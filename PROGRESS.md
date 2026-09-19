@@ -4,7 +4,8 @@
 
 - Repository root: `C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam`
 - Standard startup path: `./init.sh`
-- Standard verification path: `./gradlew build` and `./gradlew check`, wrapped by `./init.sh`
+- Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
+  `./gradlew check`
 - Current next ready feature: `gradle-kotlin-compose-baseline`
 - Current blocker: `sheet-schema-definition` is blocked on a human decision. It does not block the
   next eight slices.
@@ -52,6 +53,20 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   runs unit tests and lint only, and the three quality tools report as unwired. The baseline
   becomes meaningful once `konsist-isolation-rules` and `detekt-ktlint-gate` land.
 - Next best step: implement `gradle-kotlin-compose-baseline`.
+
+### Session 003 — 19 September 2026
+
+- Goal: write the three Claude Code subagents.
+- Completed: `.claude/agents/planner.md`, `implementer.md` and `validator.md`. Added a `CI=true`
+  guard to `init.sh` so the verification command feature-flow expects never tries to start the app.
+  Documented the feature status ladder, including `accepted`, in `AGENTS.md`.
+- Verification run: `bash -n init.sh` and `CI=true ./init.sh`, both clean, exit 0. Frontmatter of
+  the three agents checked for name, description, tools and model.
+- Evidence captured: the validator holds read-only tools plus Bash, so it can rerun the gate but
+  cannot quietly repair what it is meant to judge.
+- Known risk or unresolved issue: the pipeline has not been exercised end to end yet. The first
+  real test is running feature-flow on `gradle-kotlin-compose-baseline`.
+- Next best step: run the flow on `gradle-kotlin-compose-baseline`, or settle the Sheet schema.
 
 ## Notes For The Next Session
 

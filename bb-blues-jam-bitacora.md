@@ -366,7 +366,7 @@ información controlada, y elimina la fuente principal de error.
 | Skills del curso instaladas en `.claude/skills/` | hecho |
 | Documentos de descubrimiento (`build-brief`) | hecho — siete documentos, ver 6.2 |
 | `feature_list.json` (`harness-starter`) | hecho — 34 rebanadas, ver 6.3 |
-| Subagentes de Claude Code | pendiente, próximo paso |
+| Subagentes de Claude Code | hecho — tres en `.claude/agents/`, ver 6.4 |
 | Skills reutilizables propias | pendiente, módulo 4 |
 | Evidencia de verificación | pendiente, en curso |
 
@@ -504,6 +504,44 @@ grafo aparece qué se puede hacer hoy y qué espera, que es exactamente la pregu
 fases no responde. De ahí que el curso insista en que `feature_list.json` reemplaza al plan por
 fases y no lo complementa.
 
+### 6.4 Sesión del 19 de septiembre — los tres subagentes
+
+El repo del curso trae un `agents/openai.yaml` por skill, pero resultaron ser solo metadatos de
+interfaz: nombre para mostrar, descripción corta y un prompt por defecto. No hay nada de rol ahí.
+El contrato real estaba en el `SKILL.md` de `feature-flow`, que nombra a los tres subagentes y
+define el ciclo completo.
+
+**Los archivos son delgados a propósito.** `feature-flow` dice explícitamente que no se dupliquen
+los prompts de rol, porque las instrucciones estables ya viven en las skills. Cada subagente
+entonces hace tres cosas: invoca su skill, declara su frontera de rol, y agrega lo único que la
+skill no puede saber — las reglas de este proyecto.
+
+Esa tercera parte es la que justifica el trabajo. Las decisiones D-01 a D-14 son invisibles para una
+skill genérica: que no haya ViewModels, que ningún módulo de feature importe a otro, que ninguna
+mutación exista solo en la UI. Cada subagente las recibe en la forma que le sirve — el `planner`
+como restricciones que una spec debe respetar, el `implementer` como defectos aunque la spec calle,
+el `validator` como lista de lo que un build en verde igual no detecta.
+
+**El `validator` tiene herramientas de solo lectura más Bash.** Puede volver a correr el gate pero
+no puede editar. Es una restricción deliberada: un validador que puede arreglar lo que juzga deja
+de ser independiente, y la independencia es la única razón por la que el rol existe.
+
+**Dos huecos que aparecieron al leer el contrato de `feature-flow`.** Ninguno era visible desde la
+sesión anterior:
+
+- El pipeline usa un estado `accepted` que `feature_list.json` no documentaba. La distinción
+  importa: `passing` significa que el implementador se autoverificó, `accepted` que un validador
+  independiente aceptó. Una dependencia solo se considera satisfecha cuando está `accepted` — si se
+  confundieran, la autoverificación alcanzaría para desbloquear features, que es justo lo que el
+  pipeline de tres roles busca evitar. Quedó documentado en `AGENTS.md`.
+- `feature-flow` verifica con `CI=true ./init.sh`. El script no contemplaba esa variable, así que se
+  le agregó una guarda para que en modo CI nunca intente arrancar la app.
+
+**Lo que confirmó sobre el método.** El valor de los tres archivos no está en orquestar —de eso se
+encarga la skill— sino en que el conocimiento del proyecto viaje con el rol. Escribir "no uses
+ViewModels" una vez en `AGENTS.md` no alcanza, porque cada rol necesita esa misma regla en un
+tiempo verbal distinto: planificar sin violarla, implementar sin violarla, y detectarla violada.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
@@ -545,7 +583,7 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 
 1. ~~Correr `build-brief` sobre los dos documentos de descubrimiento~~ — hecho, ver 6.2
 2. ~~Correr `harness-starter`~~ — hecho, ver 6.3
-3. Escribir los tres subagentes de Claude Code: `planner`, `implementer`, `validator`
+3. ~~Escribir los tres subagentes de Claude Code~~ — hecho, ver 6.4
 4. Generar las pantallas en Stitch a partir de los prompts de la sección 5
 5. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante
 6. Cargar el repertorio real con etiquetas y tonalidades, en paralelo con el desarrollo

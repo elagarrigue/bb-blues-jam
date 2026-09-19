@@ -38,6 +38,8 @@ echo ""
 echo "Baseline OK."
 echo "Startup command: ./gradlew :app:installDebug   (requires a connected device or emulator)"
 
-if [ "${RUN_START_COMMAND:-0}" = "1" ]; then
+# CI=true keeps this non-interactive and never starts the app.
+# feature-flow uses `CI=true ./init.sh` as its verification command.
+if [ "${CI:-}" != "true" ] && [ "${RUN_START_COMMAND:-0}" = "1" ]; then
   exec ./gradlew :app:installDebug
 fi

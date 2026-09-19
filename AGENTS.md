@@ -64,6 +64,28 @@ without saying so and waiting for confirmation.
 - **Out of scope for the MVP:** musician self-signup, in-app tablature, the AI assistant, profiles,
   chat, notifications, onboarding, and a light theme.
 
+## Feature Flow
+
+Three subagents in `.claude/agents/` wrap the course skills. The main agent orchestrates them and
+is the only one that commits.
+
+| Subagent | Wraps | Produces |
+|---|---|---|
+| `planner` | `feature-spec` | `docs/specs/<feature-id>.md` |
+| `implementer` | `feature-implementer` | Code, evidence, status `passing` |
+| `validator` | `feature-validator` | Verdict `accept`, `revise` or `block` |
+
+Feature status ladder in `feature_list.json`:
+
+- `not_started` — no work begun.
+- `in_progress` — implementation underway. At most one feature at a time.
+- `blocked` — waiting on a human decision, not merely on unmet dependencies.
+- `passing` — implemented and self-verified by the implementer, **not yet accepted**.
+- `accepted` — an independent validator returned `accept` and the orchestrator persisted it.
+
+A dependency counts as satisfied only when its feature is `accepted`. `passing` is not acceptance:
+the whole point of the validator is that self-reported completion does not close a feature.
+
 ## Definition Of Done
 
 A feature is done only when all are true:
