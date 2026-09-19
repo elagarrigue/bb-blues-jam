@@ -5,9 +5,9 @@ designAssets:
   sourceOfTruth:
     - path: bb-blues-jam-design-prompt.md
       role: Full design brief, per-screen requirements, and reading-priority rules
-    - path: (pending) Stitch-generated screens
-      role: Eight screens and five states, to be generated from the prompts in the bitácora section 5
-      status: pending
+    - path: docs/design/
+      role: Stitch export — screens in screens/, token source in export/
+      status: in progress
   priorInspiration:
     - description: Earlier interactive mockup, dark indigo with neon amber
       status: accepted direction, not a rendered asset in this repo
@@ -92,17 +92,25 @@ rules are in `docs/build-brief.md`. Interface copy is Rioplatense Spanish using 
   the slot model as it affects layout, reading priority, and design rules. **Source of truth.**
 - **Prior interactive mockup** — established the dark indigo plus neon amber direction. Accepted as
   direction; not present in this repo as a file.
-- **Stitch screens** — not yet generated. The prompts are written and live in section 5 of
-  `bb-blues-jam-bitacora.md`. Once generated, save them and list them here with their authority.
+- **Stitch export** — being generated. Prompts are in section 5 of `bb-blues-jam-bitacora.md`;
+  `docs/design/README.md` says where each export form goes and what it is good for. PNGs are
+  visual reference; the code export is the source of real token values; the markup itself is
+  discarded, since this app is Compose and the export is HTML and Tailwind.
 
-The hex values in the front matter are a concrete starting palette derived from the stated
-direction, not measured from the original mockup. If the mockup is recovered, reconcile against it
-and update these tokens.
+The hex values in the front matter are a proposed palette derived from the stated direction, not
+measured from any rendered asset. **Reconcile them against the Stitch export when it lands**, then
+close the open question in `docs/risks-and-open-questions.md`.
+
+Generated copy is not authoritative: Stitch tends to write English or invent wording, while all UI
+copy is Rioplatense Spanish using *vos* (D-12).
 
 ## Generated Concept Images
 
-None, deliberately. Stitch is the generation path for screens, and parallel concept images would
-compete with it as a reference.
+None from `imagegen`, deliberately: Stitch is the generation path, and a parallel set of concepts
+would compete with it as a reference.
+
+Stitch screens are catalogued in `docs/design/README.md`, which also fixes the file naming so a
+screen is identifiable without opening it.
 
 ## Product Feel
 

@@ -16,3 +16,7 @@ local.properties
 
 # IDE
 /.idea/
+
+# Stitch export: keep the unpacked source, not the archive
+docs/design/export/*.zip
+docs/design/**/node_modules/
