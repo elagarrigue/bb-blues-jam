@@ -542,6 +542,54 @@ encarga la skill— sino en que el conocimiento del proyecto viaje con el rol. E
 ViewModels" una vez en `AGENTS.md` no alcanza, porque cada rol necesita esa misma regla en un
 tiempo verbal distinto: planificar sin violarla, implementar sin violarla, y detectarla violada.
 
+### 6.5 Sesión del 19 de septiembre — export de Stitch y reconciliación de tokens
+
+Se generaron las pantallas en Stitch y se revisó lo que devolvió. El hallazgo principal no fue
+visual: **el resumen del proyecto que escribe Stitch inventa hechos de producto.**
+
+| Dice Stitch | Está decidido |
+|---|---|
+| El Motivo Bar | La Macanuda, Moreno 223 |
+| El admin se llama "Fede" | No existe ese nombre; admin es un rol |
+| Formación de 6 puestos, armónica y teclados compartiendo uno | 7 cupos, separados (D-06) |
+| WebSockets o SSE para tiempo real | Sheets con autoridad única, sin sincronización (D-04) |
+| IndexedDB / LocalStorage | Room (D-01) |
+| PWA / Android | Android nativo (D-01) |
+| Progresión I-IV-V, afinaciones, backline en el detalle | No están en el modelo de dominio |
+
+Las últimas cuatro son coherentes entre sí: Stitch diseñó una PWA, que es lo que sabe hacer. Era
+esperable y no invalida los valores visuales. Las dos primeras son alucinación lisa y llana sobre
+datos que el prompt no le dio.
+
+**La que importa es la formación.** Fusionar armónica y teclados en un cupo rompe D-06, y a
+diferencia de las otras no ensucia solo la prosa: ensucia las pantallas, porque la tira de
+instrumentos aparece dibujada con seis puestos en todas. Se decidió registrar la divergencia y
+corregir en Compose en vez de regenerar: las pantallas sirven igual como referencia visual, y
+regenerar ocho por un error de datos cuesta más de lo que arregla — con el riesgo de que Stitch
+introduzca otras divergencias en el camino.
+
+**Lo que sí aportó, y era el objetivo del export:** valores reales. La paleta de `DESIGN.md` dejó de
+ser una propuesta derivada de una descripción escrita y pasó a estar medida — fondo `#0C0E13`,
+superficies `#111318` y `#1A1B21`, borde `#282A30`, ámbar `#FFB300` — más una tipografía con
+nombre, Barlow Condensed, coherente con la dirección de cartelera vintage. Cuatro tokens siguen
+derivados (`textMuted`, `slotFilled`, `archive`, `error`) porque el export los describió con
+palabras y no con valores. Queda anotado cuáles son cuáles: un token medido y uno inventado no
+merecen la misma confianza.
+
+También confirmó que la dirección sobrevivió el viaje de ida y vuelta: ámbar con semántica
+funcional estricta y sus cuatro usos reservados, cupos cubiertos en gris, 48dp, sin scroll
+horizontal, cupos libres arriba, y español rioplatense con *vos*.
+
+**Se conectó el MCP de Stitch** en el scope de usuario, no en el repo: el comando lleva la API key
+en un header, y una key versionada es una key filtrada.
+
+**Lo que confirmó sobre el método.** Una herramienta generativa produce dos cosas a la vez —
+artefactos y afirmaciones— y solo una de las dos es su trabajo. Stitch diseña; cuando además
+describe el producto, está completando huecos con lo que le parece plausible. La lección práctica
+es tener a qué contrastar: sin las 14 decisiones escritas, "El Motivo Bar" y la formación de seis
+cupos habrían entrado al proyecto sin que nadie los notara, y el error de la formación habría
+aparecido recién al implementar la tira de instrumentos.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
@@ -584,7 +632,7 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 1. ~~Correr `build-brief` sobre los dos documentos de descubrimiento~~ — hecho, ver 6.2
 2. ~~Correr `harness-starter`~~ — hecho, ver 6.3
 3. ~~Escribir los tres subagentes de Claude Code~~ — hecho, ver 6.4
-4. Generar las pantallas en Stitch a partir de los prompts de la sección 5
+4. ~~Generar las pantallas en Stitch~~ — hecho, ver 6.5; falta descomprimir el export en `docs/design/`
 5. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante
 6. Cargar el repertorio real con etiquetas y tonalidades, en paralelo con el desarrollo
 7. Cerrar la lista de mutaciones del contrato de acciones antes de rebanar features (D-13)

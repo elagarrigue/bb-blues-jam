@@ -13,21 +13,21 @@ designAssets:
       status: accepted direction, not a rendered asset in this repo
   generatedConcepts: []
 colors:
-  background: "#0B0B14"
-  surface: "#14141F"
-  surfaceRaised: "#1D1D2B"
-  primary: "#FFB020"
-  onPrimary: "#0B0B14"
+  background: "#0C0E13"
+  surface: "#111318"
+  surfaceRaised: "#1A1B21"
+  primary: "#FFB300"
+  onPrimary: "#0C0E13"
   text: "#F5F3EE"
   textMuted: "#A6A2B5"
-  border: "#2A2A3A"
-  slotOpen: "#FFB020"
+  border: "#282A30"
+  slotOpen: "#FFB300"
   slotFilled: "#6E6A80"
   archive: "#8B879B"
   error: "#FF6B5A"
 typography:
   h1:
-    fontFamily: condensed sans with character
+    fontFamily: Barlow Condensed
     fontSize: 28sp
     fontWeight: 700
   songTitle:
@@ -35,7 +35,7 @@ typography:
     fontSize: 18sp
     fontWeight: 600
   key:
-    fontFamily: neutral legible sans
+    fontFamily: Barlow Condensed
     fontSize: 18sp
     fontWeight: 700
   body:
@@ -97,9 +97,13 @@ rules are in `docs/build-brief.md`. Interface copy is Rioplatense Spanish using 
   visual reference; the code export is the source of real token values; the markup itself is
   discarded, since this app is Compose and the export is HTML and Tailwind.
 
-The hex values in the front matter are a proposed palette derived from the stated direction, not
-measured from any rendered asset. **Reconcile them against the Stitch export when it lands**, then
-close the open question in `docs/risks-and-open-questions.md`.
+The hex values in the front matter were reconciled against the Stitch export on 19 September 2026
+and are no longer a proposal. Background, surfaces, border and amber come from what Stitch actually
+produced; `textMuted`, `slotFilled`, `archive` and `error` are still derived, because the export
+described them in words rather than values.
+
+Headings and the key use **Barlow Condensed**, named by the export and consistent with the
+vintage-marquee direction. Body and data keep a neutral legible sans.
 
 Generated copy is not authoritative: Stitch tends to write English or invent wording, while all UI
 copy is Rioplatense Spanish using *vos* (D-12).
@@ -267,8 +271,8 @@ instrument strip can grow.
 
 ## Open Design Questions
 
-- The exact hex values are a proposal derived from the written direction. Reconcile with the prior
-  mockup if it is recovered.
+- `textMuted`, `slotFilled`, `archive` and `error` are still derived rather than measured: the
+  Stitch export described them in words ("muted slate grey") without giving values.
 - Icon set for the six instruments: source or draw. They must read at roughly 16dp.
 - How the instrument strip degrades when a lineup is unusually large (for example four guitars).
 - Drag-to-reorder versus explicit move actions, given that 48dp targets and dragging conflict on a

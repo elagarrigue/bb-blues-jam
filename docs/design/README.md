@@ -66,6 +66,39 @@ indigo, neon amber"), not measured from any rendered asset. Recorded as an open 
 Once the export lands, reconcile: pull the real values out of `export/`, update the tokens in
 `../../DESIGN.md`, and close the question.
 
+## Divergences in the Stitch project summary
+
+Reviewed 19 September 2026. The export invented product facts, so **treat its summary as a design
+artifact, not as a product description**. Take colors, type and layout from it; take nothing else.
+
+| What the summary says | What is decided | Action |
+|---|---|---|
+| Venue is "El Motivo Bar" | La Macanuda, Moreno 223, Bahía Blanca | Ignore. Invented. |
+| Admin is named "Fede" | No such person; admin is a role, not a name | Ignore. Invented. Copy examples using the name must be rewritten. |
+| Lineup is 6 slots, harmonica and keyboards sharing one | 7 slots: 2 guitars, bass, drums, vocals, harmonica, keyboards (D-06) | **Fix in every screen.** The instrument strip is wrong wherever it shows six. |
+| WebSockets or SSE for real-time sync | Sheets via Apps Script, one authority per entity, no sync (D-04) | Ignore. |
+| IndexedDB / LocalStorage | Room (D-01, native Android) | Ignore. |
+| PWA / Android | Native Android only, no KMP (D-01) | Ignore. Explains why the markup is discarded. |
+| Song detail shows I-IV-V, bar count, tunings, backline | Not in the domain model | Ignore unless deliberately added later. |
+
+The lineup one is the only divergence that damages the screens themselves rather than just the
+prose. Check it first.
+
+### What the summary got right
+
+Worth keeping, because it confirms the direction survived the round trip: amber with strict
+functional semantics and its four reserved uses, filled slots in muted grey, 48dp targets, no
+horizontal scroll, open slots ordered above filled ones, and Rioplatense Spanish using *vos*.
+
+Its copy examples are good and usable once the invented name is removed: *"Traé tu viola y cable
+jack"*.
+
+### What it contributed
+
+Real token values, now reconciled into `../../DESIGN.md`: background `#0C0E13`, surfaces `#111318`
+and `#1A1B21`, border `#282A30`, amber `#FFB300`. And a named typeface for headings and keys,
+**Barlow Condensed**.
+
 ## Check on arrival
 
 The instrument strip is the component the main screen depends on. When the export lands, check how

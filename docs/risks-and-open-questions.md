@@ -27,8 +27,10 @@ endpoint and a repository function. Confirm this list is complete before writing
 
 ### Instrument icons
 
-The instrument strip is the load-bearing component of the main screen and it needs six icons legible
-at roughly 16dp. Source or draw them. Blocking for the first UI slice, not for the build skeleton.
+The instrument strip is the load-bearing component of the main screen and it needs six instrument
+icons legible at roughly 16dp: guitar, bass, drums, vocals, harmonica, keyboards. Note that the
+default lineup is seven *slots*, since guitar has two — six icon types, seven positions. Source or
+draw them. Blocking for the first UI slice, not for the build skeleton.
 
 ## Implementation-Time Questions
 
@@ -92,6 +94,7 @@ Stated so they can be challenged rather than silently relied upon.
 | Songsterr has no official API | Tab links break | Optional per song; the app works with no tabs at all (D-10) |
 | MusicBrainz 1 req/s | Blocked rendering if misused | Enrichment runs in background on song add and is cached in Room; never during list rendering (D-09) |
 | A silent failed publish | Musicians read a setlist the admin thinks they changed — the worst product outcome | Publish failure must be unmissable; log write failures locally |
+| Generated design output contradicts decided product facts | Screens get built to the wrong model — the Stitch export merged harmonica and keyboards into one slot, breaking D-06 | Review generated output against the decisions before using it; divergences logged in `design/README.md` |
 | Multi-module setup consumes early weeks | Less time for product | The build skeleton is the first vertical slice, so the cost lands early and visibly |
 
 ## Research Tasks
@@ -100,6 +103,8 @@ Stated so they can be challenged rather than silently relied upon.
 - [ ] Load real repertoire with keys, tags, and difficulty.
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload.
 - [ ] Confirm the full mutation list for the action contract before slicing features.
-- [ ] Source or draw six instrument icons legible at 16dp.
+- [ ] Source or draw six instrument icons legible at 16dp (six types, seven default slots).
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.
-- [ ] Reconcile the proposed DESIGN.md palette against the prior mockup if it is recovered.
+- [x] Reconcile the DESIGN.md palette — done 19 September 2026 against the Stitch export.
+      Background, surfaces, border and amber now carry real values; `textMuted`, `slotFilled`,
+      `archive` and `error` remain derived.
