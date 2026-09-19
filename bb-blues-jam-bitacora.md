@@ -5,7 +5,8 @@ Registro del proceso y de las decisiones, para la presentación final de AI Expe
 Este documento está en español porque su destinatario es la presentación del curso. El código,
 los commits y la documentación técnica del repositorio están en inglés.
 
-Última actualización: 19 de septiembre de 2026 · Fase: diseño, previo a la primera línea de código
+Última actualización: 19 de septiembre de 2026 · Fase: harness en armado, previo a la primera línea
+de código de producto
 
 ---
 
@@ -361,8 +362,34 @@ información controlada, y elimina la fuente principal de error.
 | Estrategia de testing y tests obligatorios | hecho |
 | Definition of Done y condiciones de parada | hecho |
 | Brief de diseño y prompts para Stitch | hecho |
-| Skills reutilizables | pendiente, módulo 4 |
+| Repositorio git inicializado y publicado | hecho |
+| Skills del curso instaladas en `.claude/skills/` | hecho |
+| Documentos de descubrimiento (`build-brief`) | pendiente, próximo paso |
+| `feature_list.json` (`harness-starter`) | pendiente |
+| Subagentes de Claude Code | pendiente |
+| Skills reutilizables propias | pendiente, módulo 4 |
 | Evidencia de verificación | pendiente, en curso |
+
+### 6.1 Sesión del 19 de septiembre — puesta en marcha del repositorio
+
+El repo remoto `elagarrigue/bb-blues-jam` estaba creado pero vacío, así que no hubo nada que clonar:
+la operación correcta fue al revés, inicializar git sobre el scaffold local de Android Studio y
+publicarlo. Dos commits:
+
+| Commit | Contenido |
+|---|---|
+| `19c1075` | Scaffold de Android Studio + los dos documentos de descubrimiento + `START-HERE.md` |
+| `61eeeba` | Las seis skills del curso en `.claude/skills/`, más `/.idea/` al `.gitignore` |
+
+El push por HTTPS falló: GitHub ya no acepta autenticación por contraseña, y el `gh` del sistema
+estaba configurado con protocolo SSH, así que nunca instaló un credential helper para HTTPS. Se
+resolvió apuntando `origin` a la URL SSH, que autenticaba bien. Queda anotado porque es el tipo de
+fricción que reaparece en cualquier máquina nueva.
+
+Las skills se instalaron dentro del repo y no en `~/.claude/skills/` para que queden versionadas:
+son parte de la evidencia del harness que pide el curso. Se conservaron los `agents/openai.yaml` de
+cada skill: para Claude Code son inertes, pero son el material de referencia para escribir los tres
+subagentes.
 
 El `AGENTS.md` funciona como índice y no como volcado, para que el agente lea solo el documento que
 su tarea requiere. Cada regla incluye su motivo, porque una regla sin justificación se erosiona al
@@ -405,8 +432,10 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 
 ## 10. Próximos pasos
 
-1. Generar las pantallas en Stitch a partir de los prompts de la sección 5
-2. Adaptar el harness al proyecto de la jam
-3. Definir el esquema del Sheet: catálogo de temas, jams, asignaciones
-4. Cargar el repertorio real con etiquetas y tonalidades
-5. Fase 1 del plan: esqueleto de build y módulos
+1. Correr `build-brief` sobre los dos documentos de descubrimiento, sin reabrir lo ya decidido
+2. Correr `harness-starter` para generar `AGENTS.md`, `init.sh`, `PROGRESS.md` y `feature_list.json`
+3. Escribir los tres subagentes de Claude Code: `planner`, `implementer`, `validator`
+4. Generar las pantallas en Stitch a partir de los prompts de la sección 5
+5. Definir el esquema del Sheet: catálogo de temas, jams, asignaciones
+6. Cargar el repertorio real con etiquetas y tonalidades
+7. Primera rebanada de `feature_list.json`: esqueleto de build y módulos

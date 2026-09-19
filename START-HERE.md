@@ -1,9 +1,13 @@
 # START-HERE — BB Blues Jam
 
 Documento de arranque para continuar el proyecto en Claude Code.
-Pegá este archivo en la raíz del repo nuevo y empezá la sesión con: "Leé START-HERE.md".
+Empezá cada sesión con: "Leé START-HERE.md".
 
-Generado el 19 de septiembre de 2026. Estado: diseño cerrado, sin una línea de código escrita.
+**Sesión nueva, siguiente paso:** correr `build-brief` (sección 6.2). El prompt está ahí, listo
+para pegar.
+
+Generado el 19 de septiembre de 2026. Actualizado el 19 de septiembre de 2026.
+Estado: repo publicado y skills instaladas. Sin una línea de código de producto escrita.
 
 ---
 
@@ -36,9 +40,9 @@ completa el resto, luego ejecuta las acciones para crear la lista.
 
 ---
 
-## 2. Archivos que tenés que traer
+## 2. Archivos de insumo
 
-Copiá estos dos al repo antes de empezar. Son el insumo del descubrimiento:
+Ya están en el repo. Son el insumo del descubrimiento:
 
 | Archivo | Para qué |
 |---|---|
@@ -60,10 +64,11 @@ actualizada a medida que avanzás; no es documentación muerta.
 - 14 decisiones técnicas y de producto tomadas, con fundamento escrito
 - Diseño de UI especificado: ocho pantallas, cinco estados, dirección visual
 - Prompts de Stitch listos para generar las pantallas
+- Repo git inicializado y publicado en `github.com/elagarrigue/bb-blues-jam` (`origin` por SSH)
+- Las seis skills del curso instaladas y versionadas en `.claude/skills/`
 
 ### Pendiente inmediato
 
-- Instalar las skills del curso
 - Correr `build-brief` para generar los docs de descubrimiento
 - Correr `harness-starter` para generar `feature_list.json`
 - Escribir los tres subagentes para Claude Code
@@ -131,28 +136,33 @@ enriquecimiento opcional en background.
 
 ## 6. Pasos inmediatos
 
-### 6.1 Instalar las skills del curso
+### 6.1 Instalar las skills del curso — HECHO
 
-```bash
-git clone --depth 1 https://github.com/devexpert-io/ai-expert-project.git /tmp/aiexp
-mkdir -p .claude/skills
-cp -r /tmp/aiexp/.agents/skills/* .claude/skills/
-ls .claude/skills
-```
+Las seis están en `.claude/skills/`: `build-brief`, `harness-starter`, `feature-spec`,
+`feature-implementer`, `feature-validator`, `feature-flow`.
 
-Se instalan dentro del repo para que queden versionadas: son parte de la evidencia del harness que
-pide el curso.
+Se instalaron dentro del repo para que queden versionadas: son parte de la evidencia del harness
+que pide el curso. Se conservaron los `agents/openai.yaml` de cada skill — para Claude Code son
+inertes, pero son la referencia para escribir los subagentes de 6.4.
 
-Deberías ver seis: `build-brief`, `harness-starter`, `feature-spec`, `feature-implementer`,
-`feature-validator`, `feature-flow`.
+> **Reiniciá la sesión antes de seguir.** Claude Code registra las skills al arrancar, así que las
+> recién instaladas no aparecen en la sesión que las copió. Salí con `/quit` y volvé a entrar desde
+> esta carpeta; recién ahí `build-brief` va a estar disponible.
 
 ### 6.2 Correr build-brief
 
 ```
 Usá la skill build-brief. Leé primero bb-blues-jam-bitacora.md y
 bb-blues-jam-design-prompt.md: ya contienen el problema, los usuarios, el alcance,
-el modelo de dominio, las decisiones técnicas y la dirección de diseño.
+el modelo de dominio, las 14 decisiones técnicas y la dirección de diseño.
 No vuelvas a preguntar lo que esos archivos ya responden.
+
+Los documentos que generes van en inglés. La bitácora queda en español porque es
+material de presentación, y los textos de interfaz en español rioplatense (D-12).
+
+El descubrimiento está cerrado: tu trabajo es consolidar lo decidido en los
+documentos de salida, no reabrir decisiones. Si algo te parece mal, decilo y
+esperá confirmación antes de cambiarlo.
 ```
 
 Produce: `CONTEXT.md`, `docs/build-brief.md`, `docs/domain-model.md`,
@@ -191,10 +201,10 @@ referencialos desde `DESIGN.md`.
 
 ## 7. Decisiones pendientes
 
-**Idioma de los documentos del proyecto.** `build-brief` pregunta esto explícitamente y avisa de
-no asumirlo por el idioma de la conversación. Postura acordada: **inglés** para código, commits y
-documentación técnica; **español rioplatense** solo para los textos de la interfaz. La bitácora
-queda en español porque es material de presentación.
+**Idioma de los documentos del proyecto — resuelto.** `build-brief` pregunta esto explícitamente y
+avisa de no asumirlo por el idioma de la conversación. Postura acordada: **inglés** para código,
+commits y documentación técnica; **español rioplatense** solo para los textos de la interfaz. La
+bitácora queda en español porque es material de presentación. Ya está incorporado al prompt de 6.2.
 
 **`init.sh`.** El proyecto de referencia del curso es Next.js con pnpm. El tuyo es Android, así
 que `init.sh` tiene que envolver el gate de Gradle:
