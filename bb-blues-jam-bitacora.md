@@ -551,7 +551,7 @@ visual: **el resumen del proyecto que escribe Stitch inventa hechos de producto.
 |---|---|
 | El Motivo Bar | La Macanuda, Moreno 223 |
 | El admin se llama "Fede" | No existe ese nombre; admin es un rol |
-| Formación de 6 puestos, armónica y teclados compartiendo uno | 7 cupos, separados (D-06) |
+| Formación de 6 puestos, armónica y teclados compartiendo uno | 7 cupos por defecto, ajustable por tema (D-06) — **el resumen se equivoca, las pantallas están bien** |
 | WebSockets o SSE para tiempo real | Sheets con autoridad única, sin sincronización (D-04) |
 | IndexedDB / LocalStorage | Room (D-01) |
 | PWA / Android | Android nativo (D-01) |
@@ -561,12 +561,14 @@ Las últimas cuatro son coherentes entre sí: Stitch diseñó una PWA, que es lo
 esperable y no invalida los valores visuales. Las dos primeras son alucinación lisa y llana sobre
 datos que el prompt no le dio.
 
-**La que importa es la formación.** Fusionar armónica y teclados en un cupo rompe D-06, y a
-diferencia de las otras no ensucia solo la prosa: ensucia las pantallas, porque la tira de
-instrumentos aparece dibujada con seis puestos en todas. Se decidió registrar la divergencia y
-corregir en Compose en vez de regenerar: las pantallas sirven igual como referencia visual, y
-regenerar ocho por un error de datos cuesta más de lo que arregla — con el riesgo de que Stitch
-introduzca otras divergencias en el camino.
+**La formación parecía la divergencia grave, y no lo era.** Leyendo el markup del primer tema
+daba que faltaba Teclados, lo que habría roto D-06 en todas las pantallas. Al mirar el PNG
+renderizado apareció lo contrario: el tema 02 muestra `TEC: LIBRE`, el 05 también, y el 01
+efectivamente no lleva teclados. O sea que la formación **varía por tema**, que es exactamente lo
+que D-06 pide. Stitch lo implementó bien; su resumen lo describió mal.
+
+Queda como recordatorio de método: el markup de un tema es una muestra, no el modelo. Verificar
+sobre lo renderizado y no sobre el primer fragmento que uno abre.
 
 **Lo que sí aportó, y era el objetivo del export:** valores reales. La paleta de `DESIGN.md` dejó de
 ser una propuesta derivada de una descripción escrita y pasó a estar medida — fondo `#0C0E13`,
@@ -579,6 +581,27 @@ merecen la misma confianza.
 También confirmó que la dirección sobrevivió el viaje de ida y vuelta: ámbar con semántica
 funcional estricta y sus cuatro usos reservados, cupos cubiertos en gris, 48dp, sin scroll
 horizontal, cupos libres arriba, y español rioplatense con *vos*.
+
+**Un archivo que se contradice a sí mismo.** El export trae su propio `DESIGN.md`, y su front
+matter YAML y su prosa describen paletas distintas: la prosa nombra un set índigo (`#090B10`,
+`#181E2B`), el front matter declara un theme Material 3 (`#111318`, `#1A1B21`). Se resolvió
+contando ocurrencias en el HTML de las doce pantallas: los valores de la prosa aparecen **cero
+veces**. El código usa el front matter. Los tokens del proyecto siguen al código, porque es lo que
+efectivamente se dibujó y lo que muestran los PNG.
+
+Sirve como criterio general: cuando la documentación generada contradice al código generado, el
+código es el artefacto y la prosa es un relato sobre él.
+
+**La tira de instrumentos volvió mejor de lo especificado.** El brief pedía íconos de ~16dp,
+apagados para libre y encendidos para cubierto — justo el esquema que había quedado anotado como
+problema de accesibilidad, porque el brillo solo falla con poca visión y con reflejo. Stitch
+devolvió otra cosa: **chips con texto**. Un cupo libre dice `GTR: LIBRE` en ámbar sobre fondo
+tintado con un punto pulsante; uno cubierto dice `Gtr: Tincho` en gris con un check.
+
+Tres señales distinguen los estados —relleno, glifo y texto— y ninguna depende del brillo. La
+preocupación de accesibilidad quedó resuelta, no por haberla corregido sino porque el diseño
+generado nunca la tuvo. Cuesta ancho: los chips envuelven a dos líneas en un tema cargado. Se
+aceptó, porque un chip no necesita leyenda y además contesta "¿quién toca esto?" sin expandir.
 
 **Se conectó el MCP de Stitch** en el scope de usuario, no en el repo: el comando lleva la API key
 en un header, y una key versionada es una key filtrada.

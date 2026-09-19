@@ -75,7 +75,7 @@ artifact, not as a product description**. Take colors, type and layout from it; 
 |---|---|---|
 | Venue is "El Motivo Bar" | La Macanuda, Moreno 223, Bahía Blanca | Ignore. Invented. |
 | Admin is named "Fede" | No such person; admin is a role, not a name | Ignore. Invented. Copy examples using the name must be rewritten. |
-| Lineup is 6 slots, harmonica and keyboards sharing one | 7 slots: 2 guitars, bass, drums, vocals, harmonica, keyboards (D-06) | **Fix in every screen.** The instrument strip is wrong wherever it shows six. |
+| Lineup is 6 slots, harmonica and keyboards sharing one | Default 7 slots, adjustable per song (D-06) | **Summary only.** The screens implement per-song lineups correctly; songs 02 and 05 show a Teclados slot. |
 | WebSockets or SSE for real-time sync | Sheets via Apps Script, one authority per entity, no sync (D-04) | Ignore. |
 | IndexedDB / LocalStorage | Room (D-01, native Android) | Ignore. |
 | PWA / Android | Native Android only, no KMP (D-01) | Ignore. Explains why the markup is discarded. |
@@ -98,6 +98,72 @@ jack"*.
 Real token values, now reconciled into `../../DESIGN.md`: background `#0C0E13`, surfaces `#111318`
 and `#1A1B21`, border `#282A30`, amber `#FFB300`. And a named typeface for headings and keys,
 **Barlow Condensed**.
+
+## The export, reviewed
+
+Unpacked 19 September 2026: twelve screens, each with `code.html` and `screen.png`, plus Stitch's
+own `nocturna_blues_jam/DESIGN.md`.
+
+### That file contradicts itself, and the code settles it
+
+Its YAML front matter and its prose describe **different palettes**. The prose names a deep indigo
+set (`#090B10`, `#181E2B`, `#202738`); the front matter declares a Material 3 theme
+(`#111318`, `#1A1B21`, `#1E1F25`).
+
+Checked against the generated HTML: the prose values appear **zero times** across all twelve
+screens. The code uses the front matter throughout. Our tokens follow the code, because that is
+what was actually drawn and what the PNGs show.
+
+Worth remembering as a habit: when generated documentation disagrees with generated code, the code
+is the artifact and the prose is a story told about it.
+
+### The instrument strip came back better than specified
+
+The brief asked for a strip of ~16dp icons, dimmed for open and lit for filled. Stitch produced
+**labelled chips** instead:
+
+| State | Fill | Glyph | Label |
+|---|---|---|---|
+| Open | 15% amber | pulsing dot | `GTR: LIBRE`, uppercase, amber |
+| Filled | neutral surface | `check` | `Gtr: Tincho`, muted, with the musician's name |
+
+This is the better answer and is adopted into `../../DESIGN.md`. Three independent signals separate
+the states — fill, glyph and wording — so the distinction holds under glare, low vision, and in a
+greyscale screenshot. **The brightness-only accessibility concern is resolved**, not by our fixing
+it but by the generated design never having had it.
+
+It costs width: chips wrap to a second line on a busy song, where icons would not. Accepted, since
+a chip needs no legend and a filled chip answers "who is playing this?" without expanding the row.
+
+### The lineup is right in the screens, and the summary was wrong about it
+
+Reading only the first song's markup suggested Teclados had been dropped. The rendered screens say
+otherwise: song 02 shows `TEC: LIBRE` and song 05 shows `TEC: LIBRE`, while song 01 genuinely has
+no keyboards slot.
+
+So the lineup **varies per song**, which is exactly D-06. Stitch got this right; its project
+summary was wrong when it described a fixed six-slot lineup merging harmonica and keyboards. The
+divergence table below is corrected accordingly.
+
+Lesson worth keeping: one song's markup is a sample, not the model.
+
+### A layout bug in the rendered header
+
+`next-jam.png` has overlapping text in the header: the date line ("VIERNES 17 DE MAYO") collides
+with the time and address beneath it. It is a generation defect, not a design choice — do not
+reproduce it in Compose.
+
+### Also present
+
+- Fonts named and used: **Barlow Condensed** for headings and keys, **Chivo** for body and labels.
+- The key badge is a real component: 48-56px, amber border, amber `display-key` text at 44px/800.
+- Filter chips carry a numeric counter of available slots per instrument — a nice touch not in the
+  brief, worth keeping.
+- `data-instruments` attributes per song row, showing how filtering was intended to work.
+- A header counter of the whole jam: "32 anotados / 18 cupos libres". Not in the brief, genuinely
+  useful, and worth keeping — it answers "is there room tonight at all?" before any scrolling.
+- Filter chips carry per-instrument counts (`Todos 14`, `Guitarra 4`, `Bajo 1`), which makes the
+  filter bar itself an answer rather than only a control.
 
 ## Check on arrival
 

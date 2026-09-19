@@ -25,12 +25,17 @@ feature. From the domain model, the set is: add song to setlist, remove song, se
 lineup, assign musician to slot, clear slot, reorder songs, publish. Each needs an Apps Script
 endpoint and a repository function. Confirm this list is complete before writing `feature_list.json`.
 
-### Instrument icons
+### Instrument strip: chips, not icons — resolved
 
-The instrument strip is the load-bearing component of the main screen and it needs six instrument
-icons legible at roughly 16dp: guitar, bass, drums, vocals, harmonica, keyboards. Note that the
-default lineup is seven *slots*, since guitar has two — six icon types, seven positions. Source or
-draw them. Blocking for the first UI slice, not for the build skeleton.
+Resolved 19 September 2026 by the Stitch export. The strip is labelled chips rather than ~16dp
+icons, so no icon set needs sourcing. An open slot reads `GTR: LIBRE` in amber on a tinted fill
+with a pulsing dot; a filled slot reads `Gtr: Tincho` in muted text with a check glyph.
+
+This also closes the accessibility concern: fill, glyph and wording all distinguish the two states,
+so neither depends on brightness. Spec is in `../DESIGN.md`.
+
+Remaining minor question: whether to add an instrument glyph beside the chip text, which would cost
+width the strip cannot spare.
 
 ## Implementation-Time Questions
 
@@ -103,7 +108,7 @@ Stated so they can be challenged rather than silently relied upon.
 - [ ] Load real repertoire with keys, tags, and difficulty.
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload.
 - [ ] Confirm the full mutation list for the action contract before slicing features.
-- [ ] Source or draw six instrument icons legible at 16dp (six types, seven default slots).
+- [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.
 - [x] Reconcile the DESIGN.md palette — done 19 September 2026 against the Stitch export.
       Background, surfaces, border and amber now carry real values; `textMuted`, `slotFilled`,

@@ -13,41 +13,41 @@ designAssets:
       status: accepted direction, not a rendered asset in this repo
   generatedConcepts: []
 colors:
-  background: "#0C0E13"
-  surface: "#111318"
-  surfaceRaised: "#1A1B21"
+  background: "#111318"
+  surface: "#1A1B21"
+  surfaceRaised: "#1E1F25"
   primary: "#FFB300"
-  onPrimary: "#0C0E13"
-  text: "#F5F3EE"
-  textMuted: "#A6A2B5"
-  border: "#282A30"
+  onPrimary: "#281900"
+  text: "#E2E2E9"
+  textMuted: "#D6C4AC"
+  border: "#514532"
   slotOpen: "#FFB300"
-  slotFilled: "#6E6A80"
-  archive: "#8B879B"
-  error: "#FF6B5A"
+  slotFilled: "#33353A"
+  archive: "#9E8E78"
+  error: "#FFB4AB"
 typography:
   h1:
     fontFamily: Barlow Condensed
     fontSize: 28sp
     fontWeight: 700
   songTitle:
-    fontFamily: neutral legible sans
-    fontSize: 18sp
+    fontFamily: Barlow Condensed
+    fontSize: 24sp
     fontWeight: 600
   key:
     fontFamily: Barlow Condensed
-    fontSize: 18sp
-    fontWeight: 700
+    fontSize: 44sp
+    fontWeight: 800
   body:
-    fontFamily: neutral legible sans
+    fontFamily: Chivo
     fontSize: 16sp
   caption:
-    fontFamily: neutral legible sans
-    fontSize: 13sp
+    fontFamily: Chivo
+    fontSize: 12sp
 rounded:
-  sm: 8dp
-  md: 12dp
-  lg: 20dp
+  sm: 4dp
+  md: 8dp
+  lg: 12dp
 spacing:
   xs: 4dp
   sm: 8dp
@@ -175,22 +175,44 @@ instrument strip.
 
 ### Instrument strip
 
-The component the main screen depends on. One small icon per instrument in that song's lineup,
-**dimmed when the slot is open and lit when it is filled**. It must fit in little space and be
-understandable without a legend. This strip is what makes the collapsed list useful and the filter
-legible at a glance.
+The component the main screen depends on, and the Stitch export resolved it as **labelled chips
+rather than bare icons**. That is a better answer than the original icon-strip idea and is adopted:
 
-Note the deliberate inversion: dimmed means available. It reads as "a space to fill", and pairs with
-amber marking open slots in the expanded panel.
+- **Open slot** — amber text on a 15% amber fill, a small pulsing dot, and the label `GTR: LIBRE`
+  in uppercase.
+- **Filled slot** — muted text on a neutral surface fill, a `check` glyph, and the label
+  `Gtr: Tincho` carrying the musician's name.
+
+Three signals separate the two states: fill, glyph, and wording. None of them is brightness alone,
+so the distinction survives glare, low vision and a greyscale screenshot. That was the open
+accessibility question and it is now closed.
+
+The cost is width: chips take far more room than 16dp icons, so the strip wraps to a second line on
+a busy song. Accepted, because a musician reading `VOZ: LIBRE` needs no legend, whereas an icon
+strip does.
+
+Note what the chips give away for free: a filled slot showing the musician's name answers "who is
+playing this?" without expanding the row.
 
 ### Song row, expanded
 
 Artist name, then **open slots first**, presented as available and tappable, then filled slots below
 with the musician's name and instrument. Actionable content goes on top.
 
+### Jam summary counter
+
+In the header, above the filter bar: the number of musicians signed up and the number of open slots
+across the whole jam ("32 anotados · 18 cupos libres"), the second in amber. Not in the original
+brief; adopted from the export because it answers "is there room tonight at all?" before any
+scrolling.
+
 ### Filter chip
 
 Per instrument: Guitarra, Bajo, Batería, Voz, Armónica, Teclados. Active state uses amber.
+
+Each chip carries a count of songs with an open slot for that instrument (`Guitarra 4`, `Bajo 1`),
+plus a `Todos` chip with the total. This makes the filter bar an answer in itself, not only a
+control — a bass player reads `Bajo 1` and already knows the shape of their night.
 
 ### Status badge
 
@@ -273,7 +295,10 @@ instrument strip can grow.
 
 - `textMuted`, `slotFilled`, `archive` and `error` are still derived rather than measured: the
   Stitch export described them in words ("muted slate grey") without giving values.
-- Icon set for the six instruments: source or draw. They must read at roughly 16dp.
-- How the instrument strip degrades when a lineup is unusually large (for example four guitars).
+- Chips carry an instrument abbreviation (`Gtr`, `Bajo`, `Bat`, `Voz`, `Arm`, `Tec`). Decide
+  whether a glyph is still wanted alongside the text, which would cost width the strip does not
+  have to spare.
+- How the strip degrades when a lineup is unusually large (for example four guitars). Wrapping is
+  the current answer; confirm it stays legible.
 - Drag-to-reorder versus explicit move actions, given that 48dp targets and dragging conflict on a
   dense list used one-handed.
