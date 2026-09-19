@@ -352,7 +352,7 @@ información controlada, y elimina la fuente principal de error.
 
 | Artefacto | Estado |
 |---|---|
-| `AGENTS.md` — contexto raíz para el agente | hecho, a adaptar a la jam app |
+| `AGENTS.md` — contexto raíz para el agente | hecho — regenerado para la jam app en 6.3 |
 | Arquitectura y reglas de dependencia | hecho, a adaptar |
 | Patrón de presentación documentado | hecho |
 | Contratos de API y sus trampas | hecho, a adaptar |
@@ -365,8 +365,8 @@ información controlada, y elimina la fuente principal de error.
 | Repositorio git inicializado y publicado | hecho |
 | Skills del curso instaladas en `.claude/skills/` | hecho |
 | Documentos de descubrimiento (`build-brief`) | hecho — siete documentos, ver 6.2 |
-| `feature_list.json` (`harness-starter`) | pendiente, próximo paso |
-| Subagentes de Claude Code | pendiente |
+| `feature_list.json` (`harness-starter`) | hecho — 34 rebanadas, ver 6.3 |
+| Subagentes de Claude Code | pendiente, próximo paso |
 | Skills reutilizables propias | pendiente, módulo 4 |
 | Evidencia de verificación | pendiente, en curso |
 
@@ -462,6 +462,48 @@ El bloqueante que quedó arriba de todo es el **esquema del Sheet**. Traba el c�
 por separado, traba al asistente: la semana 5 necesita repertorio real cargado, y con doce temas no
 se arma una lista temática interesante. Conviene empezarlo en paralelo.
 
+### 6.3 Sesión del 19 de septiembre — harness mínimo con `harness-starter`
+
+Se corrió `harness-starter` sobre los siete documentos de descubrimiento. Produce cuatro archivos y
+tiene prohibido producir cualquier otro: `AGENTS.md`, `init.sh`, `PROGRESS.md` y
+`feature_list.json`.
+
+**`init.sh` adaptado a Gradle.** El proyecto de referencia del curso es Next.js con pnpm, así que el
+script había que escribirlo de cero: envuelve `./gradlew build` y `./gradlew check`. Se le agregó
+algo que no estaba en la plantilla: un chequeo que informa si Konsist, detekt y ktlint están
+cableados. Hoy los tres dan `NOT WIRED YET`, que es la verdad — `check` corre tests unitarios y lint
+y nada más. Un gate que dice correr herramientas que no corre es peor que no tener gate, porque da
+una señal verde falsa en cada validación de `feature-flow`.
+
+Se corrió: sale en verde, exit 0.
+
+**`feature_list.json`: 34 rebanadas.** La skill pide rebanadas del tamaño de una sesión y advierte
+contra dos errores opuestos: épicas que nunca terminan y tareas tan chicas que solo generan
+administración. Para un MVP con dos roles, backend, estado publicado y caché, espera entre 12 y 30;
+salieron 34, en el límite superior, porque el contrato de acciones de D-13 obliga a que cada
+mutación sea su propia rebanada verificable: agregar tema, quitar tema, fijar tonalidad, ajustar
+formación, asignar músico, liberar cupo, reordenar y publicar. Son ocho rebanadas que en otro
+proyecto serían una sola llamada "edición de la lista".
+
+**El estado `blocked` se usa una sola vez.** La tentación era marcar como bloqueadas las 27
+rebanadas que dependen del esquema del Sheet, pero eso confunde dos cosas distintas: tener
+dependencias sin cumplir es lo normal en un grafo, estar bloqueado es esperar una decisión humana.
+Solo `sheet-schema-definition` está bloqueada de verdad. El resto queda `not_started` con sus
+dependencias declaradas.
+
+Esa distinción tiene una consecuencia práctica que valía la pena calcular: **ocho rebanadas son
+alcanzables sin desbloquear el Sheet** — el baseline de Kotlin y Compose, el esqueleto de módulos,
+Konsist, detekt y ktlint, el harness de presenters con Molecule, los tokens de diseño, los tipos de
+dominio y la pantalla de info. Alcanza para varias sesiones de trabajo real mientras el esquema se
+define en paralelo.
+
+**Lo que confirmó sobre el método.** `build-brief` tradujo documentos para humanos a documentos para
+un agente; `harness-starter` traduce esos documentos a un grafo ejecutable. El paso que agrega valor
+no es generar los cuatro archivos sino ordenar el trabajo por dependencias reales: al escribir el
+grafo aparece qué se puede hacer hoy y qué espera, que es exactamente la pregunta que un plan por
+fases no responde. De ahí que el curso insista en que `feature_list.json` reemplaza al plan por
+fases y no lo complementa.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
@@ -502,7 +544,7 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 ## 10. Próximos pasos
 
 1. ~~Correr `build-brief` sobre los dos documentos de descubrimiento~~ — hecho, ver 6.2
-2. Correr `harness-starter` para generar `AGENTS.md`, `init.sh`, `PROGRESS.md` y `feature_list.json`
+2. ~~Correr `harness-starter`~~ — hecho, ver 6.3
 3. Escribir los tres subagentes de Claude Code: `planner`, `implementer`, `validator`
 4. Generar las pantallas en Stitch a partir de los prompts de la sección 5
 5. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante

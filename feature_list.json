@@ -1,0 +1,588 @@
+[
+  {
+    "id": "gradle-kotlin-compose-baseline",
+    "area": "bootstrap",
+    "title": "Convert the scaffold to a Kotlin + Compose baseline",
+    "user_visible_behavior": "The app launches and shows a single Compose screen with the project's dark theme background instead of the default Views layout.",
+    "depends_on": [],
+    "status": "not_started",
+    "verification": [
+      "./init.sh completes with no error",
+      "The app launches on a device or emulator and renders a Compose screen",
+      "No androidx.appcompat or com.google.android.material View dependency remains in app/build.gradle.kts"
+    ],
+    "evidence": [],
+    "notes": "The scaffold is a Views-based Android Studio template: no Kotlin plugin alias, no Compose, appcompat and Material Views only. This slice replaces that baseline. Keep it to build config plus one placeholder screen; theming proper belongs to design-tokens-theme."
+  },
+  {
+    "id": "module-skeleton",
+    "area": "bootstrap",
+    "title": "Create the multi-module skeleton with :core modules",
+    "user_visible_behavior": "The project builds with :app, :core:model, :core:ui and :core:data modules in place, and the app still launches.",
+    "depends_on": [
+      "gradle-kotlin-compose-baseline"
+    ],
+    "status": "not_started",
+    "verification": [
+      "./init.sh completes with no error",
+      "settings.gradle.kts includes every new module",
+      "The app still launches and renders its placeholder screen"
+    ],
+    "evidence": [],
+    "notes": "D-03. Feature modules are added by the slices that need them, not up front. No feature module may depend on another; shared contracts live in :core:* and binding happens in :app."
+  },
+  {
+    "id": "konsist-isolation-rules",
+    "area": "bootstrap",
+    "title": "Enforce feature module isolation with Konsist",
+    "user_visible_behavior": "A test fails when one feature module imports another, and passes on the current module layout.",
+    "depends_on": [
+      "module-skeleton"
+    ],
+    "status": "not_started",
+    "verification": [
+      "./gradlew check runs the Konsist test and it passes",
+      "A deliberate cross-feature import makes the test fail, then is reverted",
+      "./init.sh reports konsist as wired"
+    ],
+    "evidence": [],
+    "notes": "D-03. The failing case must be demonstrated, not assumed: a rule that cannot fail proves nothing. Konsist output is course evidence and later proves the assistant did not reach into feature modules."
+  },
+  {
+    "id": "detekt-ktlint-gate",
+    "area": "bootstrap",
+    "title": "Wire detekt and ktlint into the check task",
+    "user_visible_behavior": "./gradlew check fails on a formatting or static-analysis violation and passes on clean code.",
+    "depends_on": [
+      "module-skeleton"
+    ],
+    "status": "not_started",
+    "verification": [
+      "./gradlew check runs both tools and passes on the current tree",
+      "A deliberate violation fails the gate, then is reverted",
+      "./init.sh reports detekt and ktlint as wired"
+    ],
+    "evidence": [],
+    "notes": "Keep the gate fast; feature-flow runs init.sh on every validation."
+  },
+  {
+    "id": "molecule-presenter-harness",
+    "area": "bootstrap",
+    "title": "Set up the composable presenter pattern with a Molecule test",
+    "user_visible_behavior": "A sample presenter emits a UiModel and is covered by a unit test that runs on the JVM without an Android device.",
+    "depends_on": [
+      "module-skeleton"
+    ],
+    "status": "not_started",
+    "verification": [
+      "./gradlew check runs the presenter test on the JVM with no emulator",
+      "The test asserts at least one state transition, not just a first emission"
+    ],
+    "evidence": [],
+    "notes": "D-02, no ViewModels. Two known traps in the reference pattern, both documented in the bitácora section 3.5: hashCode derived from handle while equals compared key, breaking the contract, and the invoke operator used without being declared. Do not reintroduce either."
+  },
+  {
+    "id": "design-tokens-theme",
+    "area": "ui",
+    "title": "Implement the dark theme and design tokens",
+    "user_visible_behavior": "Every screen uses the project's dark palette and type scale; no light theme exists.",
+    "depends_on": [
+      "gradle-kotlin-compose-baseline"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A Compose preview renders the palette and type scale",
+      "Amber is exposed as a semantic accent, not applied as generic decoration",
+      "Contrast of amber-on-background and muted-text-on-surface is measured and recorded"
+    ],
+    "evidence": [],
+    "notes": "Tokens are in DESIGN.md. The hex values there are derived from the written direction, not measured from the original mockup: open question recorded in risks-and-open-questions.md. Dark only, no light variant (D-12 for copy language)."
+  },
+  {
+    "id": "domain-model-types",
+    "area": "domain",
+    "title": "Define the domain types in :core:model",
+    "user_visible_behavior": "Jam, JamSong, Slot and Song exist as Kotlin types with their states, and unit tests cover slot-open and lineup rules.",
+    "depends_on": [
+      "module-skeleton"
+    ],
+    "status": "not_started",
+    "verification": [
+      "./gradlew check runs the domain tests and they pass",
+      "A Slot with no musician reports as open and one with a musician does not",
+      "Jam status models DRAFT and PUBLISHED only"
+    ],
+    "evidence": [],
+    "notes": "docs/domain-model.md. Archived is not a stored status: a jam is historical when its date has passed. There is no Musician entity; a musician is a name on a Slot (D-05). The key lives on JamSong, not Song (D-08)."
+  },
+  {
+    "id": "sheet-schema-definition",
+    "area": "backend",
+    "title": "Define the Sheet schema and document it",
+    "user_visible_behavior": "The catalog, jams and assignments tabs exist in the Sheet with agreed columns, and the schema is written down in the repo.",
+    "depends_on": [
+      "domain-model-types"
+    ],
+    "status": "blocked",
+    "verification": [
+      "Every domain type maps to columns with no ambiguity about identifiers",
+      "A handful of real songs are loaded and read back correctly by hand",
+      "The schema is committed as documentation"
+    ],
+    "evidence": [],
+    "notes": "TOP BLOCKER, recorded in risks-and-open-questions.md. Blocked on a human decision, not on code. It gates every repository slice and, separately, gates the assistant: week 5 needs real repertoire loaded, and a twelve-song catalog cannot produce an interesting themed setlist. Load repertoire in parallel with development."
+  },
+  {
+    "id": "apps-script-read-endpoint",
+    "area": "backend",
+    "title": "Expose a read endpoint for the song catalog",
+    "user_visible_behavior": "A GET request to the Apps Script deployment returns the song catalog as JSON.",
+    "depends_on": [
+      "sheet-schema-definition"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The deployed URL returns catalog JSON matching the schema",
+      "A song with missing optional enrichment fields still serializes correctly"
+    ],
+    "evidence": [],
+    "notes": "D-04: Sheet to app, read-only. Measure and record response latency here; it informs the optimistic-update decision on the write side."
+  },
+  {
+    "id": "catalog-repository-cache",
+    "area": "data",
+    "title": "Read the catalog into a Room cache",
+    "user_visible_behavior": "The app fetches the catalog once, stores it locally, and serves songs from the cache when offline.",
+    "depends_on": [
+      "apps-script-read-endpoint",
+      "domain-model-types"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A unit test covers the repository mapping from JSON to domain types",
+      "With the network disabled the cached catalog is still returned",
+      "Cache staleness is exposed so the UI can indicate it"
+    ],
+    "evidence": [],
+    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error."
+  },
+  {
+    "id": "next-jam-read-only-list",
+    "area": "feature-next-jam",
+    "title": "Show the next jam setlist collapsed",
+    "user_visible_behavior": "A musician opens the app and sees the next jam's date, venue and its songs in collapsed rows showing position, title and key.",
+    "depends_on": [
+      "catalog-repository-cache",
+      "design-tokens-theme",
+      "molecule-presenter-harness"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A presenter test asserts the list state for a published jam",
+      "The key is visible in the collapsed row",
+      "The header shows time remaining in natural language"
+    ],
+    "evidence": [],
+    "notes": "The most important screen in the app, opened 90% of the time. The instrument strip is a separate slice because it is the component the screen depends on and deserves its own verification."
+  },
+  {
+    "id": "instrument-strip-component",
+    "area": "feature-next-jam",
+    "title": "Add the instrument strip to each song row",
+    "user_visible_behavior": "Each collapsed row shows one small icon per instrument in that song's lineup, distinguishing open slots from filled ones without expanding the row.",
+    "depends_on": [
+      "next-jam-read-only-list"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A Compose preview covers an all-open, an all-filled and a mixed lineup",
+      "Open and filled remain distinguishable with color and luminance removed",
+      "Each icon carries a content description"
+    ],
+    "evidence": [],
+    "notes": "D-07, the component that makes the collapsed list useful. Dimmed means open, lit means filled. Brightness alone fails in glare and for low-vision users, in the dark bar this app targets: pair it with shape or fill. Open design question in risks-and-open-questions.md. Icons at roughly 16dp must be sourced or drawn first."
+  },
+  {
+    "id": "song-row-expansion",
+    "area": "feature-next-jam",
+    "title": "Expand a song row in place",
+    "user_visible_behavior": "Tapping a row expands it to show the artist, then open slots first, then filled slots with musician names. Several rows can be expanded at once.",
+    "depends_on": [
+      "instrument-strip-component"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A presenter test asserts open slots are ordered before filled ones",
+      "Two rows can be expanded simultaneously",
+      "Expanding does not displace the rest of the list disorientingly"
+    ],
+    "evidence": [],
+    "notes": "Actionable content on top. bb-blues-jam-design-prompt.md section 1."
+  },
+  {
+    "id": "instrument-filter-chips",
+    "area": "feature-next-jam",
+    "title": "Filter the setlist by instrument with an open slot",
+    "user_visible_behavior": "Tapping an instrument chip shows only songs with an open slot for it, with a count of matching songs and a way to clear the filter.",
+    "depends_on": [
+      "instrument-strip-component"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A presenter test covers filtering for each of the six instruments",
+      "The no-results case is distinct from the empty case and names the active filter",
+      "Clearing the filter restores the full list"
+    ],
+    "evidence": [],
+    "notes": "D-06, D-07. Answers the musician's primary question. A song with no open slots is excluded while a filter is active but still listed otherwise."
+  },
+  {
+    "id": "list-states",
+    "area": "feature-next-jam",
+    "title": "Implement the loading, empty, error and offline states",
+    "user_visible_behavior": "Each non-happy path renders its own treatment: skeleton rows while loading, a concrete invitation when empty, a retry button on error, and cached data with a staleness indicator when offline.",
+    "depends_on": [
+      "next-jam-read-only-list"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A Compose preview covers all four states",
+      "Loading uses skeleton rows, not a centered spinner",
+      "The offline state shows data with a staleness indicator rather than an error"
+    ],
+    "evidence": [],
+    "notes": "DESIGN.md. Kept as one slice deliberately: the four states are branches of a single presenter surface and are verified by one preview file, so splitting them would create management overhead without adding verification. The unpublished-setlist case is a separate slice because it is a product state rather than a failure state, and must not look like the empty state."
+  },
+  {
+    "id": "unpublished-setlist-state",
+    "area": "feature-next-jam",
+    "title": "Hide a draft setlist from musicians",
+    "user_visible_behavior": "While a jam is in draft, a musician sees the date and venue plus a message that the list is being assembled, and no songs.",
+    "depends_on": [
+      "list-states"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A presenter test asserts no songs are exposed for a DRAFT jam",
+      "The message is visibly distinct from the empty state",
+      "The read endpoint does not serve draft songs to an unauthenticated client"
+    ],
+    "evidence": [],
+    "notes": "Hiding in the UI is not sufficient; the data should not reach an unauthenticated client at all. Recorded in docs/user-and-access-model.md."
+  },
+  {
+    "id": "song-detail-screen",
+    "area": "feature-song-detail",
+    "title": "Show the song detail screen",
+    "user_visible_behavior": "Opening a song shows its title, artist, the key displayed very large, its tags, tempo when present, and the full lineup grouped by instrument.",
+    "depends_on": [
+      "song-row-expansion"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A Compose preview renders a song with and without optional enrichment fields",
+      "The key is the largest element on the screen",
+      "A song with no artwork, tempo or tags still renders correctly"
+    ],
+    "evidence": [],
+    "notes": "Every enrichment field is optional and may be permanently absent; that is not an error state (D-09)."
+  },
+  {
+    "id": "songsterr-browser-link",
+    "area": "feature-song-detail",
+    "title": "Open the guitar tab in the browser",
+    "user_visible_behavior": "A song with a stored songsterrId shows a button that opens its tab in the browser; a song without one shows no button.",
+    "depends_on": [
+      "song-detail-screen"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The button opens the correct external URL",
+      "The button is absent when songsterrId is null"
+    ],
+    "evidence": [],
+    "notes": "D-10. No in-app rendering. Songsterr has no official API, so this must degrade silently."
+  },
+  {
+    "id": "past-jams-list",
+    "area": "feature-past-jams",
+    "title": "List past jams in reverse chronological order",
+    "user_visible_behavior": "The Anteriores tab shows past jams newest first, each with date, venue, song count and the first few titles.",
+    "depends_on": [
+      "catalog-repository-cache",
+      "design-tokens-theme"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A presenter test asserts reverse chronological ordering",
+      "The archive treatment is muted, with amber reserved for keys",
+      "The empty state renders when there is no history"
+    ],
+    "evidence": [],
+    "notes": "D-04: past jams are read-only, Sheet is their authority."
+  },
+  {
+    "id": "past-jam-detail",
+    "area": "feature-past-jams",
+    "title": "Show a past jam read-only",
+    "user_visible_behavior": "Opening a past jam shows its setlist with keys and who played, with no filter and no notion of open slots.",
+    "depends_on": [
+      "past-jams-list"
+    ],
+    "status": "not_started",
+    "verification": [
+      "No admin control and no filter appears, even when logged in as admin",
+      "Slots render as filled with no open-slot affordance"
+    ],
+    "evidence": [],
+    "notes": "Editing history is not supported. Recorded in docs/user-and-access-model.md."
+  },
+  {
+    "id": "info-screen",
+    "area": "feature-info",
+    "title": "Show the info screen",
+    "user_visible_behavior": "The Info tab explains what the jam is, where and when it happens, how to join, links to social media, and offers a discreet admin entry point.",
+    "depends_on": [
+      "design-tokens-theme"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Every link opens correctly",
+      "The admin entry point is present but discreet",
+      "Copy is in Rioplatense Spanish using vos"
+    ],
+    "evidence": [],
+    "notes": "D-12. This slice has no backend dependency and can run early if the Sheet stays blocked."
+  },
+  {
+    "id": "bottom-navigation",
+    "area": "app",
+    "title": "Wire the three tabs into bottom navigation",
+    "user_visible_behavior": "The user moves between Próxima jam, Anteriores and Info, and each tab keeps its scroll position.",
+    "depends_on": [
+      "next-jam-read-only-list",
+      "past-jams-list",
+      "info-screen"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Switching tabs preserves each tab's state",
+      "Binding happens in :app with no feature-to-feature dependency",
+      "Konsist still passes"
+    ],
+    "evidence": [],
+    "notes": "D-03: :app is where features are bound together."
+  },
+  {
+    "id": "admin-passphrase-login",
+    "area": "feature-admin",
+    "title": "Log in as admin with a passphrase",
+    "user_visible_behavior": "Entering the correct passphrase reveals admin controls; entering a wrong one shows an error and reveals nothing.",
+    "depends_on": [
+      "apps-script-read-endpoint",
+      "design-tokens-theme"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A correct passphrase sets the local admin flag and a wrong one does not",
+      "The flag survives an app restart",
+      "The error state renders as designed"
+    ],
+    "evidence": [],
+    "notes": "D-11. No Firebase Auth, no OAuth, no accounts. A visible logout belongs on the info screen. The local flag only draws controls; it authorizes nothing."
+  },
+  {
+    "id": "apps-script-write-auth",
+    "area": "backend",
+    "title": "Validate the passphrase on every write endpoint",
+    "user_visible_behavior": "A write request without a valid passphrase is rejected by Apps Script, regardless of what the client believes.",
+    "depends_on": [
+      "admin-passphrase-login"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A write with no passphrase is rejected",
+      "A write with a stale passphrase after rotation is rejected",
+      "A valid write succeeds"
+    ],
+    "evidence": [],
+    "notes": "The Apps Script URL is reachable directly, so this is the only real access control in the product. Rotating the passphrase in the Sheet is the revocation mechanism. A rejected write after rotation must read as access changed, not as a generic network error."
+  },
+  {
+    "id": "admin-add-song-to-setlist",
+    "area": "feature-admin",
+    "title": "Add a song from the catalog to the setlist",
+    "user_visible_behavior": "The admin picks a song from the catalog and it appears in the upcoming setlist, persisted to the Sheet.",
+    "depends_on": [
+      "apps-script-write-auth",
+      "next-jam-read-only-list"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The song appears locally and is present in the Sheet after a reload",
+      "The mutation is a repository function, not UI-only logic",
+      "A failed write surfaces visibly and does not leave a phantom row"
+    ],
+    "evidence": [],
+    "notes": "D-13: the first mutation, so it sets the pattern for every later one. Apps Script latency is expected; optimistic state with later confirmation, and a real rollback path."
+  },
+  {
+    "id": "admin-remove-song-from-setlist",
+    "area": "feature-admin",
+    "title": "Remove a song from the setlist",
+    "user_visible_behavior": "The admin removes a song from the upcoming setlist and the change persists to the Sheet.",
+    "depends_on": [
+      "admin-add-song-to-setlist"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The song disappears locally and is gone from the Sheet after a reload",
+      "Removing a song does not affect the catalog entry"
+    ],
+    "evidence": [],
+    "notes": "D-13."
+  },
+  {
+    "id": "admin-set-key",
+    "area": "feature-admin",
+    "title": "Set the key on a scheduled song",
+    "user_visible_behavior": "The admin sets the key for a song in the setlist, and musicians see it on the collapsed row.",
+    "depends_on": [
+      "admin-add-song-to-setlist"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The key persists to the Sheet",
+      "The catalog song's defaultKey is left untouched",
+      "The change is visible on a published jam immediately"
+    ],
+    "evidence": [],
+    "notes": "D-08, D-13. The key belongs to the JamSong, not to the Song: that distinction is the whole reason the two types are separate."
+  },
+  {
+    "id": "admin-adjust-lineup",
+    "area": "feature-admin",
+    "title": "Adjust a song's lineup",
+    "user_visible_behavior": "The admin changes how many slots of each instrument a song needs, and the instrument strip updates.",
+    "depends_on": [
+      "admin-add-song-to-setlist",
+      "instrument-strip-component"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A lineup change persists to the Sheet",
+      "A lineup with zero slots of an instrument is valid and renders correctly",
+      "Removing a slot that holds a musician is handled deliberately, not silently"
+    ],
+    "evidence": [],
+    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards."
+  },
+  {
+    "id": "admin-assign-musician",
+    "area": "feature-admin",
+    "title": "Assign a musician to an open slot",
+    "user_visible_behavior": "The admin taps an open slot, types a name with suggestions from musicians who played before, and the slot becomes filled.",
+    "depends_on": [
+      "admin-add-song-to-setlist",
+      "song-row-expansion"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The assignment persists to the Sheet",
+      "The instrument is fixed by the slot and is not selectable",
+      "Suggestions come from prior jams"
+    ],
+    "evidence": [],
+    "notes": "D-05: only the admin assigns. Where suggestions come from depends on the Sheet schema, recorded as an open question. Two musicians sharing a name are not disambiguated, by design."
+  },
+  {
+    "id": "admin-clear-slot",
+    "area": "feature-admin",
+    "title": "Clear a filled slot",
+    "user_visible_behavior": "The admin removes a musician from a slot and it returns to open.",
+    "depends_on": [
+      "admin-assign-musician"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The slot returns to open locally and in the Sheet",
+      "The instrument strip and any active filter update accordingly"
+    ],
+    "evidence": [],
+    "notes": "D-13. Completes the assign/clear pair; there is no reserved intermediate state."
+  },
+  {
+    "id": "admin-reorder-songs",
+    "area": "feature-admin",
+    "title": "Reorder songs in the setlist",
+    "user_visible_behavior": "The admin changes a song's position and the new order persists for everyone.",
+    "depends_on": [
+      "admin-add-song-to-setlist"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The new order persists to the Sheet",
+      "Positions stay contiguous with no gaps or duplicates",
+      "The reorder affordance meets the 48dp touch target minimum"
+    ],
+    "evidence": [],
+    "notes": "D-13. Drag-to-reorder versus explicit move actions is an open design question: dragging conflicts with 48dp targets on a dense one-handed list."
+  },
+  {
+    "id": "admin-publish-setlist",
+    "area": "feature-admin",
+    "title": "Publish the setlist",
+    "user_visible_behavior": "The admin publishes a draft jam, the badge changes from Borrador to Publicada, and musicians can now see the songs.",
+    "depends_on": [
+      "admin-add-song-to-setlist",
+      "unpublished-setlist-state"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The status persists to the Sheet and musicians see the setlist",
+      "A failed publish is unmissable and does not report success",
+      "The write failure is logged locally"
+    ],
+    "evidence": [],
+    "notes": "D-13, and the highest-stakes mutation in the product. A silently failed publish means the admin believes the list is live while musicians read something stale: the worst outcome this app can produce. Optimistic state is not acceptable here without explicit confirmation."
+  },
+  {
+    "id": "action-contract-registry",
+    "area": "app",
+    "title": "Register every mutation in one action contract",
+    "user_visible_behavior": "Every admin mutation is reachable through a single registry of repository functions, verified to be complete against the documented list.",
+    "depends_on": [
+      "admin-remove-song-from-setlist",
+      "admin-set-key",
+      "admin-adjust-lineup",
+      "admin-clear-slot",
+      "admin-reorder-songs",
+      "admin-publish-setlist"
+    ],
+    "status": "not_started",
+    "verification": [
+      "All eight mutations are registered: add song, remove song, set key, adjust lineup, assign musician, clear slot, reorder, publish",
+      "A test asserts no mutation exists only in the UI layer",
+      "Konsist confirms the registry lives in :app and no feature module depends on another"
+    ],
+    "evidence": [],
+    "notes": "D-13, the slice the whole phase 2 assistant rests on. Confirm the mutation list is complete before this runs; it is an open question in risks-and-open-questions.md. Capture the feature-module diff here: proving the assistant was added without touching feature modules is course evidence."
+  },
+  {
+    "id": "enrichment-background-fetch",
+    "area": "data",
+    "title": "Enrich songs from music APIs in the background",
+    "user_visible_behavior": "After a song is added, its artwork and canonical metadata appear once fetched, and nothing blocks if the fetch never succeeds.",
+    "depends_on": [
+      "catalog-repository-cache"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Enrichment runs on song add, never during list rendering",
+      "MusicBrainz requests stay within 1 req/s",
+      "With every API unreachable, the app remains fully usable"
+    ],
+    "evidence": [],
+    "notes": "D-09. MusicBrainz for identity and artistArea, Deezer for artwork and preview, Last.fm for similar artists. artistArea is what lets blues nacional argentino be filtered by data rather than by model memory, which matters for D-14. Fully removable if the timeline tightens."
+  }
+]
