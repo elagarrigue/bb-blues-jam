@@ -5,8 +5,8 @@ Registro del proceso y de las decisiones, para la presentación final de AI Expe
 Este documento está en español porque su destinatario es la presentación del curso. El código,
 los commits y la documentación técnica del repositorio están en inglés.
 
-Última actualización: 19 de septiembre de 2026 · Fase: harness en armado, previo a la primera línea
-de código de producto
+Última actualización: 19 de septiembre de 2026 · Fase: descubrimiento consolidado, previo a la
+primera línea de código de producto
 
 ---
 
@@ -364,8 +364,8 @@ información controlada, y elimina la fuente principal de error.
 | Brief de diseño y prompts para Stitch | hecho |
 | Repositorio git inicializado y publicado | hecho |
 | Skills del curso instaladas en `.claude/skills/` | hecho |
-| Documentos de descubrimiento (`build-brief`) | pendiente, próximo paso |
-| `feature_list.json` (`harness-starter`) | pendiente |
+| Documentos de descubrimiento (`build-brief`) | hecho — siete documentos, ver 6.2 |
+| `feature_list.json` (`harness-starter`) | pendiente, próximo paso |
 | Subagentes de Claude Code | pendiente |
 | Skills reutilizables propias | pendiente, módulo 4 |
 | Evidencia de verificación | pendiente, en curso |
@@ -394,6 +394,73 @@ subagentes.
 El `AGENTS.md` funciona como índice y no como volcado, para que el agente lea solo el documento que
 su tarea requiere. Cada regla incluye su motivo, porque una regla sin justificación se erosiona al
 tercer refactor.
+
+### 6.2 Sesión del 19 de septiembre — descubrimiento consolidado con `build-brief`
+
+Se corrió la skill `build-brief` sobre los dos documentos de insumo. La premisa fue explícita: el
+descubrimiento estaba cerrado y la tarea era consolidar, no reabrir. La skill está escrita para
+entrevistar al usuario de a una pregunta por vez; acá esa entrevista ya había ocurrido —
+parcialmente con NotebookLM, parcialmente en la conversación de diseño— y estaba registrada en la
+bitácora y en el brief de diseño. El valor de la corrida no estuvo en preguntar sino en volcar ese
+material a documentos que un agente implementador pueda leer sin contexto previo.
+
+**Qué se generó.** Siete documentos, todos en inglés (D-12):
+
+| Documento | Qué ambigüedad evita |
+|---|---|
+| `CONTEXT.md` | Deriva de vocabulario — 20 términos definidos y 7 descartados |
+| `docs/build-brief.md` | Construir el producto equivocado |
+| `docs/domain-model.md` | Entidades y estados inconsistentes |
+| `docs/user-and-access-model.md` | Ambigüedad de permisos |
+| `docs/technical-discovery.md` | Restricciones de plataforma ocultas |
+| `DESIGN.md` | Que el agente improvise la UI |
+| `docs/risks-and-open-questions.md` | Hacer pasar incógnitas por decisiones |
+
+Se eligió el conjunto compacto más los tres documentos opcionales. El criterio de la skill para
+separarlos es que el tema sea un riesgo de producto y no un detalle de implementación: los permisos
+lo son porque D-05 y D-11 sostienen todo el modelo de escritura; la tecnología lo es porque D-04 y
+el límite de 1 req/s de MusicBrainz cambian la arquitectura; el diseño lo es porque sin tokens
+escritos el implementador inventa.
+
+Se descartó generar imágenes de concepto con `imagegen`: las pantallas salen de Stitch y un set
+paralelo de conceptos competiría con la fuente real.
+
+**Qué apareció al escribir que no estaba explícito en los insumos.** Ninguna decisión nueva, pero sí
+cuatro precisiones que estaban implícitas y que conviene tener escritas antes de codificar:
+
+- **`Song` y `JamSong` son entidades distintas.** Confundirlas pierde justo lo que D-08 establece:
+  la tonalidad es de la noche, no del tema. El catálogo tiene `defaultKey`; la noche tiene `key`.
+- **No existe entidad `Musician`.** Un músico es un nombre en un `Slot`. Modelarlo como entidad
+  implicaría una identidad que D-05 elimina a propósito.
+- **"Archivada" no es un estado guardado.** Solo se persisten `DRAFT` y `PUBLISHED`; una jam es
+  histórica cuando su fecha pasó. Guardar un tercer estado obligaría a alguien a mantenerlo.
+- **La lista completa de mutaciones del contrato de acciones** (D-13): agregar tema, quitar tema,
+  fijar tonalidad, ajustar formación, asignar músico, liberar cupo, reordenar y publicar. D-13 exige
+  que todas existan desde la fase 1, así que la lista tiene que estar cerrada *antes* de rebanar las
+  features, no descubrirse feature por feature. Quedó como bloqueante.
+
+**Tres puntos levantados para confirmación, no resueltos por cuenta propia:**
+
+1. Los valores hexadecimales de `DESIGN.md` son una propuesta derivada de la dirección escrita
+   ("índigo oscuro, ámbar neón"), no medidos del mockup original. Si el mockup aparece, hay que
+   reconciliar.
+2. La tira de instrumentos distingue cupo libre de cupo cubierto **solo por brillo**, que es
+   exactamente lo que falla con poca visión o con reflejo — en un bar oscuro, el contexto previsto.
+   Se agregó un requisito de accesibilidad: que la distinción también use forma o relleno.
+3. Una publicación que falla en silencio es el peor resultado posible del producto: el admin cree
+   que la lista está publicada y los músicos leen otra cosa. Quedó registrado como riesgo con
+   mitigación de error no ignorable.
+
+**Lo que confirmó la corrida sobre el método.** Una skill de descubrimiento sobre un descubrimiento
+ya hecho no es redundante, pero tampoco hace lo que anuncia: no descubre, traduce. El insumo estaba
+en dos documentos escritos para humanos —una bitácora narrativa y un brief de diseño— y la salida
+son siete documentos escritos para un agente sin contexto. El trabajo real fue decidir qué de lo
+narrado era decisión estable y qué era todavía suposición, que es justo lo que separa
+`build-brief.md` de `risks-and-open-questions.md`.
+
+El bloqueante que quedó arriba de todo es el **esquema del Sheet**. Traba el código de repositorio y,
+por separado, traba al asistente: la semana 5 necesita repertorio real cargado, y con doce temas no
+se arma una lista temática interesante. Conviene empezarlo en paralelo.
 
 ## 7. Mapa a los módulos del curso
 
@@ -429,13 +496,16 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 | El repertorio del Sheet puede quedar chico para que el asistente proponga algo interesante | Cargar el catálogo durante las semanas 1 y 2 |
 | Latencia de Apps Script en escrituras | Estado optimista en el presenter y confirmación posterior |
 | El asistente propone temas fuera del catálogo | Validar toda sugerencia contra el catálogo antes de ejecutar la acción |
+| Una publicación falla en silencio y los músicos leen una lista desactualizada | Error no ignorable al publicar; registrar localmente los fallos de escritura |
+| La tira de instrumentos distingue libre de cubierto solo por brillo | Sumar forma o relleno a la distinción, más etiqueta accesible por ícono |
 
 ## 10. Próximos pasos
 
-1. Correr `build-brief` sobre los dos documentos de descubrimiento, sin reabrir lo ya decidido
+1. ~~Correr `build-brief` sobre los dos documentos de descubrimiento~~ — hecho, ver 6.2
 2. Correr `harness-starter` para generar `AGENTS.md`, `init.sh`, `PROGRESS.md` y `feature_list.json`
 3. Escribir los tres subagentes de Claude Code: `planner`, `implementer`, `validator`
 4. Generar las pantallas en Stitch a partir de los prompts de la sección 5
-5. Definir el esquema del Sheet: catálogo de temas, jams, asignaciones
-6. Cargar el repertorio real con etiquetas y tonalidades
-7. Primera rebanada de `feature_list.json`: esqueleto de build y módulos
+5. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante
+6. Cargar el repertorio real con etiquetas y tonalidades, en paralelo con el desarrollo
+7. Cerrar la lista de mutaciones del contrato de acciones antes de rebanar features (D-13)
+8. Primera rebanada de `feature_list.json`: esqueleto de build y módulos
