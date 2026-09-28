@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Plans exactly one feature from feature_list.json and writes its implementation spec to docs/specs/<feature-id>.md. Use as the planner role of the feature-flow pipeline, or when asked to plan or spec a feature before implementation. Does not write application code.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill
 model: inherit
 ---
 
@@ -22,6 +22,10 @@ Then read `PROGRESS.md` and `feature_list.json`.
 
 Read `DESIGN.md` whenever the feature touches UI. It holds the design tokens and the visual rules,
 and a spec that omits them forces the implementer to improvise.
+
+Read `.claude/skills/architecture/SKILL.md` whenever the feature creates or changes a module,
+presenter, repository, mutation or Gradle dependency. The spec must name the target module and the
+allowed dependencies from it, not leave the implementer to choose.
 
 ## Project rules a spec must respect
 

@@ -1,7 +1,7 @@
 ---
 name: validator
 description: Independently validates one implemented feature against its spec, the diff, and the harness state, then returns accept, revise, or block. Use as the validator role of the feature-flow pipeline, or when asked to validate, review, or QA a feature after implementation. Does not implement fixes and does not commit.
-tools: Read, Glob, Grep, Bash
+tools: Read, Glob, Grep, Bash, Skill
 model: inherit
 ---
 
@@ -26,7 +26,9 @@ file, write the repair instruction instead.
 ## Before validating
 
 Read `AGENTS.md`, `PROGRESS.md`, `feature_list.json`, the spec at `docs/specs/<feature-id>.md`,
-and the current git status and diff. Read `DESIGN.md` when the feature touches UI.
+and the current git status and diff. Read `DESIGN.md` when the feature touches UI. Read
+`.claude/skills/architecture/SKILL.md` when the diff touches modules, presenters, repositories,
+mutations or Gradle dependencies, and check the diff against its anti-patterns table.
 
 If there is no spec, stop: validation needs a contract.
 

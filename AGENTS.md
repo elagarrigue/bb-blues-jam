@@ -1,11 +1,48 @@
 # Project Agent Instructions
 
-This repository contains BB Blues Jam, a native Android app for organizing a monthly blues jam:
-the admin builds and publishes a setlist, and musicians read it to see what is played, in which
-key, and where there is an open slot for their instrument.
+BB Blues Jam is a native Android app for organizing a monthly blues jam: the admin builds and
+publishes a setlist, and musicians read it to see what is played, in which key, and where there is
+an open slot for their instrument.
 
 Code, commits, and technical documentation are in English. User-facing interface copy is in
 Rioplatense Spanish using *vos*, never *tú* (D-12).
+
+## Non-Negotiable Rules
+
+These come from decisions already made. Each has its reasoning in the bitácora; do not reverse one
+without saying so and waiting for confirmation.
+
+- **No ViewModels.** Presentation uses composable presenters; state lives in the Compose runtime and
+  presenters are tested with Molecule without Android (D-02).
+- **No dependencies between feature modules.** Shared contracts go in `:core:*`, binding happens in
+  `:app`, and Konsist enforces it (D-03).
+- **No mutation may exist only in the UI.** Every mutation is a repository function or a deeplink,
+  because the phase 2 assistant must perform anything the admin can do by hand (D-13).
+- **One authority per entity.** The Sheet owns the catalog and past jams; the app owns the upcoming
+  setlist and its published state. No bidirectional sync (D-04).
+- **The admin sets the key.** Never derive it from an external API (D-08).
+- **External music APIs are optional enrichment**, fetched in the background and cached. Never
+  during list rendering — MusicBrainz allows 1 req/s (D-09).
+- **Every write is validated server-side in Apps Script.** The local admin flag only controls which
+  controls are drawn; it does not authorize anything.
+- **Out of scope for the MVP:** musician self-signup, in-app tablature, the AI assistant, profiles,
+  chat, notifications, onboarding, and a light theme.
+
+## Commands
+
+| Purpose | Command |
+|---|---|
+| Startup and verification gate | `./init.sh` |
+| Gate as feature-flow runs it (never starts the app) | `CI=true ./init.sh` |
+| Build | `./gradlew build` |
+| Unit tests, lint, and static checks | `./gradlew check` |
+| Install on a device or emulator | `./gradlew :app:installDebug` |
+
+`init.sh` prints `NOT WIRED YET` for Konsist, detekt and ktlint until their slices land. Never report
+a tool as passing when it is not wired.
+
+Before creating or changing a module, presenter, repository, mutation or Gradle dependency, load
+the `architecture` skill. It holds the module layout, where each piece goes, and the anti-patterns.
 
 ## Read First
 
@@ -43,27 +80,6 @@ Before writing code:
 - Do not silently change verification rules during implementation.
 - Update durable repo artifacts instead of relying on chat summaries.
 
-## Project Rules
-
-These come from decisions already made. Each has its reasoning in the bitácora; do not reverse one
-without saying so and waiting for confirmation.
-
-- **No ViewModels.** Presentation uses composable presenters; state lives in the Compose runtime and
-  presenters are tested with Molecule without Android (D-02).
-- **No dependencies between feature modules.** Shared contracts go in `:core:*`, binding happens in
-  `:app`, and Konsist enforces it (D-03).
-- **No mutation may exist only in the UI.** Every mutation is a repository function or a deeplink,
-  because the phase 2 assistant must perform anything the admin can do by hand (D-13).
-- **One authority per entity.** The Sheet owns the catalog and past jams; the app owns the upcoming
-  setlist and its published state. No bidirectional sync (D-04).
-- **The admin sets the key.** Never derive it from an external API (D-08).
-- **External music APIs are optional enrichment**, fetched in the background and cached. Never
-  during list rendering — MusicBrainz allows 1 req/s (D-09).
-- **Every write is validated server-side in Apps Script.** The local admin flag only controls which
-  controls are drawn; it does not authorize anything.
-- **Out of scope for the MVP:** musician self-signup, in-app tablature, the AI assistant, profiles,
-  chat, notifications, onboarding, and a light theme.
-
 ## Feature Flow
 
 Three subagents in `.claude/agents/` wrap the course skills. The main agent orchestrates them and
@@ -98,9 +114,11 @@ A feature is done only when all are true:
 
 ## End Of Session
 
-Before ending a session:
+1. Update `PROGRESS.md` and `feature_list.json`.
+2. Record unresolved risks or blockers.
+3. Leave the repo clean enough for the next session to run `./init.sh` immediately.
 
-1. Update `PROGRESS.md`.
-2. Update `feature_list.json`.
-3. Record unresolved risks or blockers.
-4. Leave the repo clean enough for the next session to run `./init.sh` immediately.
+## Reminder
+
+No ViewModels. No feature module imports another. No mutation only in the UI. `passing` is not
+`accepted`. When a change would contradict D-01 … D-14, stop and ask.

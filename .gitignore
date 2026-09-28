@@ -20,3 +20,6 @@ local.properties
 # Stitch export: keep the unpacked source, not the archive
 docs/design/export/*.zip
 docs/design/**/node_modules/
+
+# Course material (not ours to redistribute)
+/docs/clases/

@@ -9,7 +9,8 @@
 - Current next ready feature: `gradle-kotlin-compose-baseline`
 - Current blocker: `sheet-schema-definition` is blocked on a human decision. It does not block the
   next eight slices.
-- Last verified at: 19 September 2026 — `./init.sh` ran green against the scaffold, exit 0.
+- Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green against the scaffold, exit 0;
+  Konsist, detekt and ktlint still report `NOT WIRED YET`.
 
 ### What exists
 
@@ -67,6 +68,47 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: the pipeline has not been exercised end to end yet. The first
   real test is running feature-flow on `gradle-kotlin-compose-baseline`.
 - Next best step: run the flow on `gradle-kotlin-compose-baseline`, or settle the Sheet schema.
+
+### Session 004 — 19 September 2026
+
+- Goal: generate the screens in Stitch and reconcile `DESIGN.md` against the export.
+- Completed: export unpacked under `docs/design/`; palette and typography in `DESIGN.md` replaced
+  with measured values. Four tokens remain derived (`textMuted`, `slotFilled`, `archive`, `error`)
+  and are marked as such.
+- Verification run: token values counted against the HTML of all twelve exported screens; the
+  export's own prose palette appears zero times in its code, so the front-matter values were used.
+- Evidence captured: commits `2d23970`, `dfa4d6e`, `847c8d2`; bitácora section 6.5 lists the
+  product facts Stitch invented and that were rejected.
+- Known risk or unresolved issue: none new.
+- Next best step: run the flow on `gradle-kotlin-compose-baseline`.
+
+### Session 005 — 28 September 2026
+
+- Goal: check the harness against the week 1 and week 2 course material and close the gaps.
+- Completed:
+  - `AGENTS.md` reordered in a U layout: role, non-negotiable rules and literal commands at the
+    top; reference in the middle; Definition of Done and a reminder of the critical rules at the
+    end. 106 → 124 lines, still under the ~150 ceiling.
+  - New project skill `.claude/skills/architecture/`: module layout, where each piece goes,
+    allowed dependencies, presenter pattern, feature template, anti-patterns. Referenced from
+    `AGENTS.md` and from the three subagents.
+  - Course PDFs kept out of git: `/docs/clases/` added to `.gitignore`.
+  - `START-HERE.md` and the bitácora brought up to date.
+- Verification run: `CI=true ./init.sh`, exit 0. The architecture skill is listed by Claude Code
+  after creation.
+- Evidence captured: this entry; bitácora section 6.6.
+- Known risk or unresolved issue:
+  - **The subagents could not invoke their skill.** None of the three listed `Skill` in its
+    `tools:` frontmatter, yet each is told to invoke `feature-spec`, `feature-implementer` or
+    `feature-validator`. Fixed by adding `Skill` to all three; still to be confirmed on the first
+    planner run.
+  - The architecture skill leaves three points open on purpose: the dependency injection
+    framework, the navigation and deeplink scheme, and whether admin UI is its own module. Each is
+    to be decided by the slice that first needs it and recorded in the skill.
+  - The reference presenter sample does not exist in the repo; the skill describes the pattern
+    until `molecule-presenter-harness` lands a canonical sample.
+- Next best step: run the planner on `gradle-kotlin-compose-baseline` and review the spec before
+  implementing.
 
 ## Notes For The Next Session
 

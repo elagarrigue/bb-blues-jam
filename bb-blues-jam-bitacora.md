@@ -5,8 +5,8 @@ Registro del proceso y de las decisiones, para la presentación final de AI Expe
 Este documento está en español porque su destinatario es la presentación del curso. El código,
 los commits y la documentación técnica del repositorio están en inglés.
 
-Última actualización: 19 de septiembre de 2026 · Fase: descubrimiento consolidado, previo a la
-primera línea de código de producto
+Última actualización: 28 de septiembre de 2026 · Fase: harness contrastado con el curso, previo a
+la primera línea de código de producto
 
 ---
 
@@ -367,7 +367,7 @@ información controlada, y elimina la fuente principal de error.
 | Documentos de descubrimiento (`build-brief`) | hecho — siete documentos, ver 6.2 |
 | `feature_list.json` (`harness-starter`) | hecho — 34 rebanadas, ver 6.3 |
 | Subagentes de Claude Code | hecho — tres en `.claude/agents/`, ver 6.4 |
-| Skills reutilizables propias | pendiente, módulo 4 |
+| Skills reutilizables propias | primera hecha — `architecture`, ver 6.6; más en el módulo 4 |
 | Evidencia de verificación | pendiente, en curso |
 
 ### 6.1 Sesión del 19 de septiembre — puesta en marcha del repositorio
@@ -613,12 +613,62 @@ es tener a qué contrastar: sin las 14 decisiones escritas, "El Motivo Bar" y la
 cupos habrían entrado al proyecto sin que nadie los notara, y el error de la formación habría
 aparecido recién al implementar la tira de instrumentos.
 
+### 6.6 Sesión del 28 de septiembre — el harness contra el material del curso
+
+Terminada la semana 2, se contrastó el repo con las slides de las dos primeras clases. Se buscaba
+lo que el curso pide explícitamente y el proyecto no hacía, no volver a validar lo ya decidido.
+
+**Lo que ya cumplía.** `AGENTS.md` en 106 líneas, bajo el techo práctico de ~150 que da la clase y
+lejos del límite duro de 32 KiB. Reglas verificables en lugar de adjetivos ("no ViewModels", no
+"buena arquitectura"). Especificaciones largas en `docs/` con un enlace, vocabulario de dominio y
+Definition of Done. El `CLAUDE.md` que propone el ejercicio no hizo falta: Claude Code lee
+`AGENTS.md` cuando no hay `CLAUDE.md`, y en Windows un symlink trae más fricción que beneficio.
+
+**Tres huecos, ninguno grave:**
+
+- **Posición.** La clase insiste en el *layout* en U: los modelos atienden mejor al principio y al
+  final, y el centro es zona de baja atención (*lost in the middle*). Las reglas innegociables del
+  proyecto estaban justo en el centro, en la línea 46, y faltaban los comandos literales. Se
+  reordenó: arriba rol, reglas y comandos; en el medio, referencia; al final, DoD y un recordatorio
+  de lo crítico. La clase lo llama "repetición estratégica": dos líneas que aumentan la fiabilidad.
+- **La skill de arquitectura.** Es un ejercicio explícito del módulo 6 y estaba planeada para la
+  semana 4. Se adelantó porque este proyecto la necesita más que la tienda de ejemplo: sin ella, el
+  `implementer` iba a improvisar la estructura del primer módulo en `module-skeleton`.
+- **La primera `feature-spec`**, que es el cierre de la semana 2. Queda como siguiente paso.
+
+**Qué apareció al escribir la skill.** Lo mismo que en 6.2: escribir obliga a notar lo que no está
+decidido. Tres cosas quedaron marcadas como abiertas en lugar de inventadas:
+
+- **El framework de inyección de dependencias** no figura en ninguna de las 14 decisiones.
+- **El ejemplo de referencia del *presenter* no está en el repo.** La documentación dice que se
+  corrigieron dos errores, pero el código corregido no existe. La skill describe el patrón hasta
+  que `molecule-presenter-harness` deje un ejemplo canónico.
+- **Un área del grafo no es un módulo.** `feature_list.json` separa `feature-admin` de
+  `feature-next-jam`, pero los controles del admin se dibujan sobre la misma pantalla que ve el
+  músico ("una sola app, no dos"), y un módulo de *feature* no puede importar a otro (D-03). Si
+  cada área fuera un módulo, las dos decisiones chocarían. La skill fija un valor por defecto
+  —controles de admin dentro de `:feature:next-jam`, mutaciones en `:core:data`— y deja la
+  decisión final a la primera rebanada de admin.
+
+**Un hueco que el pipeline iba a destapar recién al correr.** Ninguno de los tres subagentes
+declara la herramienta `Skill` en su *frontmatter*, pero los tres tienen la instrucción de invocar su
+skill. El error no se veía porque el pipeline todavía no se ejecutó ni una vez. Quedó registrado
+como riesgo en `PROGRESS.md`, a confirmar en la primera corrida del `planner`.
+
+**Material del curso fuera del repo.** Las slides quedaron en `docs/clases/` y en `.gitignore`: el
+repo es público y el material no es nuestro para redistribuir.
+
+**Lo que confirmó sobre el método.** Un `AGENTS.md` correcto en contenido puede estar mal en
+forma. Cada regla se cumplía, pero estaba en el lugar donde el modelo la lee con menos atención.
+Nada cambió de fondo y el archivo es más confiable: la clase lo resume en que un `AGENTS.md` no es
+documentación sino ingeniería de contexto, y dónde está algo pesa tanto como qué dice.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
 |---|---|---|
 | 1 | Aprender a aprender con IA | Exploración de dominios, investigación de diez APIs con NotebookLM, definición del problema |
-| 2 | Prompt y context engineering | `AGENTS.md`, documentos de contexto, prompts de diseño, especificaciones |
+| 2 | Prompt y context engineering | `AGENTS.md` en U, documentos de contexto, prompts de diseño, skill `architecture`, especificaciones |
 | 3 | IDEs agénticos | Implementación de la app base con agentes en el editor |
 | 4 | CLI y MCP | Skills propias; posible MCP para Google Sheets |
 | 5 | APIs de IA | El asistente: function calling sobre el contrato de acciones, pool de candidatos del Sheet |
@@ -655,8 +705,11 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 1. ~~Correr `build-brief` sobre los dos documentos de descubrimiento~~ — hecho, ver 6.2
 2. ~~Correr `harness-starter`~~ — hecho, ver 6.3
 3. ~~Escribir los tres subagentes de Claude Code~~ — hecho, ver 6.4
-4. ~~Generar las pantallas en Stitch~~ — hecho, ver 6.5; falta descomprimir el export en `docs/design/`
-5. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante
-6. Cargar el repertorio real con etiquetas y tonalidades, en paralelo con el desarrollo
-7. Cerrar la lista de mutaciones del contrato de acciones antes de rebanar features (D-13)
-8. Primera rebanada de `feature_list.json`: esqueleto de build y módulos
+4. ~~Generar las pantallas en Stitch~~ — hecho, ver 6.5; export descomprimido en `docs/design/`
+5. ~~Contrastar el harness con las clases 1 y 2~~ — hecho, ver 6.6
+6. **Primera `feature-spec`** sobre `gradle-kotlin-compose-baseline`, confirmando que los
+   subagentes cargan su skill
+7. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante
+8. Cargar el repertorio real con etiquetas y tonalidades, en paralelo con el desarrollo
+9. Cerrar la lista de mutaciones del contrato de acciones antes de `action-contract-registry` (D-13)
+10. Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio

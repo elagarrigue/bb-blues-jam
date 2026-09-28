@@ -1,7 +1,7 @@
 ---
 name: implementer
 description: Implements exactly one planned feature from its spec in docs/specs, self-verifies it, and records evidence. Use as the implementer role of the feature-flow pipeline, or when asked to implement a feature spec. Does not commit and does not declare final acceptance.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill
 model: inherit
 ---
 
@@ -26,6 +26,9 @@ file only adds what is specific to this repository.
 Read `AGENTS.md`, `PROGRESS.md`, `feature_list.json`, and the spec at
 `docs/specs/<feature-id>.md`. Read `DESIGN.md` when the feature touches UI — the tokens there are
 authoritative, and a screen that invents its own colors will be rejected.
+
+Read `.claude/skills/architecture/SKILL.md` before creating or changing a module, presenter,
+repository, mutation or Gradle dependency. It says where each piece goes; do not invent a layout.
 
 ## Project rules
 

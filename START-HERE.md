@@ -3,11 +3,12 @@
 Documento de arranque para continuar el proyecto en Claude Code.
 Empezá cada sesión con: "Leé START-HERE.md".
 
-**Sesión nueva, siguiente paso:** correr `build-brief` (sección 6.2). El prompt está ahí, listo
-para pegar.
+**Sesión nueva, siguiente paso:** correr `feature-spec` sobre `gradle-kotlin-compose-baseline`
+(sección 6.6). El estado verificado al día vive en `PROGRESS.md`, no acá.
 
-Generado el 19 de septiembre de 2026. Actualizado el 19 de septiembre de 2026.
-Estado: repo publicado y skills instaladas. Sin una línea de código de producto escrita.
+Generado el 19 de septiembre de 2026. Actualizado el 28 de septiembre de 2026.
+Estado: semana 2 cerrada salvo la primera spec. Descubrimiento, harness, subagentes, pantallas y
+skill de arquitectura hechos. Sin una línea de código de producto escrita.
 
 ---
 
@@ -66,13 +67,19 @@ actualizada a medida que avanzás; no es documentación muerta.
 - Prompts de Stitch listos para generar las pantallas
 - Repo git inicializado y publicado en `github.com/elagarrigue/bb-blues-jam` (`origin` por SSH)
 - Las seis skills del curso instaladas y versionadas en `.claude/skills/`
+- `build-brief`: siete documentos de descubrimiento en inglés
+- `harness-starter`: `AGENTS.md`, `init.sh`, `PROGRESS.md` y `feature_list.json` (34 rebanadas)
+- Tres subagentes en `.claude/agents/`: `planner`, `implementer`, `validator`
+- Pantallas generadas en Stitch, export en `docs/design/`, tokens de `DESIGN.md` medidos
+- `AGENTS.md` reordenado en U según la clase de la semana 2
+- Skill propia `architecture` en `.claude/skills/architecture/`
 
 ### Pendiente inmediato
 
-- Correr `build-brief` para generar los docs de descubrimiento
-- Correr `harness-starter` para generar `feature_list.json`
-- Escribir los tres subagentes para Claude Code
-- Generar las pantallas en Stitch
+- Correr `feature-spec` sobre `gradle-kotlin-compose-baseline` (cierra la semana 2)
+- Verificar que los subagentes puedan invocar su skill (ver `PROGRESS.md`, sesión 005)
+- Definir el esquema del Sheet y empezar a cargar el repertorio real, en paralelo
+- Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio
 
 ---
 
@@ -149,7 +156,10 @@ inertes, pero son la referencia para escribir los subagentes de 6.4.
 > recién instaladas no aparecen en la sesión que las copió. Salí con `/quit` y volvé a entrar desde
 > esta carpeta; recién ahí `build-brief` va a estar disponible.
 
-### 6.2 Correr build-brief
+> Las secciones 6.2 a 6.5 están hechas y quedan como registro de cómo se corrió cada paso. El
+> detalle de cada sesión está en la bitácora, sección 6.
+
+### 6.2 Correr build-brief — HECHO
 
 ```
 Usá la skill build-brief. Leé primero bb-blues-jam-bitacora.md y
@@ -171,7 +181,7 @@ Produce: `CONTEXT.md`, `docs/build-brief.md`, `docs/domain-model.md`,
 
 La skill va a preguntar el idioma de los documentos. Ver sección 7.
 
-### 6.3 Correr harness-starter
+### 6.3 Correr harness-starter — HECHO
 
 Produce `AGENTS.md`, `init.sh`, `PROGRESS.md` y `feature_list.json`.
 
@@ -179,7 +189,7 @@ Produce `AGENTS.md`, `init.sh`, `PROGRESS.md` y `feature_list.json`.
 fases: genera rebanadas verticales del tamaño de una sesión, y la spec de cada una se escribe justo
 antes de implementarla.
 
-### 6.4 Escribir los tres subagentes
+### 6.4 Escribir los tres subagentes — HECHO
 
 `feature-flow` necesita tres subagentes que envuelvan las skills correspondientes:
 
@@ -192,10 +202,20 @@ antes de implementarla.
 Van en `.claude/agents/`. El repo del curso trae `agents/openai.yaml` en cada skill y un
 `.opencode/agents/validator.md` como referencia, pero nada para Claude Code.
 
-### 6.5 Generar las pantallas en Stitch
+### 6.5 Generar las pantallas en Stitch — HECHO
 
 Usá los prompts de la sección 5 de `bb-blues-jam-design-prompt.md`. Guardá los resultados y
 referencialos desde `DESIGN.md`.
+
+### 6.6 Primera spec con feature-spec — SIGUIENTE
+
+```
+Usá el subagente planner sobre gradle-kotlin-compose-baseline. No implementes nada:
+el resultado es docs/specs/gradle-kotlin-compose-baseline.md.
+```
+
+Es el último ejercicio de la semana 2 y la primera corrida real del pipeline. Revisá la spec
+(human in the loop) antes de pasarla al `implementer`.
 
 ---
 
@@ -258,7 +278,7 @@ Edición del 14 de septiembre al 23 de octubre de 2026.
 | Semana | Módulo | Aplicación |
 |---|---|---|
 | 1 | Aprender a aprender con IA | Hecho: exploración de dominios, investigación de APIs, definición del problema |
-| 2 | Prompt y context engineering | `build-brief`, `harness-starter`, subagentes, `DESIGN.md` |
+| 2 | Prompt y context engineering | Hecho: `harness-starter`, subagentes, `DESIGN.md`, `AGENTS.md` en U, skill `architecture`. Falta la primera `feature-spec` |
 | 3 | IDEs agénticos | Ciclo `feature-flow` sobre la app base |
 | 4 | CLI y MCP | Skills propias; posible MCP para Google Sheets |
 | 5 | APIs de IA | El asistente: function calling sobre el contrato de acciones |
