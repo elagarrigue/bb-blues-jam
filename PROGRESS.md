@@ -159,6 +159,30 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     and are the admin's to fill; the week 5 assistant depends on them.
 - Next best step: run the planner on `gradle-kotlin-compose-baseline`; import the seed in parallel.
 
+### Session 008 — 28 September 2026
+
+- Goal: first real run of the pipeline — plan `gradle-kotlin-compose-baseline`.
+- Completed:
+  - The planner wrote `docs/specs/gradle-kotlin-compose-baseline.md` (Compose in `:app` only,
+    Kotlin 2.2.10 matching AGP 9.4.1's built-in Kotlin, Compose BOM 2025.09.00, activity-compose
+    1.11.0, a launcher `MainActivity`, and a `#111318` placeholder screen).
+  - The user reports the seed CSVs are imported into the real Sheet. Not verified from this session:
+    the Sheet is private to it.
+- Verification run: orchestrator review of the spec against the repo — no Kotlin plugin applied, no
+  activity in the manifest, and hex values matching `DESIGN.md`, all confirmed. `adb devices` lists
+  no device; three AVDs exist (`Pixel_2_API_29`, `Pixel_2_API_30b`, `Pixel_6a_API_34`).
+- Evidence captured: the planner loaded `feature-spec` through the Skill tool, which confirms the
+  session 005 fix of adding `Skill` to the subagents' tools.
+- Known risk or unresolved issue:
+  - `design-tokens-theme` depended only on this slice, but the architecture skill puts tokens in
+    `:core:ui`, which `module-skeleton` creates. Fixed with user approval: `module-skeleton` added
+    to its `depends_on` (no cycle: `module-skeleton` depends only on this slice).
+  - Manual launch check: the user connected a Pixel 5 (`adb devices` shows it); the implementer
+    runs the launch scenario on it.
+  - The course skill `feature-spec` points to a reference spec, `docs/specs/bootstrap-nextjs-shell.md`,
+    that does not exist here. Harmless; noted.
+- Next best step: spec approved by the user; run the implementer.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with

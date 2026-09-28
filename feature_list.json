@@ -87,7 +87,8 @@
     "title": "Implement the dark theme and design tokens",
     "user_visible_behavior": "Every screen uses the project's dark palette and type scale; no light theme exists.",
     "depends_on": [
-      "gradle-kotlin-compose-baseline"
+      "gradle-kotlin-compose-baseline",
+      "module-skeleton"
     ],
     "status": "not_started",
     "verification": [
