@@ -89,7 +89,7 @@
       "The test asserts at least one state transition, not just a first emission"
     ],
     "evidence": [],
-    "notes": "D-02, no ViewModels. Two known traps in the reference pattern, both documented in the bitácora section 3.5: hashCode derived from handle while equals compared key, breaking the contract, and the invoke operator used without being declared. Do not reintroduce either. The canonical example to implement is .claude/skills/architecture/references/presenter-pattern.md: put the contracts (Presenter, UiModel, UiEvent, EventHandler) in :core:ui, make its sample compile with a green Molecule test, then update the reference to match the real code."
+    "notes": "D-02, no ViewModels. Two known traps in the reference pattern, both documented in the bitácora section 3.5: hashCode derived from handle while equals compared key, breaking the contract, and the invoke operator used without being declared. Do not reintroduce either. The canonical example to implement is .claude/skills/architecture/references/presenter-pattern.md: put the contracts (Presenter, UiModel, UiEvent, EventHandler) in :core:ui, make its sample compile with a green Molecule test, then update the reference to match the real code. Inherited from module-skeleton: if this is the first slice to put code in :core:ui (before design-tokens-theme), add the Compose plugin, BOM and buildFeatures.compose there, and delete the CoreUiMarker placeholder and its line in the :app ModuleWiringTest."
   },
   {
     "id": "design-tokens-theme",
@@ -107,7 +107,7 @@
       "Contrast of amber-on-background and muted-text-on-surface is measured and recorded"
     ],
     "evidence": [],
-    "notes": "Tokens are in DESIGN.md. The hex values there are derived from the written direction, not measured from the original mockup: open question recorded in risks-and-open-questions.md. Dark only, no light variant (D-12 for copy language). Cleanup inherited from gradle-kotlin-compose-baseline: remove the temporary background/text colors in app/src/main/res/values/colors.xml and the 0xFF111318 literal in the PlaceholderScreen @Preview."
+    "notes": "Tokens are in DESIGN.md. The hex values there are derived from the written direction, not measured from the original mockup: open question recorded in risks-and-open-questions.md. Dark only, no light variant (D-12 for copy language). Cleanup inherited from gradle-kotlin-compose-baseline: remove the temporary background/text colors in app/src/main/res/values/colors.xml and the 0xFF111318 literal in the PlaceholderScreen @Preview. Inherited from module-skeleton: if this is the first slice to put code in :core:ui (before molecule-presenter-harness), add the Compose plugin, BOM and buildFeatures.compose there, and delete the CoreUiMarker placeholder and its line in the :app ModuleWiringTest."
   },
   {
     "id": "domain-model-types",
@@ -124,7 +124,7 @@
       "Jam status models DRAFT and PUBLISHED only"
     ],
     "evidence": [],
-    "notes": "docs/domain-model.md. Archived is not a stored status: a jam is historical when its date has passed. There is no Musician entity; a musician is a name on a Slot (D-05). The key lives on JamSong, not Song (D-08)."
+    "notes": "docs/domain-model.md. Archived is not a stored status: a jam is historical when its date has passed. There is no Musician entity; a musician is a name on a Slot (D-05). The key lives on JamSong, not Song (D-08). Cleanup inherited from module-skeleton: delete the CoreModelMarker placeholder in :core:model, its test, and its line in the :app ModuleWiringTest."
   },
   {
     "id": "sheet-schema-definition",
@@ -175,7 +175,7 @@
       "Cache staleness is exposed so the UI can indicate it"
     ],
     "evidence": [],
-    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error."
+    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it."
   },
   {
     "id": "next-jam-read-only-list",
