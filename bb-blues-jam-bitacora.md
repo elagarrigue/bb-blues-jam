@@ -712,6 +712,48 @@ confirma que el área era una etiqueta y no una frontera.
 abrir esa documentación. La corrección existía en la cabeza y en una frase de la bitácora; recién al
 escribir el ejemplo completo se volvió algo que un agente puede leer y un validador puede contrastar.
 
+### 6.8 Sesión del 28 de septiembre — el esquema del Sheet, sembrado con una jam real
+
+El bloqueante que venía arriba de todo desde 6.2 se resolvió con dos insumos del organizador: la
+planilla que se va a usar y una foto del *setlist* real del sábado 25 de julio de 2026 en La
+Macanuda, con trece temas, artista y tono.
+
+**La propuesta era un tab por fecha, y se mantuvo con un ajuste.** Un tab por fecha es como el
+organizador ya piensa la jam: una hoja, una noche, como el póster. El riesgo estaba en la misma
+foto: "B.B King" en el tema 1 y "B.B. King" en el 5. Si cada tab repite título y artista como texto,
+el mismo tema termina escrito de tres formas, y se rompen justo las dos cosas por las que existe el
+historial: saber si un tema ya se tocó, y el *pool* de candidatos del asistente (D-14). La solución
+fue un tab `Catalogo` con un identificador estable por tema, y que cada tab de fecha lo referencie.
+
+**Lo que el esquema resolvió de paso.** Tres cosas que estaban abiertas:
+
+- **El tab de asignaciones desapareció.** Los cupos son columnas del tab de fecha, una por
+  instrumento de la formación por defecto: vacía es libre, un nombre es cubierto, `-` es que ese
+  instrumento no va en ese tema. Es D-06 en tres símbolos que el admin puede tipear a mano.
+- **Las sugerencias de nombres** para asignar un cupo salen de los tabs de fechas anteriores, sin
+  una lista aparte de músicos y sin la entidad `Musician` que D-05 evita a propósito.
+- **Un tema borrado del catálogo** no rompe una lista vieja: el tab de fecha guarda título y artista
+  como texto, y la app los usa solo si el identificador ya no existe. Por eso esas columnas tienen
+  que ser texto y no una fórmula de búsqueda: una fórmula falla exactamente cuando se la necesita.
+
+**Lo que se dejó afuera del Sheet a propósito.** Los datos de MusicBrainz y Deezer. Si la app los
+escribiera en el catálogo, pasaría a ser escritora de una entidad cuya autoridad es el Sheet, que es
+la sincronización bidireccional que D-04 elimina. Viven en el caché de Room.
+
+**Una precisión al modelo de dominio.** `Jam` gana `startTime`: el póster dice "21 hs" y el
+encabezado de la próxima jam lo necesita. Era un dato que el modelo no tenía porque nunca se había
+mirado un póster real.
+
+**La planilla no se escribió desde acá.** Es privada y no había conector autenticado, así que la
+sesión dejó cuatro CSV para importar. Los datos de la foto se normalizaron con confirmación del
+organizador —"Memphis" es Memphis La Blusera, que importa porque en la fase 2 "blues nacional" se
+filtra por artista— y lo que la foto no dice quedó vacío en lugar de inventado: tempo, etiquetas y
+dificultad son carga del admin, y son precisamente lo que el asistente va a usar.
+
+**Lo que confirmó sobre el método.** Un dato real vale más que el esquema mejor pensado en abstracto.
+En una sola imagen aparecieron la hora que faltaba en el dominio y la inconsistencia de nombres que
+justifica el catálogo. Ninguna de las dos salía de los documentos.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
@@ -758,7 +800,7 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 5. ~~Contrastar el harness con las clases 1 y 2~~ — hecho, ver 6.6
 6. **Primera `feature-spec`** sobre `gradle-kotlin-compose-baseline`, confirmando que los
    subagentes cargan su skill
-7. **Definir el esquema del Sheet:** catálogo de temas, jams, asignaciones — bloqueante
-8. Cargar el repertorio real con etiquetas y tonalidades, en paralelo con el desarrollo
+7. ~~Definir el esquema del Sheet~~ — hecho, ver 6.8; falta importar `docs/sheet-seed/` a la planilla
+8. Cargar el repertorio real con tempo, etiquetas y dificultad, en paralelo con el desarrollo
 9. Cerrar la lista de mutaciones del contrato de acciones antes de `action-contract-registry` (D-13)
 10. Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio

@@ -6,7 +6,7 @@ states, and the rules that govern transitions.
 ## Core Concepts
 
 ```
-Jam(id, date, venue, status: DRAFT | PUBLISHED, songs: List<JamSong>)
+Jam(id, date, startTime, venue, status: DRAFT | PUBLISHED, songs: List<JamSong>)
 JamSong(position, songId, key, lineup: List<Slot>)
 Slot(instrument, musicianName?)          // open when musicianName is null
 Song(id, title, artist, defaultKey, tempo, tags, difficulty,
@@ -15,7 +15,7 @@ Song(id, title, artist, defaultKey, tempo, tags, difficulty,
 
 ### Jam
 
-One monthly session: a date, a venue, a status, and an ordered setlist. At most one Jam is upcoming
+One monthly session: a date, a start time, a venue, a status, and an ordered setlist. At most one Jam is upcoming
 at a time. Jams whose date has passed are historical and read-only.
 
 ### JamSong

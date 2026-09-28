@@ -7,8 +7,8 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current next ready feature: `gradle-kotlin-compose-baseline`
-- Current blocker: `sheet-schema-definition` is blocked on a human decision. It does not block the
-  next eight slices.
+- Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
+  once the seed is imported into the real Sheet and read back by hand.
 - Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green against the scaffold, exit 0;
   Konsist, detekt and ktlint still report `NOT WIRED YET`.
 
@@ -134,11 +134,36 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   must turn it into real code with a green test, then update the reference to match the code.
 - Next best step: run the planner on `gradle-kotlin-compose-baseline`.
 
+### Session 007 — 28 September 2026
+
+- Goal: settle the Sheet schema, the top blocker, and seed it with a real jam.
+- Completed:
+  - `docs/sheet-schema.md`: tabs `Catalogo`, `Jams`, one tab per jam named `YYYY-MM-DD`, and
+    `Config`. The planned assignments tab folded into the jam tabs as one column per slot: empty is
+    open, a name is filled, `-` is not in that song's lineup (D-06). Headers are Spanish because the
+    admin edits the Sheet; code maps them by name.
+  - `docs/sheet-seed/`: four CSVs built from `docs/ejemplo jam.jpeg`, the 25 July 2026 setlist at La
+    Macanuda — thirteen songs with artist and key. Artists normalized (`B.B. King`,
+    `Memphis La Blusera`), confirmed by the user.
+  - `sheet-schema-definition` moved from `blocked` to `not_started`.
+  - Two open questions closed by the schema: catalog-deleted songs fall back to the jam tab's
+    title/artist copies, and musician suggestions come from past jam tabs.
+  - `Jam` gains `startTime` in the domain model; the poster and the next-jam header both need it.
+- Verification run: seed CSVs regenerated and inspected; `feature_list.json` diff limited to the
+  one slice. The Sheet itself was not written: it is private and no connector was authenticated.
+- Evidence captured: this entry; bitácora section 6.8.
+- Known risk or unresolved issue:
+  - The seed is not in the real Sheet yet. The user imports it by hand, or a later session does it
+    with the Chrome extension or the Drive connector.
+  - `tono_default` in the seed is that night's key, a stand-in. Tempo, tags and difficulty are empty
+    and are the admin's to fill; the week 5 assistant depends on them.
+- Next best step: run the planner on `gradle-kotlin-compose-baseline`; import the seed in parallel.
+
 ## Notes For The Next Session
 
-- Two things must be settled by a human, in parallel with coding, and neither is code work:
-  the **Sheet schema**, and **loading real repertoire**. Week 5 needs a catalog large enough for the
-  assistant to produce an interesting themed setlist.
+- The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with
+  coding: **importing the seed** and **loading real repertoire** with tempo, tags and difficulty.
+  Week 5 needs a catalog large enough for the assistant to produce an interesting themed setlist.
 - Before `action-contract-registry` runs, confirm the mutation list is complete. The current list is
   add song, remove song, set key, adjust lineup, assign musician, clear slot, reorder, publish
   (D-13).

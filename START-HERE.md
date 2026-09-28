@@ -78,7 +78,8 @@ actualizada a medida que avanzás; no es documentación muerta.
 
 - Correr `feature-spec` sobre `gradle-kotlin-compose-baseline` (cierra la semana 2)
 - Confirmar en esa primera corrida que el `planner` carga su skill (se le agregó `Skill` a `tools:`)
-- Definir el esquema del Sheet y empezar a cargar el repertorio real, en paralelo
+- Importar `docs/sheet-seed/` a la planilla y cargar el repertorio real (tempo, etiquetas,
+  dificultad), en paralelo. El esquema ya está: `docs/sheet-schema.md`
 - Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio
 
 ---

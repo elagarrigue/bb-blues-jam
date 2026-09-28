@@ -59,6 +59,7 @@ Read optional docs only when relevant:
   anything that writes.
 - `docs/technical-discovery.md` — when touching the stack, the Sheet, external APIs, or
   verification.
+- `docs/sheet-schema.md` — when touching the Sheet, Apps Script, or the `:core:data` mappers.
 - `DESIGN.md` — when touching any UI. It carries the design tokens and the visual rules.
 - `bb-blues-jam-design-prompt.md` — per-screen design requirements. Source of truth for screens.
 - `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 16 decisions (D-01 … D-16) and

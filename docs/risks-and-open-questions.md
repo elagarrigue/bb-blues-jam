@@ -6,16 +6,15 @@ the other discovery documents; the 16 decisions and their reasoning are in
 
 ## Blocking Next Phase
 
-### The Sheet schema is not defined
+### The Sheet schema — resolved, repertoire still thin
 
-The catalog, jams, and assignment tabs need columns, types, and identifier rules before any
-repository code can be written, and before Apps Script endpoints can be shaped. This is the single
-largest blocker.
+Resolved 28 September 2026 in `sheet-schema.md`: a `Catalogo` tab with stable song ids, a `Jams`
+index, one tab per jam date referencing catalog ids with one column per slot, and a `Config` tab
+for the passphrase. Seed data for the 25 July 2026 jam is in `sheet-seed/`.
 
-It has a second deadline beyond implementation: the assistant's usefulness in week 5 depends on how
-much real repertoire is loaded, with keys and tags. A catalog of twelve songs cannot produce an
-interesting themed setlist. Loading should start as early as possible and run in parallel with
-development.
+What remains open is the second deadline: the assistant's usefulness in week 5 depends on how much
+real repertoire is loaded, with keys, tempo, tags and difficulty. The seed has thirteen songs and no
+tags. Loading should run in parallel with development.
 
 ### The Apps Script action surface is not specified
 
@@ -47,12 +46,11 @@ width the strip cannot spare.
   presenter state, which makes rollback the real question. A failed publish is the worst case in the
   product: the admin believes the list is live and musicians see something stale. Publish failure in
   particular needs an unmissable, non-transient error.
-- **A song deleted from the catalog while scheduled** in an upcoming jam. The JamSong carries the
-  title and artist it needs to render, so the setlist stays readable, but the intended behavior
-  should be confirmed rather than left to emerge.
-- **Musician name suggestions.** The assign-slot sheet suggests people who played before. Source:
-  derived from past jams in the Sheet, or a separate list? Affects the Sheet schema, so it is worth
-  answering alongside it.
+- **A song deleted from the catalog while scheduled** — resolved by the schema: each jam tab keeps
+  plain-text copies of title and artist, used as a fallback when the song id is no longer in
+  `Catalogo`.
+- **Musician name suggestions** — resolved by the schema: derived from the names in past jam tabs,
+  with no separate musicians list.
 - **Time zone and "how long until" text.** Phrases like "esta noche" depend on the device clock and
   a local definition of the jam date. Single-timezone community, so low risk, but the boundary
   behavior around midnight should be decided rather than emergent.
@@ -104,7 +102,8 @@ Stated so they can be challenged rather than silently relied upon.
 
 ## Research Tasks
 
-- [ ] Define the Sheet schema: catalog, jams, assignments.
+- [x] Define the Sheet schema — `sheet-schema.md`. Import the seed into the real Sheet and read it
+  back by hand to close `sheet-schema-definition`.
 - [ ] Load real repertoire with keys, tags, and difficulty.
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload.
 - [ ] Confirm the full mutation list for the action contract before slicing features.

@@ -119,18 +119,18 @@
     "id": "sheet-schema-definition",
     "area": "backend",
     "title": "Define the Sheet schema and document it",
-    "user_visible_behavior": "The catalog, jams and assignments tabs exist in the Sheet with agreed columns, and the schema is written down in the repo.",
+    "user_visible_behavior": "The Catalogo, Jams, Config and one-tab-per-date tabs exist in the Sheet with the agreed columns, and the schema is written down in the repo.",
     "depends_on": [
       "domain-model-types"
     ],
-    "status": "blocked",
+    "status": "not_started",
     "verification": [
       "Every domain type maps to columns with no ambiguity about identifiers",
       "A handful of real songs are loaded and read back correctly by hand",
       "The schema is committed as documentation"
     ],
     "evidence": [],
-    "notes": "TOP BLOCKER, recorded in risks-and-open-questions.md. Blocked on a human decision, not on code. It gates every repository slice and, separately, gates the assistant: week 5 needs real repertoire loaded, and a twelve-song catalog cannot produce an interesting themed setlist. Load repertoire in parallel with development."
+    "notes": "Unblocked 28 September 2026: the schema decision is made and documented in docs/sheet-schema.md (one tab per jam date referencing Catalogo ids; the separate assignments tab was folded into the jam tabs as one column per slot). Seed data for the 25 July 2026 jam is in docs/sheet-seed/. Remaining to satisfy verification: import the seed into the real Sheet and read it back by hand. Keep loading real repertoire in parallel: week 5 needs a catalog large enough for an interesting themed setlist."
   },
   {
     "id": "apps-script-read-endpoint",
