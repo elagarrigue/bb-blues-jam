@@ -22,6 +22,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, and shared components such as the instrument strip. | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
 | `:app` | Navigation, bottom bar, `startKoin` with every module, and the action registry (D-13). | everything |
+| `:konsist-test` | Test-only JVM module (`kotlin-jvm`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. The planned ones are
 `:feature:next-jam`, `:feature:song-detail`, `:feature:past-jams` and `:feature:info`.
@@ -46,12 +47,18 @@ is. There is no `:feature:admin`.
 
 ## Dependency Rules
 
-- `:feature:a` → `:feature:b` is forbidden, in any direction and for any reason. Konsist enforces it
-  once `konsist-isolation-rules` lands.
+- `:feature:a` → `:feature:b` is forbidden, in any direction and for any reason.
 - `:core:*` never depends on `:feature:*` or `:app`.
 - `:core:model` has no Android dependency.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
+
+Konsist enforces the first three rules, the package roots and the ViewModel ban in
+`konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
+`./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
+`core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
+covered without editing it. **A new dependency rule means a new test in that class**, proven able
+to fail before it is trusted.
 
 ## Build Conventions
 
@@ -75,6 +82,9 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
 - **New modules keep sources in `src/main/kotlin`** (and `src/test/kotlin`). `:app` keeps
   `src/main/java`. Libraries need no `AndroidManifest.xml`; the namespace comes from the DSL,
   `com.bbbjam.<path>` (for example `com.bbbjam.core.ui`).
+- **Package root is `com.bbbjam.<module path>` with hyphens removed** (`:feature:next-jam` →
+  `com.bbbjam.feature.nextjam`), and every source file in `:core:*` and `:feature:*` declares a package
+  equal to or under it. Enforced by the `package-under-module-root` Konsist rule.
 - **Dependencies**: `:core:ui` and `:core:data` use `api(project(":core:model"))`, because their
   public contracts expose domain types. `:app` lists each module it uses with
   `implementation(project(...))`. Use `project(":…")`, not type-safe project accessors.

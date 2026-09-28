@@ -60,13 +60,36 @@
     "depends_on": [
       "module-skeleton"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "./gradlew check runs the Konsist test and it passes",
       "A deliberate cross-feature import makes the test fail, then is reverted",
       "./init.sh reports konsist as wired"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh (before any change): exit 0; konsist/detekt/ktlint all NOT WIRED YET.",
+      "Konsist 0.17.3 in test-only :konsist-test; testRuntimeClasspath resolves kotlin-compiler-embeddable 2.0.21 (Konsist's parser), isolated to that module.",
+      "CI=true ./init.sh after the slice: exit 0; 'konsist: wired', detekt and ktlint 'NOT WIRED YET'. ./gradlew check --dry-run lists :konsist-test:test.",
+      "TEST-com.bbbjam.konsist.ModuleIsolationTest.xml: tests=\"8\" skipped=\"0\" failures=\"0\" errors=\"0\". Tests: 'Konsist scope covers every included module', 'core and feature files declare a package under their module root', 'feature modules do not import other feature modules', 'feature modules do not import the app module', 'core modules import only their own root and core model', 'core model does not touch Android', 'no ViewModel is imported or subclassed', 'module build files declare only allowed project dependencies'.",
+      "Scenario 5: :konsist-test:test UP-TO-DATE twice; after appending '// touch' to CoreModelMarker.kt the task executed; file restored (SHA-1 bb307eb9 match).",
+      "Scenario 2: temporary :feature:probe-a and :feature:probe-b (android-library, depend only on :core:model) -> ./gradlew check exit 0, 8/8 pass.",
+      "Scenario 3: probe-a adds implementation(project(\":feature:probe-b\")) + import com.bbbjam.feature.probeb.ProbeB -> CI=true ./init.sh exit 1 (fails in its Build step, ':konsist-test:test' 8 tests completed, 2 failed); ./gradlew check exit 1: 'feature modules do not import other feature modules' -> Assert 'feature-imports-feature' was violated (1 time) ... Import com.bbbjam.feature.probeb.ProbeB ...feature/probe-a/.../ProbeA.kt:4:1; 'module build files declare only allowed project dependencies' -> Assert 'build-file-project-deps' was violated (1 times) ... feature/probe-a/build.gradle.kts:23 feature/probe-a may not depend on :feature:probe-b.",
+      "Scenario 3 fully qualified reference (no import): ./gradlew :konsist-test:test exit 1, only 'module build files declare only allowed project dependencies' failed (1 of 8).",
+      "Scenario 4 feature-imports-app (probes present): probe-a ReachApp.kt imports com.bbbjam.MainActivity -> exit 1, 'feature modules do not import the app module': Assert 'feature-imports-app' was violated (1 time) ... ReachApp.kt:3:1. Reverted -> exit 0.",
+      "Probes deleted, settings.gradle.kts restored (SHA-1 03221f3c match), no feature/ dir -> CI=true ./init.sh exit 0, konsist wired.",
+      "Scenario 4 scope sanity: CoreUiMarker.kt -> .kt.txt -> exit 1, 'Konsist scope covers every included module': Assert 'scope-sanity' was violated (1 times). Included modules with no file in the Konsist scope: [core/ui]. Reverted -> exit 0.",
+      "Scenario 4 package: core/ui Squatter.kt with package com.bbbjam.core.data -> exit 1, 'core and feature files declare a package under their module root': Assert 'package-under-module-root' was violated (1 time) ... File Squatter.kt. Reverted -> exit 0.",
+      "Scenario 4 core allowlist: core/ui Cross.kt imports com.bbbjam.core.data.CoreDataMarker -> exit 1, 'core modules import only their own root and core model': Assert 'core-import-allowlist' was violated (1 time) ... Cross.kt:3:1. Reverted -> exit 0.",
+      "Scenario 4 core model Android: core/model Droid.kt imports android.content.Context -> exit 1, 'core model does not touch Android': Assert 'core-model-no-android' was violated (1 time) ... Droid.kt:3:1. Reverted -> exit 0.",
+      "Scenario 4 ViewModel import: app ProbeViewModel.kt with import androidx.lifecycle.ViewModel -> exit 1, 'no ViewModel is imported or subclassed': Assert 'no-viewmodel-import' was violated (1 time) ... ProbeViewModel.kt:3:1. Reverted -> exit 0.",
+      "Scenario 4 ViewModel subclass: class ProbeViewModel : androidx.lifecycle.ViewModel(), no import -> exit 1, same test: Assert 'no-viewmodel-subclass' was violated (1 time) ... Class ProbeViewModel ...:3:1. Reverted -> exit 0.",
+      "Scenario 4 build file (core): core/data adds implementation(project(\":core:ui\")) -> exit 1, 'module build files declare only allowed project dependencies': Assert 'build-file-project-deps' was violated (1 times) ... core/data/build.gradle.kts:23 core/data may not depend on :core:ui. Reverted -> exit 0.",
+      "Each demonstration failed exactly one test (8 tests completed, 1 failed), except the Scenario 3 import+dependency state (2 failed, as specified).",
+      "init.sh (Decision 4, user-approved): ModuleIsolationTest.kt moved out -> CI=true ./init.sh exit 0 with 'konsist: NOT WIRED YET'; restored -> exit 0 with 'konsist: wired', tests=\"8\" failures=\"0\".",
+      "Restore proof: sha1sum -c on settings.gradle.kts, CoreModelMarker.kt, CoreUiMarker.kt, core/data/build.gradle.kts, ModuleIsolationTest.kt, init.sh all OK; git status shows only the slice's files; no feature/ directory or probe file remains. Logs kept in the session scratchpad only.",
+      "Not wired yet: detekt and ktlint (detekt-ktlint-gate). No device check: nothing user-visible changed.",
+      "28 September 2026: independent validator verdict accept. init.sh diff matches Decision 4 exactly (bash -n clean); CI=true ./init.sh exit 0 with konsist wired, 8 tests, 0 failures; reproduced the up-to-date trap fix, the probe-a/probe-b cross-feature failure (init.sh exit 1, feature-imports-feature and build-file-project-deps), the fully qualified variant, feature-imports-app, the init.sh NOT WIRED/wired honesty check, and four violations of its own choosing (AndroidViewModel subclass without import, androidx import in a :core:model test source set, core-import-allowlist, a projects. accessor). SHA-1 of all 139 non-ignored files identical before and after."
+    ],
     "notes": "D-03. The failing case must be demonstrated, not assumed: a rule that cannot fail proves nothing. Konsist output is course evidence and later proves the assistant did not reach into feature modules."
   },
   {

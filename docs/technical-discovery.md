@@ -57,9 +57,10 @@ single authority:
 Local Room cache backs offline reads; the app shows last-known data with a staleness indicator
 rather than an error.
 
-The Sheet's schema — catalog, jams, and assignment tabs — is not yet defined. It is the top blocking
-item in `risks-and-open-questions.md`, because the assistant's quality in week 5 depends directly on
-how much real repertoire is loaded by then.
+The Sheet's schema is defined in `sheet-schema.md`: a `Catalogo` tab with stable song ids, a `Jams`
+index, one tab per jam date referencing catalog ids with one column per slot, and a `Config` tab
+for the passphrase. What remains open is how much real repertoire is loaded, with keys and tags,
+because the assistant's quality in week 5 depends directly on it.
 
 ## Integrations
 
@@ -108,7 +109,8 @@ advantage of this backend: the fallback is a spreadsheet anyone can fix.
 
 - **Presenter tests with Molecule**, no Android instrumentation required (a direct benefit of D-02).
 - **Konsist** for module isolation. This is evidence, not just hygiene: its output is part of the
-  course deliverable.
+  course deliverable. Wired: Konsist 0.17.3 in the test-only module `:konsist-test`
+  (`ModuleIsolationTest`, 8 tests), run by `./gradlew check`.
 - **detekt and ktlint** for static analysis and formatting.
 - `init.sh` wraps the Gradle gate — `./gradlew build` and `./gradlew check` — and is run by
   `feature-flow` on every validation, so it must be fast and non-blocking.

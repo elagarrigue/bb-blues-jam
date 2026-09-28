@@ -6,12 +6,14 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `konsist-isolation-rules`. `gradle-kotlin-compose-baseline` and
-  `module-skeleton` are `accepted`.
+- Current next ready feature: `detekt-ktlint-gate` (also ready: `molecule-presenter-harness`,
+  `design-tokens-theme`, `domain-model-types`). Accepted: `gradle-kotlin-compose-baseline`,
+  `module-skeleton`, `konsist-isolation-rules`.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green with four modules, exit 0;
-  Konsist, detekt and ktlint still report `NOT WIRED YET`. Launch checked on a Pixel 5 (API 34).
+- Last verified at: 28 September 2026 — `CI=true ./init.sh` exit 0 with `:konsist-test` added;
+  it prints `konsist: wired` (8 Konsist tests, 0 failures); detekt and ktlint still `NOT WIRED YET`.
+  Last launch check on a Pixel 5 (API 34) was in session 011; this slice changed nothing visible.
 
 ### What exists
 
@@ -21,6 +23,14 @@ libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:c
 depends on all three. Each `:core` module holds only a placeholder marker object; `CoreModelMarkerTest`
 and `:app`'s `ModuleWiringTest` prove they compile and are wired. `compileSdk` and `minSdk` come from
 the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
+
+A fifth, test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
+`ModuleIsolationTest`: 8 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
+(no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
+`:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, and allowed
+`project(":…")` dependencies in `core/*`/`feature/*` build files). Module groups are read from paths,
+so the first `:feature:*` module is covered without editing the suite. The test task declares every
+`.kt`/`.kts` file as an input, so a change elsewhere reruns it (`konsist-isolation-rules`, `passing`).
 
 `:app` is on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
 `accepted`). AGP 9.4.1 with its built-in Kotlin (no `org.jetbrains.kotlin.android`
@@ -35,9 +45,11 @@ drawn with foundation `BasicText`. Both colors live temporarily in `res/values/c
 by the window theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`), until
 `design-tokens-theme` replaces them. Dark only: `values-night` was deleted.
 
-`./gradlew check` runs unit tests and lint only; Konsist, detekt and ktlint are not wired yet, and
-`init.sh` reports which of them are missing rather than pretending they run. The tests are the two
-template tests plus `CoreModelMarkerTest` and `ModuleWiringTest`.
+`./gradlew check` runs unit tests, lint and the Konsist suite; detekt and ktlint are not wired yet,
+and `init.sh` reports them as missing rather than pretending they run. `init.sh` prints
+`konsist: wired` only when `:konsist-test:test` exists and its results hold at least one test (with
+the suite removed it prints `NOT WIRED YET`). The unit tests are the two template tests plus
+`CoreModelMarkerTest` and `ModuleWiringTest`.
 
 No product code has been written; the placeholder screen is scaffolding.
 
@@ -306,6 +318,70 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   until Konsist lands. The validator did not rerun `./gradlew build --rerun-tasks`, so the
   implementer's "no compiler warnings" claim stands on the implementer's run alone.
 - Next best step: plan `konsist-isolation-rules`.
+
+### Session 013 — 28 September 2026
+
+- Goal: implement `konsist-isolation-rules` (implementer subagent), spec
+  `docs/specs/konsist-isolation-rules.md`.
+- Completed:
+  - Catalog `konsist = "0.17.3"` and library entry; `include(":konsist-test")`; module
+    `konsist-test/` (`kotlin-jvm`, Java 11, `/build` `.gitignore`, JUnit + Konsist, no project
+    dependency). Its `tasks.test` declares the project's `.kt`/`.kts` files as inputs and passes
+    `bbbjam.rootDir`.
+  - `ModuleIsolationTest` with the 8 specified tests; Windows `\` module separators normalised; no
+    hard-coded module list.
+  - `init.sh` changed exactly as the spec's Decision 4 (approved by the user): a `konsist_wired`
+    check replaces the task-name grep for Konsist; detekt/ktlint detection untouched.
+  - Architecture skill (`:konsist-test` row, enforcement note, package-root convention) and
+    `docs/technical-discovery.md` (one line) updated.
+- Verification run (full evidence in `feature_list.json`):
+  - Before: `CI=true ./init.sh` exit 0, three tools `NOT WIRED YET`. After: exit 0, `konsist: wired`,
+    `tests="8" failures="0" errors="0"`.
+  - Scenario 5: `:konsist-test:test` UP-TO-DATE, then executed after a one-line touch in
+    `CoreModelMarker.kt`.
+  - Scenarios 2-3 with temporary `:feature:probe-a`/`probe-b`: clean probes green; a cross-feature
+    dependency plus import made `CI=true ./init.sh` exit 1 with `feature-imports-feature` and
+    `build-file-project-deps` failing (`ProbeA.kt:4:1`, `feature/probe-a/build.gradle.kts:23`); a fully
+    qualified reference without import failed only the build-file test.
+  - Scenario 4: each remaining violation (scope sanity, package root, feature→app, core allowlist,
+    Android in `:core:model`, ViewModel import, ViewModel subclass, core build file) failed exactly
+    its own test and passed again after the revert.
+  - init.sh negative control: suite file moved out → `konsist: NOT WIRED YET`; restored → `wired`.
+  - Restore: SHA-1s of every touched file match; `feature/` gone; `git status` shows only the
+    slice's files. Logs kept in the scratchpad, not the repo.
+- Deviation from the spec: none in behavior. Interpretation: Decision 4 says to replace "the two
+  comment lines" about "unit tests and lint only"; only one line says that, so only it was replaced.
+  The next two comment lines (tools "picked up here automatically, with no change to this script")
+  are now stale for Konsist and were left for the orchestrator/user to reword.
+- Known risk or unresolved issue:
+  - Konsist 0.17.3 (Dec 2024) parses with `kotlin-compiler-embeddable` 2.0.21 while the project
+    compiles with 2.2.10; syntax newer than 2.0 could fail to parse. JDK 25 prints `sun.misc.Unsafe`
+    warnings from that jar (noise).
+  - Rules over `feature/*` are vacuous until the first feature module lands (Konsist passes on empty
+    lists); the probes are the only proof so far.
+  - Konsist sees imports, not resolved references; the build-file rule covers fully qualified use.
+  - Konsist failure lines print a `???` glyph in this Windows console (encoding); the message is intact.
+- Next best step: run the validator on `konsist-isolation-rules`.
+
+### Session 014 — 28 September 2026
+
+- Goal: independent validation of `konsist-isolation-rules`.
+- Completed: validator verdict **accept**; status set to `accepted` by the orchestrator.
+- Verification run (by the validator): the `init.sh` diff matches Decision 4 exactly; the gate is
+  green with `konsist: wired` and 8/8 tests; the up-to-date trap fix, the probe-module cross-feature
+  failure (`init.sh` exit 1), the fully qualified variant, the `init.sh` honesty check, and four
+  extra violations of the validator's own choosing were reproduced; SHA-1 of all 139 non-ignored
+  files identical before and after.
+- Also: `docs/technical-discovery.md` still said the Sheet schema was undefined — a miss from
+  session 007, corrected now to point at `docs/sheet-schema.md`.
+- Known risk or unresolved issue:
+  - `init.sh` lines 23–24 still say tools are picked up "with no change to this script", false for
+    Konsist. A spec inconsistency (the spec said "two comment lines", one existed); rewording needs
+    the user's approval because the `init.sh` change was approved as written.
+  - Keep one `include(":x")` per line in `settings.gradle.kts`: the scope-sanity guard parses only
+    single-argument includes.
+  - Konsist 0.17.3 parses with Kotlin 2.0.21 while the project compiles with 2.2.10.
+- Next best step: plan `detekt-ktlint-gate`.
 
 ## Notes For The Next Session
 
