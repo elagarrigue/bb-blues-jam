@@ -20,8 +20,8 @@ echo "== Build =="
 echo ""
 echo "== Check =="
 # ./gradlew check runs unit tests, lint and the Konsist suite (:konsist-test).
-# Konsist, detekt and ktlint are wired in by their own feature slices; once each is
-# registered it is picked up here automatically, with no change to this script.
+# detekt and ktlint are wired in by their own feature slices; once registered they are
+# picked up by the task-name check below. Konsist needed its own check (see konsist_wired).
 ./gradlew check --quiet
 
 echo ""

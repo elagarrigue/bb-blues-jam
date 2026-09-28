@@ -375,9 +375,9 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Also: `docs/technical-discovery.md` still said the Sheet schema was undefined — a miss from
   session 007, corrected now to point at `docs/sheet-schema.md`.
 - Known risk or unresolved issue:
-  - `init.sh` lines 23–24 still say tools are picked up "with no change to this script", false for
-    Konsist. A spec inconsistency (the spec said "two comment lines", one existed); rewording needs
-    the user's approval because the `init.sh` change was approved as written.
+  - `init.sh` lines 23–24 said tools are picked up "with no change to this script", false for
+    Konsist (a spec inconsistency). Reworded with the user's approval, comment only; `bash -n` and
+    `CI=true ./init.sh` (exit 0, konsist wired) rerun afterwards.
   - Keep one `include(":x")` per line in `settings.gradle.kts`: the scope-sanity guard parses only
     single-argument includes.
   - Konsist 0.17.3 parses with Kotlin 2.0.21 while the project compiles with 2.2.10.
