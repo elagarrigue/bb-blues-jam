@@ -79,7 +79,7 @@
       "The test asserts at least one state transition, not just a first emission"
     ],
     "evidence": [],
-    "notes": "D-02, no ViewModels. Two known traps in the reference pattern, both documented in the bitácora section 3.5: hashCode derived from handle while equals compared key, breaking the contract, and the invoke operator used without being declared. Do not reintroduce either."
+    "notes": "D-02, no ViewModels. Two known traps in the reference pattern, both documented in the bitácora section 3.5: hashCode derived from handle while equals compared key, breaking the contract, and the invoke operator used without being declared. Do not reintroduce either. The canonical example to implement is .claude/skills/architecture/references/presenter-pattern.md: put the contracts (Presenter, UiModel, UiEvent, EventHandler) in :core:ui, make its sample compile with a green Molecule test, then update the reference to match the real code."
   },
   {
     "id": "design-tokens-theme",
@@ -375,7 +375,7 @@
   },
   {
     "id": "admin-passphrase-login",
-    "area": "feature-admin",
+    "area": "feature-info",
     "title": "Log in as admin with a passphrase",
     "user_visible_behavior": "Entering the correct passphrase reveals admin controls; entering a wrong one shows an error and reveals nothing.",
     "depends_on": [
@@ -410,7 +410,7 @@
   },
   {
     "id": "admin-add-song-to-setlist",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Add a song from the catalog to the setlist",
     "user_visible_behavior": "The admin picks a song from the catalog and it appears in the upcoming setlist, persisted to the Sheet.",
     "depends_on": [
@@ -428,7 +428,7 @@
   },
   {
     "id": "admin-remove-song-from-setlist",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Remove a song from the setlist",
     "user_visible_behavior": "The admin removes a song from the upcoming setlist and the change persists to the Sheet.",
     "depends_on": [
@@ -444,7 +444,7 @@
   },
   {
     "id": "admin-set-key",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Set the key on a scheduled song",
     "user_visible_behavior": "The admin sets the key for a song in the setlist, and musicians see it on the collapsed row.",
     "depends_on": [
@@ -461,7 +461,7 @@
   },
   {
     "id": "admin-adjust-lineup",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Adjust a song's lineup",
     "user_visible_behavior": "The admin changes how many slots of each instrument a song needs, and the instrument strip updates.",
     "depends_on": [
@@ -479,7 +479,7 @@
   },
   {
     "id": "admin-assign-musician",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Assign a musician to an open slot",
     "user_visible_behavior": "The admin taps an open slot, types a name with suggestions from musicians who played before, and the slot becomes filled.",
     "depends_on": [
@@ -497,7 +497,7 @@
   },
   {
     "id": "admin-clear-slot",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Clear a filled slot",
     "user_visible_behavior": "The admin removes a musician from a slot and it returns to open.",
     "depends_on": [
@@ -513,7 +513,7 @@
   },
   {
     "id": "admin-reorder-songs",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Reorder songs in the setlist",
     "user_visible_behavior": "The admin changes a song's position and the new order persists for everyone.",
     "depends_on": [
@@ -530,7 +530,7 @@
   },
   {
     "id": "admin-publish-setlist",
-    "area": "feature-admin",
+    "area": "feature-next-jam",
     "title": "Publish the setlist",
     "user_visible_behavior": "The admin publishes a draft jam, the badge changes from Borrador to Publicada, and musicians can now see the songs.",
     "depends_on": [

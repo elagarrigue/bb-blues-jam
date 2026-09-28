@@ -23,13 +23,20 @@ and no hidden gestures without a visible alternative.
   another; shared contracts live in `:core:*` and binding happens in `:app`. Enforced with Konsist
   rather than documented and hoped for. This is the same constraint that later proves the assistant
   did not reach into feature modules.
+- **Koin** for dependency injection (D-16). Constructor injection only; each module exposes its own
+  Koin module and `:app` starts Koin with all of them. Presenters are `factory`, repositories
+  `single`. Chosen because it needs no annotation processing and matches the reference presenter
+  articles, which already inject presenters with `koinInject()`.
+- **Admin is a state, not a module** (D-15). Each presenter reads the admin flag and adds admin
+  controls to its own `UiModel`; there is no `:feature:admin`.
 - **Room** for local caching of the catalog and enrichment data.
 - **DataStore** for the admin flag.
 - **Gradle** with a `check` task covering tests, Konsist, detekt, and ktlint.
 
-Two corrections were made to the reference composable-presenter pattern and are recorded in the
-project's own documentation: `hashCode` derived from `handle` while `equals` compared `key`, which
-breaks the contract, and the `invoke` operator was used in examples without being declared.
+Two corrections were made to the reference composable-presenter pattern: `hashCode` derived from
+`handle` while `equals` compared `key`, which breaks the contract, and the `invoke` operator was
+used in examples without being declared. The corrected pattern, with a full example, lives in
+`.claude/skills/architecture/references/presenter-pattern.md`.
 
 ## Data and Storage
 

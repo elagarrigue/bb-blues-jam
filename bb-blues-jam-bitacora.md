@@ -344,6 +344,20 @@ El asistente elige del repertorio cargado, con título, artista, tonalidad, temp
 dificultad. Acotar la selección a datos propios convierte el problema en filtrado y ranking sobre
 información controlada, y elimina la fuente principal de error.
 
+### D-15 — El admin es un estado, no un módulo
+El admin es un músico con controles extra sobre las mismas pantallas. Cada *presenter* lee el flag
+de admin y suma sus eventos y controles a su propio `UiModel`. Las mutaciones de la lista se dibujan
+en `:feature:next-jam` y el ingreso por frase de acceso vive en `:feature:info`, donde está su
+entrada discreta. Un `:feature:admin` separado chocaba con D-03: sus controles se dibujan sobre la
+pantalla de otro módulo, que no podría importar.
+
+### D-16 — Koin para inyección de dependencias
+Sin procesamiento de anotaciones, y es lo que ya usan los artículos de referencia del patrón de
+*presenters* (`koinInject()`). Solo inyección por constructor, para que los tests armen *presenters*
+y repositorios a mano. Cada módulo expone su propio módulo de Koin y solo `:app` los arranca.
+Descartados Hilt, por el costo de kapt/KSP y de la ceremonia de anotaciones para una app de este
+tamaño, y la inyección manual, que con cuatro *features* y tres repositorios empieza a pesar en `:app`.
+
 ---
 
 # Parte III — Harness y seguimiento
@@ -662,6 +676,41 @@ repo es público y el material no es nuestro para redistribuir.
 forma. Cada regla se cumplía, pero estaba en el lugar donde el modelo la lee con menos atención.
 Nada cambió de fondo y el archivo es más confiable: la clase lo resume en que un `AGENTS.md` no es
 documentación sino ingeniería de contexto, y dónde está algo pesa tanto como qué dice.
+
+### 6.7 Sesión del 28 de septiembre — Koin, admin como estado y el ejemplo del *presenter*
+
+Tres decisiones del usuario cerraron dos de los puntos que la skill `architecture` había dejado
+abiertos, y quedaron registradas como D-15 y D-16.
+
+**El ejemplo del *presenter* salió de los dos artículos de Doximity que originan D-02.** Al leerlos
+con atención aparecieron, en el propio material de referencia, los dos errores que la sección 3.5
+anotaba: `EventHandler.equals` compara `key` mientras `hashCode` usa `handle`, y la vista llama
+`uiModel.events(...)` sin que `invoke` esté declarado, algo que no compila. Hasta ahora la bitácora
+decía que "quedaron corregidos en la documentación del proyecto", pero esa documentación no existía
+en el repo. Ahora sí: `references/presenter-pattern.md`, con una tabla de cada desvío respecto de los
+artículos y su motivo. Uno de esos desvíos es de actualización: Molecule renombró
+`RecompositionClock` a `RecompositionMode`.
+
+El ejemplo no es un contador: es la pantalla de la próxima jam, con un *presenter* hijo por fila y el
+admin como estado. Así el patrón queda demostrado sobre el dominio real, con las reglas que importan
+—mutaciones por repositorio (D-13), borrador visible como mensaje y no como lista vacía, y el error
+de publicación nunca silenciado.
+
+**Al escribirlo aparecieron dos errores propios, detectados antes del commit.** Un `listOf(position = …)`
+que no es Kotlin válido, y un comentario que decía "cupos libres primero" sobre un código que no
+ordenaba. El segundo es más interesante: al ordenar, el índice que viaja en el evento `ClearSlot`
+dejaba de coincidir con el cupo real. Se resolvió haciendo que cada cupo lleve su índice original.
+Es el tipo de error que un test habría encontrado y una lectura rápida no. Por eso el ejemplo se
+declara como referencia no compilada, y `molecule-presenter-harness` lo tiene que convertir en
+código con un test en verde.
+
+**Admin como estado reordenó el grafo sin cambiarlo.** Las nueve rebanadas de `feature-admin` pasaron
+a `feature-next-jam` (ocho mutaciones) y `feature-info` (el ingreso). Las dependencias no cambiaron:
+confirma que el área era una etiqueta y no una frontera.
+
+**Lo que confirmó sobre el método.** "Corregido en la documentación" no es evidencia si nadie puede
+abrir esa documentación. La corrección existía en la cabeza y en una frase de la bitácora; recién al
+escribir el ejemplo completo se volvió algo que un agente puede leer y un validador puede contrastar.
 
 ## 7. Mapa a los módulos del curso
 

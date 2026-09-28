@@ -47,7 +47,7 @@ Ya están en el repo. Son el insumo del descubrimiento:
 
 | Archivo | Para qué |
 |---|---|
-| `bb-blues-jam-bitacora.md` | Proceso, 14 decisiones con su fundamento, mapa a los módulos del curso |
+| `bb-blues-jam-bitacora.md` | Proceso, 16 decisiones con su fundamento, mapa a los módulos del curso |
 | `bb-blues-jam-design-prompt.md` | Brief de diseño completo + prompts por pantalla para Stitch |
 
 **Importante:** la bitácora es también el material de la presentación final. Mantenela
@@ -62,7 +62,7 @@ actualizada a medida que avanzás; no es documentación muerta.
 - Problema elegido y validado contra alternativas descartadas
 - Investigación de diez APIs musicales con NotebookLM, verificada después contra documentación viva
 - Alcance del MVP definido
-- 14 decisiones técnicas y de producto tomadas, con fundamento escrito
+- 16 decisiones técnicas y de producto tomadas, con fundamento escrito
 - Diseño de UI especificado: ocho pantallas, cinco estados, dirección visual
 - Prompts de Stitch listos para generar las pantallas
 - Repo git inicializado y publicado en `github.com/elagarrigue/bb-blues-jam` (`origin` por SSH)
@@ -77,7 +77,7 @@ actualizada a medida que avanzás; no es documentación muerta.
 ### Pendiente inmediato
 
 - Correr `feature-spec` sobre `gradle-kotlin-compose-baseline` (cierra la semana 2)
-- Verificar que los subagentes puedan invocar su skill (ver `PROGRESS.md`, sesión 005)
+- Confirmar en esa primera corrida que el `planner` carga su skill (se le agregó `Skill` a `tools:`)
 - Definir el esquema del Sheet y empezar a cargar el repertorio real, en paralelo
 - Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio
 
@@ -104,6 +104,8 @@ bitácora.
 | D-12 | UI en español rioplatense, código y docs técnicos en inglés |
 | D-13 | Contrato de acciones definido antes del asistente |
 | D-14 | El catálogo del Sheet es el pool de candidatos del LLM |
+| D-15 | El admin es un estado dentro de cada feature, no un módulo |
+| D-16 | Koin para inyección de dependencias, solo por constructor |
 
 ### Las dos que más condicionan el trabajo
 

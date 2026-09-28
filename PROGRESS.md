@@ -102,13 +102,37 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     `tools:` frontmatter, yet each is told to invoke `feature-spec`, `feature-implementer` or
     `feature-validator`. Fixed by adding `Skill` to all three; still to be confirmed on the first
     planner run.
-  - The architecture skill leaves three points open on purpose: the dependency injection
-    framework, the navigation and deeplink scheme, and whether admin UI is its own module. Each is
-    to be decided by the slice that first needs it and recorded in the skill.
-  - The reference presenter sample does not exist in the repo; the skill describes the pattern
-    until `molecule-presenter-harness` lands a canonical sample.
+  - The architecture skill left three points open on purpose: the dependency injection
+    framework, the navigation and deeplink scheme, and whether admin UI is its own module. The
+    first and third were settled in session 006.
+  - The reference presenter sample did not exist in the repo. Addressed in session 006.
 - Next best step: run the planner on `gradle-kotlin-compose-baseline` and review the spec before
   implementing.
+
+### Session 006 — 28 September 2026
+
+- Goal: record the user's decisions on dependency injection and admin, and write the canonical
+  presenter example.
+- Completed:
+  - **D-15, admin is a state, not a module.** The nine `feature-admin` slices moved to
+    `feature-next-jam` (eight mutations) and `feature-info` (passphrase login). No dependency
+    changed.
+  - **D-16, Koin**, constructor injection only; presenters `factory`, repositories `single`, one
+    Koin module per Gradle module, `startKoin` only in `:app`.
+  - `.claude/skills/architecture/references/presenter-pattern.md`: contracts, a next-jam example
+    with a child row presenter and admin state, the screen, Koin wiring, and Molecule tests with
+    fakes. Adapted from Doximity's two articles, with a table of every deviation. Both bugs the
+    bitácora records (`equals`/`hashCode` mismatch, undeclared `invoke`) are present in the
+    articles themselves and are corrected here.
+  - The architecture skill, `AGENTS.md`, `technical-discovery.md`, START-HERE and the bitácora
+    updated for D-15 and D-16; decision range references moved to D-01 … D-16.
+- Verification run: `feature_list.json` rewritten with its original 2-space indentation; the diff
+  is exactly the nine `area` lines. The presenter example is **not compiled** — there is no Compose
+  in the project yet.
+- Evidence captured: this entry; bitácora sections D-15, D-16 and 6.7.
+- Known risk or unresolved issue: the example may not compile as written. `molecule-presenter-harness`
+  must turn it into real code with a green test, then update the reference to match the code.
+- Next best step: run the planner on `gradle-kotlin-compose-baseline`.
 
 ## Notes For The Next Session
 
