@@ -6,15 +6,23 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `module-skeleton`. `gradle-kotlin-compose-baseline` is `accepted`.
+- Current next ready feature: `konsist-isolation-rules`. `gradle-kotlin-compose-baseline` and
+  `module-skeleton` are `accepted`.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green on the Compose baseline, exit
-  0; Konsist, detekt and ktlint still report `NOT WIRED YET`. Launch checked on a Pixel 5 (API 34).
+- Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green with four modules, exit 0;
+  Konsist, detekt and ktlint still report `NOT WIRED YET`. Launch checked on a Pixel 5 (API 34).
 
 ### What exists
 
-A single `:app` module on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
+Four modules: `:app`, `:core:model`, `:core:ui` and `:core:data` (`module-skeleton`, `accepted`).
+`:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
+libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
+depends on all three. Each `:core` module holds only a placeholder marker object; `CoreModelMarkerTest`
+and `:app`'s `ModuleWiringTest` prove they compile and are wired. `compileSdk` and `minSdk` come from
+the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
+
+`:app` is on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
 `accepted`). AGP 9.4.1 with its built-in Kotlin (no `org.jetbrains.kotlin.android`
 plugin), Kotlin/KGP 2.2.10, the Compose compiler plugin `org.jetbrains.kotlin.plugin.compose` on the
 same `kotlin` catalog key, Compose BOM 2025.09.00 (ui, foundation, ui-tooling-preview, ui-tooling for
@@ -28,8 +36,8 @@ by the window theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionB
 `design-tokens-theme` replaces them. Dark only: `values-night` was deleted.
 
 `./gradlew check` runs unit tests and lint only; Konsist, detekt and ktlint are not wired yet, and
-`init.sh` reports which of them are missing rather than pretending they run. The two template test
-files are still the only tests.
+`init.sh` reports which of them are missing rather than pretending they run. The tests are the two
+template tests plus `CoreModelMarkerTest` and `ModuleWiringTest`.
 
 No product code has been written; the placeholder screen is scaffolding.
 
@@ -251,6 +259,53 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: `design-tokens-theme` inherits the cleanup of the temporary
   colors and the preview literal (added to its notes). The gate is still unit tests and lint only.
 - Next best step: plan `module-skeleton`, the next dependency-ready slice.
+
+### Session 011 — 28 September 2026
+
+- Goal: implement `module-skeleton` (implementer subagent).
+- Completed:
+  - Catalog: `compileSdk = "37"`, `minSdk = "24"` versions; `android-library` (agp) and `kotlin-jvm`
+    (kotlin) plugins, both declared at the root `apply false`. `settings.gradle.kts` includes
+    `:core:model`, `:core:ui`, `:core:data`.
+  - `:core:model` on `kotlin-jvm` with Java/JVM target 11 and JUnit; `:core:ui` and `:core:data` on
+    `android-library` with namespaces `com.bbbjam.core.ui`/`.data`, catalog SDK levels, Java 11,
+    `api(project(":core:model"))`. Sources in `src/main/kotlin`; one `/build` `.gitignore` each.
+  - Marker objects `CoreModelMarker`, `CoreUiMarker`, `CoreDataMarker`; `CoreModelMarkerTest`;
+    `:app` reads SDK levels from the catalog, depends on all three, and has `ModuleWiringTest`.
+  - Architecture skill: new "Build Conventions" section.
+- Verification run:
+  - Before: `CI=true ./init.sh` exit 0. After: `./gradlew build --rerun-tasks` successful (263
+    tasks, no compiler warnings), `CI=true ./init.sh` exit 0, the three tools `NOT WIRED YET`. Both
+    new tests: 1 test, 0 failures.
+  - Dependency reports match Scenario 3: `:core:model` only `kotlin-stdlib`; `:core:ui`/`:core:data`
+    exactly one `project ':core:model'`; `:app` all three. `buildEnvironment`: library plugin 9.4.1,
+    KGP 2.2.10 only. No `org.jetbrains.kotlin.android` anywhere.
+  - Negative check: `import android.content.Context` in `CoreModelMarker.kt` made
+    `:core:model:compileKotlin` fail with `Unresolved reference 'android'` (exit 1); reverted, compiles
+    again.
+  - Pixel 5, API 34: `installDebug` exit 0, cold `am start -W` Status ok 775 ms, AndroidRuntime
+    logcat empty; screenshot unchanged from the baseline (dark surface, centered label), by eye only.
+- Evidence captured: `feature_list.json` entry. Screenshot kept in the scratchpad, not the repo.
+- Deviation from the spec: none.
+- Known risk or unresolved issue:
+  - The dependency direction is checked only by hand-read Gradle reports until Konsist lands.
+  - The marker objects and `ModuleWiringTest` lines are scaffolding; the slices named in their KDoc
+    must delete them.
+  - Screenshot colors were not pixel-sampled this time (no image library in the shell).
+- Next best step: run the validator on `module-skeleton`.
+
+### Session 012 — 28 September 2026
+
+- Goal: independent validation of `module-skeleton`.
+- Completed: validator verdict **accept**; status set to `accepted` by the orchestrator.
+- Verification run (by the validator): `CI=true ./init.sh` exit 0; the new tests rerun with
+  `--rerun` and passing; dependency reports matching the architecture skill; one KGP version; the
+  negative check reproduced independently and the file restored byte-identical (SHA-1); Pixel 5 cold
+  start in 686 ms, empty AndroidRuntime logcat, background pixels sampled at `#111318`.
+- Known risk or unresolved issue: dependency direction is still checked by reading Gradle reports
+  until Konsist lands. The validator did not rerun `./gradlew build --rerun-tasks`, so the
+  implementer's "no compiler warnings" claim stands on the implementer's run alone.
+- Next best step: plan `konsist-isolation-rules`.
 
 ## Notes For The Next Session
 

@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "BBBluesJam"
 include(":app")
+include(":core:model")
+include(":core:ui")
+include(":core:data")

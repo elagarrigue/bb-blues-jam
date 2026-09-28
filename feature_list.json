@@ -32,13 +32,24 @@
     "depends_on": [
       "gradle-kotlin-compose-baseline"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "./init.sh completes with no error",
       "settings.gradle.kts includes every new module",
       "The app still launches and renders its placeholder screen"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-09-28 baseline before changes: CI=true ./init.sh exit 0, konsist/detekt/ktlint NOT WIRED YET.",
+      "2026-09-28 after changes: ./gradlew build --rerun-tasks BUILD SUCCESSFUL, 263 actionable tasks executed, configuration cache stored, no w:/e: compiler lines. CI=true ./init.sh exit 0, konsist/detekt/ktlint still NOT WIRED YET.",
+      "Tests: core/model/build/test-results/test/TEST-com.bbbjam.core.model.CoreModelMarkerTest.xml tests=1 failures=0 errors=0; app/build/test-results/testDebugUnitTest/TEST-com.bbbjam.ModuleWiringTest.xml tests=1 failures=0 errors=0. ModuleWiringTest imports all three markers, so it compiles only if :app depends on all three modules.",
+      "grep -n include settings.gradle.kts: include(\":app\"), include(\":core:model\"), include(\":core:ui\"), include(\":core:data\"); nothing else (the other matches are includeGroupByRegex repository filters).",
+      "Dependency reports: :core:model runtimeClasspath = kotlin-stdlib:2.2.10 (+ annotations:13.0) only, no project line, no android/androidx artifact. :core:ui and :core:data releaseRuntimeClasspath = exactly one project ':core:model' plus kotlin-stdlib. :app debugRuntimeClasspath project lines: ':core:model', ':core:ui', ':core:data'.",
+      "./gradlew buildEnvironment: com.android.library.gradle.plugin:9.4.1, org.jetbrains.kotlin.jvm.gradle.plugin:2.2.10, kotlin-gradle-plugin:2.2.10 only; grep for 'kotlin-gradle-plugin:.* ->' found nothing (no version conflict). grep -rn org.jetbrains.kotlin.android --include=*.kts --include=*.toml .: no matches (exit 1).",
+      "Scenario 4 negative check: added 'import android.content.Context' to CoreModelMarker.kt; ./gradlew :core:model:compileKotlin BUILD FAILED, exit 1, with 'e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/model/src/main/kotlin/com/bbbjam/core/model/CoreModelMarker.kt:3:8 Unresolved reference 'android'.' Reverted from a backup copy; grep -c android on the file = 0; :core:model:compileKotlin exit 0 again.",
+      "Device: Pixel 5 (09281FDD4004U6), API 34, landscape as found. ./gradlew :app:installDebug exit 0; logcat -c; am start -W -n com.bbbjam/.MainActivity Status ok, LaunchState COLD, TotalTime 775 ms; logcat -d -s AndroidRuntime empty. Screenshot (kept in the scratchpad, viewed by eye; no pixel sampling, PIL unavailable): dark surface edge to edge, centered 'BB Blues Jam' label, light status and nav icons, no action bar, unchanged from the accepted baseline. No device setting was changed.",
+      "git status after build: core/*/build not listed (each module has its own /build .gitignore).",
+      "28 September 2026: independent validator verdict accept. Reran CI=true ./init.sh (exit 0) and the new tests with --rerun (CoreModelMarkerTest, ModuleWiringTest: 1 test each, 0 failures); dependency reports confirm :core:model has no project or Android dependency, :core:ui and :core:data depend only on :core:model, :app on all three; one KGP version (2.2.10); reproduced the negative check (android import in :core:model fails with Unresolved reference 'android', file restored byte-identical by SHA-1); Pixel 5 cold start 686 ms, empty AndroidRuntime logcat, pixels sampled at #111318."
+    ],
     "notes": "D-03. Feature modules are added by the slices that need them, not up front. No feature module may depend on another; shared contracts live in :core:* and binding happens in :app."
   },
   {

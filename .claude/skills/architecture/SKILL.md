@@ -53,6 +53,36 @@ is. There is no `:feature:admin`.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
 
+## Build Conventions
+
+Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new module follows them.
+
+- **Plugin per module kind.** A pure Kotlin module (`:core:model`) applies `kotlin-jvm`
+  (`org.jetbrains.kotlin.jvm`, `version.ref = "kotlin"`). An Android library (`:core:ui`,
+  `:core:data`, every `:feature:*`) applies `android-library` (`com.android.library`) and relies on
+  AGP 9's built-in Kotlin. Never apply `org.jetbrains.kotlin.android`, and never
+  `com.android.kotlin.multiplatform.library`: the project is Android-only.
+- **Every plugin is declared at the root** `build.gradle.kts` with `apply false`, from the catalog
+  with `alias(...)`. Omitting one there fails configuration with "the plugin is already on the
+  classpath with an unknown version", because AGP already puts KGP and the library plugin on the
+  classpath.
+- **SDK levels come from the catalog**: `compileSdk` and `minSdk` in `[versions]`, read with
+  `libs.versions.minSdk.get().toInt()` (and `release(libs.versions.compileSdk.get().toInt())`) in
+  every Android module. `targetSdk` lives in `:app` only.
+- **Java 11 everywhere**: `compileOptions` `VERSION_11` in Android modules; `java {}` `VERSION_11`
+  plus `compilerOptions.jvmTarget = JvmTarget.JVM_11` in JVM modules. No `jvmToolchain(11)`, which
+  would make foojay download a JDK 11 for nothing.
+- **New modules keep sources in `src/main/kotlin`** (and `src/test/kotlin`). `:app` keeps
+  `src/main/java`. Libraries need no `AndroidManifest.xml`; the namespace comes from the DSL,
+  `com.bbbjam.<path>` (for example `com.bbbjam.core.ui`).
+- **Dependencies**: `:core:ui` and `:core:data` use `api(project(":core:model"))`, because their
+  public contracts expose domain types. `:app` lists each module it uses with
+  `implementation(project(...))`. Use `project(":…")`, not type-safe project accessors.
+- **Each module has its own `.gitignore`** with `/build`; the root one only ignores the root build.
+- **No `build-logic` convention plugins yet.** Plain per-module build files are cheaper at this
+  size. Revisit when the first `:feature:*` module is added or when `detekt-ktlint-gate` needs to
+  configure every module, whichever comes first.
+
 ## Presenter Pattern
 
 Read `references/presenter-pattern.md` before writing a presenter. It holds the contracts, a full
