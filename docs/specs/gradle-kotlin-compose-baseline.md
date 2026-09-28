@@ -291,3 +291,18 @@ E2E: the repo has no persistent E2E command, and none is justified for a placeho
 - [ ] `CI=true ./init.sh` rerun by the validator exits 0.
 - [ ] Manual launch evidence exists, or its absence is stated honestly.
 - [ ] `feature_list.json` status is `passing` (not `accepted`), and `PROGRESS.md` is updated.
+
+## Accepted Deviations
+
+Recorded after validation on 28 September 2026 (verdict: accept).
+
+- **Edge to edge with dark bars.** Scenario 2 and the approach prescribe `enableEdgeToEdge()` with
+  no arguments. The implementation calls
+  `enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))`.
+  The default follows the system's light or dark mode, and on a light-mode phone it drew dark status
+  icons and a light navigation scrim, contradicting "#111318 edge to edge" in a dark-only app. The
+  validator ruled it justified and in scope.
+- **Preview literal.** The validator checklist says each hex appears once, in `colors.xml`, but the
+  approach prescribes `@Preview(backgroundColor = 0xFF111318)`, and annotation arguments must be
+  compile-time constants. The runtime path keeps one literal per value; the preview constant is
+  exempt. `design-tokens-theme` removes both.

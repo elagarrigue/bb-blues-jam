@@ -754,6 +754,36 @@ dificultad son carga del admin, y son precisamente lo que el asistente va a usar
 En una sola imagen aparecieron la hora que faltaba en el dominio y la inconsistencia de nombres que
 justifica el catálogo. Ninguna de las dos salía de los documentos.
 
+### 6.9 Sesión del 28 de septiembre — primera rebanada por el pipeline completo
+
+`gradle-kotlin-compose-baseline` fue la primera *feature* que recorrió `planner` → `implementer` →
+`validator`, con revisión humana de la spec en el medio. Terminó `accepted`.
+
+**El pipeline encontró su propio defecto antes de producir nada.** Los tres subagentes tenían
+instrucciones de invocar su skill, pero ninguno tenía la herramienta para hacerlo. Se corrigió en
+6.6 y el `planner` lo confirmó en la primera corrida: cargó `feature-spec` sin leerlo por ruta.
+
+**El `planner` leyó el repo antes de opinar.** Detectó que AGP 9 ya compila Kotlin, y que agregar el
+plugin de Kotlin habría roto el build. También notó que el *manifest* no tenía ninguna *activity*,
+con lo que "la app arranca" ni siquiera era cierto antes de empezar. Y encontró un problema de orden
+en otra rebanada: `design-tokens-theme` necesitaba `:core:ui` y no dependía de quien lo crea. Se
+corrigió con aprobación humana.
+
+**El dispositivo real encontró lo que ningún documento anticipaba.** Con el teléfono en modo claro,
+`enableEdgeToEdge()` sin argumentos dibujaba íconos oscuros sobre el fondo oscuro. El `implementer`
+se desvió de la spec, lo declaró y lo registró; el `validator` lo reprodujo y lo juzgó justificado.
+Es el caso que justifica que la desviación sea visible y no silenciosa.
+
+**El `validator` también juzgó a la spec.** El checklist pedía cada color una sola vez, y la misma
+spec pedía un literal en el `@Preview`, que no puede leer un recurso. Lo dictaminó como
+inconsistencia de la spec y no defecto del código, y quedó registrado en la spec como desviación
+aceptada.
+
+**Lo que confirmó sobre el método.** Cada rol encontró algo que el anterior no podía ver: el
+`planner`, lo que había en el repo; el `implementer`, lo que pasa en un teléfono; el `validator`, las
+contradicciones del contrato. Ninguno de los tres hallazgos habría salido de un solo agente que
+planifica, implementa y se autoevalúa.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |

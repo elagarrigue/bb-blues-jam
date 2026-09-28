@@ -6,20 +6,32 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `gradle-kotlin-compose-baseline`
+- Current next ready feature: `module-skeleton`. `gradle-kotlin-compose-baseline` is `accepted`.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green against the scaffold, exit 0;
-  Konsist, detekt and ktlint still report `NOT WIRED YET`.
+- Last verified at: 28 September 2026 — `CI=true ./init.sh` ran green on the Compose baseline, exit
+  0; Konsist, detekt and ktlint still report `NOT WIRED YET`. Launch checked on a Pixel 5 (API 34).
 
 ### What exists
 
-A bare Android Studio scaffold: a single `:app` module, Views-based with appcompat and Material
-Views, no Kotlin plugin alias, no Compose, and the two template test files. `./gradlew check`
-currently runs unit tests and lint only; Konsist, detekt and ktlint are not wired yet, and
-`init.sh` reports which of them are missing rather than pretending they run.
+A single `:app` module on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
+`accepted`). AGP 9.4.1 with its built-in Kotlin (no `org.jetbrains.kotlin.android`
+plugin), Kotlin/KGP 2.2.10, the Compose compiler plugin `org.jetbrains.kotlin.plugin.compose` on the
+same `kotlin` catalog key, Compose BOM 2025.09.00 (ui, foundation, ui-tooling-preview, ui-tooling for
+debug only) and activity-compose 1.11.0. appcompat and Material Views are gone, and there is no
+Material 3 yet.
 
-No product code has been written.
+`MainActivity` (a `ComponentActivity`, the launcher) turns on edge-to-edge with dark system bars and
+shows `PlaceholderScreen`: `#111318` full screen with a centered `BB Blues Jam` label in `#E2E2E9`,
+drawn with foundation `BasicText`. Both colors live temporarily in `res/values/colors.xml`, also used
+by the window theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`), until
+`design-tokens-theme` replaces them. Dark only: `values-night` was deleted.
+
+`./gradlew check` runs unit tests and lint only; Konsist, detekt and ktlint are not wired yet, and
+`init.sh` reports which of them are missing rather than pretending they run. The two template test
+files are still the only tests.
+
+No product code has been written; the placeholder screen is scaffolding.
 
 ### Reachable without unblocking the Sheet schema
 
@@ -182,6 +194,63 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - The course skill `feature-spec` points to a reference spec, `docs/specs/bootstrap-nextjs-shell.md`,
     that does not exist here. Harmless; noted.
 - Next best step: spec approved by the user; run the implementer.
+
+### Session 009 — 28 September 2026
+
+- Goal: implement `gradle-kotlin-compose-baseline` (implementer subagent).
+- Completed:
+  - Catalog: added `kotlin` 2.2.10, `composeBom` 2025.09.00, `activityCompose` 1.11.0, the Compose
+    libraries and the `kotlin-compose` plugin (`version.ref = "kotlin"`); removed appcompat and
+    material. Root build declares the plugin `apply false`; `:app` applies it, sets
+    `buildFeatures.compose = true` and swaps the dependencies.
+  - `MainActivity` and `PlaceholderScreen` (with `@Preview`), launcher entry in the manifest,
+    colors/strings/theme reworked, `values-night` deleted.
+  - No version bump was needed.
+- Verification run:
+  - Before: `CI=true ./init.sh` exit 0.
+  - After: `./gradlew :app:assembleDebug` successful; `CI=true ./init.sh` exit 0, the three tools
+    `NOT WIRED YET`. Lint: 4 warnings, all newer-version notices.
+  - `grep` for `appcompat|com.google.android.material` in the catalog and `app/build.gradle.kts`:
+    no matches. `grep` for `MaterialComponents|AppCompat` in `app/src/main`: no matches.
+    `values-night` and `res/layout` absent.
+  - `./gradlew buildEnvironment`: `kotlin-gradle-plugin:2.2.10` and
+    `compose-compiler-gradle-plugin:2.2.10`, neither resolved to another version.
+  - Pixel 5, Android 14 (API 34), system light mode, 3-button nav, held in landscape: `installDebug`
+    exit 0; cold `am start -W` Status ok, 694 ms; `logcat -s AndroidRuntime` empty (cleared first).
+    The screenshot shows `#111318` edge to edge (pixel-sampled, including under both system bars),
+    the centered label (sampled `#E2E2E8`, one step off `#E2E2E9`, capture rounding), no action bar,
+    light system bar icons. Two screencaps right after `am start` caught the window transition with
+    the surface already dark. No white frame was caught, but screencap only samples frames.
+- Evidence captured: `feature_list.json` entry. Screenshots kept out of the repo.
+- Deviation from the spec: the spec calls `enableEdgeToEdge()` with no arguments. On the light-mode
+  device that drew dark status icons (nearly invisible) and a light grey navigation-bar scrim over
+  the dark screen, contradicting "dark `#111318` edge to edge". `MainActivity` now passes
+  `SystemBarStyle.dark(Color.TRANSPARENT)` for both bars, called before `super.onCreate`. This is
+  permanent behavior for a dark-only app, not placeholder-only.
+- Known risk or unresolved issue:
+  - The `@Preview` carries `backgroundColor = 0xFF111318` as the spec requires, so that hex appears
+    twice (once in `colors.xml`), against the validator checklist's "appear once". The annotation
+    needs a compile-time constant, so it cannot read the resource. Goes away with
+    `design-tokens-theme`.
+  - Portrait was also checked (rotation locked to 0 for the shot, then restored): same result,
+    AndroidRuntime empty. Dark system mode was not checked.
+  - Layout Inspector (optional in the spec) was not run.
+- Next best step: run the validator on `gradle-kotlin-compose-baseline`.
+
+### Session 010 — 28 September 2026
+
+- Goal: independent validation of `gradle-kotlin-compose-baseline`.
+- Completed: validator verdict **accept**; status set to `accepted` by the orchestrator. This is the
+  first feature to go through the full planner → implementer → validator pipeline.
+- Verification run (by the validator, not the implementer): `CI=true ./init.sh` exit 0; the spec's
+  grep checks clean; `buildEnvironment` shows KGP and the Compose compiler plugin both at 2.2.10;
+  reinstall and cold start on the Pixel 5 in 636 ms with an empty AndroidRuntime logcat; dark
+  surface edge to edge with light system-bar icons, confirmed by eye.
+- Rulings recorded in the spec's "Accepted Deviations": the `SystemBarStyle.dark` edge-to-edge
+  call is justified and in scope; the `@Preview` hex literal is a spec inconsistency.
+- Known risk or unresolved issue: `design-tokens-theme` inherits the cleanup of the temporary
+  colors and the preview literal (added to its notes). The gate is still unit tests and lint only.
+- Next best step: plan `module-skeleton`, the next dependency-ready slice.
 
 ## Notes For The Next Session
 

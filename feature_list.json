@@ -5,13 +5,23 @@
     "title": "Convert the scaffold to a Kotlin + Compose baseline",
     "user_visible_behavior": "The app launches and shows a single Compose screen with the project's dark theme background instead of the default Views layout.",
     "depends_on": [],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "./init.sh completes with no error",
       "The app launches on a device or emulator and renders a Compose screen",
       "No androidx.appcompat or com.google.android.material View dependency remains in app/build.gradle.kts"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-09-28 baseline before changes: CI=true ./init.sh exit 0, konsist/detekt/ktlint NOT WIRED YET.",
+      "2026-09-28 after changes: ./gradlew :app:assembleDebug BUILD SUCCESSFUL; CI=true ./init.sh exit 0 (build + check: unit tests and lint), konsist/detekt/ktlint still NOT WIRED YET; no error/mismatch lines in the log. Lint: 4 warnings, all GradleDependency/NewerVersionAvailable notices.",
+      "grep -nE 'appcompat|com\\.google\\.android\\.material' app/build.gradle.kts gradle/libs.versions.toml: no matches (exit 1). grep -rnE 'MaterialComponents|AppCompat' app/src/main: no matches (exit 1). app/src/main/res/values-night and res/layout do not exist.",
+      "./gradlew buildEnvironment: org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10 and org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.2.10, no version conflict on either. (kotlin-stdlib/reflect 2.3.21 on the build classpath are Gradle 9.6's embedded Kotlin, a strict constraint, not the KGP.)",
+      "Versions: Kotlin/KGP 2.2.10, Compose compiler plugin 2.2.10 (version.ref kotlin), Compose BOM 2025.09.00, activity-compose 1.11.0. No bump was needed.",
+      "Device: Pixel 5 (redfin), Android 14 / API 34, system in light mode, 3-button nav, landscape. ./gradlew :app:installDebug exit 0; am start -W com.bbbjam/.MainActivity Status ok, COLD, TotalTime 694 ms; logcat -s AndroidRuntime empty after launch (cleared before). Screenshot: full-screen #111318 (pixel-sampled at corners, center, under both system bars), centered 'BB Blues Jam' label sampled #E2E2E8 (1 step from #E2E2E9, capture rounding), no action bar, light status and nav icons. Two screencaps taken immediately after am start show the window transition with the app surface already #111318, no white frame caught (screencap samples frames, so this is supporting evidence, not proof).",
+      "Deviation: first launch with plain enableEdgeToEdge() drew dark status icons and a light grey navigation scrim over #111318 because the device is in light mode (SystemBarStyle.auto). MainActivity now passes SystemBarStyle.dark(Color.TRANSPARENT) for both bars and calls enableEdgeToEdge before super.onCreate; relaunch verified as above.",
+      "Portrait relaunch on the same Pixel 5 (rotation locked to 0, then restored): #111318 edge to edge, centered label, light status and nav icons, AndroidRuntime empty. Dark system mode and Layout Inspector not checked. Known tension: @Preview(backgroundColor = 0xFF111318), required by the spec, repeats the hex outside colors.xml because the annotation needs a constant.",
+      "28 September 2026: independent validator verdict accept. Reran CI=true ./init.sh (exit 0), the spec grep checks, buildEnvironment (KGP and compose-compiler-gradle-plugin both 2.2.10), and reinstalled on the Pixel 5 (API 34): cold start 636 ms, empty AndroidRuntime logcat, dark surface edge to edge with light system-bar icons. Rulings: the SystemBarStyle.dark deviation is justified and in scope; the @Preview hex literal is a spec inconsistency, not a defect."
+    ],
     "notes": "The scaffold is a Views-based Android Studio template: no Kotlin plugin alias, no Compose, appcompat and Material Views only. This slice replaces that baseline. Keep it to build config plus one placeholder screen; theming proper belongs to design-tokens-theme."
   },
   {
@@ -97,7 +107,7 @@
       "Contrast of amber-on-background and muted-text-on-surface is measured and recorded"
     ],
     "evidence": [],
-    "notes": "Tokens are in DESIGN.md. The hex values there are derived from the written direction, not measured from the original mockup: open question recorded in risks-and-open-questions.md. Dark only, no light variant (D-12 for copy language)."
+    "notes": "Tokens are in DESIGN.md. The hex values there are derived from the written direction, not measured from the original mockup: open question recorded in risks-and-open-questions.md. Dark only, no light variant (D-12 for copy language). Cleanup inherited from gradle-kotlin-compose-baseline: remove the temporary background/text colors in app/src/main/res/values/colors.xml and the 0xFF111318 literal in the PlaceholderScreen @Preview."
   },
   {
     "id": "domain-model-types",
