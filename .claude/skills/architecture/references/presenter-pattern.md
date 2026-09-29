@@ -5,10 +5,15 @@ Note-Taking App in Compose". Compose runs both the view and the presentation lay
 a class with a `@Composable present(params)` that returns an immutable `UiModel`. State lives in the
 Compose runtime, so there is no ViewModel (D-02).
 
-This is a reference sketch, not compiled code: the project has no Compose yet. The
-`molecule-presenter-harness` slice turns the contracts below into real code in `:core:ui`, with a
-passing Molecule test. After that, the code in the repository is the source of truth; update this
-file to match it rather than letting the two drift.
+The contracts below are real code in `core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/`
+(package `com.bbbjam.core.ui.presenter`), set up by `molecule-presenter-harness`. The compiled,
+tested example is `SamplePresenter` with `SamplePresenterTest` and `EventHandlerTest` in
+`core/ui/src/test/kotlin/com/bbbjam/core/ui/presenter/`. The code in the repository is the source
+of truth: when it changes, update this file to match rather than letting the two drift.
+
+The next-jam example further down is an **illustrative sketch**: it uses domain types and
+repositories (`JamSong`, `SetlistRepository`, `AdminSession`) that do not exist yet, so it is not
+compiled. `next-jam-read-only-list` turns it into real code.
 
 ## What Changed From The Articles
 
@@ -18,33 +23,71 @@ file to match it rather than letting the two drift.
 | View calls `uiModel.events(event)` with no `invoke` declared | `operator fun invoke` is declared | The article's call does not compile (bitácora 3.5) |
 | `data class EventHandler` | Plain `class` with an explicit `toString` | A data class would also generate `copy`/`componentN` around a lambda, and its equality is overridden anyway |
 | `RecompositionClock.Immediate` | `RecompositionMode.Immediate` | Renamed in current Molecule |
+| Articles run presenter tests without Android stubs | `unitTests.isReturnDefaultValues = true` in each presenter module | The Android Compose runtime calls `android.os.Trace`, which throws in JVM unit tests |
 | Use cases with `operator fun invoke` | Repository interfaces in `:core:data` | The project's mutation contract is repository functions (D-13) |
 | Mockposable to mock child presenters | Real child presenter with fake repositories | One less compiler plugin; fakes also exercise the child |
 | `produceState` per flow | One `combine`d flow with `collectAsState(null)` | One emission per data change keeps Molecule tests deterministic |
 
-## Contracts — `:core:ui`, package `presenter`
+## Contracts — `:core:ui`, package `com.bbbjam.core.ui.presenter`
+
+Each type is one file; the blocks below are the files verbatim.
+
+`core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/UiModel.kt`:
 
 ```kotlin
+package com.bbbjam.core.ui.presenter
+
+import androidx.compose.runtime.Immutable
+
+/**
+ * What a presenter returns: display values and [EventHandler]s only. No repositories, no Android
+ * types, no raw lambdas.
+ */
 @Immutable
 interface UiModel
+```
 
+`core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/UiEvent.kt`:
+
+```kotlin
+package com.bbbjam.core.ui.presenter
+
+/** Marker for the events a [UiModel] accepts, declared as a sealed `Event : UiEvent` inside it. */
 interface UiEvent
+```
 
+`core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/Presenter.kt`:
+
+```kotlin
+package com.bbbjam.core.ui.presenter
+
+import androidx.compose.runtime.Composable
+
+/**
+ * A composable presenter (D-02): state lives in the Compose runtime and [present] returns an
+ * immutable [UiModel]. Dependencies arrive through the constructor; runtime inputs as [Params].
+ */
 interface Presenter<Model : UiModel, Params> {
     @Composable
     fun present(params: Params): Model
 }
+```
+
+`core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/EventHandler.kt`:
+
+```kotlin
+package com.bbbjam.core.ui.presenter
+
+import androidx.compose.runtime.Immutable
 
 /**
  * Wraps an event lambda so a UiModel stays comparable. Two handlers are equal when their keys are
- * equal, which lets tests compare a whole UiModel against one built with `EventHandler {}`.
+ * equal, and `hashCode` derives from the same key, which lets tests compare a whole UiModel
+ * against one built with `EventHandler {}`.
  * Give a key only when a handler is the sole changing property of a model.
  */
 @Immutable
-class EventHandler<E : UiEvent>(
-    private val key: Any? = null,
-    val handle: (E) -> Unit,
-) {
+class EventHandler<E : UiEvent>(private val key: Any? = null, val handle: (E) -> Unit) {
     operator fun invoke(event: E) = handle(event)
 
     override fun equals(other: Any?): Boolean = other is EventHandler<*> && key == other.key
@@ -55,7 +98,7 @@ class EventHandler<E : UiEvent>(
 }
 ```
 
-## Example — Next Jam Screen
+## Example — Next Jam Screen (illustrative sketch)
 
 The admin is not a separate module or screen. It is state inside the feature: the same presenter
 reads the admin flag and adds admin events and controls to the same `UiModel`. Mutations go
@@ -282,6 +325,47 @@ class BluesJamApp : Application() {
 
 Fakes backed by `MutableStateFlow`, no emulator, no mocking library required. Each test asserts a
 state transition, not just the first emission.
+
+### Module setup
+
+Every module with presenters (proven in `:core:ui`, file `core/ui/build.gradle.kts`):
+
+- applies `alias(libs.plugins.kotlin.compose)` with `buildFeatures { compose = true }`;
+- depends on `:core:ui`, which exposes the Compose runtime (BOM-aligned) as `api`;
+- adds `testImplementation` of `libs.junit`, `libs.molecule.runtime` (2.2.0), `libs.turbine`
+  (1.2.1) and `libs.kotlinx.coroutines.test` (1.10.2);
+- sets `testOptions { unitTests.isReturnDefaultValues = true }`. Without it every Molecule test
+  fails with `Method beginSection in android.os.Trace not mocked`: the module resolves the Android
+  Compose runtime, which calls `android.os.Trace` against the stub `android.jar`. The flag is
+  scoped to unit tests; presenters must not call Android anyway.
+
+### Compiled example — `SamplePresenterTest`
+
+`SamplePresenter` (test sources) reads a `Flow<String>` with `collectAsState(initial = null)`,
+keeps `expanded` in `remember`, and toggles it through an `EventHandler`. The test drives it with a
+`MutableSharedFlow<String>(replay = 1)` and compares whole models built by
+`data(title, expanded) = SampleUiModel.Data(title, expanded, EventHandler {})`:
+
+```kotlin
+    @Test
+    fun `toggle expanded event changes the state`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { SamplePresenter(titles).present(Unit) }.test {
+            assertEquals(SampleUiModel.Loading, awaitItem())
+            titles.emit("Sweet Home Chicago")
+            val first = awaitItem() as SampleUiModel.Data
+            assertEquals(data("Sweet Home Chicago", expanded = false), first)
+
+            first.events(SampleUiModel.Data.Event.ToggleExpanded)
+            assertEquals(data("Sweet Home Chicago", expanded = true), awaitItem())
+
+            // The first model's handler still writes through the current state, not a stale copy.
+            first.events(SampleUiModel.Data.Event.ToggleExpanded)
+            assertEquals(data("Sweet Home Chicago", expanded = false), awaitItem())
+        }
+    }
+```
+
+### Illustrative sketch — next-jam tests
 
 ```kotlin
 class NextJamPresenterTest {

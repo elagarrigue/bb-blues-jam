@@ -6,14 +6,14 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `molecule-presenter-harness` (also ready: `design-tokens-theme`,
-  `domain-model-types`). Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
-  `konsist-isolation-rules`, `detekt-ktlint-gate`. The bootstrap gate is complete.
+- Current next ready feature: `design-tokens-theme` (also ready: `domain-model-types`). Accepted:
+  `gradle-kotlin-compose-baseline`, `module-skeleton`, `konsist-isolation-rules`,
+  `detekt-ktlint-gate`, `molecule-presenter-harness`. The bootstrap gate is complete.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 — `CI=true ./init.sh` exit 0 with detekt and ktlint in
-  `check`; it prints `konsist: wired` (8 Konsist tests, 0 failures), `detekt: wired`,
-  `ktlint: wired`.
+- Last verified at: 28 September 2026 — `CI=true ./init.sh` exit 0; it prints `konsist: wired`
+  (8 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:ui` runs
+  `EventHandlerTest` (6) and `SamplePresenterTest` (3) on the JVM, 0 failures.
   Last launch check on a Pixel 5 (API 34) was in session 011; this slice changed nothing visible.
 
 ### What exists
@@ -21,9 +21,18 @@
 Four modules: `:app`, `:core:model`, `:core:ui` and `:core:data` (`module-skeleton`, `accepted`).
 `:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
 libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
-depends on all three. Each `:core` module holds only a placeholder marker object; `CoreModelMarkerTest`
-and `:app`'s `ModuleWiringTest` prove they compile and are wired. `compileSdk` and `minSdk` come from
-the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
+depends on all three. `:core:model` and `:core:data` still hold only a placeholder marker object;
+`CoreModelMarkerTest` and `:app`'s `ModuleWiringTest` prove they compile and are wired.
+
+`:core:ui` holds the presenter contracts of D-02 in `com.bbbjam.core.ui.presenter`: `UiModel`,
+`UiEvent`, `Presenter` and `EventHandler` (`equals` and `hashCode` both from `key`, `operator invoke`
+declared) (`molecule-presenter-harness`, `accepted`). It applies the Compose compiler plugin and
+exposes the Compose BOM and `androidx.compose.runtime:runtime` as `api` (no `ui`/`foundation`).
+Its test sources hold a sample presenter with no domain types, `SamplePresenterTest` (Molecule
+2.2.0 + Turbine 1.2.1 + coroutines-test 1.10.2, asserting transitions after events) and
+`EventHandlerTest`. Unit tests set `isReturnDefaultValues = true` because the Android Compose
+runtime calls `android.os.Trace`; every presenter module needs the same (architecture skill).
+`compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
 
 A fifth, test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
 `ModuleIsolationTest`: 8 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
@@ -53,7 +62,8 @@ applies `kotlin-jvm` or an Android plugin, so a new module gets them with no bui
 no baseline file. `init.sh` prints `konsist: wired` only when `:konsist-test:test` exists and its
 results hold at least one test, and `detekt`/`ktlint: wired` only when `check --dry-run` schedules
 the tool's task in every module that compiles Kotlin; otherwise it names the modules missing it.
-The unit tests are the two template tests plus `CoreModelMarkerTest` and `ModuleWiringTest`.
+The unit tests are the two template tests plus `CoreModelMarkerTest`, `ModuleWiringTest`,
+`EventHandlerTest` and `SamplePresenterTest`.
 
 No product code has been written; the placeholder screen is scaffolding.
 
@@ -455,6 +465,55 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     approved text, so it waits for the user.
   - detekt is an alpha; the ktlint-gradle stale-results quirk (see session 016).
 - Next best step: plan `molecule-presenter-harness`.
+
+### Session 018 — 28 September 2026
+
+- Goal: implement `molecule-presenter-harness` (spec `docs/specs/molecule-presenter-harness.md`).
+- Completed: catalog entries (molecule 2.2.0, turbine 1.2.1, coroutines-test 1.10.2, BOM-managed
+  compose runtime); `core/ui/build.gradle.kts` exactly as Decision 2; the four contracts in
+  `core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/`; `SamplePresenter`,
+  `SamplePresenterTest` and `EventHandlerTest` in `core/ui/src/test`; `CoreUiMarker` deleted and
+  removed from `ModuleWiringTest`; `presenter-pattern.md` (contracts verbatim, module setup,
+  compiled example, next-jam labelled illustrative), architecture `SKILL.md` and
+  `docs/technical-discovery.md` updated.
+- Verification run:
+  - Baseline `CI=true ./init.sh` exit 0, three `wired`.
+  - `./gradlew ktlintFormat` exit 0; `./gradlew check --continue` exit 0; 9/9 `:core:ui` tests.
+  - Trace probe (`isReturnDefaultValues = false`): 3/3 `SamplePresenterTest` fail with
+    `Method beginSection in android.os.Trace not mocked`; restored (SHA-1 `fb191622…` match).
+  - Scenario 2 (no-op toggle): `toggle expanded event changes the state` and `local state survives
+    a new value from the source` fail, `No value produced in 3s`; restored (SHA-1 `2d82f6e4…`).
+  - Scenario 3 (`hashCode` from `handle`): the unkeyed-hash, same-key-hash and hash-set tests fail
+    (`expected:<3> but was:<5>` for the set); restored (SHA-1 `414efa5f…`).
+  - Scenario 4 (no `invoke`): `compileDebugUnitTestKotlin` fails, `Expression 'events' … cannot be
+    invoked as a function`; restored (SHA-1 `414efa5f…`), green.
+  - `:core:ui` compile + lint with `--warning-mode all --rerun-tasks`: no warning, lint no issues.
+  - Final `CI=true ./init.sh` exit 0, `konsist: wired` (8/8), `detekt: wired`, `ktlint: wired`;
+    warm 6.41 / 6.19 s. No device used or needed.
+- Evidence captured: `feature_list.json` entry, status `passing` (awaiting the validator).
+- Known risk or unresolved issue:
+  - `isReturnDefaultValues` makes any stubbed Android call in a presenter unit test return a default
+    instead of throwing; presenters must not call Android (Decision 4).
+  - The unit-test classpath of `:core:ui` resolves kotlin-stdlib 2.2.20 (Molecule's requirement)
+    while the compiler is 2.2.10; main classpaths are unchanged.
+  - Carried over: detekt alpha, ktlint-gradle stale-results quirk, `init.sh` empty-grep exit.
+- Next best step: validate `molecule-presenter-harness`.
+
+### Session 019 — 28 September 2026
+
+- Goal: independent validation of `molecule-presenter-harness`.
+- Completed: validator verdict **accept**; status set to `accepted`. The `CoreUiMarker.kt`
+  deletion, left unstaged by the implementer after an accidental `git rm` and reset, is staged with
+  this commit.
+- Verification run (by the validator): gate exit 0 with three `wired`; `:core:ui` tests 9/9 and
+  Konsist 8/8; its own negative controls — presenter ignoring new source values, toggle not
+  flipping, `equals` ignoring the key, a no-op `invoke`, and `isReturnDefaultValues = false` — each
+  failed as expected and were restored by SHA-1; the four contract blocks in `presenter-pattern.md`
+  match the source files verbatim.
+- Known risk or unresolved issue: `isReturnDefaultValues` makes a stubbed Android call in a
+  presenter unit test return a default instead of failing; `:core:ui`'s unit-test classpath
+  resolves kotlin-stdlib 2.2.20 against the 2.2.10 compiler (no warnings).
+- Next best step: plan `design-tokens-theme`.
 
 ## Notes For The Next Session
 

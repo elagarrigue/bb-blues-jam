@@ -96,15 +96,24 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   `android_studio` style, Composable naming exception) and `config/detekt/detekt.yml` (overrides on
   top of detekt's defaults). `./gradlew ktlintFormat` fixes formatting. Never add a baseline file,
   `ignoreFailures`, or a blanket rule disable without the user's approval.
+- **A module with presenters** (set by `molecule-presenter-harness`, spec
+  `docs/specs/molecule-presenter-harness.md`) applies `kotlin-compose` with
+  `buildFeatures.compose = true`, gets the Compose runtime through `:core:ui` (which exposes the
+  BOM and `androidx.compose.runtime:runtime` as `api`), adds `testImplementation` junit,
+  molecule-runtime, turbine, kotlinx-coroutines-test, and sets
+  `testOptions.unitTests.isReturnDefaultValues = true`. Without that flag every Molecule test fails
+  on `android.os.Trace` "not mocked", because the Android Compose runtime calls it.
 - **No `build-logic` convention plugins yet.** Deferred to the first `:feature:*` module, which will
   duplicate Android-library boilerplate; the root quality block can move there then. A convention
   plugin must be applied per module, which the quality gate must not depend on.
 
 ## Presenter Pattern
 
-Read `references/presenter-pattern.md` before writing a presenter. It holds the contracts, a full
-next-jam example with a child presenter and admin state, the screen, the Koin wiring, and Molecule
-tests. In short:
+Read `references/presenter-pattern.md` before writing a presenter. It holds the contracts, the
+module setup, a compiled sample test, and an illustrative next-jam example with a child presenter
+and admin state, the screen, the Koin wiring, and Molecule tests. The contracts are real code in
+`:core:ui`, package `com.bbbjam.core.ui.presenter`; the compiled example is `SamplePresenter` with
+`SamplePresenterTest` in `core/ui/src/test/kotlin/com/bbbjam/core/ui/presenter/`. In short:
 
 - A presenter is a class implementing `Presenter<Model, Params>` with a `@Composable present(params)`
   that returns an immutable `UiModel`. Dependencies arrive through the constructor via Koin; runtime

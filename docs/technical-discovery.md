@@ -108,6 +108,10 @@ advantage of this backend: the fallback is a spreadsheet anyone can fix.
 ## Testing and Verification
 
 - **Presenter tests with Molecule**, no Android instrumentation required (a direct benefit of D-02).
+  Wired: Molecule 2.2.0, Turbine 1.2.1 and kotlinx-coroutines-test 1.10.2 as `testImplementation`
+  in `:core:ui` (`SamplePresenterTest`, `EventHandlerTest`), run on the JVM by `./gradlew check`.
+  Presenter modules set `unitTests.isReturnDefaultValues = true`, because the Android Compose
+  runtime calls `android.os.Trace`; no Robolectric.
 - **Konsist** for module isolation. This is evidence, not just hygiene: its output is part of the
   course deliverable. Wired: Konsist 0.17.3 in the test-only module `:konsist-test`
   (`ModuleIsolationTest`, 8 tests), run by `./gradlew check`.

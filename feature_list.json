@@ -129,12 +129,26 @@
     "depends_on": [
       "module-skeleton"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "./gradlew check runs the presenter test on the JVM with no emulator",
       "The test asserts at least one state transition, not just a first emission"
     ],
-    "evidence": [],
+    "evidence": [
+      "28 September 2026 baseline before changes: CI=true ./init.sh exit 0; konsist, detekt, ktlint wired.",
+      "Catalog: molecule 2.2.0, turbine 1.2.1, kotlinxCoroutines 1.10.2 (coroutines-test), androidx-compose-runtime (BOM-managed). core/ui/build.gradle.kts exactly as Decision 2: kotlin-compose plugin, buildFeatures.compose, testOptions.unitTests.isReturnDefaultValues = true, api(platform(bom)) + api(runtime), four testImplementation libs. debugUnitTestRuntimeClasspath resolves molecule-runtime 2.2.0, turbine 1.2.1, kotlinx-coroutines-test 1.10.2, androidx.compose.runtime:runtime 1.9.1 (stdlib 2.2.10 -> 2.2.20 on the test classpath only).",
+      "Contracts UiModel, UiEvent, Presenter, EventHandler in core/ui/src/main/kotlin/com/bbbjam/core/ui/presenter/ (Decision 5); equals and hashCode both from key, operator invoke declared. CoreUiMarker.kt deleted; its import and assertion removed from :app ModuleWiringTest, KDoc reworded.",
+      "SamplePresenter, SamplePresenterTest, EventHandlerTest in core/ui/src/test only. ./gradlew ktlintFormat exit 0; ./gradlew check --continue exit 0 on first run.",
+      "android.os.Trace finding reproduced: with isReturnDefaultValues = false all 3 SamplePresenterTest tests fail ('Expected item but found Error(RuntimeException)', cause 'Method beginSection in android.os.Trace not mocked'). Restored by copy, core/ui/build.gradle.kts SHA-1 fb1916225b0c5a1cd25d51e9fd2820e946526559 match.",
+      "Scenario 2: toggle turned into 'expanded = expanded'. :core:ui:testDebugUnitTest exit 1, 9 tests, 2 failed: 'toggle expanded event changes the state' and 'local state survives a new value from the source', both 'TurbineAssertionError: No value produced in 3s'. Restored by copy, SamplePresenter.kt SHA-1 2d82f6e4ffe19e2be6d3653bb648895498c9742a match; rerun exit 0.",
+      "Scenario 3: hashCode changed to handle.hashCode(). exit 1, 3 failed: 'unkeyed handlers with different lambdas are equal with equal hash codes' and 'handlers with the same key are equal with equal hash codes' (assertEquals on hash codes, e.g. expected:<1437941060> but was:<1210830415>), 'a hash set keeps one handler per key' (expected:<3> but was:<5>). Restored by copy, EventHandler.kt SHA-1 414efa5fd8bf8288385cf111cc4227ca6ae40c65 match; rerun exit 0.",
+      "Scenario 4: 'operator fun invoke' line removed. :core:ui:compileDebugUnitTestKotlin exit 1: SamplePresenterTest.kt:33/37/49 \"Expression 'events' of type 'EventHandler<SampleUiModel.Data.Event>' cannot be invoked as a function. Function 'invoke()' is not found.\", EventHandlerTest.kt:72 \"Unresolved reference 'handler'\", :73 \"Unresolved reference 'invoke'\". Restored by copy, SHA-1 414efa5f... match; :core:ui:testDebugUnitTest exit 0.",
+      ":core:ui compileDebugUnitTestKotlin + lintDebug --warning-mode all --rerun-tasks: exit 0, no compiler warning, no Gradle deprecation; lint 'No issues found.'",
+      "Scenario 1: CI=true ./init.sh exit 0 with 'konsist: wired', 'detekt: wired', 'ktlint: wired'. EventHandlerTest 6, SamplePresenterTest 3 (testDebugUnitTest), ModuleIsolationTest 8, ExampleUnitTest 1, ModuleWiringTest 1, CoreModelMarkerTest 1; 0 failures. Warm timings 6.41 s, 6.19 s.",
+      "Scenario 5: no emulator or device attached for any run; no Robolectric. No baseline file (git ls-files has no baseline xml); .editorconfig, config/detekt/detekt.yml, root build.gradle.kts and init.sh unchanged (git diff empty). Logs in the session scratchpad.",
+      "Docs: presenter-pattern.md contracts replaced with the four files verbatim, 'What Changed' row for isReturnDefaultValues, Module setup list and the compiled SamplePresenterTest toggle test; next-jam example labelled illustrative sketch. Architecture SKILL.md Build Conventions bullet and Presenter Pattern section; docs/technical-discovery.md Testing line.",
+      "28 September 2026: independent validator verdict accept. CI=true ./init.sh exit 0 with three wired; :core:ui testDebugUnitTest --rerun: EventHandlerTest 6/6, SamplePresenterTest 3/3, Konsist 8/8. Its own negative controls: presenter ignoring new source values (take(1)) and toggle writing true instead of flipping each fail their transition test; equals ignoring the key and a no-op invoke are caught; isReturnDefaultValues=false reproduces the android.os.Trace not mocked failure. The four contract blocks in presenter-pattern.md compared verbatim to the source files. SHA-1 of all 14 touched files identical before and after."
+    ],
     "notes": "D-02, no ViewModels. Two known traps in the reference pattern, both documented in the bitácora section 3.5: hashCode derived from handle while equals compared key, breaking the contract, and the invoke operator used without being declared. Do not reintroduce either. The canonical example to implement is .claude/skills/architecture/references/presenter-pattern.md: put the contracts (Presenter, UiModel, UiEvent, EventHandler) in :core:ui, make its sample compile with a green Molecule test, then update the reference to match the real code. Inherited from module-skeleton: if this is the first slice to put code in :core:ui (before design-tokens-theme), add the Compose plugin, BOM and buildFeatures.compose there, and delete the CoreUiMarker placeholder and its line in the :app ModuleWiringTest."
   },
   {
