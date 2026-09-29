@@ -841,6 +841,47 @@ calidad de las specs más que cualquier instrucción de formato. Las tres decisi
 estas rebanadas —que Konsist necesitaba declarar entradas, que `init.sh` mentía y que detekt estable
 no corre— salieron de ejecutar, no de leer documentación.
 
+### 6.11 Sesión del 28 de septiembre — el *gate* completo, el patrón compilado y el tema
+
+Tres rebanadas más cerraron `accepted` —`detekt-ktlint-gate`, `molecule-presenter-harness` y
+`design-tokens-theme`— con el flujo corriendo de corrido y frenando solo donde había una decisión
+humana. Frenó dos veces, y las dos eran decisiones de verdad: poner una versión alfa de detekt en el
+*gate* (ninguna estable corre sobre el Java 25 del *daemon*) y commitear fuentes de terceros. La
+tercera, cómo se construye el tema, quedó registrada como D-17.
+
+**El patrón de los artículos, por fin compilado.** Lo que en 6.7 era un ejemplo "de referencia, no
+compilado" pasó a ser código con tests: `EventHandler` con `equals` y `hashCode` derivados de la
+misma clave, `invoke` declarado, y un *presenter* de muestra probado con Molecule. Los dos errores de
+los artículos de Doximity ahora tienen tests que fallan si vuelven; el `validator` los rompió de
+formas que el `implementer` no había probado —un `equals` que ignora la clave, un `invoke` vacío— y
+los tests los atraparon. La referencia de la skill dejó de ser prosa: copia los archivos reales, y
+el `validator` lo verificó con un script, letra por letra.
+
+**Un hallazgo que no estaba en ningún documento.** Los tests de Molecule fallaban en la JVM porque el
+runtime de Compose de Android llama a `android.os.Trace`. Ni los artículos ni la documentación lo
+mencionaban; apareció al ejecutar. Se resolvió con una línea que ahora es convención para todo módulo
+con *presenters*, con su costo anotado: en esos tests, una llamada accidental a Android devuelve un
+valor por defecto en lugar de fallar.
+
+**El ámbar dejó de ser un color y pasó a ser un rol.** La regla de diseño de 4.2 —"el ámbar no decora,
+marca lo accionable"— ahora es código: el ámbar no tiene nombre público, solo existe como
+`primaryAction`, `slotOpen`, `key`, `published` y `activeFilter`, y un test falla si aparece en otro
+rol. El `validator` lo probó pintando de ámbar el tinte de superficie y el color de archivo, y los dos
+casos fallaron. El contraste se midió en vez de estimarse: ámbar sobre fondo 10,35, texto atenuado
+sobre superficie 10,10, todo AA y AAA. Y en el teléfono apareció un detalle que ningún documento
+podía anticipar: la pantalla del Pixel 5 trabaja en Display P3, así que el ámbar `#FFB300` se lee
+`#F4B63F` en una captura; la spec calculó los valores esperados en P3 y coincidieron.
+
+**El *gate* se volvió más estricto a cada paso, nunca más laxo.** Detekt y ktlint entraron sin
+archivo de *baseline* que escondiera problemas; `init.sh` pasó a decir "cableado" solo si la
+herramienta corre en todos los módulos, nombrando los que falten; y una regla nueva de Konsist impide
+literales de color fuera de `:core:ui`. Los subagentes ahora tratan cualquier `NOT WIRED` como defecto.
+
+**Lo que confirmó sobre el método.** La autonomía no reemplazó el criterio humano: lo concentró.
+Corriendo sin pedir permiso en cada etapa, el flujo se detuvo exactamente donde una decisión
+cambiaba el proyecto —una dependencia alfa, archivos de terceros, una regla de arquitectura nueva— y
+en ningún otro lado. Las preguntas pasaron de "¿sigo?" a "¿esto?".
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
