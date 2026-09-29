@@ -784,6 +784,46 @@ aceptada.
 contradicciones del contrato. Ninguno de los tres hallazgos habría salido de un solo agente que
 planifica, implementa y se autoevalúa.
 
+### 6.10 Sesión del 28 de septiembre — el esqueleto, Konsist y el gate que decía la verdad
+
+Dos rebanadas más cerraron `accepted`, `module-skeleton` y `konsist-isolation-rules`, y una tercera
+quedó planificada y frenada a propósito. El patrón se repitió en las tres: el `planner` dejó de
+escribir especificaciones sobre lo que creía y pasó a probarlas en una copia descartable del repo
+antes de proponerlas.
+
+**Una regla que no puede fallar no prueba nada.** Cada restricción se demostró rota y después
+reparada: un `import android.*` en `:core:model` que no compila, y en Konsist ocho reglas, cada una
+con su violación plantada. Para la regla central —ninguna *feature* importa otra— todavía no existían
+módulos de *feature*. Se crearon dos descartables, `feature/probe-a` y `feature/probe-b`, se mostró
+que el *gate* falla con un import cruzado indicando archivo y línea, y se borraron comprobando por
+*hash* que el árbol quedó idéntico. Esa salida es la evidencia que en la semana 5 va a mostrar que el
+asistente no tocó los módulos de *feature*.
+
+**El *gate* podía mentir de dos maneras, y las dos aparecieron al prototipar.** Gradle daba por "al
+día" el test de Konsist aunque se violara una regla en otro módulo, porque los fuentes ajenos no eran
+entradas de la tarea: el *gate* quedaba verde con el aislamiento roto. Y `init.sh` marcaba Konsist como
+"cableado" solo porque el módulo se llama `konsist-test`, aunque no corriera ningún test. Las dos se
+corrigieron, y el cambio a `init.sh` se hizo recién con aprobación explícita: `AGENTS.md` prohíbe
+cambiar reglas de verificación en silencio, y un *gate* que dice "wired" sin correr nada es peor que
+no tener *gate*.
+
+**El validador también encontró lo que la spec decía mal.** La spec pedía reemplazar "las dos
+líneas" de un comentario que tenía una sola. El `implementer` aplicó lo aprobado al pie de la letra y
+avisó del resto en lugar de reescribirlo por su cuenta; el `validator` lo dictaminó inconsistencia de
+la spec, y el comentario se corrigió después con aprobación.
+
+**Un bloqueo real, por primera vez.** Al planificar detekt, el prototipo mostró que ninguna versión
+estable corre en este entorno: el *daemon* de Gradle está fijado en Java 25 por la plantilla de
+Android Studio, y detekt 1.23.8 falla de tres maneras distintas. Solo corre la 2.0.0-alpha.6. Poner
+una alfa en el *gate* o bajar el JDK del *daemon* es una decisión de proyecto, no de un agente, y el
+flujo se detuvo ahí. También me encontré un olvido propio de la sesión del esquema:
+`technical-discovery.md` seguía diciendo que el esquema no estaba definido.
+
+**Lo que confirmó sobre el método.** Pedirle a un agente que pruebe antes de especificar cambió la
+calidad de las specs más que cualquier instrucción de formato. Las tres decisiones más importantes de
+estas rebanadas —que Konsist necesitaba declarar entradas, que `init.sh` mentía y que detekt estable
+no corre— salieron de ejecutar, no de leer documentación.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |

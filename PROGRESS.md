@@ -383,6 +383,21 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - Konsist 0.17.3 parses with Kotlin 2.0.21 while the project compiles with 2.2.10.
 - Next best step: plan `detekt-ktlint-gate`.
 
+### Session 015 — 28 September 2026
+
+- Goal: plan `detekt-ktlint-gate`.
+- Completed: `docs/specs/detekt-ktlint-gate.md`, prototyped on a throwaway clone. ktlint via
+  ktlint-gradle 14.2.0 (ktlint 1.8.0, `android_studio` style); detekt applied from a root
+  `subprojects {}` block to every Kotlin module; Compose naming exceptions in `.editorconfig` and
+  `config/detekt/detekt.yml`; today's tree passes with no baseline after config plus small fixes.
+- Finding: **no stable detekt runs here.** detekt 1.23.8 fails three ways on the Java 25 daemon
+  (invalid `--jvm-target`, its Kotlin 2.0.21 compiler cannot parse `25.0.2`, and forcing Kotlin
+  2.2.10 is rejected). detekt 2.0.0-alpha.6 works, including with the configuration cache.
+- **Blocked on the user:** approval of the spec's `init.sh` change (a tool counts as wired only when
+  its task is scheduled in every Kotlin module; today a name match anywhere says `wired`), and the
+  choice between the detekt alpha and lowering the daemon JVM pin to 21 for detekt 1.23.8.
+- Next best step: the user decides; then the implementer runs the spec.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with
