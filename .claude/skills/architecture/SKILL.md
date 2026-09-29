@@ -5,7 +5,7 @@ description: Canonical architecture and design patterns for BB Blues Jam — mod
 
 # Architecture
 
-The rules below come from decisions D-02, D-03, D-04, D-09, D-13, D-15 and D-16, with their reasoning in
+The rules below come from decisions D-02, D-03, D-04, D-09, D-13, D-15, D-16 and D-17, with their reasoning in
 `bb-blues-jam-bitacora.md`. Do not reverse one without saying so and waiting for confirmation.
 
 ## Canonical Pattern
@@ -40,6 +40,12 @@ is. There is no `:feature:admin`.
 - **A mutation** → a repository function in `:core:data`, then registered in the `:app` action
   registry. Never a lambda that only exists in a composable.
 - A color, spacing or type value → `:core:ui` tokens from `DESIGN.md`. Never a literal in a feature.
+  Screens wrap in `BluesJamTheme { }` (already done in `MainActivity`) and read `BluesJamTheme.colors`,
+  `.typography`, `.shapes` and `.spacing` (package `com.bbbjam.core.ui.theme`), never
+  `MaterialTheme.colorScheme` and never the internal palette (D-17). Amber has no public name; pick
+  the role (`primaryAction`, `slotOpen`, `key`, `published`, `activeFilter` and their `on…`
+  colors). A component slice that uses a Material 3 component sets its colors explicitly from
+  `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
 - A component used by two features → `:core:ui`. Never copy it between features.
 - Wiring an implementation to its interface → the Koin module of the module that owns the
   implementation; `:app` only lists modules in `startKoin`.
@@ -53,7 +59,10 @@ is. There is no `:feature:admin`.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
 
-Konsist enforces the first three rules, the package roots and the ViewModel ban in
+Konsist enforces the first three rules, the package roots, the ViewModel ban and
+`no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
+`:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
+colors) in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
@@ -103,6 +112,14 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   molecule-runtime, turbine, kotlinx-coroutines-test, and sets
   `testOptions.unitTests.isReturnDefaultValues = true`. Without that flag every Molecule test fails
   on `android.os.Trace` "not mocked", because the Android Compose runtime calls it.
+- **`:core:ui` is the design system** (set by `design-tokens-theme`, spec
+  `docs/specs/design-tokens-theme.md`). Besides the runtime it exposes `androidx.compose.ui:ui` and
+  `androidx.compose.material3:material3` as `api` (BOM-managed, material3 1.3.2), so a module that
+  depends on it gets the token types and the themed components with no dependency line of its own.
+  Fonts are bundled static TTFs in `core/ui/src/main/res/font`, with their SIL OFL 1.1 texts in
+  `core/ui/src/main/assets/licenses`; no downloadable fonts, because the app is used offline. The
+  only XML color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, used by
+  the `:app` window theme and guarded by `WindowBackgroundTest` against drift from the token.
 - **No `build-logic` convention plugins yet.** Deferred to the first `:feature:*` module, which will
   duplicate Android-library boilerplate; the root quality block can move there then. A convention
   plugin must be applied per module, which the quality gate must not depend on.

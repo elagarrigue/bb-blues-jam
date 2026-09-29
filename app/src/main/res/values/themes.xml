@@ -1,6 +1,7 @@
 <resources>
-    <!-- Dark-only window theme without Material Components; Compose draws everything else. -->
+    <!-- Dark-only window theme without Material Components; Compose draws everything else.
+         The window color comes from :core:ui, next to the token it mirrors. -->
     <style name="Theme.BBBluesJam" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/background</item>
+        <item name="android:windowBackground">@color/bluesjam_window_background</item>
     </style>
 </resources>

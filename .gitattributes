@@ -1,0 +1,3 @@
+# Third-party licence texts must stay byte-identical to upstream on every checkout.
+core/ui/src/main/assets/licenses/*.txt -text
+*.ttf binary

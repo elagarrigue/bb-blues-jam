@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window is drawn before any Kotlin runs, so its color must be a resource. It mirrors
+         BluesJamPalette.Background, and WindowBackgroundTest fails if the two drift apart.
+         No other color belongs in XML: every other color is a token in BluesJamColors. -->
+    <color name="bluesjam_window_background">#FF111318</color>
+</resources>

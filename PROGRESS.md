@@ -6,15 +6,18 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `design-tokens-theme` (also ready: `domain-model-types`). Accepted:
+- Current next ready feature: `domain-model-types` (also ready: `info-screen`). Accepted:
   `gradle-kotlin-compose-baseline`, `module-skeleton`, `konsist-isolation-rules`,
-  `detekt-ktlint-gate`, `molecule-presenter-harness`. The bootstrap gate is complete.
+  `detekt-ktlint-gate`, `molecule-presenter-harness`, `design-tokens-theme`.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 — `CI=true ./init.sh` exit 0; it prints `konsist: wired`
-  (8 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:ui` runs
-  `EventHandlerTest` (6) and `SamplePresenterTest` (3) on the JVM, 0 failures.
-  Last launch check on a Pixel 5 (API 34) was in session 011; this slice changed nothing visible.
+- Last verified at: 28 September 2026 (session 021) — `CI=true ./init.sh` exit 0; it prints
+  `konsist: wired` (9 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:ui` runs
+  `EventHandlerTest` (6), `SamplePresenterTest` (3), `BluesJamColorsTest` (3),
+  `BluesJamTypographyTest` (2), `ContrastTest` (6) and `WindowBackgroundTest` (1) on the JVM, 0
+  failures. Launch check on the Pixel 5 (API 34) in session 021: cold start, empty AndroidRuntime
+  logcat, background `#111318`, label Barlow Condensed Bold. The display runs in Display P3, so
+  saturated colors in screenshots read as their P3 encoding (amber `#FFB300` → `#F4B63F`).
 
 ### What exists
 
@@ -27,7 +30,17 @@ depends on all three. `:core:model` and `:core:data` still hold only a placehold
 `:core:ui` holds the presenter contracts of D-02 in `com.bbbjam.core.ui.presenter`: `UiModel`,
 `UiEvent`, `Presenter` and `EventHandler` (`equals` and `hashCode` both from `key`, `operator invoke`
 declared) (`molecule-presenter-harness`, `accepted`). It applies the Compose compiler plugin and
-exposes the Compose BOM and `androidx.compose.runtime:runtime` as `api` (no `ui`/`foundation`).
+exposes the Compose BOM, `androidx.compose.runtime:runtime`, `ui` and `material3` (1.3.2) as `api`.
+
+`:core:ui` also holds the design system in `com.bbbjam.core.ui.theme` (`design-tokens-theme`,
+`passing`; D-17): `BluesJamTheme { }` wraps `MaterialTheme` with every dark-scheme role, the type
+scale and the shapes mapped from the `DESIGN.md` tokens, and provides `LocalContentColor` = `text`.
+Screens read `BluesJamTheme.colors` / `.typography` / `.shapes` / `.spacing`. The palette is
+`internal`; amber is public only as `primaryAction`, `slotOpen`, `key`, `published`,
+`activeFilter` (plus their `on…` colors). Fonts are bundled static TTFs (Barlow Condensed
+SemiBold/Bold/ExtraBold, Chivo Regular) with their OFL texts in `assets/licenses`. The only XML
+color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, guarded by
+`WindowBackgroundTest`. `ThemeShowcase` (public, with a `@Preview`) draws every role and style.
 Its test sources hold a sample presenter with no domain types, `SamplePresenterTest` (Molecule
 2.2.0 + Turbine 1.2.1 + coroutines-test 1.10.2, asserting transitions after events) and
 `EventHandlerTest`. Unit tests set `isReturnDefaultValues = true` because the Android Compose
@@ -35,25 +48,27 @@ runtime calls `android.os.Trace`; every presenter module needs the same (archite
 `compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
 
 A fifth, test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
-`ModuleIsolationTest`: 8 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
+`ModuleIsolationTest`: 9 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
 (no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
-`:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, and allowed
-`project(":…")` dependencies in `core/*`/`feature/*` build files). Module groups are read from paths,
+`:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
+`project(":…")` dependencies in `core/*`/`feature/*` build files, and no color literal outside
+`:core:ui`). Module groups are read from paths,
 so the first `:feature:*` module is covered without editing the suite. The test task declares every
-`.kt`/`.kts` file as an input, so a change elsewhere reruns it (`konsist-isolation-rules`, `passing`).
+`.kt`/`.kts` file as an input, so a change elsewhere reruns it (`konsist-isolation-rules`, `accepted`).
 
 `:app` is on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
 `accepted`). AGP 9.4.1 with its built-in Kotlin (no `org.jetbrains.kotlin.android`
 plugin), Kotlin/KGP 2.2.10, the Compose compiler plugin `org.jetbrains.kotlin.plugin.compose` on the
 same `kotlin` catalog key, Compose BOM 2025.09.00 (ui, foundation, ui-tooling-preview, ui-tooling for
-debug only) and activity-compose 1.11.0. appcompat and Material Views are gone, and there is no
-Material 3 yet.
+debug only) and activity-compose 1.11.0. appcompat and Material Views are gone; Material 3 arrives
+through `:core:ui`.
 
 `MainActivity` (a `ComponentActivity`, the launcher) turns on edge-to-edge with dark system bars and
-shows `PlaceholderScreen`: `#111318` full screen with a centered `BB Blues Jam` label in `#E2E2E9`,
-drawn with foundation `BasicText`. Both colors live temporarily in `res/values/colors.xml`, also used
-by the window theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`), until
-`design-tokens-theme` replaces them. Dark only: `values-night` was deleted.
+shows `PlaceholderScreen` inside `BluesJamTheme`: the background token full screen with a centered
+`BB Blues Jam` label in the `h1` style (Barlow Condensed Bold 28sp), drawn with an M3 `Text` that
+inherits the `text` color. `:app` has no colors of its own: its `colors.xml` is gone, and the window
+theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`) uses
+`@color/bluesjam_window_background` from `:core:ui`. Dark only: `values-night` was deleted.
 
 `./gradlew check` runs unit tests, Android lint, the Konsist suite, detekt 2.0.0-alpha.6 and ktlint
 1.8.0 (ktlint-gradle 14.2.0). The root `build.gradle.kts` applies both tools to every module that
@@ -63,7 +78,8 @@ no baseline file. `init.sh` prints `konsist: wired` only when `:konsist-test:tes
 results hold at least one test, and `detekt`/`ktlint: wired` only when `check --dry-run` schedules
 the tool's task in every module that compiles Kotlin; otherwise it names the modules missing it.
 The unit tests are the two template tests plus `CoreModelMarkerTest`, `ModuleWiringTest`,
-`EventHandlerTest` and `SamplePresenterTest`.
+`EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
+`ContrastTest` and `WindowBackgroundTest`.
 
 No product code has been written; the placeholder screen is scaffolding.
 
@@ -532,6 +548,54 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Finding for later device checks: the Pixel 5 display runs in Display P3, so screenshots return
   P3-encoded values (amber `#FFB300` reads `#F4B63F`); the spec lists the expected P3 values.
 - Next best step: the implementer runs the spec.
+
+### Session 021 — 28 September 2026
+
+- Goal: implement `design-tokens-theme` (spec `docs/specs/design-tokens-theme.md`).
+- Completed: token sources in `core/ui/src/main/kotlin/com/bbbjam/core/ui/theme/`
+  (`BluesJamPalette`, `BluesJamColors`, `BluesJamTypography` with `BluesJamFonts`, `BluesJamDimens`,
+  `BluesJamTheme` with `BluesJamMaterial`, `ThemeShowcase`); the four OFL fonts and two licence
+  texts fetched from the pinned commits, all six SHA-256 matching the spec;
+  `bluesjam_window_background` in `:core:ui`; `material3` in the catalog and `ui`/`material3` as
+  `api` in `:core:ui`; `:app` draws the placeholder from the tokens, and its `colors.xml` and the
+  preview literal are gone; the Konsist rule `no-color-literal-outside-core-ui` (user-approved);
+  architecture skill and `docs/technical-discovery.md` updated.
+- Verification run: `CI=true ./init.sh` baseline exit 0; after `./gradlew ktlintFormat`, exit 0
+  with three `wired` lines; `:core:ui` 21 tests, `ModuleIsolationTest` 9, 0 failures; detekt 0
+  findings; `:core:ui` lint clean. Negative probes, each restored with a matching SHA-1: an extra
+  amber role, a missing `secondary` (M3 baseline `#CCC2DC` leaks), a drifted window color, a
+  low-contrast `textMuted` (2.15 and 2.33) and two color literals in `PlaceholderScreen.kt` (Konsist
+  and `init.sh` exit 1) each failed the named test. Pixel 5, landscape, Display P3: cold start
+  530 ms, empty AndroidRuntime log, background `#111318`, label `#E2E2E8`. In the `ThemeShowcase`
+  probe every swatch was within 1 per channel of its token converted to P3, and the three Barlow
+  weights and Chivo rendered distinctly. `MainActivity` was restored (SHA-1 OK) and reinstalled.
+- Evidence captured: `feature_list.json` → `design-tokens-theme` (status `passing`); logs and
+  screenshots in the session scratchpad only.
+- Known risk or unresolved issue: `core.autocrlf=true` and no `.gitattributes`. The licence texts
+  are stored as LF blobs that hash-match upstream, but a fresh Windows checkout writes CRLF working
+  copies with different SHA-256 values (TTFs are binary and unaffected). The Konsist rule is
+  textual: it misses `Color.Red`, `Color.parseColor` and XML colors, and would flag an ARGB hex in
+  a comment. `ThemeShowcase` ignores window insets, so its first row sits under the status bar;
+  it is a probe, not a screen.
+- Next best step: independent validation of `design-tokens-theme`.
+
+### Session 022 — 28 September 2026
+
+- Goal: independent validation of `design-tokens-theme`.
+- Completed: validator verdict **accept**; status set to `accepted`. Orchestrator follow-ups:
+  `.gitattributes` keeps the OFL licence texts byte-identical to upstream on any checkout
+  (`core.autocrlf=true` would otherwise write CRLF copies) and marks `*.ttf` binary; the
+  architecture skill now lists the Konsist colour rule's named-argument gap (`Color(red = …)`); a
+  stale `passing` for `konsist-isolation-rules` in "What exists" corrected.
+- Verification run (by the validator): gate exit 0 with three `wired`; `:core:ui` 21/21 and
+  Konsist 9/9; fonts and licences re-fetched from the pinned commits with matching SHA-256 on disk,
+  in the blob and in the APK; contrast recomputed; its own probes (amber on `surfaceTint`, amber on
+  `archive`, an Int ARGB literal and a numeric `Color(…)` in an `:app` test, two typography
+  drifts) all caught; Pixel 5 background `#111318` and label `#E2E2E8` under Display P3.
+- Known risk or unresolved issue: `BluesJamTypographyTest` does not check line heights; the
+  ThemeShowcase swatch probe was run by the implementer only; M3 component defaults (e.g. the
+  navigation bar indicator) are not design decisions — each component slice sets them from tokens.
+- Next best step: plan `domain-model-types`.
 
 ## Notes For The Next Session
 

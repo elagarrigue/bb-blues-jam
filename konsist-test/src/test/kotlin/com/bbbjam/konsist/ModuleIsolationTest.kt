@@ -102,6 +102,15 @@ class ModuleIsolationTest {
     }
 
     @Test
+    fun `colors outside core ui come from its tokens`() {
+        scope.files
+            .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
+            .assertFalse(testName = "no-color-literal-outside-core-ui") { file ->
+                COLOR_LITERAL.containsMatchIn(file.text)
+            }
+    }
+
+    @Test
     fun `module build files declare only allowed project dependencies`() {
         val violations = listOf(CORE, FEATURE)
             .flatMap { group -> File(rootDir, group).listFiles().orEmpty().toList() }
@@ -150,6 +159,8 @@ class ModuleIsolationTest {
         const val CORE = "core/"
         const val FEATURE = "feature/"
         const val CORE_MODEL = "core/model"
+        const val CORE_UI = "core/ui"
+        const val KONSIST_TEST = "konsist-test"
         const val PROJECT_PACKAGE = "com.bbbjam."
         const val CORE_PACKAGE = "com.bbbjam.core."
         const val FEATURE_PACKAGE = "com.bbbjam.feature."
@@ -164,6 +175,9 @@ class ModuleIsolationTest {
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")
         val TYPE_SAFE_ACCESSOR = Regex("""\bprojects\.""")
+
+        /** A `Color(…)` built from a number, or an ARGB hex literal such as a preview `backgroundColor`. */
+        val COLOR_LITERAL = Regex("""\bColor\(\s*(0x|\d)|\b0x[0-9A-Fa-f]{8}L?\b""")
 
         val rootDir: File by lazy {
             File(requireNotNull(System.getProperty("bbbjam.rootDir")) { "bbbjam.rootDir is not set" })

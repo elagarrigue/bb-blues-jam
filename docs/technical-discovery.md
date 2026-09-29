@@ -16,6 +16,8 @@ and no hidden gestures without a visible alternative.
 ## Candidate Stack
 
 - **Kotlin + Jetpack Compose**, Material 3 as a base with a distinct identity.
+  Fonts (Barlow Condensed, Chivo) are bundled in the APK, not downloadable fonts, because the app
+  is used offline in a bar and a fallback to Roboto would change widths and lose the identity (`docs/specs/design-tokens-theme.md`, Decision 4).
 - **Composable presenters instead of ViewModels** (D-02). State lives in the Compose runtime,
   presenters are tested with Molecule without Android, and the `UiModel` stays a plain data object —
   which in phase 2 lets it be exposed as assistant context with no adapter layer.
