@@ -585,12 +585,19 @@ Queda como recordatorio de método: el markup de un tema es una muestra, no el m
 sobre lo renderizado y no sobre el primer fragmento que uno abre.
 
 **Lo que sí aportó, y era el objetivo del export:** valores reales. La paleta de `DESIGN.md` dejó de
-ser una propuesta derivada de una descripción escrita y pasó a estar medida — fondo `#0C0E13`,
-superficies `#111318` y `#1A1B21`, borde `#282A30`, ámbar `#FFB300` — más una tipografía con
+ser una propuesta derivada de una descripción escrita y pasó a estar medida — fondo `#111318`,
+superficies `#1A1B21` y `#1E1F25`, borde `#514532`, ámbar `#FFB300` — más una tipografía con
 nombre, Barlow Condensed, coherente con la dirección de cartelera vintage. Cuatro tokens siguen
 derivados (`textMuted`, `slotFilled`, `archive`, `error`) porque el export los describió con
 palabras y no con valores. Queda anotado cuáles son cuáles: un token medido y uno inventado no
 merecen la misma confianza.
+
+> *Corrección del 28 de septiembre.* Esta sección decía originalmente fondo `#0C0E13` y borde
+> `#282A30`, tomados de una primera reconciliación contra el resumen del export. La revisión del
+> código desempaquetado se quedó con el *front matter* Material 3, y `DESIGN.md` ya tenía los
+> valores correctos; esta prosa no se había actualizado. Lo detectó el `planner` de
+> `design-tokens-theme`, que además aclaró que los cuatro tokens "derivados" sí son valores del
+> esquema Material 3 del export: lo derivado es qué rol se le asignó a cada uno.
 
 También confirmó que la dirección sobrevivió el viaje de ida y vuelta: ámbar con semántica
 funcional estricta y sus cuatro usos reservados, cupos cubiertos en gris, 48dp, sin scroll

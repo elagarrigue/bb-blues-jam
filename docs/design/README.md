@@ -95,8 +95,10 @@ jack"*.
 
 ### What it contributed
 
-Real token values, now reconciled into `../../DESIGN.md`: background `#0C0E13`, surfaces `#111318`
-and `#1A1B21`, border `#282A30`, amber `#FFB300`. And a named typeface for headings and keys,
+Real token values, now reconciled into `../../DESIGN.md`: background `#111318`, surfaces `#1A1B21`
+and `#1E1F25`, border `#514532`, amber `#FFB300` — the export's Material 3 front matter, which the
+review below settles on. (A first reconciliation took `#0C0E13` and `#282A30` from the export's
+summary; the unpacked code uses neither.) And a named typeface for headings and keys,
 **Barlow Condensed**.
 
 ## The export, reviewed

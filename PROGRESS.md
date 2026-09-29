@@ -515,6 +515,23 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   resolves kotlin-stdlib 2.2.20 against the 2.2.10 compiler (no warnings).
 - Next best step: plan `design-tokens-theme`.
 
+### Session 020 — 28 September 2026
+
+- Goal: plan `design-tokens-theme`.
+- Completed: `docs/specs/design-tokens-theme.md`, prototyped on a throwaway clone and on the Pixel 5.
+  Material 3 underneath with plain token objects on top in `com.bbbjam.core.ui.theme`; amber exposed
+  only through semantic roles; bundled fonts (Barlow Condensed SemiBold/Bold/ExtraBold, Chivo
+  Regular) because the app is used offline; one XML color left for the pre-Compose window, guarded
+  by a drift test; WCAG contrast measured (amber on background 10.35, textMuted on surface 10.10,
+  onPrimary on primary 9.52 — all AA and AAA).
+- Also: `docs/design/README.md` and bitácora §6.5 still quoted `#0C0E13`/`#282A30` from a first
+  reconciliation; corrected to the values `DESIGN.md` already had.
+- **Blocked on the user:** fetching and committing third-party font files (OFL), adding a Konsist
+  rule (`no-color-literal-outside-core-ui`), and whether the theme approach becomes a D-xx decision.
+- Finding for later device checks: the Pixel 5 display runs in Display P3, so screenshots return
+  P3-encoded values (amber `#FFB300` reads `#F4B63F`); the spec lists the expected P3 values.
+- Next best step: the user decides; then the implementer runs the spec.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with
