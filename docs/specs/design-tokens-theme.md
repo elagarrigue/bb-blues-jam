@@ -358,12 +358,12 @@ paths with sampled values, and the full SHA-256 of the six fetched files (protot
 - [ ] The gate is green with three `wired` lines. No baseline, no suppression. Scope matches Expected File Changes.
 - [ ] The architecture skill and technical discovery are updated. `feature_list.json` is `passing`, not `accepted`.
 
-## Pending User Decisions
+## User Approvals
 
-Recorded 28 September 2026. Implementation waits on these:
+Recorded 28 September 2026, before implementation:
 
-- Fetching and committing the four third-party TTFs and two SIL OFL 1.1 licence texts from GitHub at
-  pinned commits (google/fonts for Barlow Condensed, Omnibus-Type/Chivo for Chivo).
-- Adding the Konsist rule `no-color-literal-outside-core-ui` to the gate (tightens verification).
-- Whether "Material 3 underneath, plain `BluesJamTheme.*` tokens on top; screens never read
-  `MaterialTheme.colorScheme`" becomes a project decision (D-17) or stays in the architecture skill.
+- **Fonts: approved.** Fetch the four TTFs and two SIL OFL 1.1 licence texts from GitHub at the
+  pinned commits in this spec, verify the SHA-256 values, and commit them.
+- **Konsist rule `no-color-literal-outside-core-ui`: approved** as written.
+- **Theme approach recorded as D-17**: Material 3 underneath, `BluesJamTheme.*` semantic tokens on
+  top; screens never read `MaterialTheme.colorScheme` directly.

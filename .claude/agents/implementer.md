@@ -32,7 +32,7 @@ repository, mutation or Gradle dependency. It says where each piece goes; do not
 
 ## Project rules
 
-These come from decisions already made (D-01 … D-16, with reasoning in
+These come from decisions already made (D-01 … D-17, with reasoning in
 `bb-blues-jam-bitacora.md`). Breaking one is a defect even when the spec is silent.
 
 - **No ViewModels.** Composable presenters; state lives in the Compose runtime; tests use Molecule

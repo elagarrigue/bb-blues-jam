@@ -18,6 +18,7 @@ without saying so and waiting for confirmation.
   `:app`, and Konsist enforces it (D-03).
 - **Admin is a state inside each feature**, never a `:feature:admin` module (D-15).
 - **Koin with constructor injection only.** No `get()` or `inject()` inside classes (D-16).
+- **Screens read `BluesJamTheme.*` tokens**, never `MaterialTheme.colorScheme`; amber only by role (D-17).
 - **No mutation may exist only in the UI.** Every mutation is a repository function or a deeplink,
   because the phase 2 assistant must perform anything the admin can do by hand (D-13).
 - **One authority per entity.** The Sheet owns the catalog and past jams; the app owns the upcoming
@@ -62,7 +63,7 @@ Read optional docs only when relevant:
 - `docs/sheet-schema.md` — when touching the Sheet, Apps Script, or the `:core:data` mappers.
 - `DESIGN.md` — when touching any UI. It carries the design tokens and the visual rules.
 - `bb-blues-jam-design-prompt.md` — per-screen design requirements. Source of truth for screens.
-- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 16 decisions (D-01 … D-16) and
+- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 17 decisions (D-01 … D-17) and
   their reasoning live here. Consult when a change might contradict one.
 
 ## Startup Workflow
@@ -124,4 +125,4 @@ A feature is done only when all are true:
 ## Reminder
 
 No ViewModels. No feature module imports another. No mutation only in the UI. `passing` is not
-`accepted`. When a change would contradict D-01 … D-16, stop and ask.
+`accepted`. When a change would contradict D-01 … D-17, stop and ask.

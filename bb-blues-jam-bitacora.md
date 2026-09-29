@@ -358,6 +358,16 @@ y repositorios a mano. Cada módulo expone su propio módulo de Koin y solo `:ap
 Descartados Hilt, por el costo de kapt/KSP y de la ceremonia de anotaciones para una app de este
 tamaño, y la inyección manual, que con cuatro *features* y tres repositorios empieza a pesar en `:app`.
 
+### D-17 — Material 3 por debajo, tokens propios por encima
+`BluesJamTheme` envuelve `MaterialTheme` con un esquema oscuro armado íntegramente desde los tokens
+de `DESIGN.md`, para que los componentes Material 3 hereden la paleta y las fuentes. Pero las
+pantallas leen `BluesJamTheme.colors`, `.typography`, `.shapes` y `.spacing`, nunca
+`MaterialTheme.colorScheme`. El ámbar no tiene nombre público: solo existe como rol
+(`primaryAction`, `slotOpen`, `key`, `published`, `activeFilter`), que es la regla de diseño de que
+el ámbar marca lo accionable y no decora. Se descartó usar solo Material 3, porque sus nombres de rol
+(`primary`, `tertiary`) no dicen para qué se usa un color, y un sistema totalmente propio, porque
+cada componente Material habría que reescribirlo. Sin tema claro ni color dinámico.
+
 ---
 
 # Parte III — Harness y seguimiento

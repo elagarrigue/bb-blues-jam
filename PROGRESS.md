@@ -526,11 +526,12 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   onPrimary on primary 9.52 — all AA and AAA).
 - Also: `docs/design/README.md` and bitácora §6.5 still quoted `#0C0E13`/`#282A30` from a first
   reconciliation; corrected to the values `DESIGN.md` already had.
-- **Blocked on the user:** fetching and committing third-party font files (OFL), adding a Konsist
-  rule (`no-color-literal-outside-core-ui`), and whether the theme approach becomes a D-xx decision.
+- Decisions by the user: fonts **approved** (fetch and commit the pinned OFL TTFs and licences);
+  the Konsist rule **approved**; the theme approach **recorded as D-17** (bitácora, START-HERE,
+  AGENTS.md, subagents' decision range).
 - Finding for later device checks: the Pixel 5 display runs in Display P3, so screenshots return
   P3-encoded values (amber `#FFB300` reads `#F4B63F`); the spec lists the expected P3 values.
-- Next best step: the user decides; then the implementer runs the spec.
+- Next best step: the implementer runs the spec.
 
 ## Notes For The Next Session
 
