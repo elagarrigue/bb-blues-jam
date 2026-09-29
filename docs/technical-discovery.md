@@ -111,7 +111,9 @@ advantage of this backend: the fallback is a spreadsheet anyone can fix.
 - **Konsist** for module isolation. This is evidence, not just hygiene: its output is part of the
   course deliverable. Wired: Konsist 0.17.3 in the test-only module `:konsist-test`
   (`ModuleIsolationTest`, 8 tests), run by `./gradlew check`.
-- **detekt and ktlint** for static analysis and formatting.
+- **detekt and ktlint** for static analysis and formatting. Wired: detekt 2.0.0-alpha.6 (no stable
+  detekt runs on the Java 25 Gradle daemon) and ktlint 1.8.0 through ktlint-gradle 14.2.0, applied
+  to every Kotlin module by the root `build.gradle.kts` and run by `./gradlew check`.
 - `init.sh` wraps the Gradle gate — `./gradlew build` and `./gradlew check` — and is run by
   `feature-flow` on every validation, so it must be fast and non-blocking.
 

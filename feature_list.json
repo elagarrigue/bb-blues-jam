@@ -100,13 +100,25 @@
     "depends_on": [
       "module-skeleton"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "./gradlew check runs both tools and passes on the current tree",
       "A deliberate violation fails the gate, then is reverted",
       "./init.sh reports detekt and ktlint as wired"
     ],
-    "evidence": [],
+    "evidence": [
+      "28 September 2026 baseline before changes: CI=true ./init.sh exit 0; konsist wired, detekt/ktlint NOT WIRED YET. Warm timings 7.41 s, 6.97 s, 7.16 s.",
+      "Versions pinned in the catalog: detekt 2.0.0-alpha.6 (dev.detekt, user-approved alpha), ktlint-gradle 14.2.0, ktlint 1.8.0. Applied from the root build.gradle.kts subprojects block (kotlin-jvm and com.android.base hooks); no module build file changed; config in .editorconfig and config/detekt/detekt.yml exactly as Decision 2; no baseline file (git ls-files has no *baseline*.xml).",
+      "Source fixes, formatting only: explicit import org.junit.Assert.assertEquals in both template tests, then ./gradlew ktlintFormat (exit 0) sorted imports, added final newlines, and joined ModuleIsolationTest.featureFiles onto one line.",
+      "./gradlew check --warning-mode all --rerun-tasks: exit 0, no Gradle deprecation warning (only JDK sun.misc.Unsafe lines from kotlin-compiler-embeddable 2.2.21). :X:detekt and :X:ktlintMainSourceSetCheck/ktlintTestSourceSetCheck ran in :app, :core:model, :core:ui, :core:data, :konsist-test (plus :app ktlintAndroidTestSourceSetCheck).",
+      "Scenario 1: CI=true ./init.sh exit 0 with 'konsist: wired', 'detekt: wired', 'ktlint: wired'. Konsist 8 tests, 0 failures; ExampleUnitTest, ModuleWiringTest, CoreModelMarkerTest 1 test each, 0 failures. Warm timings after: 6.21 s, 6.22 s, 6.09 s.",
+      "Scenario 2 (ktlint): CoreModelMarker.kt line 8 changed to 'const val PATH:String   =   \":core:model\"'. ./gradlew check --continue exit 1, one failed task :core:model:ktlintMainSourceSetCheck ('CoreModelMarker.kt:8:20 Missing spacing after \":\"', 8:27 and 8:31 'Unnecessary long whitespace'); :core:model:detekt passed. CI=true ./init.sh exit 1. Restored by copy: SHA-1 bb307eb9694686b2aa6c84b8e72ab32bd97e14d5 matches the backup; CI=true ./init.sh exit 0, three wired.",
+      "Scenario 3 (detekt): appended a five-line detektProbe with an empty if block. ./gradlew check --continue exit 1, one failed task :core:model:detekt ('CoreModelMarker.kt:12:20 This empty block of code can be removed. [EmptyIfBlock]'). CI=true ./init.sh exit 1. Restored by copy, SHA-1 bb307eb9… match; CI=true ./init.sh exit 0, three wired.",
+      "Scenario 4: PlaceholderScreen.kt unchanged (git diff app/src/main empty) and neither detekt FunctionNaming nor ktlint function-naming reports it (gate green).",
+      "Scenario 5 (init.sh Decision 5, user-approved, applied exactly as written; bash -n clean; Konsist detection untouched): with the com.android.base hook removed, CI=true ./init.sh exit 0 and prints 'detekt: NOT WIRED YET (missing from check in: :app :core:data :core:ui)' and the same for ktlint; with the HEAD root build file, both name ':app :core:data :core:model :core:ui :konsist-test'. Restored by copy, build.gradle.kts SHA-1 2eebddfb8624a6bc3989f2a609f36b4fd106ce26 match; CI=true ./init.sh exit 0, three wired. The old detection printed 'wired' for both with the tools applied.",
+      "No device check: nothing user-visible changed. Logs in the session scratchpad.",
+      "28 September 2026: independent validator verdict accept. bash -n clean; CI=true ./init.sh exit 0 with konsist, detekt and ktlint wired; check --rerun-tasks runs detekt and ktlint in all five Kotlin modules and Konsist 8/8. Reproduced with its own probes: ktlint-only in :core:data (Unexpected spacing before ':'), detekt-only in :core:ui (TooGenericExceptionThrown), init.sh NOT WIRED naming :app :core:data :core:ui when the com.android.base hook is removed, and a non-Composable PascalCase function flagged by both tools (the exception is scoped to @Composable). SHA-1 of all 25 touched files identical before and after."
+    ],
     "notes": "Keep the gate fast; feature-flow runs init.sh on every validation."
   },
   {

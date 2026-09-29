@@ -19,9 +19,8 @@ echo "== Build =="
 
 echo ""
 echo "== Check =="
-# ./gradlew check runs unit tests, lint and the Konsist suite (:konsist-test).
-# detekt and ktlint are wired in by their own feature slices; once registered they are
-# picked up by the task-name check below. Konsist needed its own check (see konsist_wired).
+# ./gradlew check runs unit tests, Android lint, the Konsist suite (:konsist-test), detekt and
+# ktlint (both applied to every Kotlin module by the root build.gradle.kts).
 ./gradlew check --quiet
 
 echo ""
@@ -39,13 +38,25 @@ if konsist_wired; then
 else
   echo "  konsist: NOT WIRED YET (see feature_list.json)"
 fi
-for tool in detekt ktlint; do
-  if ./gradlew tasks --all --quiet 2>/dev/null | grep -qi "$tool"; then
-    echo "  $tool: wired"
+# detekt and ktlint are Gradle plugins. Each counts as wired only when `check` itself schedules
+# its task in every module that compiles Kotlin (check has already passed above, so they ran
+# clean). A Kotlin module that escapes a tool is named, and the tool is reported as not wired.
+check_plan=$(./gradlew check --dry-run --quiet 2>/dev/null || true)
+modules_running() { # $1: task-name regex; prints the paths of the modules whose check runs it
+  grep -oE "^:[^ ]*:$1( |$)" <<<"$check_plan" | sed -E 's/ $//; s/:[^:]+$//' | sort -u
+}
+kotlin_modules=$(modules_running 'compile[A-Za-z]*Kotlin')
+report_tool() { # $1: tool name, $2: task-name regex of its analysis task
+  local missing
+  missing=$(comm -23 <(echo "$kotlin_modules") <(modules_running "$2") | tr '\n' ' ' | sed 's/ $//')
+  if [ -n "$kotlin_modules" ] && [ -z "$missing" ]; then
+    echo "  $1: wired"
   else
-    echo "  $tool: NOT WIRED YET (see feature_list.json)"
+    echo "  $1: NOT WIRED YET (missing from check in: ${missing:-every module})"
   fi
-done
+}
+report_tool detekt 'detekt'
+report_tool ktlint 'ktlint[A-Za-z]*SourceSetCheck'
 
 echo ""
 echo "Baseline OK."

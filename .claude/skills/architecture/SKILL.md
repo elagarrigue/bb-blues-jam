@@ -89,9 +89,16 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   public contracts expose domain types. `:app` lists each module it uses with
   `implementation(project(...))`. Use `project(":…")`, not type-safe project accessors.
 - **Each module has its own `.gitignore`** with `/build`; the root one only ignores the root build.
-- **No `build-logic` convention plugins yet.** Plain per-module build files are cheaper at this
-  size. Revisit when the first `:feature:*` module is added or when `detekt-ktlint-gate` needs to
-  configure every module, whichever comes first.
+- **Quality tools come from the root build file** (set by `detekt-ktlint-gate`, spec
+  `docs/specs/detekt-ktlint-gate.md`). The root `build.gradle.kts` applies detekt and ktlint to
+  every module that applies `kotlin-jvm` or an Android plugin, so a new module needs no tool
+  configuration and gets both in its `check`. Configuration lives in `.editorconfig` (ktlint,
+  `android_studio` style, Composable naming exception) and `config/detekt/detekt.yml` (overrides on
+  top of detekt's defaults). `./gradlew ktlintFormat` fixes formatting. Never add a baseline file,
+  `ignoreFailures`, or a blanket rule disable without the user's approval.
+- **No `build-logic` convention plugins yet.** Deferred to the first `:feature:*` module, which will
+  duplicate Android-library boilerplate; the root quality block can move there then. A convention
+  plugin must be applied per module, which the quality gate must not depend on.
 
 ## Presenter Pattern
 

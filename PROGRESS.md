@@ -6,13 +6,14 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `detekt-ktlint-gate` (also ready: `molecule-presenter-harness`,
-  `design-tokens-theme`, `domain-model-types`). Accepted: `gradle-kotlin-compose-baseline`,
-  `module-skeleton`, `konsist-isolation-rules`.
+- Current next ready feature: `molecule-presenter-harness` (also ready: `design-tokens-theme`,
+  `domain-model-types`). Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+  `konsist-isolation-rules`, `detekt-ktlint-gate`. The bootstrap gate is complete.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 — `CI=true ./init.sh` exit 0 with `:konsist-test` added;
-  it prints `konsist: wired` (8 Konsist tests, 0 failures); detekt and ktlint still `NOT WIRED YET`.
+- Last verified at: 28 September 2026 — `CI=true ./init.sh` exit 0 with detekt and ktlint in
+  `check`; it prints `konsist: wired` (8 Konsist tests, 0 failures), `detekt: wired`,
+  `ktlint: wired`.
   Last launch check on a Pixel 5 (API 34) was in session 011; this slice changed nothing visible.
 
 ### What exists
@@ -45,11 +46,14 @@ drawn with foundation `BasicText`. Both colors live temporarily in `res/values/c
 by the window theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`), until
 `design-tokens-theme` replaces them. Dark only: `values-night` was deleted.
 
-`./gradlew check` runs unit tests, lint and the Konsist suite; detekt and ktlint are not wired yet,
-and `init.sh` reports them as missing rather than pretending they run. `init.sh` prints
-`konsist: wired` only when `:konsist-test:test` exists and its results hold at least one test (with
-the suite removed it prints `NOT WIRED YET`). The unit tests are the two template tests plus
-`CoreModelMarkerTest` and `ModuleWiringTest`.
+`./gradlew check` runs unit tests, Android lint, the Konsist suite, detekt 2.0.0-alpha.6 and ktlint
+1.8.0 (ktlint-gradle 14.2.0). The root `build.gradle.kts` applies both tools to every module that
+applies `kotlin-jvm` or an Android plugin, so a new module gets them with no build code; config is in
+`.editorconfig` (`android_studio` style, Composable naming exception) and `config/detekt/detekt.yml`;
+no baseline file. `init.sh` prints `konsist: wired` only when `:konsist-test:test` exists and its
+results hold at least one test, and `detekt`/`ktlint: wired` only when `check --dry-run` schedules
+the tool's task in every module that compiles Kotlin; otherwise it names the modules missing it.
+The unit tests are the two template tests plus `CoreModelMarkerTest` and `ModuleWiringTest`.
 
 No product code has been written; the placeholder screen is scaffolding.
 
@@ -397,6 +401,60 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   when its task is scheduled in every Kotlin module); **detekt 2.0.0-alpha.6 approved** over
   lowering the daemon JVM pin to 21.
 - Next best step: the implementer runs the spec.
+
+### Session 016 — 28 September 2026
+
+- Goal: implement `detekt-ktlint-gate` (spec `docs/specs/detekt-ktlint-gate.md`).
+- Completed: catalog entries (detekt 2.0.0-alpha.6, ktlint-gradle 14.2.0, ktlint 1.8.0); root
+  `build.gradle.kts` quality block (Decision 4); `.editorconfig` and `config/detekt/detekt.yml`
+  (Decision 2); explicit `assertEquals` import in both template tests, then `./gradlew ktlintFormat`
+  (import order, final newlines, one joined signature in `ModuleIsolationTest`), formatting only;
+  `init.sh` detection replaced exactly as the user-approved Decision 5; architecture skill Build
+  Conventions and `docs/technical-discovery.md` §Testing updated.
+- Verification run:
+  - Baseline `CI=true ./init.sh` exit 0 (detekt/ktlint NOT WIRED YET); warm 7.41 / 6.97 / 7.16 s.
+  - `./gradlew check --warning-mode all --rerun-tasks` exit 0, no Gradle deprecation warning;
+    `detekt` and `ktlint*SourceSetCheck` ran in all five Kotlin modules.
+  - After: `CI=true ./init.sh` exit 0, `konsist: wired`, `detekt: wired`, `ktlint: wired`; warm
+    6.21 / 6.22 / 6.09 s (about 1 s faster: one `check --dry-run` replaced two `tasks --all`).
+  - ktlint probe (`PATH:String   =   ...` in `CoreModelMarker.kt`): only
+    `:core:model:ktlintMainSourceSetCheck` failed (`8:20 Missing spacing after ":"`);
+    `CI=true ./init.sh` exit 1.
+  - detekt probe (empty `if` appended): only `:core:model:detekt` failed
+    (`CoreModelMarker.kt:12:20 ... [EmptyIfBlock]`); `CI=true ./init.sh` exit 1.
+  - Each probe restored by copy, SHA-1 `bb307eb9…` matched, `CI=true ./init.sh` exit 0.
+  - init.sh negative control: without the `com.android.base` hook it printed `NOT WIRED YET
+    (missing from check in: :app :core:data :core:ui)` for both tools; with the HEAD root build file
+    it named all five modules; restored (SHA-1 `2eebddfb…` match), three `wired` again.
+- Evidence captured: `feature_list.json` entry, status `passing` (awaiting the validator).
+- Known risk or unresolved issue:
+  - detekt is an alpha (user-approved); no stable detekt runs on the Java 25 daemon. Revisit when
+    detekt 2.0 ships.
+  - ktlint-gradle keeps stale errors when a new file with violations is added and then deleted; the
+    gate stays red until `./gradlew ktlintCheck --rerun-tasks`. Probe by modifying existing files.
+  - `.claude/agents/*.md` still describe detekt/ktlint as "not wired until their slices land"; left
+    for the orchestrator/user as the spec says.
+  - Root build scripts are not linted; the cross-project `subprojects {}` block is incompatible with
+    Gradle Isolated Projects (not enabled).
+- Next best step: validate `detekt-ktlint-gate`.
+
+### Session 017 — 28 September 2026
+
+- Goal: independent validation of `detekt-ktlint-gate`.
+- Completed: validator verdict **accept**; status set to `accepted`. The three subagent files no
+  longer say the tools are unwired: the gate is complete, a `NOT WIRED YET` line is now a defect,
+  and baselines, `ignoreFailures` or rule disables need the user's approval.
+- Verification run (by the validator): `CI=true ./init.sh` exit 0 with three `wired`;
+  `check --rerun-tasks` runs detekt and ktlint in all five Kotlin modules; its own probes — ktlint in
+  `:core:data`, detekt in `:core:ui`, the missing-hook NOT WIRED case, and a non-Composable
+  PascalCase function flagged by both tools — each failed as expected and were restored by SHA-1.
+- Known risk or unresolved issue:
+  - `init.sh` can exit 1 with no message if `./gradlew check --dry-run` prints nothing (e.g. a
+    Gradle startup flake): under `set -euo pipefail` the empty grep aborts the script. It fails
+    closed, never falsely green. The fix (`|| true` on the grep in `modules_running`) changes
+    approved text, so it waits for the user.
+  - detekt is an alpha; the ktlint-gradle stale-results quirk (see session 016).
+- Next best step: plan `molecule-presenter-harness`.
 
 ## Notes For The Next Session
 

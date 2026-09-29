@@ -53,10 +53,10 @@ otherwise.
 The repository gate is `./init.sh`, which wraps `./gradlew build` and `./gradlew check`. Prefer it
 over ad-hoc commands.
 
-Be honest about what the gate covers today: `check` runs unit tests and lint only, because Konsist,
-detekt and ktlint are not wired yet — `init.sh` prints which are missing. Until
-`konsist-isolation-rules` and `detekt-ktlint-gate` are accepted, do not write a verification step
-that assumes those tools run.
+The gate is complete: `check` runs unit tests, Android lint, the Konsist suite (`:konsist-test`),
+detekt and ktlint in every Kotlin module, and `init.sh` reports each tool as wired only when it
+really runs. Verification steps may rely on them. A slice that adds a module or a rule must keep
+`init.sh` printing all three as `wired`, and a new rule needs its failing case demonstrated.
 
 Prefer verification that runs on the JVM. Anything needing a device or emulator is slow and cannot
 be part of the standard gate, so if a feature genuinely needs one, say so and give the manual steps.

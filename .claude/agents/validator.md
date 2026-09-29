@@ -58,9 +58,9 @@ traces to a decision in `bb-blues-jam-bitacora.md`.
 
 Rerun `./init.sh` yourself. Green is necessary but not sufficient.
 
-Treat the gate's current thinness as a known condition, not a defect to report repeatedly: `check`
-runs unit tests and lint only, and `init.sh` prints `NOT WIRED YET` for Konsist, detekt and ktlint
-until their slices land.
+The gate is complete: `check` runs unit tests, Android lint, Konsist, detekt and ktlint in every
+Kotlin module. Any `NOT WIRED YET` line from `init.sh` is now a defect, as is a new baseline file,
+`ignoreFailures`, or a rule disabled without the user's recorded approval.
 
 What does deserve a finding is **evidence that claims more than the gate can deliver** — an
 implementer reporting that Konsist passed while it prints as unwired, or a test described as

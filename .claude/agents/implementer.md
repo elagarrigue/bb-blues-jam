@@ -57,10 +57,11 @@ These come from decisions already made (D-01 … D-16, with reasoning in
 
 Run `./init.sh`. It wraps `./gradlew build` and `./gradlew check` and is the standard gate.
 
-Report what actually ran. The gate is currently thin — `check` runs unit tests and lint only, and
-`init.sh` prints `NOT WIRED YET` for Konsist, detekt and ktlint until their slices land. Never
-describe a check as having passed when the tool is not wired; a false green here propagates into
-the validator's judgment and into the course evidence.
+Report what actually ran. `check` runs unit tests, Android lint, Konsist, detekt and ktlint, and
+`init.sh` must end with all three tools `wired`. Run `./gradlew ktlintFormat` before the gate
+rather than hand-fixing formatting. Never add a detekt/ktlint baseline, `ignoreFailures` or a rule
+disable without the user's approval, and never describe a check as having passed when it did not
+run; a false green here propagates into the validator's judgment and into the course evidence.
 
 If verification fails and you cannot fix it inside the feature's scope, record the failure and stop.
 Do not weaken a check to make it pass, and do not change verification rules mid-implementation.

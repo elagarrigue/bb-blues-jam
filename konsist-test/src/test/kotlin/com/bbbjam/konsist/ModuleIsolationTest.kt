@@ -142,8 +142,7 @@ class ModuleIsolationTest {
         else -> true
     }
 
-    private fun featureFiles(): List<KoFileDeclaration> =
-        scope.files.filter { it.modulePath.startsWith(FEATURE) }
+    private fun featureFiles(): List<KoFileDeclaration> = scope.files.filter { it.modulePath.startsWith(FEATURE) }
 
     private fun String.isUnder(root: String): Boolean = this == root || startsWith("$root.")
 
