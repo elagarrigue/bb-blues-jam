@@ -1,19 +1,20 @@
 package com.bbbjam
 
 import com.bbbjam.core.data.CoreDataMarker
-import com.bbbjam.core.model.CoreModelMarker
+import com.bbbjam.core.model.JamStatus
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Compiles only if `:app` depends on `:core:model` and `:core:data`. Each line is removed by the
- * slice that deletes the corresponding marker; the `:core:ui` line went with its marker in
- * `molecule-presenter-harness`, and `:app` uses `:core:ui` for real from `design-tokens-theme`.
+ * Compiles only if `:core:model` and `:core:data` are visible from `:app`. For `:core:model` this is
+ * also true through the `api` edges of `:core:ui` and `:core:data`, as it was with the old marker;
+ * the direct edge is `implementation(project(":core:model"))` in `app/build.gradle.kts`. The
+ * `:core:data` line goes with its marker; the `:core:ui` line went in `molecule-presenter-harness`.
  */
 class ModuleWiringTest {
     @Test
     fun appSeesEveryCoreModule() {
-        assertEquals(":core:model", CoreModelMarker.PATH)
+        assertEquals(JamStatus.DRAFT, JamStatus.valueOf("DRAFT"))
         assertEquals(":core:data", CoreDataMarker.PATH)
     }
 }

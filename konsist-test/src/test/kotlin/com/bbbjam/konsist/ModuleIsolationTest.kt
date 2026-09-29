@@ -90,6 +90,14 @@ class ModuleIsolationTest {
     }
 
     @Test
+    fun `core model does not read the system clock`() {
+        scope.files.filter { it.modulePath == CORE_MODEL }
+            .assertFalse(testName = "core-model-no-system-clock") { file ->
+                SYSTEM_CLOCK.containsMatchIn(file.text)
+            }
+    }
+
+    @Test
     fun `no ViewModel is imported or subclassed`() {
         scope.files.flatMap { it.imports }
             .assertFalse(testName = "no-viewmodel-import") { import ->
@@ -178,6 +186,12 @@ class ModuleIsolationTest {
 
         /** A `Color(…)` built from a number, or an ARGB hex literal such as a preview `backgroundColor`. */
         val COLOR_LITERAL = Regex("""\bColor\(\s*(0x|\d)|\b0x[0-9A-Fa-f]{8}L?\b""")
+
+        /**
+         * A read of the system time: any `.now(`, `Clock.system…`, `System.currentTimeMillis(` or
+         * `System.nanoTime(`. `:core:model` takes today's date from its caller.
+         */
+        val SYSTEM_CLOCK = Regex("""\.now\(|\bClock\.system|\bSystem\.currentTimeMillis\(|\bSystem\.nanoTime\(""")
 
         val rootDir: File by lazy {
             File(requireNotNull(System.getProperty("bbbjam.rootDir")) { "bbbjam.rootDir is not set" })

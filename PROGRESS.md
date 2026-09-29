@@ -6,26 +6,42 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `domain-model-types` (also ready: `info-screen`). Accepted:
-  `gradle-kotlin-compose-baseline`, `module-skeleton`, `konsist-isolation-rules`,
-  `detekt-ktlint-gate`, `molecule-presenter-harness`, `design-tokens-theme`.
+- Current next ready features: `sheet-schema-definition` (needs the user's hand check of the real
+  Sheet) and `info-screen`. Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+  `konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
+  `design-tokens-theme`, `domain-model-types`.
 - Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
   once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 28 September 2026 (session 021) — `CI=true ./init.sh` exit 0; it prints
-  `konsist: wired` (9 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:ui` runs
-  `EventHandlerTest` (6), `SamplePresenterTest` (3), `BluesJamColorsTest` (3),
-  `BluesJamTypographyTest` (2), `ContrastTest` (6) and `WindowBackgroundTest` (1) on the JVM, 0
-  failures. Launch check on the Pixel 5 (API 34) in session 021: cold start, empty AndroidRuntime
-  logcat, background `#111318`, label Barlow Condensed Bold. The display runs in Display P3, so
-  saturated colors in screenshots read as their P3 encoding (amber `#FFB300` → `#F4B63F`).
+- Last verified at: 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
+  `konsist: wired` (10 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:model`
+  runs 30 tests in 9 classes on the JVM, 0 failures; `:core:ui` runs `EventHandlerTest` (6),
+  `SamplePresenterTest` (3), `BluesJamColorsTest` (3), `BluesJamTypographyTest` (2),
+  `ContrastTest` (6) and `WindowBackgroundTest` (1), 0 failures. Last launch check on the Pixel 5
+  (API 34) was session 021: cold start, empty AndroidRuntime logcat, background `#111318`, label
+  Barlow Condensed Bold. The display runs in Display P3, so saturated colors in screenshots read
+  as their P3 encoding (amber `#FFB300` → `#F4B63F`). Session 024 changed nothing visible.
 
 ### What exists
 
 Four modules: `:app`, `:core:model`, `:core:ui` and `:core:data` (`module-skeleton`, `accepted`).
 `:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
 libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
-depends on all three. `:core:model` and `:core:data` still hold only a placeholder marker object;
-`CoreModelMarkerTest` and `:app`'s `ModuleWiringTest` prove they compile and are wired.
+depends on all three. `:core:data` still holds only a placeholder marker object; `:app`'s
+`ModuleWiringTest` proves `:core:data` and `:core:model` are visible from `:app` (the latter through
+`JamStatus`).
+
+`:core:model` holds the domain types in `com.bbbjam.core.model` (`domain-model-types`, `accepted`):
+`Jam` (date as identity, setlist positions exactly 1..n in order, `isHistorical(today)` with the
+date from the caller), `JamStatus` (`DRAFT`, `PUBLISHED` only), `JamSong` (position ≥ 1, `songId`,
+`title`, `artist`, `key`, `lineup`, `extraParticipants` default empty), `Lineup` (`openSlots`,
+`hasOpenSlotFor`, `default()` = seven open slots in Sheet column order; never more of an instrument
+than the default, zero allowed — D-18), `Slot` (open when `musicianName` is null; blank names
+rejected), `ExtraParticipant` (name and free-text instrument, both non-blank, no `;`, `(`, `)`;
+never open), `Instrument` (six values, `KEYBOARDS` not `KEYS`), `Song` (optional catalog and
+enrichment fields default to null), `Tempo`, `Difficulty`, and the validated value classes `Key`
+(schema **Keys** format, `isMinor`, `parseOrNull`) and `SongId` (lowercase slug, `parseOrNull`).
+Pure Kotlin with java.time; no serialization, no date parsing, no clock (Konsist
+`core-model-no-system-clock`). Invalid values throw `IllegalArgumentException` naming the value.
 
 `:core:ui` holds the presenter contracts of D-02 in `com.bbbjam.core.ui.presenter`: `UiModel`,
 `UiEvent`, `Presenter` and `EventHandler` (`equals` and `hashCode` both from `key`, `operator invoke`
@@ -48,9 +64,9 @@ runtime calls `android.os.Trace`; every presenter module needs the same (archite
 `compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
 
 A fifth, test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
-`ModuleIsolationTest`: 9 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
+`ModuleIsolationTest`: 10 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
 (no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
-`:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
+`:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
 `project(":…")` dependencies in `core/*`/`feature/*` build files, and no color literal outside
 `:core:ui`). Module groups are read from paths,
 so the first `:feature:*` module is covered without editing the suite. The test task declares every
@@ -77,11 +93,12 @@ applies `kotlin-jvm` or an Android plugin, so a new module gets them with no bui
 no baseline file. `init.sh` prints `konsist: wired` only when `:konsist-test:test` exists and its
 results hold at least one test, and `detekt`/`ktlint: wired` only when `check --dry-run` schedules
 the tool's task in every module that compiles Kotlin; otherwise it names the modules missing it.
-The unit tests are the two template tests plus `CoreModelMarkerTest`, `ModuleWiringTest`,
-`EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
+The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
+`JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
+`SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
 `ContrastTest` and `WindowBackgroundTest`.
 
-No product code has been written; the placeholder screen is scaffolding.
+The only product code is the `:core:model` domain types; the placeholder screen is scaffolding.
 
 ### Reachable without unblocking the Sheet schema
 
@@ -620,6 +637,65 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Open questions recorded in the spec, not blocking: empty slot cells in past jams mean "not
   recorded" (handled by `past-jam-detail`); a 21:00 jam counts as historical from 00:00; a DRAFT jam
   in the past and a song twice in one setlist are not enforced anywhere yet.
+
+### Session 024 — 29 September 2026
+
+- Goal: implement `domain-model-types` (spec `docs/specs/domain-model-types.md`, with its User
+  Approvals: Konsist rule approved, D-18).
+- Completed: eleven spec types plus `ExtraParticipant` in `core/model/src/main/kotlin/com/bbbjam/core/model/`;
+  `Lineup` rejects more of an instrument than the default (2 guitars, 1 of each other), zero stays
+  valid; `JamSong.extraParticipants` (default empty) never touches the lineup; `CoreModelMarker` and
+  `CoreModelMarkerTest` deleted, `ModuleWiringTest` now uses `JamStatus` (KDoc says the `:core:model`
+  edge is also reachable through the `api` edges of `:core:ui`/`:core:data`); Konsist rule
+  `core-model-no-system-clock` (a textual match for `.now(`, `Clock.system`,
+  `System.currentTimeMillis(`, `System.nanoTime(` in any `:core:model` file). Docs: the Core
+  Concepts sketch in `docs/domain-model.md` (no `Jam.id`, `setlist`, `JamSong` title/artist/
+  `extraParticipants`, `Lineup`, `ExtraParticipant`), and the architecture skill (module row, clock
+  rule, java.time/desugaring convention).
+- Verification run: `CI=true ./init.sh` baseline exit 0; `./gradlew ktlintFormat` exit 0; final
+  `CI=true ./init.sh` exit 0 with three `wired`. `:core:model` 30/30 (`ExtraParticipantTest` 3,
+  `JamSongTest` 5, `JamStatusTest` 1, `JamTest` 4, `KeyTest` 3, `LineupTest` 7, `SlotTest` 3,
+  `SongIdTest` 2, `SongTest` 2); `ModuleIsolationTest` 10/10; `ModuleWiringTest` 1/1; detekt 0
+  findings; `grep -rn CoreModelMarker --include=*.kt` empty. Fourteen negative demonstrations, each a
+  scripted mutation restored from a copy with matching SHA-1: loosened key and id regexes, inverted
+  `isOpen`, no blank-name check, no position rule, position ≥ 0, same-day historical, `KEYBOARDS`
+  missing from the defaults, no over-default check, no `;()` check, no blank check on extras, extras
+  turned into an open slot, an `ARCHIVED` status, and `LocalDate.now()` in `Jam.kt` (Konsist 10
+  tests, 1 failed: `core-model-no-system-clock`). Each failed the named test; details in
+  `feature_list.json`.
+- Finding fixed in scope: the `KEYBOARDS` probe showed `Lineup` threw `NoSuchElementException` for
+  an instrument absent from the defaults; it now treats the default count as 0, so every rejection
+  is an `IllegalArgumentException`.
+- No device check: nothing visible changed.
+- Evidence captured: `feature_list.json` → `domain-model-types` (status `passing`); logs and the probe
+  script in the session scratchpad only.
+- Open questions from the spec, not blocking: **A** decided as D-18. **B** an empty slot cell in a
+  past jam means "not recorded", but `Slot.isOpen` is structural, so `past-jam-detail` must not draw
+  open state. **C** a 21:00 jam is historical from 00:00 (already in
+  `docs/risks-and-open-questions.md`). **D** a DRAFT jam in the past and a song twice in one setlist
+  are not enforced; "at most one upcoming jam" belongs to the `Jams` mapper/repository and Apps
+  Script.
+- Known risk or unresolved issue: java.time on `minSdk` 24 is safe only while `:core:model` never
+  parses a date or reads the clock; the first Android module that builds dates must enable core
+  library desugaring in `:app` and in itself (architecture skill). The clock rule is textual: a
+  statically imported `now()` or a clock reached under another spelling slips past it. The extras probe had to replace
+  `JamSong` with a plain class, because `Lineup` cannot see extras by construction.
+- Next best step: independent validation of `domain-model-types`.
+
+### Session 025 — 29 September 2026
+
+- Goal: independent validation of `domain-model-types`.
+- Completed: validator verdict **accept**; status set to `accepted`.
+- Verification run (by the validator): gate exit 0 with three `wired`, Konsist 10/10; `:core:model`
+  30/30 with `--rerun`; its own probes — trailing-space, tab and Spanish-name keys, two basses,
+  positions `[1,3,2]`, a third guitar as an extra participant, the clock rule via
+  `Clock.systemDefaultZone()` and `LocalTime.now()` (a parameter named `now` passes), android and
+  serialization imports failing to compile — with SHA-1 and git state identical afterwards.
+- Known risk or unresolved issue: `KeyTest` does not list a trailing-space key, so a regex letting
+  `"B "` through would pass the suite; added to `catalog-repository-cache`'s notes. The clock rule
+  is textual (a static import of `now` would pass it).
+- Next best step: `sheet-schema-definition` needs the user to confirm the real Sheet by hand
+  (including the new `Otros` column); `info-screen` can proceed meanwhile.
 
 ## Notes For The Next Session
 

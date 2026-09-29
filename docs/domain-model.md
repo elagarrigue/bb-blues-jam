@@ -6,12 +6,19 @@ states, and the rules that govern transitions.
 ## Core Concepts
 
 ```
-Jam(id, date, startTime, venue, status: DRAFT | PUBLISHED, songs: List<JamSong>)
-JamSong(position, songId, key, lineup: List<Slot>)
+Jam(date, startTime, venue, status: DRAFT | PUBLISHED, setlist: List<JamSong>)   // date is the identity
+JamSong(position, songId, title, artist, key, lineup: Lineup,
+        extraParticipants: List<ExtraParticipant> = [])
+Lineup(slots: List<Slot>)                // at most the default count of each instrument (D-18)
 Slot(instrument, musicianName?)          // open when musicianName is null
-Song(id, title, artist, defaultKey, tempo, tags, difficulty,
+ExtraParticipant(name, instrument)       // free-text instrument; never open (D-18)
+Song(id, title, artist, defaultKey, tempo?, tags, difficulty?,
      mbid?, artistArea?, deezerTrackId?, previewUrl?, artworkUrl?, songsterrId?)
 ```
+
+`Key` follows the **Keys** format and `SongId` the `Catalogo.id` slug of `sheet-schema.md`. The
+types live in `:core:model` (package `com.bbbjam.core.model`); setlist positions are exactly 1..n in
+order, and `Jam.isHistorical(today)` takes today's date from the caller.
 
 ### Jam
 

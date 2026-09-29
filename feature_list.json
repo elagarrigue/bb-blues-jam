@@ -190,13 +190,20 @@
     "depends_on": [
       "module-skeleton"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "./gradlew check runs the domain tests and they pass",
       "A Slot with no musician reports as open and one with a musician does not",
       "Jam status models DRAFT and PUBLISHED only"
     ],
-    "evidence": [],
+    "evidence": [
+      "29 Sep 2026 (session 024), implementer: CI=true ./init.sh baseline exit 0; after ./gradlew ktlintFormat (exit 0), final CI=true ./init.sh exit 0 printing konsist: wired, detekt: wired, ktlint: wired.",
+      ":core:model tests (JVM) 30/30, 0 failures: ExtraParticipantTest 3, JamSongTest 5, JamStatusTest 1, JamTest 4, KeyTest 3, LineupTest 7, SlotTest 3, SongIdTest 2, SongTest 2. ModuleIsolationTest 10/10 (new core-model-no-system-clock). :app ModuleWiringTest 1/1 now references JamStatus. detekt 0 findings in :core:model and :konsist-test.",
+      "grep -rn CoreModelMarker --include=*.kt: no match (exit 1). :core:model imports only java.time.LocalDate/LocalTime (main), org.junit.* and its own package (test); core/model/build.gradle.kts unchanged.",
+      "Negative demonstrations (scripted file mutation, gradle exit 1, file restored from a copy, SHA-1 before == after each time): Key regex [A-G].* -> KeyTest 'keys outside the schema format are rejected' (\"Bmaj\" accepted); SongId regex .+ -> SongIdTest (\"Sweet-Little-Angel\" accepted); Slot.isOpen inverted -> 8 failures incl. SlotTest both state tests; blank-name require removed -> SlotTest 'a blank musician name is rejected' (\"\" accepted); Jam positions require removed -> JamTest ([2] accepted); position >= 0 -> JamSongTest (0 accepted); isHistorical = !isAfter -> JamTest 'a jam is historical only after its date'; KEYBOARDS dropped from defaults -> LineupTest default-lineup test; over-default require removed -> LineupTest 2 tests ([GUITAR, GUITAR, GUITAR] accepted); ExtraParticipant RESERVED emptied -> separators test (\"Juan; Ana\" accepted); blank checks removed -> blank test (\"\" / \"saxo\" accepted); extras turned into an open KEYBOARDS slot in JamSong -> JamSongTest 2 extras tests; ARCHIVED added -> JamStatusTest; fun x() = java.time.LocalDate.now() in Jam.kt -> ModuleIsolationTest 10 tests, 1 failed, 'core-model-no-system-clock' was violated (1 time), Jam.kt.",
+      "No device check: nothing visible changed (no UI, no :app main source touched).",
+      "29 September 2026: independent validator verdict accept. CI=true ./init.sh exit 0 with three wired, Konsist 10/10; :core:model test --rerun 30/30. Its own probes: keys with trailing spaces, tabs and Spanish note names rejected; two basses rejected; positions [1,3,2] rejected; a third guitar as an extra participant leaves no open guitar; Lineup allowing two basses caught; the clock rule caught Clock.systemDefaultZone() in Song.kt and LocalTime.now() in a test while a parameter named now passes; android and kotlinx.serialization imports fail to compile. SHA-1 of all 21 model files and git state identical before and after. Gap found: KeyTest does not list a trailing-space key (a regex allowing \"B \" passes the suite) — recorded as a follow-up."
+    ],
     "notes": "docs/domain-model.md. Archived is not a stored status: a jam is historical when its date has passed. There is no Musician entity; a musician is a name on a Slot (D-05). The key lives on JamSong, not Song (D-08). Cleanup inherited from module-skeleton: delete the CoreModelMarker placeholder in :core:model, its test, and its line in the :app ModuleWiringTest."
   },
   {
@@ -248,7 +255,7 @@
       "Cache staleness is exposed so the UI can indicate it"
     ],
     "evidence": [],
-    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it."
+    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject)."
   },
   {
     "id": "next-jam-read-only-list",

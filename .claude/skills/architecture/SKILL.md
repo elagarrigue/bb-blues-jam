@@ -17,7 +17,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 
 | Module | Holds | May depend on |
 |---|---|---|
-| `:core:model` | Domain types: `Jam`, `JamSong`, `Slot`, `Song`, `JamStatus`. Pure Kotlin, no Android. | nothing |
+| `:core:model` | Domain types: `Jam`, `JamStatus`, `JamSong`, `Lineup`, `Slot`, `ExtraParticipant`, `Instrument`, `Song`, `Tempo`, `Difficulty`, `Key`, `SongId`. Pure Kotlin, no Android, no serialization, no date parsing, no clock. | nothing |
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, and shared components such as the instrument strip. | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
@@ -56,10 +56,14 @@ is. There is no `:feature:admin`.
 - `:feature:a` → `:feature:b` is forbidden, in any direction and for any reason.
 - `:core:*` never depends on `:feature:*` or `:app`.
 - `:core:model` has no Android dependency.
+- `:core:model` never reads the system clock: no `.now(`, `Clock.system…`,
+  `System.currentTimeMillis(` or `System.nanoTime(` in its main or test sources. The caller passes
+  today's date (`Jam.isHistorical(today)`) and owns the time zone.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
 
-Konsist enforces the first three rules, the package roots, the ViewModel ban and
+Konsist enforces the first four rules (the clock one as `core-model-no-system-clock`, a textual
+match on each `:core:model` file), the package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
 colors) in
@@ -120,6 +124,14 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   `core/ui/src/main/assets/licenses`; no downloadable fonts, because the app is used offline. The
   only XML color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, used by
   the `:app` window theme and guarded by `WindowBackgroundTest` against drift from the token.
+- **java.time and desugaring** (set by `domain-model-types`, spec
+  `docs/specs/domain-model-types.md`). `:core:model` uses `java.time.LocalDate`/`LocalTime`, which
+  do not exist below API 26 while `minSdk` is 24. That is safe only because `:core:model` never
+  parses a date or reads the clock. The first Android module that constructs or parses a date
+  (expected `catalog-repository-cache`) enables `isCoreLibraryDesugaringEnabled = true` plus
+  `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")` in `:app` **and** in its own
+  module: lint `NewApi` fails a library that uses java.time without it even when `:app` has it, and
+  a library that enables it without `:app` fails `:app:checkDebugAarMetadata`.
 - **No `build-logic` convention plugins yet.** Deferred to the first `:feature:*` module, which will
   duplicate Android-library boilerplate; the root quality block can move there then. A convention
   plugin must be applied per module, which the quality gate must not depend on.
