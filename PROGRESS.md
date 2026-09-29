@@ -597,6 +597,23 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   navigation bar indicator) are not design decisions — each component slice sets them from tokens.
 - Next best step: plan `domain-model-types`.
 
+### Session 023 — 28 September 2026
+
+- Goal: plan `domain-model-types`.
+- Completed: `docs/specs/domain-model-types.md`, prototyped on a throwaway clone. Types in
+  `com.bbbjam.core.model`: `JamStatus`, `Instrument`, `Tempo`, `Difficulty`, value classes `Key` and
+  `SongId` (validated against the schema formats), `Slot`, `Lineup`, `JamSong`, `Jam`, `Song`.
+  Positions must be exactly 1..n when a `Jam` is built; "historical" takes today's date from the
+  caller.
+- Finding: java.time on minSdk 24 is safe in `:core:model` as long as it never parses dates or reads
+  the clock; the first Android slice that does must enable core library desugaring in `:app` and in
+  its own module (lint and AAR metadata checks block the unsafe cases, proven in the prototype).
+- **Blocked on the user:** the new Konsist rule `core-model-no-system-clock`, and whether a lineup
+  may exceed the default seven slots.
+- Open questions recorded in the spec, not blocking: empty slot cells in past jams mean "not
+  recorded" (handled by `past-jam-detail`); a 21:00 jam counts as historical from 00:00; a DRAFT jam
+  in the past and a song twice in one setlist are not enforced anywhere yet.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with
