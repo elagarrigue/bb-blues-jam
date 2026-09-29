@@ -41,8 +41,8 @@ without saying so and waiting for confirmation.
 | Unit tests, lint, and static checks | `./gradlew check` |
 | Install on a device or emulator | `./gradlew :app:installDebug` |
 
-`init.sh` prints `NOT WIRED YET` for Konsist, detekt and ktlint until their slices land. Never report
-a tool as passing when it is not wired.
+`init.sh` must end with `konsist`, `detekt` and `ktlint` all `wired`; a `NOT WIRED YET` line is a
+defect. Never report a tool as passing when it did not run.
 
 Before creating or changing a module, presenter, repository, mutation or Gradle dependency, load
 the `architecture` skill. It holds the module layout, where each piece goes, and the anti-patterns.
@@ -63,7 +63,7 @@ Read optional docs only when relevant:
 - `docs/sheet-schema.md` — when touching the Sheet, Apps Script, or the `:core:data` mappers.
 - `DESIGN.md` — when touching any UI. It carries the design tokens and the visual rules.
 - `bb-blues-jam-design-prompt.md` — per-screen design requirements. Source of truth for screens.
-- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 17 decisions (D-01 … D-17) and
+- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 18 decisions (D-01 … D-18) and
   their reasoning live here. Consult when a change might contradict one.
 
 ## Startup Workflow
@@ -125,4 +125,4 @@ A feature is done only when all are true:
 ## Reminder
 
 No ViewModels. No feature module imports another. No mutation only in the UI. `passing` is not
-`accepted`. When a change would contradict D-01 … D-17, stop and ask.
+`accepted`. When a change would contradict D-01 … D-18, stop and ask.

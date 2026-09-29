@@ -608,8 +608,15 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Finding: java.time on minSdk 24 is safe in `:core:model` as long as it never parses dates or reads
   the clock; the first Android slice that does must enable core library desugaring in `:app` and in
   its own module (lint and AAR metadata checks block the unsafe cases, proven in the prototype).
-- **Blocked on the user:** the new Konsist rule `core-model-no-system-clock`, and whether a lineup
-  may exceed the default seven slots.
+- Decisions by the user (29 September): the Konsist rule `core-model-no-system-clock` **approved**;
+  lineups **only shrink** from the default seven, and anyone playing outside the lineup goes in a
+  per-song "Otros" list with name and instrument — recorded as **D-18** in the bitácora,
+  `CONTEXT.md`, `docs/domain-model.md`, `docs/sheet-schema.md` (new optional `Otros` column), the
+  seed CSV, START-HERE and the spec's "User Approvals". Adding and removing an extra participant
+  join the D-13 mutation list (noted on `admin-adjust-lineup` and `action-contract-registry`).
+- Also refreshed `START-HERE.md` (it still pointed at the first spec) and the `AGENTS.md` gate line
+  (it still said the tools were unwired).
+- Next best step: the implementer runs the spec with its User Approvals.
 - Open questions recorded in the spec, not blocking: empty slot cells in past jams mean "not
   recorded" (handled by `past-jam-detail`); a 21:00 jam counts as historical from 00:00; a DRAFT jam
   in the past and a song twice in one setlist are not enforced anywhere yet.

@@ -65,6 +65,7 @@ carries a time, and the header of the next-jam screen needs it.
 | `artista` | — | yes | Copy of the catalog artist. Same fallback |
 | `tono` | `key` | yes | See **Keys**. That night's key, not the catalog default (D-08) |
 | `Guitarra 1`, `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados` | `lineup` | see below | One column per slot of the default lineup (D-06) |
+| `Otros` | `extraParticipants` | no | `Nombre (instrumento)` entries separated by `;`, e.g. `Juan (saxo); Ana (percusión)`. Empty or missing column = none (D-18) |
 
 `Catalogo` is authoritative for title and artist: the app resolves `id_tema` there. The copies in
 the jam tab exist so the admin can read the tab, and so a setlist stays readable if a song is later
@@ -79,8 +80,11 @@ as plain text rather than a lookup formula, or the fallback breaks exactly when 
 | a name | Filled slot: `musicianName` |
 | `-` | Not part of this song's lineup (the per-song adjustment in D-06) |
 
-A song with no harmonica has `-` under `Armónica`. A slot for an instrument outside the default
-seven is out of scope for the MVP.
+A song with no harmonica has `-` under `Armónica`. Slots are only ever removed from the default
+seven, never added (D-18). Anyone playing outside the lineup — a sax, percussion, a third guitar —
+goes in `Otros` as `Nombre (instrumento)`. Those entries are never open slots and never count for
+"where can I play?". The name and the instrument are both required and may not contain `;`, `(` or
+`)`; the mapper rejects a malformed entry rather than guessing.
 
 For past jams the slot cells are optional history. An empty cell in a past jam means "not
 recorded", and the app never presents a past jam as having open slots.
@@ -115,3 +119,4 @@ typo shows up when the tab is read, not on stage.
 - `Jam` → `Jams.fecha`, which is also the tab name.
 - `JamSong` → (`fecha`, `posicion`).
 - `Slot` → (`fecha`, `posicion`, column header).
+- Extra participant → (`fecha`, `posicion`, its order within `Otros`).

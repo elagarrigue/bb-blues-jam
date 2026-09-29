@@ -45,7 +45,10 @@ the model's memory, which is exactly where an LLM is weakest on this repertoire 
 - A **Jam** has exactly one ordered setlist of **JamSongs**. Order is explicit via `position`.
 - A **JamSong** references exactly one **Song** and owns exactly one **Lineup**.
 - A **Lineup** is a list of **Slots**. Default: 2 guitars, 1 bass, 1 drums, 1 vocals, 1 harmonica,
-  1 keyboards — adjustable per JamSong.
+  1 keyboards — adjustable per JamSong only by removing Slots, never beyond the default (D-18).
+- A **JamSong** may also list **Extra Participants** ("Otros"): a name and a free-text instrument
+  for anyone playing outside the Lineup. They are never open and never count for the open-slot
+  filter (D-18).
 - A **Song** may appear in many **Jams**, with a different key and a different lineup each time.
 - Deleting a JamSong from a setlist does not affect the Song in the catalog.
 

@@ -3,12 +3,13 @@
 Documento de arranque para continuar el proyecto en Claude Code.
 Empezá cada sesión con: "Leé START-HERE.md".
 
-**Sesión nueva, siguiente paso:** correr `feature-spec` sobre `gradle-kotlin-compose-baseline`
-(sección 6.6). El estado verificado al día vive en `PROGRESS.md`, no acá.
+**Sesión nueva, siguiente paso:** ver "Current next ready feature" en `PROGRESS.md` y seguir el
+flujo `planner` → `implementer` → `validator`. El estado verificado al día vive en `PROGRESS.md`,
+no acá; este documento solo orienta.
 
-Generado el 19 de septiembre de 2026. Actualizado el 28 de septiembre de 2026.
-Estado: semana 2 cerrada salvo la primera spec. Descubrimiento, harness, subagentes, pantallas y
-skill de arquitectura hechos. Sin una línea de código de producto escrita.
+Generado el 19 de septiembre de 2026. Actualizado el 29 de septiembre de 2026.
+Estado: semana 2 cerrada. Seis rebanadas `accepted`: baseline Compose, esqueleto de módulos, Konsist,
+detekt/ktlint, patrón de *presenters* con Molecule y tema con tokens. El *gate* está completo.
 
 ---
 
@@ -47,7 +48,7 @@ Ya están en el repo. Son el insumo del descubrimiento:
 
 | Archivo | Para qué |
 |---|---|
-| `bb-blues-jam-bitacora.md` | Proceso, 17 decisiones con su fundamento, mapa a los módulos del curso |
+| `bb-blues-jam-bitacora.md` | Proceso, 18 decisiones con su fundamento, mapa a los módulos del curso |
 | `bb-blues-jam-design-prompt.md` | Brief de diseño completo + prompts por pantalla para Stitch |
 
 **Importante:** la bitácora es también el material de la presentación final. Mantenela
@@ -62,7 +63,7 @@ actualizada a medida que avanzás; no es documentación muerta.
 - Problema elegido y validado contra alternativas descartadas
 - Investigación de diez APIs musicales con NotebookLM, verificada después contra documentación viva
 - Alcance del MVP definido
-- 17 decisiones técnicas y de producto tomadas, con fundamento escrito
+- 18 decisiones técnicas y de producto tomadas, con fundamento escrito
 - Diseño de UI especificado: ocho pantallas, cinco estados, dirección visual
 - Prompts de Stitch listos para generar las pantallas
 - Repo git inicializado y publicado en `github.com/elagarrigue/bb-blues-jam` (`origin` por SSH)
@@ -76,10 +77,9 @@ actualizada a medida que avanzás; no es documentación muerta.
 
 ### Pendiente inmediato
 
-- Correr `feature-spec` sobre `gradle-kotlin-compose-baseline` (cierra la semana 2)
-- Confirmar en esa primera corrida que el `planner` carga su skill (se le agregó `Skill` a `tools:`)
-- Importar `docs/sheet-seed/` a la planilla y cargar el repertorio real (tempo, etiquetas,
-  dificultad), en paralelo. El esquema ya está: `docs/sheet-schema.md`
+- Seguir con la siguiente rebanada lista de `feature_list.json` (ver `PROGRESS.md`)
+- Cargar el repertorio real en la planilla (tempo, etiquetas, dificultad), en paralelo; la semana 5
+  lo necesita. Agregar la columna `Otros` a los tabs de fecha (D-18, `docs/sheet-schema.md`)
 - Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio
 
 ---
@@ -108,6 +108,7 @@ bitácora.
 | D-15 | El admin es un estado dentro de cada feature, no un módulo |
 | D-16 | Koin para inyección de dependencias, solo por constructor |
 | D-17 | Material 3 por debajo, tokens `BluesJamTheme.*` por encima; las pantallas no leen `MaterialTheme.colorScheme` |
+| D-18 | La formación solo se achica; quien toca fuera de ella va en "Otros" (nombre e instrumento) |
 
 ### Las dos que más condicionan el trabajo
 
@@ -129,6 +130,8 @@ los módulos de feature.
 
 ## 5. Modelo de dominio, borrador
 
+La versión al día está en `docs/domain-model.md`. Borrador original:
+
 ```
 Jam(id, date, venue, status: DRAFT | PUBLISHED, songs)
 JamSong(position, songId, key, lineup)
@@ -137,7 +140,8 @@ Song(id, title, artist, defaultKey, tempo, tags, difficulty,
      mbid?, artistArea?, deezerTrackId?, previewUrl?, artworkUrl?, songsterrId?)
 ```
 
-Formación por defecto: 2 guitarras, bajo, batería, voz, armónica, teclados. Ajustable por tema.
+Formación por defecto: 2 guitarras, bajo, batería, voz, armónica, teclados. Por tema solo se sacan
+cupos; quien toca fuera de la formación va en "Otros" (D-18).
 Un **cupo libre** es un `Slot` sin músico asignado.
 
 Los primeros campos de `Song` los carga el admin en el Sheet. Los últimos cinco son

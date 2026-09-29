@@ -21,7 +21,8 @@ tags. Loading should run in parallel with development.
 D-13 requires every mutation to exist as a repository function or deeplink from phase 1, which means
 the list of mutations must be enumerated before features are sliced — not discovered feature by
 feature. From the domain model, the set is: add song to setlist, remove song, set key, adjust
-lineup, assign musician to slot, clear slot, reorder songs, publish. Each needs an Apps Script
+lineup, assign musician to slot, clear slot, reorder songs, publish — and, since D-18, add and
+remove an extra participant ("Otros"). Each needs an Apps Script
 endpoint and a repository function. Confirm this list is complete before writing `feature_list.json`.
 
 ### Instrument strip: chips, not icons — resolved

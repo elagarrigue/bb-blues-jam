@@ -30,7 +30,8 @@ Catalog is the only pool the assistant may select from.
 
 ### Lineup
 The set of Slots defined for one JamSong — which instruments are needed and how many of each. The
-default Lineup is 2 guitars, bass, drums, vocals, harmonica, keyboards, adjustable per song.
+default Lineup is 2 guitars, bass, drums, vocals, harmonica, keyboards. Adjusting it per song only
+removes Slots; a Lineup never has more of an instrument than the default (D-18).
 
 ### Slot
 One position for one instrument within a JamSong's Lineup. A Slot is either open or filled.
@@ -42,8 +43,13 @@ primary question is "where can I play?", and the answer is the set of open Slots
 ### Filled Slot
 A Slot with a musician's name assigned to it.
 
+### Extra Participant
+Someone who plays a JamSong outside its Lineup, recorded as a name and a free-text instrument (a
+sax, percussion, a third guitar). Shown in the UI under "Otros". Not a Slot: never open, never part
+of "where can I play?", and added only by the Admin (D-05, D-18).
+
 ### Musician
-A person who plays at a Jam. Represented only by a name on a Slot. Musicians have no accounts, no
+A person who plays at a Jam. Represented only by a name on a Slot or an Extra Participant. Musicians have no accounts, no
 profiles, and no login; they are data, not users of an authenticated system.
 
 ### Admin

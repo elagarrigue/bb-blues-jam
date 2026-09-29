@@ -559,7 +559,7 @@
       "Removing a slot that holds a musician is handled deliberately, not silently"
     ],
     "evidence": [],
-    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards."
+    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies."
   },
   {
     "id": "admin-assign-musician",
@@ -650,7 +650,7 @@
       "Konsist confirms the registry lives in :app and no feature module depends on another"
     ],
     "evidence": [],
-    "notes": "D-13, the slice the whole phase 2 assistant rests on. Confirm the mutation list is complete before this runs; it is an open question in risks-and-open-questions.md. Capture the feature-module diff here: proving the assistant was added without touching feature modules is course evidence."
+    "notes": "D-13, the slice the whole phase 2 assistant rests on. Confirm the mutation list is complete before this runs; it is an open question in risks-and-open-questions.md. Capture the feature-module diff here: proving the assistant was added without touching feature modules is course evidence. D-18 adds mutations to the documented list: add extra participant and remove extra participant (\"Otros\"). Confirm the full list, including these, before this slice runs."
   },
   {
     "id": "enrichment-background-fetch",

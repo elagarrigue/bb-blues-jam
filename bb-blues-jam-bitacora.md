@@ -368,6 +368,17 @@ el ámbar marca lo accionable y no decora. Se descartó usar solo Material 3, po
 (`primary`, `tertiary`) no dicen para qué se usa un color, y un sistema totalmente propio, porque
 cada componente Material habría que reescribirlo. Sin tema claro ni color dinámico.
 
+### D-18 — La formación solo se achica; los que sobran van en "Otros"
+Por tema, los cupos solo se sacan de los siete por defecto, nunca se agregan. Quien toca fuera de la
+formación —un saxo, percusión, una tercera guitarra— se anota en una lista "Otros" con nombre e
+instrumento en texto libre. Esos participantes nunca son cupos: no están libres ni ocupados, y no
+entran en "¿dónde puedo tocar?". Así el filtro principal (D-06, D-07) sigue respondiendo sobre una
+formación fija y comparable entre temas, y la jam real, donde siempre se suma alguien, queda
+registrada igual. La planilla lo guarda en una columna `Otros` como `Nombre (instrumento)` separados
+por `;`. Se descartó permitir cupos extra por tema, porque obligaba a columnas variables en la
+planilla y hacía que "hay lugar para guitarra" dependiera de cuántas guitarras se inventaron para ese
+tema. Decidido por el organizador al revisar `domain-model-types`.
+
 ---
 
 # Parte III — Harness y seguimiento

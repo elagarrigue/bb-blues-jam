@@ -280,11 +280,25 @@ This shape was compiled and passed the full gate on a throwaway clone (see Repos
 - [ ] `ModuleWiringTest` references a real domain type and its KDoc states what it proves.
 - [ ] Docs updated as listed; Open Questions A–D recorded in `PROGRESS.md`.
 
-## Pending User Decisions
+## User Approvals
 
-Recorded 28 September 2026. Implementation waits on:
+Recorded 29 September 2026, before implementation. These amend the spec above; where they
+conflict, this section wins.
 
-- The new Konsist rule `core-model-no-system-clock` (tightens the gate).
-- Open question A, lineup counts: whether a song may ever have more slots of an instrument than the
-  default seven (the Sheet today only allows removing slots). The type allows any count either way;
-  the answer shapes `admin-adjust-lineup`.
+- **Konsist rule `core-model-no-system-clock`: approved** as written (Konsist 9 → 10).
+- **Open question A, lineup counts — decided as D-18.** A Lineup is the default seven Slots with
+  some removed, never more of an instrument than the default (2 guitars, and 1 of each other
+  instrument). Anyone playing outside it goes in a new list of **Extra Participants** ("Otros").
+  Changes to this slice:
+  - `Lineup` rejects a lineup with more Slots of an instrument than the default, with a unit test
+    and a negative demonstration. Zero of an instrument stays valid.
+  - New type `ExtraParticipant(name: String, instrument: String)` in `com.bbbjam.core.model`: both
+    non-blank, neither may contain `;`, `(` or `)` (the Sheet cell format in
+    `docs/sheet-schema.md`), with tests including a negative demonstration.
+  - `JamSong` gains `extraParticipants: List<ExtraParticipant>` (default empty). Extra participants
+    are never open and never affect `Lineup.openSlots` / `hasOpenSlotFor` — a test proves that.
+  - No parsing of the `Otros` cell in this slice; that is the mapper's job.
+  - `CONTEXT.md`, `docs/domain-model.md`, `docs/sheet-schema.md` and the seed CSV were already
+    updated by the orchestrator for D-18; the domain-model Core Concepts edit this spec asks for
+    must include `extraParticipants` on `JamSong`.
+- Open questions B, C and D stay recorded as in this spec; they do not block this slice.
