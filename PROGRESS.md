@@ -393,10 +393,10 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Finding: **no stable detekt runs here.** detekt 1.23.8 fails three ways on the Java 25 daemon
   (invalid `--jvm-target`, its Kotlin 2.0.21 compiler cannot parse `25.0.2`, and forcing Kotlin
   2.2.10 is rejected). detekt 2.0.0-alpha.6 works, including with the configuration cache.
-- **Blocked on the user:** approval of the spec's `init.sh` change (a tool counts as wired only when
-  its task is scheduled in every Kotlin module; today a name match anywhere says `wired`), and the
-  choice between the detekt alpha and lowering the daemon JVM pin to 21 for detekt 1.23.8.
-- Next best step: the user decides; then the implementer runs the spec.
+- Decisions by the user: the spec's `init.sh` change is **approved** (a tool counts as wired only
+  when its task is scheduled in every Kotlin module); **detekt 2.0.0-alpha.6 approved** over
+  lowering the daemon JVM pin to 21.
+- Next best step: the implementer runs the spec.
 
 ## Notes For The Next Session
 

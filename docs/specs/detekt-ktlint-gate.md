@@ -321,13 +321,10 @@ approval) or the fallback was recorded.
 - [ ] init.sh changed only as Decision 5 and only with recorded approval.
 - [ ] Skill and technical-discovery updates present; `feature_list.json` is `passing`, not `accepted`.
 
-## Pending User Decisions
+## User Approvals
 
-Recorded 28 September 2026. Implementation waits on both:
+Recorded 28 September 2026, before implementation:
 
-- **Decision 5, the `init.sh` change** — a change to verification rules; AGENTS.md requires the
-  user's explicit approval.
-- **detekt 2.0.0-alpha.6 in the gate** — no stable detekt runs on this setup. The Gradle daemon JVM
-  is pinned to Java 25 by `gradle/gradle-daemon-jvm.properties` (`toolchainVersion=25`, from the
-  Android Studio template). The unprototyped alternative is lowering that pin to 21 and using
-  detekt 1.23.8.
+- **Decision 5, the `init.sh` change: approved** by the user, exactly as written above.
+- **detekt 2.0.0-alpha.6: approved** by the user over lowering the daemon JVM pin to 21. No stable
+  detekt runs on the Java 25 daemon (`gradle/gradle-daemon-jvm.properties`, `toolchainVersion=25`).
