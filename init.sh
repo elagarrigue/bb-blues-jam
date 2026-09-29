@@ -43,7 +43,8 @@ fi
 # clean). A Kotlin module that escapes a tool is named, and the tool is reported as not wired.
 check_plan=$(./gradlew check --dry-run --quiet 2>/dev/null || true)
 modules_running() { # $1: task-name regex; prints the paths of the modules whose check runs it
-  grep -oE "^:[^ ]*:$1( |$)" <<<"$check_plan" | sed -E 's/ $//; s/:[^:]+$//' | sort -u
+  # `|| true`: an empty plan (e.g. a Gradle startup flake) must print NOT WIRED, not abort silently.
+  { grep -oE "^:[^ ]*:$1( |$)" <<<"$check_plan" || true; } | sed -E 's/ $//; s/:[^:]+$//' | sort -u
 }
 kotlin_modules=$(modules_running 'compile[A-Za-z]*Kotlin')
 report_tool() { # $1: tool name, $2: task-name regex of its analysis task

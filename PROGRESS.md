@@ -494,8 +494,10 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue:
   - `init.sh` can exit 1 with no message if `./gradlew check --dry-run` prints nothing (e.g. a
     Gradle startup flake): under `set -euo pipefail` the empty grep aborts the script. It fails
-    closed, never falsely green. The fix (`|| true` on the grep in `modules_running`) changes
-    approved text, so it waits for the user.
+    closed, never falsely green. Fixed 29 September with the user's approval (`|| true` on the grep
+    in `modules_running`): an empty plan now prints `NOT WIRED YET (missing from check in: every
+    module)` for both tools instead of aborting; `bash -n` clean and the full gate still exits 0
+    with three `wired`.
   - detekt is an alpha; the ktlint-gradle stale-results quirk (see session 016).
 - Next best step: plan `molecule-presenter-harness`.
 
