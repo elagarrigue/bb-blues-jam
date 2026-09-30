@@ -1,20 +1,7 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 // Test-only module: the Konsist architecture suite. It reads every module's sources, so it
 // needs no project dependency (Konsist parses source files, not classes).
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
-    }
+    id("bluesjam.jvm.library")
 }
 
 dependencies {

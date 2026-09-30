@@ -273,13 +273,23 @@
       "module-skeleton",
       "detekt-ktlint-gate"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired",
       "Every module build file applies a convention plugin and no longer repeats SDK levels, Java target or Compose setup",
       "A module that omits its convention plugin is caught by a check, and the failing case is demonstrated"
     ],
-    "evidence": [],
+    "evidence": [
+      "Session 033 (implementer, 30 September 2026): baseline CI=true ./init.sh exit 0 on untouched HEAD 095c88b (konsist/detekt/ktlint wired, Konsist 10/10).",
+      "After: ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0 (after-init1 and after-final), konsist: wired, detekt: wired, ktlint: wired; ModuleIsolationTest XML tests=\"11\" failures=\"0\"; all 20 test result files failures=\"0\".",
+      "build-logic/ is an included build (pluginManagement includeBuild), one :convention subproject with kotlin-dsl and six binary plugins (bluesjam.jvm.library, .android.library, .android.application, .android.compose, .android.presenter, .android.feature); catalog read from ../gradle/libs.versions.toml; compiles with 0 w: lines. Root build.gradle.kts, init.sh, gradle.properties and the wrapper unchanged (git status).",
+      "Verification item 2: grep -nE 'compileSdk|minSdk|targetSdk|JavaVersion|JvmTarget|buildFeatures|isReturnDefaultValues' */build.gradle.kts */*/build.gradle.kts -> no output, exit 1 (includes build-logic/convention/build.gradle.kts).",
+      "Zero behaviour change (clean ./gradlew build before and after, capture script): byte-identical check --dry-run plan (353 lines), build --dry-run plan (590), buildEnvironment, merged manifests, AAR names, APK entry list (466 lines) and SHA-1 of all 392 non-META-INF entries, all 14 :core:*/:konsist-test dependency reports and :app debugCompileClasspath (15 of 22 reports byte-identical). :app's three runtime reports and :feature:info's four reports differ in order only (Koin now declared by the convention); normalised to sorted coordinate sets they are identical (283/286/273 and 201/272/286/262 coordinates). Test classes identical (20); only change ModuleIsolationTest tests 10 -> 11.",
+      "Failure demonstrations (./gradlew :konsist-test:test exit 1 each, restored by cp with SHA-1 match): core/data at HEAD content -> 'build-file-applies-convention' violated (7 times) incl. 'core/data/build.gradle.kts applies no bluesjam.* convention plugin'; feature/info applying bluesjam.android.presenter -> '(1 times) ... must apply bluesjam.android.feature (applies [bluesjam.android.presenter])'; core/ui with 'defaultConfig { minSdk = 26 } // targetSdk ...' -> '(1 times) core/ui/build.gradle.kts:7 sets 'minSdk', owned by a convention' (comment word ignored); core/data build file moved away -> '(1 times) core/data/build.gradle.kts is missing'; implementation(project(\":feature:info\")) in core/data -> 'build-file-project-deps' violated (1 times).",
+      "Timings CI=true ./init.sh (s) before/after: warm 7,7 / 7,7; after ./gradlew clean 48 / 40; one module build file edited (configuration cache miss) 20 / 14; one convention source edited n/a / 18; first run after the change (build-logic already compiled) 10.",
+      "Device (manual): Pixel 5, API 34, ./gradlew :app:installDebug; installed base.apk SHA-1 equals app/build/outputs/apk/debug/app-debug.apk (06614bed...); am start -W Status: ok, LaunchState COLD, TotalTime 872 ms; logcat crash buffer and AndroidRuntime empty; Info screen drawn as before (screenshot in session scratchpad).",
+      "30 September 2026: independent validator verdict accept. CI=true ./init.sh exit 0 with three wired, Konsist 11/11; protected files unchanged. Against its own clean clone of HEAD: check/build dry-run plans, buildEnvironment, the APK's 392 non-META-INF entries by SHA-1 and all dependency coordinate sets identical. Its probes: the new rule caught a raw id(\"com.android.library\"), apply(plugin = …), jvmToolchain, buildFeatures { compose } and sourceCompatibility; breaking isReturnDefaultValues in the presenter convention failed the presenter tests (android.os.Trace); build-file-project-deps still fails on feature/info → :app. Rule gaps found: backtick plugin ids, pluginManager.apply / plugins.apply, java { toolchain } — follow-up needing the user's approval."
+    ],
     "notes": "Added 30 September 2026 with the user's approval, split out of info-screen so a UI slice does not also restructure the build. Must land before or with the second :feature:* module (next-jam-read-only-list depends on it). Quality tools (detekt, ktlint) may stay applied from the root subprojects block; decide in the spec."
   },
   {

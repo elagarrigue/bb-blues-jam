@@ -23,3 +23,6 @@ docs/design/**/node_modules/
 
 # Course material (not ours to redistribute)
 /docs/clases/
+
+# Kotlin daemon sessions and error logs (root and included builds)
+.kotlin/

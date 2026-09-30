@@ -1,18 +1,13 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    id("bluesjam.android.application")
+    id("bluesjam.android.compose")
 }
 
 android {
     namespace = "com.bbbjam"
-    compileSdk {
-        version = release(libs.versions.compileSdk.get().toInt())
-    }
 
     defaultConfig {
         applicationId = "com.bbbjam"
-        minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -25,13 +20,6 @@ android {
                 enable = false
             }
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        compose = true
     }
 }
 

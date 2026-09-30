@@ -19,6 +19,11 @@ import org.junit.Test
  * Known limit: Konsist sees imports, not resolved references. A fully qualified reference with no
  * import slips past the import rules; the build-file rule closes that gap, because a cross-module
  * reference cannot compile without a Gradle `project(":…")` dependency.
+ *
+ * Two rules read build files as plain text rather than Kotlin declarations:
+ * `build-file-project-deps` (allowed `project(":…")` dependencies) and
+ * `build-file-applies-convention` (every module applies its `bluesjam.*` convention plugin and does
+ * not copy back a setting the convention owns).
  */
 class ModuleIsolationTest {
 
@@ -133,6 +138,49 @@ class ModuleIsolationTest {
         }
     }
 
+    @Test
+    fun `module build files apply their convention plugin`() {
+        val settings = File(rootDir, "settings.gradle.kts")
+        val violations = INCLUDE_REGEX.findAll(settings.readText())
+            .map { it.groupValues[1].removePrefix(":").replace(':', '/') }
+            .flatMap { conventionViolations(it) }
+            .toList()
+        if (violations.isNotEmpty()) {
+            fail(
+                "Assert 'build-file-applies-convention' was violated (${violations.size} times). " +
+                    "Invalid build files:\n" + violations.joinToString("\n"),
+            )
+        }
+    }
+
+    private fun conventionViolations(modulePath: String): List<String> {
+        val display = "$modulePath/build.gradle.kts"
+        val buildFile = File(rootDir, display)
+        if (!buildFile.isFile) return listOf("$display is missing")
+        val lines = buildFile.readLines().map { it.substringBefore("//") }
+        val applied = lines.flatMap { line -> CONVENTION_ID.findAll(line).map { it.groupValues[1] } }
+        val required = when {
+            modulePath == APP -> "bluesjam.android.application"
+            modulePath.startsWith(FEATURE) -> "bluesjam.android.feature"
+            else -> null
+        }
+        val pluginViolations = when {
+            applied.isEmpty() -> listOf("$display applies no bluesjam.* convention plugin")
+            required != null && required !in applied -> listOf("$display must apply $required (applies $applied)")
+            else -> emptyList()
+        }
+        val lineViolations = lines.flatMapIndexed { index, line ->
+            val location = "$display:${index + 1}"
+            listOfNotNull(
+                RAW_PLUGIN.find(line)?.let { "$location applies a plugin directly, use a convention: ${line.trim()}" },
+                OWNED_SETTING.find(line)?.let {
+                    "$location sets '${it.groupValues[1]}', owned by a convention: ${line.trim()}"
+                },
+            )
+        }
+        return pluginViolations + lineViolations
+    }
+
     private fun buildFileViolations(buildFile: File): List<String> {
         val modulePath = buildFile.parentFile.relativeTo(rootDir).path.replace('\\', '/')
         val display = "$modulePath/build.gradle.kts"
@@ -169,6 +217,7 @@ class ModuleIsolationTest {
         const val CORE_MODEL = "core/model"
         const val CORE_UI = "core/ui"
         const val KONSIST_TEST = "konsist-test"
+        const val APP = "app"
         const val PROJECT_PACKAGE = "com.bbbjam."
         const val CORE_PACKAGE = "com.bbbjam.core."
         const val FEATURE_PACKAGE = "com.bbbjam.feature."
@@ -183,6 +232,20 @@ class ModuleIsolationTest {
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")
         val TYPE_SAFE_ACCESSOR = Regex("""\bprojects\.""")
+
+        /** A convention plugin applied by id, such as `id("bluesjam.android.feature")`. */
+        val CONVENTION_ID = Regex("""\bid\(\s*"(bluesjam\.[a-z.]+)"\s*\)""")
+
+        /** A plugin applied without a convention: a catalog alias, another id, `kotlin("…")`, `apply(plugin…)`. */
+        val RAW_PLUGIN = Regex(
+            """\balias\(\s*libs\.plugins\.|\bid\(\s*"(?!bluesjam\.)|\bkotlin\(\s*"|\bapply\(\s*plugin""",
+        )
+
+        /** A setting a convention plugin owns, which a module build file never sets again. */
+        val OWNED_SETTING = Regex(
+            """\b(compileSdk|minSdk|targetSdk|JavaVersion|JvmTarget|jvmTarget|jvmToolchain|""" +
+                """sourceCompatibility|targetCompatibility|buildFeatures|isReturnDefaultValues)\b""",
+        )
 
         /** A `Color(…)` built from a number, or an ARGB hex literal such as a preview `backgroundColor`. */
         val COLOR_LITERAL = Regex("""\bColor\(\s*(0x|\d)|\b0x[0-9A-Fa-f]{8}L?\b""")

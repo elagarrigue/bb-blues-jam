@@ -1,6 +1,7 @@
 [versions]
 compileSdk = "37"
 minSdk = "24"
+targetSdk = "37"
 agp = "9.4.1"
 kotlin = "2.2.10"
 coreKtx = "1.19.0"
@@ -39,6 +40,9 @@ koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }
 koin-android = { group = "io.insert-koin", name = "koin-android" }
 koin-compose = { group = "io.insert-koin", name = "koin-compose" }
+# For build-logic only: the convention plugins compile against AGP and KGP (compileOnly).
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

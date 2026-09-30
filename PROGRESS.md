@@ -6,13 +6,20 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready features: `build-logic-conventions`, then `apps-script-read-endpoint` (needs
-  the user to deploy Apps Script). Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+- Current next ready feature: `apps-script-read-endpoint` (its deployment needs the user's Google
+  account). Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
   `konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
-  `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`, `info-screen`.
+  `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`, `info-screen`,
+  `build-logic-conventions`.
 - Current blocker: none. The seed was imported into the real Sheet and reviewed by hand by the user
   (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 30 September 2026 (session 030) — `CI=true ./init.sh` exit 0, `konsist: wired`
+- Last verified at: 30 September 2026 (session 033, `build-logic-conventions`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (11/11, new `build-file-applies-convention`), `detekt: wired`,
+  `ktlint: wired`; every other suite unchanged (20 result files, 0 failures). Task plans,
+  `buildEnvironment`, manifests, dependency sets and the debug APK (392 non-`META-INF` entries by
+  SHA-1) identical to HEAD `095c88b`. Pixel 5 (API 34): cold start 872 ms, `Status: ok`, empty
+  crash buffer and AndroidRuntime log, Info drawn unchanged.
+  Before that, session 030 — `CI=true ./init.sh` exit 0, `konsist: wired`
   (10/10, now checking the real `:feature:info`), `detekt: wired`, `ktlint: wired`; new
   `InfoPresenterTest` (4) and `InfoModuleTest` (1), all other counts as below, 0 failures. Pixel 5
   (API 34): cold start 760 ms, empty crash buffer and AndroidRuntime logcat, Info drawn from the
@@ -71,12 +78,25 @@ Its test sources hold a sample presenter with no domain types, `SamplePresenterT
 runtime calls `android.os.Trace`; every presenter module needs the same (architecture skill).
 `compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
 
-A test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
-`ModuleIsolationTest`: 10 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
+Module build setup lives in `build-logic/` (`build-logic-conventions`, `accepted`): an included build
+(`includeBuild("build-logic")` in `pluginManagement`) whose `:convention` subproject holds six binary
+plugins in `com.bbbjam.buildlogic` — `bluesjam.jvm.library` (`:core:model`, `:konsist-test`),
+`bluesjam.android.library` (`:core:data`), `bluesjam.android.application` + `bluesjam.android.compose`
+(`:app`), `bluesjam.android.presenter` (`:core:ui`) and `bluesjam.android.feature` (`:feature:info`).
+They set SDK levels (`compileSdk`, `minSdk`, and now `targetSdk` from the catalog), Java 11,
+Compose, `isReturnDefaultValues`, the presenter test libraries and Koin for features. Module files
+keep only `id("bluesjam.…")`, namespace, `:app`'s identity and build types, and their own
+dependencies. The catalog is shared from `gradle/libs.versions.toml` (new `targetSdk`,
+`android-gradlePlugin`, `kotlin-gradlePlugin`); detekt and ktlint are still applied from the root
+`subprojects {}` block and do not lint `build-logic` itself.
+
+A test-only module `:konsist-test` (`bluesjam.jvm.library`, no project dependency) holds
+`ModuleIsolationTest`: 11 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
 (no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
 `:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
-`project(":…")` dependencies in `core/*`/`feature/*` build files, and no color literal outside
-`:core:ui`). Module groups are read from paths,
+`project(":…")` dependencies in `core/*`/`feature/*` build files, every module build file applying
+its `bluesjam.*` convention with no raw plugin and no convention-owned setting, and no color literal
+outside `:core:ui`). Module groups are read from paths,
 so the first `:feature:*` module is covered without editing the suite. The test task declares every
 `.kt`/`.kts` file as an input, so a change elsewhere reruns it (`konsist-isolation-rules`, `accepted`).
 
@@ -897,6 +917,81 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: the Kotlin inside `build-logic` is not linted (outside the root
   build); the first build on a fresh clone is ~30 s slower once; Android Studio sync not tried.
 - Next best step: the implementer runs the spec.
+
+### Session 033 — 30 September 2026
+
+- Goal: implement `build-logic-conventions` (spec `docs/specs/build-logic-conventions.md`; the user
+  approved the Konsist rule `build-file-applies-convention`, 10 → 11).
+- Completed:
+  - `build-logic/settings.gradle.kts` (repositories as the root, `FAIL_ON_PROJECT_REPOS`, catalog
+    `libs` from `../gradle/libs.versions.toml`), `build-logic/convention/build.gradle.kts`
+    (`kotlin-dsl`, AGP/KGP `compileOnly`, six registrations), `build-logic/convention/.gitignore`
+    (`/build`), `ProjectExtensions.kt` and the six `*ConventionPlugin` classes.
+  - `settings.gradle.kts`: `includeBuild("build-logic")` first in `pluginManagement`. Catalog:
+    `targetSdk = "37"`, `android-gradlePlugin`, `kotlin-gradlePlugin`.
+  - Module files converted: `core/model`, `konsist-test`, `core/data`, `core/ui`, `feature/info`,
+    `app`, as the spec's Expected File Changes.
+  - `ModuleIsolationTest`: `build-file-applies-convention` and a KDoc paragraph on the build-file
+    rules.
+  - Architecture skill, Build Conventions: convention plugins table and rules, rewritten plugin /
+    SDK / Java / presenter bullets, Isolated Projects note and the unlinted `build-logic` gap,
+    reference feature build file, Konsist at 11 rules, template comment; `:konsist-test` row.
+- Verification run (logs in the session scratchpad, `impl-blc/`):
+  - Baseline on untouched HEAD `095c88b`: `CI=true ./init.sh` exit 0, three `wired`, Konsist 10.
+  - `./gradlew ktlintFormat` exit 0 (no change). `CI=true ./init.sh` exit 0, three `wired`,
+    `ModuleIsolationTest` `tests="11" failures="0"`, 20 result files with `failures="0"`.
+    `build-logic` compiles with no `w:` line.
+  - Spec item 2 grep over `*/build.gradle.kts */*/build.gradle.kts`: no output, exit 1.
+  - Zero behaviour change, clean `./gradlew build` before (HEAD) and after, same capture script:
+    byte-identical `check --dry-run` (353 lines) and `build --dry-run` (590) plans,
+    `buildEnvironment`, merged manifests, AAR names, APK entry list (466) and SHA-1 of all 392
+    non-`META-INF` entries, and 15 of 22 dependency reports (all `:core:*`, `:konsist-test`, `:app`
+    `debugCompileClasspath`). The other seven (`:app` runtime ×3, `:feature:info` ×4) differ in
+    order only and are identical as sorted coordinate sets. Test classes identical; only
+    `ModuleIsolationTest` 10 → 11 tests.
+  - Failure demonstrations, `./gradlew :konsist-test:test` exit 1 each, each file restored by `cp`
+    and SHA-1 checked: `core/data` at its HEAD content → `build-file-applies-convention` violated 7
+    times ("applies no bluesjam.* convention plugin", ":2 applies a plugin directly…", ":7 sets
+    'compileSdk'…"); `feature/info` with `bluesjam.android.presenter` → "must apply
+    bluesjam.android.feature (applies [bluesjam.android.presenter])"; `core/ui` with
+    `defaultConfig { minSdk = 26 } // targetSdk…` → one violation, ":7 sets 'minSdk'" (the comment
+    word is ignored); `core/data/build.gradle.kts` moved out → "is missing";
+    `implementation(project(":feature:info"))` in `core/data` → `build-file-project-deps` still
+    fails on the new file shape.
+  - Timings, `CI=true ./init.sh` seconds, before / after: warm 7, 7 / 7, 7; after `./gradlew clean`
+    48 / 40; one module build file edited (configuration cache miss) 20 / 14; one convention source
+    edited — / 18. Single runs on a shared machine; read as "no slower", not as a speed-up.
+  - Pixel 5 (API 34), manual: `./gradlew :app:installDebug`; the installed `base.apk` has the same
+    SHA-1 as `app-debug.apk`; `am start -W` `Status: ok`, `LaunchState: COLD`, 872 ms; crash buffer
+    and AndroidRuntime log empty; Info drawn unchanged (screenshot in the scratchpad). No device
+    setting changed.
+- Deviations: the four Android module files were converted in one step and built together, not one
+  build per file (the two JVM modules were built individually); the result is the same.
+- Known risk or unresolved issue:
+  - `build-logic` Kotlin is not linted by detekt/ktlint and not counted by `init.sh` (spec
+    Decision 3, left for a later slice with the user's say).
+  - A fresh clone pays for compiling `build-logic` once (planner measured ~30 s); Android Studio
+    sync and opening `build-logic` standalone were not tried.
+  - `build-logic/.kotlin/` (Kotlin session dir, empty after a build) is not ignored, the same as the
+    root `.kotlin/` today.
+  - With `core.autocrlf=true`, `git checkout -- <file>` rewrites LF files as CRLF; restore probes by
+    copying the saved bytes, and check with `sha1sum`.
+- Next best step: independent validation of `build-logic-conventions`.
+
+### Session 034 — 30 September 2026
+
+- Goal: independent validation of `build-logic-conventions`.
+- Completed: validator verdict **accept**; status set to `accepted`. Orchestrator follow-up:
+  `.kotlin/` added to the root `.gitignore` (the Kotlin daemon writes error logs there, at the root
+  and in `build-logic/`; the root gap predated this slice).
+- Verification run (by the validator): gate exit 0 with three `wired`, Konsist 11/11; against its
+  own clean clone of HEAD, plans, `buildEnvironment`, the APK's non-META-INF entries by SHA-1 and
+  dependency coordinate sets identical; its probes showed the new rule catching five evasions,
+  the presenter convention being load-bearing, and `build-file-project-deps` still working.
+- Known risk or unresolved issue: the rule `build-file-applies-convention` misses backtick plugin
+  ids, `pluginManager.apply` / `plugins.apply`, and `java { toolchain }` — a hardening needing the
+  user's approval (gate change). The Kotlin inside `build-logic` is not linted.
+- Next best step: `apps-script-read-endpoint` — plan it; deploying the script is the user's step.
 
 ## Notes For The Next Session
 

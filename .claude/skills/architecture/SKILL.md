@@ -22,7 +22,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
 | `:app` | Navigation, bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). | everything |
-| `:konsist-test` | Test-only JVM module (`kotlin-jvm`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
+| `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
 (set by `info-screen`); the planned ones are `:feature:next-jam`, `:feature:song-detail` and
@@ -74,28 +74,62 @@ colors) in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. **A new dependency rule means a new test in that class**, proven able
+covered without editing it. It holds 11 rules; the two that read build files are
+`build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
+dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
 
 ## Build Conventions
 
-Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new module follows them.
+Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`); moved into convention plugins by
+`build-logic-conventions` (spec `docs/specs/build-logic-conventions.md`). Every new module follows
+them.
 
-- **Plugin per module kind.** A pure Kotlin module (`:core:model`) applies `kotlin-jvm`
-  (`org.jetbrains.kotlin.jvm`, `version.ref = "kotlin"`). An Android library (`:core:ui`,
-  `:core:data`, every `:feature:*`) applies `android-library` (`com.android.library`) and relies on
-  AGP 9's built-in Kotlin. Never apply `org.jetbrains.kotlin.android`, and never
+- **Convention plugins.** `build-logic/` is an included build (`includeBuild("build-logic")` first
+  in `pluginManagement`, not `buildSrc`) with one subproject, `:convention` (`kotlin-dsl`, binary
+  plugins in `com.bbbjam.buildlogic`). It reads the root catalog from `../gradle/libs.versions.toml`
+  and compiles against AGP and KGP as `compileOnly` (catalog `android-gradlePlugin`,
+  `kotlin-gradlePlugin`). A module build file applies only `id("bluesjam.…")` plugins and keeps what
+  is its own: `namespace`, `:app`'s identity and build types, project dependencies and
+  module-specific libraries.
+
+  | Plugin | Applies / sets | Used by |
+  |---|---|---|
+  | `bluesjam.jvm.library` | `org.jetbrains.kotlin.jvm`; `java {}` source/target 11; `jvmTarget = JVM_11` | `:core:model`, `:konsist-test` |
+  | `bluesjam.android.library` | `com.android.library`; common Android setup (SDKs, Java 11) | `:core:data` |
+  | `bluesjam.android.application` | `com.android.application`; common Android setup; `targetSdk` from the catalog | `:app` |
+  | `bluesjam.android.compose` | requires an Android plugin first; Compose compiler plugin; `buildFeatures.compose = true` | `:app` (and through the two below) |
+  | `bluesjam.android.presenter` | `.android.library` + `.android.compose`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, molecule-runtime, turbine, kotlinx-coroutines-test | `:core:ui` |
+  | `bluesjam.android.feature` | `.android.presenter`; `implementation` Koin BOM, `koin-core`, `koin-compose` | every `:feature:*` |
+
+  A convention adds a dependency only when every module of its kind needs it. Optional or
+  module-specific libraries (Compose BOM, foundation, tooling, `koin-android`, junit in JVM modules
+  and `:app`) stay in the module file. **Project dependencies never go into a convention**:
+  `build-file-project-deps` reads them from module files (D-03). The Konsist rule
+  `build-file-applies-convention` fails a module that applies no `bluesjam.*` plugin, an `:app`
+  without `bluesjam.android.application`, a `:feature:*` without `bluesjam.android.feature`, a raw
+  plugin (`alias(libs.plugins…)`, another `id`, `kotlin("…")`, `apply(plugin…)`), a
+  convention-owned setting (`compileSdk`, `minSdk`, `targetSdk`, `JavaVersion`, `JvmTarget`,
+  `jvmTarget`, `jvmToolchain`, `sourceCompatibility`, `targetCompatibility`, `buildFeatures`,
+  `isReturnDefaultValues`) outside a `//` comment, or a missing build file. Editing a convention
+  recompiles `build-logic` and misses the configuration cache once (about 18 s of `init.sh`
+  instead of 7).
+- **Plugin per module kind.** A pure Kotlin module applies `bluesjam.jvm.library`. An Android
+  library applies `bluesjam.android.library` (or `.presenter`/`.feature`, which include it) and
+  relies on AGP 9's built-in Kotlin. Never apply `org.jetbrains.kotlin.android`, and never
   `com.android.kotlin.multiplatform.library`: the project is Android-only.
 - **Every plugin is declared at the root** `build.gradle.kts` with `apply false`, from the catalog
-  with `alias(...)`. Omitting one there fails configuration with "the plugin is already on the
-  classpath with an unknown version", because AGP already puts KGP and the library plugin on the
-  classpath.
-- **SDK levels come from the catalog**: `compileSdk` and `minSdk` in `[versions]`, read with
-  `libs.versions.minSdk.get().toInt()` (and `release(libs.versions.compileSdk.get().toInt())`) in
-  every Android module. `targetSdk` lives in `:app` only.
-- **Java 11 everywhere**: `compileOptions` `VERSION_11` in Android modules; `java {}` `VERSION_11`
-  plus `compilerOptions.jvmTarget = JvmTarget.JVM_11` in JVM modules. No `jvmToolchain(11)`, which
-  would make foojay download a JDK 11 for nothing.
+  with `alias(...)`. The conventions compile against AGP and KGP `compileOnly` and apply plugins by
+  id, so at runtime they use the copies the root puts on the classpath: without `kotlin.compose`
+  there, configuration fails ("An exception occurred applying plugin request [id:
+  'bluesjam.android.compose']"). It also keeps one AGP and one KGP in `buildEnvironment`.
+- **SDK levels come from the catalog**, set by the conventions: `compileSdk` and `minSdk` in every
+  Android module (`configureAndroidCommon` in `ProjectExtensions.kt`), `targetSdk` in `:app` only
+  through `bluesjam.android.application`. Change a level in `[versions]`, never in a module.
+- **Java 11 everywhere**, set by the conventions: `compileOptions` `VERSION_11` in Android modules;
+  `java {}` `VERSION_11` plus `jvmTarget = JVM_11` in JVM modules. No `jvmToolchain(11)`, which
+  would make foojay download a JDK 11 for nothing. `build-logic` itself targets the daemon JVM
+  (pinned by `gradle/gradle-daemon-jvm.properties`); do not add a toolchain there either.
 - **New modules keep sources in `src/main/kotlin`** (and `src/test/kotlin`). `:app` keeps
   `src/main/java`. Libraries need no `AndroidManifest.xml`; the namespace comes from the DSL,
   `com.bbbjam.<path>` (for example `com.bbbjam.core.ui`).
@@ -112,14 +146,20 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   configuration and gets both in its `check`. Configuration lives in `.editorconfig` (ktlint,
   `android_studio` style, Composable naming exception) and `config/detekt/detekt.yml` (overrides on
   top of detekt's defaults). `./gradlew ktlintFormat` fixes formatting. Never add a baseline file,
-  `ignoreFailures`, or a blanket rule disable without the user's approval.
+  `ignoreFailures`, or a blanket rule disable without the user's approval. The tools stay
+  root-applied after `build-logic-conventions`, not in a convention. That root block is the build's
+  only Isolated Projects blocker; moving the tools into a `bluesjam.quality` convention applied by
+  the three base conventions was proven to work (spec Decision 3) and is left to its own slice.
+  Known gap: the Kotlin in `build-logic` is outside the root build, so detekt and ktlint do not
+  lint it.
 - **A module with presenters** (set by `molecule-presenter-harness`, spec
-  `docs/specs/molecule-presenter-harness.md`) applies `kotlin-compose` with
-  `buildFeatures.compose = true`, gets the Compose runtime through `:core:ui` (which exposes the
-  BOM and `androidx.compose.runtime:runtime` as `api`), adds `testImplementation` junit,
-  molecule-runtime, turbine, kotlinx-coroutines-test, and sets
-  `testOptions.unitTests.isReturnDefaultValues = true`. Without that flag every Molecule test fails
-  on `android.os.Trace` "not mocked", because the Android Compose runtime calls it.
+  `docs/specs/molecule-presenter-harness.md`) applies `bluesjam.android.presenter` (a feature applies
+  `bluesjam.android.feature`, which includes it). The convention applies the Compose compiler with
+  `buildFeatures.compose = true`, adds `testImplementation` junit, molecule-runtime, turbine,
+  kotlinx-coroutines-test, and sets `testOptions.unitTests.isReturnDefaultValues = true`; the
+  Compose runtime arrives through `:core:ui` (which exposes the BOM and
+  `androidx.compose.runtime:runtime` as `api`). Without the flag every Molecule test fails on
+  `android.os.Trace` "not mocked", because the Android Compose runtime calls it.
 - **`:core:ui` is the design system** (set by `design-tokens-theme`, spec
   `docs/specs/design-tokens-theme.md`). Besides the runtime it exposes `androidx.compose.ui:ui` and
   `androidx.compose.material3:material3` as `api` (BOM-managed, material3 1.3.2), so a module that
@@ -136,18 +176,12 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")` in `:app` **and** in its own
   module: lint `NewApi` fails a library that uses java.time without it even when `:app` has it, and
   a library that enables it without `:app` fails `:app:checkDebugAarMetadata`.
-- **No `build-logic` convention plugins yet.** Deferred again by `info-screen` (spec
-  `docs/specs/info-screen.md`, Decision 1): the first feature module copies the Android-library
-  boilerplate of `:core:ui`. It lands as its own slice, `build-logic-conventions`, before or with
-  the second `:feature:*` module (`next-jam-read-only-list` depends on it). Quality tools stay
-  applied from the root `subprojects {}` block even then: a convention plugin is applied per module,
-  and the gate must not depend on a module remembering to apply it.
-- **Reference feature build file**: `feature/info/build.gradle.kts` (set by `info-screen`).
-  `android-library` + `kotlin-compose`, namespace `com.bbbjam.feature.<name>`, SDKs from the
-  catalog, Java 11, `compose = true`, `unitTests.isReturnDefaultValues = true`; its only project
-  dependency is `implementation(project(":core:ui"))` (plus `:core:data` once a feature reads
-  data); Koin BOM + `koin-core` + `koin-compose`; `androidx.compose.foundation`, tooling-preview
-  (+ debug tooling); the four presenter test libraries.
+- **Reference feature build file**: `feature/info/build.gradle.kts` (set by `info-screen`, reshaped
+  by `build-logic-conventions`): `id("bluesjam.android.feature")`, `android { namespace =
+  "com.bbbjam.feature.<name>" }`, its only project dependency `implementation(project(":core:ui"))`
+  (plus `:core:data` once a feature reads data), `androidx.compose.foundation` and tooling-preview
+  (+ debug tooling). SDKs, Java 11, Compose, the test flag, Koin and the presenter test libraries
+  come from the convention.
 - **Koin 4.1.1** (set by `info-screen`, approved 30 September 2026; D-16). Catalog: `koin-bom`
   (versioned) and `koin-core`, `koin-android`, `koin-compose` (BOM-managed). Feature modules use
   `koin-core` + `koin-compose` (for `koinInject()`); `:app` uses `koin-android` (for
@@ -197,7 +231,7 @@ and admin state, the screen, the Koin wiring, and Molecule tests. The contracts 
 
 ```
 feature/<name>/
-  build.gradle.kts                     # depends on :core:* only
+  build.gradle.kts                     # id("bluesjam.android.feature"); depends on :core:* only
   src/main/.../<Name>Presenter.kt      # class <Name>Presenter : Presenter<<Name>UiModel, Params>
   src/main/.../<Name>UiModel.kt        # sealed or data class : UiModel, with sealed Event
   src/main/.../<Name>Screen.kt         # renders the UiModel, forwards events, holds no logic
