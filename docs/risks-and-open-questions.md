@@ -1,7 +1,7 @@
 # Risks and Open Questions
 
 Questions still open after discovery, sorted by when they must be answered. Settled matters live in
-the other discovery documents; the 18 decisions and their reasoning are in
+the other discovery documents; the 19 decisions and their reasoning are in
 `../bb-blues-jam-bitacora.md`.
 
 ## Blocking Next Phase

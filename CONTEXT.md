@@ -68,8 +68,12 @@ Draft and musicians see the date and venue but not the songs.
 The state in which the admin is still building the Setlist. Only the admin can see the songs.
 
 ### Venue
-Where a Jam happens. For the MVP this is La Macanuda, Moreno 223, Bahía Blanca, but it is stored per
-Jam rather than hardcoded.
+Where a Jam happens. Currently La Macanuda, Moreno 223, Bahía Blanca, but it can change, so it is
+stored per Jam and never hardcoded — not even on the Info tab (D-19).
+
+### Bahía Blanca Blues
+The group that organizes the Jam and the community's other activities (festivals, concerts, the
+Hideaway radio program). What the Info tab presents; facts in `docs/info-content.md`.
 
 ### Sheet
 The Google Sheets workbook that serves as the project's backend, reached through Apps Script. It is

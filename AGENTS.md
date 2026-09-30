@@ -63,7 +63,7 @@ Read optional docs only when relevant:
 - `docs/sheet-schema.md` — when touching the Sheet, Apps Script, or the `:core:data` mappers.
 - `DESIGN.md` — when touching any UI. It carries the design tokens and the visual rules.
 - `bb-blues-jam-design-prompt.md` — per-screen design requirements. Source of truth for screens.
-- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 18 decisions (D-01 … D-18) and
+- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 19 decisions (D-01 … D-19) and
   their reasoning live here. Consult when a change might contradict one.
 
 ## Startup Workflow
@@ -125,4 +125,4 @@ A feature is done only when all are true:
 ## Reminder
 
 No ViewModels. No feature module imports another. No mutation only in the UI. `passing` is not
-`accepted`. When a change would contradict D-01 … D-18, stop and ask.
+`accepted`. When a change would contradict D-01 … D-19, stop and ask.

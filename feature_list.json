@@ -432,7 +432,7 @@
     "id": "info-screen",
     "area": "feature-info",
     "title": "Show the info screen",
-    "user_visible_behavior": "The Info tab explains what the jam is, where and when it happens, how to join, links to social media, and offers a discreet admin entry point.",
+    "user_visible_behavior": "The Info tab explains who organizes the jam (Bahía Blanca Blues) and what it is, that it happens monthly, the Hideaway radio program, how to join, links to social media, and offers a discreet admin entry point. It shows no venue: that belongs to each jam (D-19).",
     "depends_on": [
       "design-tokens-theme"
     ],
@@ -443,7 +443,7 @@
       "Copy is in Rioplatense Spanish using vos"
     ],
     "evidence": [],
-    "notes": "D-12. This slice has no backend dependency and can run early if the Sheet stays blocked."
+    "notes": "D-12. This slice has no backend dependency and can run early if the Sheet stays blocked. D-19 (30 September 2026): the venue can change, so Info never shows a venue or address; the next-jam header shows each jam's venue from Jams.lugar. Content source: docs/info-content.md, taken from the user and the public @bahiablancablues Instagram and Linktree; do not invent facts beyond it."
   },
   {
     "id": "bottom-navigation",

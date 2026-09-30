@@ -379,6 +379,16 @@ por `;`. Se descartó permitir cupos extra por tema, porque obligaba a columnas 
 planilla y hacía que "hay lugar para guitarra" dependiera de cuántas guitarras se inventaron para ese
 tema. Decidido por el organizador al revisar `domain-model-types`.
 
+### D-19 — Info habla de la comunidad, no del lugar
+La jam es mensual y hoy se hace en La Macanuda, pero el lugar puede cambiar. Por eso Info no muestra
+lugar ni dirección: el lugar es un dato de cada jam (`Jams.lugar` en la planilla) y se ve en el
+encabezado de la próxima jam. Info presenta a **Bahía Blanca Blues**, el grupo que organiza la jam y
+las demás movidas de la comunidad, su programa de radio **Hideaway**, las redes y cómo sumarse:
+llegar y anotarse ahí. Los hechos viven en `docs/info-content.md` con su fuente, para que ningún
+agente los complete de memoria. Se descartó dejar el lugar en Info porque una pantalla estática con
+una dirección vieja es exactamente la "versión no confiable" que la app vino a reemplazar. Decidido
+por el organizador al revisar el contenido de Info.
+
 ---
 
 # Parte III — Harness y seguimiento

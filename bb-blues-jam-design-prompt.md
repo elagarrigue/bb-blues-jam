@@ -160,9 +160,9 @@ noción de libre.
 
 ### 6. Info
 
-- Qué es la jam, en un párrafo
-- Lugar, dirección, cómo llegar
-- Cuándo se hace
+- Quién la organiza (Bahía Blanca Blues) y qué es la jam, en un párrafo
+- Que es mensual. Sin lugar ni dirección: el lugar puede cambiar y se muestra en cada jam (D-19)
+- El programa de radio Hideaway
 - Enlaces a redes sociales
 - Cómo sumarse como músico
 - Acceso discreto a "Entrar como admin"

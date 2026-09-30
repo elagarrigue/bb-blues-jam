@@ -699,6 +699,24 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Next best step: `sheet-schema-definition` needs the user to confirm the real Sheet by hand
   (including the new `Otros` column); `info-screen` can proceed meanwhile.
 
+### Session 026 — 30 September 2026
+
+- Goal: unblock `sheet-schema-definition` and `info-screen`.
+- Completed:
+  - The user reports: the real Sheet reviewed, the `Otros` column added to the jam tab, and more
+    songs added to `Catalogo`. Not verifiable from this session (private Sheet); recorded as the
+    user's manual evidence. The planner is specifying `sheet-schema-definition` on that basis.
+  - Info content gathered from the user and the public @bahiablancablues Instagram and Linktree
+    into `docs/info-content.md`, each fact with its source. **D-19**: Info presents Bahía Blanca
+    Blues (the organizing group), the monthly jam, the Hideaway radio program (Tuesdays 20–22),
+    social links and how to join (come and sign up there); **no venue**, because it can change —
+    it belongs to each jam. Updated DESIGN.md, the design prompt, `info-screen` in
+    `feature_list.json`, CONTEXT.md (Venue, new "Bahía Blanca Blues"), the build brief, the
+    bitácora and START-HERE; decision range now D-01 … D-19.
+- Known risk or unresolved issue: the Hideaway radio station/frequency is unknown, and its schedule
+  comes from an automated summary of Instagram — confirm with the user before release.
+- Next best step: finish `sheet-schema-definition`; plan `info-screen`.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with

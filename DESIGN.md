@@ -234,8 +234,9 @@ row, tappable open slots for assignment, and a clear action on filled slots.
    few titles
 5. **Past jam detail** — same structure, read-only, muted archive treatment, amber only on keys, no
    notion of open slots
-6. **Info** — what the jam is, venue and directions, when it happens, social links, how to join, and
-   a discreet admin entry point
+6. **Info** — who organizes (Bahía Blanca Blues), what the jam is and that it is monthly, the
+   Hideaway radio program, social links, how to join, and a discreet admin entry point. No venue:
+   it can change, so it belongs to each jam, shown in the next-jam header (D-19)
 7. **Admin login** — a single passphrase field and a button; no registration, no recovery, no email;
    error state included
 8. **Assign musician to a slot** — bottom sheet; the instrument is already determined by the slot

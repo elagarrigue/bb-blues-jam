@@ -1,7 +1,8 @@
 # Build Brief
 
-BB Blues Jam — an Android app to organize a monthly blues jam at La Macanuda (Moreno 223, Bahía
-Blanca, Argentina). Between 20 and 60 musicians attend each date.
+BB Blues Jam — an Android app to organize a monthly blues jam run by Bahía Blanca Blues, currently
+held at La Macanuda (Moreno 223, Bahía Blanca, Argentina); the venue can change, so it is stored per
+jam (D-19). Between 20 and 60 musicians attend each date.
 
 This project is the final deliverable of the DevExpert AI Expert course (September 2026 edition),
 which requires two things: a working app and a documented development harness.
@@ -120,4 +121,4 @@ schedule runs 14 September to 23 October 2026, with the assistant landing in wee
 must close early enough to leave that week clear.
 
 The project bitácora (`bb-blues-jam-bitacora.md`) is in Spanish and is presentation material; it
-records the reasoning behind all 18 decisions and should be kept current as work proceeds.
+records the reasoning behind all 19 decisions and should be kept current as work proceeds.
