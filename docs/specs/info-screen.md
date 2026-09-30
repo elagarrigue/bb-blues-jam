@@ -300,3 +300,15 @@ test; dependency-tree lines for stdlib and Compose runtime; logcat VIEW lines pe
 - **Behavior before login:** the admin entry shows a "not enabled yet" notice (Decision 8).
 - Recommendation for the orchestrator: add a `build-logic-conventions` feature before
   `next-jam-read-only-list` (Decision 1).
+
+## User Approvals
+
+Recorded 30 September 2026, before implementation:
+
+- **Copy table: approved as written**, including the Hideaway schedule and the admin notice.
+- **Koin 4.1.1 and `startKoin` in `:app` in this slice: approved.**
+- **UI copy in Kotlin (`InfoCopy`) rather than string resources**, and showing the notice when the
+  admin entry is tapped before the login exists: accepted with the copy table.
+- **build-logic deferred:** a separate `build-logic-conventions` slice is added to
+  `feature_list.json` before `next-jam-read-only-list`; update the architecture skill's bullet to
+  point to it.

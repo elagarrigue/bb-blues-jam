@@ -717,6 +717,23 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   comes from an automated summary of Instagram — confirm with the user before release.
 - Next best step: finish `sheet-schema-definition`; plan `info-screen`.
 
+### Session 027 — 30 September 2026
+
+- Goal: plan `sheet-schema-definition` and `info-screen`, and settle their decisions.
+- Completed:
+  - `docs/specs/sheet-schema-definition.md`: a field-by-field check of the schema against the
+    domain types found eleven documentation mismatches (M1–M11) and one gap. The user decided the
+    gap (U1): a slot is identified by its order among that instrument's non-`-` columns.
+  - `docs/specs/info-screen.md`: `:feature:info` with a presenter, Koin 4.1.1 (4.2.2 would lift
+    Kotlin and Compose above the pinned versions), a shared `ExternalLinkOpener` in `:core:ui`, copy
+    in Kotlin from `docs/info-content.md` only. The user approved the copy table as written, Koin
+    now, and splitting build-logic into its own slice.
+  - New slice `build-logic-conventions` (35 features now), placed before `next-jam-read-only-list`,
+    which depends on it; no cycles.
+- Known risk or unresolved issue: the Pixel 5 is disconnected (`adb devices` empty); `info-screen`
+  needs it for the launch and link checks.
+- Next best step: implement `sheet-schema-definition`; then `info-screen` once the phone is back.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with

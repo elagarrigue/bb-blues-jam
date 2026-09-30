@@ -270,3 +270,13 @@ No UI is involved. `DESIGN.md` does not apply.
       passphrase is empty.
 - [ ] The user's hand check is attributed to the user and not presented as agent-verified.
 - [ ] The gate exits 0 with all three tools `wired`.
+
+## User Approvals
+
+Recorded 30 September 2026, before implementation:
+
+- **U1 decided: Option B.** A slot is identified by its order among that instrument's slots: the
+  k-th guitar slot is the k-th guitar column that does not hold `-`. Update the **Identifiers**
+  section and the one-sentence KDoc in `Lineup.kt` accordingly.
+- P1–P3 and the deferred mapper rules stand as proposed; the user did not overrule them.
+- The user did not mention the `Config` tab in their hand check; record that plainly.

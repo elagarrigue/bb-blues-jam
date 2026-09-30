@@ -258,6 +258,24 @@
     "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject)."
   },
   {
+    "id": "build-logic-conventions",
+    "area": "bootstrap",
+    "title": "Introduce build-logic convention plugins",
+    "user_visible_behavior": "Every Android library, feature and JVM module applies one convention plugin instead of repeating its build setup; the build and the gate behave exactly as before.",
+    "depends_on": [
+      "module-skeleton",
+      "detekt-ktlint-gate"
+    ],
+    "status": "not_started",
+    "verification": [
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired",
+      "Every module build file applies a convention plugin and no longer repeats SDK levels, Java target or Compose setup",
+      "A module that omits its convention plugin is caught by a check, and the failing case is demonstrated"
+    ],
+    "evidence": [],
+    "notes": "Added 30 September 2026 with the user's approval, split out of info-screen so a UI slice does not also restructure the build. Must land before or with the second :feature:* module (next-jam-read-only-list depends on it). Quality tools (detekt, ktlint) may stay applied from the root subprojects block; decide in the spec."
+  },
+  {
     "id": "next-jam-read-only-list",
     "area": "feature-next-jam",
     "title": "Show the next jam setlist collapsed",
@@ -265,7 +283,8 @@
     "depends_on": [
       "catalog-repository-cache",
       "design-tokens-theme",
-      "molecule-presenter-harness"
+      "molecule-presenter-harness",
+      "build-logic-conventions"
     ],
     "status": "not_started",
     "verification": [
