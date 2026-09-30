@@ -14,7 +14,7 @@ came from, so no agent has to invent them. Collected 30 September 2026.
 | Radio station | Unknown — not in the Instagram or Linktree | Open: ask the user before showing a station or frequency |
 | How to join as a musician | Come to the jam and sign up there; the organizer adds you to a song. No account, no sign-up in the app (D-05) | The user |
 | Instagram | https://www.instagram.com/bahiablancablues/ | The user |
-| YouTube | https://m.youtube.com/channel/UCayS6srPr0FQ2FF4XoEZ-8w (use the non-mobile `www.youtube.com` form in the app) | Linktree of @bahiablancablues |
+| YouTube | https://m.youtube.com/channel/UCayS6srPr0FQ2FF4XoEZ-8w (use the non-mobile `www.youtube.com` form in the app). Opens a channel named "Radio Hideaway" (@radiohideaway9182) that carries Bahía Blanca Blues Festival videos — **user to confirm** it is the channel to show | Linktree of @bahiablancablues; channel name seen on the Pixel 5 |
 | Linktree | https://linktr.ee/bahiablancablues | Instagram bio |
 | Festival | Bahía Blanca Blues Festival, 5th edition (2025/2026 listing) | Linktree — **not** for Info unless the user asks; it dates quickly |
 

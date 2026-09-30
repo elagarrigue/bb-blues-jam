@@ -6,15 +6,20 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready features: `info-screen` (Pixel 5 connected), then `build-logic-conventions`
-  and `apps-script-read-endpoint`. Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+- Current next ready features: `build-logic-conventions`, then `apps-script-read-endpoint` (needs
+  the user to deploy Apps Script). Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
   `konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
-  `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`.
+  `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`, `info-screen`.
 - Current blocker: none. The seed was imported into the real Sheet and reviewed by hand by the user
   (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 30 September 2026 (session 028) — `CI=true ./init.sh` exit 0, three tools
-  `wired`, same test counts as below; session 028 changed docs and one KDoc sentence only.
-  Before that, 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
+- Last verified at: 30 September 2026 (session 030) — `CI=true ./init.sh` exit 0, `konsist: wired`
+  (10/10, now checking the real `:feature:info`), `detekt: wired`, `ktlint: wired`; new
+  `InfoPresenterTest` (4) and `InfoModuleTest` (1), all other counts as below, 0 failures. Pixel 5
+  (API 34): cold start 760 ms, empty crash buffer and AndroidRuntime logcat, Info drawn from the
+  tokens (background `#111318`, no amber), each link starts an `ACTION_VIEW` for its host (Chrome for
+  Instagram and Linktree, the YouTube app for YouTube) and back returns to Info; the admin notice
+  appears. Link `onClickLabel`s are not verified on device (see session 030).
+  Session 028 (docs and one KDoc sentence only) kept the gate green. Before that, 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
   `konsist: wired` (10 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:model`
   runs 30 tests in 9 classes on the JVM, 0 failures; `:core:ui` runs `EventHandlerTest` (6),
   `SamplePresenterTest` (3), `BluesJamColorsTest` (3), `BluesJamTypographyTest` (2),
@@ -25,7 +30,8 @@
 
 ### What exists
 
-Four modules: `:app`, `:core:model`, `:core:ui` and `:core:data` (`module-skeleton`, `accepted`).
+Five product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-skeleton`,
+`accepted`) and `:feature:info` (`info-screen`, `accepted`).
 `:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
 libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
 depends on all three. `:core:data` still holds only a placeholder marker object; `:app`'s
@@ -65,7 +71,7 @@ Its test sources hold a sample presenter with no domain types, `SamplePresenterT
 runtime calls `android.os.Trace`; every presenter module needs the same (architecture skill).
 `compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
 
-A fifth, test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
+A test-only module `:konsist-test` (`kotlin-jvm`, no project dependency) holds
 `ModuleIsolationTest`: 10 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
 (no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
 `:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
@@ -82,9 +88,11 @@ debug only) and activity-compose 1.11.0. appcompat and Material Views are gone; 
 through `:core:ui`.
 
 `MainActivity` (a `ComponentActivity`, the launcher) turns on edge-to-edge with dark system bars and
-shows `PlaceholderScreen` inside `BluesJamTheme`: the background token full screen with a centered
-`BB Blues Jam` label in the `h1` style (Barlow Condensed Bold 28sp), drawn with an M3 `Text` that
-inherits the `text` color. `:app` has no colors of its own: its `colors.xml` is gone, and the window
+shows `InfoScreen` inside `BluesJamTheme`, with the system-bar insets as `contentPadding` (the
+placeholder screen is gone). `BluesJamApp` (the manifest's `android:name`) calls `startKoin` with
+`appModule` and `infoModule`; `appModule` binds `ExternalLinkOpener` to `IntentLinkOpener`. Koin is
+4.1.1 (BOM); kotlin-stdlib stays 2.2.10 and Compose 1.9.1 on `:app`'s runtime classpath. `:app` has
+no colors of its own: its `colors.xml` is gone, and the window
 theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`) uses
 `@color/bluesjam_window_background` from `:core:ui`. Dark only: `values-night` was deleted.
 
@@ -98,9 +106,17 @@ the tool's task in every module that compiles Kotlin; otherwise it names the mod
 The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
 `JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
 `SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
-`ContrastTest` and `WindowBackgroundTest`.
+`ContrastTest`, `WindowBackgroundTest`, and `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`.
 
-The only product code is the `:core:model` domain types; the placeholder screen is scaffolding.
+`:feature:info` (`info-screen`, `accepted`) is the first feature module and the template for the
+others: `InfoPresenter` (`Presenter<InfoUiModel, Unit>`, constructor `ExternalLinkOpener` from
+`:core:ui`), `InfoUiModel` with `OpenLink`/`DismissLinkError`/`AdminEntryTapped`, the approved copy
+in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders only,
+`koinInject()` default) and `infoModule`. It shows who organizes the jam, the jam, Hideaway, how to
+join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
+está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
+
+Product code: the `:core:model` domain types and the Info screen.
 
 The Sheet contract is `docs/sheet-schema.md` (`sheet-schema-definition`, `accepted`): tabs, headers,
 exact Spanish enum values, cell reading rules, slot identity (the k-th slot of an instrument is the
@@ -800,6 +816,75 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   Sheet's `fecha`/`hora`/`posicion` cells are plain text is unknown; the user was advised to format
   them as plain text.
 - Next best step: implement `info-screen` on the Pixel 5.
+
+### Session 030 — 30 September 2026
+
+- Goal: implement `info-screen` (spec `docs/specs/info-screen.md`, with the user's approvals: copy
+  table verbatim, Koin 4.1.1 and `startKoin` now, copy in Kotlin, the admin notice, build-logic
+  deferred to `build-logic-conventions`).
+- Completed:
+  - `:feature:info` (`settings.gradle.kts`, `feature/info/.gitignore`, `build.gradle.kts`):
+    `SocialLink`, `InfoUiModel`, `InfoCopy`, `InfoPresenter`, `InfoScreen`, `di/InfoModule.kt`;
+    tests `InfoPresenterTest` and `InfoModuleTest`.
+  - `:core:ui`: `ExternalLinkOpener` (`com.bbbjam.core.ui.link`).
+  - `:app`: `BluesJamApp`, `di/AppModule.kt`, `link/IntentLinkOpener.kt`, manifest
+    `android:name`, `MainActivity` shows Info; `PlaceholderScreen.kt` and `placeholder_title`
+    deleted. Catalog: `koin` 4.1.1, `koin-bom`, `koin-core`, `koin-android`, `koin-compose`.
+  - Architecture skill: `:core:ui` and `:app` rows, `:feature:info` exists, link-opening bullet,
+    build-logic bullet pointing at `build-logic-conventions`, reference feature build file, Koin
+    4.1.1 (and why not 4.2), copy in Kotlin, 48dp via `LocalMinimumInteractiveComponentSize`.
+    `presenter-pattern.md` names `InfoPresenter`/`InfoPresenterTest` as the first compiled feature
+    example.
+- Verification run:
+  - Baseline `CI=true ./init.sh` exit 0 before any change. `./gradlew ktlintFormat` exit 0 (it
+    re-wrapped one call in `InfoPresenter.kt`). `CI=true ./init.sh` exit 0, three `wired`.
+    `InfoPresenterTest` 4/4, `InfoModuleTest` 1/1, Konsist 10/10, every other suite unchanged.
+  - `:app:dependencies --configuration debugRuntimeClasspath`: Koin 4.1.1; all kotlin-stdlib →
+    2.2.10; compose-bom 2025.09.00, Compose 1.9.1, material3 1.3.2; lifecycle 2.9.3. Lint adds one
+    `NewerVersionAvailable` (koin-bom 4.2.2).
+  - Failure demonstrations, each restored and SHA-1 checked (`sha1sum -c` OK on all three files):
+    m.youtube URL → `each link row opens exactly its url` fails with expected/actual URL lists;
+    `linkError` never set → `a link that cannot be opened…` fails, `No value produced in 3s`;
+    `import com.bbbjam.MainActivity` in `InfoModule.kt` → Konsist `feature-imports-app` violated.
+  - Spec greps on `feature/info/src/main` clean (the `AM` pattern only hits `INSTAGRAM`).
+  - Pixel 5, manual: cold start, empty crash/AndroidRuntime logs; each link tapped from
+    `uiautomator` coordinates gave `act=android.intent.action.VIEW` for `www.instagram.com`,
+    `www.youtube.com` and `linktr.ee` (Chrome, YouTube app, Chrome); back returned to the same
+    `MainActivity` record each time (Instagram and YouTube needed a second back for the page modal and
+    YouTube's own Home). Admin notice shown, no activity started. Rows and admin entry are 48dp
+    clickable nodes. Screenshots and dumps in the session scratchpad only.
+- Known risk or unresolved issue:
+  - Link `onClickLabel`s are not verified on device: `uiautomator` does not export action labels,
+    and turning TalkBack on through `adb settings` was refused by the permission system (settings
+    confirmed unchanged). A validator with TalkBack or an instrumented semantics test can close it.
+  - The YouTube link opens a channel named "Radio Hideaway"; the row says only YouTube /
+    youtube.com. Confirm with the user that this is the channel to show.
+  - With the insets inside the scroll (spec Decision 5), scrolled content passes under the
+    transparent status bar (the clock overlaps a heading mid-scroll). As specified; `bottom-navigation`
+    may want a status-bar scrim or top inset outside the scroll.
+  - Opening the links left two tabs in the phone's Chrome; no setting was changed.
+- Next best step: independent validation of `info-screen`; then `build-logic-conventions`.
+
+### Session 031 — 30 September 2026
+
+- Goal: independent validation of `info-screen`.
+- Completed: validator verdict **accept**; status set to `accepted`. The first `:feature:*` module
+  is in, with Koin 4.1.1 started in `:app` and the approved copy.
+- Verification run (by the validator): gate exit 0 with three `wired`, Konsist 10/10 now checking a
+  real feature module; `:feature:info` tests 5/5 rerun; dependency report Koin 4.1.1 only,
+  kotlin-stdlib 2.2.10 only; 23/23 copy strings match the approved table by script; its own probes
+  caught a changed copy word, a feature→`:app` build dependency, and two wrong admin-entry
+  behaviours; on the Pixel 5 the Linktree and YouTube intents opened and back returned, and the
+  admin notice appeared.
+- Known risk or unresolved issue:
+  - **Gate gap:** an amber role or `MaterialTheme.colorScheme` in a screen passes the whole gate;
+    D-17 is enforced only by per-spec greps. Proposed as a Konsist rule for
+    `next-jam-read-only-list` (needs the user's approval).
+  - Content scrolls under the transparent status bar; noted on `bottom-navigation`.
+  - Link click labels verified on the JVM model and by code reading, not on device.
+  - The YouTube link opens a channel named "Radio Hideaway"; recorded in `docs/info-content.md`
+    for the user to confirm.
+- Next best step: plan `build-logic-conventions`.
 
 ## Notes For The Next Session
 

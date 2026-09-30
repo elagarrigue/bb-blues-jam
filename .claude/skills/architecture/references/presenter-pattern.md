@@ -11,6 +11,13 @@ tested example is `SamplePresenter` with `SamplePresenterTest` and `EventHandler
 `core/ui/src/test/kotlin/com/bbbjam/core/ui/presenter/`. The code in the repository is the source
 of truth: when it changes, update this file to match rather than letting the two drift.
 
+The first compiled **feature** presenter is `InfoPresenter` in `:feature:info`
+(`feature/info/src/main/kotlin/com/bbbjam/feature/info/`), set up by `info-screen`: a constructor
+dependency (`ExternalLinkOpener`), local state in `remember`, copy from `InfoCopy`, a Koin
+`infoModule`, a screen with `koinInject()` as a default parameter, and `InfoPresenterTest` /
+`InfoModuleTest` in `feature/info/src/test/kotlin/com/bbbjam/feature/info/`. Copy it for the next
+feature's module layout; the next-jam sketch shows data and admin state.
+
 The next-jam example further down is an **illustrative sketch**: it uses domain types and
 repositories (`JamSong`, `SetlistRepository`, `AdminSession`) that do not exist yet, so it is not
 compiled. `next-jam-read-only-list` turns it into real code.

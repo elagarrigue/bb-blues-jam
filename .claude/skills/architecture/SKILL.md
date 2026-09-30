@@ -19,13 +19,14 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 |---|---|---|
 | `:core:model` | Domain types: `Jam`, `JamStatus`, `JamSong`, `Lineup`, `Slot`, `ExtraParticipant`, `Instrument`, `Song`, `Tempo`, `Difficulty`, `Key`, `SongId`. Pure Kotlin, no Android, no serialization, no date parsing, no clock. | nothing |
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
-| `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, and shared components such as the instrument strip. | `:core:model` |
+| `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation, bottom bar, `startKoin` with every module, and the action registry (D-13). | everything |
+| `:app` | Navigation, bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). | everything |
 | `:konsist-test` | Test-only JVM module (`kotlin-jvm`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
-Feature modules are added by the slice that first needs them, not up front. The planned ones are
-`:feature:next-jam`, `:feature:song-detail`, `:feature:past-jams` and `:feature:info`.
+Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
+(set by `info-screen`); the planned ones are `:feature:next-jam`, `:feature:song-detail` and
+`:feature:past-jams`.
 
 **Admin is a state, not a module.** An admin is a musician with extra controls on the same screens
 (one app, not two). Each presenter reads the admin flag from `AdminSession` in `:core:data` and adds
@@ -50,6 +51,9 @@ is. There is no `:feature:admin`.
 - Wiring an implementation to its interface → the Koin module of the module that owns the
   implementation; `:app` only lists modules in `startKoin`.
 - Anything that needs two features to talk → `:app` navigation or a `:core` contract.
+- Opening a web link → `ExternalLinkOpener` from `:core:ui`, injected into the presenter and called
+  from an event handler; `:app` binds `IntentLinkOpener`. Never `LocalUriHandler` or an `Intent`
+  in a feature.
 
 ## Dependency Rules
 
@@ -132,9 +136,32 @@ Set by `module-skeleton` (spec `docs/specs/module-skeleton.md`). Every new modul
   `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")` in `:app` **and** in its own
   module: lint `NewApi` fails a library that uses java.time without it even when `:app` has it, and
   a library that enables it without `:app` fails `:app:checkDebugAarMetadata`.
-- **No `build-logic` convention plugins yet.** Deferred to the first `:feature:*` module, which will
-  duplicate Android-library boilerplate; the root quality block can move there then. A convention
-  plugin must be applied per module, which the quality gate must not depend on.
+- **No `build-logic` convention plugins yet.** Deferred again by `info-screen` (spec
+  `docs/specs/info-screen.md`, Decision 1): the first feature module copies the Android-library
+  boilerplate of `:core:ui`. It lands as its own slice, `build-logic-conventions`, before or with
+  the second `:feature:*` module (`next-jam-read-only-list` depends on it). Quality tools stay
+  applied from the root `subprojects {}` block even then: a convention plugin is applied per module,
+  and the gate must not depend on a module remembering to apply it.
+- **Reference feature build file**: `feature/info/build.gradle.kts` (set by `info-screen`).
+  `android-library` + `kotlin-compose`, namespace `com.bbbjam.feature.<name>`, SDKs from the
+  catalog, Java 11, `compose = true`, `unitTests.isReturnDefaultValues = true`; its only project
+  dependency is `implementation(project(":core:ui"))` (plus `:core:data` once a feature reads
+  data); Koin BOM + `koin-core` + `koin-compose`; `androidx.compose.foundation`, tooling-preview
+  (+ debug tooling); the four presenter test libraries.
+- **Koin 4.1.1** (set by `info-screen`, approved 30 September 2026; D-16). Catalog: `koin-bom`
+  (versioned) and `koin-core`, `koin-android`, `koin-compose` (BOM-managed). Feature modules use
+  `koin-core` + `koin-compose` (for `koinInject()`); `:app` uses `koin-android` (for
+  `androidContext`). Not 4.2.x: it raises `kotlin-stdlib` to 2.3.20 and Compose to 1.10.x over the
+  pinned Kotlin 2.2.10 and BOM 2025.09.00; upgrade Koin together with Kotlin and the BOM. 4.1.1
+  only moves lifecycle 2.9.0 → 2.9.3. `koin-android` brings `koin-core-viewmodel` and the lifecycle
+  ViewModel artifacts transitively; that does not relax the ViewModel ban (D-02).
+- **UI copy lives in Kotlin, not string resources** (set by `info-screen`, Decision 6): an
+  `internal object <Name>Copy` in the feature, read by the presenter into the `UiModel`. The app is
+  Spanish-only (D-12), the copy must be in the `UiModel` for the assistant, and presenters stay
+  Android-free and JVM-testable. `app_name` stays a resource.
+- **48dp touch targets without a literal**: clickable rows use
+  `Modifier.heightIn(min = LocalMinimumInteractiveComponentSize.current)` (Material 3, 48dp), with
+  `Role.Button` and an `onClickLabel` when the row's action is not obvious from its text.
 
 ## Presenter Pattern
 
