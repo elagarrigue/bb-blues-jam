@@ -387,3 +387,11 @@ No persistent E2E harness exists; a build-structure slice with a byte-identical 
 - **Approve Decision 4** (new gate rule `build-file-applies-convention`), or accept the fallback.
 - Optional: moving detekt/ktlint into a convention for Isolated Projects (proven, not planned here),
   and linting `build-logic` itself (a gate change) — each would be its own small slice.
+
+## User Approvals
+
+Recorded 30 September 2026, before implementation:
+
+- **Konsist rule `build-file-applies-convention`: approved** as written (Konsist 10 → 11).
+- Nothing else needed approval: `init.sh`, the root build file, `gradle.properties` and the wrapper
+  do not change.

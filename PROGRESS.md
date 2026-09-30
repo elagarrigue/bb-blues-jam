@@ -886,6 +886,18 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     for the user to confirm.
 - Next best step: plan `build-logic-conventions`.
 
+### Session 032 — 30 September 2026
+
+- Goal: plan `build-logic-conventions`.
+- Completed: `docs/specs/build-logic-conventions.md`, proven on throwaway clones: an included
+  `build-logic` with six Kotlin convention plugins, detekt/ktlint kept root-applied, `init.sh`
+  unchanged; task plans, dependency sets, 20 test classes and the debug APK (392 non-META-INF
+  entries by SHA-1) identical before and after; the Pixel 5 launches unchanged. The user
+  **approved** the new Konsist rule `build-file-applies-convention` (10 → 11).
+- Known risk or unresolved issue: the Kotlin inside `build-logic` is not linted (outside the root
+  build); the first build on a fresh clone is ~30 s slower once; Android Studio sync not tried.
+- Next best step: the implementer runs the spec.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`) and the seed is imported (user's report).
