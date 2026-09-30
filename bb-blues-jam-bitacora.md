@@ -903,6 +903,47 @@ Corriendo sin pedir permiso en cada etapa, el flujo se detuvo exactamente donde 
 cambiaba el proyecto —una dependencia alfa, archivos de terceros, una regla de arquitectura nueva— y
 en ningún otro lado. Las preguntas pasaron de "¿sigo?" a "¿esto?".
 
+### 6.12 Sesiones del 29 y 30 de septiembre — el dominio, la planilla y la primera pantalla real
+
+Tres rebanadas más cerraron `accepted`: `domain-model-types`, `sheet-schema-definition` e
+`info-screen`, la primera pantalla con contenido propio y el primer módulo de *feature*. Lo más
+valioso no fue el código sino dónde se frenó el flujo: cada vez que un agente tocó un hecho del mundo
+real, se detuvo y preguntó.
+
+**Dos decisiones de producto salieron de preguntas técnicas.** El `planner` de los tipos preguntó si
+un tema podía tener más cupos que la formación por defecto; el organizador respondió con algo que
+ningún documento tenía: los cupos solo se sacan, y quien toca fuera de la formación va en una lista
+"Otros" con nombre e instrumento (D-18). Y al pedir el contenido de Info, el Instagram mostró una jam
+los martes en otro lugar: resultó ser Hideaway, el programa de radio, y reveló que el lugar de la jam
+puede cambiar, así que Info habla de la comunidad y el lugar va en cada jam (D-19). Si el agente
+hubiera resuelto la contradicción por su cuenta, Info mostraría hoy una jam semanal que no existe.
+
+**El esquema se reconcilió contra el código, no contra la memoria.** Con los tipos ya compilados, el
+`planner` de la planilla recorrió campo por campo el esquema contra el código y encontró once
+diferencias de documentación —un formato de id más estricto en el código que en la doc, valores de
+enum sin mapeo escrito, una regla de "jam futura" que contradecía a `isHistorical` en el día de la
+jam— y un hueco real: con una sola guitarra, la app no sabía en qué columna escribir. Lo decidió el
+organizador. El `validator` escribió su propio chequeo del *seed*, independiente del
+del `implementer`, y los dos coincidieron.
+
+**La primera pantalla probó el camino completo.** Info trajo el primer módulo de *feature*, Koin y un
+contrato compartido para abrir enlaces. En el Pixel 5 se abrieron Instagram, YouTube y Linktree, y
+"atrás" volvió a la app en la misma posición. Los textos se aprobaron antes de escribirse y un test
+falla si alguien cambia una palabra. Y el teléfono mostró algo que ningún documento podía saber: el
+enlace de YouTube del Linktree abre un canal llamado "Radio Hideaway". No se corrigió en silencio:
+quedó registrado para que lo confirme el organizador.
+
+**El `validator` encontró el primer hueco del *gate* que importa.** Pintar de ámbar una pantalla o leer
+`MaterialTheme.colorScheme` —justo lo que prohíbe D-17— pasa todas las verificaciones: solo lo atrapa
+un `grep` de la spec. Quedó propuesto como regla de Konsist para la próxima pantalla, a aprobar por
+el usuario. Es el tipo de hallazgo que justifica que el validador intente romper cosas en lugar de
+confirmar las que ya pasaron.
+
+**Lo que confirmó sobre el método.** "No inventar hechos" funcionó como regla solo cuando se volvió
+un archivo. `docs/info-content.md` guarda cada dato de Info con su fuente —el usuario, el Instagram,
+el teléfono— y los agentes escriben desde ahí. La lección de Stitch en 6.5 ("El Motivo Bar") se
+convirtió en infraestructura.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
