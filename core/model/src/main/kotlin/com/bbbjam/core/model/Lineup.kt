@@ -2,8 +2,8 @@ package com.bbbjam.core.model
 
 /**
  * The [Slot]s of one [JamSong]: the default seven with some possibly removed, never more of an
- * instrument than the default (D-18). Zero of an instrument is valid. Slot order is kept, so the
- * first and second guitar slots pair with the Sheet's `Guitarra 1` and `Guitarra 2`.
+ * instrument than the default (D-18). Zero of an instrument is valid. Slot order is kept: the k-th
+ * slot of an instrument is the k-th Sheet column of that instrument not holding `-`.
  */
 data class Lineup(val slots: List<Slot>) {
     init {

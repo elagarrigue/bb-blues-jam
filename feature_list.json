@@ -214,14 +214,21 @@
     "depends_on": [
       "domain-model-types"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Every domain type maps to columns with no ambiguity about identifiers",
       "A handful of real songs are loaded and read back correctly by hand",
       "The schema is committed as documentation"
     ],
-    "evidence": [],
-    "notes": "Unblocked 28 September 2026: the schema decision is made and documented in docs/sheet-schema.md (one tab per jam date referencing Catalogo ids; the separate assignments tab was folded into the jam tabs as one column per slot). Seed data for the 25 July 2026 jam is in docs/sheet-seed/. Remaining to satisfy verification: import the seed into the real Sheet and read it back by hand. Keep loading real repertoire in parallel: week 5 needs a catalog large enough for an interesting themed setlist."
+    "evidence": [
+      "30 Sep 2026 (session 028), implementer. Manual, attributed to the user, not agent-verified: the user reports that on 29-30 September 2026 the four seed CSVs were imported into the real Sheet, the tabs were reviewed by hand, the Otros column was added to the jam tab, and more songs were added to Catalogo. No agent read the Sheet (private, no connector). The user did not mention the Config tab, so nothing is claimed about it.",
+      "Mapping re-checked against HEAD ec90c8f: M1-M11 still held, no new mismatch. docs/sheet-schema.md now has a Type-to-Sheet mapping table covering every field of the 12 :core:model types, exact enum mappings (lento/medio/rápido, fácil/media/difícil, BORRADOR/PUBLICADA), Reading cells (trim, exact case- and accent-sensitive matching P1, endpoint normalization of fecha/hora/posicion M7), Slot columns (header-to-Instrument table, all seven headers required P2), Otros parsing (M10), slot identity by ordinal among non-'-' columns (U1 = B), and a Mapper rules section, each 'enforced by the repository slice'; the Jams/tab mismatch behavior is recorded as open. domain-model.md fixed for M4 and M11. Lineup.kt: one KDoc sentence reworded (comment only).",
+      "Seed check (scratch script seed_check.py, not committed): python seed_check.py docs/sheet-seed -> 'Catalogo: 13 songs; Jams: 1 rows; tabs: [2026-07-25]; filled slots: 0; - cells: 0; Otros entries: 0; CONFORMS', exit 0. A scratch copy with names, '-' in Guitarra 1 and Teclados, and 'Juan (saxo); Ana (percusión);' in Otros -> CONFORMS, exit 0 (3 filled, 2 '-', 2 Otros entries).",
+      "Seed check failures on mutated scratch copies, each exit 1: tono Bmaj -> '2026-07-25 line 6: tono \"Bmaj\" is not a key'; posicion 13->14 -> 'posicion values [1, ..., 12, 14] are not exactly 1..13'; Otros 'Juan saxo' -> 'Otros entry \"Juan saxo\" is not \"Nombre (instrumento)\"'; tempo rapido and estado PUBLICADO -> 'tempo \"rapido\" is not one of [lento, medio, rápido]' and 'estado \"PUBLICADO\" is not one of [BORRADOR, PUBLICADA]'; Teclados header removed -> 'missing required headers [Teclados]'; id_tema got-my-mojo-workin -> 'id_tema \"got-my-mojo-workin\" is not in Catalogo'; passphrase filled -> 'Config: passphrase valor is filled; it must stay empty in the repo'. A combined copy reported all 5 of its mutations. git status docs/sheet-seed: unchanged.",
+      "./gradlew ktlintFormat exit 0 (no file changed). CI=true ./init.sh exit 0: 'konsist: wired', 'detekt: wired', 'ktlint: wired', 'Baseline OK.'; :core:model 30/30 tests, ModuleIsolationTest 10/10, 0 failures. No device check: no UI or runtime behavior changed.",
+      "30 September 2026: independent validator verdict accept. CI=true ./init.sh exit 0 with three wired; Lineup.kt diff is KDoc-only; seed unchanged. Field-by-field check of all 12 domain types against the Type-to-Sheet mapping found no remaining mismatch (SongId regex quoted verbatim; Key prose equivalent to [A-G][#b]?m?; enum values exact; header order matches DEFAULT_INSTRUMENTS). Its own independent seed checker conforms on the seed and catches a duplicate Catalogo id and a date tab with no Jams row; reordered slot columns conform (headers matched by name). Undefined for later slices: duplicate slot headers, 'Juan(saxo)' without a space, duplicate Jams.fecha missing from the Mapper rules list."
+    ],
+    "notes": "Unblocked 28 September 2026: the schema decision is made and documented in docs/sheet-schema.md (one tab per jam date referencing Catalogo ids; the separate assignments tab was folded into the jam tabs as one column per slot). Seed data for the 25 July 2026 jam is in docs/sheet-seed/. Seed imported and hand-checked by the user (29–30 September 2026, the user's own report; no agent read the Sheet). Keep loading real repertoire in parallel: week 5 needs a catalog large enough for an interesting themed setlist."
   },
   {
     "id": "apps-script-read-endpoint",
@@ -255,7 +262,7 @@
       "Cache staleness is exposed so the UI can indicate it"
     ],
     "evidence": [],
-    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject)."
+    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject). From sheet-schema-definition validation: the docs leave undefined two columns with the same slot header, 'Nombre(instrumento)' without a space, and duplicate Jams.fecha (marked unique but missing from the Mapper rules list) — settle them in this slice's mapper spec."
   },
   {
     "id": "build-logic-conventions",
@@ -585,7 +592,7 @@
       "Removing a slot that holds a musician is handled deliberately, not silently"
     ],
     "evidence": [],
-    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies."
+    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies. From sheet-schema-definition validation: under U1 = B, restoring a removed guitar slot into Guitarra 1 while Guitarra 2 holds a name shifts that musician from the 1st to the 2nd guitar slot; decide the write behaviour explicitly."
   },
   {
     "id": "admin-assign-musician",

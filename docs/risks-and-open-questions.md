@@ -12,9 +12,14 @@ Resolved 28 September 2026 in `sheet-schema.md`: a `Catalogo` tab with stable so
 index, one tab per jam date referencing catalog ids with one column per slot, and a `Config` tab
 for the passphrase. Seed data for the 25 July 2026 jam is in `sheet-seed/`.
 
+Imported 29–30 September 2026, by the user's own report (no agent can read the private Sheet): the
+four seed CSVs were imported, the tabs reviewed by hand, the `Otros` column added to the jam tab,
+and more songs added to `Catalogo`. The real Sheet is now the authority and has already diverged
+from the seed, which is a one-time import file. The user did not mention the `Config` tab.
+
 What remains open is the second deadline: the assistant's usefulness in week 5 depends on how much
 real repertoire is loaded, with keys, tempo, tags and difficulty. The seed has thirteen songs and no
-tags. Loading should run in parallel with development.
+tags; the real catalog is growing past it. Loading should run in parallel with development.
 
 ### The Apps Script action surface is not specified
 
@@ -52,6 +57,19 @@ width the strip cannot spare.
   `Catalogo`.
 - **Musician name suggestions** — resolved by the schema: derived from the names in past jam tabs,
   with no separate musicians list.
+- **Sheet cell types** (for `apps-script-read-endpoint`). It is unknown whether the real Sheet
+  stores `fecha`, `hora` and `posicion` as text or as date, time and number values. The endpoint
+  must normalize them to `YYYY-MM-DD`, `HH:MM` and an integer either way (`sheet-schema.md`,
+  **Reading cells**); check the real cells when the endpoint is written.
+- **`Jams` row and jam tab mismatch** (for `catalog-repository-cache`). A `Jams` row with no tab, or
+  a date-named tab with no `Jams` row, is invalid by the schema, but what the app does about it —
+  skip the jam, show it without a setlist, or fail the read — is not decided. Decide it in that
+  slice; `sheet-schema.md` lists it under **Mapper rules** as open.
+- **Seed as mapper fixtures** (for `catalog-repository-cache`). No committed test guards
+  `docs/sheet-seed/` (decision P3 of the `sheet-schema-definition` spec): the real Sheet is the
+  authority, and a separate seed test would re-implement the mappers before they exist. Instead,
+  that slice's mapper tests should use the seed CSVs as fixtures, so the production parser checks
+  the seed.
 - **Time zone and "how long until" text.** Phrases like "esta noche" depend on the device clock and
   a local definition of the jam date. Single-timezone community, so low risk, but the boundary
   behavior around midnight should be decided rather than emergent.
@@ -103,8 +121,8 @@ Stated so they can be challenged rather than silently relied upon.
 
 ## Research Tasks
 
-- [x] Define the Sheet schema — `sheet-schema.md`. Import the seed into the real Sheet and read it
-  back by hand to close `sheet-schema-definition`.
+- [x] Define the Sheet schema — `sheet-schema.md`. The seed was imported into the real Sheet and
+  reviewed by hand by the user (29–30 September 2026, user's report).
 - [ ] Load real repertoire with keys, tags, and difficulty.
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload.
 - [ ] Confirm the full mutation list for the action contract before slicing features.

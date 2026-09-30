@@ -39,10 +39,11 @@ accounts (D-05), so modeling them as entities would imply identity the product d
 
 ### Song
 
-A catalog entry, reused across Jams. The first group of fields is admin-maintained in the Sheet. The
-last five (`mbid`, `artistArea`, `deezerTrackId`, `previewUrl`, `artworkUrl`) plus `songsterrId` are
-optional enrichment, fetched in the background and cached; every one of them may be absent and the
-app must render correctly without them.
+A catalog entry, reused across Jams. The first group of fields, including `songsterrId`, is
+admin-maintained in the Sheet; `songsterrId` is typed by the admin (D-10) and is never fetched. The
+last five (`mbid`, `artistArea`, `deezerTrackId`, `previewUrl`, `artworkUrl`) are optional
+enrichment, fetched in the background and cached, never stored in the Sheet (D-09). Every optional
+field may be absent and the app must render correctly without it.
 
 `artistArea` earns its place: it lets "blues nacional argentino" be filtered by data rather than by
 the model's memory, which is exactly where an LLM is weakest on this repertoire (D-14).
@@ -138,8 +139,9 @@ deliberate choice.
 - **An enrichment field that never resolves** is permanent-absent, not an error. No screen blocks on
   artwork, preview, or MBID.
 - **A song removed from the catalog while scheduled** in an upcoming jam: the JamSong holds the
-  title and artist it needs to render, so the setlist stays readable. Behavior here is recorded as
-  an implementation-time question in `risks-and-open-questions.md`.
+  title and artist it needs to render, so the setlist stays readable. Resolved in `sheet-schema.md`:
+  each jam tab keeps plain-text copies of title and artist, used only when `id_tema` is no longer in
+  `Catalogo`.
 - **No upcoming jam scheduled.** The Next jam tab shows an empty state with a concrete invitation,
   distinct from the DRAFT "list is being assembled" message.
 - **Offline.** The app shows the last cached data with a staleness indicator rather than an error.

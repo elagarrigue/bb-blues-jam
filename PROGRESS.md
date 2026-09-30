@@ -6,13 +6,15 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready features: `sheet-schema-definition` (needs the user's hand check of the real
-  Sheet) and `info-screen`. Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+- Current next ready features: `info-screen` (Pixel 5 connected), then `build-logic-conventions`
+  and `apps-script-read-endpoint`. Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
   `konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
-  `design-tokens-theme`, `domain-model-types`.
-- Current blocker: none. `sheet-schema-definition` was unblocked on 28 September 2026; it closes
-  once the seed is imported into the real Sheet and read back by hand.
-- Last verified at: 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
+  `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`.
+- Current blocker: none. The seed was imported into the real Sheet and reviewed by hand by the user
+  (29–30 September 2026, the user's report; no agent can read the Sheet).
+- Last verified at: 30 September 2026 (session 028) — `CI=true ./init.sh` exit 0, three tools
+  `wired`, same test counts as below; session 028 changed docs and one KDoc sentence only.
+  Before that, 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
   `konsist: wired` (10 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:model`
   runs 30 tests in 9 classes on the JVM, 0 failures; `:core:ui` runs `EventHandlerTest` (6),
   `SamplePresenterTest` (3), `BluesJamColorsTest` (3), `BluesJamTypographyTest` (2),
@@ -99,6 +101,12 @@ The unit tests are the two template tests plus the nine `:core:model` classes (`
 `ContrastTest` and `WindowBackgroundTest`.
 
 The only product code is the `:core:model` domain types; the placeholder screen is scaffolding.
+
+The Sheet contract is `docs/sheet-schema.md` (`sheet-schema-definition`, `accepted`): tabs, headers,
+exact Spanish enum values, cell reading rules, slot identity (the k-th slot of an instrument is the
+k-th column of it not holding `-`), a Type-to-Sheet mapping of every `:core:model` field, and the
+**Mapper rules** the repository slices must enforce. `docs/sheet-seed/` is the one-time import
+file; the real Sheet is the authority and already holds more songs.
 
 ### Reachable without unblocking the Sheet schema
 
@@ -734,10 +742,70 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   needs it for the launch and link checks.
 - Next best step: implement `sheet-schema-definition`; then `info-screen` once the phone is back.
 
+### Session 028 — 30 September 2026
+
+- Goal: implement `sheet-schema-definition` (spec `docs/specs/sheet-schema-definition.md`, U1 = B).
+- Completed:
+  - Re-ran the mapping check at HEAD `ec90c8f`: M1–M11 still held; no new mismatch.
+  - `docs/sheet-schema.md`: new **Reading cells** (trim every cell; exact, case- and
+    accent-sensitive enum and header matching, P1; the endpoint normalizes `fecha`, `hora`,
+    `posicion`, M7); exact `SongId` alphabet in **Identifiers** (M1); enum mappings for `tempo` and
+    `dificultad` (M2); `etiquetas` split rule (M3); a derived `setlist` row in `Jams` (M5); "at most
+    one non-historical jam" (M6); `title` / `artist` (fallback only) on the jam tab (M8); a **Slot
+    columns** header-to-`Instrument` table, all seven headers required (M9, P2); an **`Otros`**
+    parsing section (M10); slot identity by ordinal among that instrument's non-`-` columns (U1 =
+    B); a **Type-to-Sheet mapping** table; and a **Mapper rules** section, each rule "enforced by
+    the repository slice", with the `Jams`/tab mismatch behavior left open.
+  - `docs/domain-model.md`: `songsterrId` is admin-entered, not enrichment (M4); a song removed from
+    the catalog points at `sheet-schema.md` (M11).
+  - `docs/risks-and-open-questions.md`: the import and growing catalog; the cell-type question for
+    `apps-script-read-endpoint`; the open `Jams`/tab mismatch rule and the P3 seed-as-fixtures
+    hand-off for `catalog-repository-cache`.
+  - `Lineup.kt`: one KDoc sentence reworded for U1 = B. Comment only.
+  - Manual evidence, **the user's own report, not agent-verified** (no agent can read the private
+    Sheet): on 29–30 September 2026 the four seed CSVs were imported, the tabs reviewed by hand, the
+    `Otros` column added to the jam tab, and more songs added to `Catalogo`. The user did not
+    mention the `Config` tab; nothing is claimed about it.
+- Verification:
+  - Seed check (scratch `seed_check.py`, not committed) on `docs/sheet-seed`: `CONFORMS`, exit 0
+    (13 songs, 1 `Jams` row, tab `2026-07-25` positions 1..13; 0 names, 0 `-`, 0 `Otros`). A scratch
+    copy with names, `-` cells and `Juan (saxo); Ana (percusión);` also conforms, so those checks
+    are not only vacuous.
+  - Failures on mutated scratch copies, each exit 1: `tono "Bmaj" is not a key`; `posicion values
+    [1, …, 12, 14] are not exactly 1..13`; `Otros entry "Juan saxo" is not "Nombre (instrumento)"`;
+    `tempo "rapido" is not one of ['lento', 'medio', 'rápido']` and `estado "PUBLICADO" is not one
+    of ['BORRADOR', 'PUBLICADA']`; `missing required headers ['Teclados']`; `id_tema
+    "got-my-mojo-workin" is not in Catalogo`; `Config: passphrase valor is filled`. The committed
+    seed is unchanged.
+  - `./gradlew ktlintFormat` exit 0, no file changed. `CI=true ./init.sh` exit 0: `konsist: wired`,
+    `detekt: wired`, `ktlint: wired`, `Baseline OK.`; `:core:model` 30/30, Konsist 10/10.
+- Known risk or unresolved issue: whether the real `fecha`, `hora` and `posicion` cells are text or
+  typed values is unknown until `apps-script-read-endpoint` reads them. Behavior on a `Jams`/tab
+  mismatch is undecided (for `catalog-repository-cache`).
+- Next best step: validate `sheet-schema-definition`; then `info-screen` once the phone is back.
+
+### Session 029 — 30 September 2026
+
+- Goal: independent validation of `sheet-schema-definition`.
+- Completed: validator verdict **accept**; status set to `accepted`; the stale "import the seed"
+  note replaced with the user's reported hand check. The former top blocker is closed.
+- Verification run (by the validator): gate exit 0 with three `wired`; `Lineup.kt` diff KDoc-only;
+  every field of the 12 domain types checked against the new Type-to-Sheet mapping with no
+  remaining mismatch; its own seed checker, independent of the implementer's, conforms on the seed
+  and catches a duplicate catalog id and a date tab with no `Jams` row.
+- Known risk or unresolved issue: left undefined for the mapper slice (noted on
+  `catalog-repository-cache`): duplicate slot headers, `Nombre(instrumento)` without a space,
+  duplicate `Jams.fecha`. Under U1 = B, restoring a guitar slot into `Guitarra 1` shifts a named
+  musician from the 1st to the 2nd guitar slot (noted on `admin-adjust-lineup`). Whether the real
+  Sheet's `fecha`/`hora`/`posicion` cells are plain text is unknown; the user was advised to format
+  them as plain text.
+- Next best step: implement `info-screen` on the Pixel 5.
+
 ## Notes For The Next Session
 
-- The Sheet schema is settled (`docs/sheet-schema.md`). What a human still owns, in parallel with
-  coding: **importing the seed** and **loading real repertoire** with tempo, tags and difficulty.
+- The Sheet schema is settled (`docs/sheet-schema.md`) and the seed is imported (user's report).
+  What a human still owns, in parallel with coding: **loading real repertoire** with tempo, tags and
+  difficulty.
   Week 5 needs a catalog large enough for the assistant to produce an interesting themed setlist.
 - Before `action-contract-registry` runs, confirm the mutation list is complete. The current list is
   add song, remove song, set key, adjust lineup, assign musician, clear slot, reorder, publish

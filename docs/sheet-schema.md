@@ -9,6 +9,19 @@ by column position, so the admin may reorder or add columns without breaking the
 
 Seed files for import live in `docs/sheet-seed/`.
 
+## Reading cells
+
+- **Every cell is trimmed** of surrounding whitespace before it is interpreted. A cell that is
+  empty after trimming is empty.
+- **Headers and enum values match exactly after trimming.** Matching is case-sensitive and accents
+  are required: `rápido` is a tempo, `rapido` and `Rápido` are not. An unknown value is rejected by
+  the mapper, like a bad key, so a typo shows up when the tab is read. Admin advice, not enforced:
+  put a Sheets data-validation dropdown on `tempo`, `dificultad` and `estado`.
+- **The formats below are the values the read endpoint emits.** Sheets may store a cell typed as
+  `2026-07-25`, `21:00` or `3` as a date, a time or a number. If it does, `apps-script-read-endpoint`
+  normalizes `fecha` to `YYYY-MM-DD`, `hora` to `HH:MM` and `posicion` to an integer before
+  returning them. Admin advice: format the `fecha`, `hora` and `posicion` columns as plain text.
+
 ## Tabs
 
 | Tab | One row per | Authority (D-04) | Written by |
@@ -25,20 +38,21 @@ name is the join key with `Jams.fecha`. No other tab may use that name pattern.
 
 | Header | Field | Required | Format |
 |---|---|---|---|
-| `id` | `id` | yes | Lowercase slug, unique, never changed after creation: `sweet-little-angel`. On a title clash, append the artist: `crossroads-robert-johnson`. |
+| `id` | `id` | yes | Slug, unique, never changed after creation: see **Identifiers**. On a title clash, append the artist: `crossroads-robert-johnson`. |
 | `titulo` | `title` | yes | Free text |
 | `artista` | `artist` | yes | Free text, one spelling per artist across the whole catalog |
 | `tono_default` | `defaultKey` | yes | See **Keys** |
-| `tempo` | `tempo` | no | `lento`, `medio` or `rápido` |
-| `etiquetas` | `tags` | no | Comma-separated: `shuffle, 12 compases, slow blues, blues nacional` |
-| `dificultad` | `difficulty` | no | `fácil`, `media` or `difícil` |
-| `songsterr_id` | `songsterrId` | no | Numeric id from the Songsterr URL (D-10) |
+| `tempo` | `tempo` | no | `lento` → `SLOW`, `medio` → `MEDIUM`, `rápido` → `FAST`. Empty → none |
+| `etiquetas` | `tags` | no | Comma-separated: `shuffle, 12 compases, slow blues, blues nacional`. Split on `,`, trim each tag, drop empty tags, keep the order. Empty → no tags |
+| `dificultad` | `difficulty` | no | `fácil` → `EASY`, `media` → `MEDIUM`, `difícil` → `HARD`. Empty → none |
+| `songsterr_id` | `songsterrId` | no | Numeric id from the Songsterr URL, entered by the admin (D-10). Empty → none |
 
 The id is what jam tabs reference, so fixing a typo in a title or an artist never breaks history.
 
 MusicBrainz, Deezer and Last.fm enrichment (`mbid`, `artistArea`, `deezerTrackId`, `previewUrl`,
 `artworkUrl`) is **not** stored in the Sheet: it is fetched in the background and cached in Room
 (D-09). Storing it here would make the app a writer of the catalog, which D-04 forbids.
+`songsterr_id` is not enrichment: the admin types it in the Sheet and nothing fetches it.
 
 ## `Jams` → `Jam`
 
@@ -48,9 +62,11 @@ MusicBrainz, Deezer and Last.fm enrichment (`mbid`, `artistArea`, `deezerTrackId
 | `hora` | `startTime` | yes | `HH:MM`, 24 hours |
 | `lugar` | `venue` | yes | Free text |
 | `estado` | `status` | yes | `BORRADOR` → `DRAFT`, `PUBLICADA` → `PUBLISHED` |
+| — | `setlist` | — | Derived: the rows of the tab named `fecha`, sorted by `posicion` |
 
-A jam is historical when `fecha` is before today; there is no archived status (domain model). At
-most one jam may have a future `fecha`.
+A jam is historical when `fecha` is before today; on its own date a jam is not historical, and there
+is no archived status (domain model, `Jam.isHistorical`). At most one jam may be non-historical,
+that is, have a `fecha` of today or later.
 
 `startTime` is a precision over `docs/domain-model.md`, which has only `date`: the jam poster
 carries a time, and the header of the next-jam screen needs it.
@@ -61,18 +77,32 @@ carries a time, and the header of the next-jam screen needs it.
 |---|---|---|---|
 | `posicion` | `position` | yes | 1, 2, 3… with no gaps; row order in the tab is not trusted |
 | `id_tema` | `songId` | yes | An `id` that exists in `Catalogo` |
-| `titulo` | — | yes | Copy of the catalog title. Used only as a fallback, see below |
-| `artista` | — | yes | Copy of the catalog artist. Same fallback |
+| `titulo` | `title` (fallback only) | yes | Copy of the catalog title. Used only as a fallback, see below |
+| `artista` | `artist` (fallback only) | yes | Copy of the catalog artist. Same fallback |
 | `tono` | `key` | yes | See **Keys**. That night's key, not the catalog default (D-08) |
-| `Guitarra 1`, `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados` | `lineup` | see below | One column per slot of the default lineup (D-06) |
-| `Otros` | `extraParticipants` | no | `Nombre (instrumento)` entries separated by `;`, e.g. `Juan (saxo); Ana (percusión)`. Empty or missing column = none (D-18) |
+| `Guitarra 1`, `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados` | `lineup` | header yes, cells no | One column per slot of the default lineup (D-06); see **Slot columns** |
+| `Otros` | `extraParticipants` | no | `Nombre (instrumento)` entries separated by `;`, e.g. `Juan (saxo); Ana (percusión)`. Empty or missing column = none (D-18); see **`Otros`** |
 
 `Catalogo` is authoritative for title and artist: the app resolves `id_tema` there. The copies in
 the jam tab exist so the admin can read the tab, and so a setlist stays readable if a song is later
 removed from the catalog — the app falls back to them only when `id_tema` is not found. Keep them
 as plain text rather than a lookup formula, or the fallback breaks exactly when it is needed.
 
-### Slot cells
+### Slot columns
+
+All seven slot headers are **required in every jam tab**; a tab missing one is invalid. Their cells
+are optional. Each header maps to one `Instrument`, and the header order is the order of
+`Lineup.DEFAULT_INSTRUMENTS`:
+
+| Header | `Instrument` |
+|---|---|
+| `Guitarra 1` | `GUITAR` |
+| `Guitarra 2` | `GUITAR` |
+| `Bajo` | `BASS` |
+| `Batería` | `DRUMS` |
+| `Voz` | `VOCALS` |
+| `Armónica` | `HARMONICA` |
+| `Teclados` | `KEYBOARDS` |
 
 | Cell | Meaning |
 |---|---|
@@ -80,11 +110,11 @@ as plain text rather than a lookup formula, or the fallback breaks exactly when 
 | a name | Filled slot: `musicianName` |
 | `-` | Not part of this song's lineup (the per-song adjustment in D-06) |
 
-A song with no harmonica has `-` under `Armónica`. Slots are only ever removed from the default
-seven, never added (D-18). Anyone playing outside the lineup — a sax, percussion, a third guitar —
-goes in `Otros` as `Nombre (instrumento)`. Those entries are never open slots and never count for
-"where can I play?". The name and the instrument are both required and may not contain `;`, `(` or
-`)`; the mapper rejects a malformed entry rather than guessing.
+The lineup is built from the seven columns in the order above, skipping `-` cells. A song with no
+harmonica has `-` under `Armónica`. A song with one guitar may have `-` under either guitar column;
+**Identifiers** says which column its slot is. Slots are only ever removed from the default seven,
+never added (D-18). Anyone playing outside the lineup — a sax, percussion, a third guitar — goes in
+`Otros`.
 
 For past jams the slot cells are optional history. An empty cell in a past jam means "not
 recorded", and the app never presents a past jam as having open slots.
@@ -92,6 +122,14 @@ recorded", and the app never presents a past jam as having open slots.
 Musician name suggestions for the assign-slot sheet are derived from the names in past jam tabs,
 which settles that open question without a separate musicians list (there is no Musician entity,
 D-05).
+
+### `Otros`
+
+Split the cell on `;` and trim each entry. Empty entries are ignored, including the one a trailing
+`;` leaves. Every other entry must be `Nombre (instrumento)`: a name, then an instrument in
+parentheses. Both are required and may not contain `;`, `(` or `)` (`ExtraParticipant`). The mapper
+rejects a malformed entry such as `Juan saxo` rather than guessing. Entries keep their order. Extra
+participants are never open slots and never count for "where can I play?".
 
 ## `Config`
 
@@ -105,7 +143,7 @@ D-05).
 | `passphrase` | Admin passphrase (D-11). Rotating it here revokes every device. |
 
 **No read endpoint may ever return `Config`.** Apps Script reads the passphrase to validate writes
-and nothing else.
+and nothing else. The seed's `valor` stays empty in the repo.
 
 ## Keys
 
@@ -115,8 +153,76 @@ typo shows up when the tab is read, not on stage.
 
 ## Identifiers
 
-- `Song` → `Catalogo.id`.
+- `Song` → `Catalogo.id`. Its alphabet is exact: ASCII `a`–`z` and `0`–`9`, words joined by single
+  hyphens (`[a-z0-9]+(-[a-z0-9]+)*`, as `SongId` enforces). No accents, spaces, uppercase, or
+  leading, trailing or doubled hyphens. `Café Madrid` becomes `cafe-madrid`.
 - `Jam` → `Jams.fecha`, which is also the tab name.
 - `JamSong` → (`fecha`, `posicion`).
-- `Slot` → (`fecha`, `posicion`, column header).
-- Extra participant → (`fecha`, `posicion`, its order within `Otros`).
+- `Slot` → (`fecha`, `posicion`, instrument, ordinal among that instrument's slots). The k-th slot
+  of an instrument is the k-th column of that instrument, in header order, whose cell is not `-`.
+  With `Guitarra 1 = -` and `Guitarra 2 = Pedro`, the song's only guitar slot is `Guitarra 2`;
+  with `Guitarra 1 = Ana` and `Guitarra 2 = -`, it is `Guitarra 1`. Any layout the admin types is
+  valid, and a write (assign, clear, adjust lineup) resolves the column the same way. Only the
+  guitar has two columns; for every other instrument the ordinal is always 1.
+- Extra participant → (`fecha`, `posicion`, its order among the non-empty `Otros` entries).
+
+## Type-to-Sheet mapping
+
+Every field of the `:core:model` types, and where it comes from. "Derived" fields are computed by
+the mapper or the type; "enrichment" fields are never in the Sheet.
+
+| Type.field | Sheet source |
+|---|---|
+| `Song.id: SongId` | `Catalogo.id` (**Identifiers**) |
+| `Song.title` / `Song.artist` | `Catalogo.titulo` / `artista` |
+| `Song.defaultKey: Key` | `Catalogo.tono_default` (**Keys**) |
+| `Song.tempo: Tempo?` | `Catalogo.tempo`: `lento`, `medio`, `rápido` → `SLOW`, `MEDIUM`, `FAST` |
+| `Song.tags` | `Catalogo.etiquetas`, split on `,` |
+| `Song.difficulty: Difficulty?` | `Catalogo.dificultad`: `fácil`, `media`, `difícil` → `EASY`, `MEDIUM`, `HARD` |
+| `Song.songsterrId: Long?` | `Catalogo.songsterr_id`, admin-entered (D-10) |
+| `Song.mbid`, `artistArea`, `deezerTrackId`, `previewUrl`, `artworkUrl` | Not in the Sheet: background enrichment cached in Room (D-09, D-04) |
+| `Jam.date: LocalDate` | `Jams.fecha`, also the tab name |
+| `Jam.startTime: LocalTime` | `Jams.hora` |
+| `Jam.venue` | `Jams.lugar` |
+| `Jam.status: JamStatus` | `Jams.estado`: `BORRADOR`, `PUBLICADA` → `DRAFT`, `PUBLISHED` |
+| `Jam.setlist` | Derived: the rows of the tab named `fecha`, sorted by `posicion` |
+| `Jam.isHistorical(today)` | Derived from `fecha`; today comes from the caller |
+| `JamSong.position` | `posicion` |
+| `JamSong.songId: SongId` | `id_tema` |
+| `JamSong.title` / `JamSong.artist` | `Catalogo.titulo` / `artista` via `id_tema`; the tab's `titulo` / `artista` only when `id_tema` is not found |
+| `JamSong.key: Key` | `tono` (D-08) |
+| `JamSong.lineup: Lineup` | The seven slot columns, skipping `-` |
+| `Lineup.slots` | One `Slot` per slot column not holding `-`, in header order |
+| `Lineup.openSlots`, `Lineup.hasOpenSlotFor` | Derived from `slots` |
+| `Slot.instrument: Instrument` | The column header (**Slot columns**) |
+| `Slot.musicianName: String?` | The cell; empty → `null` (open) |
+| `Slot.isOpen` / `Slot.isFilled` | Derived from `musicianName` |
+| `JamSong.extraParticipants` | `Otros`, split on `;` |
+| `ExtraParticipant.name` / `instrument` | `Nombre` / `instrumento` of one `Otros` entry |
+| `Key.value`, `Key.isMinor` | The trimmed key cell; `isMinor` derived |
+| `SongId.value` | The trimmed `id` or `id_tema` cell |
+| `Instrument` values | `GUITAR`, `BASS`, `DRUMS`, `VOCALS`, `HARMONICA`, `KEYBOARDS`, from the headers above |
+| `Config.clave` / `valor` | No domain type. Server-only; never returned by a read endpoint |
+
+## Mapper rules
+
+Rules the schema states but that no domain type can check alone. Each is **enforced by the
+repository slice** (`apps-script-read-endpoint` / `catalog-repository-cache`), not by this document
+or the seed.
+
+- At most one non-historical jam (a `fecha` of today or later). Enforced by the repository slice.
+- Every `id_tema` resolves in `Catalogo`; when it does not, the tab's `titulo` / `artista` copy is
+  the fallback. Enforced by the repository slice.
+- `posicion` is unique and exactly 1..n within a tab. Enforced by the repository slice (and by
+  `Jam` once built).
+- `Catalogo.id` is unique. Enforced by the repository slice.
+- A `Jams` row has a jam tab and a jam tab has a `Jams` row. What the app does on a mismatch is
+  **open**, left to `catalog-repository-cache` to decide (see `risks-and-open-questions.md`).
+  Enforced by the repository slice.
+- Every cell is trimmed before it is read (**Reading cells**). Enforced by the repository slice.
+- Enum and header matching is exact after trimming (**Reading cells**); `Otros` is parsed as in
+  **`Otros`**; slot identity follows **Identifiers**. Enforced by the repository slice.
+- All seven slot headers are present in every jam tab; a tab missing one is invalid. Enforced by
+  the repository slice.
+- Empty slot cells in a past jam mean "not recorded" and are never shown as open. Enforced by the
+  repository slice.
