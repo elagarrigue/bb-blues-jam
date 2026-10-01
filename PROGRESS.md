@@ -6,17 +6,15 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current feature: `apps-script-read-endpoint`, `in_progress`. The repo half is done and
-  self-verified (session 035); it waits for the user to deploy the script and hand over the
-  `/exec` URL, then for the live checks M1–M5. Not `passing` until then.
-  Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
-  `konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
-  `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`, `info-screen`,
-  `build-logic-conventions`.
-- Current blocker: the live half of `apps-script-read-endpoint` waits on the user (deployment
-  and the `/exec` URL). The seed was imported into the real Sheet and reviewed by hand by the user
-  (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 1 October 2026 (session 035, `apps-script-read-endpoint` repo half) —
+- Current next ready feature: `apps-script-jams-read-endpoint`. Accepted:
+  `gradle-kotlin-compose-baseline`, `module-skeleton`, `konsist-isolation-rules`,
+  `detekt-ktlint-gate`, `molecule-presenter-harness`, `design-tokens-theme`, `domain-model-types`,
+  `sheet-schema-definition`, `info-screen`, `build-logic-conventions`, `apps-script-read-endpoint`.
+- Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
+  git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
+  the user (29–30 September 2026, the user's report; no agent can read the Sheet).
+- Last verified at: 1 October 2026 (session 036) — live endpoint: checker OK on 100 songs,
+  `config` → `unknown_resource`, warm read median ~2.5 s. Session 035 (`apps-script-read-endpoint` repo half) —
   `CI=true ./init.sh` exit 0, three `wired`, the 20 test result files identical in names and
   counts to the baseline; `node --test backend/apps-script/test/*.test.js` 33/33 (outside the
   gate). Before that, 30 September 2026 (session 033, `build-logic-conventions`) — `CI=true ./init.sh`
@@ -1070,6 +1068,34 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     `init.sh` still green. Revisit at `apps-script-write-auth`.
   - What an anonymous caller gets when the 30-concurrent limit is hit is not verified.
 - Next best step: the user's deployment (step 1 above), then M1–M5, then validation.
+
+### Session 036 — 1 October 2026
+
+- Goal: deploy `apps-script-read-endpoint` and run the live checks.
+- Completed: the user deployed the script by copy-paste and handed over the `/exec` URL, stored in
+  the git-ignored `local.properties` (`bluesjam.appsScriptUrl`). Live checks M1–M4 pass: the
+  checker accepts the catalog (100 songs), `config` returns `unknown_resource`, and every live
+  song with null optional fields passes. A data check on the live body found no invalid id, key or
+  enum value. Status set to `passing`.
+- Finding: **latency is ~2.5 s per call warm** (min 2.10, max 4.51 s over ten calls). That supports
+  the plan to serve reads from the Room cache and refresh in the background, and makes optimistic
+  writes important.
+- Known risk or unresolved issue: a true cold-start call (after 30+ idle minutes) was not measured;
+  the first observed call took 2.96 s. tempo, tags, difficulty and songsterrId are empty for all
+  100 songs — the week-5 assistant needs at least tags and tempo.
+- Next best step: independent validation of `apps-script-read-endpoint`.
+
+### Session 037 — 1 October 2026
+
+- Goal: independent validation of `apps-script-read-endpoint`.
+- Completed: first verdict **revise** (docs only): three durable docs and this file's header still
+  said latency was unmeasured and the feature `in_progress` — the orchestrator had recorded the live
+  evidence without updating them. Repaired; second verdict **accept**; status `accepted`.
+- Verification run (by the validator): Node 33/33, gate green; live checks repeated independently
+  (catalog OK, every odd `resource` value refused, nothing from Config, 8 keys per song); its own
+  code probes caught; the script id is absent from the tree and the git history.
+- Known risk or unresolved issue: a true cold call after 30+ idle minutes is still unmeasured.
+- Next best step: plan `apps-script-jams-read-endpoint`.
 
 ## Notes For The Next Session
 

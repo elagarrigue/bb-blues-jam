@@ -113,8 +113,12 @@ as the Sheet owner with anonymous access (D-11: the app has no Google sign-in), 
 against the owner's quotas; the binding one is 30 simultaneous executions per user
 (`docs/apps-script-api.md`, **Quotas**). Later code changes are deployed as a new version of the
 same deployment, which keeps the `/exec` URL; a new deployment would change it. The URL is never
-committed; it lives in the git-ignored `local.properties`. Read latency: not measured yet — the
-user's deployment of `apps-script-read-endpoint` records it (M5).
+committed; it lives in the git-ignored `local.properties`. Read latency, measured 1 October 2026
+on the live catalog of 100 songs: ten warm calls min 2.10 s, median 2.50 s, max 4.51 s; first
+observed call 2.96 s (not proven cold); an independent recheck saw 2.2–3.3 s warm and 5.16 s on a
+first call after an unknown idle period. A true cold call after 30+ idle minutes is still
+unmeasured. This settles the design: reads are cache-first with background refresh, and writes
+need optimistic state — the input for `admin-add-song-to-setlist`.
 
 ## Testing and Verification
 

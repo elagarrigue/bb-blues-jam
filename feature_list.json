@@ -238,7 +238,7 @@
     "depends_on": [
       "sheet-schema-definition"
     ],
-    "status": "in_progress",
+    "status": "accepted",
     "verification": [
       "The deployed URL returns catalog JSON matching the schema",
       "A song with missing optional enrichment fields still serializes correctly"
@@ -254,7 +254,15 @@
       "Quotas checked on developers.google.com/apps-script/guides/services/quotas (page 'Last updated 2026-09-03 UTC', fetched 1 October 2026), consumer account: 6 min per execution, 30 simultaneous executions per user, 1,000 per script, triggers 90 min/day (not used), no daily cap listed for web app executions. Also verified: ANYONE_ANONYMOUS and USER_DEPLOYING in the web app manifest reference; spreadsheets.currentonly authorizes getActiveSpreadsheet; the Content service 302 to script.googleusercontent.com needing curl -L. Recorded in docs/apps-script-api.md.",
       "After: ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0, konsist: wired, detekt: wired, ktlint: wired; the 20 test result files have the same suite names and counts as the baseline (diff empty; ModuleIsolationTest 11). No Gradle, Kotlin, Konsist or init.sh file changed (git status).",
       "git check-ignore: .clasp.json, .clasprc.json, node_modules/ and *.local.json ignored under backend/apps-script; local.properties ignored at the root. No URL, script id or token in the repo.",
-      "Pending, by the user (Google account needed): deploy by copy-paste (backend/apps-script/README.md) and hand over the /exec URL; then M1 checker exit 0 on the live response, M2 song count vs the Sheet, M3 a live song with null optional fields passes, M4 resource=config -> unknown_resource, M5 cold call plus min/median/max of ten warm calls; and whether the real Catalogo headers match the eight exactly."
+      "Pending, by the user (Google account needed): deploy by copy-paste (backend/apps-script/README.md) and hand over the /exec URL; then M1 checker exit 0 on the live response, M2 song count vs the Sheet, M3 a live song with null optional fields passes, M4 resource=config -> unknown_resource, M5 cold call plus min/median/max of ten warm calls; and whether the real Catalogo headers match the eight exactly.",
+      "1 October 2026: the user deployed the script by copy-paste (Execute as me, access Anyone) and handed the /exec URL over in chat; the orchestrator stored it in the git-ignored local.properties as bluesjam.appsScriptUrl (never committed).",
+      "M1: curl -sL \"$URL?resource=catalog\" → HTTP 200; tools/check-response.js on the live body: \"OK: schemaVersion 1, 100 songs, 100 with at least one null optional field\", exit 0. The real Catalogo headers therefore match the eight the script requires (otherwise missing_header).",
+      "M2: 100 songs live (the seed has 13; the user loaded more). Orchestrator data check on the live body against the domain formats: 0 invalid ids, 0 duplicate ids, 0 invalid defaultKey, 0 unknown tempo/difficulty values, 0 blank titles or artists, no artist spelling variants. tempo, tags, difficulty and songsterrId are empty for all 100 songs.",
+      "M3: all 100 live songs carry null optional fields and pass the checker.",
+      "M4: ?resource=config and a request with no resource both return {\"schemaVersion\":1,\"error\":{\"code\":\"unknown_resource\",...}}; nothing from Config.",
+      "M5 (partial): first observed call 2.96 s (not guaranteed cold: the deployment may already have been exercised); ten warm calls min 2.10 s, median 2.50 s, max 4.51 s. A true cold call after 30+ idle minutes was not measured in this session. These figures feed the optimistic-update decision in admin-add-song-to-setlist (recorded in docs/technical-discovery.md).",
+      "1 October 2026: validator verdict revise (docs only): technical-discovery.md, risks-and-open-questions.md and PROGRESS.md's Current Verified State still said latency was unmeasured and the feature in_progress. Repaired by the orchestrator, which had recorded the live evidence without updating them.",
+      "1 October 2026: independent validator verdict accept after the docs repair. Node 33/33; gate exit 0 with three wired; live: checker OK on 100 songs, config/Config/CATALOG/missing/odd resources all unknown_resource, nothing from Config in any body, exactly 8 keys per song; its own probes (es-AR integer formatting, duplicate_header disabled) caught by the tests; script id absent from the tree and the whole git history; local.properties ignored and untracked. Follow-ups: a true cold call after 30+ idle minutes."
     ],
     "notes": "D-04: Sheet to app, read-only. Measure and record response latency here; it informs the optimistic-update decision on the write side."
   },

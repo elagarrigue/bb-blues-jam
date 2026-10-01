@@ -132,8 +132,9 @@ Stated so they can be challenged rather than silently relied upon.
   reviewed by hand by the user (29–30 September 2026, user's report).
 - [ ] Load real repertoire with keys, tags, and difficulty.
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload. Quotas checked
-      (assumption 6). Read latency: pending the user's deployment of `apps-script-read-endpoint`
-      (M5). Write latency: still open, for the first write slice.
+      (assumption 6). Read latency measured (warm median about 2.5 s; see
+      `technical-discovery.md`); a true cold-start figure is still open. Write latency: still
+      open, for the first write slice.
 - [ ] Confirm the full mutation list for the action contract before slicing features.
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.
