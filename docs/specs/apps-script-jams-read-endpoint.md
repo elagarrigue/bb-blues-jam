@@ -439,3 +439,17 @@ produced it.
 - **A4: the time zone is the spreadsheet's own, not the manifest's** (D6). They are expected to be
   equal (Buenos Aires). Using the spreadsheet's zone makes dates round-trip even if they are not.
   Recommended: approve.
+
+## User Approvals
+
+Recorded 1 October 2026, before implementation:
+
+- **A1: approved.** Only an exact `PUBLICADA` releases a setlist; the user confirms every past jam
+  in the real Sheet is `PUBLICADA`.
+- **A2: approved.** A published row with no tab is served with `setlistError: missing_tab`; a tab
+  with no `Jams` row is ignored; per-jam errors never fail the whole response.
+- **A3: approved.** The user will add the temporary test jam (`2000-01-01`, `Prueba`, `BORRADOR`,
+  one song `zz-borrador`) for the live draft check, flip it to `PUBLICADA` when asked, and delete it
+  afterwards.
+- **A4: approved.** The spreadsheet's time zone is `(GMT-03:00) Buenos Aires`, the same as the
+  manifest's.
