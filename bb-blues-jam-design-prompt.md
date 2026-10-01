@@ -141,10 +141,8 @@ Complementa la fila expandida: acá va todo lo que no entra en la lista.
 
 - Título, artista, artwork si hay
 - **Tonalidad, bien grande.** Es el dato principal de esta pantalla.
-- Etiquetas del tema (shuffle, 12 compases, slow blues, blues nacional, etc.)
-- Tempo, si está cargado
 - Formación completa, con cupos libres y cubiertos agrupados por instrumento
-- Botón para abrir la tablatura en el navegador (sale de la app)
+- Por ahora sin etiquetas, tempo, dificultad ni botón de tablatura (D-20)
 - En modo admin: editar tonalidad, formación y asignaciones
 
 ### 4. Jams anteriores — lista

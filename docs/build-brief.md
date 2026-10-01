@@ -121,4 +121,4 @@ schedule runs 14 September to 23 October 2026, with the assistant landing in wee
 must close early enough to leave that week clear.
 
 The project bitácora (`bb-blues-jam-bitacora.md`) is in Spanish and is presentation material; it
-records the reasoning behind all 19 decisions and should be kept current as work proceeds.
+records the reasoning behind all 20 decisions and should be kept current as work proceeds.

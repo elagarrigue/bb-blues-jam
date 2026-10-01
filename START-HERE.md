@@ -48,7 +48,7 @@ Ya están en el repo. Son el insumo del descubrimiento:
 
 | Archivo | Para qué |
 |---|---|
-| `bb-blues-jam-bitacora.md` | Proceso, 19 decisiones con su fundamento, mapa a los módulos del curso |
+| `bb-blues-jam-bitacora.md` | Proceso, 20 decisiones con su fundamento, mapa a los módulos del curso |
 | `bb-blues-jam-design-prompt.md` | Brief de diseño completo + prompts por pantalla para Stitch |
 
 **Importante:** la bitácora es también el material de la presentación final. Mantenela
@@ -63,7 +63,7 @@ actualizada a medida que avanzás; no es documentación muerta.
 - Problema elegido y validado contra alternativas descartadas
 - Investigación de diez APIs musicales con NotebookLM, verificada después contra documentación viva
 - Alcance del MVP definido
-- 19 decisiones técnicas y de producto tomadas, con fundamento escrito
+- 20 decisiones técnicas y de producto tomadas, con fundamento escrito
 - Diseño de UI especificado: ocho pantallas, cinco estados, dirección visual
 - Prompts de Stitch listos para generar las pantallas
 - Repo git inicializado y publicado en `github.com/elagarrigue/bb-blues-jam` (`origin` por SSH)
@@ -110,6 +110,7 @@ bitácora.
 | D-17 | Material 3 por debajo, tokens `BluesJamTheme.*` por encima; las pantallas no leen `MaterialTheme.colorScheme` |
 | D-18 | La formación solo se achica; quien toca fuera de ella va en "Otros" (nombre e instrumento) |
 | D-19 | Info presenta a Bahía Blanca Blues y su radio; el lugar va en cada jam, no en Info |
+| D-20 | Tempo, etiquetas, dificultad y Songsterr no se usan por ahora (quedan opcionales en el esquema) |
 
 ### Las dos que más condicionan el trabajo
 

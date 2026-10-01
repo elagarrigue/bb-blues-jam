@@ -1,7 +1,7 @@
 # Risks and Open Questions
 
 Questions still open after discovery, sorted by when they must be answered. Settled matters live in
-the other discovery documents; the 19 decisions and their reasoning are in
+the other discovery documents; the 20 decisions and their reasoning are in
 `../bb-blues-jam-bitacora.md`.
 
 ## Blocking Next Phase
@@ -18,7 +18,7 @@ and more songs added to `Catalogo`. The real Sheet is now the authority and has 
 from the seed, which is a one-time import file. The user did not mention the `Config` tab.
 
 What remains open is the second deadline: the assistant's usefulness in week 5 depends on how much
-real repertoire is loaded, with keys, tempo, tags and difficulty. The seed has thirteen songs and no
+real repertoire is loaded, with keys (tempo, tags and difficulty are set aside for now, D-20). The seed has thirteen songs and no
 tags; the real catalog is growing past it. Loading should run in parallel with development.
 
 ### The Apps Script action surface is not specified
@@ -130,7 +130,7 @@ Stated so they can be challenged rather than silently relied upon.
 
 - [x] Define the Sheet schema — `sheet-schema.md`. The seed was imported into the real Sheet and
   reviewed by hand by the user (29–30 September 2026, user's report).
-- [ ] Load real repertoire with keys, tags, and difficulty.
+- [ ] Load real repertoire with keys. Tempo, tags and difficulty are not used for now (D-20).
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload. Quotas checked
       (assumption 6). Read latency measured (warm median about 2.5 s; see
       `technical-discovery.md`); a true cold-start figure is still open. Write latency: still

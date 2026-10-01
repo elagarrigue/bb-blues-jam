@@ -29,7 +29,7 @@ allowed dependencies from it, not leave the implementer to choose.
 
 ## Project rules a spec must respect
 
-These come from decisions already made (D-01 … D-19, with reasoning in
+These come from decisions already made (D-01 … D-20, with reasoning in
 `bb-blues-jam-bitacora.md`). A spec that contradicts one is wrong unless the user has said
 otherwise.
 

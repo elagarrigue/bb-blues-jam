@@ -300,7 +300,7 @@
       "Cache staleness is exposed so the UI can indicate it"
     ],
     "evidence": [],
-    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject). From sheet-schema-definition validation: the docs leave undefined two columns with the same slot header, 'Nombre(instrumento)' without a space, and duplicate Jams.fecha (marked unique but missing from the Mapper rules list) — settle them in this slice's mapper spec."
+    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject). From sheet-schema-definition validation: the docs leave undefined two columns with the same slot header, 'Nombre(instrumento)' without a space, and duplicate Jams.fecha (marked unique but missing from the Mapper rules list) — settle them in this slice's mapper spec. D-20: the mapper still parses tempo, tags, difficulty and songsterrId (they are in the contract and nullable), but nothing downstream uses them for now."
   },
   {
     "id": "build-logic-conventions",
@@ -439,18 +439,18 @@
     "id": "song-detail-screen",
     "area": "feature-song-detail",
     "title": "Show the song detail screen",
-    "user_visible_behavior": "Opening a song shows its title, artist, the key displayed very large, its tags, tempo when present, and the full lineup grouped by instrument.",
+    "user_visible_behavior": "Opening a song shows its title, artist, the key displayed very large, and the full lineup grouped by instrument.",
     "depends_on": [
       "song-row-expansion"
     ],
     "status": "not_started",
     "verification": [
-      "A Compose preview renders a song with and without optional enrichment fields",
+      "A Compose preview renders a song with only its required fields",
       "The key is the largest element on the screen",
-      "A song with no artwork, tempo or tags still renders correctly"
+      "Tempo, tags, difficulty and songsterrId are not shown even when present (D-20)"
     ],
     "evidence": [],
-    "notes": "Every enrichment field is optional and may be permanently absent; that is not an error state (D-09)."
+    "notes": "Every enrichment field is optional and may be permanently absent; that is not an error state (D-09). D-20 (1 October 2026): tempo, tags, difficulty and songsterrId are not used in the MVP; the screen does not show them."
   },
   {
     "id": "songsterr-browser-link",
@@ -460,13 +460,13 @@
     "depends_on": [
       "song-detail-screen"
     ],
-    "status": "not_started",
+    "status": "blocked",
     "verification": [
       "The button opens the correct external URL",
       "The button is absent when songsterrId is null"
     ],
     "evidence": [],
-    "notes": "D-10. No in-app rendering. Songsterr has no official API, so this must degrade silently."
+    "notes": "D-10. No in-app rendering. Songsterr has no official API, so this must degrade silently. Blocked by D-20 (1 October 2026): the user set songsterrId aside for now. Unblock only when the user brings it back."
   },
   {
     "id": "past-jams-list",

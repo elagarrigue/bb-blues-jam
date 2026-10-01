@@ -1097,6 +1097,18 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: a true cold call after 30+ idle minutes is still unmeasured.
 - Next best step: plan `apps-script-jams-read-endpoint`.
 
+### Session 038 — 1 October 2026
+
+- Goal: record the user's decision on unused catalog fields.
+- Completed: **D-20** — tempo, tags, difficulty and songsterrId are not used in the MVP; they stay
+  optional in the schema, the endpoint contract and the domain model. `song-detail-screen` no
+  longer shows them; `songsterr-browser-link` is `blocked` until the user brings it back.
+  Recorded in the bitácora, START-HERE, CONTEXT.md, DESIGN.md, the design prompt, the risks doc and
+  `feature_list.json`; decision range now D-01 … D-20.
+- Known risk or unresolved issue: the phase 2 assistant will choose from the catalog without
+  tags or tempo ("slow blues", "arrancar lento y subir" cannot be filtered by data yet).
+- Next best step: plan `apps-script-jams-read-endpoint`.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`) and the seed is imported (user's report).

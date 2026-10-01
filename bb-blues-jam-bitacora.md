@@ -389,6 +389,16 @@ agente los complete de memoria. Se descartó dejar el lugar en Info porque una p
 una dirección vieja es exactamente la "versión no confiable" que la app vino a reemplazar. Decidido
 por el organizador al revisar el contenido de Info.
 
+### D-20 — Tempo, etiquetas, dificultad y Songsterr, fuera por ahora
+El catálogo real llegó a 100 temas con título, artista y tonalidad, pero sin tempo, etiquetas,
+dificultad ni `songsterr_id`. En vez de pedir que se carguen antes de seguir, el organizador decidió
+no usarlos por ahora. Las columnas siguen en el esquema y los campos en el modelo, opcionales, así
+que volver a usarlos no rompe nada: el detalle del tema muestra título, artista, la tonalidad bien
+grande y la formación, y la rebanada del enlace a Songsterr queda bloqueada hasta que se retome.
+Consecuencia a tener en cuenta para la fase 2: el asistente va a elegir del catálogo (D-14) con
+título, artista, tonalidad e historial de jams, sin filtrar por etiquetas como "slow blues" o
+"shuffle". "Blues nacional" sigue siendo posible por el país del artista que trae MusicBrainz (D-09).
+
 ---
 
 # Parte III — Harness y seguimiento

@@ -228,8 +228,8 @@ row, tappable open slots for assignment, and a clear action on filled slots.
 
 1. **Próxima jam, musician view** — the most important screen in the app
 2. **Próxima jam, admin view** — same screen plus controls
-3. **Song detail** — key displayed very large as the main element; tags, tempo, full lineup grouped
-   by instrument, and a button opening the tab in the browser
+3. **Song detail** — key displayed very large as the main element, and the full lineup grouped by
+   instrument. No tags, tempo, difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first
    few titles
 5. **Past jam detail** — same structure, read-only, muted archive treatment, amber only on keys, no

@@ -21,7 +21,8 @@ Lineup. The same Song can appear in many Jams as different JamSongs, with differ
 different musicians.
 
 ### Song
-An entry in the Catalog: title, artist, default key, tempo, tags, difficulty. A Song exists
+An entry in the Catalog: title, artist, default key, and optional tempo, tags and difficulty, which
+the MVP does not use (D-20). A Song exists
 independently of any Jam and is reused across Jams.
 
 ### Catalog
