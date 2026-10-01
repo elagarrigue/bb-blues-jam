@@ -247,13 +247,31 @@
     "notes": "D-04: Sheet to app, read-only. Measure and record response latency here; it informs the optimistic-update decision on the write side."
   },
   {
+    "id": "apps-script-jams-read-endpoint",
+    "area": "backend",
+    "title": "Expose jams and setlists through Apps Script",
+    "user_visible_behavior": "A GET request to the Apps Script deployment returns the jams and their setlists as JSON, and never returns a draft setlist to an unauthenticated reader.",
+    "depends_on": [
+      "apps-script-read-endpoint"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The deployed URL returns jams and setlists matching docs/sheet-schema.md",
+      "A DRAFT jam's setlist is withheld from an unauthenticated request",
+      "fecha, hora and posicion come back in the documented text formats even when the Sheet stores typed cells"
+    ],
+    "evidence": [],
+    "notes": "Added 1 October 2026 with the user's approval: no slice served jams or setlists, yet next-jam-read-only-list and past-jams-list need them. Takes over the fecha/hora/posicion normalization sheet-schema.md assigned to the read endpoint. How an admin reads a draft must be coordinated with apps-script-write-auth (POST, never the passphrase in a URL)."
+  },
+  {
     "id": "catalog-repository-cache",
     "area": "data",
     "title": "Read the catalog into a Room cache",
     "user_visible_behavior": "The app fetches the catalog once, stores it locally, and serves songs from the cache when offline.",
     "depends_on": [
       "apps-script-read-endpoint",
-      "domain-model-types"
+      "domain-model-types",
+      "apps-script-jams-read-endpoint"
     ],
     "status": "not_started",
     "verification": [

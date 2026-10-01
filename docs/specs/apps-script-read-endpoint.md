@@ -404,3 +404,18 @@ agent reports the violations and nothing is changed in the Sheet without the use
   and not made here.
 - **U6 — existing bound script.** Is there already an Apps Script project on the Sheet? Will you
   share the URL with the agent for measurement (6a) or run the commands yourself (6b)?
+
+## User Approvals
+
+Recorded 1 October 2026:
+
+- **U2: approved.** Execute as the owner, access "Anyone" (anonymous); the catalog is readable by
+  anyone with the URL, never Config or the passphrase.
+- **U3:** the URL is never committed (the repo is treated as public); it goes in `local.properties`
+  (already git-ignored) under `bluesjam.appsScriptUrl` when `catalog-repository-cache` needs it.
+- **U4:** the Node tests stay outside `init.sh` (no verification-rule change); revisit at
+  `apps-script-write-auth`.
+- **U5: approved.** New slice `apps-script-jams-read-endpoint` added to `feature_list.json`.
+- **U6:** no script is bound to the Sheet yet; the user has only the Google Sheet.
+- **U1 (clasp vs copy-paste) and the hand-back mode are still open:** the user asked what "the
+  script" is. Implementation in the repo may proceed; the manual steps wait for the user.
