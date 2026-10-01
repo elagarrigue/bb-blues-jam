@@ -123,8 +123,10 @@ need optimistic state — the input for `admin-add-song-to-setlist`.
 The `jams` route (`apps-script-jams-read-endpoint`) reads the `Jams` tab plus one tab per
 `PUBLICADA` jam with a unique ISO date, so a call costs one `getSheetByName` and one
 `getDataRange` (display and raw values) per published jam on top of the `Jams` tab, and grows by
-about 12 tabs a year. Its latency is not measured yet: it is live check L5 of that slice, recorded
-here once the user has redeployed.
+about 12 tabs a year. Measured 1 October 2026 while the real Sheet had 1 published jam (13 rows;
+the test jam was still `BORRADOR`): ten warm calls min 2.13 s, median 3.06 s, max 4.24 s; the
+first call to the new version took 3.97 s (not proven cold); the validator's later recheck saw
+2.27–2.84 s warm. Each further published jam adds one tab read, so this grows with history.
 
 ## Testing and Verification
 

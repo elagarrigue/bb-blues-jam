@@ -66,9 +66,26 @@ no URL, no token.
 
 ### Updating the code later
 
-Paste the new files, save, then **Deploy → Manage deployments → (the deployment) → Edit (pencil)
-→ Version: New version → Deploy**. The URL stays the same. **New deployment** would create a
-second URL, and the app would keep calling the old version.
+Paste the new files and save. Then **verify the paste** (below) before deploying: copy-paste can
+silently leave a file on its old content. Then **Deploy → Manage deployments → (the deployment) →
+Edit (pencil) → Version: New version → Deploy**. The URL stays the same. **New deployment** would
+create a second URL, and the app would keep calling the old version. After deploying, check that
+`?resource=config` replies `unknown_resource` with the message ending in `Known: catalog, jams`
+(the route list of the code now in `src/Code.js`); an older list means the deployment still runs
+an old `Code.gs`.
+
+#### Verify the paste
+
+In the Apps Script editor, open each file and search (Ctrl+F) for its distinctive line:
+
+| File | Must contain | Must not contain |
+|---|---|---|
+| `Code.gs` | `jams: readJams_,` | |
+| `Jams.gs` | `var PUBLISHED_STATUS = 'PUBLICADA';` | |
+| `Normalize.gs` | `function isoDateCell(` and `class ContractError` | |
+| `Catalog.gs` | | `class ContractError` |
+
+If any check fails, paste that file again over its whole content, save, and check again.
 
 ### Redeploy for the jams route (`apps-script-jams-read-endpoint`)
 
@@ -86,12 +103,19 @@ The script is already deployed with the catalog route. This adds the `jams` rout
    `myFunction` it starts with, and paste the whole of `src/Jams.js`.
 4. **Save** (Ctrl+S). The project now has four script files, `Code`, `Normalize`, `Catalog` and
    `Jams`, plus `appsscript.json`.
-5. **Deploy → Manage deployments** → select the existing deployment → **Edit** (pencil icon) →
+5. **Verify the paste** with the table in **Updating the code later**: one distinctive line per
+   file (`Code.gs` has `jams: readJams_,`; `Jams.gs` has `var PUBLISHED_STATUS = 'PUBLICADA';`;
+   `Normalize.gs` has `function isoDateCell(` and `class ContractError`; `Catalog.gs` does
+   **not** have `class ContractError`). Fix any file that fails before deploying.
+6. **Deploy → Manage deployments** → select the existing deployment → **Edit** (pencil icon) →
    **Version: New version** → **Deploy**. Never choose **New deployment**: it would create a new
    URL, and the app and the checks would keep calling the old version.
-6. The scope is unchanged, so no new authorization is expected. If Google asks, authorize as the
+7. The scope is unchanged, so no new authorization is expected. If Google asks, authorize as the
    first time.
-7. Tell the orchestrator in chat (never paste the URL into a file in the repo):
+8. Check the deployment: `?resource=config` must reply `unknown_resource` with a message ending in
+   `Known: catalog, jams` (**Check a live deployment** has the command). `Known: catalog` means
+   the deployed `Code.gs` is still the old one: go back to step 5.
+9. Tell the orchestrator in chat (never paste the URL into a file in the repo):
    - that the new version is deployed;
    - the Sheet's **File → Settings → Time zone** (expected `(GMT-03:00) Buenos Aires`);
    - which real jams are `BORRADOR`, if any, and whether every past jam is `PUBLICADA`.
@@ -129,7 +153,7 @@ Catalog (and the passphrase tab is refused):
 ```bash
 curl -sL "$URL?resource=catalog" -o $OUT/catalog.local.json
 node $CHECK $OUT/catalog.local.json                                  # exit 0 = valid
-curl -sL "$URL?resource=config"                                      # must be unknown_resource
+curl -sL "$URL?resource=config"                                      # unknown_resource, "... Known: catalog, jams"
 for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource=catalog"; done
 ```
 

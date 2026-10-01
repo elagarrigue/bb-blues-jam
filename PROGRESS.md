@@ -6,11 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `apps-script-jams-read-endpoint`, `in_progress` (session 039: repo
-  half done, waiting on the user's redeploy and the live checks L1–L5). Accepted:
-  `gradle-kotlin-compose-baseline`, `module-skeleton`, `konsist-isolation-rules`,
-  `detekt-ktlint-gate`, `molecule-presenter-harness`, `design-tokens-theme`, `domain-model-types`,
-  `sheet-schema-definition`, `info-screen`, `build-logic-conventions`, `apps-script-read-endpoint`.
+- Current next ready feature: `catalog-repository-cache`. Accepted: twelve slices, the latest
+  `apps-script-read-endpoint` and `apps-script-jams-read-endpoint`.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1183,6 +1180,51 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - Latency grows with every published jam (one tab read each); unmeasured until L5.
   - Node tests remain outside the gate.
 - Next best step: the user's redeploy (step 1), then L1–L5, then validation.
+
+### Session 040 — 1 October 2026
+
+- Goal: redeploy the jams route and run the live checks.
+- Completed: after two attempts that left `Code.gs` on the old version (the deployment kept serving
+  "Known: catalog"), the user re-pasted all four files and published Version N; the route table now
+  reads "Known: catalog, jams". Live: L1 strict OK on the real jam; L2 catalog and config refusal
+  unchanged; L3 the user's test jam was withheld as `BORRADOR`, served with its one row once
+  `PUBLICADA`, and gone after deletion; L4 a `passphrase` parameter changes nothing (byte-identical);
+  L5 jams warm median 3.06 s. Status `passing`.
+- Finding: copy-paste deployment is error-prone — a file can silently stay old. The README now has
+  a **Verify the paste** step (one distinctive line per file) before deploying, and a post-deploy
+  check that `?resource=config` lists `Known: catalog, jams` (`backend/apps-script/README.md`,
+  **Updating the code later** and **Redeploy for the jams route**).
+- Finding: the first test entry came back as `2026-01-01` with an empty time — what the cells held
+  (cause not established, likely an input slip); plain-text formatting is now strongly recommended
+  in the schema.
+- Validator verdict **revise** (tests and docs only; the shipped src is correct and live behaviour
+  matches). Repaired by the implementer, no file under `backend/apps-script/src/` changed (SHA-1
+  `Normalize.js` 129a8a89…, `Jams.js` 9bd5b743…, unchanged), so no redeploy:
+  - `normalize.test.js` +1: a raw time `Date.UTC(1899, 11, 31, 0, 0)` (21:00 at a fixed -03:00)
+    that formats as `19:43` in Buenos Aires' 1899 offset, with display `21:00:00` / `21:00`, must
+    give `21:00`. Probe: raw-Date branch moved before the display regex → exit 1, 1 of 70 fails,
+    `actual: '19:43' expected: '21:00'`; restored, SHA-1 equal.
+  - `jams.test.js` +1: PUBLICADA with fecha `x2026-07-25` and `2026-07-25b` → `invalid_date`, no
+    tab read. Probe: unanchored `/d{4}-d{2}-d{2}/` → exit 1, 1 of 70 fails, readTab calls
+    `[ 'x2026-07-25', '2026-07-25b' ]` instead of `[]`; restored, SHA-1 equal.
+  - Docs: `technical-discovery.md` jams latency merged (stale "not measured yet" removed; 1 published
+    jam, first call 3.97 s, recheck 2.27–2.84 s); `sheet-schema.md` live-test sentence reworded;
+    README verify-the-paste steps; L5 evidence line completed.
+  - Reruns: `node --test backend/apps-script/test/*.test.js` exit 0, 70/70; `CI=true ./init.sh`
+    exit 0, three `wired`, the 20 result files identical to the baseline.
+- Next best step: independent re-validation.
+
+### Session 041 — 1 October 2026
+
+- Goal: independent validation of `apps-script-jams-read-endpoint`.
+- Completed: first verdict **revise** — the shipped code was correct, but two rules had no test that
+  could fail (display-first time reading, the anchored ISO date guard) and three docs were stale or
+  misleading. The implementer added two discriminating tests and fixed the docs without touching
+  `src/` (no redeploy); second verdict **accept**; status `accepted`.
+- Known risk or unresolved issue: the README's paste markers are tied to this version; any later
+  `src` change must update them (noted on `apps-script-write-auth`). A true cold call is still
+  unmeasured.
+- Next best step: plan `catalog-repository-cache`.
 
 ## Notes For The Next Session
 

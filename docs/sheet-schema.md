@@ -38,7 +38,11 @@ Seed files for import live in `docs/sheet-seed/`.
   - Every other jam and setlist cell is display text, trimmed.
 
   A value that is not in the documented format still reaches the mapper as text, which rejects it.
-  Admin advice: format the `fecha`, `hora` and `posicion` columns as plain text.
+  Admin advice, strongly recommended: format the `fecha`, `hora` and `posicion` columns as plain
+  text (Format → Number → Plain text). In the live test of 1 October 2026 the first test entry came back
+  as `2026-01-01` with an empty time. The script emits the cells' own values, so that is what the
+  cells held; the cause was not established (likely an input slip). Plain text avoids Sheets
+  reinterpreting what is typed.
 
 ## Tabs
 

@@ -182,6 +182,15 @@ test('fecha Config or Catalogo with PUBLICADA is invalid_date and never names a 
   assert.ok(!JSON.stringify(body).includes('s3cret'));
 });
 
+test('a fecha with extra characters around an ISO date is invalid_date and names no tab', () => {
+  const jams = textTab([JAMS_HEADER, ['x2026-07-25', '21:00', 'X', 'PUBLICADA'], ['2026-07-25b', '21:00', 'X', 'PUBLICADA']]);
+  const tab = textTab([TAB_HEADER, slotRow('1', MARKER)]);
+  const { body, calls } = response(jams, { 'x2026-07-25': tab, '2026-07-25b': tab });
+  assert.deepStrictEqual(calls, []);
+  assert.deepStrictEqual(body.jams.map((j) => j.setlistError && j.setlistError.code), ['invalid_date', 'invalid_date']);
+  assert.ok(!JSON.stringify(body).includes(MARKER));
+});
+
 test('a date on two rows is duplicate_date for the PUBLICADA one, and its tab is never read', () => {
   const jams = textTab([JAMS_HEADER, ['2026-07-25', '21:00', 'X', 'BORRADOR'], ['2026-07-25', '21:00', 'Y', 'PUBLICADA']]);
   const { body, calls } = response(jams, { '2026-07-25': textTab([TAB_HEADER, slotRow('1', MARKER)]) });

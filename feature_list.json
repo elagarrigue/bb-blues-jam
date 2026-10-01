@@ -274,7 +274,7 @@
     "depends_on": [
       "apps-script-read-endpoint"
     ],
-    "status": "in_progress",
+    "status": "accepted",
     "verification": [
       "The deployed URL returns jams and setlists matching docs/sheet-schema.md",
       "A DRAFT jam's setlist is withheld from an unauthenticated request",
@@ -293,7 +293,16 @@
       "After: ./gradlew ktlintFormat exit 0 (no file changed); CI=true ./init.sh exit 0, konsist: wired, detekt: wired, ktlint: wired; the 20 test result files have the same names and tests/failures/errors/skipped counts as the baseline (diff empty). No Gradle, Kotlin, Konsist or init.sh file changed (git status).",
       "Samples generated once from buildJams (scratch script), reviewed against D4/D5 by eye, added for the orchestrator to commit; jams-edge.json contains no zz- marker (grep count 0). From then on the tests only compare against the committed files.",
       "git check-ignore: jams.local.json, jams-param.local.json and jams-draft.local.json ignored by backend/apps-script/.gitignore (*.local.json). No /exec URL in any .js/.md/.json in the working tree (grep for macros/s/: none).",
-      "Pending, by the user (Google account needed): paste src/Normalize.js, src/Catalog.js and src/Code.js over their namesakes, add a Jams script file with src/Jams.js, save, Manage deployments -> Edit -> New version -> Deploy (backend/apps-script/README.md, Redeploy for the jams route); report the Sheet time zone, the real BORRADOR jams and whether every past jam is PUBLICADA; then the A3 test jam steps when asked. By the orchestrator: L1 strict check on the live jams, L2 catalog and config, L3 draft/publish/delete, L4 passphrase parameter byte-identical, L5 latency with jam and tab counts. Only then passing."
+      "Pending, by the user (Google account needed): paste src/Normalize.js, src/Catalog.js and src/Code.js over their namesakes, add a Jams script file with src/Jams.js, save, Manage deployments -> Edit -> New version -> Deploy (backend/apps-script/README.md, Redeploy for the jams route); report the Sheet time zone, the real BORRADOR jams and whether every past jam is PUBLICADA; then the A3 test jam steps when asked. By the orchestrator: L1 strict check on the live jams, L2 catalog and config, L3 draft/publish/delete, L4 passphrase parameter byte-identical, L5 latency with jam and tab counts. Only then passing.",
+      "1 October 2026, live (the user redeployed; the orchestrator ran the checks with $URL from local.properties, never printed). First redeploy attempts still served version 1 (Code.gs kept the old route table, 'Known: catalog'); after the user re-pasted all four files and created a New version, the route table reads 'Known: catalog, jams'.",
+      "L1: check-response.js --strict on the real jams body: OK, 1 jam (2026-07-25, PUBLICADA, 21:00), 13 setlist rows, 0 errors.",
+      "L2: catalog still OK (100 songs); resource=config → unknown_resource.",
+      "L3 (user-run test jam 2000-01-01, Prueba): as BORRADOR the jam is served with setlist null and the song 'zz-borrador'/'ZZ Borrador' appears 0 times in the body; flipped to PUBLICADA it is served with one setlist row (songId zz-borrador, key A, seven null slots, extraParticipants null), proving the tab is readable and was withheld on purpose; after the user deleted the row and the tab, it is gone (strict OK, 1 jam).",
+      "L4: resource=jams&passphrase=x is byte-identical to resource=jams (cmp).",
+      "L5: run against the real Sheet with 1 published jam (13 rows; the test jam was still BORRADOR): first call to the new version 3.97 s (not proven cold); ten warm jams calls min 2.13 s, median 3.06 s, max 4.24 s.",
+      "Finding: the user's first entry of the test row came back as fecha 2026-01-01 and hora null; after the user formatted the Jams fecha/hora columns as plain text and re-typed them, the values were exact. Whether that was a typing slip or Sheets auto-conversion was not established; plain-text formatting of fecha/hora/posicion is now strongly recommended in docs/sheet-schema.md.",
+      "Revise repair (implementer, 1 October 2026; tests and docs only, no file under backend/apps-script/src changed: Normalize.js 129a8a89..., Jams.js 9bd5b743..., so no redeploy). normalize.test.js +1: raw Date.UTC(1899, 11, 31, 0, 0) formats as 19:43 in Buenos Aires (1899 offset -4:16:48) yet display 21:00:00 / 21:00 gives 21:00; probe with the raw-Date branch before the display regex -> exit 1, 1 of 70 fails, actual 19:43 expected 21:00; restored, SHA-1 equal. jams.test.js +1: PUBLICADA with fecha x2026-07-25 and 2026-07-25b -> invalid_date and no tab read; probe with the unanchored /d{4}-d{2}-d{2}/ -> exit 1, 1 of 70 fails, readTab calls [x2026-07-25, 2026-07-25b] instead of []; restored, SHA-1 equal. Reruns: node --test exit 0, 70/70 (normalize 18, catalog 14, jams 22, router 16); CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 20 result files identical to the baseline. Docs: technical-discovery.md jams latency merged, sheet-schema.md live-test sentence reworded, README Verify the paste step and Known: catalog, jams post-deploy check.",
+      "1 October 2026: independent validator verdict accept after the tests-and-docs repair. src unchanged (Jams.js 9bd5b743…, Normalize.js 129a8a89…), so the live checks still describe the deployed code; Node 70/70; gate green with three wired. It reproduced both new failure demonstrations with its own edits (raw-first timeCell → actual '19:43'; unanchored ISO_DATE_ → tab reads [x2026-07-25, 2026-07-25b]) and confirmed each README paste marker tells the new files from the old ones."
     ],
     "notes": "Added 1 October 2026 with the user's approval: no slice served jams or setlists, yet next-jam-read-only-list and past-jams-list need them. Takes over the fecha/hora/posicion normalization sheet-schema.md assigned to the read endpoint. How an admin reads a draft must be coordinated with apps-script-write-auth (POST, never the passphrase in a URL)."
   },
@@ -596,7 +605,7 @@
       "A valid write succeeds"
     ],
     "evidence": [],
-    "notes": "The Apps Script URL is reachable directly, so this is the only real access control in the product. Rotating the passphrase in the Sheet is the revocation mechanism. A rejected write after rotation must read as access changed, not as a generic network error."
+    "notes": "The Apps Script URL is reachable directly, so this is the only real access control in the product. Rotating the passphrase in the Sheet is the revocation mechanism. A rejected write after rotation must read as access changed, not as a generic network error. From apps-script-jams-read-endpoint validation: any change to backend/apps-script/src must update the README's 'Verify the paste' markers and the 'Known: …' route check in the same change; copy-paste deploys can silently keep an old file."
   },
   {
     "id": "admin-add-song-to-setlist",

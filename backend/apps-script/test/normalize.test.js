@@ -126,3 +126,13 @@ test('mapColumns matches trimmed exact headers, reports missing and duplicate on
   assert.throws(() => mapColumns('T', specs, ['A']), (err) => err instanceof ContractError && err.code === 'missing_header' && /T is missing required headers: a/.test(err.message));
   assert.throws(() => mapColumns('T', specs, ['a', 'b', 'b ']), (err) => err instanceof ContractError && err.code === 'duplicate_header');
 });
+
+test('timeCell prefers a plain display time over the raw Date, even when the Date formats differently', () => {
+  // 21:00 at a fixed -03:00 on the 1899 epoch, as Sheets may build a time-only cell. Formatted with
+  // Buenos Aires' historical 1899 offset (-4:16:48) this instant reads 19:43, so a raw-first
+  // timeCell would return '19:43' instead of the '21:00' the admin sees.
+  const raw = new Date(Date.UTC(1899, 11, 31, 0, 0));
+  assert.equal(formatBA(raw, 'HH:mm'), '19:43');
+  assert.equal(timeCell(raw, '21:00:00', formatBA), '21:00');
+  assert.equal(timeCell(raw, '21:00', formatBA), '21:00');
+});
