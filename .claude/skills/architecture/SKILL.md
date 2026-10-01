@@ -22,6 +22,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
 | `:app` | Navigation, bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). | everything |
+| `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
@@ -38,6 +39,8 @@ is. There is no `:feature:admin`.
 
 - A new domain type or rule → `:core:model`, with a unit test.
 - A read or a write against the Sheet → a repository function in `:core:data`.
+- A new Sheet read or write → a route in `backend/apps-script` plus a repository function in
+  `:core:data`.
 - **A mutation** → a repository function in `:core:data`, then registered in the `:app` action
   registry. Never a lambda that only exists in a composable.
 - A color, spacing or type value → `:core:ui` tokens from `DESIGN.md`. Never a literal in a feature.

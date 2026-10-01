@@ -238,12 +238,24 @@
     "depends_on": [
       "sheet-schema-definition"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "The deployed URL returns catalog JSON matching the schema",
       "A song with missing optional enrichment fields still serializes correctly"
     ],
-    "evidence": [],
+    "evidence": [
+      "Session 035 (implementer, 1 October 2026), repo half only. The user's live evidence M1-M5 does not exist yet, so the status stays in_progress, not passing.",
+      "Baseline: CI=true ./init.sh on untouched HEAD 3d41000 exit 0, konsist/detekt/ktlint wired, 20 test result files.",
+      "node --test backend/apps-script/test/*.test.js (Node v24.13.1, outside init.sh per U4): exit 0, 33 tests, 33 pass, 0 fail; normalize.test.js 8, catalog.test.js 14, router.test.js 11.",
+      "catalog.test.js: the seed Catalogo.csv built by buildCatalog deep-equals docs/api-samples/catalog-seed.json (13 songs, 8 keys each, 4 optional fields null); the edge input (test/helpers/edge-input.js) deep-equals catalog-edge.json (raw 12345 with display '12.345' -> \"12345\", NBSP/space trimming, blank and unmapped-only rows skipped, extra column ignored, null required cell kept as null, 'Rápido' passed through); missing optional column -> nulls; missing_header, empty tab and duplicate_header codes; checker accepts both samples and rejects 4 kinds of violation.",
+      "router.test.js: route table exactly {catalog}; config, Config, CATALOG, '', toString, __proto__ and a missing resource -> unknown_resource without touching the spreadsheet; missing_tab; internal_error with the exception message; a Proxy fake spreadsheet with a Config tab holding passphrase s3cret records only getSheetByName('Catalogo') and never 'Config' across 15 request/fake combinations, and no body contains s3cret; no src file contains 'Config', 'passphrase' or doPost; doGet serializes as application/json and maps a getActiveSpreadsheet failure to internal_error; the three src files run in one vm context with no module object, as Apps Script loads them; the manifest has V8, the Buenos Aires zone, only spreadsheets.currentonly, USER_DEPLOYING and ANYONE_ANONYMOUS.",
+      "Failure demonstrations (each file restored from a saved copy, SHA-1 equal before and after): (1) Normalize.js textCell without .trim() -> exit 1, 5 of 33 fail, e.g. \"+ '  Crossroads  ' - 'Crossroads'\" (Normalize.js 7e2e18eb…); (2) catalog-seed.json title Crossroads -> Crossroad -> catalog.test.js exit 1, 'the seed Catalogo builds exactly …' fails with \"+ title: 'Crossroads' - title: 'Crossroad'\" (88a5a2f5…); (3) a Code.js route config reading the Config tab -> router.test.js exit 1, 4 fail incl. \"passphrase leaked: {\"schemaVersion\":1,\"rows\":[[\"clave\",\"valor\"],[\"passphrase\",\"s3cret\"]]}\" and 'Code.js contains \"Config\"'; (4) readCatalog_ also calling spreadsheet.getSheets() -> exit 1, 3 fail, \"accessed getSheets,getSheetByName\" (Code.js 700703ed…). Unplanned real failure while writing: the doPost guard flagged a Code.js comment that said 'no doPost'; the comment was reworded.",
+      "tools/check-response.js: seed and edge samples exit 0 ('OK: schemaVersion 1, 13 songs, 13 with at least one null optional field'); a copy with tempo deleted and songsterrId 12345 exit 1 ('songs[0] keys: missing tempo', 'songs[1].songsterrId is number 12345, expected string or null'); an HTML page exit 1 ('FAIL: not JSON …'); an unknown_resource error body exit 1; no argument exit 2.",
+      "Quotas checked on developers.google.com/apps-script/guides/services/quotas (page 'Last updated 2026-09-03 UTC', fetched 1 October 2026), consumer account: 6 min per execution, 30 simultaneous executions per user, 1,000 per script, triggers 90 min/day (not used), no daily cap listed for web app executions. Also verified: ANYONE_ANONYMOUS and USER_DEPLOYING in the web app manifest reference; spreadsheets.currentonly authorizes getActiveSpreadsheet; the Content service 302 to script.googleusercontent.com needing curl -L. Recorded in docs/apps-script-api.md.",
+      "After: ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0, konsist: wired, detekt: wired, ktlint: wired; the 20 test result files have the same suite names and counts as the baseline (diff empty; ModuleIsolationTest 11). No Gradle, Kotlin, Konsist or init.sh file changed (git status).",
+      "git check-ignore: .clasp.json, .clasprc.json, node_modules/ and *.local.json ignored under backend/apps-script; local.properties ignored at the root. No URL, script id or token in the repo.",
+      "Pending, by the user (Google account needed): deploy by copy-paste (backend/apps-script/README.md) and hand over the /exec URL; then M1 checker exit 0 on the live response, M2 song count vs the Sheet, M3 a live song with null optional fields passes, M4 resource=config -> unknown_resource, M5 cold call plus min/median/max of ten warm calls; and whether the real Catalogo headers match the eight exactly."
+    ],
     "notes": "D-04: Sheet to app, read-only. Measure and record response latency here; it informs the optimistic-update decision on the write side."
   },
   {

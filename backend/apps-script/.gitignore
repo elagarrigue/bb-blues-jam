@@ -1,0 +1,8 @@
+# clasp project file: holds the script id. Never commit it.
+.clasp.json
+# clasp OAuth tokens. clasp keeps them in the home directory; ignored here in case one lands in the repo.
+.clasprc.json
+# Node is used only to run the tests; there is no package.json and nothing to install.
+node_modules/
+# Saved live responses (for example catalog.local.json from the README's check).
+*.local.json

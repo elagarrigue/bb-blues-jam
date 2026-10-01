@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "songs": [
+    {
+      "id": "sweet-little-angel",
+      "title": "Sweet Little Angel",
+      "artist": "B.B. King",
+      "defaultKey": "B",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "walking-thru-the-park",
+      "title": "Walking Thru the Park",
+      "artist": "Muddy Waters",
+      "defaultKey": "A",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "dust-my-broom",
+      "title": "Dust My Broom",
+      "artist": "Elmore James",
+      "defaultKey": "D",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "blues-del-politico",
+      "title": "Blues Del Politico",
+      "artist": "Durazno de Gala",
+      "defaultKey": "C",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "the-thrill-is-gone",
+      "title": "The Thrill Is Gone",
+      "artist": "B.B. King",
+      "defaultKey": "Bm",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "blues-del-equipaje",
+      "title": "Blues del Equipaje",
+      "artist": "La Mississippi",
+      "defaultKey": "A",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "cafe-madrid",
+      "title": "Café Madrid",
+      "artist": "La Mississippi",
+      "defaultKey": "G",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "got-my-mojo-working",
+      "title": "Got My Mojo Working",
+      "artist": "Muddy Waters",
+      "defaultKey": "E",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "messin-with-the-kid",
+      "title": "Messin' With the Kid",
+      "artist": "Junior Wells",
+      "defaultKey": "C",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "crossroads",
+      "title": "Crossroads",
+      "artist": "Eric Clapton",
+      "defaultKey": "A",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "the-score",
+      "title": "The Score",
+      "artist": "Robert Cray",
+      "defaultKey": "C",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "blues-de-rosario",
+      "title": "Blues de Rosario",
+      "artist": "Memphis La Blusera",
+      "defaultKey": "E",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "tres-palabras",
+      "title": "Tres Palabras",
+      "artist": "La Mississippi",
+      "defaultKey": "A",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    }
+  ]
+}

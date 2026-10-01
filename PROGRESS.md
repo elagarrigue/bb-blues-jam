@@ -6,14 +6,20 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `apps-script-read-endpoint` (its deployment needs the user's Google
-  account). Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+- Current feature: `apps-script-read-endpoint`, `in_progress`. The repo half is done and
+  self-verified (session 035); it waits for the user to deploy the script and hand over the
+  `/exec` URL, then for the live checks M1–M5. Not `passing` until then.
+  Accepted: `gradle-kotlin-compose-baseline`, `module-skeleton`,
   `konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
   `design-tokens-theme`, `domain-model-types`, `sheet-schema-definition`, `info-screen`,
   `build-logic-conventions`.
-- Current blocker: none. The seed was imported into the real Sheet and reviewed by hand by the user
+- Current blocker: the live half of `apps-script-read-endpoint` waits on the user (deployment
+  and the `/exec` URL). The seed was imported into the real Sheet and reviewed by hand by the user
   (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 30 September 2026 (session 033, `build-logic-conventions`) — `CI=true ./init.sh`
+- Last verified at: 1 October 2026 (session 035, `apps-script-read-endpoint` repo half) —
+  `CI=true ./init.sh` exit 0, three `wired`, the 20 test result files identical in names and
+  counts to the baseline; `node --test backend/apps-script/test/*.test.js` 33/33 (outside the
+  gate). Before that, 30 September 2026 (session 033, `build-logic-conventions`) — `CI=true ./init.sh`
   exit 0, `konsist: wired` (11/11, new `build-file-applies-convention`), `detekt: wired`,
   `ktlint: wired`; every other suite unchanged (20 result files, 0 failures). Task plans,
   `buildEnvironment`, manifests, dependency sets and the debug APK (392 non-`META-INF` entries by
@@ -137,6 +143,14 @@ join, three social links and "Entrar como admin", which only shows "El ingreso d
 está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
 
 Product code: the `:core:model` domain types and the Info screen.
+
+`backend/apps-script/` (not a Gradle module; `apps-script-read-endpoint`, `in_progress`) holds
+the Apps Script web app: `appsscript.json` (V8, `spreadsheets.currentonly`, executes as the owner,
+anonymous access) and `src/Normalize.js`, `Catalog.js`, `Code.js` — one route,
+`GET ?resource=catalog`, which never opens `Config`. Node tests (33, `node:test`, no
+`package.json`) run outside `init.sh`; `tools/check-response.js` checks a live response. The
+contract is `docs/apps-script-api.md`, with mapper fixtures in `docs/api-samples/`. Not deployed
+yet: deploying is the user's step.
 
 The Sheet contract is `docs/sheet-schema.md` (`sheet-schema-definition`, `accepted`): tabs, headers,
 exact Spanish enum values, cell reading rules, slot identity (the k-th slot of an instrument is the
@@ -992,6 +1006,70 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   ids, `pluginManager.apply` / `plugins.apply`, and `java { toolchain }` — a hardening needing the
   user's approval (gate change). The Kotlin inside `build-logic` is not linted.
 - Next best step: `apps-script-read-endpoint` — plan it; deploying the script is the user's step.
+
+### Session 035 — 1 October 2026
+
+- Goal: implement the repository half of `apps-script-read-endpoint` (spec
+  `docs/specs/apps-script-read-endpoint.md`, with the user approvals U2–U6 and U1 copy-paste).
+- Completed:
+  - `backend/apps-script/`: `appsscript.json` (P8), `src/Normalize.js`, `src/Catalog.js`,
+    `src/Code.js` (guarded `module.exports`, P1/P6), `.gitignore` (`.clasp.json`,
+    `.clasprc.json`, `node_modules/`, `*.local.json`), `README.md` (copy-paste deployment as the
+    primary path, clasp optional and noted as not ready for this layout, redeploy-as-new-version,
+    live check commands), `tools/check-response.js`, and the tests: `test/normalize.test.js` (8),
+    `test/catalog.test.js` (14), `test/router.test.js` (11), with helpers `load.js`, `csv.js`,
+    `contract.js`, `edge-input.js`.
+  - `docs/apps-script-api.md` (contract, errors, HTTP-200 and redirect notes, quotas) and
+    `docs/api-samples/catalog-seed.json` / `catalog-edge.json`, generated once from the builder,
+    reviewed against P4, and from then on compared by the tests.
+  - Docs: `sheet-schema.md` (**Reading cells**: catalog display text and raw `songsterr_id`;
+    jam normalization now named for `apps-script-jams-read-endpoint`; **Mapper rules**: the
+    endpoint/mapper split), `technical-discovery.md` (Deployment and Operations, Testing),
+    `risks-and-open-questions.md` (cell types, drafts, assumption 6, research task), the
+    architecture skill (`backend/apps-script` row, one **Where Each Piece Goes** line), `AGENTS.md`
+    (optional-doc line).
+- Verification run (logs in the session scratchpad):
+  - Baseline on untouched HEAD `3d41000`: `CI=true ./init.sh` exit 0, three `wired`.
+  - `node --test backend/apps-script/test/*.test.js`: exit 0, 33 tests, 0 fail.
+  - Failure demonstrations, each probe restored from a saved copy with the SHA-1 checked:
+    `textCell` without `.trim()` → 5 of 33 fail (`+ '  Crossroads  ' - 'Crossroads'`); one title
+    changed in `catalog-seed.json` → the seed test fails; a `config` route reading `Config` →
+    4 router tests fail, including `passphrase leaked: {"schemaVersion":1,"rows":[["clave","valor"],
+    ["passphrase","s3cret"]]}` and `Code.js contains "Config"`; `readCatalog_` also calling
+    `getSheets()` → 3 fail (`accessed getSheets,getSheetByName`). The checker exits 1 on a copy
+    with a missing key and a numeric value, on an HTML page and on an error body; 0 on both
+    samples; 2 with no argument. One real failure while writing: the doPost guard caught a
+    comment in `Code.js` that mentioned doPost; reworded.
+  - Quotas read from Google's page (last updated 3 September 2026) on 1 October 2026: 6 min per
+    execution, 30 simultaneous executions per user, no daily cap listed for web apps.
+  - `./gradlew ktlintFormat` exit 0; `CI=true ./init.sh` exit 0, three `wired`, the 20 test
+    result files identical to the baseline in suite names and counts. No Gradle, Kotlin, Konsist
+    or `init.sh` change. (No Kotlin changed, so Gradle may have reused up-to-date test results.)
+- Deviations: two extra test helpers not listed in the spec — `load.js` reproduces Apps Script's
+  shared global scope in Node (the files call each other as globals), and `edge-input.js` holds the
+  edge input so the sample could be generated from the same data the test uses. Extra tests
+  beyond T1–T3: the files run in one `vm` context with no `module`, a manifest guard, and no
+  `doPost`/`passphrase` in `src/`. The README saves live responses under
+  `backend/apps-script/`, where `*.local.json` is ignored (the spec's command would have saved it at
+  the root, which ignores nothing of the kind). `unknown_resource` does not echo the requested value.
+- Remaining, for the user (the Google account is required):
+  1. Deploy by copy-paste as `backend/apps-script/README.md` says, and hand the `/exec` URL over in
+     chat (it goes into `local.properties` as `bluesjam.appsScriptUrl`, never committed).
+  2. Then, by whoever runs the curl: M1 checker exit 0 on the live catalog; M2 song count against
+     the Sheet; M3 a live song with `null` optional fields passes; M4 `resource=config` gives
+     `unknown_resource`; M5 one cold call after 30+ idle minutes plus min/median/max of ten warm
+     calls (input to the optimistic-update decision in `admin-add-song-to-setlist`). Also report
+     whether the real `Catalogo` headers match the eight exactly.
+  3. Only then set `passing` and record M1–M5, attributed to whoever ran them.
+- Known risk or unresolved issue:
+  - Nothing has run on Apps Script itself: the `vm` test reproduces its shared scope, but V8 on
+    Google's side, the consent screen and the redirect are unobserved until the deployment.
+  - The real `Catalogo` may have headers that differ from the eight (`missing_header`) or values
+    the mapper will reject; the checker checks shape only.
+  - Node tests are outside the gate: a change to `backend/apps-script` can break them with
+    `init.sh` still green. Revisit at `apps-script-write-auth`.
+  - What an anonymous caller gets when the 30-concurrent limit is hit is not verified.
+- Next best step: the user's deployment (step 1 above), then M1–M5, then validation.
 
 ## Notes For The Next Session
 

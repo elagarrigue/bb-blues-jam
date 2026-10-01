@@ -57,10 +57,12 @@ width the strip cannot spare.
   `Catalogo`.
 - **Musician name suggestions** — resolved by the schema: derived from the names in past jam tabs,
   with no separate musicians list.
-- **Sheet cell types** (for `apps-script-read-endpoint`). It is unknown whether the real Sheet
-  stores `fecha`, `hora` and `posicion` as text or as date, time and number values. The endpoint
-  must normalize them to `YYYY-MM-DD`, `HH:MM` and an integer either way (`sheet-schema.md`,
-  **Reading cells**); check the real cells when the endpoint is written.
+- **Sheet cell types.** Settled for the catalog: `apps-script-read-endpoint` emits display text,
+  and a raw whole number for `songsterr_id` (`apps-script-api.md`). Still open for jams (for
+  `apps-script-jams-read-endpoint`): it is unknown whether the real Sheet stores `fecha`, `hora`
+  and `posicion` as text or as date, time and number values. That endpoint must normalize them to
+  `YYYY-MM-DD`, `HH:MM` and an integer either way (`sheet-schema.md`, **Reading cells**); check
+  the real cells when it is written.
 - **`Jams` row and jam tab mismatch** (for `catalog-repository-cache`). A `Jams` row with no tab, or
   a date-named tab with no `Jams` row, is invalid by the schema, but what the app does about it —
   skip the jam, show it without a setlist, or fail the read — is not decided. Decide it in that
@@ -76,7 +78,9 @@ width the strip cannot spare.
 - **Passphrase rotation UX.** When a stale local flag meets a rotated passphrase, the failure should
   read as "your access changed", not as a generic network error.
 - **Draft data must not reach unauthenticated clients.** Hiding the draft setlist in the UI is not
-  sufficient; the endpoint should not serve it without a valid passphrase.
+  sufficient; the endpoint should not serve it without a valid passphrase. Still open, for
+  `apps-script-jams-read-endpoint`: the catalog endpoint serves no jam data. Any passphrase check
+  must use POST, never a GET parameter, or the passphrase lands in URLs and logs.
 
 ## Later / Not MVP
 
@@ -103,7 +107,10 @@ Stated so they can be challenged rather than silently relied upon.
 5. **The Sheet remains a comfortable catalog editor for the admin.** If the repertoire grows past a
    few hundred entries, that assumption may weaken.
 6. **Apps Script quotas are sufficient** for this traffic — tens of readers, a couple of writers,
-   monthly peaks. Not verified against the published limits.
+   monthly peaks. Checked against Google's published limits on 1 October 2026 (page updated
+   3 September 2026): 6 min per execution, 30 simultaneous executions per user, no daily cap listed
+   for web app executions (`apps-script-api.md`, **Quotas**). Every anonymous call runs as the
+   owner, so the 30-concurrent limit is the one to watch; still unmeasured under real load.
 
 ## Risks
 
@@ -124,7 +131,9 @@ Stated so they can be challenged rather than silently relied upon.
 - [x] Define the Sheet schema — `sheet-schema.md`. The seed was imported into the real Sheet and
   reviewed by hand by the user (29–30 September 2026, user's report).
 - [ ] Load real repertoire with keys, tags, and difficulty.
-- [ ] Verify Apps Script quotas and typical write latency with a realistic payload.
+- [ ] Verify Apps Script quotas and typical write latency with a realistic payload. Quotas checked
+      (assumption 6). Read latency: pending the user's deployment of `apps-script-read-endpoint`
+      (M5). Write latency: still open, for the first write slice.
 - [ ] Confirm the full mutation list for the action contract before slicing features.
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.

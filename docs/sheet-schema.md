@@ -17,10 +17,16 @@ Seed files for import live in `docs/sheet-seed/`.
   are required: `rápido` is a tempo, `rapido` and `Rápido` are not. An unknown value is rejected by
   the mapper, like a bad key, so a typo shows up when the tab is read. Admin advice, not enforced:
   put a Sheets data-validation dropdown on `tempo`, `dificultad` and `estado`.
-- **The formats below are the values the read endpoint emits.** Sheets may store a cell typed as
-  `2026-07-25`, `21:00` or `3` as a date, a time or a number. If it does, `apps-script-read-endpoint`
-  normalizes `fecha` to `YYYY-MM-DD`, `hora` to `HH:MM` and `posicion` to an integer before
-  returning them. Admin advice: format the `fecha`, `hora` and `posicion` columns as plain text.
+- **The catalog endpoint emits display text.** `apps-script-read-endpoint` reads `Catalogo` with
+  the cells' display values, trimmed, so what the admin sees is what the app gets, and a value
+  Sheets auto-converted (say `7/4` into a date) cannot leak a date object. The one exception is
+  `songsterr_id`, read from the raw value so that a whole number is emitted as plain digits
+  (`12345`, never an es-AR `12.345`). See `apps-script-api.md`.
+- **The formats below are the values the jam read endpoint emits.** Sheets may store a cell typed
+  as `2026-07-25`, `21:00` or `3` as a date, a time or a number. If it does,
+  `apps-script-jams-read-endpoint` normalizes `fecha` to `YYYY-MM-DD`, `hora` to `HH:MM` and
+  `posicion` to an integer before returning them. Admin advice: format the `fecha`, `hora` and
+  `posicion` columns as plain text.
 
 ## Tabs
 
@@ -207,8 +213,14 @@ the mapper or the type; "enrichment" fields are never in the Sheet.
 ## Mapper rules
 
 Rules the schema states but that no domain type can check alone. Each is **enforced by the
-repository slice** (`apps-script-read-endpoint` / `catalog-repository-cache`), not by this document
-or the seed.
+repository slice** (`catalog-repository-cache`), not by this document or the seed.
+
+The split between the endpoints and the mapper: the Apps Script read endpoints
+(`apps-script-read-endpoint`, `apps-script-jams-read-endpoint`) only trim cells, match headers by
+trimmed exact name, turn typed cells into text, and reject structural problems (a missing tab, a
+missing required header, a mapped header twice). Everything that interprets a value — keys, the id
+alphabet, enum values, tag and `Otros` splitting, unique ids and positions, catalog resolution —
+is the Kotlin mapper's, so there is one interpreter, tested in the gate against the domain types.
 
 - At most one non-historical jam (a `fecha` of today or later). Enforced by the repository slice.
 - Every `id_tema` resolves in `Catalogo`; when it does not, the tab's `titulo` / `artista` copy is
@@ -219,7 +231,8 @@ or the seed.
 - A `Jams` row has a jam tab and a jam tab has a `Jams` row. What the app does on a mismatch is
   **open**, left to `catalog-repository-cache` to decide (see `risks-and-open-questions.md`).
   Enforced by the repository slice.
-- Every cell is trimmed before it is read (**Reading cells**). Enforced by the repository slice.
+- Every cell is trimmed before it is read (**Reading cells**). Done by the read endpoints, before
+  the mapper sees a value.
 - Enum and header matching is exact after trimming (**Reading cells**); `Otros` is parsed as in
   **`Otros`**; slot identity follows **Identifiers**. Enforced by the repository slice.
 - All seven slot headers are present in every jam tab; a tab missing one is invalid. Enforced by

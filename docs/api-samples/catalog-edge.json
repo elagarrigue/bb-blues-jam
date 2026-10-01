@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "songs": [
+    {
+      "id": "the-thrill-is-gone",
+      "title": "The Thrill Is Gone",
+      "artist": "B.B. King",
+      "defaultKey": "Bm",
+      "tempo": "lento",
+      "tags": "slow blues, 12 compases",
+      "difficulty": "media",
+      "songsterrId": "12345"
+    },
+    {
+      "id": "crossroads",
+      "title": "Crossroads",
+      "artist": "Robert Johnson",
+      "defaultKey": "A",
+      "tempo": null,
+      "tags": null,
+      "difficulty": null,
+      "songsterrId": null
+    },
+    {
+      "id": "got-my-mojo-working",
+      "title": "Got My Mojo Working",
+      "artist": "Muddy Waters",
+      "defaultKey": "E",
+      "tempo": "rápido",
+      "tags": "shuffle",
+      "difficulty": "fácil",
+      "songsterrId": "42"
+    },
+    {
+      "id": "sin-tono",
+      "title": "Sin Tono",
+      "artist": "Alguien",
+      "defaultKey": null,
+      "tempo": "Rápido",
+      "tags": null,
+      "difficulty": "difícil",
+      "songsterrId": "12.5"
+    }
+  ]
+}

@@ -107,6 +107,15 @@ monthly, and Play Store distribution has not been decided.
 Operational ownership is the admin. Recovery from a bad state is editing the Sheet, which is a real
 advantage of this backend: the fallback is a spreadsheet anyone can fix.
 
+The Apps Script source lives in `backend/apps-script/` (not a Gradle module) and is deployed by
+copy-paste into a script bound to the Sheet (`backend/apps-script/README.md`). The web app executes
+as the Sheet owner with anonymous access (D-11: the app has no Google sign-in), so every call counts
+against the owner's quotas; the binding one is 30 simultaneous executions per user
+(`docs/apps-script-api.md`, **Quotas**). Later code changes are deployed as a new version of the
+same deployment, which keeps the `/exec` URL; a new deployment would change it. The URL is never
+committed; it lives in the git-ignored `local.properties`. Read latency: not measured yet — the
+user's deployment of `apps-script-read-endpoint` records it (M5).
+
 ## Testing and Verification
 
 - **Presenter tests with Molecule**, no Android instrumentation required (a direct benefit of D-02).
@@ -120,6 +129,12 @@ advantage of this backend: the fallback is a spreadsheet anyone can fix.
 - **detekt and ktlint** for static analysis and formatting. Wired: detekt 2.0.0-alpha.6 (no stable
   detekt runs on the Java 25 Gradle daemon) and ktlint 1.8.0 through ktlint-gradle 14.2.0, applied
   to every Kotlin module by the root `build.gradle.kts` and run by `./gradlew check`.
+- **Apps Script tests on Node** (`node --test backend/apps-script/test/*.test.js`, built-in
+  `node:test`, no `package.json`). They cover cell normalization, the catalog builder against the
+  committed samples in `docs/api-samples/`, the router and the never-open-`Config` guarantee. They
+  are **outside `init.sh`** (user decision, 1 October 2026), so the gate does not depend on Node;
+  revisit at `apps-script-write-auth`. A live deployment is checked with
+  `backend/apps-script/tools/check-response.js`.
 - `init.sh` wraps the Gradle gate — `./gradlew build` and `./gradlew check` — and is run by
   `feature-flow` on every validation, so it must be fast and non-blocking.
 

@@ -417,5 +417,6 @@ Recorded 1 October 2026:
   `apps-script-write-auth`.
 - **U5: approved.** New slice `apps-script-jams-read-endpoint` added to `feature_list.json`.
 - **U6:** no script is bound to the Sheet yet; the user has only the Google Sheet.
-- **U1 (clasp vs copy-paste) and the hand-back mode are still open:** the user asked what "the
-  script" is. Implementation in the repo may proceed; the manual steps wait for the user.
+- **U1: copy-paste**, decided by the user on 1 October after the script was explained. The user
+  will hand back the `/exec` URL in chat; the orchestrator stores it in `local.properties` and runs
+  the live checks (M1–M5).
