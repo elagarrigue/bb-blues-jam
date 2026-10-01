@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "jams": [
+    {
+      "date": "2026-08-29",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": [
+        {
+          "position": "2",
+          "songId": "crossroads",
+          "title": "Crossroads",
+          "artist": "Eric Clapton",
+          "key": "A",
+          "slots": {
+            "guitar1": "Pedro",
+            "guitar2": "-",
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "1",
+          "songId": "the-thrill-is-gone",
+          "title": "The Thrill Is Gone",
+          "artist": "B.B. King",
+          "key": "Bm",
+          "slots": {
+            "guitar1": "Ana",
+            "guitar2": "Luis",
+            "bass": "Marta",
+            "drums": "Diego",
+            "vocals": "Sofía",
+            "harmonica": "-",
+            "keyboards": null
+          },
+          "extraParticipants": "Juan (saxo); Ana (percusión);"
+        },
+        {
+          "position": "3",
+          "songId": "got-my-mojo-working",
+          "title": "Got My Mojo Working",
+          "artist": "Muddy Waters",
+          "key": "E",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        }
+      ],
+      "setlistError": null
+    },
+    {
+      "date": "2026-09-26",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "BORRADOR",
+      "setlist": null,
+      "setlistError": null
+    },
+    {
+      "date": "2026-06-27",
+      "startTime": "09:30",
+      "venue": "La Macanuda",
+      "status": "Publicada",
+      "setlist": null,
+      "setlistError": null
+    },
+    {
+      "date": "2026-05-30",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": null,
+      "setlistError": {
+        "code": "missing_tab",
+        "message": "The tab 2026-05-30 does not exist"
+      }
+    },
+    {
+      "date": "2026-04-25",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": null,
+      "setlistError": {
+        "code": "missing_header",
+        "message": "2026-04-25 is missing required headers: Teclados"
+      }
+    },
+    {
+      "date": "2026-03-28",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": null,
+      "setlistError": {
+        "code": "duplicate_date",
+        "message": "Jams has the fecha 2026-03-28 on more than one row"
+      }
+    },
+    {
+      "date": "2026-03-28",
+      "startTime": "21:00",
+      "venue": "Otro bar",
+      "status": "BORRADOR",
+      "setlist": null,
+      "setlistError": null
+    },
+    {
+      "date": "Config",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": null,
+      "setlistError": {
+        "code": "invalid_date",
+        "message": "fecha is not a YYYY-MM-DD date, so no tab is read"
+      }
+    },
+    {
+      "date": "2026-02-28",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": [
+        {
+          "position": "1",
+          "songId": "crossroads",
+          "title": "Crossroads",
+          "artist": "Eric Clapton",
+          "key": "A",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        }
+      ],
+      "setlistError": null
+    }
+  ]
+}

@@ -53,7 +53,9 @@ transfer and no per-record access rules.
   next jam with no login wall. Authentication exists only to reveal editing controls.
 - **Draft setlists are hidden from musicians**, who see the date, the venue, and a message that the
   list is being assembled. The data should not be delivered to an unauthenticated client at all,
-  rather than being delivered and hidden in the UI.
+  rather than being delivered and hidden in the UI. The Apps Script `jams` route enforces this
+  server-side: it serves a setlist only for an `estado` of exactly `PUBLICADA` and fails closed on
+  any other value, a typo included (`apps-script-api.md`).
 - **Admin state is local.** A flag in DataStore after the passphrase validates against the Sheet
   through Apps Script.
 - **Write endpoints must validate the passphrase server-side** in Apps Script. A client-side flag

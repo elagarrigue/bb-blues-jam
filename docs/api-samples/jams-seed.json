@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "jams": [
+    {
+      "date": "2026-07-25",
+      "startTime": "21:00",
+      "venue": "La Macanuda",
+      "status": "PUBLICADA",
+      "setlist": [
+        {
+          "position": "1",
+          "songId": "sweet-little-angel",
+          "title": "Sweet Little Angel",
+          "artist": "B.B. King",
+          "key": "B",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "2",
+          "songId": "walking-thru-the-park",
+          "title": "Walking Thru the Park",
+          "artist": "Muddy Waters",
+          "key": "A",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "3",
+          "songId": "dust-my-broom",
+          "title": "Dust My Broom",
+          "artist": "Elmore James",
+          "key": "D",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "4",
+          "songId": "blues-del-politico",
+          "title": "Blues Del Politico",
+          "artist": "Durazno de Gala",
+          "key": "C",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "5",
+          "songId": "the-thrill-is-gone",
+          "title": "The Thrill Is Gone",
+          "artist": "B.B. King",
+          "key": "Bm",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "6",
+          "songId": "blues-del-equipaje",
+          "title": "Blues del Equipaje",
+          "artist": "La Mississippi",
+          "key": "A",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "7",
+          "songId": "cafe-madrid",
+          "title": "Café Madrid",
+          "artist": "La Mississippi",
+          "key": "G",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "8",
+          "songId": "got-my-mojo-working",
+          "title": "Got My Mojo Working",
+          "artist": "Muddy Waters",
+          "key": "E",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "9",
+          "songId": "messin-with-the-kid",
+          "title": "Messin' With the Kid",
+          "artist": "Junior Wells",
+          "key": "C",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "10",
+          "songId": "crossroads",
+          "title": "Crossroads",
+          "artist": "Eric Clapton",
+          "key": "A",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "11",
+          "songId": "the-score",
+          "title": "The Score",
+          "artist": "Robert Cray",
+          "key": "C",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "12",
+          "songId": "blues-de-rosario",
+          "title": "Blues de Rosario",
+          "artist": "Memphis La Blusera",
+          "key": "E",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        },
+        {
+          "position": "13",
+          "songId": "tres-palabras",
+          "title": "Tres Palabras",
+          "artist": "La Mississippi",
+          "key": "A",
+          "slots": {
+            "guitar1": null,
+            "guitar2": null,
+            "bass": null,
+            "drums": null,
+            "vocals": null,
+            "harmonica": null,
+            "keyboards": null
+          },
+          "extraParticipants": null
+        }
+      ],
+      "setlistError": null
+    }
+  ]
+}

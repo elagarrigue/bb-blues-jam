@@ -4,8 +4,9 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `:core:data`. The Sheet behind it is described in `sheet-schema.md`. Deployment steps are in
 `backend/apps-script/README.md`.
 
-Current routes: one read, `catalog` (`apps-script-read-endpoint`). Jams and setlists come with
-`apps-script-jams-read-endpoint`; writes and the passphrase check with `apps-script-write-auth`.
+Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
+(`apps-script-jams-read-endpoint`). Writes, the passphrase check and the admin's read of a draft
+come with `apps-script-write-auth`.
 
 ## Transport
 
@@ -34,6 +35,7 @@ Success:
 
 ```json
 {"schemaVersion":1,"songs":[ … ]}
+{"schemaVersion":1,"jams":[ … ]}
 ```
 
 Error:
@@ -44,8 +46,8 @@ Error:
 
 | `code` | When |
 |---|---|
-| `unknown_resource` | `resource` missing, empty, or not a route (`config`, `CATALOG`, `jams` today) |
-| `missing_tab` | The route's tab does not exist (`Catalogo`) |
+| `unknown_resource` | `resource` missing, empty, or not a route (`config`, `CATALOG`, `Jams`) |
+| `missing_tab` | The route's tab does not exist (`Catalogo`, `Jams`) |
 | `missing_header` | A required header is missing, or the tab is empty |
 | `duplicate_header` | A mapped header appears twice (after trimming) |
 | `internal_error` | Any other exception; `message` is the exception message |
@@ -85,7 +87,8 @@ Rules:
   values, tag splitting, `songsterrId` parsing and duplicate ids are checked by the Kotlin mapper in
   `catalog-repository-cache`, which turns this response into `Song` (`sheet-schema.md`, **Mapper
   rules**).
-- `Config` is never opened and never returned, by this or any read route.
+- `Config` is never opened and never returned, by this or any read route (the `jams` route
+  included: see **The draft rule**).
 
 Samples, both produced by `buildCatalog` and asserted equal to its output by
 `backend/apps-script/test/catalog.test.js`:
@@ -99,6 +102,114 @@ Samples, both produced by `buildCatalog` and asserted equal to its output by
 
 To check a live response: `node backend/apps-script/tools/check-response.js <file>` (exit 0 when
 valid). It checks shape only, like the samples' test.
+
+## `GET ?resource=jams`
+
+Every row of the `Jams` tab, in Sheet row order, each with its setlist read from the tab named by
+its date. Body: `{"schemaVersion":1,"jams":[ … ]}`. Rows whose four mapped cells are all empty are
+skipped. The script does not split jams into upcoming and past: that is `Jam.isHistorical(today)`
+in the app, with today from the caller.
+
+### The draft rule
+
+**A setlist is served only for a jam whose `estado`, trimmed, is exactly `PUBLICADA`.** For any
+other value (`BORRADOR`, `Publicada`, a typo, empty) the jam is served with `setlist: null` and
+`setlistError: null`, and its tab is never even requested. This is the one value the script
+interprets: withholding a draft cannot be left to the client. Failing closed is deliberate, so a
+past jam left in `BORRADOR` shows no setlist until the admin marks it `PUBLICADA` (user approval
+A1). No query parameter changes this: `?resource=jams&passphrase=…` gives the same body as
+`?resource=jams`. How the admin reads a draft is not part of this route; it belongs to
+`apps-script-write-auth` and must use POST with the passphrase in the body.
+
+A tab is requested only by a `date` that is `YYYY-MM-DD`, so a `fecha` such as `Config` or
+`Catalogo` can never name another tab. The spreadsheet is accessed only through `getSheetByName`
+and `getSpreadsheetTimeZone`; tabs are never listed, so a date-named tab with no `Jams` row is
+never read or served.
+
+### Jam
+
+Every jam has exactly these keys, in this order:
+
+| Field | Sheet source | Value |
+|---|---|---|
+| `date` | `fecha` | `YYYY-MM-DD` from a typed date or a text cell; any other text passed through trimmed; `null` when empty |
+| `startTime` | `hora` | `HH:MM`; any other text passed through trimmed; `null` when empty |
+| `venue` | `lugar` | trimmed display text or `null` |
+| `status` | `estado` | trimmed display text or `null`, Sheet vocabulary (`BORRADOR`, `PUBLICADA`); the mapper owns the enum |
+| `setlist` | the tab named `date` | an array of setlist rows, or `null` (withheld or broken) |
+| `setlistError` | none | `null`, or `{"code","message"}` (below); always `null` for a withheld jam |
+
+`setlist` is an array only when `status` is `PUBLICADA` and `setlistError` is `null`. An empty
+array is a published jam whose tab has its headers and no rows. Required `Jams` headers: `fecha`,
+`hora`, `lugar`, `estado`.
+
+How typed cells become text (the spreadsheet's own time zone, display text first for `hora`) is
+in `sheet-schema.md`, **Reading cells**.
+
+### Setlist row
+
+Every row has exactly these keys, in this order, and `slots` has exactly these seven:
+
+| Field | Jam tab header | Value |
+|---|---|---|
+| `position` | `posicion` | integer text from the raw value (`3` gives `"3"`, `2.5` gives `"2.5"`), or `null` |
+| `songId` | `id_tema` | text or `null` |
+| `title` | `titulo` | text or `null`: the fallback copy; the mapper resolves the catalog |
+| `artist` | `artista` | text or `null`: same fallback |
+| `key` | `tono` | text or `null` |
+| `slots` | the seven slot columns | `{"guitar1","guitar2","bass","drums","vocals","harmonica","keyboards"}` from `Guitarra 1`, `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados`; each `null` (empty), `"-"` (raw) or a name |
+| `extraParticipants` | `Otros` | the raw trimmed cell, or `null` when empty or when the column is missing (D-18) |
+
+Rows come in tab order, not sorted: the mapper sorts by `position`. A row whose mapped cells are
+all empty is skipped, and unmapped columns are ignored. The key order of `slots` is the column
+order of `Lineup.DEFAULT_INSTRUMENTS`, so the mapper can compute a slot's ordinal (the k-th
+non-`-` column of that instrument). `-` and `Otros` are passed through raw: the Kotlin mapper is
+their only parser. Required tab headers: `posicion`, `id_tema`, `titulo`, `artista`, `tono` and
+all seven slot columns; `Otros` is optional.
+
+### Errors
+
+Whole-response errors use the envelope above and concern the `Jams` tab only: `missing_tab`,
+`missing_header` (an empty tab, or a missing `fecha`, `hora`, `lugar` or `estado`) and
+`duplicate_header`. Any uncaught exception is `internal_error`.
+
+A problem with one published jam is reported in that jam's `setlistError`, with `setlist: null`,
+and every other jam is still served, so one broken past tab cannot blank the app (user approval
+A2):
+
+| `setlistError.code` | When (only for a `PUBLICADA` jam) |
+|---|---|
+| `invalid_date` | `date` is empty or not `YYYY-MM-DD`; no tab is requested |
+| `duplicate_date` | the same `date` is on more than one `Jams` row; that tab is not read for any of them |
+| `missing_tab` | no tab has that name |
+| `missing_header` | the tab is empty or lacks a required header, a slot column included |
+| `duplicate_header` | a mapped header appears twice in the tab (after trimming) |
+
+`message` is English and for logs only. What the app shows for a jam with a `setlistError` is
+`catalog-repository-cache`'s decision. The script still does not interpret values: keys, ids, the
+`estado` enum, `-`, `Otros`, unique or contiguous positions, catalog resolution and "at most one
+upcoming jam" are the mapper's (`sheet-schema.md`, **Mapper rules**).
+
+Samples, both produced by `buildJams` and asserted equal to its output by
+`backend/apps-script/test/jams.test.js`:
+
+- [`api-samples/jams-seed.json`](api-samples/jams-seed.json): the response for
+  `sheet-seed/Jams.csv` and `sheet-seed/2026-07-25.csv`. One `PUBLICADA` jam with 13 rows, every
+  slot and `extraParticipants` `null`. The mapper's happy path.
+- [`api-samples/jams-edge.json`](api-samples/jams-edge.json): the response for a messy spreadsheet
+  (`test/helpers/jams-edge-input.js`), nine jams. A published jam with typed `fecha`, `hora` and
+  `posicion`, names, a `-`, an `Otros` list with a trailing `;`, padded cells and positions out of
+  row order; a `BORRADOR` jam and a `Publicada` typo, both withheld (their tabs hold a marker song
+  that is absent from the sample); `missing_tab`; `missing_header` (no `Teclados`);
+  `duplicate_date` with its `BORRADOR` twin; `invalid_date` for a `fecha` of `Config`; and a
+  published jam whose tab has no `Otros` column and whose `hora` is a typed time shown as
+  `9:00 p. m.`.
+
+To check a live response: `node backend/apps-script/tools/check-response.js [--strict] <file>`. It
+dispatches on `jams` or `songs`, always enforces the draft rule (a `status` other than `PUBLICADA`
+implies `setlist: null` and `setlistError: null`), and with `--strict` also rejects a `date`,
+`startTime` or `position` outside its format and any `setlistError`. `jams-edge.json` passes
+without `--strict` and fails with it, by design.
 
 ## Quotas
 

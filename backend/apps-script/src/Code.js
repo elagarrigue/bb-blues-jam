@@ -1,8 +1,8 @@
 /**
  * Web app entry point (docs/apps-script-api.md). GET only: this slice serves no POST.
  *
- * Uses CATALOG_TAB, ContractError and buildCatalog from Catalog.js (shared global scope in
- * Apps Script).
+ * Uses ContractError from Normalize.js, CATALOG_TAB and buildCatalog from Catalog.js, and JAMS_TAB
+ * and buildJams from Jams.js (shared global scope in Apps Script).
  */
 
 var SCHEMA_VERSION = 1;
@@ -10,6 +10,7 @@ var SCHEMA_VERSION = 1;
 /** The only routes. A resource not listed here is `unknown_resource`. */
 var ROUTES = {
   catalog: readCatalog_,
+  jams: readJams_,
 };
 
 /**
@@ -28,7 +29,7 @@ function doGet(e) {
 
 /**
  * Routes a request. `params` is the query parameter map, `spreadsheet` anything with
- * getSheetByName(name). Returns the response body as a plain object; never throws.
+ * getSheetByName(name) and getSpreadsheetTimeZone(); nothing else of it is used. Returns the response body as a plain object; never throws.
  */
 function handleGet(params, spreadsheet) {
   const resource = params ? params.resource : undefined;
@@ -57,6 +58,31 @@ function readCatalog_(spreadsheet) {
   }
   const range = sheet.getDataRange();
   return buildCatalog(range.getDisplayValues(), range.getValues());
+}
+
+/**
+ * The Jams tab plus the tab of each published jam. Dates are formatted in the spreadsheet's own
+ * time zone, the one Sheets used to build the typed cells, so they round-trip what the admin sees.
+ */
+function readJams_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  if (!sheet) {
+    throw new ContractError('missing_tab', 'The tab ' + JAMS_TAB + ' does not exist');
+  }
+  const timeZone = spreadsheet.getSpreadsheetTimeZone();
+  const formatDate = function (date, pattern) {
+    return Utilities.formatDate(date, timeZone, pattern);
+  };
+  const readTab = function (date) {
+    const tab = spreadsheet.getSheetByName(date);
+    if (!tab) {
+      return null;
+    }
+    const tabRange = tab.getDataRange();
+    return { display: tabRange.getDisplayValues(), raw: tabRange.getValues() };
+  };
+  const range = sheet.getDataRange();
+  return buildJams(range.getDisplayValues(), range.getValues(), readTab, formatDate);
 }
 
 function errorBody_(code, message) {

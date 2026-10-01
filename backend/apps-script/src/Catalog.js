@@ -6,7 +6,8 @@
  * structural problems are rejected. Keys, ids, enum values, tags and duplicate ids are left to
  * the mapper in catalog-repository-cache.
  *
- * Uses textCell and integerTextCell from Normalize.js (shared global scope in Apps Script).
+ * Uses ContractError, mapColumns, textCell and integerTextCell from Normalize.js (shared global
+ * scope in Apps Script).
  */
 
 var CATALOG_TAB = 'Catalogo';
@@ -25,15 +26,6 @@ var CATALOG_FIELDS = [
   { header: 'dificultad', field: 'difficulty', required: false, integer: false },
   { header: 'songsterr_id', field: 'songsterrId', required: false, integer: true },
 ];
-
-/** A structural problem with a stable `code` from the contract's error list. */
-class ContractError extends Error {
-  constructor(code, message) {
-    super(message);
-    this.name = 'ContractError';
-    this.code = code;
-  }
-}
 
 /**
  * Builds `{ songs }` from the tab's display values and raw values (same shape, row 1 is the
@@ -67,33 +59,9 @@ function buildCatalog(displayRows, rawRows) {
 
 /** Maps each field to its column index; optional fields with no column are left out. */
 function catalogColumns_(headerRow) {
-  const byHeader = {};
-  CATALOG_FIELDS.forEach(function (spec) {
-    byHeader[spec.header] = spec;
-  });
-  const columns = {};
-  headerRow.forEach(function (cell, index) {
-    const name = cell === null || cell === undefined ? '' : String(cell).trim();
-    if (!Object.prototype.hasOwnProperty.call(byHeader, name)) {
-      return;
-    }
-    const field = byHeader[name].field;
-    if (columns[field] !== undefined) {
-      throw new ContractError('duplicate_header', CATALOG_TAB + ' has the header "' + name + '" twice');
-    }
-    columns[field] = index;
-  });
-  const missing = CATALOG_FIELDS.filter(function (spec) {
-    return spec.required && columns[spec.field] === undefined;
-  }).map(function (spec) {
-    return spec.header;
-  });
-  if (missing.length > 0) {
-    throw new ContractError('missing_header', CATALOG_TAB + ' is missing required headers: ' + missing.join(', '));
-  }
-  return columns;
+  return mapColumns(CATALOG_TAB, CATALOG_FIELDS, headerRow);
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { CATALOG_TAB, CATALOG_FIELDS, ContractError, buildCatalog, catalogColumns_ };
+  module.exports = { CATALOG_TAB, CATALOG_FIELDS, buildCatalog, catalogColumns_ };
 }

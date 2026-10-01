@@ -5,23 +5,25 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-This slice serves one read: `GET <url>?resource=catalog`. It never opens the `Config` tab.
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`. It never opens the
+`Config` tab, and it never reads the tab of a jam whose `estado` is not exactly `PUBLICADA`.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `appsscript.json` | Manifest: V8, Buenos Aires time zone, the `spreadsheets.currentonly` scope, web app executed as the owner with anonymous access. |
-| `src/Normalize.js` | Cell normalization: `textCell`, `integerTextCell`, `isBlank`. |
-| `src/Catalog.js` | `buildCatalog(displayRows, rawRows)`, the header-to-field table, `ContractError`. |
+| `src/Normalize.js` | Cell normalization (`textCell`, `integerTextCell`, `isoDateCell`, `timeCell`, `isBlank`, `isDateValue`), the header matcher `mapColumns` and `ContractError`. |
+| `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
+| `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `test/` | Node tests (`node:test`), run outside `init.sh`. |
+| `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
 Each `src/*.js` file ends with `if (typeof module !== 'undefined') { module.exports = … }`. Apps
 Script has no `module`, so the line does nothing there; Node uses it to load the same file in the
 tests. Apps Script loads every file into one shared global scope, so `Code.js` calls functions
-from `Catalog.js` directly; `test/helpers/load.js` reproduces that in Node.
+from `Catalog.js` and `Jams.js` directly; `test/helpers/load.js` reproduces that in Node.
 
 ## Run the tests
 
@@ -48,9 +50,10 @@ no URL, no token.
    Back in **Editor**, open `appsscript.json` and replace its whole content with
    `backend/apps-script/appsscript.json`.
 3. The project starts with one file, `Code.gs`, holding an empty `myFunction`. Replace its whole
-   content with `src/Code.js`. Add two more files with **+ → Script**, named `Normalize` and
-   `Catalog` (the editor adds `.gs`), and paste `src/Normalize.js` and `src/Catalog.js` into
-   them. File order does not matter: no file runs code from another at load time. **Save** (Ctrl+S).
+   content with `src/Code.js`. Add three more files with **+ → Script**, named `Normalize`,
+   `Catalog` and `Jams` (the editor adds `.gs`), and paste `src/Normalize.js`, `src/Catalog.js`
+   and `src/Jams.js` into them. File order does not matter: no file runs code from another at
+   load time. **Save** (Ctrl+S).
 4. **Deploy → New deployment** → gear next to "Select type" → **Web app**. Set **Execute as: Me**
    and **Who has access: Anyone** (these match the manifest), then **Deploy**.
 5. Authorize when asked. For a personal script Google shows "Google hasn't verified this app":
@@ -67,21 +70,100 @@ Paste the new files, save, then **Deploy → Manage deployments → (the deploym
 → Version: New version → Deploy**. The URL stays the same. **New deployment** would create a
 second URL, and the app would keep calling the old version.
 
+### Redeploy for the jams route (`apps-script-jams-read-endpoint`)
+
+The script is already deployed with the catalog route. This adds the `jams` route. The
+`appsscript.json` manifest has not changed: leave it as it is.
+
+1. Open the Sheet, then **Extensions → Apps Script**.
+2. Replace the **whole content** of three existing files, each with its namesake from
+   `backend/apps-script/src/`:
+   - `Normalize.gs` ← `src/Normalize.js` (it now also holds `ContractError` and the header matcher);
+   - `Catalog.gs` ← `src/Catalog.js` (`ContractError` moved out of it; pasting only one of these
+     two files would define it twice or not at all, so paste both);
+   - `Code.gs` ← `src/Code.js`.
+3. Add one new file: **+ → Script**, name it `Jams` (the editor adds `.gs`), delete the empty
+   `myFunction` it starts with, and paste the whole of `src/Jams.js`.
+4. **Save** (Ctrl+S). The project now has four script files, `Code`, `Normalize`, `Catalog` and
+   `Jams`, plus `appsscript.json`.
+5. **Deploy → Manage deployments** → select the existing deployment → **Edit** (pencil icon) →
+   **Version: New version** → **Deploy**. Never choose **New deployment**: it would create a new
+   URL, and the app and the checks would keep calling the old version.
+6. The scope is unchanged, so no new authorization is expected. If Google asks, authorize as the
+   first time.
+7. Tell the orchestrator in chat (never paste the URL into a file in the repo):
+   - that the new version is deployed;
+   - the Sheet's **File → Settings → Time zone** (expected `(GMT-03:00) Buenos Aires`);
+   - which real jams are `BORRADOR`, if any, and whether every past jam is `PUBLICADA`.
+
+### Temporary test jam for the draft check (user approval A3)
+
+Sheet edits need no redeploy. Do each step only when the orchestrator asks for it.
+
+1. **Add the draft.** In the `Jams` tab, add a row: `fecha` `2000-01-01`, `hora` `21:00`, `lugar`
+   `Prueba`, `estado` `BORRADOR`. Add a tab named exactly `2000-01-01`, copy into its first row the
+   13 headers of a real jam tab (`posicion`, `id_tema`, `titulo`, `artista`, `tono`, `Guitarra 1`,
+   `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados`, `Otros`), and add one row:
+   `posicion` `1`, `id_tema` `zz-borrador`, `titulo` `ZZ BORRADOR NO DEBE SALIR`, `artista`
+   `Prueba`, `tono` `A`, every other cell empty. Tell the orchestrator; it runs check L3.
+2. **Publish it.** Change that `Jams` row's `estado` to `PUBLICADA`. Tell the orchestrator; it runs
+   L3 again, and this time the row must appear.
+3. **Delete it.** Delete the `2000-01-01` row from `Jams` and delete the `2000-01-01` tab. Tell the
+   orchestrator; it confirms the jam is gone.
+
+The date is in the past on purpose: it cannot become a second upcoming jam.
+
 ## Check a live deployment
 
-From Git Bash at the repository root, with `URL` set to the `/exec` URL:
+From Git Bash at the repository root. `URL` is read from the git-ignored `local.properties`, where
+Android Studio may escape `:` as `\:`; the commands never print it.
 
 ```bash
-curl -sL "$URL?resource=catalog" -o backend/apps-script/catalog.local.json
-node backend/apps-script/tools/check-response.js backend/apps-script/catalog.local.json  # exit 0 = valid
-curl -sL "$URL?resource=config"                                       # must be unknown_resource
+URL=$(grep '^bluesjam.appsScriptUrl=' local.properties | cut -d= -f2- | sed 's/\\:/:/g' | tr -d '\r')
+CHECK=backend/apps-script/tools/check-response.js
+OUT=backend/apps-script
+```
+
+Catalog (and the passphrase tab is refused):
+
+```bash
+curl -sL "$URL?resource=catalog" -o $OUT/catalog.local.json
+node $CHECK $OUT/catalog.local.json                                  # exit 0 = valid
+curl -sL "$URL?resource=config"                                      # must be unknown_resource
 for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource=catalog"; done
+```
+
+Jams (`apps-script-jams-read-endpoint`, checks L1 to L5):
+
+```bash
+# L1: the real jams pass the strict check (formats, and no per-jam error).
+curl -sL "$URL?resource=jams" -o $OUT/jams.local.json
+node $CHECK --strict $OUT/jams.local.json                            # exit 0; prints the counts
+
+# L2: catalog still valid, config still refused (the catalog block above).
+
+# L3, with the draft test jam present: withheld, and nothing of its tab in the body.
+curl -sL "$URL?resource=jams" -o $OUT/jams-draft.local.json
+node $CHECK $OUT/jams-draft.local.json                               # exit 0 (the draft rule holds)
+grep -c 'zz-borrador\|NO DEBE SALIR' $OUT/jams-draft.local.json      # must print 0
+node -e "const b=require('./$OUT/jams-draft.local.json'); console.log(JSON.stringify(b.jams.filter(j => j.date === '2000-01-01')))"
+#   expect [{"date":"2000-01-01","startTime":"21:00","venue":"Prueba","status":"BORRADOR","setlist":null,"setlistError":null}]
+# L3 again after the flip to PUBLICADA: the same node -e on a fresh body shows one setlist row
+# with songId "zz-borrador". After deletion: it prints [].
+
+# L4: a passphrase parameter changes nothing (compare with a body fetched right after L1).
+curl -sL "$URL?resource=jams&passphrase=x" -o $OUT/jams-param.local.json
+cmp $OUT/jams.local.json $OUT/jams-param.local.json && echo identical
+
+# L5: latency. One first call, then ten warm calls; report min, median, max, plus the jam and
+# published-tab counts that the L1 check printed.
+for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource=jams"; done | sort -n
 ```
 
 `-L` is required: the web app answers with a 302 to `script.googleusercontent.com`. Every response
 is HTTP 200, errors included, so the body decides. An HTML page instead of JSON usually means the
-`/dev` URL, access not set to **Anyone**, or a missing `-L`. `*.local.json` files are git-ignored inside
-`backend/apps-script/` only, so save live responses there, as above.
+`/dev` URL, access not set to **Anyone**, or a missing `-L`. `*.local.json` files are git-ignored
+inside `backend/apps-script/` only, so save live responses there, as above.
 For the cold-start figure, run one request after at least 30 minutes with no calls.
 
 ## Optional: clasp

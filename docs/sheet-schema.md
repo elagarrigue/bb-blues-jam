@@ -23,10 +23,22 @@ Seed files for import live in `docs/sheet-seed/`.
   `songsterr_id`, read from the raw value so that a whole number is emitted as plain digits
   (`12345`, never an es-AR `12.345`). See `apps-script-api.md`.
 - **The formats below are the values the jam read endpoint emits.** Sheets may store a cell typed
-  as `2026-07-25`, `21:00` or `3` as a date, a time or a number. If it does,
-  `apps-script-jams-read-endpoint` normalizes `fecha` to `YYYY-MM-DD`, `hora` to `HH:MM` and
-  `posicion` to an integer before returning them. Admin advice: format the `fecha`, `hora` and
-  `posicion` columns as plain text.
+  as `2026-07-25`, `21:00` or `3` as a date, a time or a number. The jams endpoint
+  (`apps-script-jams-read-endpoint`) normalizes them either way:
+  - `fecha`: a typed date is formatted `yyyy-MM-dd` in the **spreadsheet's own time zone** (the
+    zone Sheets used to build the value; Buenos Aires for this Sheet); text is trimmed and passed
+    through.
+  - `hora`: the **display text first**. `H:MM`, `HH:MM` or `HH:MM:00` with a valid hour and
+    minute is zero-padded to `HH:MM`. Otherwise a typed time (for example one shown as
+    `9:00 p. m.`) is formatted `HH:mm` in the spreadsheet's zone; otherwise the trimmed text is
+    passed through. Display first, because a time-only cell sits on Sheets' 1899-12-30 epoch, where
+    the historical offset of Buenos Aires (-4:16:48) can shift the minutes.
+  - `posicion`: the raw value, as for `songsterr_id` (`3` gives `"3"`, `2.5` gives `"2.5"` for
+    the mapper to reject).
+  - Every other jam and setlist cell is display text, trimmed.
+
+  A value that is not in the documented format still reaches the mapper as text, which rejects it.
+  Admin advice: format the `fecha`, `hora` and `posicion` columns as plain text.
 
 ## Tabs
 
@@ -217,8 +229,9 @@ repository slice** (`catalog-repository-cache`), not by this document or the see
 
 The split between the endpoints and the mapper: the Apps Script read endpoints
 (`apps-script-read-endpoint`, `apps-script-jams-read-endpoint`) only trim cells, match headers by
-trimmed exact name, turn typed cells into text, and reject structural problems (a missing tab, a
-missing required header, a mapped header twice). Everything that interprets a value — keys, the id
+trimmed exact name, turn typed cells into text, reject structural problems (a missing tab, a
+missing required header, a mapped header twice), and withhold every setlist whose jam is not
+`PUBLICADA` (below). Everything that interprets a value — keys, the id
 alphabet, enum values, tag and `Otros` splitting, unique ids and positions, catalog resolution —
 is the Kotlin mapper's, so there is one interpreter, tested in the gate against the domain types.
 
@@ -228,14 +241,24 @@ is the Kotlin mapper's, so there is one interpreter, tested in the gate against 
 - `posicion` is unique and exactly 1..n within a tab. Enforced by the repository slice (and by
   `Jam` once built).
 - `Catalogo.id` is unique. Enforced by the repository slice.
-- A `Jams` row has a jam tab and a jam tab has a `Jams` row. What the app does on a mismatch is
-  **open**, left to `catalog-repository-cache` to decide (see `risks-and-open-questions.md`).
-  Enforced by the repository slice.
+- A `Jams` row has a jam tab and a jam tab has a `Jams` row. The endpoint's half is settled: a
+  `PUBLICADA` row with no tab arrives with `setlistError` `missing_tab`; a tab with no `Jams` row
+  is ignored, never read or served; a per-jam error never fails the whole response. What the app
+  shows for a jam with a `setlistError` is **open**, left to `catalog-repository-cache` (see
+  `risks-and-open-questions.md`).
+- **Only a `PUBLICADA` jam's setlist is served.** The jams endpoint reads a jam tab only when the
+  trimmed `estado` is exactly `PUBLICADA`; any other value, a typo or wrong case included, gives
+  `setlist: null` with no error and the tab is never opened. This is the one value the endpoint
+  interprets, because withholding a draft cannot be left to the client. The mapper still owns the
+  `estado` enum and rejects a typo. A tab is looked up only by a `fecha` that is `YYYY-MM-DD`
+  (else `invalid_date`) and that appears on one row only (else `duplicate_date`). Enforced by
+  the endpoint.
 - Every cell is trimmed before it is read (**Reading cells**). Done by the read endpoints, before
   the mapper sees a value.
 - Enum and header matching is exact after trimming (**Reading cells**); `Otros` is parsed as in
   **`Otros`**; slot identity follows **Identifiers**. Enforced by the repository slice.
-- All seven slot headers are present in every jam tab; a tab missing one is invalid. Enforced by
-  the repository slice.
+- All seven slot headers are present in every jam tab; a tab missing one is invalid. Detected by
+  the jams endpoint per jam (`setlistError` `missing_header`, the other jams still served); what the
+  app does with it is the repository slice's.
 - Empty slot cells in a past jam mean "not recorded" and are never shown as open. Enforced by the
   repository slice.

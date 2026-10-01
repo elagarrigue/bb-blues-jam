@@ -6,7 +6,7 @@
 const path = require('node:path');
 
 const SRC_DIR = path.join(__dirname, '..', '..', 'src');
-const SRC_FILES = ['Normalize.js', 'Catalog.js', 'Code.js'];
+const SRC_FILES = ['Normalize.js', 'Catalog.js', 'Jams.js', 'Code.js'];
 
 let loaded = null;
 

@@ -6,14 +6,17 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `apps-script-jams-read-endpoint`. Accepted:
+- Current next ready feature: `apps-script-jams-read-endpoint`, `in_progress` (session 039: repo
+  half done, waiting on the user's redeploy and the live checks L1–L5). Accepted:
   `gradle-kotlin-compose-baseline`, `module-skeleton`, `konsist-isolation-rules`,
   `detekt-ktlint-gate`, `molecule-presenter-harness`, `design-tokens-theme`, `domain-model-types`,
   `sheet-schema-definition`, `info-screen`, `build-logic-conventions`, `apps-script-read-endpoint`.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 1 October 2026 (session 036) — live endpoint: checker OK on 100 songs,
+- Last verified at: 1 October 2026 (session 039, `apps-script-jams-read-endpoint` repo half) —
+  `node --test backend/apps-script/test/*.test.js` 68/68 (outside the gate); `CI=true ./init.sh`
+  exit 0, three `wired`, the 20 test result files identical to the baseline. Before that, session 036 — live endpoint: checker OK on 100 songs,
   `config` → `unknown_resource`, warm read median ~2.5 s. Session 035 (`apps-script-read-endpoint` repo half) —
   `CI=true ./init.sh` exit 0, three `wired`, the 20 test result files identical in names and
   counts to the baseline; `node --test backend/apps-script/test/*.test.js` 33/33 (outside the
@@ -1108,6 +1111,78 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: the phase 2 assistant will choose from the catalog without
   tags or tempo ("slow blues", "arrancar lento y subir" cannot be filtered by data yet).
 - Next best step: plan `apps-script-jams-read-endpoint`.
+
+### Session 039 — 1 October 2026
+
+- Goal: implement the repository half of `apps-script-jams-read-endpoint` (spec
+  `docs/specs/apps-script-jams-read-endpoint.md`, with the user approvals A1–A4).
+- Completed:
+  - `backend/apps-script/src/Normalize.js`: `ContractError` and the header matcher `mapColumns`
+    moved in from `Catalog.js`; new `isDateValue`, `isoDateCell`, `timeCell` (display first,
+    zero-padded `HH:MM`, typed values formatted in the spreadsheet's zone). `Catalog.js` now calls
+    `mapColumns`; the 33 existing tests passed before any test file was touched.
+  - `src/Jams.js` (new): `buildJams`, `buildSetlist`, the header tables, the draft rule (exact
+    `PUBLICADA` after trimming, fail closed, the tab never requested otherwise), the ISO-date guard,
+    `duplicate_date`, and per-jam `setlistError` (A2). `src/Code.js`: route `jams` →
+    `readJams_`, which uses only `getSheetByName` and `getSpreadsheetTimeZone`.
+  - Tests: `normalize.test.js` +9 (T4), `jams.test.js` new (21, T5 and the checker),
+    `router.test.js` +5 (T6) with three existing tests extended; helpers `format.js`
+    (`Utilities.formatDate` stand-in on `Intl`, `zonedDate`) and `jams-edge-input.js`; `load.js`
+    loads four files. `contract.js`: `checkJamsResponse` (draft rule always, formats with
+    `strict`). `tools/check-response.js`: dispatches on `jams`/`songs`, `--strict`, jams summary.
+  - Samples `docs/api-samples/jams-seed.json` and `jams-edge.json`, generated once from the
+    builder, reviewed by eye, then only compared.
+  - Docs: `apps-script-api.md` (the `jams` section, draft rule, per-jam errors, routes),
+    `sheet-schema.md` (**Reading cells** normalization, **Mapper rules**: the endpoint's half of
+    the mismatch, the draft rule, slot headers detected per jam), `risks-and-open-questions.md`
+    (cell types settled, draft data settled for anonymous reads, mismatch script half settled),
+    `technical-discovery.md` (tabs read per call; latency pending L5), `user-and-access-model.md`
+    (server-side withholding), `backend/apps-script/README.md` (layout, four-file first deploy,
+    the redeploy steps for this slice, the A3 test-jam steps, live checks L1–L5 with `$URL` read
+    from `local.properties`).
+- Verification run (logs in the session scratchpad):
+  - Baseline on untouched HEAD `9f2ce59`: `CI=true ./init.sh` exit 0, three `wired`, 20 result files.
+  - `node --test backend/apps-script/test/*.test.js`: exit 0, 68 tests (normalize 17, catalog 14,
+    jams 21, router 16), 0 fail.
+  - Failure demonstrations, each restored from a saved copy with the SHA-1 checked: (a) status
+    check disabled → 11 of 68 fail, including `draft leaked: {…"songId":"zz-borrador-secreto"…}`
+    and `requested 2026-09-26`; (b) ISO guard dropped → 8 fail, including the passphrase-tab test
+    `requested Jams,2026-07-25,Config,Catalogo` (a `fecha` of `Config` opens the passphrase tab);
+    (c) `timeCell` without padding → 3 fail (`'9:30'` vs `'09:30'`); (d) the checker on a copy of
+    `jams-edge.json` whose `BORRADOR` jam carries a setlist → exit 1, `jams[1] has status
+    "BORRADOR" but carries a setlist: a draft must be withheld`.
+  - `./gradlew ktlintFormat` exit 0; `CI=true ./init.sh` exit 0, three `wired`, the 20 result files
+    identical in names and counts. No Gradle, Kotlin, Konsist or `init.sh` change.
+- Deviations: `timeCell` also requires minutes ≤ 59 (the spec names only hour ≤ 23), so `21:75`
+  passes through as text for the mapper to reject. `isDateValue` also rejects an invalid `Date`,
+  which would otherwise make `Utilities.formatDate` throw and fail the whole response.
+  `buildSetlist` takes an optional third argument, the tab name, for the error message. A
+  non-contract exception from a tab read is not turned into a per-jam error: it stays
+  `internal_error`, as for the catalog. The passphrase-tab test now also accepts
+  `getSpreadsheetTimeZone` as an access (the catalog-only test still requires exactly
+  `getSheetByName`).
+- Remaining:
+  1. User: redeploy as `backend/apps-script/README.md`, **Redeploy for the jams route**, says:
+     paste `src/Normalize.js`, `src/Catalog.js` and `src/Code.js` over their namesakes, add a
+     `Jams` file with `src/Jams.js`, save, **Manage deployments → Edit → New version → Deploy**.
+     Report the Sheet's time zone, the real `BORRADOR` jams, and whether every past jam is
+     `PUBLICADA`.
+  2. Orchestrator: L1 (`--strict` on the live jams), L2 (catalog and `config`), L4 (passphrase
+     parameter byte-identical), L5 (latency, jam and tab counts; record in
+     `technical-discovery.md`).
+  3. User and orchestrator: the A3 test jam (add as `BORRADOR` → L3; flip to `PUBLICADA` → L3;
+     delete → confirm absent).
+  4. Then `passing`, with each item attributed to whoever produced it, then validation.
+- Known risk or unresolved issue:
+  - Nothing new has run on Apps Script: the real cell types, `Utilities.formatDate` and the
+    1899-epoch time path are unobserved until L1. A real `hora` shown in an unusual format falls
+    to the raw `Date` path, whose offset behavior on Google's side is unverified; L1 strict would
+    flag a wrong `startTime`.
+  - Pasting `Normalize.js` without `Catalog.js` (or the reverse) defines `ContractError` twice or
+    not at all; the README says to paste both.
+  - Latency grows with every published jam (one tab read each); unmeasured until L5.
+  - Node tests remain outside the gate.
+- Next best step: the user's redeploy (step 1), then L1–L5, then validation.
 
 ## Notes For The Next Session
 

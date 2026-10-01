@@ -57,16 +57,18 @@ width the strip cannot spare.
   `Catalogo`.
 - **Musician name suggestions** — resolved by the schema: derived from the names in past jam tabs,
   with no separate musicians list.
-- **Sheet cell types.** Settled for the catalog: `apps-script-read-endpoint` emits display text,
-  and a raw whole number for `songsterr_id` (`apps-script-api.md`). Still open for jams (for
-  `apps-script-jams-read-endpoint`): it is unknown whether the real Sheet stores `fecha`, `hora`
-  and `posicion` as text or as date, time and number values. That endpoint must normalize them to
-  `YYYY-MM-DD`, `HH:MM` and an integer either way (`sheet-schema.md`, **Reading cells**); check
-  the real cells when it is written.
-- **`Jams` row and jam tab mismatch** (for `catalog-repository-cache`). A `Jams` row with no tab, or
-  a date-named tab with no `Jams` row, is invalid by the schema, but what the app does about it —
-  skip the jam, show it without a setlist, or fail the read — is not decided. Decide it in that
-  slice; `sheet-schema.md` lists it under **Mapper rules** as open.
+- **Sheet cell types.** Settled. The catalog endpoint emits display text, and a raw whole number
+  for `songsterr_id` (`apps-script-api.md`). The jams endpoint (`apps-script-jams-read-endpoint`)
+  normalizes `fecha`, `hora` and `posicion` to `YYYY-MM-DD`, `HH:MM` and integer text whether
+  the Sheet stores them as text or as date, time and number cells, formatting typed dates in the
+  spreadsheet's own time zone (`sheet-schema.md`, **Reading cells**). Which form the real Sheet
+  uses is still unobserved until the live strict check of that slice.
+- **`Jams` row and jam tab mismatch.** The script half is settled (user approval A2 of
+  `apps-script-jams-read-endpoint`): a `PUBLICADA` row with no tab is served with
+  `setlistError` `missing_tab`, a tab with no `Jams` row is ignored (never read or served), and a
+  per-jam error never fails the whole response. Still open, for `catalog-repository-cache`: what
+  the app shows for a jam that arrives with a `setlistError`. An orphan tab is silent: an admin who
+  adds a tab but forgets the `Jams` row sees nothing.
 - **Seed as mapper fixtures** (for `catalog-repository-cache`). No committed test guards
   `docs/sheet-seed/` (decision P3 of the `sheet-schema-definition` spec): the real Sheet is the
   authority, and a separate seed test would re-implement the mappers before they exist. Instead,
@@ -77,10 +79,14 @@ width the strip cannot spare.
   behavior around midnight should be decided rather than emergent.
 - **Passphrase rotation UX.** When a stale local flag meets a rotated passphrase, the failure should
   read as "your access changed", not as a generic network error.
-- **Draft data must not reach unauthenticated clients.** Hiding the draft setlist in the UI is not
-  sufficient; the endpoint should not serve it without a valid passphrase. Still open, for
-  `apps-script-jams-read-endpoint`: the catalog endpoint serves no jam data. Any passphrase check
-  must use POST, never a GET parameter, or the passphrase lands in URLs and logs.
+- **Draft data must not reach unauthenticated clients.** Settled for anonymous reads by
+  `apps-script-jams-read-endpoint`: the `jams` route serves a setlist only for a jam whose
+  `estado` is exactly `PUBLICADA`, fails closed on any other value, and never even opens a draft's
+  tab; a query parameter cannot unlock it. Still open, for `apps-script-write-auth` or an admin
+  slice: how the admin reads a draft. That read must use POST with the passphrase in the body,
+  never a GET parameter, or the passphrase lands in URLs and logs. Consequence of the rule (user
+  approval A1): a past jam left in `BORRADOR` shows no setlist until the admin marks it
+  `PUBLICADA`.
 
 ## Later / Not MVP
 

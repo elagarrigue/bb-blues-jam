@@ -120,6 +120,12 @@ first call after an unknown idle period. A true cold call after 30+ idle minutes
 unmeasured. This settles the design: reads are cache-first with background refresh, and writes
 need optimistic state — the input for `admin-add-song-to-setlist`.
 
+The `jams` route (`apps-script-jams-read-endpoint`) reads the `Jams` tab plus one tab per
+`PUBLICADA` jam with a unique ISO date, so a call costs one `getSheetByName` and one
+`getDataRange` (display and raw values) per published jam on top of the `Jams` tab, and grows by
+about 12 tabs a year. Its latency is not measured yet: it is live check L5 of that slice, recorded
+here once the user has redeployed.
+
 ## Testing and Verification
 
 - **Presenter tests with Molecule**, no Android instrumentation required (a direct benefit of D-02).
