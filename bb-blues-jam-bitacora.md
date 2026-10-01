@@ -954,6 +954,54 @@ un archivo. `docs/info-content.md` guarda cada dato de Info con su fuente —el 
 el teléfono— y los agentes escriben desde ahí. La lección de Stitch en 6.5 ("El Motivo Bar") se
 convirtió en infraestructura.
 
+### 6.13 Sesiones del 30 de septiembre y 1 de octubre — convenciones de build y el backend en vivo
+
+Cuatro rebanadas más cerraron `accepted`: `build-logic-conventions`, los dos *endpoints* de Apps
+Script y, antes, `info-screen`. Por primera vez el flujo cruzó el borde del repositorio: parte del
+trabajo solo podía hacerlo el organizador, con su cuenta de Google, y el agente tuvo que guiarlo
+paso a paso y verificar desde afuera.
+
+**Ordenar el build sin cambiar nada, y demostrarlo.** Seis *convention plugins* reemplazaron la
+configuración repetida de cada módulo. La exigencia fue "cambio de comportamiento cero", y se probó
+byte a byte: mismos planes de tareas, mismas dependencias, y el APK con sus 392 entradas idénticas
+por *hash*. El `validator` lo repitió contra su propio clon del commit anterior.
+
+**Explicar antes de pedir.** Cuando el agente propuso "subir el script", el organizador preguntó
+"¿cuál script?". Ninguna spec lo había explicado en términos de usuario. La respuesta —un programa
+chico pegado a la planilla que hace de intermediario, con un diagrama de tres cajas— destrabó todo.
+Quedó como regla de método: el paso manual de una spec tiene que poder seguirlo alguien que nunca
+abrió Apps Script.
+
+**El despliegue manual falló de la forma más silenciosa posible.** Después de pegar el código, la
+URL seguía respondiendo con la versión vieja. Hubo tres vueltas: la implementación apuntaba a la
+versión 1; después `Code.gs` había quedado con el contenido anterior sin que nada lo indicara. Lo que
+lo resolvió fue una marca por archivo —una línea que tiene que estar— y el mensaje de error del
+propio *endpoint*, que lista las rutas que conoce: "Known: catalog" delataba el código viejo. Las
+dos cosas quedaron en el README.
+
+**La prueba del borrador, en vivo.** La regla más delicada —un setlist en borrador nunca llega a un
+músico— se probó con una jam de prueba en la planilla real: en `BORRADOR` no apareció, en `PUBLICADA`
+sí, y después se borró. El control positivo importa tanto como el negativo: sin él, "no aparece"
+podría significar que el script ni siquiera lee el tab. Al diseñarla, el `planner` encontró además
+una fuga posible: sin validar el formato de la fecha, una fila con "Config" en la fecha habría hecho
+leer el tab de la frase de acceso.
+
+**Dos veces *revise*, dos veces por lo mismo.** Los dos *endpoints* volvieron del `validator` una vez.
+El código estaba bien las dos veces; lo que fallaba era la documentación —quedaba diciendo "latencia
+sin medir" junto a la medición— y, en el segundo, dos tests que no podían fallar: invertir una regla
+los dejaba en verde. Un test que no puede fallar no prueba nada, y esta vez lo encontró el validador,
+no el autor.
+
+**Una decisión de alcance desde el uso real.** Con 100 temas cargados y sin tempo ni etiquetas, el
+organizador decidió no usarlos por ahora (D-20). Quedan en el esquema, opcionales; el costo se anotó
+donde duele: el asistente de la fase 2 no va a poder filtrar "slow blues" por dato.
+
+**Lo que confirmó sobre el método.** Cuando el sistema real vive fuera del repo, la verificación
+cambia de forma: el agente no puede leer la planilla ni el código desplegado, solo lo que el
+*endpoint* responde. Por eso cada chequeo se diseñó para ser observable desde afuera —el mensaje de
+rutas, un parámetro que no cambia nada, un borrador que aparece al publicarse— y por eso la URL vive
+en un archivo ignorado y el `validator` verificó que no estuviera en todo el historial de git.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
