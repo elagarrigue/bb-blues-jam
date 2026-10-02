@@ -6,10 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `next-jam-read-only-list` is `in_progress` (Session 048): code,
-  tests, Konsist rules and docs done and the gate green, but the device check (spec steps A, B) has
-  not run because the Pixel 5 was not connected. Accepted: fourteen slices, the latest
-  `jams-repository-cache`.
+- Current state: `next-jam-read-only-list` `accepted` (fifteen slices accepted). Step E pending: the
+  user deletes the temporary jam 2026-10-31; the orchestrator then confirms the no-upcoming line.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1641,6 +1639,27 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     Material defaults).
 - Next best step: reconnect the Pixel 5 and run the pending device steps; then set `passing` and
   hand to the validator.
+
+### Session 049 — 2 October 2026
+
+- Goal: the device check of `next-jam-read-only-list`.
+- Completed (orchestrator, Pixel 5): with the user's temporary jam 2026-10-31 in the Sheet, the app
+  showed "Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días" and all 13 rows with amber keys
+  and "Tonalidad <key>" descriptions; the temporary tabs switch to Info and back; no crash. Status
+  `passing`.
+- Known risk or unresolved issue: the temporary jam must be deleted by the user (step E) once
+  validation is done — until then any musician would see it.
+- Next best step: independent validation, then step E.
+
+### Session 050 — 2 October 2026
+
+- Goal: independent validation of `next-jam-read-only-list`.
+- Completed: validator verdict **accept**; status `accepted`. The validator reproduced the device
+  evidence (header, 13 rows, amber keys at #F4B63F in Display P3, ~69dp rows) and confirmed the
+  copy by script.
+- Known risk or unresolved issue: step E pending (temporary jam still in the Sheet). Gate gaps
+  found: an amber role added to the allowlist map passes the gate (reviewer-only), and a hardcoded
+  dp literal is caught by nothing but per-spec greps (noted on `list-states`).
 
 ## Notes For The Next Session
 
