@@ -392,3 +392,30 @@ except the edited ones); the red→green storage failure output; the device log 
 - Two Apps Script calls per app start (catalog + jams): still far under 30 concurrent executions.
 - No admin surface shows rejected jams or rows yet; P4/P8 rejections are visible only in logcat.
 - Live data has no names, `-` or `Otros`; those paths are proven only by `jams-edge.json`.
+
+## User Approvals
+
+Recorded 2 October 2026, before implementation. Where they differ from the body, these win.
+
+- **D1: approved.** `Jam.setlist` becomes the sealed `Setlist` (`Available`, `Withheld`,
+  `Unavailable(SetlistProblem)`); a published jam is never `Withheld`. `DataFailure.Storage` is
+  approved with it. Update `docs/domain-model.md`.
+- **P4: the user chose the alternative — drop only the bad row.** An invalid setlist row is dropped
+  and reported; the rest of the setlist stays `Available`. Consequences the implementer must apply:
+  - `Setlist.Available` no longer requires positions exactly 1..n. It requires positions ≥ 1,
+    unique and ascending; gaps are allowed. Positions are never renumbered: they stay the Sheet's
+    `posicion`, which remains the write identity.
+  - `Setlist.Available` also carries how many rows were dropped (for example `droppedRows: Int`), so
+    a screen can say the list is incomplete instead of showing a silent gap.
+  - A setlist whose every row is invalid is `Unavailable(INVALID_ROWS)`, never an empty
+    `Available`.
+  - Update the "positions 1..n" wording in `docs/domain-model.md` and the jam Mapper rules in
+    `docs/sheet-schema.md` (the Sheet itself should still hold 1..n; the app tolerates a dropped
+    row), and the existing `JamTest` cases that asserted gaps are rejected.
+- **G1: approved.** The 13th Konsist test `data-libraries-only-in-core-data-qualified`, failing case
+  demonstrated.
+- **P1, P2, P3, P5, P6, P7, P8: approved as recommended.** `Juan(saxo)` without a space is valid; a
+  duplicated `fecha` rejects every row with it; a broken tab shows as "setlist unavailable"; with
+  several future jams the earliest is upcoming and the rest are logged; in a past jam an empty slot
+  cell means "not recorded" and is dropped; "today" is the Buenos Aires date; a jam row with a
+  missing or invalid `hora` or a missing `lugar` is rejected and logged.
