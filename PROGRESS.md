@@ -6,10 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: fifteen of 37 slices accepted, the latest `next-jam-read-only-list`.
-  `instrument-strip-component` is `in_progress` (session 052): code, tests, gate, failure
-  demonstrations and docs are done; the device check (spec step C) waits on the user's temporary
-  jam (steps A/B), because today's data has no upcoming jam and the strip is not visible.
+- Current feature: `instrument-strip-component`, `in_progress` — validator blocked only on step D
+  (the user deletes the temporary jam 2026-10-31). Fifteen of 37 slices accepted.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1758,6 +1756,28 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     no-upcoming line. `font_scale` read 1.0 and was not changed. Steps A–D not run.
 - Next: the user runs steps A/B (including the `Otros` cell); then step C on the device, step D
   cleanup, and only then `passing`.
+
+### Session 053 — 2 October 2026
+
+- Goal: the device check of `instrument-strip-component`.
+- Completed (orchestrator, Pixel 5): with the user's temporary jam carrying names and two `Otros`
+  entries, the strip showed open, filled and extra chips in column order with one accessibility
+  description each; at font scale 1.3 (restored to 1.0) the chips wrap without clipping. Status
+  `passing`.
+- Known risk or unresolved issue: a fully open song shows seven amber chips (song 4) — the amber
+  density risk is for the user to judge; step D (delete the temporary jam) pending.
+
+### Session 054 — 2 October 2026
+
+- Goal: independent validation of `instrument-strip-component`.
+- Completed: validator verdict **block**, on one human step only: the spec makes the cleanup of the
+  temporary jam part of the device check. Code, copy, probes and device evidence all held; the
+  validator also measured greyscale (open vs filled fills 50 vs 53 luma), confirming that glyph and
+  wording carry the distinction. Status back to `in_progress`.
+- Known risk or unresolved issue: a chip whose content description is cleared passes the gate (no
+  Compose semantics test harness yet).
+- Next best step: the user deletes the temporary jam; the orchestrator confirms the no-upcoming line
+  and asks the validator for a narrow recheck.
 
 ## Notes For The Next Session
 
