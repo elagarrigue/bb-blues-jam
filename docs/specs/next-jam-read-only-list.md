@@ -343,3 +343,17 @@ uiautomator excerpts; the copy as shipped. In `feature_list.json` and `PROGRESS.
 - `TemporaryTabs` loses each tab's scroll position on switch; accepted until `bottom-navigation`.
 - Two `songTitle`-sized texts plus a 44sp key may truncate long titles on a narrow phone
   (ellipsis by design); check on the device.
+
+## User Approvals
+
+Recorded 2 October 2026, before implementation:
+
+- **C1: copy approved as written**, including the 18:00 split, "Esta noche" after the start,
+  "21:00", the dropped-rows note and zero-padded positions.
+- **C2:** the venue is shown as the Sheet's `lugar` text as-is; no address column.
+- **G1: both D-17 Konsist rules approved** — `no-material-theme-outside-core-ui` and
+  `amber-roles-allowlisted` (Konsist 13 → 15), each with its failing case demonstrated, including
+  the `BluesJamColors.` branch.
+- **Device check:** the user will add the temporary future jam (step B: tab `2026-10-31` copied from
+  `2026-07-25`, a `Jams` row `2026-10-31 | 21:00 | La Macanuda | PUBLICADA`) and delete it afterwards
+  (step E).
