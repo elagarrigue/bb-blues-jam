@@ -298,3 +298,29 @@ contrast values; the copy as shipped; the user's cleanup confirmation.
 - A future material3 upgrade removes the transitive icons if D1 is declined.
 - `song-row-expansion` will make the row clickable; with per-chip `clearAndSetSemantics` the merged
   row description will list every chip — that slice decides whether that is too long.
+
+## User Approvals
+
+Recorded 2 October 2026, before implementation. Where they differ from the body, these win.
+
+- **C1: copy approved as written** (unnumbered guitars, long names cut with "…" visually, full name
+  in the content description).
+- **E1: the user chose to show extras ("Otros") in the strip, with a different style.** The
+  orchestrator defines the style so an extra can never be read as a slot:
+  - Extra chips come **after** all slot chips, in their `Otros` order.
+  - No fill (transparent background), text in `textMuted`, never amber, never `slotFilled`.
+  - A leading "+" glyph instead of the open dot or the filled check.
+  - Label `+ <instrument as typed>: <name>`, e.g. `+ saxo: Juan`; the instrument keeps the case the
+    admin typed. Long values are cut with "…" like slot names.
+  - Content description: `Otros: <instrument>, <name>`, e.g. "Otros: saxo, Juan".
+  - Extras still never count as open slots and never affect `hasOpenSlotFor` (D-18). The mapper
+    takes `JamSong.extraParticipants` in addition to the `Lineup`; tests cover extras present,
+    absent, and that an extra never produces an open-looking chip.
+  - Add a contrast test for `textMuted` on the row surface if it is not already covered.
+- **P1: static dot** instead of the pulse.
+- **D1: declare `material-icons-core` explicitly** (catalog entry, version from the Compose BOM, in
+  `core/ui/build.gradle.kts`).
+- The amber allowlist stays `{feature/next-jam: {key}}`: the strip reads `slotOpen` inside
+  `:core:ui`.
+- Device check: the user's temporary jam (step A/B) also gets an `Otros` cell on song 1, e.g.
+  `Juan (saxo)`, so the extra chip is seen on the phone.

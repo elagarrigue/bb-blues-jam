@@ -433,18 +433,18 @@
     "id": "instrument-strip-component",
     "area": "feature-next-jam",
     "title": "Add the instrument strip to each song row",
-    "user_visible_behavior": "Each collapsed row shows one small icon per instrument in that song's lineup, distinguishing open slots from filled ones without expanding the row.",
+    "user_visible_behavior": "Each collapsed row shows one labelled chip per slot in that song's lineup (open: amber 'GTR: LIBRE' with a dot; filled: muted 'Gtr: Tincho' with a check), plus distinct '+' chips for extra participants, without expanding the row.",
     "depends_on": [
       "next-jam-read-only-list"
     ],
     "status": "not_started",
     "verification": [
-      "A Compose preview covers an all-open, an all-filled and a mixed lineup",
-      "Open and filled remain distinguishable with color and luminance removed",
-      "Each icon carries a content description"
+      "A Compose preview covers an all-open, an all-filled and a mixed lineup, with and without extras",
+      "Open, filled and extra chips remain distinguishable with color and luminance removed (glyph and wording)",
+      "Each chip carries a content description"
     ],
     "evidence": [],
-    "notes": "D-07, the component that makes the collapsed list useful. Dimmed means open, lit means filled. Brightness alone fails in glare and for low-vision users, in the dark bar this app targets: pair it with shape or fill. Open design question in risks-and-open-questions.md. Icons at roughly 16dp must be sourced or drawn first."
+    "notes": "D-07, the component that makes the collapsed list useful. Dimmed means open, lit means filled. Brightness alone fails in glare and for low-vision users, in the dark bar this app targets: pair it with shape or fill. Open design question in risks-and-open-questions.md. Icons at roughly 16dp must be sourced or drawn first. 2 October 2026: entry reworded from icons to labelled chips, as DESIGN.md and the risks doc settled on 19 September; extras shown with a distinct style (user decision, see the spec's User Approvals)."
   },
   {
     "id": "song-row-expansion",
