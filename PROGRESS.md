@@ -6,8 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: `next-jam-read-only-list` `accepted` (fifteen slices accepted). Step E pending: the
-  user deletes the temporary jam 2026-10-31; the orchestrator then confirms the no-upcoming line.
+- Current state: sixteen slices accepted through `next-jam-read-only-list`; the temporary test jam
+  is gone (step E verified). See Session 051 for the next ready slices.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1660,6 +1660,12 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: step E pending (temporary jam still in the Sheet). Gate gaps
   found: an amber role added to the allowlist map passes the gate (reviewer-only), and a hardcoded
   dp literal is caught by nothing but per-spec greps (noted on `list-states`).
+
+### Session 051 — 2 October 2026
+
+- Goal: step E of `next-jam-read-only-list`.
+- Completed: the user deleted the temporary jam; on the Pixel 5 the app now logs `upcoming none` and
+  shows the approved no-upcoming line. The Sheet holds only the real 2026-07-25 jam again.
 
 ## Notes For The Next Session
 
