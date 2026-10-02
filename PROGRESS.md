@@ -6,12 +6,20 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: see Session 047. Accepted: fourteen slices, the latest
+- Current next ready feature: `next-jam-read-only-list` is `in_progress` (Session 048): code,
+  tests, Konsist rules and docs done and the gate green, but the device check (spec steps A, B) has
+  not run because the Pixel 5 was not connected. Accepted: fourteen slices, the latest
   `jams-repository-cache`.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 2 October 2026 (session 045, `jams-repository-cache`) — `CI=true ./init.sh`
+- Last verified at: 2 October 2026 (session 048, `next-jam-read-only-list`, JVM only) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (15/15, new `no-material-theme-outside-core-ui` and
+  `amber-roles-allowlisted`), `detekt: wired`, `ktlint: wired`; 38 result files, 0 failures: the 35
+  baseline files unchanged except `ModuleIsolationTest` 13 → 15, plus `JamDateTextTest` 7,
+  `NextJamPresenterTest` 6, `NextJamModuleTest` 1. Lint: `:feature:next-jam` no issues, `:app` the
+  same 14 pin warnings. No device run (Pixel 5 absent from `adb devices`). Before that, session 045
+  (`jams-repository-cache`) — `CI=true ./init.sh`
   exit 0, `konsist: wired` (13/13, new `data-libraries-only-in-core-data-qualified`), `detekt:
   wired`, `ktlint: wired`; 35 result files, 0 failures (the 29 baseline files unchanged except
   `JamTest` 4 → 6, `DefaultCatalogRepositoryTest` 14 → 17, `ModuleIsolationTest` 12 → 13, plus six
@@ -52,8 +60,9 @@
 
 ### What exists
 
-Five product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-skeleton`,
-`accepted`) and `:feature:info` (`info-screen`, `accepted`).
+Six product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-skeleton`,
+`accepted`), `:feature:info` (`info-screen`, `accepted`) and `:feature:next-jam`
+(`next-jam-read-only-list`, `in_progress`).
 `:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
 libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
 depends on all three. `:app`'s `ModuleWiringTest` proves `:core:model` is visible from `:app`
@@ -135,8 +144,10 @@ dependencies. The catalog is shared from `gradle/libs.versions.toml` (new `targe
 `subprojects {}` block and do not lint `build-logic` itself.
 
 A test-only module `:konsist-test` (`bluesjam.jvm.library`, no project dependency) holds
-`ModuleIsolationTest`: 13 Konsist 0.17.3 tests (12th `data-libraries-only-in-core-data`, 13th
-`data-libraries-only-in-core-data-qualified`) that enforce the architecture skill's dependency rules
+`ModuleIsolationTest`: 15 Konsist 0.17.3 tests (12th `data-libraries-only-in-core-data`, 13th
+`data-libraries-only-in-core-data-qualified`, 14th `no-material-theme-outside-core-ui`, 15th
+`amber-roles-allowlisted` with its per-module `AMBER_ROLE_ALLOWLIST`, today only
+`feature/next-jam` → `key`) that enforce the architecture skill's dependency rules
 (no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
 `:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
 `project(":…")` dependencies in `core/*`/`feature/*` build files, every module build file applying
@@ -153,9 +164,10 @@ debug only) and activity-compose 1.11.0. appcompat and Material Views are gone; 
 through `:core:ui`.
 
 `MainActivity` (a `ComponentActivity`, the launcher) turns on edge-to-edge with dark system bars and
-shows `InfoScreen` inside `BluesJamTheme`, with the system-bar insets as `contentPadding` (the
-placeholder screen is gone). `BluesJamApp` (the manifest's `android:name`) calls `startKoin` with
-`appModule` and `infoModule`; `appModule` binds `ExternalLinkOpener` to `IntentLinkOpener`. Koin is
+shows `TemporaryTabs` inside `BluesJamTheme`: Próxima jam (first) or Info above a plain two-cell tab
+row (`selectable`, `Role.Tab`, 48dp, `text`/`textMuted`, no amber), each screen with the status-bar
+insets as `contentPadding`; `bottom-navigation` deletes it. `BluesJamApp` (the manifest's
+`android:name`) calls `startKoin` with `appModule`, `dataModule`, `infoModule` and `nextJamModule`; `appModule` binds `ExternalLinkOpener` to `IntentLinkOpener`. Koin is
 4.1.1 (BOM); kotlin-stdlib stays 2.2.10 and Compose 1.9.1 on `:app`'s runtime classpath. `:app` has
 no colors of its own: its `colors.xml` is gone, and the window
 theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`) uses
@@ -171,7 +183,9 @@ the tool's task in every module that compiles Kotlin; otherwise it names the mod
 The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
 `JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
 `SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
-`ContrastTest`, `WindowBackgroundTest`, and `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`.
+`ContrastTest`, `WindowBackgroundTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
+`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest` and `NextJamModuleTest`, and the
+`:core:data` classes.
 
 `:feature:info` (`info-screen`, `accepted`) is the first feature module and the template for the
 others: `InfoPresenter` (`Presenter<InfoUiModel, Unit>`, constructor `ExternalLinkOpener` from
@@ -181,8 +195,18 @@ in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders 
 join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
 está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
 
-Product code: the `:core:model` domain types, the Info screen and the catalog and jams data layer
-(`:core:data`, not yet drawn by any screen).
+`:feature:next-jam` (`next-jam-read-only-list`, `in_progress`) is the first feature that reads data
+(project deps `:core:ui` and `:core:data`): `NextJamPresenter(JamsRepository, JamCalendar)` maps
+`observeJams().upcoming` to `NextJamUiModel` (`Loading` until something was ever fetched,
+`NoUpcomingJam`, or `Jam(header, setlist)` with `Songs(rows, droppedRowsNote)` or `NotShown` for a
+withheld or unavailable setlist). The header is "Sábado 31 de octubre · 21:00", the venue as
+written in `lugar`, and the time remaining ("Esta noche" from 18:00 on its own date, "Hoy",
+"Mañana", "En n días") from `JamCalendar.today()` read once per snapshot. Rows show the zero-padded
+position, the title and the key in `typography.key` / `colors.key` (content description
+"Tonalidad <key>"). Copy in `NextJamCopy` (approved C1), day and month names hand-written.
+
+Product code: the `:core:model` domain types, the Info screen, the read-only Próxima jam screen and
+the catalog and jams data layer (`:core:data`).
 
 `backend/apps-script/` (not a Gradle module; `apps-script-read-endpoint`, `in_progress`) holds
 the Apps Script web app: `appsscript.json` (V8, `spreadsheets.currentonly`, executes as the owner,
@@ -1525,6 +1549,98 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   only jam in the Sheet (2026-07-25) is past, so there is no upcoming jam to show until the user
   adds the next date.
 - Next best step: the next ready slice in list order.
+
+### Session 048 — 2 October 2026
+
+- Goal: implement `next-jam-read-only-list` (spec `docs/specs/next-jam-read-only-list.md`, with the
+  user approvals C1 copy as written, C2 venue as `lugar`, G1 both D-17 Konsist rules).
+- Status: `in_progress`, not `passing`: everything but the device check is done and verified; the
+  Pixel 5 (`09281FDD4004U6`) was absent from `adb devices` at three checks during the session, so
+  spec steps A and B (and the tab switch on the device) have not run.
+- Completed:
+  - New `:feature:next-jam` (`feature/next-jam/`, package `com.bbbjam.feature.nextjam`):
+    `NextJamCopy`, `JamDateText.kt` (`timeRemaining`, `jamDateLabel`), `NextJamUiModel.kt`,
+    `NextJamPresenter.kt` (+ pure `JamsSnapshot.toUiModel(today)`), `NextJamScreen.kt` (public
+    `NextJamScreen`, internal `NextJamContent`, a `@Preview`), `di/NextJamModule.kt`; tests
+    `JamDateTextTest`, `NextJamPresenterTest`, `NextJamModuleTest`, `FakeJamsRepository`.
+  - `:app`: `TemporaryTabs.kt` (Próxima jam first, Info), `MainActivity` draws it,
+    `BluesJamApp` adds `nextJamModule`, `app/build.gradle.kts` and `settings.gradle.kts` include
+    the module.
+  - Konsist 13 → 15: `no-material-theme-outside-core-ui` and `amber-roles-allowlisted`
+    (`AMBER_ROLE_ALLOWLIST = mapOf("feature/next-jam" to setOf("key"))`). `:feature:info` and
+    `:app` pass both unchanged.
+  - Docs: architecture `SKILL.md` (module exists, `TemporaryTabs`, today per snapshot, hand-written
+    date names, the two rules with their limits and the allowlist convention, 15 rules),
+    `references/presenter-pattern.md` (`NextJamPresenter` compiled; the sketch's
+    `SetlistRepository`/catalog lookup superseded), `docs/risks-and-open-questions.md` (phrasing
+    settled, ticker still open, venue address per C2).
+- Verification run:
+  - Baseline on untouched HEAD `62375ac`: `CI=true ./init.sh` exit 0, three `wired`, 35 result
+    files, Konsist 13/13.
+  - After: `./gradlew ktlintFormat` exit 0; `CI=true ./init.sh` exit 0 (19 s on the last run),
+    `konsist: wired`, `detekt: wired`, `ktlint: wired`; 38 result files, 0 failures; the 35
+    baseline files identical in names and counts except `ModuleIsolationTest` 13 → 15; new
+    `JamDateTextTest` 7, `NextJamPresenterTest` 6, `NextJamModuleTest` 1. Lint `:feature:next-jam`
+    "No issues found"; `:app` 0 errors, the same 6 GradleDependency + 8 NewerVersionAvailable.
+  - Greps on `feature/next-jam/src/main` and `TemporaryTabs.kt`: no `MaterialTheme`, the only amber
+    role is `colors.key` (`NextJamScreen.kt`), no `.dp`, no `Color(`/hex, no `LocalDate.now`,
+    `Clock.system` or `.now(`, no tú forms, no "Motivo".
+  - Failure demonstrations, each an edit of an existing file, restored, SHA-1 checked (`sha1sum`;
+    for tracked `InfoScreen.kt` also `git hash-object` = HEAD blob `550c45b0…`):
+    1. `MaterialTheme.colorScheme.primary` (+ import) as the tagline color in `feature/info`
+       `InfoScreen.kt` → Konsist 15 tests, 1 failed: "Assert 'no-material-theme-outside-core-ui'
+       was violated (1 time). Invalid files: └── File InfoScreen.kt …". Restored `35f1d950…`.
+    2. `BluesJamTheme.colors.primaryAction` in `InfoScreen.kt` → 1 failed: "Assert
+       'amber-roles-allowlisted' was violated (1 time) … InfoScreen.kt". Restored `35f1d950…`.
+    3. `BluesJamColors.slotOpen` (+ import) in `InfoScreen.kt`, the `BluesJamColors.` branch alone
+       (`Colors` is capitalized, so `colors.` cannot match) → 1 failed, same rule, InfoScreen.kt.
+       Restored `35f1d950…`.
+    4. `colors.slotOpen` instead of `colors.key` in `NextJamScreen.kt` (allowlisted module, role not
+       allowed) → 1 failed, same rule, NextJamScreen.kt. Restored `bd776f70…`.
+    5. Copy: `SETLIST_WITHHELD` "armando" → "preparando" in `NextJamCopy.kt` → 14 tests, 1 failed:
+       `expected:<…NotShown(message=La lista de temas se está armando. …)> but was:<…se está
+       preparando. …>`. Restored `cde25e42…`.
+    6. UTC today: `calendar.today()` → `calendar.now().atZone(ZoneOffset.UTC).toLocalDate()` in
+       `NextJamPresenter.kt` → 1 failed (`time remaining uses today in Buenos Aires, not UTC`):
+       `expected:<[Mañana]> but was:<[Esta noche]>`. Restored `522ce58e…`.
+    7. 18:00 split moved to 19:00 in `JamDateText.kt` → 1 failed: `expected:<[Esta noche]> but
+       was:<[Hoy]>`. Restored `092643cb…`.
+    8. `fetchedAt` guard removed (`false ->`) → 1 failed: `expected:<Loading> but
+       was:<NoUpcomingJam(message=La próxima jam todavía no tiene fecha. …)>`. Restored `522ce58e…`.
+    After all restores: `:feature:next-jam:testDebugUnitTest` and `:konsist-test:test` green, and
+    the final gate above.
+  - Device: **not run**. `adb devices` listed nothing (three checks). Nothing was installed.
+- Pending device steps (agent, once the Pixel 5 is back): `./gradlew :app:installDebug`; `adb
+  shell am force-stop com.bbbjam`; `adb logcat -c`; `adb shell am start -W -n
+  com.bbbjam/.MainActivity`; wait for `jams cache:` in `adb logcat -d -s BluesJam`; check the
+  crash buffer (`logcat -b crash -d`) is empty; screenshot and `uiautomator dump`. If the line says
+  `upcoming none`: step A, the no-upcoming line. If it says `upcoming 2026-10-31` (the user's
+  temporary jam): step B, header "Sábado 31 de octubre · 21:00", "La Macanuda", "En N días" (N
+  from the device date; 29 on 2 October), 13 rows "01"…"13" with title and a key node whose
+  `content-desc` is "Tonalidad <key>", key drawn in amber; scroll to the end. Then tap Info and
+  back. Step E (the user deletes the temporary jam; relaunch shows `upcoming none`) is the
+  orchestrator's.
+- Deviations from the spec, and why:
+  - Mapping tests for dropped rows, withheld/unavailable and never-fetched call the pure
+    `JamsSnapshot.toUiModel(today)` directly (all 4 `SetlistProblem`s, droppedRows 0/1/2, empty
+    `Available`), with Molecule transitions for loading → jam, no-upcoming → jam, never-fetched →
+    fetched, withheld → unavailable and the two Buenos Aires clocks.
+  - The never-fetched Molecule test does not assert one `Loading` per emission (Molecule may or may
+    not re-emit an equal model); it asserts every model before the fetched snapshot is `Loading` and
+    then the no-upcoming line.
+  - The UTC demonstration uses `calendar.now()` at UTC instead of `LocalDate.now(UTC)` so the fixed
+    test clock is used and the failure is exactly the boundary (Mañana vs Esta noche).
+- Known risk or unresolved issue:
+  - Device evidence (A, B, the tab switch, E) is missing; row height ≥ 56dp, long-title truncation
+    and the key's amber are not seen on a device yet.
+  - The user may have added the temporary 2026-10-31 jam to the Sheet; if it stays, any musician
+    who installs the app sees it (step E pending).
+  - First offline launch with an empty cache shows only the background (`Loading`) until
+    `list-states`; no midnight ticker; `TemporaryTabs` drops each tab's scroll position.
+  - The two new rules are text matches with the documented limits (aliases, `with(MaterialTheme)`,
+    Material defaults).
+- Next best step: reconnect the Pixel 5 and run the pending device steps; then set `passing` and
+  hand to the validator.
 
 ## Notes For The Next Session
 

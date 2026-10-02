@@ -81,8 +81,15 @@ width the strip cannot spare.
 - **Time zone and "how long until" text.** The jam date boundary is settled by
   `jams-repository-cache` (user approval P7): "today" is the Buenos Aires date from `JamCalendar`,
   never the device zone or UTC, so a jam stays upcoming through its own night and turns historical
-  at 00:00 of the next day. Still open: a screen left open across midnight keeps the old split
-  until it collects again (no ticker), and phrases like "esta noche" are for the screen slices.
+  at 00:00 of the next day. The phrasing is settled by `next-jam-read-only-list` (user approval
+  C1, 2 October 2026): calendar days from `JamCalendar.today()`, "Esta noche" on the jam's own date
+  for a start at 18:00 or later (still shown after the start time, until 00:00), "Hoy" for an
+  earlier start, "Mañana", then "En n días" with no weeks. Still open: a screen left open across
+  midnight keeps the old split and phrase until the next emission (no ticker).
+- **Venue address.** `DESIGN.md` asks for the venue's name and address; the Sheet has one free-text
+  `Jams.lugar`, shown as written (user approval C2 of `next-jam-read-only-list`, 2 October 2026). If
+  an address is wanted, the admin types it into `lugar` ("La Macanuda, Moreno 223"); an address
+  column would be a schema change and its own slice.
 - **Passphrase rotation UX.** When a stale local flag meets a rotated passphrase, the failure should
   read as "your access changed", not as a generic network error.
 - **Draft data must not reach unauthenticated clients.** Settled for anonymous reads by

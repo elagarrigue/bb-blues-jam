@@ -18,9 +18,20 @@ dependency (`ExternalLinkOpener`), local state in `remember`, copy from `InfoCop
 `InfoModuleTest` in `feature/info/src/test/kotlin/com/bbbjam/feature/info/`. Copy it for the next
 feature's module layout; the next-jam sketch shows data and admin state.
 
-The next-jam example further down is an **illustrative sketch**: it uses domain types and
-repositories (`JamSong`, `SetlistRepository`, `AdminSession`) that do not exist yet, so it is not
-compiled. `next-jam-read-only-list` turns it into real code.
+The first feature presenter that reads data is `NextJamPresenter` in `:feature:next-jam`
+(`feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/`), set up by
+`next-jam-read-only-list`: constructor `NextJamPresenter(jams: JamsRepository, calendar:
+JamCalendar)`, one `remember { jams.observeJams() }.collectAsState(initial = null)`, "today" read
+once per snapshot with `remember(snapshot) { calendar.today() }`, and the mapping in a pure
+`JamsSnapshot.toUiModel(today)` that tests call directly. Its tests (`NextJamPresenterTest`,
+`JamDateTextTest`, `NextJamModuleTest`, with `FakeJamsRepository` on a `MutableSharedFlow(replay =
+1)` and `JamCalendar(Clock.fixed(…), BUENOS_AIRES)`) are in its `src/test`.
+
+The next-jam example further down is still an **illustrative sketch** for the parts that do not exist
+yet: the child `SongRowPresenter` (`song-row-expansion`), admin state with `AdminSession`, and the
+publish and slot mutations. Its `SetlistRepository` and catalog lookup are superseded by
+`JamsRepository`, whose snapshot already resolves titles against the cached catalog; there is no
+`CatalogRepository` in `NextJamPresenter`.
 
 ## What Changed From The Articles
 

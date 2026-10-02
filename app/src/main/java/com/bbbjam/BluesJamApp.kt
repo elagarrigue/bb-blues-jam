@@ -12,6 +12,7 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.di.appModule
 import com.bbbjam.feature.info.di.infoModule
+import com.bbbjam.feature.nextjam.di.nextJamModule
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +41,7 @@ class BluesJamApp : Application() {
         super.onCreate()
         val koin = startKoin {
             androidContext(this@BluesJamApp)
-            modules(appModule, dataModule, infoModule)
+            modules(appModule, dataModule, infoModule, nextJamModule)
         }.koin
         val catalog = koin.get<CatalogRepository>()
         val jams = koin.get<JamsRepository>()

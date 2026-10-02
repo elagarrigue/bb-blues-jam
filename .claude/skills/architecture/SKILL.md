@@ -21,13 +21,14 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation, bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). | everything |
+| `:app` | Navigation, bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Until `bottom-navigation`, `TemporaryTabs.kt` (internal) switches between Próxima jam and Info; that slice deletes it. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
-(set by `info-screen`); the planned ones are `:feature:next-jam`, `:feature:song-detail` and
-`:feature:past-jams`.
+(set by `info-screen`) and `:feature:next-jam` exists (set by `next-jam-read-only-list`; the first
+feature that reads data, depending on `:core:ui` and `:core:data`); the planned ones are
+`:feature:song-detail` and `:feature:past-jams`.
 
 **Admin is a state, not a module.** An admin is a musician with extra controls on the same screens
 (one app, not two). Each presenter reads the admin flag from `AdminSession` in `:core:data` and adds
@@ -50,6 +51,17 @@ is. There is no `:feature:admin`.
   the role (`primaryAction`, `slotOpen`, `key`, `published`, `activeFilter` and their `on…`
   colors). A component slice that uses a Material 3 component sets its colors explicitly from
   `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
+- Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
+  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` may read `key` only. A
+  slice that adds an amber use (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds that
+  role for its module in the same diff, so each amber use is a reviewed decision.
+- "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as
+  `remember(snapshot) { calendar.today() }` so a header agrees with the repository's upcoming/past
+  split. Never `LocalDate.now()` or the device zone.
+- Spanish day and month names → hand-written `when` tables in the feature's `<Name>Copy`, not
+  `DateTimeFormatter` with a `Locale`: desugared java.time on API 24–25 and the JVM may render
+  locale text differently, and the copy must be identical on the device and in tests. Times are
+  padded with `padStart`, not `String.format` (locale-sensitive).
 - A component used by two features → `:core:ui`. Never copy it between features.
 - Wiring an implementation to its interface → the Koin module of the module that owns the
   implementation; `:app` only lists modules in `startKoin`.
@@ -82,13 +94,23 @@ compile classpath still blocks okhttp3, Room and serialization-json but not seri
 package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
-colors) in
+colors), and the two D-17 screen rules from `next-jam-read-only-list`:
+`no-material-theme-outside-core-ui` (no `MaterialTheme.colorScheme`, `.typography` or `.shapes`
+outside `:core:ui` and `:konsist-test`) and `amber-roles-allowlisted` (outside `:core:ui` and
+`:konsist-test`, every `colors.<role>` or `BluesJamColors.<role>` read of an amber role —
+`primaryAction`, `onPrimaryAction`, `slotOpen`, `key`, `published`, `onPublished`, `activeFilter`,
+`onActiveFilter` — must be in `AMBER_ROLE_ALLOWLIST` for its module). Their known limits: text
+matches, so an import alias of `MaterialTheme`, `with(MaterialTheme) { … }` or an alias of the
+colors object (`val c = BluesJamTheme.colors; c.key`) escapes; a Material component left on its
+default colors (amber `primary`) escapes; and the rule cannot judge whether an allowed role is
+drawn on the right element. All of them live in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 13 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 15 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
-`jams-repository-cache`); the two that read build files are
+`jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
+`amber-roles-allowlisted`, with `next-jam-read-only-list`); the two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
@@ -247,7 +269,8 @@ them.
 - **Reference feature build file**: `feature/info/build.gradle.kts` (set by `info-screen`, reshaped
   by `build-logic-conventions`): `id("bluesjam.android.feature")`, `android { namespace =
   "com.bbbjam.feature.<name>" }`, its only project dependency `implementation(project(":core:ui"))`
-  (plus `:core:data` once a feature reads data), `androidx.compose.foundation` and tooling-preview
+  (plus `implementation(project(":core:data"))` once a feature reads data, as
+  `feature/next-jam/build.gradle.kts` does), `androidx.compose.foundation` and tooling-preview
   (+ debug tooling). SDKs, Java 11, Compose, the test flag, Koin and the presenter test libraries
   come from the convention.
 - **Koin 4.1.1** (set by `info-screen`, approved 30 September 2026; D-16). Catalog: `koin-bom`

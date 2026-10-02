@@ -26,6 +26,11 @@ import org.junit.Test
  * `build-file-project-deps` (allowed `project(":…")` dependencies) and
  * `build-file-applies-convention` (every module applies its `bluesjam.*` convention plugin and does
  * not copy back a setting the convention owns).
+ *
+ * Two rules guard D-17 in screens as text matches: `no-material-theme-outside-core-ui` (no
+ * `MaterialTheme.colorScheme`/`.typography`/`.shapes` outside `:core:ui`) and
+ * `amber-roles-allowlisted` (an amber role outside `:core:ui` only where `AMBER_ROLE_ALLOWLIST`
+ * allows it for that module).
  */
 class ModuleIsolationTest {
 
@@ -141,6 +146,25 @@ class ModuleIsolationTest {
             .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
             .assertFalse(testName = "no-color-literal-outside-core-ui") { file ->
                 COLOR_LITERAL.containsMatchIn(file.text)
+            }
+    }
+
+    @Test
+    fun `screens outside core ui do not read the Material theme`() {
+        scope.files
+            .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
+            .assertFalse(testName = "no-material-theme-outside-core-ui") { file ->
+                MATERIAL_THEME_READ.containsMatchIn(file.text)
+            }
+    }
+
+    @Test
+    fun `amber roles outside core ui are allowlisted per module`() {
+        scope.files
+            .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
+            .assertFalse(testName = "amber-roles-allowlisted") { file ->
+                val allowed = AMBER_ROLE_ALLOWLIST[file.modulePath].orEmpty()
+                AMBER_ROLE_READ.findAll(file.text).any { it.groupValues[2] !in allowed }
             }
     }
 
@@ -285,6 +309,34 @@ class ModuleIsolationTest {
         val OWNED_SETTING = Regex(
             """\b(compileSdk|minSdk|targetSdk|JavaVersion|JvmTarget|jvmTarget|jvmToolchain|""" +
                 """sourceCompatibility|targetCompatibility|buildFeatures|isReturnDefaultValues)\b""",
+        )
+
+        /**
+         * A read of Material's theme values in a screen (D-17): screens read `BluesJamTheme.colors`,
+         * `.typography` and `.shapes`. Known limits: a text match, so an import alias of
+         * `MaterialTheme`, `with(MaterialTheme) { colorScheme }`, or a Material component left on its
+         * default (amber `primary`) colors is not caught.
+         */
+        val MATERIAL_THEME_READ = Regex("""\bMaterialTheme\s*\.\s*(colorScheme|typography|shapes)\b""")
+
+        /**
+         * A read of an amber role (`DESIGN.md`: amber only for its five uses, plus their `on…` colors).
+         * Group 2 is the role. Known limits: a text match, so an alias
+         * (`val c = BluesJamTheme.colors; c.key`) escapes, and it cannot judge whether an allowed role
+         * is drawn on the right element.
+         */
+        val AMBER_ROLE_READ = Regex(
+            """\b(colors|BluesJamColors)\s*\.\s*""" +
+                """(primaryAction|onPrimaryAction|slotOpen|key|published|onPublished|activeFilter|onActiveFilter)\b""",
+        )
+
+        /**
+         * The amber roles each module outside `:core:ui` may read. A slice that adds an amber use
+         * (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds it here in its own diff, so
+         * every amber use is a reviewed decision. A module not listed may read none.
+         */
+        val AMBER_ROLE_ALLOWLIST: Map<String, Set<String>> = mapOf(
+            "feature/next-jam" to setOf("key"),
         )
 
         /** A `Color(…)` built from a number, or an ARGB hex literal such as a preview `backgroundColor`. */

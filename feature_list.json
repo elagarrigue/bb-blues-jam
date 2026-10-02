@@ -409,13 +409,21 @@
       "build-logic-conventions",
       "jams-repository-cache"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "A presenter test asserts the list state for a published jam",
       "The key is visible in the collapsed row",
       "The header shows time remaining in natural language"
     ],
-    "evidence": [],
+    "evidence": [
+      "Session 048 (2 October 2026), implementer. Status in_progress, not passing: code, tests, the two approved D-17 Konsist rules and docs are done and the gate is green, but the Pixel 5 (09281FDD4004U6) was absent from adb devices at three checks, so spec device steps A/B and the tab switch on the device have not run. Pending steps in PROGRESS.md, Session 048.",
+      "Baseline on untouched HEAD 62375ac: CI=true ./init.sh exit 0, three wired, 35 result files, Konsist 13/13.",
+      "After: ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0, konsist: wired (15/15), detekt: wired, ktlint: wired; 38 result files, 0 failures; the 35 baseline files identical in names and counts except ModuleIsolationTest 13 -> 15; new JamDateTextTest 7, NextJamPresenterTest 6, NextJamModuleTest 1. Lint :feature:next-jam 'No issues found'; :app 0 errors and the same 6 GradleDependency + 8 NewerVersionAvailable warnings. No baseline, ignoreFailures, @Suppress or rule disable.",
+      "Verification lines: 'A presenter test asserts the list state for a published jam' -> NextJamPresenterTest 'loading, then a published jam with its header and every row' (full NextJamUiModel.Jam equality: 'Sábado 31 de octubre · 21:00', 'La Macanuda', 'En 29 días', 13 rows '01'..'13' with title, key and 'Tonalidad <key>'). 'The key is visible in the collapsed row' -> SongRowUiModel.key in every row; NextJamScreen draws it with typography.key and colors.key (device check pending). 'The header shows time remaining in natural language' -> JamDateTextTest (18:00/17:59 split, Mañana, En 2/29/45 días, year rollover, clamp) and the Buenos Aires clock test (02:30Z on the jam date -> Mañana; 23:00Z -> Esta noche).",
+      "Failure demonstrations, each an edit of an existing file, restored with SHA-1 checked: (1) MaterialTheme.colorScheme.primary in feature/info InfoScreen.kt -> \"Assert 'no-material-theme-outside-core-ui' was violated (1 time). Invalid files: File InfoScreen.kt\"; (2) BluesJamTheme.colors.primaryAction in InfoScreen.kt -> \"Assert 'amber-roles-allowlisted' was violated (1 time) ... InfoScreen.kt\"; (3) BluesJamColors.slotOpen in InfoScreen.kt (BluesJamColors. branch alone) -> same rule, 1 time; InfoScreen.kt restored 35f1d950... each time, git hash-object = HEAD blob 550c45b0...; (4) colors.slotOpen instead of colors.key in NextJamScreen.kt -> same rule, NextJamScreen.kt; restored bd776f70... (5) SETLIST_WITHHELD 'armando' -> 'preparando' -> NextJamPresenterTest fails expected '...se está armando...' but was '...se está preparando...'; restored cde25e42... (6) calendar.today() -> calendar.now() at UTC -> 'expected:<[Mañana]> but was:<[Esta noche]>'; (7) 18:00 split -> 19:00 -> 'expected:<[Esta noche]> but was:<[Hoy]>'; (8) fetchedAt guard removed -> 'expected:<Loading> but was:<NoUpcomingJam(...)>'; NextJamPresenter.kt restored 522ce58e..., JamDateText.kt 092643cb...",
+      "Greps on feature/next-jam/src/main and TemporaryTabs.kt: no MaterialTheme, only amber role colors.key, no .dp, no Color(/hex, no LocalDate.now/Clock.system/.now(, no tú forms, no 'Motivo'.",
+      "Device: not run (Pixel 5 not connected; nothing installed). Steps A, B, the tab switch and E remain."
+    ],
     "notes": "The most important screen in the app, opened 90% of the time. The instrument strip is a separate slice because it is the component the screen depends on and deserves its own verification. From info-screen validation: D-17 (no MaterialTheme.colorScheme in screens) and amber-only-by-role are enforced only by per-spec greps; an amber role or MaterialTheme.colorScheme in a screen passes the whole gate. Propose a Konsist rule for this screen-heavy slice (a verification change: needs the user's approval) and demonstrate its failing case."
   },
   {

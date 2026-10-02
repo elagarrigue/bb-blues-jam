@@ -6,11 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.systemBars
 import com.bbbjam.core.ui.theme.BluesJamTheme
-import com.bbbjam.feature.info.InfoScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +17,7 @@ class MainActivity : ComponentActivity() {
         val darkBars = SystemBarStyle.dark(Color.TRANSPARENT)
         enableEdgeToEdge(statusBarStyle = darkBars, navigationBarStyle = darkBars)
         super.onCreate(savedInstanceState)
-        // Info is the only screen until bottom-navigation hosts the tabs and passes its inner padding.
-        setContent { BluesJamTheme { InfoScreen(contentPadding = WindowInsets.systemBars.asPaddingValues()) } }
+        // TemporaryTabs hosts Próxima jam and Info until bottom-navigation replaces it.
+        setContent { BluesJamTheme { TemporaryTabs() } }
     }
 }
