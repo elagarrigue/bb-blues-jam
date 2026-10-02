@@ -49,7 +49,8 @@ slot chips in a distinct style (no fill, muted text, a leading `+`), never as sl
 
 Risk, not solved: **amber saturation**. A fresh setlist has every slot open, so every row shows
 seven amber chips over about three lines; "if everything glows, nothing stands out". Real nights
-fill slots, but this is how a newly published list will look. Worth the user's eye on the device.
+fill slots, but this is how a newly published list will look. The user saw it on the Pixel 5 on
+2 October 2026 and chose to keep it as is "for now"; revisit if it reads as noise at a real jam.
 
 ## Implementation-Time Questions
 

@@ -6,8 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current feature: `instrument-strip-component`, `in_progress` — validator blocked only on step D
-  (the user deletes the temporary jam 2026-10-31). Fifteen of 37 slices accepted.
+- Current state: sixteen of 37 slices accepted, the latest `instrument-strip-component`. No test jam
+  is left in the Sheet.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1778,6 +1778,18 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   Compose semantics test harness yet).
 - Next best step: the user deletes the temporary jam; the orchestrator confirms the no-upcoming line
   and asks the validator for a narrow recheck.
+
+### Session 055 — 2 October 2026
+
+- Goal: step D of `instrument-strip-component`.
+- Completed: the user deleted the temporary jam; on the Pixel 5 the app logs `upcoming none` and
+  shows the no-upcoming line. Status `passing` again for the validator's recheck.
+
+### Session 056 — 2 October 2026
+
+- Goal: close `instrument-strip-component`.
+- Completed: validator verdict **accept** after the narrow recheck; status `accepted`. The user kept
+  the seven-amber-chip rows "for now" (recorded in the risks doc).
 
 ## Notes For The Next Session
 
