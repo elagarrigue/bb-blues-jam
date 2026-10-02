@@ -18,7 +18,9 @@ import org.junit.Test
  *
  * Known limit: Konsist sees imports, not resolved references. A fully qualified reference with no
  * import slips past the import rules; the build-file rule closes that gap, because a cross-module
- * reference cannot compile without a Gradle `project(":…")` dependency.
+ * reference cannot compile without a Gradle `project(":…")` dependency. For the data libraries,
+ * which can reach another module transitively (kotlinx-serialization-core does), the text rule
+ * `data-libraries-only-in-core-data-qualified` closes it.
  *
  * Two rules read build files as plain text rather than Kotlin declarations:
  * `build-file-project-deps` (allowed `project(":…")` dependencies) and
@@ -119,6 +121,17 @@ class ModuleIsolationTest {
         scope.files.filter { it.modulePath != CORE_DATA }.flatMap { it.imports }
             .assertFalse(testName = "data-libraries-only-in-core-data") { import ->
                 DATA_LIBRARY_PREFIXES.any { import.name.startsWith(it) }
+            }
+    }
+
+    @Test
+    fun `only core data references the data libraries, even fully qualified`() {
+        scope.files
+            .filter { it.modulePath != CORE_DATA && it.modulePath != KONSIST_TEST }
+            .assertFalse(testName = "data-libraries-only-in-core-data-qualified") { file ->
+                file.text.lineSequence()
+                    .filterNot { it.trimStart().startsWith("import ") }
+                    .any { QUALIFIED_DATA_LIBRARY.containsMatchIn(it) }
             }
     }
 
@@ -243,6 +256,18 @@ class ModuleIsolationTest {
          * (D-13), so no other module may import them.
          */
         val DATA_LIBRARY_PREFIXES = listOf("okhttp3.", "androidx.room.", "kotlinx.serialization.")
+
+        /**
+         * A reference to a data library outside an import line, such as a fully qualified
+         * `kotlinx.serialization.KSerializer`, which compiles in a feature because serialization-core
+         * reaches it transitively. Import lines are `data-libraries-only-in-core-data`'s.
+         *
+         * Known limits: it is a line-based text match, so a qualified name split across lines at a
+         * dot, or written with a backticked segment, is not caught. The compile classpath still
+         * blocks okhttp3, Room and serialization-json outside `:core:data`, but not
+         * serialization-core.
+         */
+        val QUALIFIED_DATA_LIBRARY = Regex("""\b(okhttp3|androidx\.room|kotlinx\.serialization)\.""")
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")

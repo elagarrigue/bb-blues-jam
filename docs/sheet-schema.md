@@ -86,11 +86,12 @@ MusicBrainz, Deezer and Last.fm enrichment (`mbid`, `artistArea`, `deezerTrackId
 | `hora` | `startTime` | yes | `HH:MM`, 24 hours |
 | `lugar` | `venue` | yes | Free text |
 | `estado` | `status` | yes | `BORRADOR` → `DRAFT`, `PUBLICADA` → `PUBLISHED` |
-| — | `setlist` | — | Derived: the rows of the tab named `fecha`, sorted by `posicion` |
+| — | `setlist` | — | Derived: the rows of the tab named `fecha`, sorted by `posicion` (see **Mapper rules** for withheld and unavailable setlists) |
 
 A jam is historical when `fecha` is before today; on its own date a jam is not historical, and there
-is no archived status (domain model, `Jam.isHistorical`). At most one jam may be non-historical,
-that is, have a `fecha` of today or later.
+is no archived status (domain model, `Jam.isHistorical`). Today is the date in Buenos Aires. At
+most one jam may be non-historical, that is, have a `fecha` of today or later; when several are, the
+app shows the earliest and holds the others back (**Mapper rules**).
 
 `startTime` is a precision over `docs/domain-model.md`, which has only `date`: the jam poster
 carries a time, and the header of the next-jam screen needs it.
@@ -99,7 +100,7 @@ carries a time, and the header of the next-jam screen needs it.
 
 | Header | Field | Required | Format |
 |---|---|---|---|
-| `posicion` | `position` | yes | 1, 2, 3… with no gaps; row order in the tab is not trusted |
+| `posicion` | `position` | yes | 1, 2, 3… with no gaps; row order in the tab is not trusted. The app never renumbers: a row it drops leaves a gap (**Mapper rules**) |
 | `id_tema` | `songId` | yes | An `id` that exists in `Catalogo` |
 | `titulo` | `title` (fallback only) | yes | Copy of the catalog title. Used only as a fallback, see below |
 | `artista` | `artist` (fallback only) | yes | Copy of the catalog artist. Same fallback |
@@ -151,9 +152,11 @@ D-05).
 
 Split the cell on `;` and trim each entry. Empty entries are ignored, including the one a trailing
 `;` leaves. Every other entry must be `Nombre (instrumento)`: a name, then an instrument in
-parentheses. Both are required and may not contain `;`, `(` or `)` (`ExtraParticipant`). The mapper
-rejects a malformed entry such as `Juan saxo` rather than guessing. Entries keep their order. Extra
-participants are never open slots and never count for "where can I play?".
+parentheses, with or without a space between them (`Juan(saxo)` is valid). Both are required and
+may not contain `;`, `(` or `)` (`ExtraParticipant`). The mapper drops a malformed entry such as
+`Juan saxo` rather than guessing, and keeps the song and the other entries (user approval P1 of
+`jams-repository-cache`). Entries keep their order. Extra participants are never open slots and
+never count for "where can I play?".
 
 ## `Config`
 
@@ -209,7 +212,7 @@ the mapper or the type; "enrichment" fields are never in the Sheet.
 | `Jam.startTime: LocalTime` | `Jams.hora` |
 | `Jam.venue` | `Jams.lugar` |
 | `Jam.status: JamStatus` | `Jams.estado`: `BORRADOR`, `PUBLICADA` → `DRAFT`, `PUBLISHED` |
-| `Jam.setlist` | Derived: the rows of the tab named `fecha`, sorted by `posicion` |
+| `Jam.setlist: Setlist` | Derived. `Available`: the valid rows of the tab named `fecha`, sorted by `posicion`, with the count of dropped rows; `Withheld`: a `BORRADOR` jam; `Unavailable(problem)`: a `PUBLICADA` jam whose tab is missing or invalid, or whose rows are all invalid |
 | `Jam.isHistorical(today)` | Derived from `fecha`; today comes from the caller |
 | `JamSong.position` | `posicion` |
 | `JamSong.songId: SongId` | `id_tema` |
@@ -270,31 +273,58 @@ none) and checks each row of the `catalog` response:
   is left as it was. A valid response replaces the cached catalog whole, even when it has no songs
   (the Sheet is the authority, D-04).
 
-### `Jams` and jam tabs (for `jams-repository-cache`)
+### `Jams` and jam tabs (enforced by `jams-repository-cache`)
 
-- At most one non-historical jam (a `fecha` of today or later). Enforced by the repository slice.
-- Every `id_tema` resolves in `Catalogo`; when it does not, the tab's `titulo` / `artista` copy is
-  the fallback. Enforced by the repository slice.
-- `posicion` is unique and exactly 1..n within a tab. Enforced by the repository slice (and by
-  `Jam` once built).
-- A `Jams` row has a jam tab and a jam tab has a `Jams` row. The endpoint's half is settled: a
-  `PUBLICADA` row with no tab arrives with `setlistError` `missing_tab`; a tab with no `Jams` row
-  is ignored, never read or served; a per-jam error never fails the whole response. What the app
-  shows for a jam with a `setlistError` is **open**, left to `jams-repository-cache` (see
-  `risks-and-open-questions.md`).
-- **Only a `PUBLICADA` jam's setlist is served.** The jams endpoint reads a jam tab only when the
-  trimmed `estado` is exactly `PUBLICADA`; any other value, a typo or wrong case included, gives
-  `setlist: null` with no error and the tab is never opened. This is the one value the endpoint
-  interprets, because withholding a draft cannot be left to the client. The mapper still owns the
-  `estado` enum and rejects a typo. A tab is looked up only by a `fecha` that is `YYYY-MM-DD`
-  (else `invalid_date`) and that appears on one row only (else `duplicate_date`). Enforced by
-  the endpoint.
-- Every cell is trimmed before it is read (**Reading cells**). Done by the read endpoints, before
-  the mapper sees a value.
-- Enum and header matching is exact after trimming (**Reading cells**); `Otros` is parsed as in
-  **`Otros`**; slot identity follows **Identifiers**. Enforced by the repository slice.
-- All seven slot headers are present in every jam tab; a tab missing one is invalid. Detected by
-  the jams endpoint per jam (`setlistError` `missing_header`, the other jams still served); what the
-  app does with it is the repository slice's.
-- Empty slot cells in a past jam mean "not recorded" and are never shown as open. Enforced by the
-  repository slice.
+The jam mappers are `JamsMapper` (the `Jams` rows) and `SetlistMapper` (one jam's tab rows) in
+`:core:data`. They trim every cell again (empty means none) and match values exactly. The user's
+decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-cache.md`.
+
+| Field | Rule | When it fails |
+|---|---|---|
+| `fecha` | required; `YYYY-MM-DD` and a real date (`2026-02-30` is not) | the jam is rejected |
+| `fecha` unique | a `fecha` that parses and is on more than one row rejects every such row, valid or not (P2) | every such row is rejected |
+| `hora` | required; `HH:MM`, 24 hours, zero-padded (`9:00`, `24:00` are not) | the jam is rejected (P8) |
+| `lugar` | required | the jam is rejected (P8) |
+| `estado` | exactly `BORRADOR` or `PUBLICADA` (`Publicada` is not) | the jam is rejected |
+| `posicion` | required; digits only, at least 1 (`2.5`, `0`, `-1` are not) | the row is dropped |
+| `posicion` unique | a `posicion` that parses and is on more than one row drops every such row, valid or not | every such row is dropped |
+| `id_tema` | required; the **Identifiers** alphabet | the row is dropped |
+| `titulo`, `artista` | required (they are the fallback copies) | the row is dropped |
+| `tono` | required; **Keys**. Never filled from `tono_default` (D-08) | the row is dropped |
+| slot cells | empty = open slot, `-` = no slot, anything else = the musician's name | never fails |
+| `Otros` | **`Otros`** above | a malformed entry is dropped; the row is kept (P1) |
+
+- **A rejected `Jams` row never stops the others**, and a dropped setlist row never stops the
+  rest of its setlist (user approval P4): the setlist stays available with its valid rows, sorted by
+  `posicion` and **never renumbered**, because (`fecha`, `posicion`) is the write identity of a
+  JamSong. A gap is therefore possible; the setlist carries how many rows were dropped so a screen
+  can say it is incomplete. A setlist whose rows are all invalid is **unavailable**
+  (`INVALID_ROWS`), never an empty list. The Sheet itself should still number 1..n.
+- **The setlist state.** A `BORRADOR` jam is always **withheld**; a setlist or error that arrives
+  with one breaks the contract, is ignored (fail closed) and is reported. A `PUBLICADA` jam with a
+  `setlistError` is **unavailable** (P3): `missing_tab` → `MISSING_TAB`, `missing_header` and
+  `duplicate_header` → `INVALID_TAB` (so duplicate slot headers are settled by the endpoint; the
+  mapper never sees them), any other code → `UNKNOWN`. A `PUBLICADA` jam with neither a setlist nor
+  an error is unavailable (`UNKNOWN`). A published jam is never withheld. A published tab with
+  headers and no rows is an empty available setlist.
+- **At most one upcoming jam** (P5). With today's date in Buenos Aires (P7), the earliest jam that
+  is not historical is the upcoming one; later future jams are held back, shown in neither list,
+  and reported in the refresh log. Past jams are listed newest first.
+- **Catalog resolution.** Every `id_tema` is resolved in the cached `Catalogo` when the jams are
+  read (a Room view), so a later catalog fix shows without refetching the jams; when it is not
+  there, the tab's `titulo` / `artista` copy is the fallback.
+- **Past slots.** An empty slot cell in a past jam means "not recorded" and is dropped from the
+  lineup, so no past jam ever shows an open slot (P6).
+- **The endpoint's half.** Only a `PUBLICADA` jam's setlist is served: the jams endpoint reads a
+  jam tab only when the trimmed `estado` is exactly `PUBLICADA`; any other value, a typo or wrong
+  case included, gives `setlist: null` with no error and the tab is never opened. A tab is looked up
+  only by a `fecha` that is `YYYY-MM-DD` (else `invalid_date`) and that appears on one row only
+  (else `duplicate_date`); a `PUBLICADA` row with no tab arrives with `missing_tab`, a tab missing
+  a slot header with `missing_header`; a tab with no `Jams` row is ignored. A per-jam error never
+  fails the whole response. Enforced by the endpoint.
+- Every rejected row, dropped row, malformed `Otros` entry, ignored draft setlist, `setlistError`
+  and held-back jam is reported in the refresh outcome and the startup log line
+  (`jams refresh: …`), by index and date, never with a musician's name. Nothing is persisted, and no
+  admin surface shows them yet. Only a broken response (not JSON, `schemaVersion` other than 1, an
+  `error`, a missing key or a wrong type) fails the whole read, and then the cache is left as it
+  was; a valid response replaces the cached jams whole.

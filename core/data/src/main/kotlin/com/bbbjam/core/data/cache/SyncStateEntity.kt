@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * The freshness of one cached resource (`"catalog"`; the jams slice adds `"jams"`). Times are epoch
+ * The freshness of one cached resource (`"catalog"` or `"jams"`). Times are epoch
  * milliseconds. [failure] is the encoded [com.bbbjam.core.data.DataFailure] of the latest attempt,
  * or null when it succeeded.
  */

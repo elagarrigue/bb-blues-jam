@@ -43,8 +43,10 @@ class FreshnessTest {
             DataFailure.Service("missing_header"),
             DataFailure.InvalidResponse("songs: Field 'x' is required"),
             DataFailure.InvalidResponse(""),
+            DataFailure.Storage("SQLiteFullException"),
         ).forEach { assertEquals(it, decodeDataFailure(it.encode())) }
         assertEquals(DataFailure.InvalidResponse("something new"), decodeDataFailure("something new"))
+        assertEquals("Storage:SQLiteFullException", DataFailure.Storage("SQLiteFullException").encode())
     }
 
     private companion object {

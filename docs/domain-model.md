@@ -6,7 +6,9 @@ states, and the rules that govern transitions.
 ## Core Concepts
 
 ```
-Jam(date, startTime, venue, status: DRAFT | PUBLISHED, setlist: List<JamSong>)   // date is the identity
+Jam(date, startTime, venue, status: DRAFT | PUBLISHED, setlist: Setlist)   // date is the identity
+Setlist = Available(songs: List<JamSong>, droppedRows) | Withheld | Unavailable(problem)
+SetlistProblem = MISSING_TAB | INVALID_TAB | INVALID_ROWS | UNKNOWN
 JamSong(position, songId, title, artist, key, lineup: Lineup,
         extraParticipants: List<ExtraParticipant> = [])
 Lineup(slots: List<Slot>)                // at most the default count of each instrument (D-18)
@@ -17,13 +19,30 @@ Song(id, title, artist, defaultKey, tempo?, tags, difficulty?,
 ```
 
 `Key` follows the **Keys** format and `SongId` the `Catalogo.id` slug of `sheet-schema.md`. The
-types live in `:core:model` (package `com.bbbjam.core.model`); setlist positions are exactly 1..n in
-order, and `Jam.isHistorical(today)` takes today's date from the caller.
+types live in `:core:model` (package `com.bbbjam.core.model`), and `Jam.isHistorical(today)` takes
+today's date from the caller. In an available setlist, positions are at least 1, unique and
+ascending; gaps are allowed and positions are never renumbered, because they are the Sheet's
+`posicion`, the write identity of a JamSong (user approval P4 of `jams-repository-cache`,
+2 October 2026). The Sheet should still number 1..n; a gap means a row was dropped as invalid.
 
 ### Jam
 
 One monthly session: a date, a start time, a venue, a status, and an ordered setlist. At most one Jam is upcoming
 at a time. Jams whose date has passed are historical and read-only.
+
+### Setlist
+
+What a reader gets of a Jam's songs is a state, never a bare list, so "not published" or "broken"
+is never read as "no songs" (`jams-repository-cache`, decision D1):
+
+- **Available** — the songs in position order, plus how many tab rows were dropped as invalid
+  (`droppedRows`), so a screen can say the list is incomplete instead of showing a silent gap. A
+  published tab with headers and no rows is an empty available setlist.
+- **Withheld** — the Jam is a draft, so the list is not served to musicians. A published Jam is
+  never withheld; a draft may be withheld (a musician's read) or available (the admin's, later).
+- **Unavailable(problem)** — the Jam is published but the setlist cannot be shown: its tab is
+  missing (`MISSING_TAB`), lacks or doubles a header (`INVALID_TAB`), has rows of which none is
+  valid (`INVALID_ROWS`, never an empty available list), or the reason is unknown (`UNKNOWN`).
 
 ### JamSong
 
@@ -76,7 +95,12 @@ DRAFT ──publish──> PUBLISHED ──(date passes)──> archived (implic
 - **PUBLISHED.** The setlist is visible to musicians. The admin may still edit; edits to a published
   jam are visible immediately. There is no republish step and no unpublish in the MVP.
 - **Archived** is not a stored status. A jam is historical when its date has passed; past jams are
-  read from the Sheet, which is their authority.
+  read from the Sheet, which is their authority. "Today" is the date in Buenos Aires
+  (`JamCalendar`), so a jam is upcoming through its own night and historical from 00:00 of the
+  next day. In a past jam an empty slot means "not recorded": the lineup keeps only filled slots,
+  and no past jam ever shows an open slot.
+- **More than one future jam.** The earliest one is the upcoming jam; later ones are held back
+  (shown in neither list) and reported in the refresh log.
 
 The transition DRAFT → PUBLISHED is admin-initiated and writes through to the Sheet.
 

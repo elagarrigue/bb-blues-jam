@@ -8,7 +8,11 @@ import com.bbbjam.core.data.Fixtures
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.RefreshOutcome
+import com.bbbjam.core.data.jams.JamCalendar
+import com.bbbjam.core.data.jams.JamsRefreshOutcome
+import com.bbbjam.core.data.jams.JamsRepository
 import java.time.Clock
+import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -19,7 +23,7 @@ import org.koin.dsl.module
 class DataModuleTest {
 
     @Test
-    fun `dataModule resolves one catalog repository once Context and the endpoint are bound`() {
+    fun `dataModule resolves one catalog and one jams repository once Context and the endpoint are bound`() {
         val database = Fixtures.inMemoryDatabase()
         // What :app provides (androidContext, the BuildConfig endpoint), plus an in-memory database in
         // place of the file one, which needs a real Context.
@@ -36,6 +40,11 @@ class DataModuleTest {
             assertSame(first, app.koin.get<CatalogRepository>())
             assertEquals(Clock.systemUTC().zone, app.koin.get<Clock>().zone)
             assertEquals(RefreshOutcome.Failed(DataFailure.NotConfigured), runBlocking { first.refresh() })
+
+            val jams = app.koin.get<JamsRepository>()
+            assertSame(jams, app.koin.get<JamsRepository>())
+            assertEquals(ZoneId.of("America/Argentina/Buenos_Aires"), app.koin.get<JamCalendar>().zone)
+            assertEquals(JamsRefreshOutcome.Failed(DataFailure.NotConfigured), runBlocking { jams.refresh() })
         } finally {
             app.close()
             database.close()

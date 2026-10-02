@@ -1,12 +1,17 @@
 package com.bbbjam.core.data.catalog
 
+import android.database.sqlite.SQLiteFullException
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.Fixtures
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.MutableClock
+import com.bbbjam.core.data.cache.CatalogDao
+import com.bbbjam.core.data.cache.CatalogSongEntity
+import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
+import com.bbbjam.core.data.remote.SongDto
 import com.bbbjam.core.data.remote.TransportResult
 import com.bbbjam.core.model.SongId
 import java.time.Duration
@@ -31,6 +36,7 @@ import org.junit.Test
  */
 class DefaultCatalogRepositoryTest {
     private val database = Fixtures.inMemoryDatabase()
+    private val dao = FailingCatalogDao(database.catalogDao())
     private val clock = MutableClock(T0)
     private val transport = FakeTransport(TransportResult.Body(Fixtures.sample("catalog-seed.json")))
 
@@ -271,14 +277,68 @@ class DefaultCatalogRepositoryTest {
         assertEquals(2, transport.calls)
     }
 
+    @Test
+    fun `a full disk on replace is a storage failure for an explicit refresh and the cache is untouched`() = runTest {
+        val repository = repository()
+        repository.refresh()
+        dao.failReplace = true
+        clock.instant = T0.plusSeconds(1)
+
+        val outcome = repository.refresh()
+
+        assertEquals(RefreshOutcome.Failed(DataFailure.Storage("SQLiteFullException")), outcome)
+        val snapshot = repository.observeCatalog().first()
+        assertEquals(13, snapshot.songs.size)
+        assertEquals(T0, snapshot.freshness.fetchedAt)
+        assertEquals(DataFailure.Storage("SQLiteFullException"), snapshot.freshness.lastFailure)
+    }
+
+    @Test
+    fun `a full disk during a background refresh started by a collector does not crash`() = runTest {
+        dao.failReplace = true
+        val repository = repository()
+
+        val first = repository.observeCatalog().first()
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(emptyList<Any>(), first.songs)
+        assertEquals(1, transport.calls)
+        val failed = repository.observeCatalog().first()
+        assertEquals(DataFailure.Storage("SQLiteFullException"), failed.freshness.lastFailure)
+        assertEquals(emptyList<Any>(), failed.songs)
+    }
+
+    @Test
+    fun `a mapper exception is an invalid response, not a crash, and the cache is untouched`() = runTest {
+        repository().refresh()
+        val repository = repository(mapper = { throw IllegalArgumentException("Invalid key \"B \"\nsecond line") })
+
+        val outcome = repository.refresh()
+
+        assertEquals(RefreshOutcome.Failed(DataFailure.InvalidResponse("mapping: Invalid key \"B \"")), outcome)
+        assertEquals(13, repository.observeCatalog().first().songs.size)
+    }
+
     /** Collects the first snapshot and runs whatever refresh that collection launched up to its request. */
     private suspend fun TestScope.collectOnce(repository: CatalogRepository) {
         repository.observeCatalog().first()
         testScheduler.runCurrent()
     }
 
-    private fun TestScope.repository(transport: AppsScriptTransport = this@DefaultCatalogRepositoryTest.transport) =
-        DefaultCatalogRepository(transport, database.catalogDao(), clock, DataScope(backgroundScope))
+    private fun TestScope.repository(
+        transport: AppsScriptTransport = this@DefaultCatalogRepositoryTest.transport,
+        mapper: (List<SongDto>) -> MappedCatalog = CatalogMapper::map,
+    ) = DefaultCatalogRepository(transport, dao, clock, DataScope(backgroundScope), mapper)
+
+    /** The real DAO, except that a test can make the replace fail as on a full disk. */
+    private class FailingCatalogDao(private val real: CatalogDao) : CatalogDao by real {
+        var failReplace = false
+
+        override suspend fun replaceCatalog(songs: List<CatalogSongEntity>, state: SyncStateEntity) {
+            if (failReplace) throw SQLiteFullException("disk full")
+            real.replaceCatalog(songs, state)
+        }
+    }
 
     private class FakeTransport(var result: TransportResult) : AppsScriptTransport {
         var calls = 0

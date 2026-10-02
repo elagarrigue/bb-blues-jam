@@ -17,4 +17,5 @@ internal sealed interface TransportResult {
 /** Route names of `docs/apps-script-api.md`. */
 internal object Resources {
     const val CATALOG = "catalog"
+    const val JAMS = "jams"
 }

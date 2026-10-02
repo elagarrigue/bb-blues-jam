@@ -19,12 +19,20 @@ sealed interface DataFailure {
      * Google), a wrong shape or a `schemaVersion` other than 1. [detail] is for logs only.
      */
     data class InvalidResponse(val detail: String) : DataFailure
+
+    /**
+     * The answer was good but the cache refused to store it, for example a full disk
+     * (`SQLiteFullException`). [detail] is the exception's class name, for logs only. The cache keeps
+     * what it had.
+     */
+    data class Storage(val detail: String) : DataFailure
 }
 
 private const val NOT_CONFIGURED = "NotConfigured"
 private const val OFFLINE = "Offline"
 private const val SERVICE = "Service:"
 private const val INVALID_RESPONSE = "InvalidResponse:"
+private const val STORAGE = "Storage:"
 
 /** The failure as stored in the cache's `sync_state.failure` column. */
 internal fun DataFailure.encode(): String = when (this) {
@@ -32,6 +40,7 @@ internal fun DataFailure.encode(): String = when (this) {
     DataFailure.Offline -> OFFLINE
     is DataFailure.Service -> SERVICE + code
     is DataFailure.InvalidResponse -> INVALID_RESPONSE + detail
+    is DataFailure.Storage -> STORAGE + detail
 }
 
 /** The inverse of [encode]; an unknown value reads as an invalid response rather than failing. */
@@ -40,5 +49,6 @@ internal fun decodeDataFailure(stored: String): DataFailure = when {
     stored == OFFLINE -> DataFailure.Offline
     stored.startsWith(SERVICE) -> DataFailure.Service(stored.removePrefix(SERVICE))
     stored.startsWith(INVALID_RESPONSE) -> DataFailure.InvalidResponse(stored.removePrefix(INVALID_RESPONSE))
+    stored.startsWith(STORAGE) -> DataFailure.Storage(stored.removePrefix(STORAGE))
     else -> DataFailure.InvalidResponse(stored)
 }

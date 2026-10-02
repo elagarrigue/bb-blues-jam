@@ -13,7 +13,9 @@ as a whole, which is called the BB Blues Jam.
 
 ### Setlist
 The ordered list of songs to be played at one Jam. A Jam has exactly one Setlist. The Setlist is
-the artifact the admin builds and the musician reads.
+the artifact the admin builds and the musician reads. A Setlist is **withheld** while its Jam is a
+draft: a musician sees that it is being assembled, not an empty list. A Setlist is **unavailable**
+when its Jam is published but its tab cannot be read, or none of its rows is valid.
 
 ### JamSong
 One song as it appears in one Jam's Setlist: its position, the key chosen for that night, and its

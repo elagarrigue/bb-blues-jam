@@ -5,22 +5,36 @@ import android.util.Log
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.toLogLine
 import com.bbbjam.core.data.di.dataModule
+import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.jams.toLogLine
+import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.model.SongId
 import com.bbbjam.di.appModule
 import com.bbbjam.feature.info.di.infoModule
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
 /**
  * Starts Koin with every module; only `:app` calls `startKoin` (D-16). Then refreshes the catalog
- * once per process start (user approval Q3) and logs the outcome: counts, ids, issues and the
- * failure kind, never the URL.
+ * and the jams once per process start, concurrently (user approval Q3), and logs each outcome:
+ * counts, ids, dates, issues and the failure kind, never the URL or a musician's name. Once both are
+ * done it logs one line from the jams cache: the upcoming/past split and how many setlist songs
+ * resolve in the cached catalog. An exception that escapes is logged, not fatal.
  */
 class BluesJamApp : Application() {
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val appScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+            Log.e(LOG_TAG, "startup refresh failed", error)
+        },
+    )
 
     override fun onCreate() {
         super.onCreate()
@@ -29,12 +43,25 @@ class BluesJamApp : Application() {
             modules(appModule, dataModule, infoModule)
         }.koin
         val catalog = koin.get<CatalogRepository>()
+        val jams = koin.get<JamsRepository>()
         appScope.launch {
-            Log.i(LOG_TAG, catalog.refresh().toLogLine())
+            val catalogDone = async { Log.i(LOG_TAG, catalog.refresh().toLogLine()) }
+            val jamsDone = async { Log.i(LOG_TAG, jams.refresh().toLogLine()) }
+            catalogDone.await()
+            jamsDone.await()
+            val catalogIds = catalog.observeCatalog().first().songs.map { it.id }.toSet()
+            Log.i(LOG_TAG, jams.observeJams().first().toCacheLine { it in catalogIds })
         }
     }
 
     private companion object {
         const val LOG_TAG = "BluesJam"
+
+        /** `jams cache: upcoming <date|none>, past N, songs S (C from catalog)`: counts and dates only. */
+        fun JamsSnapshot.toCacheLine(inCatalog: (SongId) -> Boolean): String {
+            val songs = (listOfNotNull(upcoming) + past).flatMap { (it.setlist as? Setlist.Available)?.songs.orEmpty() }
+            return "jams cache: upcoming ${upcoming?.date ?: "none"}, past ${past.size}, " +
+                "songs ${songs.size} (${songs.count { inCatalog(it.songId) }} from catalog)"
+        }
     }
 }

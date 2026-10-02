@@ -4,20 +4,20 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * One monthly session. Its [date] is its identity (`Jams.fecha`). The [setlist] positions are
- * exactly 1..n in list order, so a gap, a duplicate or an out-of-order list cannot be built.
+ * One monthly session. Its [date] is its identity (`Jams.fecha`). Its [setlist] is a state, not a
+ * bare list: [Setlist.Available], [Setlist.Withheld] or [Setlist.Unavailable]. A published jam is
+ * never withheld; a draft may be withheld (a musician's read) or available (the admin's).
  */
 data class Jam(
     val date: LocalDate,
     val startTime: LocalTime,
     val venue: String,
     val status: JamStatus,
-    val setlist: List<JamSong>,
+    val setlist: Setlist,
 ) {
     init {
-        val positions = setlist.map { it.position }
-        require(positions == (1..setlist.size).toList()) {
-            "Setlist positions $positions of the $date jam must be 1..${setlist.size} in order"
+        require(!(status == JamStatus.PUBLISHED && setlist == Setlist.Withheld)) {
+            "The published $date jam cannot have a withheld setlist"
         }
     }
 

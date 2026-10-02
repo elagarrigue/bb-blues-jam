@@ -6,12 +6,19 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `jams-repository-cache`. Accepted: thirteen slices, the latest
-  `catalog-repository-cache`.
+- Current next ready feature: see Session 047. Accepted: fourteen slices, the latest
+  `jams-repository-cache`.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 2 October 2026 (session 042, `catalog-repository-cache`, JVM only) —
+- Last verified at: 2 October 2026 (session 045, `jams-repository-cache`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (13/13, new `data-libraries-only-in-core-data-qualified`), `detekt:
+  wired`, `ktlint: wired`; 35 result files, 0 failures (the 29 baseline files unchanged except
+  `JamTest` 4 → 6, `DefaultCatalogRepositoryTest` 14 → 17, `ModuleIsolationTest` 12 → 13, plus six
+  new classes). Pixel 5 (API 34): upgrade over the accepted v1 build, cold start 797 ms, `jams
+  refresh: updated 1 jams …`, `jams cache: upcoming none, past 1, songs 13 (13 from catalog)`,
+  database `user_version` 2; offline (airplane mode, restored to 0) both refreshes `failed Offline`,
+  same rows and `fetched_at`. Before that, session 042 (`catalog-repository-cache`, JVM only) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (12/12, new `data-libraries-only-in-core-data`),
   `detekt: wired`, `ktlint: wired`; 29 result files, 0 failures: the 20 baseline files unchanged
   except `ModuleIsolationTest` 11 → 12, plus nine new `:core:data` classes (58 tests). No device
@@ -52,7 +59,7 @@ libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:c
 depends on all three. `:app`'s `ModuleWiringTest` proves `:core:model` is visible from `:app`
 (through `JamStatus`); the `:core:data` marker is gone (session 042).
 
-`:core:data` (`catalog-repository-cache`, `in_progress`, convention `bluesjam.android.data`) reads
+`:core:data` (`catalog-repository-cache`, `accepted`, convention `bluesjam.android.data`) reads
 the catalog: `OkHttpAppsScriptTransport` (OkHttp 5.1.0) → `AppsScriptEnvelope`
 (kotlinx-serialization 1.9.0) → `CatalogMapper` (the catalog Mapper rules, Q1 duplicates reject
 every copy, Q2 a bad tempo/difficulty/songsterrId is dropped and the song kept) → Room 2.8.4
@@ -66,9 +73,25 @@ failure (`NotConfigured`, `Offline`, `Service(code)`, `InvalidResponse`) never t
 refreshes once per process start and logs `catalog refresh: …` (tag `BluesJam`, never the URL).
 The manifest now has `INTERNET`. Core library desugaring is on in every Android module.
 
+`:core:data` also reads the jams (`jams-repository-cache`, `passing`): `GET ?resource=jams` →
+`JamDto` → `JamsMapper` (the `Jams` rows: P2 a shared `fecha` rejects every such row, P8 `hora`
+and `lugar` required) and `SetlistMapper` (one tab: P4 a bad row is dropped and reported, the rest
+stay available, positions never renumbered; P1 `Juan(saxo)` valid, a malformed `Otros` entry
+dropped alone) → Room v2 (`jam`, `jam_song`, `jam_slot` with the slot's column index, `jam_extra`,
+foreign keys CASCADE, and the view `jam_song_resolved`, which resolves titles against the cached
+catalog at read time). `JamsRepository.observeJams()` emits `JamsSnapshot(upcoming, past,
+freshness)`: today comes from `JamCalendar` in Buenos Aires (P7), the earliest future jam is
+upcoming and later ones are held back (P5), past jams are newest first with only filled slots (P6).
+Both repositories now turn a refused write into `DataFailure.Storage` and a mapper exception into
+`InvalidResponse("mapping: …")`, and `DataScope` and `BluesJamApp`'s scope log an escaped exception
+instead of crashing. `BluesJamApp` refreshes catalog and jams concurrently and logs `jams refresh:
+…` and `jams cache: …` (counts and dates only).
+
 `:core:model` holds the domain types in `com.bbbjam.core.model` (`domain-model-types`, `accepted`):
-`Jam` (date as identity, setlist positions exactly 1..n in order, `isHistorical(today)` with the
-date from the caller), `JamStatus` (`DRAFT`, `PUBLISHED` only), `JamSong` (position ≥ 1, `songId`,
+`Jam` (date as identity, `setlist: Setlist`, `isHistorical(today)` with the date from the caller; a
+published jam is never withheld), `Setlist` (`Available(songs, droppedRows)` with positions ≥ 1,
+unique and ascending, gaps allowed, never empty when rows were dropped; `Withheld`;
+`Unavailable(SetlistProblem)`, set by `jams-repository-cache`), `JamStatus` (`DRAFT`, `PUBLISHED` only), `JamSong` (position ≥ 1, `songId`,
 `title`, `artist`, `key`, `lineup`, `extraParticipants` default empty), `Lineup` (`openSlots`,
 `hasOpenSlotFor`, `default()` = seven open slots in Sheet column order; never more of an instrument
 than the default, zero allowed — D-18), `Slot` (open when `musicianName` is null; blank names
@@ -112,7 +135,8 @@ dependencies. The catalog is shared from `gradle/libs.versions.toml` (new `targe
 `subprojects {}` block and do not lint `build-logic` itself.
 
 A test-only module `:konsist-test` (`bluesjam.jvm.library`, no project dependency) holds
-`ModuleIsolationTest`: 11 Konsist 0.17.3 tests that enforce the architecture skill's dependency rules
+`ModuleIsolationTest`: 13 Konsist 0.17.3 tests (12th `data-libraries-only-in-core-data`, 13th
+`data-libraries-only-in-core-data-qualified`) that enforce the architecture skill's dependency rules
 (no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
 `:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
 `project(":…")` dependencies in `core/*`/`feature/*` build files, every module build file applying
@@ -157,7 +181,7 @@ in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders 
 join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
 está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
 
-Product code: the `:core:model` domain types, the Info screen and the catalog data layer
+Product code: the `:core:model` domain types, the Info screen and the catalog and jams data layer
 (`:core:data`, not yet drawn by any screen).
 
 `backend/apps-script/` (not a Gradle module; `apps-script-read-endpoint`, `in_progress`) holds
@@ -1375,6 +1399,132 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   exceptions in the refresh coroutines could crash the app; the data-libraries Konsist rule is
   import-only (the compile classpath backs it up except possibly for serialization-core).
 - Next best step: plan `jams-repository-cache`.
+
+### Session 045 — 2 October 2026
+
+- Goal: implement `jams-repository-cache` (spec `docs/specs/jams-repository-cache.md`; its **User
+  Approvals** win over the body: D1 sealed `Setlist` and `DataFailure.Storage` approved, **P4 drop
+  only the bad row**, G1 the 13th Konsist rule approved, P1, P2, P3, P5, P6, P7, P8 as recommended).
+- Completed (all seven spec tasks; no split was needed):
+  - `:core:model`: new `Setlist` (`Available(songs, droppedRows)`, `Withheld`,
+    `Unavailable(SetlistProblem)`) and `SetlistProblem`; `Jam.setlist: Setlist`, the positions rule
+    moved to `Setlist.Available` (≥ 1, unique, ascending, gaps allowed; an empty `Available` with
+    dropped rows is rejected) and `Jam` rejects a published jam with a withheld setlist. `JamTest`
+    rewritten for P4 (gaps now build), new `SetlistTest`.
+  - `:core:data`: `remote/JamDto.kt` (`JamDto`, `SetlistRowDto`, `SlotsDto`, `SetlistErrorDto`),
+    `Resources.JAMS`; `jams/` (`JamsRepository`, `JamsSnapshot`, `JamCalendar`,
+    `JamsRefreshOutcome` + `toLogLine()`, `JamIssue`/`RejectedJam`, `SetlistIssue`/`SetlistRowIssue`,
+    `JamsMapper`, `SetlistMapper`, `DefaultJamsRepository`); `cache/` (`JamEntities.kt` with four
+    entities, the `jam_song_resolved` view and `JamWithChildren`, `JamsDao`, `JamCacheMapping.kt`,
+    `SyncStates.kt` with the helpers both repositories share); `BluesJamDatabase` version 2;
+    `DataFailure.Storage`; `DataScope.create` with a `CoroutineExceptionHandler`;
+    `DefaultCatalogRepository` gets the same storage and mapping handling (D5); `dataModule` binds
+    `JamCalendar` (Buenos Aires), `JamsDao`, `JamsRepository` and the reporting `DataScope`.
+  - `:app`: `BluesJamApp` refreshes catalog and jams concurrently, logs both lines and then `jams
+    cache: upcoming …, past …, songs … (… from catalog)`; its scope has an exception handler.
+  - Konsist: 13th rule `data-libraries-only-in-core-data-qualified`.
+  - Tests: `JamsMapperTest` 19, `JamsDaoTest` 5, `DefaultJamsRepositoryTest` 19,
+    `JamsRefreshOutcomeTest` 3, `DataScopeTest` 1, `SetlistTest` 5; `DefaultCatalogRepositoryTest`
+    +3 (storage explicit, storage background, mapper exception), `FreshnessTest` (Storage
+    round-trip), `DataModuleTest` (jams repository and Buenos Aires calendar), `Fixtures` (jams
+    body, jams sample, seed CSV reader).
+  - Docs: `docs/domain-model.md` (Setlist states, positions under P4, Buenos Aires day, past slots,
+    held-back jams), `CONTEXT.md` (withheld, unavailable), `docs/sheet-schema.md` (jam Mapper rules
+    now enforced, with a rules table and P1–P8; `posicion`, `Otros` and `Jam.setlist` rows),
+    `docs/risks-and-open-questions.md` (`setlistError` display, jam fixtures and the midnight
+    boundary settled), `.claude/skills/architecture/SKILL.md` (model types, jams layout, Room v2,
+    the catch rule, 13 Konsist rules).
+- Verification run (logs in the session scratchpad, `s045/`):
+  - Baseline on untouched HEAD `c01a5f2`: `CI=true ./init.sh` exit 0, three `wired`, 29 files.
+  - `./gradlew ktlintFormat` exit 0, then `CI=true ./init.sh` exit 0, `konsist: wired`, `detekt:
+    wired`, `ktlint: wired`; 35 result files, 0 failures (see Current Verified State).
+    `:core:data` + `:core:model` with `--rerun` five times: 145/145 each. Lint: `:core:data` no
+    issues; `:app` the same 14 pin warnings. No baseline, `ignoreFailures`, `@Suppress` or rule
+    disable; no catch of `Exception`, `RuntimeException`, `IllegalStateException` or `Throwable`.
+  - Robustness red → green: with `DefaultCatalogRepository.kt` still the HEAD blob, the two new
+    storage tests failed (`SQLiteFullException` thrown from `refresh()`; the background one escaped
+    the refresh); after the fix, 17/17.
+  - Failure demonstrations (each an edit of an existing file, restored with the SHA-1 checked):
+    Konsist G1 (a qualified `kotlinx.serialization.KSerializer` typealias in `InfoPresenter.kt` →
+    "Assert 'data-libraries-only-in-core-data-qualified' was violated (1 time)"); duplicate-date
+    rule off → 8 tests fail; P4 "blank the whole setlist" → 3 fail; P4 "renumber" → `expected:<[1,
+    3]> but was:<[1, 2]>`; a draft mapped to its setlist → `expected:<[Withheld, Withheld,
+    Withheld]> but was:<[Available(…`. Details in `feature_list.json`.
+  - Pixel 5 (API 34): the installed accepted build's database was `user_version` 1 with 100
+    songs; `./gradlew :app:installDebug` upgraded it (first install time unchanged). Online: cold
+    start 797 ms, `jams refresh: updated 1 jams, 0 rejected, 0 setlist issues, 0 held back`,
+    `catalog refresh: updated 100 songs, 0 rejected, 0 with dropped fields`, `jams cache: upcoming
+    none, past 1, songs 13 (13 from catalog)`; crash buffer and AndroidRuntime empty. Pulled
+    database: `user_version` 2, `jam` 1, `jam_song` 13, `jam_slot` 91, `jam_extra` 0,
+    `catalog_song` 100, `sync_state` `catalog` and `jams` with `fetched_at` set. Offline (airplane
+    mode on through adb, with the user's consent): cold start 745 ms, both refreshes `failed
+    Offline`, the `jams cache:` line unchanged, no crash; same rows, same `fetched_at`, newer
+    `attempted_at`, `failure` `Offline`. Airplane mode then disabled: `airplane_mode_on` = 0.
+  - URL hygiene: no tracked or new file and no log holds the URL.
+- Deviations from the spec body, and why:
+  - P4 (user approval) replaces the body's "any bad row makes the setlist `INVALID_ROWS`": a bad
+    row is dropped and counted in `Setlist.Available.droppedRows`; `PositionGap` does not exist
+    (gaps are allowed). Duplicate positions drop **every** row that shares a parsed position,
+    valid or not, like P2 for dates, so the mapper never guesses which row owns a write identity.
+  - Issues: `SetlistIssue` is a sealed type (`DraftSetlistIgnored`, `SetlistMissing`,
+    `SetlistError(code)`, `RowIssues(index, issues)`) and `SetlistRowIssue` carries `dropsRow`.
+    `MalformedExtraParticipant` holds no entry text, because an `Otros` entry is a person's name and
+    log lines never hold names. A draft that arrives with a `setlistError` is reported as
+    `DraftSetlistIgnored` too. Script `setlistError`s are counted as setlist issues in the log.
+  - The mapper's output pairs each `Jam` with `slotColumns` (`MappedJam`), the column index the
+    cache keeps for each slot, because `Lineup` cannot tell which guitar column a lone guitar is.
+  - Both repositories take an optional `mapper` constructor parameter (default the real mapper) so
+    the "mapper exception → `InvalidResponse`" path is tested; `dataModule` still passes four.
+  - The catalog repository's private freshness helpers moved to `cache/SyncStates.kt`;
+    `DefaultCatalogRepositoryTest`'s existing 14 test bodies are unchanged (its `repository()`
+    helper now passes a delegating DAO that can fail on demand).
+  - The `jams cache:` line counts "from catalog" as setlist songs whose id is in the cached catalog
+    (computed in `:app`), since the domain `JamSong` does not say where its title came from.
+- Known risk or unresolved issue:
+  - The read Flows still throw on a Room read exception (corrupt file); left to `list-states`.
+  - No midnight re-split: a screen open across midnight keeps the old split until it collects again.
+  - Rejected jams, dropped rows and held-back jams are visible only in logcat until an admin
+    surface exists.
+  - The live data has no names, `-` or `Otros`; those paths are proven by `jams-edge.json` only.
+  - The last-resort handler logs the throwable; an unforeseen exception message could in theory
+    carry request data. Every expected failure is already a typed outcome that never holds the URL.
+  - The v1 → v2 upgrade drops the cached catalog too (destructive); the next start refetches it.
+- Next best step: independent validation of `jams-repository-cache`.
+
+### Session 046 — 2 October 2026
+
+- Goal: repair `jams-repository-cache` after the validator's `revise` (test and docs only; no device
+  rerun needed). Status stays `passing`, awaiting re-validation.
+- Completed:
+  - F1: `JamsDaoTest` gains `a lone guitar keeps the column it was typed in, Guitarra 2 or Guitarra
+    1` (a published jam whose row 1 is `-`/`Pedro` and row 2 `Ana`/`-` under the two guitar
+    columns, through the mapper, `jamRows`, `replaceJams` and `observeJams`; the guitar slot's
+    `column_index` is 1 and 0, and `toDomain()` equals the mapped jam).
+  - F3: the `SetlistRowIssue.DuplicatePosition` KDoc now matches the rule (shared with another row,
+    every such row dropped, valid or not).
+  - F2 (docs only, rule unchanged): the known limits of
+    `data-libraries-only-in-core-data-qualified` are stated in its KDoc and the architecture skill.
+- Verification run:
+  - Red demonstration: `cache/JamCacheMapping.kt` (sha1 `7ad9c125…`) with `zip(columns)` replaced
+    by `DEFAULT_INSTRUMENTS.indexOf(instrument) + occurrence index` (the variant that passed all 108
+    tests before) → 109 tests, 1 failed: `expected:<{1=1, 2=0}> but was:<{1=0, 2=0}>`. Restored,
+    sha1 `7ad9c125f5fdb9069ef83c898492f546c1729997`.
+  - `./gradlew ktlintFormat` exit 0; `CI=true ./init.sh` exit 0, three `wired`, Konsist 13/13, 35
+    result files, 0 failures; `:core:model:test :core:data:testDebugUnitTest --rerun` 146/146.
+- Next best step: re-validation of `jams-repository-cache`.
+
+### Session 047 — 2 October 2026
+
+- Goal: re-validation of `jams-repository-cache`.
+- Completed: validator verdict **accept** after one revise round (a lone guitar's Sheet column was
+  not guarded through the cache; now a test proves it, red under an independent mutation). Status
+  `accepted`. The app now caches jams and setlists offline with withheld drafts, unavailable
+  setlists and dropped rows represented in the domain (D1/P4).
+- Known risk or unresolved issue: hardening `data-libraries-only-in-core-data-qualified` against
+  names split across lines or with backticks needs the user's approval (limits documented). The
+  only jam in the Sheet (2026-07-25) is past, so there is no upcoming jam to show until the user
+  adds the next date.
+- Next best step: the next ready slice in list order.
 
 ## Notes For The Next Session
 

@@ -17,7 +17,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 
 | Module | Holds | May depend on |
 |---|---|---|
-| `:core:model` | Domain types: `Jam`, `JamStatus`, `JamSong`, `Lineup`, `Slot`, `ExtraParticipant`, `Instrument`, `Song`, `Tempo`, `Difficulty`, `Key`, `SongId`. Pure Kotlin, no Android, no serialization, no date parsing, no clock. | nothing |
+| `:core:model` | Domain types: `Jam`, `JamStatus`, `Setlist`, `SetlistProblem`, `JamSong`, `Lineup`, `Slot`, `ExtraParticipant`, `Instrument`, `Song`, `Tempo`, `Difficulty`, `Key`, `SongId`. Pure Kotlin, no Android, no serialization, no date parsing, no clock. | nothing |
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
@@ -68,20 +68,27 @@ is. There is no `:feature:admin`.
   today's date (`Jam.isHistorical(today)`) and owns the time zone.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
-- Only `:core:data` imports `okhttp3.`, `androidx.room.` or `kotlinx.serialization.`: Sheet I/O
-  lives only in repositories (D-13). A feature sees repository interfaces and domain types.
+- Only `:core:data` imports or references `okhttp3.`, `androidx.room.` or
+  `kotlinx.serialization.`: Sheet I/O lives only in repositories (D-13). A feature sees repository
+  interfaces and domain types.
 
 Konsist enforces the first four rules (the clock one as `core-model-no-system-clock`, a textual
-match on each `:core:model` file), the data-library rule (`data-libraries-only-in-core-data`, on
-imports), the package roots, the ViewModel ban and
+match on each `:core:model` file), the data-library rule (`data-libraries-only-in-core-data` on imports, and
+`data-libraries-only-in-core-data-qualified`, a text match on every non-import line outside
+`:core:data` and `:konsist-test`, because kotlinx-serialization-core reaches a feature transitively
+and a fully qualified reference there compiles; known limits: it is a line-based text match, so a
+qualified name split across lines at a dot, or with a backticked segment, is not caught, and the
+compile classpath still blocks okhttp3, Room and serialization-json but not serialization-core), the
+package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
 colors) in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 12 rules (the 12th, `data-libraries-only-in-core-data`, came
-with `catalog-repository-cache`); the two that read build files are
+covered without editing it. It holds 13 rules (the 12th, `data-libraries-only-in-core-data`, came
+with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
+`jams-repository-cache`); the two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
@@ -197,8 +204,30 @@ them.
   `java.time.Clock`, `Clock.systemUTC()`, and a process-wide `DataScope`). `dataModule` needs
   `Context` (`androidContext()`) and `AppsScriptEndpoint` from `:app`, so `:core:data` uses
   `koin-core` only. Repositories are cache-first: a Flow from Room plus a single-flight
-  `refresh()`; a failure never touches the cache. The jams slice reuses the transport, the
-  envelope, `DataFailure`, `Freshness`, the `sync_state` table and the database.
+  `refresh()`; a failure never touches the cache.
+- **`:core:data` jams** (set by `jams-repository-cache`, spec
+  `docs/specs/jams-repository-cache.md`). `jams/`: public `JamsRepository` (`observeJams()`,
+  `refresh()`), `JamsSnapshot` (`upcoming`, `past`, `freshness`; the split is computed on each
+  emission, at most one upcoming, past newest first with only filled slots), `JamCalendar`
+  (`today()`/`now()` from the bound `Clock` in `JamCalendar.BUENOS_AIRES`; the only source of
+  "today" for jams, which presenters reuse; never `LocalDate.now()`), `JamsRefreshOutcome` +
+  `toLogLine()`, `JamIssue`, `RejectedJam`, `SetlistIssue`, `SetlistRowIssue`; internal
+  `JamsMapper`, `SetlistMapper`, `DefaultJamsRepository`. `remote/JamDto.kt` holds the jams DTOs.
+  Room database **version 2** (destructive from 1): tables `jam`, `jam_song` (PK `jam_date`,
+  `position`), `jam_slot` (PK + `column_index` 0..6, the slot's Sheet identity) and `jam_extra`, with
+  `ForeignKey` CASCADE from `jam`; the view `jam_song_resolved` resolves titles against
+  `catalog_song` at read time, so a catalog replace re-emits the jams; `JamsDao.observeJams()` is a
+  `@Transaction` query with three `@Relation`s. `cache/SyncStates.kt` holds the helpers both
+  repositories share (`toFreshness`, `isRefreshDue`, `recordedFailure`, `toStorageFailure`,
+  `mappingFailure`).
+- **Refresh robustness** (`jams-repository-cache`, both repositories). A write the cache refuses is
+  caught as `android.database.SQLException` (a full disk is `SQLiteFullException`) and becomes
+  `DataFailure.Storage(<exception class>)`; a mapper exception is caught as
+  `IllegalArgumentException` and becomes `InvalidResponse("mapping: …")`. **Never catch
+  `Exception`, `RuntimeException`, `IllegalStateException` or `Throwable`**: coroutine cancellation
+  is an `IllegalStateException`. As a last resort `DataScope.create` (bound in `dataModule`) and
+  `BluesJamApp`'s scope carry a `CoroutineExceptionHandler` that logs instead of crashing. The read
+  Flows still throw on a Room read exception (left to `list-states`).
 - **The Apps Script URL** never enters a tracked file. `app/build.gradle.kts` reads
   `bluesjam.appsScriptUrl` from the git-ignored `local.properties` into
   `BuildConfig.APPS_SCRIPT_URL` (`""` when missing), and `appModule` binds
