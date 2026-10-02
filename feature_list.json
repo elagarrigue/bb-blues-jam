@@ -323,7 +323,25 @@
       "Cache staleness is exposed so the UI can indicate it"
     ],
     "evidence": [],
-    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject). From sheet-schema-definition validation: the docs leave undefined two columns with the same slot header, 'Nombre(instrumento)' without a space, and duplicate Jams.fecha (marked unique but missing from the Mapper rules list) — settle them in this slice's mapper spec. D-20: the mapper still parses tempo, tags, difficulty and songsterrId (they are in the contract and nullable), but nothing downstream uses them for now."
+    "notes": "docs/technical-discovery.md. Offline reads are a requirement; the app shows last-known data with a staleness indicator rather than an error. Inherited from module-skeleton: if this is the first slice to put code in :core:data, delete the CoreDataMarker placeholder and its line in the :app ModuleWiringTest; when ModuleWiringTest has no lines left, delete it. Follow-up from domain-model-types validation: add trailing-space keys (\"B \", \"Bm \") to KeyTest's invalid list when this slice adds the key mapper (the mapper trims; the type must still reject). From sheet-schema-definition validation: the docs leave undefined two columns with the same slot header, 'Nombre(instrumento)' without a space, and duplicate Jams.fecha (marked unique but missing from the Mapper rules list) — settle them in this slice's mapper spec. D-20: the mapper still parses tempo, tags, difficulty and songsterrId (they are in the contract and nullable), but nothing downstream uses them for now. 1 October 2026: scoped to the catalog plus shared data infrastructure; the jams half and its inherited jam notes moved to jams-repository-cache (S1). Q2: an invalid D-20 field is dropped, not the song."
+  },
+  {
+    "id": "jams-repository-cache",
+    "area": "data",
+    "title": "Read jams and setlists into the cache",
+    "user_visible_behavior": "The app fetches the jams and their published setlists, stores them locally, and serves them from the cache when offline; a jam whose setlist is withheld or broken is shown as such, never as an empty list.",
+    "depends_on": [
+      "catalog-repository-cache",
+      "apps-script-jams-read-endpoint"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A unit test maps docs/api-samples/jams-*.json to domain types, including a withheld draft and a per-jam setlistError",
+      "With the network disabled the cached jams are still returned, with staleness exposed",
+      "At most one upcoming jam and the other jam mapper rules in docs/sheet-schema.md are enforced"
+    ],
+    "evidence": [],
+    "notes": "Split out of catalog-repository-cache on 1 October 2026 with the user's approval (S1). Reuses its HTTP client, sync_state table, freshness model and convention plugin. Jam.setlist is a non-null list today, so a withheld or unavailable setlist needs a domain-model decision. Proposed defaults from the catalog spec: duplicate slot headers cannot reach the mapper (the endpoint reports them per jam); accept 'Nombre(instrumento)' without a space; reject every jam row that shares a date; show a jam whose tab is broken as 'setlist unavailable', never hidden or empty. Inherited from sheet-schema-definition validation: duplicate slot headers, 'Nombre(instrumento)' without a space and duplicate Jams.fecha must be settled here."
   },
   {
     "id": "build-logic-conventions",
@@ -362,7 +380,8 @@
       "catalog-repository-cache",
       "design-tokens-theme",
       "molecule-presenter-harness",
-      "build-logic-conventions"
+      "build-logic-conventions",
+      "jams-repository-cache"
     ],
     "status": "not_started",
     "verification": [
@@ -498,7 +517,8 @@
     "user_visible_behavior": "The Anteriores tab shows past jams newest first, each with date, venue, song count and the first few titles.",
     "depends_on": [
       "catalog-repository-cache",
-      "design-tokens-theme"
+      "design-tokens-theme",
+      "jams-repository-cache"
     ],
     "status": "not_started",
     "verification": [

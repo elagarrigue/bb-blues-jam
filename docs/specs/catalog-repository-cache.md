@@ -505,3 +505,23 @@ time, so this was not prototyped on a device. Steps, with
 - The cold-start latency is unmeasured. The 45 s call timeout is an estimate.
 - The device path (`INTERNET`, Koin `Context`, desugared `Clock` on API 34) was not run on a
   device during planning.
+
+## User Approvals
+
+Recorded 1 October 2026, before implementation. Where they differ from the body, these win.
+
+- **New dependencies: approved** — KSP 2.3.12, Room 2.8.4, OkHttp 5.1.0, kotlinx-serialization 1.9.0
+  and its plugin, desugar_jdk_libs 2.1.5; test-only mockwebserver3 5.1.0, sqlite-bundled-jvm 2.6.2,
+  koin-test. **G1 approved**: the 7th convention plugin `bluesjam.android.data`, desugaring and
+  `buildConfig` in the existing conventions (update the architecture skill's desugaring wording).
+- **G2 approved**: the Konsist rule `data-libraries-only-in-core-data` (11 → 12), failing case
+  demonstrated.
+- **Q1**: a duplicated `Catalogo.id` rejects every copy (the recommendation).
+- **Q2: the user chose the alternative.** An invalid value in a field the MVP does not use (tempo,
+  difficulty, songsterrId — D-20) does **not** reject the song: the field is dropped (null) and the
+  song is kept, with the reason still collected for the log. Errors in id, title, artist or
+  defaultKey still reject the song. Update the Mapper rules in `docs/sheet-schema.md` to say so.
+- **Q3 approved**: stale after 30 minutes, refresh on every app start, automatic retry no sooner
+  than 60 s.
+- **S1 approved**: the jams half is split into a new feature `jams-repository-cache`, added to
+  `feature_list.json` by the orchestrator, with the inherited jam notes moved there.
