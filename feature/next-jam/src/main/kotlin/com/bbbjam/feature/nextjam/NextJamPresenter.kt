@@ -11,6 +11,7 @@ import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.Presenter
+import com.bbbjam.core.ui.strip.toInstrumentChips
 import java.time.LocalDate
 
 /**
@@ -70,4 +71,5 @@ private fun JamSong.toRow() = SongRowUiModel(
     title = title,
     key = key.value,
     keyDescription = NextJamCopy.keyDescription(key.value),
+    instruments = lineup.toInstrumentChips(extraParticipants),
 )

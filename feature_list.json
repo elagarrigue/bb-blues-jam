@@ -437,13 +437,17 @@
     "depends_on": [
       "next-jam-read-only-list"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "A Compose preview covers an all-open, an all-filled and a mixed lineup, with and without extras",
       "Open, filled and extra chips remain distinguishable with color and luminance removed (glyph and wording)",
       "Each chip carries a content description"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-02 session 052 (implementer): CI=true ./init.sh exit 0; konsist: wired (15/15, unchanged), detekt: wired, ktlint: wired; 40 result files, 220 tests, 0 failures. New LineupChipsTest 9, InstrumentStripDefaultsTest 5; ContrastTest 6 -> 8 (open slot on its chip fill 7.03, muted text on a filled chip 7.22); NextJamPresenterTest 6 -> 7. Lint :core:ui and :feature:next-jam no issues.",
+      "Failure demonstrations, each restored with sha1sum -c OK: reversed slot order -> LineupChipsTest 5 and NextJamPresenterTest 4 failures; extras mapped as OPEN_SLOT chips -> LineupChipsTest 2 and NextJamPresenterTest 1 failures; colors.slotOpen in NextJamScreen.kt -> Konsist 'amber-roles-allowlisted' violated; OPEN_FILL_ALPHA 0.9f -> ContrastTest 'contrast 1.1968 is below AA text (4.5)'; extra text slotOpen or extra glyph DOT -> InstrumentStripDefaultsTest failures.",
+      "Pixel 5 09281FDD4004U6: installDebug exit 0, cold start 912 ms, crash buffer and AndroidRuntime empty, BluesJam 'jams cache: upcoming none, past 1, songs 13', so the strip is not on screen. Spec step C (colour, greyscale, font scale 1.3, uiautomator) NOT run: pending the user's temporary jam (steps A/B) and cleanup (D)."
+    ],
     "notes": "D-07, the component that makes the collapsed list useful. Dimmed means open, lit means filled. Brightness alone fails in glare and for low-vision users, in the dark bar this app targets: pair it with shape or fill. Open design question in risks-and-open-questions.md. Icons at roughly 16dp must be sourced or drawn first. 2 October 2026: entry reworded from icons to labelled chips, as DESIGN.md and the risks doc settled on 19 September; extras shown with a distinct style (user decision, see the spec's User Approvals)."
   },
   {

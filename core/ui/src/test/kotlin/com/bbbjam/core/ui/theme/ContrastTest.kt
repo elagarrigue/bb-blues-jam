@@ -1,7 +1,9 @@
 package com.bbbjam.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import com.bbbjam.core.ui.strip.InstrumentStripDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,6 +35,18 @@ class ContrastTest {
 
     @Test
     fun `text on the background`() = assertContrast(colors.text, colors.background, expected = 14.41)
+
+    /** The instrument strip's open chip: amber on its 15% amber fill, composited over the row surface. */
+    @Test
+    fun `open slot on its chip fill`() = assertContrast(
+        colors.slotOpen,
+        colors.slotOpen.copy(alpha = InstrumentStripDefaults.OPEN_FILL_ALPHA).compositeOver(colors.surface),
+        expected = 7.03,
+    )
+
+    /** The instrument strip's filled chip. An extra chip has no fill: `muted text on a surface` covers it. */
+    @Test
+    fun `muted text on a filled chip`() = assertContrast(colors.textMuted, colors.slotFilled, expected = 7.22)
 
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {
         val lighter = maxOf(foreground.luminance(), background.luminance())

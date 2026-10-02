@@ -55,6 +55,9 @@ is. There is no `:feature:admin`.
   `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` may read `key` only. A
   slice that adds an amber use (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds that
   role for its module in the same diff, so each amber use is a reviewed decision.
+  Amber read **inside a `:core:ui` component** needs no allowlist entry: the instrument strip reads
+  `slotOpen` in `com.bbbjam.core.ui.strip`, so `:feature:next-jam` stays at `{key}` and the rule
+  guarantees the feature cannot draw open-slot amber outside the shared component.
 - "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as
   `remember(snapshot) { calendar.today() }` so a header agrees with the repository's upcoming/past
   split. Never `LocalDate.now()` or the device zone.
@@ -63,6 +66,11 @@ is. There is no `:feature:admin`.
   locale text differently, and the copy must be identical on the device and in tests. Times are
   padded with `padStart`, not `String.format` (locale-sensitive).
 - A component used by two features → `:core:ui`. Never copy it between features.
+  The instrument strip is the example (`instrument-strip-component`): `InstrumentStrip(chips)` draws
+  only `InstrumentChipUiModel`s (no domain type in the composable), and the pure mapper
+  `Lineup.toInstrumentChips(extras)` sits beside it so every feature maps a lineup identically; the
+  presenter calls the mapper, the screen only draws. UI copy shared by two features lives with the
+  component in `:core:ui` (`internal object InstrumentStripCopy`), not in a feature's `<Name>Copy`.
 - Wiring an implementation to its interface → the Koin module of the module that owns the
   implementation; `:app` only lists modules in `startKoin`.
 - Anything that needs two features to talk → `:app` navigation or a `:core` contract.
@@ -202,6 +210,11 @@ them.
   `docs/specs/design-tokens-theme.md`). Besides the runtime it exposes `androidx.compose.ui:ui` and
   `androidx.compose.material3:material3` as `api` (BOM-managed, material3 1.3.2), so a module that
   depends on it gets the token types and the themed components with no dependency line of its own.
+  `androidx.compose.material:material-icons-core` is declared explicitly as `implementation` in
+  `:core:ui` (catalog `androidx-compose-material-icons-core`, BOM-managed) for `Icons.Filled.Check`:
+  material3 1.3.2 pulls it transitively, but later material3 versions drop it, so relying on the
+  transitive copy would break an upgrade. A feature that needs an icon gets it from a `:core:ui`
+  component, or declares the dependency itself.
   Fonts are bundled static TTFs in `core/ui/src/main/res/font`, with their SIL OFL 1.1 texts in
   `core/ui/src/main/assets/licenses`; no downloadable fonts, because the app is used offline. The
   only XML color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, used by

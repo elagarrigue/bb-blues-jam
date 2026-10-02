@@ -8,6 +8,8 @@ import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.model.ExtraParticipant
+import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -15,7 +17,10 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
+import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.strip.InstrumentChipKind
+import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -68,6 +73,23 @@ class NextJamPresenterTest {
         lineup = Lineup.default(),
     )
 
+    /** The 7 chips of `Lineup.default()`, written out from the approved copy (instrument strip spec, C1). */
+    private val defaultChips = listOf(
+        open("GTR: LIBRE", "Guitarra: libre"),
+        open("GTR: LIBRE", "Guitarra: libre"),
+        open("BAJO: LIBRE", "Bajo: libre"),
+        open("BAT: LIBRE", "Batería: libre"),
+        open("VOZ: LIBRE", "Voz: libre"),
+        open("ARM: LIBRE", "Armónica: libre"),
+        open("TEC: LIBRE", "Teclados: libre"),
+    )
+
+    private fun open(label: String, description: String) =
+        InstrumentChipUiModel(label, description, InstrumentChipKind.OPEN_SLOT)
+
+    private fun filled(label: String, description: String) =
+        InstrumentChipUiModel(label, description, InstrumentChipKind.FILLED_SLOT)
+
     private fun jam(
         setlist: Setlist,
         status: JamStatus = JamStatus.PUBLISHED,
@@ -93,19 +115,19 @@ class NextJamPresenterTest {
             assertEquals(NextJamUiModel.Loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs))))
             val expectedRows = listOf(
-                SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B"),
-                SongRowUiModel(2, "02", "Walking Thru the Park", "A", "Tonalidad A"),
-                SongRowUiModel(3, "03", "Dust My Broom", "D", "Tonalidad D"),
-                SongRowUiModel(4, "04", "Blues Del Politico", "C", "Tonalidad C"),
-                SongRowUiModel(5, "05", "The Thrill Is Gone", "Bm", "Tonalidad Bm"),
-                SongRowUiModel(6, "06", "Blues del Equipaje", "A", "Tonalidad A"),
-                SongRowUiModel(7, "07", "Café Madrid", "G", "Tonalidad G"),
-                SongRowUiModel(8, "08", "Got My Mojo Working", "E", "Tonalidad E"),
-                SongRowUiModel(9, "09", "Messin' With the Kid", "C", "Tonalidad C"),
-                SongRowUiModel(10, "10", "Crossroads", "A", "Tonalidad A"),
-                SongRowUiModel(11, "11", "The Score", "C", "Tonalidad C"),
-                SongRowUiModel(12, "12", "Blues de Rosario", "E", "Tonalidad E"),
-                SongRowUiModel(13, "13", "Tres Palabras", "A", "Tonalidad A"),
+                SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B", defaultChips),
+                SongRowUiModel(2, "02", "Walking Thru the Park", "A", "Tonalidad A", defaultChips),
+                SongRowUiModel(3, "03", "Dust My Broom", "D", "Tonalidad D", defaultChips),
+                SongRowUiModel(4, "04", "Blues Del Politico", "C", "Tonalidad C", defaultChips),
+                SongRowUiModel(5, "05", "The Thrill Is Gone", "Bm", "Tonalidad Bm", defaultChips),
+                SongRowUiModel(6, "06", "Blues del Equipaje", "A", "Tonalidad A", defaultChips),
+                SongRowUiModel(7, "07", "Café Madrid", "G", "Tonalidad G", defaultChips),
+                SongRowUiModel(8, "08", "Got My Mojo Working", "E", "Tonalidad E", defaultChips),
+                SongRowUiModel(9, "09", "Messin' With the Kid", "C", "Tonalidad C", defaultChips),
+                SongRowUiModel(10, "10", "Crossroads", "A", "Tonalidad A", defaultChips),
+                SongRowUiModel(11, "11", "The Score", "C", "Tonalidad C", defaultChips),
+                SongRowUiModel(12, "12", "Blues de Rosario", "E", "Tonalidad E", defaultChips),
+                SongRowUiModel(13, "13", "Tres Palabras", "A", "Tonalidad A", defaultChips),
             )
             assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null)), awaitItem())
         }
@@ -128,7 +150,7 @@ class NextJamPresenterTest {
                 NextJamUiModel.Jam(
                     header,
                     SetlistUiModel.Songs(
-                        listOf(SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B")),
+                        listOf(SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B", defaultChips)),
                         null,
                     ),
                 ),
@@ -163,8 +185,8 @@ class NextJamPresenterTest {
         val today = LocalDate.of(2026, 10, 2)
         val withGap = listOf(seedSongs[0], seedSongs[2])
         val gapRows = listOf(
-            SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B"),
-            SongRowUiModel(3, "03", "Dust My Broom", "D", "Tonalidad D"),
+            SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B", defaultChips),
+            SongRowUiModel(3, "03", "Dust My Broom", "D", "Tonalidad D", defaultChips),
         )
         assertEquals(
             NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, null)),
@@ -224,5 +246,48 @@ class NextJamPresenterTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter(calendarAt("2026-10-31T23:00:00Z")).present(Unit) }.test {
             assertEquals("Esta noche", (awaitAfterLoading() as NextJamUiModel.Jam).header.timeRemaining)
         }
+    }
+
+    @Test
+    fun `each row carries its strip, slots in column order and then the extras`() {
+        val mixed = Lineup(
+            listOf(
+                Slot(Instrument.GUITAR),
+                Slot(Instrument.GUITAR, "Tincho"),
+                Slot(Instrument.BASS, "Nico"),
+                Slot(Instrument.DRUMS),
+                Slot(Instrument.VOCALS),
+                Slot(Instrument.HARMONICA, "Mono"),
+            ),
+        )
+        val withExtra = seedSongs[0].copy(lineup = mixed, extraParticipants = listOf(ExtraParticipant("Juan", "saxo")))
+        val emptyLineup = seedSongs[1].copy(lineup = Lineup(emptyList()))
+        val expectedRows = listOf(
+            SongRowUiModel(
+                1,
+                "01",
+                "Sweet Little Angel",
+                "B",
+                "Tonalidad B",
+                listOf(
+                    open("GTR: LIBRE", "Guitarra: libre"),
+                    filled("Gtr: Tincho", "Guitarra: Tincho"),
+                    filled("Bajo: Nico", "Bajo: Nico"),
+                    open("BAT: LIBRE", "Batería: libre"),
+                    open("VOZ: LIBRE", "Voz: libre"),
+                    filled("Arm: Mono", "Armónica: Mono"),
+                    InstrumentChipUiModel("+ saxo: Juan", "Otros: saxo, Juan", InstrumentChipKind.EXTRA),
+                ),
+            ),
+            SongRowUiModel(2, "02", "Walking Thru the Park", "A", "Tonalidad A", emptyList()),
+        )
+        val model = snapshot(
+            jam(Setlist.Available(listOf(withExtra, emptyLineup))),
+        ).toUiModel(LocalDate.of(2026, 10, 2))
+        assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null)), model)
+        // The extra is never open: the open chips are exactly the lineup's open slots (D-18).
+        val rows = ((model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
+        val chips = rows[0].instruments
+        assertEquals(mixed.openSlots.size, chips.count { it.isOpen })
     }
 }

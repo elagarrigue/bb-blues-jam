@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 
 /**
  * Everything Próxima jam draws, as plain values. No events in this slice: rows do not expand yet
@@ -29,7 +30,8 @@ sealed interface SetlistUiModel : UiModel {
 
 /**
  * One collapsed row. [position] is the Sheet's `posicion`, never renumbered; [positionLabel] is it
- * zero-padded ("01"). [keyDescription] is what a screen reader says for [key].
+ * zero-padded ("01"). [keyDescription] is what a screen reader says for [key]. [instruments] is the
+ * instrument strip: the lineup's slots in Sheet column order, then the extra participants.
  */
 data class SongRowUiModel(
     val position: Int,
@@ -37,4 +39,5 @@ data class SongRowUiModel(
     val title: String,
     val key: String,
     val keyDescription: String,
+    val instruments: List<InstrumentChipUiModel>,
 ) : UiModel

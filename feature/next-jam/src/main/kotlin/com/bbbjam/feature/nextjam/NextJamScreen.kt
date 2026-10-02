@@ -23,13 +23,20 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.bbbjam.core.model.ExtraParticipant
+import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.Lineup
+import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.strip.InstrumentStrip
+import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import org.koin.compose.koinInject
 
 /**
  * Próxima jam: the upcoming jam's date, venue and time remaining, and its songs as collapsed rows
- * (position, title, key in the amber `key` role). It renders [NextJamUiModel]; the presenter
- * decides. [contentPadding] goes inside the list, so the background runs edge to edge.
+ * (position, title, key in the amber `key` role) with the instrument strip under each. It renders
+ * [NextJamUiModel]; the presenter decides. [contentPadding] goes inside the list, so the background
+ * runs edge to edge.
  */
 @Composable
 fun NextJamScreen(
@@ -117,31 +124,37 @@ private fun SongRow(row: SongRowUiModel) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         // The key style's 44sp line plus two spacing.sm paddings makes the row at least 56dp
-        // (DESIGN.md song-row) without a dp literal.
-        Row(
+        // (DESIGN.md song-row) without a dp literal. The instrument strip goes under that line.
+        Column(
             modifier = Modifier.padding(horizontal = spacing.md, vertical = spacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing.md),
+            verticalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
-            Text(
-                text = row.positionLabel,
-                style = BluesJamTheme.typography.songTitle,
-                color = BluesJamTheme.colors.textMuted,
-            )
-            Text(
-                text = row.title,
-                style = BluesJamTheme.typography.songTitle,
-                color = BluesJamTheme.colors.text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = row.key,
-                style = BluesJamTheme.typography.key,
-                color = BluesJamTheme.colors.key,
-                modifier = Modifier.semantics { contentDescription = row.keyDescription },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.md),
+            ) {
+                Text(
+                    text = row.positionLabel,
+                    style = BluesJamTheme.typography.songTitle,
+                    color = BluesJamTheme.colors.textMuted,
+                )
+                Text(
+                    text = row.title,
+                    style = BluesJamTheme.typography.songTitle,
+                    color = BluesJamTheme.colors.text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = row.key,
+                    style = BluesJamTheme.typography.key,
+                    color = BluesJamTheme.colors.key,
+                    modifier = Modifier.semantics { contentDescription = row.keyDescription },
+                )
+            }
+            InstrumentStrip(row.instruments)
         }
     }
 }
@@ -149,11 +162,29 @@ private fun SongRow(row: SongRowUiModel) {
 @Preview
 @Composable
 private fun NextJamScreenPreview() {
+    val mixed = Lineup(
+        listOf(
+            Slot(Instrument.GUITAR),
+            Slot(Instrument.GUITAR, "Tincho"),
+            Slot(Instrument.BASS, "Nico"),
+            Slot(Instrument.DRUMS),
+            Slot(Instrument.VOCALS),
+            Slot(Instrument.HARMONICA, "Mono"),
+        ),
+    )
+    val allOpen = Lineup.default().toInstrumentChips(emptyList())
     val rows = listOf(
-        SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B"),
-        SongRowUiModel(2, "02", "Walking Thru the Park", "A", "Tonalidad A"),
-        SongRowUiModel(4, "04", "Blues Del Politico", "C", "Tonalidad C"),
-        SongRowUiModel(5, "05", "The Thrill Is Gone", "Bm", "Tonalidad Bm"),
+        SongRowUiModel(1, "01", "Sweet Little Angel", "B", "Tonalidad B", allOpen),
+        SongRowUiModel(
+            2,
+            "02",
+            "Walking Thru the Park",
+            "A",
+            "Tonalidad A",
+            mixed.toInstrumentChips(listOf(ExtraParticipant("Juan", "saxo"))),
+        ),
+        SongRowUiModel(4, "04", "Blues Del Politico", "C", "Tonalidad C", emptyList()),
+        SongRowUiModel(5, "05", "The Thrill Is Gone", "Bm", "Tonalidad Bm", allOpen),
     )
     val model = NextJamUiModel.Jam(
         header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días"),

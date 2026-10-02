@@ -6,12 +6,21 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: fifteen of 37 slices accepted, the latest `next-jam-read-only-list`; the temporary test jam
-  is gone (step E verified). See Session 051 for the next ready slices.
+- Current state: fifteen of 37 slices accepted, the latest `next-jam-read-only-list`.
+  `instrument-strip-component` is `in_progress` (session 052): code, tests, gate, failure
+  demonstrations and docs are done; the device check (spec step C) waits on the user's temporary
+  jam (steps A/B), because today's data has no upcoming jam and the strip is not visible.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 2 October 2026 (session 048, `next-jam-read-only-list`, JVM only) —
+- Last verified at: 2 October 2026 (session 052, `instrument-strip-component`) — `CI=true
+  ./init.sh` exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 40
+  result files, 220 tests, 0 failures: the 38 previous files unchanged except `ContrastTest` 6 → 8
+  and `NextJamPresenterTest` 6 → 7, plus `LineupChipsTest` 9 and `InstrumentStripDefaultsTest` 5.
+  Lint `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: installed,
+  cold start 912 ms, empty crash buffer and AndroidRuntime log, `jams cache: upcoming none`, so only
+  the no-upcoming line is drawn (no strip to check). Before that, session 048
+  (`next-jam-read-only-list`, JVM only) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (15/15, new `no-material-theme-outside-core-ui` and
   `amber-roles-allowlisted`), `detekt: wired`, `ktlint: wired`; 38 result files, 0 failures: the 35
   baseline files unchanged except `ModuleIsolationTest` 13 → 15, plus `JamDateTextTest` 7,
@@ -60,7 +69,7 @@
 
 Six product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-skeleton`,
 `accepted`), `:feature:info` (`info-screen`, `accepted`) and `:feature:next-jam`
-(`next-jam-read-only-list`, `in_progress`).
+(`next-jam-read-only-list`, `accepted`).
 `:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
 libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
 depends on all three. `:app`'s `ModuleWiringTest` proves `:core:model` is visible from `:app`
@@ -181,7 +190,7 @@ the tool's task in every module that compiles Kotlin; otherwise it names the mod
 The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
 `JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
 `SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
-`ContrastTest`, `WindowBackgroundTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
+`ContrastTest`, `WindowBackgroundTest`, `LineupChipsTest`, `InstrumentStripDefaultsTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
 `:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest` and `NextJamModuleTest`, and the
 `:core:data` classes.
 
@@ -193,7 +202,7 @@ in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders 
 join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
 está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
 
-`:feature:next-jam` (`next-jam-read-only-list`, `in_progress`) is the first feature that reads data
+`:feature:next-jam` (`next-jam-read-only-list`, `accepted`) is the first feature that reads data
 (project deps `:core:ui` and `:core:data`): `NextJamPresenter(JamsRepository, JamCalendar)` maps
 `observeJams().upcoming` to `NextJamUiModel` (`Loading` until something was ever fetched,
 `NoUpcomingJam`, or `Jam(header, setlist)` with `Songs(rows, droppedRowsNote)` or `NotShown` for a
@@ -202,6 +211,20 @@ written in `lugar`, and the time remaining ("Esta noche" from 18:00 on its own d
 "Mañana", "En n días") from `JamCalendar.today()` read once per snapshot. Rows show the zero-padded
 position, the title and the key in `typography.key` / `colors.key` (content description
 "Tonalidad <key>"). Copy in `NextJamCopy` (approved C1), day and month names hand-written.
+Under that line each row draws the instrument strip (`instrument-strip-component`, `in_progress`):
+`SongRowUiModel.instruments` comes from `lineup.toInstrumentChips(extraParticipants)` in the
+presenter; the screen calls `InstrumentStrip`. `:feature:next-jam` still reads only the amber `key`.
+
+`:core:ui` holds the instrument strip in `com.bbbjam.core.ui.strip` (`instrument-strip-component`,
+`in_progress`): `InstrumentChipUiModel(label, contentDescription, kind)` with `InstrumentChipKind`
+`OPEN_SLOT`/`FILLED_SLOT`/`EXTRA` (`isOpen` only for an open slot), the pure mapper
+`Lineup.toInstrumentChips(extras)` (slots in Sheet column order, then the extras in `Otros` order),
+the approved copy in `internal object InstrumentStripCopy` (`GTR: LIBRE` / `Gtr: Tincho` /
+`+ saxo: Juan`; "Guitarra: libre" / "Guitarra: Tincho" / "Otros: saxo, Juan"),
+`InstrumentStripDefaults` (`OPEN_FILL_ALPHA` 0.15, `DOT_TO_EM` 0.5, `style(kind)`), and the
+`InstrumentStrip(chips)` composable: a `FlowRow` of non-interactive chips, one semantics node each,
+static dot, `Icons.Filled.Check` (from `material-icons-core`, now declared explicitly), glyph sizes
+from the caption font size, four `@Preview`s.
 
 Product code: the `:core:model` domain types, the Info screen, the read-only Próxima jam screen and
 the catalog and jams data layer (`:core:data`).
@@ -1666,6 +1689,75 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Goal: step E of `next-jam-read-only-list`.
 - Completed: the user deleted the temporary jam; on the Pixel 5 the app now logs `upcoming none` and
   shows the approved no-upcoming line. The Sheet holds only the real 2026-07-25 jam again.
+
+### Session 052 — 2 October 2026
+
+- Goal: implement `instrument-strip-component` (spec `docs/specs/instrument-strip-component.md`,
+  with its User Approvals: C1 copy as written; E1 extras **shown** after the slot chips in a distinct
+  style; P1 static dot; D1 `material-icons-core` declared; amber allowlist unchanged).
+- Status: `in_progress`, not `passing`. Everything but spec step C is done and verified. Step C
+  needs an upcoming jam with names and an `Otros` cell; the Pixel 5 logs `jams cache: upcoming none,
+  past 1, songs 13`, so the strip is not on screen. Pending the user's steps A/B (temporary
+  `2026-10-31` jam with names, a long name, an all-filled song and `Juan (saxo)` in `Otros` on song
+  1), then C (colour, greyscale, font scale 1.3 restored to 1.0, uiautomator), then D (cleanup).
+- Completed:
+  - `:core:ui` `com.bbbjam.core.ui.strip`: `InstrumentChipUiModel.kt` (with `InstrumentChipKind`),
+    `InstrumentStripCopy.kt`, `LineupChips.kt`, `InstrumentStripDefaults.kt`, `InstrumentStrip.kt`
+    (previews all-open, all-filled with a long name, mixed, mixed with two extras). Tests
+    `LineupChipsTest` (9) and `InstrumentStripDefaultsTest` (5); `ContrastTest` + `open slot on its
+    chip fill` (7.03) and `muted text on a filled chip` (7.22). An extra chip has no fill, so its
+    contrast is the existing `muted text on a surface` (10.10); no duplicate test added.
+  - `gradle/libs.versions.toml` + `androidx-compose-material-icons-core` (BOM-managed);
+    `core/ui/build.gradle.kts` `implementation` of it.
+  - `:feature:next-jam`: `SongRowUiModel.instruments` (last, no default), presenter maps
+    `lineup.toInstrumentChips(extraParticipants)`, `SongRow` is a `Column` (title line `Row` with
+    `fillMaxWidth`, then `InstrumentStrip`), preview rows with strips; `NextJamPresenterTest`
+    expected rows gain the seven default chips, new case `each row carries its strip, slots in
+    column order and then the extras` (scenario 2 + `Juan (saxo)`, plus an empty lineup).
+  - Docs: `DESIGN.md` Instrument strip (static dot, filled text at full `textMuted`, extras style,
+    "three signals" corrected to glyph and wording, the per-chip glyph question closed);
+    architecture `SKILL.md` (strip as the shared-component example, shared copy in `:core:ui`, amber
+    inside `:core:ui` needs no allowlist entry, the explicit icons dependency);
+    `docs/risks-and-open-questions.md` (correction, pulse decision, amber saturation risk).
+- Deviation from the spec body (the approvals win): the chip carries `kind:
+  InstrumentChipKind` instead of `isOpen: Boolean` (a third, extra, style needed a third state;
+  `isOpen` stays as a derived property), and the mapper is `Lineup.toInstrumentChips(extras)`.
+  The extra's "+" is the first character of its label rather than a separate drawn icon, so the
+  label is exactly `+ saxo: Juan` as approved. Chip styles live in `InstrumentStripDefaults.style`
+  so a JVM test can check them.
+- Verification run:
+  - Baseline on untouched HEAD `d4e85f0`: `CI=true ./init.sh` exit 0, three `wired`, 38 files.
+  - After: `./gradlew ktlintFormat` exit 0; `CI=true ./init.sh` exit 0, `konsist: wired` (15/15),
+    `detekt: wired`, `ktlint: wired`; 40 result files, 220 tests, 0 failures (counts above).
+  - Greps on `feature/next-jam/src/main` and `core/ui/.../strip`: no `.dp` literal, no `Color(`, no
+    `MaterialTheme.`, no `animate`/`InfiniteTransition`, no tú forms; `slotOpen` appears only in
+    `InstrumentStripDefaults.kt`.
+  - Failure demonstrations, each an edit of an existing file, restored from a copy, `sha1sum -c`
+    OK (`LineupChips.kt` `d3a18471…`, `InstrumentStripDefaults.kt` `80f1f8c2…`, `NextJamScreen.kt`
+    `ee5d6197…`):
+    1. `slots.reversed().map` in the mapper → `:core:ui` 37 tests, 5 failed (`LineupChipsTest`:
+       default order, second guitar, mixed, extras, without extras) and `:feature:next-jam` 15, 4
+       failed (every `NextJamPresenterTest` case with rows), `expected:<[…GTR: LIBRE…]> but was:<…>`.
+    2. Extras mapped as slot chips (`kind = OPEN_SLOT`) → `:core:ui` 2 failed (`an extra never
+       looks like an open slot`, `extras come after every slot chip…`) and `NextJamPresenterTest`
+       1 failed (`each row carries its strip…`).
+    3. `BluesJamTheme.colors.slotOpen` for the key in `NextJamScreen.kt` → Konsist 15, 1 failed:
+       "Assert 'amber-roles-allowlisted' was violated (1 time). Invalid files: └── File
+       NextJamScreen.kt".
+    4. `OPEN_FILL_ALPHA = 0.9f` → `ContrastTest` `open slot on its chip fill`: "contrast
+       1.196784838139893 is below AA text (4.5)"; `InstrumentStripDefaultsTest` open style fails.
+    5. Extra text `slotOpen` → `InstrumentStripDefaultsTest` `an extra never uses amber or the slot
+       fills`: "Values should be different. Actual: Color(1.0, 0.7019608, 0.0, 1.0 …)" and `an extra
+       has no fill, muted text and no slot glyph` fail.
+    6. Extra glyph `DOT` → `an extra has no fill, muted text and no slot glyph`: "expected:<NONE>
+       but was:<DOT>".
+  - Device (Pixel 5 `09281FDD4004U6`, API 34): `./gradlew :app:installDebug` exit 0, force-stop,
+    `logcat -c`, `am start -W` COLD 912 ms; `BluesJam`: `catalog refresh: updated 100 songs…`,
+    `jams refresh: updated 1 jams…`, `jams cache: upcoming none, past 1, songs 13 (13 from
+    catalog)`; crash buffer and AndroidRuntime empty; screenshot (scratchpad) shows the approved
+    no-upcoming line. `font_scale` read 1.0 and was not changed. Steps A–D not run.
+- Next: the user runs steps A/B (including the `Otros` cell); then step C on the device, step D
+  cleanup, and only then `passing`.
 
 ## Notes For The Next Session
 

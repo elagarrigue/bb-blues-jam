@@ -178,14 +178,32 @@ instrument strip.
 The component the main screen depends on, and the Stitch export resolved it as **labelled chips
 rather than bare icons**. That is a better answer than the original icon-strip idea and is adopted:
 
-- **Open slot** — amber text on a 15% amber fill, a small pulsing dot, and the label `GTR: LIBRE`
-  in uppercase.
-- **Filled slot** — muted text on a neutral surface fill, a `check` glyph, and the label
-  `Gtr: Tincho` carrying the musician's name.
+- **Open slot** — amber (`slotOpen`) text on a 15% amber fill, a small **static** dot, and the
+  label `GTR: LIBRE` in uppercase. The Stitch export pulses the dot; the app does not (decided 2
+  October 2026, `instrument-strip-component`): with real data every slot can be open, an infinite
+  animation per chip redraws every frame on a phone held all night, and perpetual motion beside
+  content conflicts with WCAG 2.2.2. The pulse adds no information.
+- **Filled slot** — `textMuted` text at full alpha on a `slotFilled` fill, a `check` glyph, and the
+  label `Gtr: Tincho` carrying the musician's name. Not Stitch's `on-surface-variant/60` text, which
+  measures 4.36:1, below AA.
+- **Extra participant ("Otros")** — after all slot chips, in their `Otros` order: no fill,
+  `textMuted` text, never amber and never `slotFilled`, and a leading `+` instead of the dot or the
+  check, as part of the label `+ saxo: Juan` (the instrument as the admin typed it). It is never a
+  slot and never counts as open (D-18).
 
-Three signals separate the two states: fill, glyph, and wording. None of them is brightness alone,
-so the distinction survives glare, low vision and a greyscale screenshot. That was the open
-accessibility question and it is now closed.
+Chips are not interactive (no click, no 48dp target: filtering is the filter bar's job). Each is one
+screen-reader node: "Guitarra: libre", "Guitarra: Tincho", "Otros: saxo, Juan". Slot chips follow
+the Sheet's column order, not open-first, so strips are comparable down the list; guitars are not
+numbered; long names are cut with "…" and kept whole in the description. Glyph sizes derive from
+the caption's font size, so they scale with the system font. The component is `InstrumentStrip` in
+`:core:ui` (`com.bbbjam.core.ui.strip`).
+
+Two signals separate open from filled without colour or brightness: the **glyph** (dot versus
+check) and the **wording** (`LIBRE` in uppercase versus a name). The fills differ in hue only: in
+greyscale the 15% amber fill and `slotFilled` come out almost the same grey, so the earlier claim of
+"three signals: fill, glyph, and wording" overstated it. An extra adds a third look (no fill, `+`).
+Contrast, measured by `ContrastTest`: amber on its composited fill 7.03:1, `textMuted` on
+`slotFilled` 7.22:1, an extra's `textMuted` on the row surface 10.10:1.
 
 The cost is width: chips take far more room than 16dp icons, so the strip wraps to a second line on
 a busy song. Accepted, because a musician reading `VOZ: LIBRE` needs no legend, whereas an icon
@@ -296,9 +314,6 @@ instrument strip can grow.
 
 - `textMuted`, `slotFilled`, `archive` and `error` are still derived rather than measured: the
   Stitch export described them in words ("muted slate grey") without giving values.
-- Chips carry an instrument abbreviation (`Gtr`, `Bajo`, `Bat`, `Voz`, `Arm`, `Tec`). Decide
-  whether a glyph is still wanted alongside the text, which would cost width the strip does not
-  have to spare.
 - How the strip degrades when a lineup is unusually large (for example four guitars). Wrapping is
   the current answer; confirm it stays legible.
 - Drag-to-reorder versus explicit move actions, given that 48dp targets and dragging conflict on a

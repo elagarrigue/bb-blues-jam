@@ -34,13 +34,22 @@ endpoint and a repository function. Confirm this list is complete before writing
 
 Resolved 19 September 2026 by the Stitch export. The strip is labelled chips rather than ~16dp
 icons, so no icon set needs sourcing. An open slot reads `GTR: LIBRE` in amber on a tinted fill
-with a pulsing dot; a filled slot reads `Gtr: Tincho` in muted text with a check glyph.
+with a dot (Stitch pulses it; the app keeps it static, see below); a filled slot reads
+`Gtr: Tincho` in muted text with a check glyph.
 
-This also closes the accessibility concern: fill, glyph and wording all distinguish the two states,
-so neither depends on brightness. Spec is in `../DESIGN.md`.
+This also closes the accessibility concern, with one correction made on 2 October 2026
+(`instrument-strip-component`): the separating signals are the **glyph** (dot versus check) and the
+**wording** (`LIBRE` versus a name). The fills differ in hue only and come out almost the same grey
+in greyscale, so fill is not a luminance-independent signal. Spec is in `../DESIGN.md`.
 
-Remaining minor question: whether to add an instrument glyph beside the chip text, which would cost
-width the strip cannot spare.
+Settled in the same slice: the dot is **static**, not pulsing (an infinite animation per open chip
+costs battery all night and conflicts with WCAG 2.2.2; the pulse carries no information); no
+instrument glyph beside the chip text (width); extra participants ("Otros") are shown after the
+slot chips in a distinct style (no fill, muted text, a leading `+`), never as slots.
+
+Risk, not solved: **amber saturation**. A fresh setlist has every slot open, so every row shows
+seven amber chips over about three lines; "if everything glows, nothing stands out". Real nights
+fill slots, but this is how a newly published list will look. Worth the user's eye on the device.
 
 ## Implementation-Time Questions
 
