@@ -1002,6 +1002,48 @@ cambia de forma: el agente no puede leer la planilla ni el código desplegado, s
 rutas, un parámetro que no cambia nada, un borrador que aparece al publicarse— y por eso la URL vive
 en un archivo ignorado y el `validator` verificó que no estuviera en todo el historial de git.
 
+### 6.14 Sesión del 2 de octubre — la app lee la planilla y muestra la próxima jam
+
+Tres rebanadas más cerraron `accepted` —`catalog-repository-cache`, `jams-repository-cache` y
+`next-jam-read-only-list`— y con ellas la app dejó de ser un andamio: en el Pixel 5 lee los 100 temas
+reales, los guarda, sigue funcionando en modo avión y muestra la pantalla principal con datos
+verdaderos. Van 15 de 37.
+
+**El usuario decidió más que nunca, y en el momento justo.** Cada spec trajo preguntas que solo el
+organizador podía responder, y varias veces eligió distinto de lo recomendado. Ante un campo inválido
+que no se usa (D-20), prefirió mostrar el tema sin ese dato antes que esconderlo. Ante una fila mala
+en un setlist, prefirió ocultar solo esa fila antes que toda la lista. Esa segunda elección obligó a
+relajar una regla del dominio —las posiciones dejan de ser 1..n sin huecos— y la spec escribió el
+costo explícitamente: nunca renumerar, porque la posición es la identidad de las escrituras, y contar
+las filas descartadas para que la pantalla avise en vez de mostrar un hueco mudo. Las decisiones no
+se tomaron en abstracto: aparecieron cuando un agente las necesitó para seguir.
+
+**Un cambio a un tipo ya aceptado, hecho a la luz.** Una jam en borrador no tiene setlist que
+mostrar, pero el tipo `Jam` exigía una lista. En lugar de esconder el problema con una lista vacía
+—justo lo que el diseño prohíbe— el `planner` propuso un `Setlist` con tres estados y lo trajo para
+aprobar, porque tocaba una rebanada cerrada. Lo correcto no era evitar tocar lo aceptado sino no
+tocarlo en silencio.
+
+**El validador encontró el agujero que importaba.** Con una sola guitarra cargada en `Guitarra 2`,
+nada verificaba que la caché la guardara en esa columna y no en la primera. Ningún usuario lo
+notaría hoy; las ediciones del admin, mañana, escribirían en la celda equivocada. Lo encontró
+rompiendo el código a propósito y viendo que los 108 tests seguían en verde.
+
+**Probar con datos reales sin ensuciar los datos reales.** La pantalla principal necesita una jam
+futura y la planilla no tenía ninguna. Se usó la misma técnica que con el borrador: una jam de
+prueba que el organizador cargó, el agente verificó en el teléfono —encabezado, 13 temas, tonos en
+ámbar medidos en Display P3— y después se borró, con una verificación final de que la app volvió a
+decir "la próxima jam todavía no tiene fecha". La limpieza es parte de la prueba, no un detalle.
+
+**El teléfono como límite físico del flujo.** El Pixel 5 se desconectó varias veces, y el flujo se
+detuvo cada vez en lugar de dar por buena una pantalla que nadie había visto. Una rebanada sin la
+prueba en el dispositivo quedó en `in_progress`, nunca en `passing`.
+
+**Lo que confirmó sobre el método.** Una de las veces que el agente intentó seguir sin esperar, el
+organizador interrumpió la llamada: el teléfono estaba conectado, pero la jam de prueba todavía no
+estaba cargada. La autonomía funciona mientras el agente sepa qué no sabe; cuando el estado depende
+de algo que hace una persona, la pregunta cuesta menos que la suposición.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |

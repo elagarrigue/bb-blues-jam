@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: sixteen slices accepted through `next-jam-read-only-list`; the temporary test jam
+- Current state: fifteen of 37 slices accepted, the latest `next-jam-read-only-list`; the temporary test jam
   is gone (step E verified). See Session 051 for the next ready slices.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
