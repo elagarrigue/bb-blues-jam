@@ -6,9 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current feature: `catalog-repository-cache`, `in_progress` (session 042): code, tests, docs
-  and the gate are done; only the Pixel 5 device check remains (steps in Session 042). Accepted:
-  twelve slices, the latest `apps-script-read-endpoint` and `apps-script-jams-read-endpoint`.
+- Current next ready feature: `jams-repository-cache`. Accepted: thirteen slices, the latest
+  `catalog-repository-cache`.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1353,6 +1352,29 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - `combine` over two Room flows can emit once with the new songs and the old `fetchedAt` for an
     instant after a replace; never a partial catalog.
 - Next best step: run the device check above, then independent validation.
+
+### Session 043 — 2 October 2026
+
+- Goal: the pending device check of `catalog-repository-cache`.
+- Completed (orchestrator, Pixel 5 API 34, user consented to airplane mode): online the app
+  fetched 100 songs, 0 rejected, 0 dropped, no crash; the on-device Room database held 100 rows and
+  a clean `sync_state`. In airplane mode the app logged `failed Offline`, kept the 100 rows and the
+  same `fetched_at`, and recorded the failure for the staleness indicator. Airplane mode restored.
+  Status `passing`.
+- Next best step: independent validation.
+
+### Session 044 — 2 October 2026
+
+- Goal: independent validation of `catalog-repository-cache`.
+- Completed: validator verdict **accept**; status `accepted`. The app now reads the real catalog
+  (100 songs) and keeps it offline.
+- Verification run (by the validator): gate green, Konsist 12/12, 58 data tests rerun; five probes of
+  its own (Q2 both directions, cache wiped on failure, empty list before the cache, error envelope
+  as empty catalog) all caught; Pixel 5 reinstall fetched 100 songs; no URL in tree or history.
+- Known risk or unresolved issue (moved to `jams-repository-cache`'s notes): unhandled non-IO
+  exceptions in the refresh coroutines could crash the app; the data-libraries Konsist rule is
+  import-only (the compile classpath backs it up except possibly for serialization-core).
+- Next best step: plan `jams-repository-cache`.
 
 ## Notes For The Next Session
 
