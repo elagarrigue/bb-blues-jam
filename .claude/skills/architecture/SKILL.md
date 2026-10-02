@@ -68,16 +68,20 @@ is. There is no `:feature:admin`.
   today's date (`Jam.isHistorical(today)`) and owns the time zone.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
+- Only `:core:data` imports `okhttp3.`, `androidx.room.` or `kotlinx.serialization.`: Sheet I/O
+  lives only in repositories (D-13). A feature sees repository interfaces and domain types.
 
 Konsist enforces the first four rules (the clock one as `core-model-no-system-clock`, a textual
-match on each `:core:model` file), the package roots, the ViewModel ban and
+match on each `:core:model` file), the data-library rule (`data-libraries-only-in-core-data`, on
+imports), the package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
 colors) in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 11 rules; the two that read build files are
+covered without editing it. It holds 12 rules (the 12th, `data-libraries-only-in-core-data`, came
+with `catalog-repository-cache`); the two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
@@ -99,11 +103,12 @@ them.
   | Plugin | Applies / sets | Used by |
   |---|---|---|
   | `bluesjam.jvm.library` | `org.jetbrains.kotlin.jvm`; `java {}` source/target 11; `jvmTarget = JVM_11` | `:core:model`, `:konsist-test` |
-  | `bluesjam.android.library` | `com.android.library`; common Android setup (SDKs, Java 11) | `:core:data` |
-  | `bluesjam.android.application` | `com.android.application`; common Android setup; `targetSdk` from the catalog | `:app` |
+  | `bluesjam.android.library` | `com.android.library`; common Android setup (SDKs, Java 11, core library desugaring) | through `.data`, `.presenter` |
+  | `bluesjam.android.application` | `com.android.application`; common Android setup; `targetSdk` from the catalog; `buildFeatures.buildConfig = true` | `:app` |
   | `bluesjam.android.compose` | requires an Android plugin first; Compose compiler plugin; `buildFeatures.compose = true` | `:app` (and through the two below) |
   | `bluesjam.android.presenter` | `.android.library` + `.android.compose`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, molecule-runtime, turbine, kotlinx-coroutines-test | `:core:ui` |
   | `bluesjam.android.feature` | `.android.presenter`; `implementation` Koin BOM, `koin-core`, `koin-compose` | every `:feature:*` |
+  | `bluesjam.android.data` | `.android.library` + `org.jetbrains.kotlin.plugin.serialization` + `com.google.devtools.ksp`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, kotlinx-coroutines-test, turbine | `:core:data` |
 
   A convention adds a dependency only when every module of its kind needs it. Optional or
   module-specific libraries (Compose BOM, foundation, tooling, `koin-android`, junit in JVM modules
@@ -129,6 +134,7 @@ them.
 - **SDK levels come from the catalog**, set by the conventions: `compileSdk` and `minSdk` in every
   Android module (`configureAndroidCommon` in `ProjectExtensions.kt`), `targetSdk` in `:app` only
   through `bluesjam.android.application`. Change a level in `[versions]`, never in a module.
+  `configureAndroidCommon` also turns on core library desugaring (below).
 - **Java 11 everywhere**, set by the conventions: `compileOptions` `VERSION_11` in Android modules;
   `java {}` `VERSION_11` plus `jvmTarget = JVM_11` in JVM modules. No `jvmToolchain(11)`, which
   would make foojay download a JDK 11 for nothing. `build-logic` itself targets the daemon JVM
@@ -172,13 +178,43 @@ them.
   only XML color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, used by
   the `:app` window theme and guarded by `WindowBackgroundTest` against drift from the token.
 - **java.time and desugaring** (set by `domain-model-types`, spec
-  `docs/specs/domain-model-types.md`). `:core:model` uses `java.time.LocalDate`/`LocalTime`, which
-  do not exist below API 26 while `minSdk` is 24. That is safe only because `:core:model` never
-  parses a date or reads the clock. The first Android module that constructs or parses a date
-  (expected `catalog-repository-cache`) enables `isCoreLibraryDesugaringEnabled = true` plus
-  `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")` in `:app` **and** in its own
-  module: lint `NewApi` fails a library that uses java.time without it even when `:app` has it, and
-  a library that enables it without `:app` fails `:app:checkDebugAarMetadata`.
+  `docs/specs/domain-model-types.md`; moved into the conventions by `catalog-repository-cache`).
+  `minSdk` is 24 and java.time arrives at API 26. `configureAndroidCommon` sets
+  `isCoreLibraryDesugaringEnabled = true` and adds `coreLibraryDesugaring` desugar_jdk_libs 2.1.5
+  (catalog `desugar-jdk-libs`) in **every** Android module, `:app` included: lint `NewApi` fails a
+  library that uses java.time without it even when `:app` has it, and a library that enables it
+  without `:app` fails `:app:checkDebugAarMetadata`. Proven: with it off, `:core:data:lintDebug`
+  fails `NewApi` on `java.time.Clock#systemUTC` and 13 more calls. `:core:model` (JVM, no Android)
+  still never parses a date or reads the clock.
+- **`:core:data` layout** (set by `catalog-repository-cache`, spec
+  `docs/specs/catalog-repository-cache.md`). Package `com.bbbjam.core.data`: public
+  `AppsScriptEndpoint`, `DataFailure`, `Freshness`; `catalog/` (public `CatalogRepository`,
+  `CatalogSnapshot`, `RefreshOutcome`, `RejectedSong`, `DroppedFields`, `SongIssue`; internal
+  `CatalogMapper`, `DefaultCatalogRepository`); `remote/` (internal `AppsScriptTransport`,
+  `OkHttpAppsScriptTransport`, `AppsScriptEnvelope`, DTOs); `cache/` (internal Room database
+  `bluesjam-cache.db`, entities, DAO; version 1, no exported schema, destructive fallback, because
+  every table is a re-fetchable cache); `di/dataModule` (every binding `single`; it binds the one
+  `java.time.Clock`, `Clock.systemUTC()`, and a process-wide `DataScope`). `dataModule` needs
+  `Context` (`androidContext()`) and `AppsScriptEndpoint` from `:app`, so `:core:data` uses
+  `koin-core` only. Repositories are cache-first: a Flow from Room plus a single-flight
+  `refresh()`; a failure never touches the cache. The jams slice reuses the transport, the
+  envelope, `DataFailure`, `Freshness`, the `sync_state` table and the database.
+- **The Apps Script URL** never enters a tracked file. `app/build.gradle.kts` reads
+  `bluesjam.appsScriptUrl` from the git-ignored `local.properties` into
+  `BuildConfig.APPS_SCRIPT_URL` (`""` when missing), and `appModule` binds
+  `AppsScriptEndpoint.of(BuildConfig.APPS_SCRIPT_URL)`. Never log it (`AppsScriptEndpoint` hides
+  it in `toString`).
+- **Data stack pins** (`catalog-repository-cache`): KSP 2.3.12, Room 2.8.4, OkHttp 5.1.0,
+  kotlinx-serialization 1.9.0, desugar_jdk_libs 2.1.5; test only mockwebserver3 5.1.0,
+  sqlite-bundled-jvm 2.6.2, koin-test (BOM). Held so kotlin-stdlib stays at the 2.2.10 compiler on
+  `:app`'s runtime classpath: OkHttp 5.2+ needs stdlib 2.2.20+, serialization 1.10 needs 2.3.0
+  (the Koin 4.2 trap again). KSP 2.2.10-2.0.2 fails under built-in Kotlin ("Using
+  kotlin.sourceSets DSL to add Kotlin sources is not allowed"). Upgrade them with Kotlin.
+- **Room tests run on the JVM**: `Room.inMemoryDatabaseBuilder(ContextWrapper(null), …)
+  .setDriver(BundledSQLiteDriver())`, no Robolectric. The stub `android.database.SQLException`
+  loses its message, so avoid Room features that parse it (`@Upsert`; use
+  `@Insert(onConflict = REPLACE)`). A module test task that reads repository files declares them
+  as inputs (`core/data/build.gradle.kts` does so for `docs/api-samples` and `docs/sheet-seed`).
 - **Reference feature build file**: `feature/info/build.gradle.kts` (set by `info-screen`, reshaped
   by `build-logic-conventions`): `id("bluesjam.android.feature")`, `android { namespace =
   "com.bbbjam.feature.<name>" }`, its only project dependency `implementation(project(":core:ui"))`

@@ -1,6 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("bluesjam.android.application")
     id("bluesjam.android.compose")
+}
+
+// The Apps Script /exec URL lives only in the git-ignored local.properties
+// (bluesjam.appsScriptUrl), never in a tracked file. Without it the app builds with "" and every
+// read fails as NotConfigured (docs/apps-script-api.md, Transport).
+val appsScriptUrl: String = rootProject.file("local.properties").let { file ->
+    if (!file.isFile) return@let ""
+    val properties = Properties()
+    file.inputStream().use { properties.load(it) }
+    properties.getProperty("bluesjam.appsScriptUrl", "").trim()
 }
 
 android {
@@ -12,6 +24,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val escapedUrl = appsScriptUrl.replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField("String", "APPS_SCRIPT_URL", "\"$escapedUrl\"")
     }
 
     buildTypes {

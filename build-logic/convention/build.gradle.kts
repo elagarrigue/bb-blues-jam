@@ -31,6 +31,10 @@ gradlePlugin {
             id = "bluesjam.android.presenter"
             implementationClass = "com.bbbjam.buildlogic.AndroidPresenterConventionPlugin"
         }
+        register("androidData") {
+            id = "bluesjam.android.data"
+            implementationClass = "com.bbbjam.buildlogic.AndroidDataConventionPlugin"
+        }
         register("androidFeature") {
             id = "bluesjam.android.feature"
             implementationClass = "com.bbbjam.buildlogic.AndroidFeatureConventionPlugin"

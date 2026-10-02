@@ -5,7 +5,10 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
-/** The `:app` module: the Android library setup plus `targetSdk` from the catalog. */
+/**
+ * The `:app` module: the common Android setup, `targetSdk` from the catalog and BuildConfig, which
+ * carries the Apps Script URL read from the git-ignored `local.properties`.
+ */
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -13,6 +16,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             extensions.configure<ApplicationExtension> {
                 configureAndroidCommon(this)
                 defaultConfig.targetSdk = libs.intVersion("targetSdk")
+                buildFeatures.buildConfig = true
             }
         }
     }

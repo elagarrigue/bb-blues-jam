@@ -66,14 +66,15 @@ width the strip cannot spare.
 - **`Jams` row and jam tab mismatch.** The script half is settled (user approval A2 of
   `apps-script-jams-read-endpoint`): a `PUBLICADA` row with no tab is served with
   `setlistError` `missing_tab`, a tab with no `Jams` row is ignored (never read or served), and a
-  per-jam error never fails the whole response. Still open, for `catalog-repository-cache`: what
-  the app shows for a jam that arrives with a `setlistError`. An orphan tab is silent: an admin who
+  per-jam error never fails the whole response. Still open, for `jams-repository-cache` (split out
+  of `catalog-repository-cache` on 1 October 2026, S1): what the app shows for a jam that arrives
+  with a `setlistError`. An orphan tab is silent: an admin who
   adds a tab but forgets the `Jams` row sees nothing.
-- **Seed as mapper fixtures** (for `catalog-repository-cache`). No committed test guards
-  `docs/sheet-seed/` (decision P3 of the `sheet-schema-definition` spec): the real Sheet is the
-  authority, and a separate seed test would re-implement the mappers before they exist. Instead,
-  that slice's mapper tests should use the seed CSVs as fixtures, so the production parser checks
-  the seed.
+- **Seed as mapper fixtures.** No committed test guards `docs/sheet-seed/` on its own (decision P3
+  of the `sheet-schema-definition` spec): the mapper tests use the seed as fixtures instead. Done
+  for the catalog by `catalog-repository-cache`: `CatalogMapperTest` maps `Catalogo.csv` and
+  `catalog-seed.json` and asserts the same result, and `catalog-edge.json` is a fixture too. Still
+  to do for the jams by `jams-repository-cache` (`Jams.csv`, `2026-07-25.csv`, `jams-*.json`).
 - **Time zone and "how long until" text.** Phrases like "esta noche" depend on the device clock and
   a local definition of the jam date. Single-timezone community, so low risk, but the boundary
   behavior around midnight should be decided rather than emergent.

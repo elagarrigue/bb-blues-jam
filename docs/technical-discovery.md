@@ -31,7 +31,13 @@ and no hidden gestures without a visible alternative.
   articles, which already inject presenters with `koinInject()`.
 - **Admin is a state, not a module** (D-15). Each presenter reads the admin flag and adds admin
   controls to its own `UiModel`; there is no `:feature:admin`.
-- **Room** for local caching of the catalog and enrichment data.
+- **Room** for local caching of the catalog and enrichment data. Wired by
+  `catalog-repository-cache` with the rest of the data stack in `:core:data`: Room 2.8.4 through
+  KSP 2.3.12 (the 2.2.10-2.0.2 line fails under AGP 9 built-in Kotlin), OkHttp 5.1.0,
+  kotlinx-serialization 1.9.0 with its Kotlin 2.2.10 plugin, and core library desugaring
+  (desugar_jdk_libs 2.1.5) in every Android module for java.time below API 26. Pinned so
+  kotlin-stdlib stays at 2.2.10: OkHttp 5.2+ needs stdlib 2.2.20+ and serialization 1.10 needs
+  2.3.0. A Kotlin upgrade moves OkHttp, serialization and Koin together.
 - **DataStore** for the admin flag.
 - **Gradle** with a `check` task covering tests, Konsist, detekt, and ktlint.
 
@@ -57,7 +63,12 @@ single authority:
 | Published status | App | app → Sheet |
 
 Local Room cache backs offline reads; the app shows last-known data with a staleness indicator
-rather than an error.
+rather than an error. For the catalog (`catalog-repository-cache`): `CatalogRepository` always
+emits the cached songs with a `Freshness` (`fetchedAt`, `lastFailure`, `isRefreshing`,
+`isStale(now)`); the data is stale after 30 minutes or after a failed attempt; the app refreshes
+once per process start, and collecting the catalog refreshes in the background when stale, never
+sooner than 60 s after the last attempt (user approval Q3). A failed read never touches the cache;
+a valid one replaces it whole.
 
 The Sheet's schema is defined in `sheet-schema.md`: a `Catalogo` tab with stable song ids, a `Jams`
 index, one tab per jam date referencing catalog ids with one column per slot, and a `Config` tab
@@ -135,9 +146,17 @@ first call to the new version took 3.97 s (not proven cold); the validator's lat
   in `:core:ui` (`SamplePresenterTest`, `EventHandlerTest`), run on the JVM by `./gradlew check`.
   Presenter modules set `unitTests.isReturnDefaultValues = true`, because the Android Compose
   runtime calls `android.os.Trace`; no Robolectric.
+- **Repository and Room tests on the JVM** (`catalog-repository-cache`). Room runs in memory on
+  the bundled SQLite driver (`androidx.sqlite:sqlite-bundled-jvm` 2.6.2, test only) with
+  `ContextWrapper(null)` and `isReturnDefaultValues = true`; no Robolectric (it worked in the
+  prototype but took ~34 s on its first run). The HTTP client is tested against MockWebServer
+  (`mockwebserver3` 5.1.0), and no test reaches the network. The contract samples and the seed
+  CSV are the mapper fixtures. The stub `android.database.SQLException` drops its message, so a
+  Room feature that reads the message (`@Upsert`) fails on the JVM; the cache uses
+  `@Insert(onConflict = REPLACE)` instead. The device's framework SQLite is proven only on device.
 - **Konsist** for module isolation. This is evidence, not just hygiene: its output is part of the
   course deliverable. Wired: Konsist 0.17.3 in the test-only module `:konsist-test`
-  (`ModuleIsolationTest`, 8 tests), run by `./gradlew check`.
+  (`ModuleIsolationTest`, 12 tests since `catalog-repository-cache`), run by `./gradlew check`.
 - **detekt and ktlint** for static analysis and formatting. Wired: detekt 2.0.0-alpha.6 (no stable
   detekt runs on the Java 25 Gradle daemon) and ktlint 1.8.0 through ktlint-gradle 14.2.0, applied
   to every Kotlin module by the root `build.gradle.kts` and run by `./gradlew check`.

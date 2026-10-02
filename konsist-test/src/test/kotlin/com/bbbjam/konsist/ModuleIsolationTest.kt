@@ -115,6 +115,14 @@ class ModuleIsolationTest {
     }
 
     @Test
+    fun `only core data imports the data libraries`() {
+        scope.files.filter { it.modulePath != CORE_DATA }.flatMap { it.imports }
+            .assertFalse(testName = "data-libraries-only-in-core-data") { import ->
+                DATA_LIBRARY_PREFIXES.any { import.name.startsWith(it) }
+            }
+    }
+
+    @Test
     fun `colors outside core ui come from its tokens`() {
         scope.files
             .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
@@ -216,6 +224,7 @@ class ModuleIsolationTest {
         const val FEATURE = "feature/"
         const val CORE_MODEL = "core/model"
         const val CORE_UI = "core/ui"
+        const val CORE_DATA = "core/data"
         const val KONSIST_TEST = "konsist-test"
         const val APP = "app"
         const val PROJECT_PACKAGE = "com.bbbjam."
@@ -228,6 +237,12 @@ class ModuleIsolationTest {
             "androidx.lifecycle.viewmodel",
         )
         val VIEWMODEL_NAMES = setOf("ViewModel", "AndroidViewModel")
+
+        /**
+         * HTTP, the Room cache and JSON belong to `:core:data`: Sheet I/O lives only in repositories
+         * (D-13), so no other module may import them.
+         */
+        val DATA_LIBRARY_PREFIXES = listOf("okhttp3.", "androidx.room.", "kotlinx.serialization.")
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")

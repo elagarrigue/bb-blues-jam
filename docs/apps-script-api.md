@@ -11,9 +11,19 @@ come with `apps-script-write-auth`.
 ## Transport
 
 - **URL:** the deployment's `/exec` URL. It is not committed; the client reads it from the
-  git-ignored `local.properties` key `bluesjam.appsScriptUrl` (wired by
-  `catalog-repository-cache`). Redeploying as a *new version* of the same deployment keeps the
-  URL; a *new deployment* changes it.
+  git-ignored `local.properties` key `bluesjam.appsScriptUrl`. Redeploying as a *new version* of
+  the same deployment keeps the URL; a *new deployment* changes it.
+- **Client wiring** (`catalog-repository-cache`): `app/build.gradle.kts` reads that key with
+  `java.util.Properties` (so `\:` escapes are undone) into `BuildConfig.APPS_SCRIPT_URL`, `""` when
+  the file or the key is missing. `:app`'s `appModule` binds `AppsScriptEndpoint.of(…)` from it; a
+  blank or non-`https` URL means not configured, and every read then fails with `NotConfigured`
+  without a request (CI and a fresh clone build and start). The URL is never logged:
+  `AppsScriptEndpoint.toString()` hides it and the log line carries only counts and failure kinds.
+  Changing `local.properties` invalidates the configuration cache, so the next build picks it up.
+- **Client:** OkHttp 5.1.0 in `:core:data` (`OkHttpAppsScriptTransport`), with timeouts connect
+  15 s, read 30 s and a whole-call 45 s. Any `IOException` (timeouts included) is `Offline`; a
+  non-2xx status is `InvalidResponse`. Requests are `GET <url>?resource=<route>`, built with
+  `HttpUrl.newBuilder()`, and the body is read as UTF-8.
 - **Method:** `GET`, with the route in the query: `<url>?resource=catalog`. Matching is exact and
   case-sensitive.
 - **Redirect:** the web app answers with a `302` to a one-time URL on
@@ -98,7 +108,8 @@ Samples, both produced by `buildCatalog` and asserted equal to its output by
 - [`api-samples/catalog-edge.json`](api-samples/catalog-edge.json): the response for a messy tab
   (`test/helpers/edge-input.js`). Four songs: every optional field set with a numeric
   `songsterr_id`; none set; `rápido`/`fácil` with a padded string id; and `sin-tono`, with a `null`
-  `defaultKey`, tempo `Rápido` and `songsterrId` `"12.5"`, which the mapper must reject.
+  `defaultKey`, tempo `Rápido` and `songsterrId` `"12.5"`, which the mapper rejects for its
+  missing key, reporting all three problems (`sheet-schema.md`, **Mapper rules**).
 
 To check a live response: `node backend/apps-script/tools/check-response.js <file>` (exit 0 when
 valid). It checks shape only, like the samples' test.
@@ -186,7 +197,7 @@ A2):
 | `duplicate_header` | a mapped header appears twice in the tab (after trimming) |
 
 `message` is English and for logs only. What the app shows for a jam with a `setlistError` is
-`catalog-repository-cache`'s decision. The script still does not interpret values: keys, ids, the
+`jams-repository-cache`'s decision. The script still does not interpret values: keys, ids, the
 `estado` enum, `-`, `Otros`, unique or contiguous positions, catalog resolution and "at most one
 upcoming jam" are the mapper's (`sheet-schema.md`, **Mapper rules**).
 

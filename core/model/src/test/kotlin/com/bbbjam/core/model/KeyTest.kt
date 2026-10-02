@@ -36,6 +36,6 @@ class KeyTest {
 
     private companion object {
         val VALID = listOf("B", "Bm", "F#", "Bbm", "Ab", "C#m", "G")
-        val INVALID = listOf("", "H", "b", "bm", "Bmaj", "B m", " B", "Do", "F##", "Bm7", "BM", "Si")
+        val INVALID = listOf("", "H", "b", "bm", "Bmaj", "B m", " B", "B ", "Bm ", "Do", "F##", "Bm7", "BM", "Si")
     }
 }

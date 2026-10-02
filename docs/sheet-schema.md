@@ -14,9 +14,11 @@ Seed files for import live in `docs/sheet-seed/`.
 - **Every cell is trimmed** of surrounding whitespace before it is interpreted. A cell that is
   empty after trimming is empty.
 - **Headers and enum values match exactly after trimming.** Matching is case-sensitive and accents
-  are required: `rápido` is a tempo, `rapido` and `Rápido` are not. An unknown value is rejected by
-  the mapper, like a bad key, so a typo shows up when the tab is read. Admin advice, not enforced:
-  put a Sheets data-validation dropdown on `tempo`, `dificultad` and `estado`.
+  are required: `rápido` is a tempo, `rapido` and `Rápido` are not. An unknown `estado` is rejected
+  by the mapper, like a bad key. An unknown `tempo` or `dificultad` only drops that value: the song
+  is kept without it and the value is reported in the refresh log (user approval Q2 of
+  `catalog-repository-cache`; see **Mapper rules**). Admin advice, not enforced: put a Sheets
+  data-validation dropdown on `tempo`, `dificultad` and `estado`.
 - **The catalog endpoint emits display text.** `apps-script-read-endpoint` reads `Catalogo` with
   the cells' display values, trimmed, so what the admin sees is what the app gets, and a value
   Sheets auto-converted (say `7/4` into a date) cannot leak a date object. The one exception is
@@ -228,8 +230,9 @@ the mapper or the type; "enrichment" fields are never in the Sheet.
 
 ## Mapper rules
 
-Rules the schema states but that no domain type can check alone. Each is **enforced by the
-repository slice** (`catalog-repository-cache`), not by this document or the seed.
+Rules the schema states but that no domain type can check alone. Each is **enforced by a
+repository slice** (`catalog-repository-cache` for `Catalogo`, `jams-repository-cache` for `Jams`
+and the jam tabs), not by this document or the seed.
 
 The split between the endpoints and the mapper: the Apps Script read endpoints
 (`apps-script-read-endpoint`, `apps-script-jams-read-endpoint`) only trim cells, match headers by
@@ -239,16 +242,45 @@ missing required header, a mapped header twice), and withhold every setlist whos
 alphabet, enum values, tag and `Otros` splitting, unique ids and positions, catalog resolution —
 is the Kotlin mapper's, so there is one interpreter, tested in the gate against the domain types.
 
+### `Catalogo` (enforced by `catalog-repository-cache`)
+
+The catalog mapper is `CatalogMapper` in `:core:data`. It trims every cell again (empty means
+none) and checks each row of the `catalog` response:
+
+| Field | Rule | When it fails |
+|---|---|---|
+| `id` | required; the **Identifiers** alphabet | the song is rejected |
+| `titulo`, `artista` | required | the song is rejected |
+| `tono_default` | required; **Keys** | the song is rejected |
+| `tempo` | empty, or exactly `lento`, `medio`, `rápido` | the value is dropped; the song is kept |
+| `dificultad` | empty, or exactly `fácil`, `media`, `difícil` | the value is dropped; the song is kept |
+| `songsterr_id` | empty, or decimal digits that fit a 64-bit integer (`12.5`, `1e3` and `-5` are not ids) | the value is dropped; the song is kept |
+| `etiquetas` | split on `,`, each tag trimmed, empty tags dropped, order and duplicates kept | never fails |
+
+- **A required field decides; an optional one never hides a song.** `tempo`, `dificultad` and
+  `songsterr_id` are not used by the MVP (D-20), so a bad value there drops only that value (user
+  approval Q2, 1 October 2026). Every problem of a row, kept or rejected, is reported with its
+  1-based position in the response and its id, in the refresh outcome and the startup log line
+  (`catalog refresh: …`). Nothing is persisted, and no admin surface shows them yet.
+- **`Catalogo.id` is unique.** After the per-row checks, **every** valid row sharing an id is
+  rejected, not only the later ones (user approval Q1): the mapper does not guess which row is
+  right, and a setlist that references the id falls back to its tab's copy.
+- A rejected row never stops the others. Only a broken response (not JSON, `schemaVersion` other
+  than 1, an `error`, a missing key or a non-string value) fails the whole read, and then the cache
+  is left as it was. A valid response replaces the cached catalog whole, even when it has no songs
+  (the Sheet is the authority, D-04).
+
+### `Jams` and jam tabs (for `jams-repository-cache`)
+
 - At most one non-historical jam (a `fecha` of today or later). Enforced by the repository slice.
 - Every `id_tema` resolves in `Catalogo`; when it does not, the tab's `titulo` / `artista` copy is
   the fallback. Enforced by the repository slice.
 - `posicion` is unique and exactly 1..n within a tab. Enforced by the repository slice (and by
   `Jam` once built).
-- `Catalogo.id` is unique. Enforced by the repository slice.
 - A `Jams` row has a jam tab and a jam tab has a `Jams` row. The endpoint's half is settled: a
   `PUBLICADA` row with no tab arrives with `setlistError` `missing_tab`; a tab with no `Jams` row
   is ignored, never read or served; a per-jam error never fails the whole response. What the app
-  shows for a jam with a `setlistError` is **open**, left to `catalog-repository-cache` (see
+  shows for a jam with a `setlistError` is **open**, left to `jams-repository-cache` (see
   `risks-and-open-questions.md`).
 - **Only a `PUBLICADA` jam's setlist is served.** The jams endpoint reads a jam tab only when the
   trimmed `estado` is exactly `PUBLICADA`; any other value, a typo or wrong case included, gives

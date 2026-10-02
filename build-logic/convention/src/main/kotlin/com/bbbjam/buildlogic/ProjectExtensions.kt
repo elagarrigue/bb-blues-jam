@@ -7,6 +7,7 @@ import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 
 /** The root version catalog, `gradle/libs.versions.toml`. */
@@ -19,12 +20,22 @@ internal fun VersionCatalog.intVersion(alias: String): Int = findVersion(alias).
 /** A `[libraries]` entry, such as `koin-core`. */
 internal fun VersionCatalog.library(alias: String): Provider<MinimalExternalModuleDependency> = findLibrary(alias).get()
 
-/** SDK levels from the catalog and Java 11, shared by every Android module. */
+/**
+ * SDK levels from the catalog, Java 11 and core library desugaring, shared by every Android module.
+ *
+ * Desugaring is on everywhere because `minSdk` is below 26: lint `NewApi` fails a library that uses
+ * java.time without it even when `:app` has it, and a library that enables it without `:app` fails
+ * `:app:checkDebugAarMetadata`.
+ */
 internal fun Project.configureAndroidCommon(android: CommonExtension) {
     android.apply {
         compileSdk { version = release(libs.intVersion("compileSdk")) }
         defaultConfig.minSdk = libs.intVersion("minSdk")
         compileOptions.sourceCompatibility = JavaVersion.VERSION_11
         compileOptions.targetCompatibility = JavaVersion.VERSION_11
+        compileOptions.isCoreLibraryDesugaringEnabled = true
+    }
+    dependencies {
+        add("coreLibraryDesugaring", libs.library("desugar-jdk-libs"))
     }
 }

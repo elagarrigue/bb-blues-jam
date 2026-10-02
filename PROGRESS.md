@@ -6,12 +6,17 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current next ready feature: `catalog-repository-cache`. Accepted: twelve slices, the latest
-  `apps-script-read-endpoint` and `apps-script-jams-read-endpoint`.
+- Current feature: `catalog-repository-cache`, `in_progress` (session 042): code, tests, docs
+  and the gate are done; only the Pixel 5 device check remains (steps in Session 042). Accepted:
+  twelve slices, the latest `apps-script-read-endpoint` and `apps-script-jams-read-endpoint`.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 1 October 2026 (session 039, `apps-script-jams-read-endpoint` repo half) —
+- Last verified at: 2 October 2026 (session 042, `catalog-repository-cache`, JVM only) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (12/12, new `data-libraries-only-in-core-data`),
+  `detekt: wired`, `ktlint: wired`; 29 result files, 0 failures: the 20 baseline files unchanged
+  except `ModuleIsolationTest` 11 → 12, plus nine new `:core:data` classes (58 tests). No device
+  run. Before that, 1 October 2026 (session 039, `apps-script-jams-read-endpoint` repo half) —
   `node --test backend/apps-script/test/*.test.js` 68/68 (outside the gate); `CI=true ./init.sh`
   exit 0, three `wired`, the 20 test result files identical to the baseline. Before that, session 036 — live endpoint: checker OK on 100 songs,
   `config` → `unknown_resource`, warm read median ~2.5 s. Session 035 (`apps-script-read-endpoint` repo half) —
@@ -45,9 +50,22 @@ Five product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-s
 `accepted`) and `:feature:info` (`info-screen`, `accepted`).
 `:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
 libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
-depends on all three. `:core:data` still holds only a placeholder marker object; `:app`'s
-`ModuleWiringTest` proves `:core:data` and `:core:model` are visible from `:app` (the latter through
-`JamStatus`).
+depends on all three. `:app`'s `ModuleWiringTest` proves `:core:model` is visible from `:app`
+(through `JamStatus`); the `:core:data` marker is gone (session 042).
+
+`:core:data` (`catalog-repository-cache`, `in_progress`, convention `bluesjam.android.data`) reads
+the catalog: `OkHttpAppsScriptTransport` (OkHttp 5.1.0) → `AppsScriptEnvelope`
+(kotlinx-serialization 1.9.0) → `CatalogMapper` (the catalog Mapper rules, Q1 duplicates reject
+every copy, Q2 a bad tempo/difficulty/songsterrId is dropped and the song kept) → Room 2.8.4
+(`bluesjam-cache.db`, tables `catalog_song` and `sync_state`). `CatalogRepository` is
+cache-first: `observeCatalog()` emits the cached songs with `Freshness` (`fetchedAt`,
+`lastFailure`, `isRefreshing`, `isStale(now)`: stale after 30 min or a failure) and refreshes in
+the background when stale, never within 60 s of the last attempt; `refresh()` is single-flight. A
+failure (`NotConfigured`, `Offline`, `Service(code)`, `InvalidResponse`) never touches the cache.
+`:app` reads `bluesjam.appsScriptUrl` from the git-ignored `local.properties` into
+`BuildConfig.APPS_SCRIPT_URL`, binds `AppsScriptEndpoint` in `appModule`, starts `dataModule`,
+refreshes once per process start and logs `catalog refresh: …` (tag `BluesJam`, never the URL).
+The manifest now has `INTERNET`. Core library desugaring is on in every Android module.
 
 `:core:model` holds the domain types in `com.bbbjam.core.model` (`domain-model-types`, `accepted`):
 `Jam` (date as identity, setlist positions exactly 1..n in order, `isHistorical(today)` with the
@@ -140,7 +158,8 @@ in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders 
 join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
 está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
 
-Product code: the `:core:model` domain types and the Info screen.
+Product code: the `:core:model` domain types, the Info screen and the catalog data layer
+(`:core:data`, not yet drawn by any screen).
 
 `backend/apps-script/` (not a Gradle module; `apps-script-read-endpoint`, `in_progress`) holds
 the Apps Script web app: `appsscript.json` (V8, `spreadsheets.currentonly`, executes as the owner,
@@ -1225,6 +1244,115 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   `src` change must update them (noted on `apps-script-write-auth`). A true cold call is still
   unmeasured.
 - Next best step: plan `catalog-repository-cache`.
+
+### Session 042 — 2 October 2026
+
+- Goal: implement `catalog-repository-cache` (spec `docs/specs/catalog-repository-cache.md`; its
+  **User Approvals** win over the body: dependencies and G1 approved, G2 approved, Q1 reject every
+  duplicate, **Q2 drop an invalid tempo/difficulty/songsterrId and keep the song**, Q3 30 min /
+  every start / 60 s, S1 jams split out).
+- Completed:
+  - Build: catalog versions `ksp` 2.3.12, `room` 2.8.4, `okhttp` 5.1.0, `kotlinxSerialization`
+    1.9.0, `desugarJdkLibs` 2.1.5, `sqlite` 2.6.2 and their libraries/plugins; root `apply false`
+    for `kotlin-serialization` and `ksp`; new 7th convention `bluesjam.android.data`
+    (`AndroidDataConventionPlugin`); desugaring in `configureAndroidCommon` (every Android
+    module); `buildFeatures.buildConfig = true` in the application convention;
+    `app/build.gradle.kts` reads `local.properties` into `BuildConfig.APPS_SCRIPT_URL`.
+  - `:core:data`: `AppsScriptEndpoint`, `DataFailure`, `Freshness`, `DataScope`;
+    `catalog/` (`CatalogRepository`, `CatalogSnapshot`, `RefreshOutcome` + `toLogLine()`,
+    `SongIssue`, `RejectedSong`, `DroppedFields`, `CatalogMapper`, `DefaultCatalogRepository`);
+    `remote/` (`AppsScriptTransport`, `OkHttpAppsScriptTransport`, `AppsScriptEnvelope`,
+    `SongDto`); `cache/` (`BluesJamDatabase`, `CatalogSongEntity`, `SyncStateEntity`,
+    `CatalogDao`, `Converters`, entity mapping); `di/dataModule`. `CoreDataMarker` deleted.
+  - `:app`: `INTERNET` permission; `appModule` binds `AppsScriptEndpoint`; `BluesJamApp` starts
+    `dataModule`, refreshes the catalog once per start and logs the outcome line.
+    `ModuleWiringTest` lost its `CoreDataMarker` line (the `JamStatus` line stays).
+  - `KeyTest`: `"B "` and `"Bm "` added to the invalid keys.
+  - Konsist: 12th rule `data-libraries-only-in-core-data` (no `okhttp3.`, `androidx.room.`,
+    `kotlinx.serialization.` import outside `:core:data`).
+  - Docs: architecture skill (7th plugin, desugaring everywhere, buildConfig, URL path,
+    `:core:data` layout, pins, Room JVM tests, 12 Konsist rules, the data-library rule),
+    `apps-script-api.md` (client wiring and timeouts; `setlistError` display now
+    `jams-repository-cache`'s), `sheet-schema.md` (Reading cells and a `Catalogo` **Mapper rules**
+    table with Q1 and Q2; the jam rules under their own heading for `jams-repository-cache`),
+    `technical-discovery.md` (data stack, freshness policy, JVM Room testing),
+    `risks-and-open-questions.md` (seed fixtures done for the catalog; the jams items moved to S1).
+- Verification run (logs in the session scratchpad):
+  - Baseline on untouched HEAD `b295443`: `CI=true ./init.sh` exit 0, three `wired`, 20 files.
+  - `./gradlew ktlintFormat` exit 0, then `CI=true ./init.sh` exit 0 (cold 1 m 19 s), `konsist:
+    wired`, `detekt: wired`, `ktlint: wired`. 29 result files, 0 failures: the 20 baseline files
+    identical in names and counts except `ModuleIsolationTest` 11 → 12 (`ModuleWiringTest` 1,
+    `KeyTest` 3), plus `AppsScriptEndpointTest` 3, `FreshnessTest` 4, `CatalogDaoTest` 5,
+    `CatalogMapperTest` 12, `DefaultCatalogRepositoryTest` 14, `RefreshOutcomeTest` 2,
+    `DataModuleTest` 1, `EnvelopeTest` 11, `OkHttpAppsScriptTransportTest` 6. `:core:data` tests
+    rerun 5 times (`--rerun`): 58/58 each. No baseline, `ignoreFailures`, `@Suppress` or rule
+    disable added.
+  - Lint: no errors; `:app` 6 `GradleDependency` + 8 `NewerVersionAvailable` warnings (the pins).
+  - `:app:dependencies` (debug runtime): kotlin-stdlib 2.2.10 (every request resolves to it;
+    release runtime too), OkHttp 5.1.0, serialization 1.9.0, coroutines 1.9.0, Room 2.8.4, Koin
+    4.1.1. `buildEnvironment`: one KGP (2.2.10), one AGP (9.4.1), KSP 2.3.12.
+  - Failure demonstrations, each an edit of an existing file, restored with the SHA-1 checked:
+    Konsist (`import okhttp3.OkHttpClient` in `InfoPresenter.kt` → "Assert
+    'data-libraries-only-in-core-data' was violated (1 time)"); desugaring off →
+    `:core:data:lintDebug` 14 `NewApi` errors (`java.time.Duration#ofSeconds`,
+    `Clock#systemUTC`, …); duplicate-id rule weakened → `every valid row sharing an id is
+    rejected` fails; Q2 inverted (`InvalidTempo` rejects) → `an invalid tempo drops the field
+    and keeps the song` fails (expected the song, was `[]`); `Key` accepting a trailing space →
+    `KeyTest` fails on `"B "`. Details in `feature_list.json`.
+  - URL hygiene: `git grep -E 'script\.google\.com/macros'` empty; no new file holds the URL;
+    `BuildConfig` checked to hold an `https` URL without printing it.
+  - Optional manual live check (outside the gate): curl of the catalog route, URL read from
+    `local.properties` in the shell: 200 after one redirect, 2.70 s, checker OK on 100 songs; a
+    Python approximation of the required-field rules found nothing to reject. The Kotlin mapper
+    was not run on the live body.
+- Deviations from the spec body, and why:
+  - Q2 changes the outcome shape: `SongIssue` (with `rejectsSong`) replaces `RejectionReason`,
+    `RejectedSong.issues` replaces `reasons` (it lists every issue of the row, as Scenario 4
+    expects for `sin-tono`), and `DroppedFields` plus `RefreshOutcome.Updated.dropped` report
+    the kept songs whose optional values were dropped.
+  - `OkHttpAppsScriptTransport` takes the URL string (`AppsScriptEndpoint.url`, internal) instead
+    of the endpoint, because `AppsScriptEndpoint` only accepts `https` and MockWebServer serves
+    `http`. The https rule has its own test.
+  - `sync_state` is written with `@Insert(onConflict = REPLACE)`, not `@Upsert`: Room's upsert
+    recognizes the conflict by the exception message, which the stub
+    `android.database.SQLException` of JVM tests drops (7 repository and 2 DAO tests failed with a
+    bare `SQLException` until this changed). Same behavior on device for a one-row-per-resource
+    table.
+  - The background-refresh decision runs on the first snapshot of each collection (not in a
+    separate `onStart` read), so it uses the same `sync_state` row it emits.
+  - The test JVM prints a "restricted method System::loadLibrary" warning for the bundled SQLite
+    driver; harmless today, not silenced.
+- Remaining before `passing` — the Pixel 5 check (not connected: `adb devices` empty). With
+  `ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"` and the URL in `local.properties`:
+  1. `./gradlew :app:installDebug`.
+  2. `$ADB logcat -c`, then `$ADB shell am start -W -n com.bbbjam/.MainActivity` (record
+     `TotalTime`), wait about 10 s, `$ADB logcat -d -s BluesJam`: expect `catalog refresh: updated
+     N songs, R rejected, D with dropped fields` (N about 100). `$ADB logcat -d -b crash` and
+     `$ADB logcat -d -s AndroidRuntime` empty. This covers `INTERNET`, Koin's `Context` for the
+     database, and the desugared `Clock`/`Instant` path (the APK is built for minSdk 24, so its
+     java.time calls go through the desugared library on API 34 too).
+  3. `$ADB shell am force-stop com.bbbjam`, then `$ADB exec-out run-as com.bbbjam cat
+     databases/bluesjam-cache.db > cache.db` (plus `-wal`/`-shm` if present). With Python
+     `sqlite3`: `catalog_song` has N rows; the `sync_state` row `catalog` has `fetched_at` set
+     and `failure` NULL.
+  4. `$ADB shell cmd connectivity airplane-mode enable` (or Wi-Fi and data off by hand),
+     `$ADB logcat -c`, relaunch: expect `catalog refresh: failed Offline`, no crash. Force-stop
+     and pull again: still N rows, the same `fetched_at`, a newer `attempted_at`, `failure` =
+     `Offline` (so `isStale` is true: what a staleness indicator would show).
+  5. `$ADB shell cmd connectivity airplane-mode disable`.
+  6. Record cold start, the log lines and the row counts here (never the URL); then `passing` and
+     validation.
+- Known risk or unresolved issue:
+  - The device path is unproven: framework SQLite (tests use the bundled driver), the `INTERNET`
+    permission, `androidContext` → `Context` for Room, a real redirect from the app.
+  - The pins hold kotlin-stdlib at 2.2.10; a Kotlin upgrade must move OkHttp, serialization and
+    Koin together. KSP 2.3.x may later demand a newer KGP.
+  - A `tempo`/`dificultad` cell typed in NFD Unicode would not match and would be dropped (Q2).
+  - Rejections and drops are only in the log line; no admin surface shows them yet.
+  - The 45 s call timeout is an estimate; a cold Apps Script start is unmeasured.
+  - `combine` over two Room flows can emit once with the new songs and the old `fetchedAt` for an
+    instant after a replace; never a partial catalog.
+- Next best step: run the device check above, then independent validation.
 
 ## Notes For The Next Session
 
