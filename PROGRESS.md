@@ -6,10 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: sixteen of 37 slices accepted, the latest `instrument-strip-component`.
-  `song-row-expansion` is `in_progress`: implemented and gate-green, device step C pending because
-  the Sheet has no upcoming jam (the user's temporary `2026-10-31` jam, spec steps A/B). No test jam
-  is in the Sheet.
+- Current feature: `song-row-expansion`, `in_progress` — validator blocked only on step D (the user
+  deletes the temporary jam 2026-10-31); then accept without re-validating the code. Sixteen of 37
+  slices accepted.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1909,6 +1908,26 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     no-upcoming line and the two tabs. `font_scale` read 1.0; no setting was changed. Steps A–D not
     run.
 - Next: the user runs steps A/B; then step C on the device, step D cleanup, and only then `passing`.
+
+### Session 058 — 3 October 2026
+
+- Goal: step C of `song-row-expansion`.
+- Completed (orchestrator, Pixel 5): rows above a tapped row do not move; the panel replaces the
+  strip with artist, open slots first, the hint, filled slots and extras; tapping an open slot does
+  nothing; two rows expand at once; expansion survives rotation; font scale 1.3 wraps cleanly. All
+  settings changed for the check were restored (rotation automatic, user_rotation 0, font 1.0).
+  The user's malformed `Otros` entry ("Uno") was dropped and logged, as approved. Status `passing`.
+- Known risk or unresolved issue: the header's expanded/collapsed state description cannot be read
+  by uiautomator and there is no semantics harness (T1 declined) — unverified on device.
+
+### Session 059 — 3 October 2026
+
+- Goal: independent validation of `song-row-expansion`.
+- Completed: validator verdict **block**, on step D only; status back to `in_progress`. Code, copy,
+  probes and device behaviour ready to accept.
+- Known risk or unresolved issue: the header's state description and click label cannot be verified
+  by uiautomator (T1 declined); the approval assumed they could — the user is told. Optional
+  follow-ups: a copy test for the panel headings; ellipsis for a very long extra instrument.
 
 ## Notes For The Next Session
 
