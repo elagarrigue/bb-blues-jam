@@ -6,9 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current feature: `song-row-expansion`, `in_progress` — validator blocked only on step D (the user
-  deletes the temporary jam 2026-10-31); then accept without re-validating the code. Sixteen of 37
-  slices accepted.
+- Current state: seventeen of 37 slices accepted, the latest `song-row-expansion`. No test jam is
+  left in the Sheet.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1928,6 +1927,12 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: the header's state description and click label cannot be verified
   by uiautomator (T1 declined); the approval assumed they could — the user is told. Optional
   follow-ups: a copy test for the panel headings; ellipsis for a very long extra instrument.
+
+### Session 060 — 3 October 2026
+
+- Goal: step D of `song-row-expansion` and close it.
+- Completed: the user deleted the temporary jam; the Pixel 5 shows the no-upcoming line again.
+  Status `accepted` per the validator's ruling.
 
 ## Notes For The Next Session
 
