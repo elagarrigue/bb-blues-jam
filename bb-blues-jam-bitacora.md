@@ -1044,6 +1044,47 @@ organizador interrumpió la llamada: el teléfono estaba conectado, pero la jam 
 estaba cargada. La autonomía funciona mientras el agente sepa qué no sabe; cuando el estado depende
 de algo que hace una persona, la pregunta cuesta menos que la suposición.
 
+### 6.15 Sesiones del 2 y 3 de octubre — los cupos se ven: tira y panel
+
+Dos rebanadas más cerraron `accepted` —`instrument-strip-component` y `song-row-expansion`— y con
+ellas la pregunta central del músico, "¿dónde puedo tocar?", tiene respuesta en pantalla. Van 17 de
+37.
+
+**El organizador decidió con la app en la mano.** Las dos specs llegaron con preguntas, y las
+respuestas salieron de mirar el teléfono, no un documento. "Otros" se muestra en la tira, pero con
+otro estilo, para que un saxo no se lea como un cupo más. El punto que pulsaba en el diseño de Stitch
+quedó fijo: siete animaciones por tema toda la noche cuestan batería y no agregan información. Siete
+chips ámbar en un tema sin nadie anotado se quedan "por ahora", con la condición escrita de revisarlo
+si en una jam real se siente como ruido.
+
+**El validador corrigió una afirmación del propio diseño.** `DESIGN.md` decía que libre y ocupado se
+distinguían por tres señales —relleno, ícono y texto—. El `validator` midió la captura en escala de
+grises y encontró 50 contra 53 de luminancia en los rellenos: el relleno no es una señal. Las señales
+reales son el ícono (punto o check) y la palabra (`LIBRE` o un nombre). El documento se corrigió; la
+accesibilidad seguía bien, pero por razones distintas a las escritas.
+
+**Una prueba de usuario que nadie planeó.** Al cargar los datos de prueba, el organizador escribió
+"Uno" en la columna `Otros`, sin instrumento. La app descartó esa entrada, lo anotó en el log y mostró
+el tema igual: exactamente la regla aprobada semanas antes para entradas mal escritas, probada ahora
+por un error real y no por un caso inventado.
+
+**Un "no" con consecuencias, dicho en voz alta.** El usuario rechazó sumar Robolectric para tests de
+semántica. La spec había previsto verificar a mano en el teléfono el estado "expandido/contraído" para
+el lector de pantalla; el validador demostró que la herramienta usada no expone ese dato. En lugar de
+dar la verificación por hecha, quedó escrito que no se hizo, por qué, y qué haría falta: activar
+TalkBack y escuchar. Una decisión de alcance cambia lo que se puede afirmar, y la evidencia tiene que
+decirlo.
+
+**La limpieza como parte de la prueba.** Las dos rebanadas usaron una jam de prueba con nombres en la
+planilla real. Las dos veces el `validator` bloqueó la aceptación hasta que se borró: una jam falsa
+visible para 40 músicos es un defecto aunque el código esté perfecto. El flujo trató el estado del
+mundo real como parte del entregable.
+
+**Lo que confirmó sobre el método.** Con cada rebanada, el validador encuentra menos errores de código
+y más diferencias entre lo que un documento afirma y lo que efectivamente se verificó. Esa es la parte
+que un solo agente que se autoevalúa nunca encontraría: no se trata de si el código anda, sino de si
+lo que decimos sobre él es cierto.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
