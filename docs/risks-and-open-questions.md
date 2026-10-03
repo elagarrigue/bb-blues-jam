@@ -52,6 +52,27 @@ seven amber chips over about three lines; "if everything glows, nothing stands o
 fill slots, but this is how a newly published list will look. The user saw it on the Pixel 5 on
 2 October 2026 and chose to keep it as is "for now"; revisit if it reads as noise at a real jam.
 
+### Expanded song row (`song-row-expansion`, 3 October 2026)
+
+Settled with the user before implementation: the panel replaces the strip when a row is expanded;
+open slots look available but are not interactive for musicians; lines are compact (no 48dp
+minimum); a hint line follows the open slots. Spec in `../DESIGN.md`.
+
+Known gap, accepted (T1 declined by the user): **no Compose semantics test harness**. There is no
+Robolectric or Compose UI test in the build, so nothing automatic checks the drawn semantics: the
+header's state description ("expandido" / "contraído") and click label, a panel line or strip chip
+losing its content description, a panel line becoming clickable, or the strip still being drawn
+while expanded. The gate covers what reaches the `UiModel` (JVM tests on the strings, order and
+state); the drawn tree is checked by hand on the Pixel 5 with `uiautomator dump`, which shows
+content descriptions and clickability but not every semantics property. Revisit if a regression
+slips through, or when a later slice needs a composable test anyway.
+
+Risks, not solved: an all-open song's panel is seven amber lines under one heading (the amber
+saturation risk again, now per expanded row); expanding a row near the bottom grows below the fold
+and the user scrolls by hand (no auto-scroll, by design); expansion survives rotation
+(`rememberSaveable`) but not the switch between the temporary tabs until `bottom-navigation` owns
+per-tab state; Compose honouring the system "remove animations" setting is assumed, not verified.
+
 ## Implementation-Time Questions
 
 - **Offline mutations.** Reads are cached, but what happens when an admin edits with no connection?

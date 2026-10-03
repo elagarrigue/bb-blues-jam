@@ -27,9 +27,23 @@ once per snapshot with `remember(snapshot) { calendar.today() }`, and the mappin
 `JamDateTextTest`, `NextJamModuleTest`, with `FakeJamsRepository` on a `MutableSharedFlow(replay =
 1)` and `JamCalendar(Clock.fixed(…), BUENOS_AIRES)`) are in its `src/test`.
 
+Row expansion exists (`song-row-expansion`) and does **not** follow the sketch's child
+`SongRowPresenter`: `NextJamPresenter` holds one `ExpandedRows(jamDate, positions)` in
+`rememberSaveable(stateSaver = ExpandedRows.Saver) { mutableStateOf(ExpandedRows.NONE) }` and passes
+it, with an `onToggle(date, position)` lambda, into the pure `JamsSnapshot.toUiModel(today,
+expanded, onToggle)`; each `SongRowUiModel` carries `events: EventHandler<Event>` with
+`ToggleExpanded`. The sketch's `remember(jamSong.position)` inside a child called in `map {}` is a
+trap: `remember` is positioned by **call order**, and its key only resets the slot, so removing a
+row hands its slot (and its expansion) to the next row unless each call is wrapped in
+`key(position) { … }`. Never recreate the state object either (`remember(snapshot) { … }`): keyless
+handlers compare equal, so Compose may keep an earlier model's handler, which must still write
+through the same state. `NextJamPresenterTest` proves both (a refresh dropping a row, and a stale
+first-model handler).
+
 The next-jam example further down is still an **illustrative sketch** for the parts that do not exist
-yet: the child `SongRowPresenter` (`song-row-expansion`), admin state with `AdminSession`, and the
-publish and slot mutations. Its `SetlistRepository` and catalog lookup are superseded by
+yet: admin state with `AdminSession`, and the publish and slot mutations. Its `SongRowPresenter` is
+superseded for expansion; a child presenter becomes worth it only when a row gains its own
+dependencies (the admin slot mutations), and then each call goes inside `key(position)`. Its `SetlistRepository` and catalog lookup are superseded by
 `JamsRepository`, whose snapshot already resolves titles against the cached catalog; there is no
 `CatalogRepository` in `NextJamPresenter`.
 

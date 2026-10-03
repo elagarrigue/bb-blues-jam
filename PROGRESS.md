@@ -6,12 +6,21 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: sixteen of 37 slices accepted, the latest `instrument-strip-component`. No test jam
-  is left in the Sheet.
+- Current state: sixteen of 37 slices accepted, the latest `instrument-strip-component`.
+  `song-row-expansion` is `in_progress`: implemented and gate-green, device step C pending because
+  the Sheet has no upcoming jam (the user's temporary `2026-10-31` jam, spec steps A/B). No test jam
+  is in the Sheet.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 2 October 2026 (session 052, `instrument-strip-component`) — `CI=true
+- Last verified at: 3 October 2026 (session 057, `song-row-expansion`) — `CI=true ./init.sh` exit 0,
+  `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 43 result files, 240 tests,
+  0 failures: the 40 previous files unchanged except `ContrastTest` 8 → 9 and `NextJamPresenterTest`
+  7 → 11, plus `LineupPanelMapperTest` 7, `LineupPanelDefaultsTest` 3 and `ExpandedRowsTest` 5. Lint
+  `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: installed, cold
+  start 609 ms, empty crash buffer and AndroidRuntime log, `jams cache: upcoming none`, so only the
+  no-upcoming line is drawn (no row to expand). Before that, 2 October 2026 (session 052,
+  `instrument-strip-component`) — `CI=true
   ./init.sh` exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 40
   result files, 220 tests, 0 failures: the 38 previous files unchanged except `ContrastTest` 6 → 8
   and `NextJamPresenterTest` 6 → 7, plus `LineupChipsTest` 9 and `InstrumentStripDefaultsTest` 5.
@@ -188,8 +197,8 @@ the tool's task in every module that compiles Kotlin; otherwise it names the mod
 The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
 `JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
 `SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
-`ContrastTest`, `WindowBackgroundTest`, `LineupChipsTest`, `InstrumentStripDefaultsTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
-`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest` and `NextJamModuleTest`, and the
+`ContrastTest`, `WindowBackgroundTest`, `LineupChipsTest`, `InstrumentStripDefaultsTest`, `LineupPanelMapperTest`, `LineupPanelDefaultsTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
+`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest`, `ExpandedRowsTest` and `NextJamModuleTest`, and the
 `:core:data` classes.
 
 `:feature:info` (`info-screen`, `accepted`) is the first feature module and the template for the
@@ -209,9 +218,17 @@ written in `lugar`, and the time remaining ("Esta noche" from 18:00 on its own d
 "Mañana", "En n días") from `JamCalendar.today()` read once per snapshot. Rows show the zero-padded
 position, the title and the key in `typography.key` / `colors.key` (content description
 "Tonalidad <key>"). Copy in `NextJamCopy` (approved C1), day and month names hand-written.
-Under that line each row draws the instrument strip (`instrument-strip-component`, `in_progress`):
+Under that line each row draws the instrument strip (`instrument-strip-component`, `accepted`):
 `SongRowUiModel.instruments` comes from `lineup.toInstrumentChips(extraParticipants)` in the
 presenter; the screen calls `InstrumentStrip`. `:feature:next-jam` still reads only the amber `key`.
+Rows expand in place (`song-row-expansion`, `in_progress`): the presenter holds one
+`ExpandedRows(jamDate, positions)` in `rememberSaveable` (keyed by the Sheet's position, scoped to
+the jam date, never recreated) and passes it into `toUiModel(today, expanded, onToggle)`; each
+`SongRowUiModel` adds `artist`, `isExpanded`, `stateDescription` ("expandido"/"contraído"),
+`toggleLabel` ("ver los cupos"/"ocultar los cupos"), `lineup: LineupPanelUiModel` and `events`
+(`ToggleExpanded`). The screen's header (title line with `ExpandIndicator`, then the strip collapsed
+or the artist expanded) is the only clickable part (`Role.Button`, `onClickLabel`,
+`stateDescription`); the `LineupPanel` sits below it, and the row animates its size.
 
 `:core:ui` holds the instrument strip in `com.bbbjam.core.ui.strip` (`instrument-strip-component`,
 `in_progress`): `InstrumentChipUiModel(label, contentDescription, kind)` with `InstrumentChipKind`
@@ -223,6 +240,17 @@ the approved copy in `internal object InstrumentStripCopy` (`GTR: LIBRE` / `Gtr:
 `InstrumentStrip(chips)` composable: a `FlowRow` of non-interactive chips, one semantics node each,
 static dot, `Icons.Filled.Check` (from `material-icons-core`, now declared explicitly), glyph sizes
 from the caption font size, four `@Preview`s.
+
+`:core:ui` also holds the expanded lineup in `com.bbbjam.core.ui.lineup` (`song-row-expansion`,
+`in_progress`): `LineupPanelUiModel(openSlots, filledSlots, extras, noOpenSlotsNote, hint)` of
+`LineupLineUiModel(instrument, detail, contentDescription, kind)`, the pure mapper
+`Lineup.toLineupPanel(extras)` (open slots, then filled, each in lineup order, then extras), the
+approved copy in `internal object LineupPanelCopy` ("Cupos libres", "Cupos cubiertos", "Otros",
+"LIBRE", "No quedan cupos libres.", the hint), `LineupPanelDefaults` (the strip's style per kind
+plus the detail colour), `LineupPanel(model)` (headings, compact non-interactive lines, one
+semantics node each, five `@Preview`s with the indicator's) and `ExpandIndicator(expanded)` (the
+`KeyboardArrowDown` chevron, `textMuted`, turned 180° when expanded). `InstrumentStripCopy.name()`
+is now visible inside `:core:ui`.
 
 Product code: the `:core:model` domain types, the Info screen, the read-only Próxima jam screen and
 the catalog and jams data layer (`:core:data`).
@@ -1790,6 +1818,97 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Goal: close `instrument-strip-component`.
 - Completed: validator verdict **accept** after the narrow recheck; status `accepted`. The user kept
   the seven-amber-chip rows "for now" (recorded in the risks doc).
+
+### Session 057 — 3 October 2026
+
+- Goal: implement `song-row-expansion` (spec `docs/specs/song-row-expansion.md`, with its User
+  Approvals: C1 copy as written with `contraído`; I1 the panel replaces the strip when expanded; I2
+  open slots available but not interactive for musicians, compact lines, DESIGN.md's "tappable"
+  moved to the admin view; H1 hint included; **T1 declined**: no Robolectric or Compose UI test
+  dependencies).
+- Status: `in_progress`, not `passing`. Everything but spec step C is done and verified. Step C
+  needs an upcoming jam; the Pixel 5 logs `jams cache: upcoming none, past 1, songs 13`, so there is
+  no row to expand. Pending: the user's steps A/B (temporary `2026-10-31` jam with names, a long
+  name, an all-filled song and `Juan (saxo)` in `Otros`), then C (uiautomator bounds before/after,
+  panel nodes, two rows expanded, a tap on a panel line doing nothing), then D (cleanup).
+- Completed:
+  - `:core:ui` `com.bbbjam.core.ui.lineup`: `LineupPanelUiModel.kt`, `LineupPanelMapper.kt`,
+    `LineupPanelCopy.kt`, `LineupPanelDefaults.kt`, `LineupPanel.kt`, `ExpandIndicator.kt`;
+    `InstrumentStripCopy.name()` no longer private. Tests `LineupPanelMapperTest` (7) and
+    `LineupPanelDefaultsTest` (3); `ContrastTest` follow-up: `open slot on its chip fill` now
+    composites `InstrumentStripDefaults.style(OPEN_SLOT).fill` (7.03), new `text on a filled slot`
+    (measured 9.5196, recorded 9.52).
+  - `:feature:next-jam`: `ExpandedRows.kt` (+ `ExpandedRowsTest`, 5), `SongRowUiModel` gains
+    `artist`, `isExpanded`, `stateDescription`, `toggleLabel`, `lineup`, `events`; presenter state in
+    `rememberSaveable`; `NextJamCopy` row state and action; `NextJamScreen` header/panel split
+    (`SongRow`, `RowHeader`, `TitleLine`, preview rows from a helper). `NextJamPresenterTest`
+    expected rows gain the new fields (helper `row(...)`), plus four cases: `rows start collapsed, a
+    tap expands only that row, and two rows stay expanded at once`; `expansion follows the position
+    through a refresh, and a new jam starts collapsed`; `an earlier model's handler still writes
+    through the same state after a refresh`; `an expanded row carries the artist and its lineup with
+    open slots before filled ones`.
+  - Docs: `DESIGN.md` "Song row, expanded" (header-only toggle, panel replaces strip, sections,
+    compact non-interactive lines, "tappable" only in the admin view, motion, screen readers);
+    architecture `SKILL.md` (the `lineup` package, per-row state in the parent presenter, never
+    recreate it, no Compose UI test harness); `references/presenter-pattern.md` (the
+    `SongRowPresenter` sketch superseded for expansion, the call-order pitfall);
+    `docs/risks-and-open-questions.md` (the T1 gap, panel height, no auto-scroll, tab switch).
+- Deviations from the spec body (the approvals win where they differ): `LineupPanelUiModel` has a
+  fifth field, `hint: String?` (H1 is conditional on an open slot, so the mapper decides it and the
+  `UiModel` carries it); an extra's "+" is part of its instrument text (`+ saxo`), as in the strip's
+  label, because `InstrumentStripDefaults` gives extras no glyph; `ExpandIndicator` lives in its own
+  `ExpandIndicator.kt` (detekt `TooManyFunctions` 12 > 11 in `LineupPanel.kt`; split, not
+  suppressed). No Robolectric/semantics test, per T1.
+- Verification run:
+  - Baseline on untouched HEAD `bcccd0e`: `CI=true ./init.sh` exit 0, three `wired`, 40 result
+    files, 220 tests, 0 failures.
+  - After: `./gradlew ktlintFormat` exit 0; first gate exit 1 on detekt `TooManyFunctions` (fixed
+    by the split above); then `CI=true ./init.sh` exit 0, `konsist: wired` (15/15), `detekt:
+    wired`, `ktlint: wired`; 43 result files, 240 tests, 0 failures (counts above).
+  - Greps on `feature/next-jam/src/main` and `core/ui/.../lineup`: no `.dp`/`.sp` literal, no
+    `Color(` literal, no `MaterialTheme.`, no `clickable`/`Role`/`onClick`/`heightIn` in `lineup/`,
+    no "Pedir", no tú forms; `slotOpen` only in `LineupPanelDefaults.kt` (and the strip's defaults).
+  - Failure demonstrations, each an edit of an existing file, run, restored from a copy, SHA-1
+    equal before and after (`NextJamPresenter.kt` `f14bdedd…`, `ExpandedRows.kt` `c93863f2…`,
+    `LineupPanelMapper.kt` `5b2ed0ea…`, `NextJamCopy.kt` `07bbf445…`, `InstrumentStripDefaults.kt`
+    `80f1f8c2…`, `NextJamScreen.kt` `e9f38c34…`):
+    1. Expansion keyed by list index (`songs.mapIndexed`, `isExpanded(date, index)`) →
+       `NextJamPresenterTest` 2 of 11 failed: `expansion follows the position through a refresh…`
+       (expected row 02 expanded and row 03 collapsed; got row 02 collapsed and row 03 expanded:
+       the expansion moved to the neighbour) and `an expanded row carries the artist…`
+       ("expected:<true> but was:<false>").
+    2. State recreated, `remember(snapshot) { mutableStateOf(ExpandedRows.NONE) }` → 2 failed: `an
+       earlier model's handler still writes through the same state after a refresh`
+       ("TurbineAssertionError: No value produced in 3s") and the refresh test (row 02 collapsed).
+    3. Toggle replacing the set (`copy(positions = setOf(position))`) → `ExpandedRowsTest` `two
+       positions stay expanded together…` ("expected:<ExpandedRows(jamDate=2026-10-31,
+       positions=[1, 3])> but was:<…positions=[3])>") and `NextJamPresenterTest` `rows start
+       collapsed… two rows stay expanded at once` ("expected:<[1, 3]> but was:<[3]>").
+    4. Open slots not first (`slots.partition { !it.isOpen }`) → `:core:ui` 48 tests, 6 failed
+       (every `LineupPanelMapperTest` case with slots) and `:feature:next-jam` 24, 8 failed (every
+       presenter case with rows).
+    5. Extras counted as open (`openSlots = open.map … + extras.map …`) → `LineupPanelMapperTest`
+       `open slots first…` and `extras are never open nor filled slots…`, `NextJamPresenterTest`
+       `an expanded row carries…` and `each row carries its strip…`.
+    6. Copy change, `ROW_COLLAPSED = "colapsado"` → `NextJamPresenterTest` 6 failed (every case
+       comparing rows).
+    7. The drawn fill changed in `InstrumentStripDefaults.style` (`alpha = 0.9f`, constant
+       `OPEN_FILL_ALPHA` untouched, so the old ContrastTest would have passed) → `ContrastTest`
+       `open slot on its chip fill`: "contrast 1.196784838139893 is below AA text (4.5)", plus
+       `InstrumentStripDefaultsTest` and `LineupPanelDefaultsTest` open styles.
+    8. `BluesJamTheme.colors.slotOpen` for the artist in `NextJamScreen.kt` → Konsist 15, 1 failed:
+       "Assert 'amber-roles-allowlisted' was violated (1 time). Invalid files: File
+       NextJamScreen.kt". The helper script crashed printing this message, before its own restore;
+       the file was restored by hand from the copy and SHA-1 `e9f38c34…` confirmed.
+    Not demonstrable without T1: dropping the header's `stateDescription`, a line's
+    `clearAndSetSemantics`, or drawing the strip while expanded passes the gate (risks doc).
+  - Device (Pixel 5 `09281FDD4004U6`): `./gradlew :app:installDebug` exit 0, force-stop,
+    `logcat -c`, `am start -W` COLD 609 ms; `BluesJam`: `catalog refresh: updated 100 songs…`,
+    `jams refresh: updated 1 jams…`, `jams cache: upcoming none, past 1, songs 13 (13 from
+    catalog)`; crash buffer and AndroidRuntime empty; `uiautomator dump` shows only the
+    no-upcoming line and the two tabs. `font_scale` read 1.0; no setting was changed. Steps A–D not
+    run.
+- Next: the user runs steps A/B; then step C on the device, step D cleanup, and only then `passing`.
 
 ## Notes For The Next Session
 

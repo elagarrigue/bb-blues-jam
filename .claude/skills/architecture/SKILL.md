@@ -57,7 +57,8 @@ is. There is no `:feature:admin`.
   role for its module in the same diff, so each amber use is a reviewed decision.
   Amber read **inside a `:core:ui` component** needs no allowlist entry: the instrument strip reads
   `slotOpen` in `com.bbbjam.core.ui.strip`, so `:feature:next-jam` stays at `{key}` and the rule
-  guarantees the feature cannot draw open-slot amber outside the shared component.
+  guarantees the feature cannot draw open-slot amber outside the shared component. The lineup
+  panel (`com.bbbjam.core.ui.lineup`) does the same.
 - "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as
   `remember(snapshot) { calendar.today() }` so a header agrees with the repository's upcoming/past
   split. Never `LocalDate.now()` or the device zone.
@@ -71,6 +72,21 @@ is. There is no `:feature:admin`.
   `Lineup.toInstrumentChips(extras)` sits beside it so every feature maps a lineup identically; the
   presenter calls the mapper, the screen only draws. UI copy shared by two features lives with the
   component in `:core:ui` (`internal object InstrumentStripCopy`), not in a feature's `<Name>Copy`.
+  The expanded lineup is the second example (`song-row-expansion`): `com.bbbjam.core.ui.lineup`
+  holds `LineupPanel(model)`, the pure mapper `Lineup.toLineupPanel(extras)` (open slots first, then
+  filled, then extras), `LineupPanelUiModel`/`LineupLineUiModel`, internal `LineupPanelCopy` and
+  `LineupPanelDefaults` (line styles reuse `InstrumentStripDefaults.style`), and `ExpandIndicator`,
+  the row chevron, which is here because features do not depend on the icons library.
+- Per-row UI state of a list (which rows are expanded) → **one state object in the parent
+  presenter**, keyed by a stable id, passed into the pure mapping; not a child presenter called in a
+  loop. A `remember` inside a child presenter called in `map {}` is keyed by call order, so removing
+  or inserting a row moves its state to a neighbour unless each call is wrapped in `key(id)`.
+  `NextJamPresenter` holds `ExpandedRows(jamDate, positions)` in
+  `rememberSaveable(stateSaver = ExpandedRows.Saver)` (survives rotation; in Molecule it behaves as
+  `remember`), keyed by the Sheet's `posicion` and scoped to the jam date. **Never recreate such a
+  state object** (`remember(snapshot) { … }`): handlers without a key compare equal, so Compose may
+  keep an earlier model's handler, and it must still write through the same state. A child
+  presenter pays off only when a row has its own dependencies (the admin slot mutations).
 - Wiring an implementation to its interface → the Koin module of the module that owns the
   implementation; `:app` only lists modules in `startKoin`.
 - Anything that needs two features to talk → `:app` navigation or a `:core` contract.
@@ -274,6 +290,12 @@ them.
   `:app`'s runtime classpath: OkHttp 5.2+ needs stdlib 2.2.20+, serialization 1.10 needs 2.3.0
   (the Koin 4.2 trap again). KSP 2.2.10-2.0.2 fails under built-in Kotlin ("Using
   kotlin.sourceSets DSL to add Kotlin sources is not allowed"). Upgrade them with Kotlin.
+- **No Compose UI test harness** (`song-row-expansion`, T1 declined by the user on 3 October 2026):
+  no Robolectric, `ui-test-junit4` or `ui-test-manifest`. Put everything a test must check into the
+  `UiModel` (copy, state descriptions, order, kinds) and test it on the JVM; keep the visual rules
+  in a `…Defaults` object a JVM test can read. Drawn semantics (content descriptions, clickability,
+  merged nodes) are checked on the device with `uiautomator dump`. The gap is recorded in
+  `docs/risks-and-open-questions.md`.
 - **Room tests run on the JVM**: `Room.inMemoryDatabaseBuilder(ContextWrapper(null), …)
   .setDriver(BundledSQLiteDriver())`, no Robolectric. The stub `android.database.SQLException`
   loses its message, so avoid Room features that parse it (`@Upsert`; use

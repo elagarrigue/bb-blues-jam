@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -36,13 +37,20 @@ class ContrastTest {
     @Test
     fun `text on the background`() = assertContrast(colors.text, colors.background, expected = 14.41)
 
-    /** The instrument strip's open chip: amber on its 15% amber fill, composited over the row surface. */
+    /**
+     * The open chip and the open panel line: amber on the fill the component actually draws
+     * (`InstrumentStripDefaults.style`), composited over the row surface.
+     */
     @Test
     fun `open slot on its chip fill`() = assertContrast(
         colors.slotOpen,
-        colors.slotOpen.copy(alpha = InstrumentStripDefaults.OPEN_FILL_ALPHA).compositeOver(colors.surface),
+        InstrumentStripDefaults.style(InstrumentChipKind.OPEN_SLOT).fill.compositeOver(colors.surface),
         expected = 7.03,
     )
+
+    /** A filled panel line: the musician's name in full `text` on `slotFilled`. */
+    @Test
+    fun `text on a filled slot`() = assertContrast(colors.text, colors.slotFilled, expected = 9.52)
 
     /** The instrument strip's filled chip. An extra chip has no fill: `muted text on a surface` covers it. */
     @Test

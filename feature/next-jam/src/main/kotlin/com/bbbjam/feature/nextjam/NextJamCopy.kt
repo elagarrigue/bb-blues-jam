@@ -23,6 +23,16 @@ internal object NextJamCopy {
     const val SETLIST_UNAVAILABLE =
         "No se pudo leer la lista de temas de esta jam. Avisale a la organización."
 
+    /**
+     * A row's state and its action for screen readers, approved on 3 October 2026
+     * (`docs/specs/song-row-expansion.md`, C1). TalkBack reads the action as "Presioná dos veces
+     * para ver los cupos".
+     */
+    const val ROW_EXPANDED = "expandido"
+    const val ROW_COLLAPSED = "contraído"
+    const val SHOW_SLOTS = "ver los cupos"
+    const val HIDE_SLOTS = "ocultar los cupos"
+
     /** "En 29 días": always days, no weeks (exact and short). Only for two days or more. */
     fun inDays(days: Long): String = "En $days días"
 

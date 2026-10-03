@@ -214,8 +214,38 @@ playing this?" without expanding the row.
 
 ### Song row, expanded
 
-Artist name, then **open slots first**, presented as available and tappable, then filled slots below
-with the musician's name and instrument. Actionable content goes on top.
+Artist name, then **open slots first**, presented as available, then filled slots below with the
+musician's name and instrument, then the extra participants. Actionable content goes on top.
+Decided 3 October 2026 (`song-row-expansion`):
+
+- **Header-only toggle.** Tapping the row's header (position, title, key, and a `textMuted` chevron
+  that points down collapsed and up expanded) expands or collapses it; a tap on the panel does
+  nothing, so a stray touch never collapses a row and future admin taps on slots never fight the
+  row's click. Several rows may be expanded at once.
+- **The panel replaces the strip.** Expanded, the header shows the artist (`body`, `textMuted`)
+  instead of the strip; the panel is a superset of the strip, and showing both would repeat every
+  slot on screen and for screen readers.
+- **Sections:** `CUPOS LIBRES`, `CUPOS CUBIERTOS`, `OTROS` (caption, `textMuted`, uppercase, marked
+  as headings), each drawn only when non-empty. With at least one open slot, a caption hint follows
+  the open lines ("Para tocar, anotate en la jam: la organización te suma a un tema."); with none,
+  "No quedan cupos libres." replaces the open section.
+- **Lines** are full width and compact: the strip's glyph and fill for the same kind, the full
+  instrument name, then the detail — `LIBRE` in `slotOpen`, a musician's name in `text` (9.52:1 on
+  `slotFilled`), an extra's name in `textMuted` with `+ saxo` as its instrument. Long names wrap to
+  two lines, then "…". Each line is one screen-reader node with the strip's description.
+- **Open slots look available, not tappable, in the musician view**: no click, no ripple, no role,
+  no "Pedir cupo" (self-signup is out of scope). A control that looks tappable and does nothing is a
+  false affordance. Lines have no 48dp minimum because nothing in the panel is a touch target. Open
+  slots become tappable only in the admin view (`admin-assign-musician`, which decides how its
+  targets reach 48dp).
+- **Motion:** the row animates its own height; the tapped header and everything above it stay
+  still, the rows below slide. No auto-scroll.
+- **Screen readers:** the header is one button whose state is "expandido" / "contraído" and whose
+  action is "ver los cupos" / "ocultar los cupos"; the panel's headings and lines follow as separate
+  nodes, so each slot is spoken once in either state.
+
+The component is `LineupPanel` in `:core:ui` (`com.bbbjam.core.ui.lineup`), with `ExpandIndicator`
+for the chevron.
 
 ### Jam summary counter
 
