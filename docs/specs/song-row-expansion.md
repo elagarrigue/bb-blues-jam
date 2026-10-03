@@ -335,3 +335,19 @@ copy as shipped; the user's cleanup confirmation.
 - T1: Robolectric's SDK support lags `compileSdk`; a Compose BOM upgrade may need a matching
   Robolectric bump.
 - A forgotten temporary jam (step D) is shown to every musician.
+
+## User Approvals
+
+Recorded 3 October 2026, before implementation. Where they differ from the body, these win.
+
+- **C1: copy approved as written**, with `contraído` (not `colapsado`).
+- **I1: approved** — when a row is expanded the strip is replaced by the artist line and the panel.
+- **I2: approved** — open slots look available but are not interactive for musicians; compact lines;
+  reword `DESIGN.md`'s "tappable" to apply to the admin view.
+- **H1: approved** — the hint line is included.
+- **T1: declined.** No Robolectric or Compose UI test harness. The semantics checks stay on the JVM
+  model plus device uiautomator; the state description (`expandido`/`contraído`) and the merged
+  row description are verified on the Pixel 5 via uiautomator dumps. Record this as a known gap in
+  the risks doc.
+- The device check needs the user's temporary jam (steps A/B) and its cleanup (step D), which is
+  part of the check.
