@@ -204,7 +204,7 @@ class NextJamPresenterTest {
                 row("12", "Blues de Rosario", "E"),
                 row("13", "Tres Palabras", "A"),
             )
-            assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null)), awaitItem())
+            assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(13))), awaitItem())
         }
         assertEquals(0, repository.refreshCalls)
     }
@@ -227,6 +227,7 @@ class NextJamPresenterTest {
                     SetlistUiModel.Songs(
                         listOf(row("01", "Sweet Little Angel", "B")),
                         null,
+                        bar(1),
                     ),
                 ),
                 awaitItem(),
@@ -264,19 +265,20 @@ class NextJamPresenterTest {
             row("03", "Dust My Broom", "D"),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, null)),
+            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, null, bar(2))),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 0))).toUiModel(today),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, "Falta 1 tema: no se pudo leer.")),
+            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, "Falta 1 tema: no se pudo leer.", bar(2))),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 1))).toUiModel(today),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, "Faltan 2 temas: no se pudieron leer.")),
+            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, "Faltan 2 temas: no se pudieron leer.", bar(2))),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 2))).toUiModel(today),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(emptyList(), null)),
+            // An empty setlist draws no filter bar: that is the empty case, not no-results.
+            NextJamUiModel.Jam(header, SetlistUiModel.Songs(emptyList(), null, filterBar = null)),
             snapshot(jam(Setlist.Available(emptyList()))).toUiModel(today),
         )
     }
@@ -358,7 +360,9 @@ class NextJamPresenterTest {
         val model = snapshot(
             jam(Setlist.Available(listOf(withExtra, emptyLineup))),
         ).toUiModel(LocalDate.of(2026, 10, 2))
-        assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null)), model)
+        // Song 1 is open for guitar, drums and vocals; song 2 has no slot at all.
+        val counts = listOf(1, 0, 1, 1, 0, 0)
+        assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(2, counts))), model)
         // The extra is never open: the open chips are exactly the lineup's open slots (D-18).
         val rows = ((model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
         val chips = rows[0].instruments
@@ -399,6 +403,7 @@ class NextJamPresenterTest {
                             row("03", "Dust My Broom", "D"),
                         ),
                         null,
+                        bar(3),
                     ),
                 ),
                 first,

@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import com.bbbjam.core.ui.filter.InstrumentFilterDefaults
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
 import org.junit.Assert.assertEquals
@@ -55,6 +56,20 @@ class ContrastTest {
     /** The instrument strip's filled chip. An extra chip has no fill: `muted text on a surface` covers it. */
     @Test
     fun `muted text on a filled chip`() = assertContrast(colors.textMuted, colors.slotFilled, expected = 7.22)
+
+    /** The selected filter chip, read through the style the component draws. */
+    @Test
+    fun `content on the active filter`() {
+        val style = InstrumentFilterDefaults.chipStyle(selected = true)
+        assertContrast(style.content, style.fill, expected = 9.52)
+    }
+
+    /** An unselected filter chip. */
+    @Test
+    fun `muted text on a raised surface`() {
+        val style = InstrumentFilterDefaults.chipStyle(selected = false)
+        assertContrast(style.content, style.fill, expected = 9.66)
+    }
 
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {
         val lighter = maxOf(foreground.luminance(), background.luminance())

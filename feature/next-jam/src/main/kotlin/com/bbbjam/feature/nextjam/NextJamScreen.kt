@@ -31,6 +31,8 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.filter.InstrumentFilterBar
+import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.lineup.ExpandIndicator
 import com.bbbjam.core.ui.lineup.LineupPanel
 import com.bbbjam.core.ui.lineup.toLineupPanel
@@ -43,9 +45,10 @@ import org.koin.compose.koinInject
 /**
  * Próxima jam: the upcoming jam's date, venue and time remaining, and its songs as rows (position,
  * title, key in the amber `key` role) with the instrument strip under each; tapping a row's header
- * expands it in place to the artist and the lineup panel. It renders [NextJamUiModel] and forwards
- * events; the presenter decides. [contentPadding] goes inside the list, so the background
- * runs edge to edge.
+ * expands it in place to the artist and the lineup panel. Under the header, the instrument filter
+ * bar narrows the rows to songs with an open slot for the selected instruments. It renders
+ * [NextJamUiModel] and forwards events; the presenter decides. [contentPadding] goes inside the
+ * list, so the background runs edge to edge.
  */
 @Composable
 fun NextJamScreen(
@@ -84,6 +87,7 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
             item(key = HEADER_KEY) { Header(model.header) }
             when (val setlist = model.setlist) {
                 is SetlistUiModel.Songs -> {
+                    setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
                     items(setlist.rows, key = { it.position }) { row -> SongRow(row) }
                     setlist.droppedRowsNote?.let { note ->
                         item(key = NOTE_KEY) {
@@ -104,6 +108,7 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
 
 private const val HEADER_KEY = "header"
 private const val NOTE_KEY = "note"
+private const val FILTER_KEY = "filter"
 
 @Composable
 private fun Header(header: JamHeaderUiModel) {
@@ -248,9 +253,14 @@ private fun NextJamScreenPreview() {
         previewRow(4, "Blues Del Politico", "Pappo", "C", Lineup(emptyList())),
         previewRow(5, "The Thrill Is Gone", "B.B. King", "Bm", Lineup.default(), isExpanded = true),
     )
+    val lineups = listOf(Lineup.default(), mixed, Lineup(emptyList()), Lineup.default())
     val model = NextJamUiModel.Jam(
         header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días"),
-        setlist = SetlistUiModel.Songs(rows, droppedRowsNote = "Falta 1 tema: no se pudo leer."),
+        setlist = SetlistUiModel.Songs(
+            rows = rows,
+            droppedRowsNote = "Falta 1 tema: no se pudo leer.",
+            filterBar = instrumentFilterBar(lineups, emptySet()) {},
+        ),
     )
     BluesJamTheme { NextJamContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) }
 }

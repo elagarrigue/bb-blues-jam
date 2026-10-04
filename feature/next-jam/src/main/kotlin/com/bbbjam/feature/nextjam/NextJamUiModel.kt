@@ -1,5 +1,6 @@
 package com.bbbjam.feature.nextjam
 
+import com.bbbjam.core.ui.filter.InstrumentFilterBarUiModel
 import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
@@ -7,7 +8,8 @@ import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 
 /**
- * Everything Próxima jam draws, as plain values. Rows expand in place (`song-row-expansion`);
+ * Everything Próxima jam draws, as plain values. Rows expand in place (`song-row-expansion`) and
+ * can be filtered by instrument (`instrument-filter-chips`);
  * loading, error and offline get their designs in `list-states`.
  */
 sealed interface NextJamUiModel : UiModel {
@@ -24,8 +26,17 @@ sealed interface NextJamUiModel : UiModel {
 data class JamHeaderUiModel(val date: String, val venue: String, val timeRemaining: String) : UiModel
 
 sealed interface SetlistUiModel : UiModel {
-    /** The rows in position order; [droppedRowsNote] says how many rows could not be read, or is null. */
-    data class Songs(val rows: List<SongRowUiModel>, val droppedRowsNote: String?) : SetlistUiModel
+    /**
+     * The rows in position order, only those the instrument filter shows; [droppedRowsNote] says how
+     * many rows could not be read, or is null. [filterBar] is the instrument filter
+     * (`instrument-filter-chips`), null when the setlist has no song (the empty case is not a
+     * filter's no-results case).
+     */
+    data class Songs(
+        val rows: List<SongRowUiModel>,
+        val droppedRowsNote: String?,
+        val filterBar: InstrumentFilterBarUiModel?,
+    ) : SetlistUiModel
 
     /** The setlist is withheld (a draft) or unavailable: one line instead of rows. */
     data class NotShown(val message: String) : SetlistUiModel

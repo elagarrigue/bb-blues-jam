@@ -6,12 +6,21 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: seventeen of 37 slices accepted, the latest `song-row-expansion`. No test jam is
-  left in the Sheet.
+- Current state: seventeen of 37 slices accepted, the latest `song-row-expansion`;
+  `instrument-filter-chips` is `passing` (awaiting the validator). **The user's temporary
+  `2026-10-31` jam is still in the Sheet** (step D of that spec pending): every musician sees it
+  until it is deleted.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 3 October 2026 (session 057, `song-row-expansion`) — `CI=true ./init.sh` exit 0,
+- Last verified at: 4 October 2026 (session 061, `instrument-filter-chips`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 46 result files,
+  263 tests, 0 failures: the 43 previous files unchanged except `ContrastTest` 9 → 11, plus
+  `InstrumentFilterMapperTest` 8, `InstrumentFilterDefaultsTest` 3 and `NextJamFilterTest` 10. Lint
+  `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: cold start
+  636 ms, `jams cache: upcoming 2026-10-31, past 1, songs 26`, spec step C done (session 061),
+  empty crash buffer, every setting restored. Before that, 3 October 2026 (session 057,
+  `song-row-expansion`) — `CI=true ./init.sh` exit 0,
   `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 43 result files, 240 tests,
   0 failures: the 40 previous files unchanged except `ContrastTest` 8 → 9 and `NextJamPresenterTest`
   7 → 11, plus `LineupPanelMapperTest` 7, `LineupPanelDefaultsTest` 3 and `ExpandedRowsTest` 5. Lint
@@ -196,7 +205,8 @@ The unit tests are the two template tests plus the nine `:core:model` classes (`
 `JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
 `SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
 `ContrastTest`, `WindowBackgroundTest`, `LineupChipsTest`, `InstrumentStripDefaultsTest`, `LineupPanelMapperTest`, `LineupPanelDefaultsTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
-`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest`, `ExpandedRowsTest` and `NextJamModuleTest`, and the
+`InstrumentFilterMapperTest`, `InstrumentFilterDefaultsTest`,
+`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest`, `NextJamFilterTest`, `ExpandedRowsTest` and `NextJamModuleTest`, and the
 `:core:data` classes.
 
 `:feature:info` (`info-screen`, `accepted`) is the first feature module and the template for the
@@ -238,6 +248,16 @@ the approved copy in `internal object InstrumentStripCopy` (`GTR: LIBRE` / `Gtr:
 `InstrumentStrip(chips)` composable: a `FlowRow` of non-interactive chips, one semantics node each,
 static dot, `Icons.Filled.Check` (from `material-icons-core`, now declared explicitly), glyph sizes
 from the caption font size, four `@Preview`s.
+
+Próxima jam filters by instrument (`instrument-filter-chips`, `passing`): under the header,
+`SetlistUiModel.Songs.filterBar` (null for a setlist with no song) draws `InstrumentFilterBar`: the
+heading "Filtrá por cupo libre", `Todos` and six checkbox chips with per-instrument counts, then the
+count line ("3 de 13 temas con cupo libre para bajo o voz") or the no-results block with "Ver todos
+los temas". Multi-select with OR; the presenter holds a `Set<Instrument>` in
+`rememberSaveable(InstrumentFilterSaver)`, never recreated and not tied to the jam date, applies
+the `InstrumentFilterChange`s its handlers send, and filters rows with `matchesInstrumentFilter`;
+expansion is untouched. `:core:ui` `com.bbbjam.core.ui.filter` holds the component, its `UiModel`s,
+the mapper, `InstrumentFilterCopy` and `InstrumentFilterDefaults` (the only `activeFilter` reader).
 
 `:core:ui` also holds the expanded lineup in `com.bbbjam.core.ui.lineup` (`song-row-expansion`,
 `in_progress`): `LineupPanelUiModel(openSlots, filledSlots, extras, noOpenSlotsNote, hint)` of
@@ -1933,6 +1953,94 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Goal: step D of `song-row-expansion` and close it.
 - Completed: the user deleted the temporary jam; the Pixel 5 shows the no-upcoming line again.
   Status `accepted` per the validator's ruling.
+
+### Session 061 — 4 October 2026
+
+- Goal: implement `instrument-filter-chips` (spec `docs/specs/instrument-filter-chips.md` with its
+  User Approvals, which win: C1 copy with the heading `Filtrá por cupo libre`; **F1 multi-select
+  with OR** (checkbox chips, `Todos` checked exactly when nothing is selected and clears, "Ver todos
+  los temas" clears, names joined lowercase in chip order with ", " and " o "); F3 zero-count chips
+  tappable; F4 superseded; F5 selection not tied to the jam date; S1 no-results shipped here).
+- Status: `passing` (step C done on the device). **Step D pending**: the user deletes the temporary
+  `2026-10-31` row and tab; then a relaunch must log `upcoming none`.
+- Completed:
+  - `:core:ui` `com.bbbjam.core.ui.filter`: `InstrumentFilterUiModel.kt`
+    (`InstrumentFilterBarUiModel` with `Event.Clear`, `FilterChipUiModel` with `Event.Toggle`),
+    `InstrumentFilterChange.kt` (`Toggle(instrument)`, `Clear`, `Set<Instrument>.updatedBy`),
+    `InstrumentFilterMapper.kt` (`instrumentFilterBar(lineups, selected, onChange)`,
+    `Lineup.matchesInstrumentFilter`), `InstrumentFilterCopy.kt`, `InstrumentFilterDefaults.kt`,
+    `InstrumentFilterBar.kt` (FlowRow of `toggleable(Role.Checkbox)` chips at least 48dp tall,
+    heading, live-region count line, no-results block, five `@Preview`s). Tests
+    `InstrumentFilterMapperTest` (8), `InstrumentFilterDefaultsTest` (3), `ContrastTest` +2
+    (`onActiveFilter` on `activeFilter` 9.52, `textMuted` on `surfaceRaised` 9.66).
+  - `:feature:next-jam`: `Songs.filterBar`; presenter state `Set<Instrument>` with
+    `InstrumentFilterSaver`; `toUiModel(…, filter, onFilterChange)`; screen item `"filter"` after
+    the header. `NextJamPresenterTest` expectations gain the bar (`FilterBarExpectations.kt`), and
+    the filter cases live in the new `NextJamFilterTest` (10).
+  - Docs: `DESIGN.md` "Filter chip" (behaviour, layout, semantics, state, component); architecture
+    `SKILL.md` (the `filter` package, change-not-set handlers, presenter-held selection);
+    `docs/risks-and-open-questions.md` (bar height, not sticky, extra amber, lost on relaunch and tab
+    switch, live region and TalkBack unverified).
+- Deviations from the spec body (approvals and tooling): multi-select replaces the body's
+  single-select and `Role.RadioButton` (approval F1); the chip event is `Toggle` and handlers send
+  an `InstrumentFilterChange` instead of `onSelect(Instrument?)`, because an unchanged chip keeps
+  an equal model and Compose may reuse its old handler, so a handler carrying a computed set would
+  undo another chip (tested: a stale `Voz` handler adds to the current `Bajo`); no
+  `selectableGroup` (a radio-group notion); the row predicate is shared from `:core:ui` so the count
+  line always equals the rows drawn; the filter cases are in `NextJamFilterTest`, not
+  `NextJamPresenterTest`, because detekt `LargeClass` (600 lines) failed the latter (split, not
+  suppressed); `InstrumentFilterChange` has its own file (detekt `MatchingDeclarationName`).
+  Singular rule, **corrected after the device run** (the orchestrator fixed an error in the
+  approval): the count line's noun agrees with the total, so "1 de 13 temas…" and "tema" only for a
+  one-song setlist ("1 de 1 tema…"). The chip descriptions keep agreeing with their own count
+  ("Bajo: 1 tema con cupo libre"), as approved. The spec's demonstration "selected style `slotOpen`" cannot fail by value
+  (`slotOpen` and `activeFilter` are the same amber); instead the defaults test pins the exact roles
+  and that no filter chip uses the open-slot chip's fill or text colour.
+- Verification run:
+  - Baseline at `71f44b3`: `CI=true ./init.sh` exit 0, 43 files, 240 tests.
+  - `./gradlew ktlintFormat` exit 0. First gate exit 1 (detekt: MagicNumber in previews,
+    MatchingDeclarationName, MaxLineLength, LargeClass), fixed by restructuring. Final
+    `CI=true ./init.sh` exit 0, three `wired`, Konsist 15/15, 46 files, 263 tests, 0 failures.
+  - Greps on `feature/next-jam/src/main` and `core/ui/.../filter`: no `.dp`/`.sp` literal, no
+    `Color(`, no `MaterialTheme.`, no `horizontalScroll`/`LazyRow`, no tú forms; `activeFilter` only
+    in `InstrumentFilterDefaults.kt` (plus tokens, showcase, tests, Konsist). No Gradle, Konsist,
+    `init.sh` or dependency change; no Robolectric/ui-test.
+  - Failure demonstrations (edit an existing file, run, restore from a copy, SHA-1 equal before and
+    after: `InstrumentFilterMapper.kt` `4377ab26…`, `NextJamPresenter.kt` `bf21864e…`,
+    `InstrumentFilterCopy.kt` `ced1cc0c…`, `NextJamScreen.kt` `77c7267e…`):
+    1. AND (`selected.all`) → `InstrumentFilterMapperTest` "expected:<[3 de 5 temas]…> but
+       was:<[1 de 5 tema]…>"; `NextJamFilterTest` 2 failed "expected:<[2, 3, 6]> but was:<[3]>".
+    2. Extras counted as open in the presenter's filter → `NextJamFilterTest` 7 of 10 failed, the
+       D-18 case "expected:<false> but was:<true>", others "expected:<[2, 3]> but was:<[1, 2, 3]>".
+    3. `Todos` never checked → `InstrumentFilterMapperTest` 1, `NextJamFilterTest` 5
+       ("expected:<[Todos]> but was:<[]>"), `NextJamPresenterTest` 5.
+    4. " y " for " o " → "expected:<…para bajo [o] voz> but was:<…para bajo [y] voz>" (mapper 1,
+       filter test 2).
+    5. `BluesJamTheme.colors.activeFilter` in `NextJamScreen.kt` → Konsist "Assert
+       'amber-roles-allowlisted' was violated (1 time). Invalid files: File NextJamScreen.kt".
+    6. Selection in `remember(snapshot)` → "the selection survives a refresh…" "expected:<[2]> but
+       was:<[1, 2, 3, 4, 5, 6, 7]>" and the stale-handler test "TurbineAssertionError: No value
+       produced in 3s".
+  - Device (Pixel 5 `09281FDD4004U6`), step C with the user's jam (details in the feature's
+    evidence): counts Todos 13, Guitarra 13, Bajo 2, Batería 13, Voz 1, Armónica 0, Teclados 13
+    (the user's data, not the spec's suggested numbers); Bajo → rows 03, 07 and "2 de 13 temas con
+    cupo libre para bajo"; + Voz → 03, 07, 09 and "…para bajo o voz"; − Bajo → 09, "1 de 13 tema…" (the old singular rule; see the
+    correction below);
+    Todos clears; expansion kept for shown and hidden rows; Armónica → no-results and the 48dp
+    action, which clears; Bajo survives rotation; at 360dp the chips wrap to 3 rows at font 1.0 and
+    1.3, all 48dp. Originals recorded and restored: font_scale 1.0, accelerometer_rotation 1,
+    user_rotation 0, density 440 (`wm density reset`). Crash buffer empty.
+  - Copy correction after the device run (copy-only, no device rerun): `InstrumentFilterCopy.summary`
+    now picks "tema"/"temas" from the total, not the matched count; expectations written out
+    literally ("1 de 5 temas…", "1 de 7 temas…", "1 de 1 tema…"). Demonstration: the matched-count
+    rule restored for a run → `InstrumentFilterMapperTest` 1 failed "expected:<1 de 5 tema[s] con
+    cupo libre para...> but was:<1 de 5 tema[] con cupo libre para...>", `NextJamFilterTest` 2
+    failed (the per-instrument case and "expected:<1 de 7 tema[s]…> but was:<1 de 7 tema[]…>");
+    `InstrumentFilterCopy.kt` restored, SHA-1 `ea7ed9f6…` before and after. `./gradlew
+    ktlintFormat` exit 0; `CI=true ./init.sh` exit 0, three `wired`, 46 files, 263 tests, 0
+    failures.
+- Known risk or unresolved issue: step D; live regions and TalkBack wording unverified (T1).
+- Next: the user deletes the temporary jam (step D) and tells the orchestrator; then the validator.
 
 ## Notes For The Next Session
 

@@ -262,6 +262,32 @@ Each chip carries a count of songs with an open slot for that instrument (`Guita
 plus a `Todos` chip with the total. This makes the filter bar an answer in itself, not only a
 control — a bass player reads `Bajo 1` and already knows the shape of their night.
 
+Behaviour (`instrument-filter-chips`, approved 4 October 2026):
+
+- **Multi-select with OR.** Each instrument chip toggles on its own; a song is shown when it has an
+  open slot for **any** selected instrument. Only slots count: an extra in `Otros` never makes a song
+  match, and a song with every slot filled shows only under `Todos`.
+- **`Todos`** is checked exactly when no instrument is selected; tapping it clears the selection.
+  Counts stay per instrument whatever is selected. A chip with count 0 stays tappable.
+- **Above the chips**, the heading `Filtrá por cupo libre` (caption, muted, a heading for screen
+  readers). **Below them**, while something is selected: the count line ("2 de 13 temas con cupo
+  libre para bajo"; several names join in chip order with ", " and a final " o ": "para guitarra,
+  bajo o voz"), or, when nothing matches, the no-results block: "Ningún tema tiene cupo libre para
+  armónica." and the text action "Ver todos los temas" (underlined, 48dp tall), which clears. No
+  bar at all on a published setlist with no songs: that is the empty state, not no-results.
+- **Layout.** The chips wrap (2 rows at 393dp, 3 at 360dp; never a horizontal scroll); each chip is
+  at least 48dp tall, `rounded.lg`, label in body and count in caption. Selected: `activeFilter`
+  fill with `onActiveFilter` content; unselected: `surfaceRaised` with `textMuted`. The bar is the
+  list's second item and scrolls with it (not sticky).
+- **Screen readers.** Each chip is one checkbox node (`Role.Checkbox`, checked = selected) with a
+  description ("Bajo: 2 temas con cupo libre", "Todos los temas: 13"); the count line and the
+  no-results message are polite live regions.
+- **State.** The selection belongs to the musician, not to the jam: it survives refreshes, rotation
+  and a new upcoming jam; it is lost on relaunch and on the temporary tab switch.
+
+The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter`); amber
+`activeFilter` is read only there.
+
 ### Status badge
 
 **Borrador** or **Publicada**. Published is amber; draft is muted.

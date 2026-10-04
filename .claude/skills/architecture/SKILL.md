@@ -77,6 +77,16 @@ is. There is no `:feature:admin`.
   filled, then extras), `LineupPanelUiModel`/`LineupLineUiModel`, internal `LineupPanelCopy` and
   `LineupPanelDefaults` (line styles reuse `InstrumentStripDefaults.style`), and `ExpandIndicator`,
   the row chevron, which is here because features do not depend on the icons library.
+- The instrument filter is the third example (`instrument-filter-chips`): `com.bbbjam.core.ui.filter`
+  holds `InstrumentFilterBar(model)`, `InstrumentFilterBarUiModel`/`FilterChipUiModel`, the pure
+  mapper `instrumentFilterBar(lineups, selected, onChange)`, the row predicate
+  `Lineup.matchesInstrumentFilter(selected)` (OR over `hasOpenSlotFor`; extras never count), the
+  change type `InstrumentFilterChange` (`Toggle(instrument)`, `Clear`) with
+  `Set<Instrument>.updatedBy(change)`, internal `InstrumentFilterCopy` and
+  `InstrumentFilterDefaults` (the only reader of `activeFilter`, so `:feature:next-jam` stays at
+  `{key}`). Handlers carry the **change**, never a precomputed set: an unchanged chip compares equal
+  to its previous model, Compose may keep its old handler, and a stale set would undo another
+  chip's selection.
 - Per-row UI state of a list (which rows are expanded) → **one state object in the parent
   presenter**, keyed by a stable id, passed into the pure mapping; not a child presenter called in a
   loop. A `remember` inside a child presenter called in `map {}` is keyed by call order, so removing
@@ -87,6 +97,11 @@ is. There is no `:feature:admin`.
   state object** (`remember(snapshot) { … }`): handlers without a key compare equal, so Compose may
   keep an earlier model's handler, and it must still write through the same state. A child
   presenter pays off only when a row has its own dependencies (the admin slot mutations).
+  The filter selection is held the same way, beside it: `Set<Instrument>` in
+  `rememberSaveable(stateSaver = InstrumentFilterSaver)` (enum names), created once, never
+  recreated, and **not** scoped to the jam date (it describes the musician). The presenter filters
+  rows with `matchesInstrumentFilter` and builds the bar from every song, so the count line equals
+  the rows drawn; a setlist with no song gets no bar.
 - Wiring an implementation to its interface → the Koin module of the module that owns the
   implementation; `:app` only lists modules in `startKoin`.
 - Anything that needs two features to talk → `:app` navigation or a `:core` contract.

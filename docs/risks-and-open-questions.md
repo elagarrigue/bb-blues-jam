@@ -73,6 +73,20 @@ and the user scrolls by hand (no auto-scroll, by design); expansion survives rot
 (`rememberSaveable`) but not the switch between the temporary tabs until `bottom-navigation` owns
 per-tab state; Compose honouring the system "remove animations" setting is assumed, not verified.
 
+### Instrument filter (`instrument-filter-chips`, 4 October 2026)
+
+Settled with the user before implementation: multi-select with OR semantics (checkbox chips,
+`Todos` clears), the copy with the heading `Filtrá por cupo libre`, zero-count chips tappable, the
+selection not tied to the jam date, and the plain no-results block shipped here rather than in
+`list-states`. Spec in `../DESIGN.md` "Filter chip".
+
+Risks, not solved: the bar takes 2–3 rows of 48dp chips (about 150–200dp) on a 360dp screen or a
+large font, pushing the first song down; it is not sticky, so after scrolling the active filter and
+the count line are off screen; the selected chip adds one more amber element beside the open-slot
+amber of the shown rows; the selection is lost on relaunch and on the temporary tab switch (until
+`bottom-navigation` owns per-tab state). Unverified (no TalkBack run, T1 declined): the live-region
+announcements of the count line and the no-results message, and TalkBack's checkbox wording.
+
 ## Implementation-Time Questions
 
 - **Offline mutations.** Reads are cached, but what happens when an admin edits with no connection?

@@ -306,8 +306,10 @@ Recorded 4 October 2026, before implementation. Where they differ from the body,
   - Count line and no-results text join the selected instrument names in lowercase, in the fixed
     chip order, with ", " and a final " o ": one → `para bajo`; two → `para bajo o voz`; three →
     `para guitarra, bajo o voz`. Examples: `5 de 13 temas con cupo libre para bajo o voz`,
-    `Ningún tema tiene cupo libre para bajo o voz.` Singular `1 de 13 tema…`/`1 de 1 tema…` rules
-    from the body still apply.
+    `Ningún tema tiene cupo libre para bajo o voz.` The noun agrees with the **total**: `1 de 13
+    temas…`, `2 de 13 temas…`; `tema` is singular only when the setlist has exactly one song
+    (`1 de 1 tema…`). (Corrected 4 October 2026: an earlier wording here said `1 de 13 tema…`, an
+    orchestrator error; the body's copy table had it right.)
   - Tests cover selecting two and three instruments, deselecting one, Todos clearing, OR counting
     (a song open only for voz is shown under bajo+voz), and the joined copy.
 - **F2: confirmed** (count per chip and the `Todos` chip).
