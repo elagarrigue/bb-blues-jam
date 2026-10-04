@@ -290,7 +290,17 @@ screenshots (no URL, no names beyond the test data); the user's cleanup confirma
 
 ## User Approvals
 
-Pending. Each has a recommended option.
+Answered by the user on 4 October 2026:
+
+- **N1:** **Navigation Compose now** (the alternative, not the recommendation): a new dependency,
+  and the library choice is made here instead of in `bottom-navigation`. The spec body must be
+  revised to match before implementation.
+- **K1:** yes — new type role `keyDisplay`, Barlow Condensed ExtraBold 96sp.
+- **G1:** grouped by instrument, open first within each, `Otros` last; DESIGN.md records the
+  exception.
+- **C1:** copy approved as written.
+
+The questions as asked:
 
 - **N1 — navigation structure.** *Recommended:* state-based in `:app` (Decision 9): the detail
   opens full screen over `TemporaryTabs` (bar hidden), `BackHandler` + a visible back button,
