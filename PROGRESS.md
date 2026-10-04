@@ -6,10 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: seventeen of 37 slices accepted, the latest `song-row-expansion`;
-  `instrument-filter-chips` is `passing` (awaiting the validator). **The user's temporary
-  `2026-10-31` jam is still in the Sheet** (step D of that spec pending): every musician sees it
-  until it is deleted.
+- Current state: eighteen of 37 slices accepted, the latest `instrument-filter-chips` (step D done
+  4 October 2026: the test jam is deleted; the app shows no upcoming jam). Next: `list-states`,
+  spec approved (C1, K1, S1), implementation starting.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -1966,6 +1965,8 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Validator (commit a2c2c10): **accept, conditional on step D**. It reran the gate (exit 0, three
   wired), showed an `any`→`all` mutation fails 3 tests, and confirmed the corrected count line on
   the Pixel 5 after a reinstall, with no device setting changed.
+- Step D done: the user deleted the test jam; the relaunch logs `upcoming none` and shows the
+  no-upcoming line. **Status `accepted`.**
 - Completed:
   - `:core:ui` `com.bbbjam.core.ui.filter`: `InstrumentFilterUiModel.kt`
     (`InstrumentFilterBarUiModel` with `Event.Clear`, `FilterChipUiModel` with `Event.Toggle`),
