@@ -287,3 +287,35 @@ result; `BluesJam` log lines; copy as shipped; the user's cleanup confirmation.
 - Amber: the active chip adds one amber element beside the amber open-slot chips of the shown rows.
 - `liveRegion` announcements and TalkBack's radio wording are unverified (T1 declined).
 - A forgotten temporary jam (step D) is shown to every musician.
+
+## User Approvals
+
+Recorded 4 October 2026, before implementation. Where they differ from the body, these win.
+
+- **C1: copy approved as written, with the heading** `Filtrá por cupo libre`.
+- **F1: the user chose MULTI-select, with OR semantics.** A song is shown when it has an open slot
+  for **any** selected instrument (`selected.any { lineup.hasOpenSlotFor(it) }`; extras never count,
+  D-18). Consequences, defined by the orchestrator:
+  - State is a set of instruments (`rememberSaveable`, saved by enum names), not a single value.
+  - Each instrument chip toggles independently: tapping a selected chip deselects it. Semantics are
+    a checkbox (`toggleable`, `Role.Checkbox`), so uiautomator reads `checkable`/`checked` and
+    TalkBack can toggle both ways. This replaces F4.
+  - `Todos` is checked exactly when the set is empty; tapping it clears the set. "Ver todos los
+    temas" clears the set too.
+  - Per-chip counts stay per instrument (unchanged).
+  - Count line and no-results text join the selected instrument names in lowercase, in the fixed
+    chip order, with ", " and a final " o ": one → `para bajo`; two → `para bajo o voz`; three →
+    `para guitarra, bajo o voz`. Examples: `5 de 13 temas con cupo libre para bajo o voz`,
+    `Ningún tema tiene cupo libre para bajo o voz.` Singular `1 de 13 tema…`/`1 de 1 tema…` rules
+    from the body still apply.
+  - Tests cover selecting two and three instruments, deselecting one, Todos clearing, OR counting
+    (a song open only for voz is shown under bajo+voz), and the joined copy.
+- **F2: confirmed** (count per chip and the `Todos` chip).
+- **F3: approved** — zero-count chips stay tappable and lead to the no-results block.
+- **F4: superseded** by the multi-select toggle above.
+- **F5: approved** — selection not tied to the jam date; lost on relaunch and on the temporary tab
+  switch.
+- **S1: approved** — the plain no-results block ships in this slice.
+- Amber allowlist unchanged (`{key}`); the active chip reads `activeFilter` inside `:core:ui`.
+- Device check: adjust step B/C so the multi-select OR is visible (e.g. select Bajo, then add Voz
+  and see more songs), plus the user's temporary jam and its cleanup (step D).
