@@ -6,9 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: eighteen of 37 slices accepted, the latest `instrument-filter-chips` (step D done
-  4 October 2026: the test jam is deleted; the app shows no upcoming jam). `list-states` is
-  `passing` (session 062), awaiting independent validation.
+- Current state: nineteen of 37 slices accepted, the latest `list-states` (session 062, validator
+  accept 4 October 2026). Next: `song-detail-screen` (spec in planning).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
@@ -2056,7 +2055,8 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Goal: implement `list-states` (spec `docs/specs/list-states.md`; User Approvals answered 4
   October 2026: C1 copy as written, K1 the Konsist rule `no-dp-literal-outside-core-ui` in this
   slice, demonstrated failing first, S1 catch `SQLException` in the jams read flow).
-- Status: `passing`, awaiting the validator. Not committed (the orchestrator commits).
+- Status: **`accepted`** — the validator reran the gate, three mutations of its own and the four
+  Pixel 5 steps (commit 071755e).
 - Completed:
   - `:core:data`: `DefaultJamsRepository.observeJams()` ends in `Flow.catch` for
     `android.database.SQLException` only: one `JamsSnapshot(null, [], Freshness(null,
