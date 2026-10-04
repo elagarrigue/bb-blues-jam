@@ -1085,6 +1085,38 @@ y más diferencias entre lo que un documento afirma y lo que efectivamente se ve
 que un solo agente que se autoevalúa nunca encontraría: no se trata de si el código anda, sino de si
 lo que decimos sobre él es cierto.
 
+### 6.16 Sesión del 4 de octubre — filtrar por cupo libre
+
+`instrument-filter-chips` cerró `accepted`: van 18 de 37. Un armonicista ya no tiene que recorrer los
+13 temas buscando un cupo; toca "Armónica" y ve cuáles le quedan, o un mensaje claro si no hay
+ninguno, con un botón para volver a la lista completa.
+
+**La decisión de producto la tomó el usuario, no el plan.** La spec proponía un filtro de a un
+instrumento. El organizador eligió "varios a la vez" y, después, que la lógica fuera "cualquiera"
+(un tema aparece si tiene cupo para bajo **o** para voz), no "todos". Es la pregunta real de quien
+toca dos instrumentos. El texto lo dice igual: "3 de 13 temas con cupo libre para bajo o voz".
+
+**El error fue del orquestador, y lo encontró el orquestador.** Al pasar las respuestas a la spec
+escribí mal la regla del singular: "1 de 13 tema". El `implementer` la aplicó al pie de la letra y
+el teléfono la mostró así. La tabla original del `planner` estaba bien: el sustantivo concuerda con
+el total. Lo corregí antes de validar, quedó un test que falla si se vuelve a la regla vieja, y la
+evidencia dice que la prueba en el teléfono se hizo con el texto equivocado. El flujo copia lo que se
+le dice con fidelidad; por eso lo que se le dice tiene que estar bien.
+
+**Un guion que significa dos cosas.** El organizador cargó la armónica con `-` en todos los temas,
+"como si fuesen todos ocupados". Técnicamente `-` quiere decir "ese instrumento no va en este tema";
+para el filtro el resultado es el mismo: ningún cupo libre de armónica. Se aclaró en el chat y no
+hizo falta cambiar nada, pero muestra que la planilla tiene usos que el esquema no previó.
+
+**Las pruebas que pueden fallar.** El `implementer` mostró seis fallas a propósito (Y en vez de O,
+contar los "Otros" como cupos, el ámbar fuera de su lugar, entre otras); el `validator` sumó una
+propia: cambió "cualquiera" por "todos" y tres tests se pusieron en rojo. Después de eso, que el gate
+pase significa algo.
+
+**Otra vez, la limpieza cerró la rebanada.** La aceptación quedó condicionada a borrar la jam de
+prueba; el organizador la borró y el teléfono volvió a mostrar "La próxima jam todavía no tiene
+fecha".
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
