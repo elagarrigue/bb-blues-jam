@@ -1963,6 +1963,9 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   tappable; F4 superseded; F5 selection not tied to the jam date; S1 no-results shipped here).
 - Status: `passing` (step C done on the device). **Step D pending**: the user deletes the temporary
   `2026-10-31` row and tab; then a relaunch must log `upcoming none`.
+- Validator (commit a2c2c10): **accept, conditional on step D**. It reran the gate (exit 0, three
+  wired), showed an `any`→`all` mutation fails 3 tests, and confirmed the corrected count line on
+  the Pixel 5 after a reinstall, with no device setting changed.
 - Completed:
   - `:core:ui` `com.bbbjam.core.ui.filter`: `InstrumentFilterUiModel.kt`
     (`InstrumentFilterBarUiModel` with `Event.Clear`, `FilterChipUiModel` with `Event.Toggle`),
