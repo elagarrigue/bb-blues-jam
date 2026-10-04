@@ -291,7 +291,14 @@ and screenshots per device step; `BluesJam` log lines (never the script URL); co
 
 ## User Approvals
 
-Pending. Each item lists the recommended option first.
+Answered by the user on 4 October 2026 (recommended option taken in all three):
+
+- **C1:** copy table approved as written.
+- **K1:** yes — add `no-dp-literal-outside-core-ui` in this slice, demonstrated failing first
+  (Konsist 16/16).
+- **S1:** yes — catch `SQLException` in the jams read flow in `:core:data` in this slice.
+
+The questions as asked:
 
 - **C1 — copy.** Approve the copy table above (Rioplatense, vos), or give replacements.
   *Recommended:* approve as written.
