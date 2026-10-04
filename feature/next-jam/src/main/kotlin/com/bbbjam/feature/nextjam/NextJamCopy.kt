@@ -18,6 +18,17 @@ internal object NextJamCopy {
 
     const val NO_UPCOMING_JAM =
         "La próxima jam todavía no tiene fecha. Cuando se confirme, la vas a ver acá."
+
+    /**
+     * The screen's own state copy, approved on 4 October 2026 (`docs/specs/list-states.md`, C1).
+     * The shared messages, labels and ages live in `:core:ui` (`ListStateCopy`).
+     */
+    const val LOADING = "Cargando la próxima jam"
+    const val LOAD_FAILED = "No pudimos cargar la próxima jam"
+    const val NO_UPCOMING_TITLE = "Todavía no hay fecha"
+    const val EMPTY_SETLIST_TITLE = "Todavía no hay temas"
+    const val EMPTY_SETLIST =
+        "La lista está publicada pero todavía no tiene temas. ¿Tenés uno en mente? Contáselo a la organización."
     const val SETLIST_WITHHELD =
         "La lista de temas se está armando. Cuando se publique, la vas a ver acá."
     const val SETLIST_UNAVAILABLE =

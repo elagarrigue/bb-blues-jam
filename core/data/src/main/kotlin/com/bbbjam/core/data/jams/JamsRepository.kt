@@ -14,6 +14,10 @@ interface JamsRepository {
      * whenever the cache, the catalog it resolves titles from, or the freshness changes. Collecting
      * it starts one background refresh when the cache is stale and the last attempt is at least
      * [com.bbbjam.core.data.catalog.CatalogRepository.MIN_RETRY_INTERVAL] old.
+     *
+     * When reading the cache itself fails (`android.database.SQLException`), it emits one snapshot
+     * with no jams and a [com.bbbjam.core.data.DataFailure.Storage] failure, nothing fetched and
+     * not refreshing, then completes; collect it again to retry. Any other exception is rethrown.
      */
     fun observeJams(): Flow<JamsSnapshot>
 

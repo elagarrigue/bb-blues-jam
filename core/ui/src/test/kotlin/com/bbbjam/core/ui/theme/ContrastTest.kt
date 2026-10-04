@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import com.bbbjam.core.ui.filter.InstrumentFilterDefaults
+import com.bbbjam.core.ui.state.ListStateDefaults
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
 import org.junit.Assert.assertEquals
@@ -70,6 +71,17 @@ class ContrastTest {
         val style = InstrumentFilterDefaults.chipStyle(selected = false)
         assertContrast(style.content, style.fill, expected = 9.66)
     }
+
+    /** The error block's retry button, read through the style the component draws (`list-states`). */
+    @Test
+    fun `content on the retry button`() {
+        val style = ListStateDefaults.retryButtonStyle()
+        assertContrast(style.content, style.fill, expected = 9.52)
+    }
+
+    /** The staleness notice's detail ("Mostrando lo guardado hace 3 horas.") on the notice's fill. */
+    @Test
+    fun `muted text on the notice`() = assertContrast(colors.textMuted, ListStateDefaults.noticeFill(), expected = 9.66)
 
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {
         val lighter = maxOf(foreground.luminance(), background.luminance())

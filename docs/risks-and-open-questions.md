@@ -87,6 +87,22 @@ amber of the shown rows; the selection is lost on relaunch and on the temporary 
 `bottom-navigation` owns per-tab state). Unverified (no TalkBack run, T1 declined): the live-region
 announcements of the count line and the no-results message, and TalkBack's checkbox wording.
 
+### List states (`list-states`, 4 October 2026)
+
+Settled with the user before implementation: the copy (C1), the Konsist rule
+`no-dp-literal-outside-core-ui` (K1), and catching `SQLException` in the jams read flow (S1).
+Spec in `../DESIGN.md` "Required States".
+
+Risks, not solved: the staleness notice's age is computed when the data changes, so a screen left
+open for an hour keeps "hace 2 minutos"; data older than 30 minutes with no failure draws no notice
+and refreshes only when the flow is collected again (relaunch, tab switch), so nothing tells the
+musician in between; the **catalog** read Flow still throws on a Room read exception (only the jams
+flow is caught; no screen reads the catalog yet); the previews (`NextJamStatesPreview.kt` and the
+`:core:ui` state previews) compile in the gate but are not rendered by it. Unverified (no TalkBack
+run, T1 declined): the error block's and notice's TalkBack wording and the `Actualizando…` live
+region; on the Pixel 5, `Actualizando…` was too brief to capture offline (the refresh fails at
+once).
+
 ## Implementation-Time Questions
 
 - **Offline mutations.** Reads are cached, but what happens when an admin edits with no connection?

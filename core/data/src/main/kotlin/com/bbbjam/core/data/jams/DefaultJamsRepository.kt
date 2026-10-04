@@ -3,6 +3,7 @@ package com.bbbjam.core.data.jams
 import android.database.SQLException
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.DataScope
+import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.cache.JamWithChildren
 import com.bbbjam.core.data.cache.JamsDao
 import com.bbbjam.core.data.cache.SyncStateEntity
@@ -27,6 +28,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -61,6 +63,12 @@ internal class DefaultJamsRepository(
             }
             emit(cached.toSnapshot(calendar.today()))
         }
+    }.catch { error ->
+        // A Room read that fails (a corrupt or unreadable cache) must not crash the collector: it is
+        // reported once as a storage failure with nothing fetched, and the flow completes. Only
+        // SQLException: anything else, cancellation included, is rethrown (`list-states`, S1).
+        if (error !is SQLException) throw error
+        emit(JamsSnapshot(null, emptyList(), Freshness(null, error.toStorageFailure(), isRefreshing = false)))
     }
 
     override suspend fun refresh(): JamsRefreshOutcome {

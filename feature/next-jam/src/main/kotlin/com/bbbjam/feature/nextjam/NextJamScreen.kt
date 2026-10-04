@@ -37,6 +37,10 @@ import com.bbbjam.core.ui.lineup.ExpandIndicator
 import com.bbbjam.core.ui.lineup.LineupPanel
 import com.bbbjam.core.ui.lineup.toLineupPanel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.state.EmptyStateBlock
+import com.bbbjam.core.ui.state.ListErrorBlock
+import com.bbbjam.core.ui.state.SkeletonList
+import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.strip.InstrumentStrip
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.theme.BluesJamTheme
@@ -46,7 +50,8 @@ import org.koin.compose.koinInject
  * Próxima jam: the upcoming jam's date, venue and time remaining, and its songs as rows (position,
  * title, key in the amber `key` role) with the instrument strip under each; tapping a row's header
  * expands it in place to the artist and the lineup panel. Under the header, the instrument filter
- * bar narrows the rows to songs with an open slot for the selected instruments. It renders
+ * bar narrows the rows to songs with an open slot for the selected instruments. Loading, error,
+ * empty and offline are drawn with the `:core:ui` state components (`list-states`). It renders
  * [NextJamUiModel] and forwards events; the presenter decides. [contentPadding] goes inside the
  * list, so the background runs edge to edge.
  */
@@ -73,10 +78,22 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
         .fillMaxSize()
         .background(BluesJamTheme.colors.background)
     when (model) {
-        NextJamUiModel.Loading -> Box(modifier = background)
+        is NextJamUiModel.Loading -> Box(modifier = background.padding(padding)) {
+            SkeletonList(description = model.description)
+        }
 
-        is NextJamUiModel.NoUpcomingJam -> Box(modifier = background.padding(padding)) {
-            Message(text = model.message)
+        // At the top of the padded area, like the other messages, not vertically centred.
+        is NextJamUiModel.Failed -> Box(modifier = background.padding(padding)) {
+            ListErrorBlock(model.error)
+        }
+
+        is NextJamUiModel.NoUpcomingJam -> LazyColumn(
+            modifier = background,
+            contentPadding = padding,
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
+        ) {
+            model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+            item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
         }
 
         is NextJamUiModel.Jam -> LazyColumn(
@@ -84,6 +101,8 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
             contentPadding = padding,
             verticalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
+            // The notice sits above the header: on the offline screen the cached data is the content.
+            model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
             item(key = HEADER_KEY) { Header(model.header) }
             when (val setlist = model.setlist) {
                 is SetlistUiModel.Songs -> {
@@ -100,6 +119,8 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
                     }
                 }
 
+                is SetlistUiModel.Empty -> item(key = EMPTY_KEY) { EmptyStateBlock(setlist.empty) }
+
                 is SetlistUiModel.NotShown -> item(key = NOTE_KEY) { Message(text = setlist.message) }
             }
         }
@@ -109,6 +130,8 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
 private const val HEADER_KEY = "header"
 private const val NOTE_KEY = "note"
 private const val FILTER_KEY = "filter"
+private const val STALENESS_KEY = "staleness"
+private const val EMPTY_KEY = "empty"
 
 @Composable
 private fun Header(header: JamHeaderUiModel) {
@@ -261,6 +284,7 @@ private fun NextJamScreenPreview() {
             droppedRowsNote = "Falta 1 tema: no se pudo leer.",
             filterBar = instrumentFilterBar(lineups, emptySet()) {},
         ),
+        staleness = null,
     )
     BluesJamTheme { NextJamContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) }
 }

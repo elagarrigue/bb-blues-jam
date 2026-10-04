@@ -330,6 +330,34 @@ A sixth case is product-specific and easily missed: **an unpublished setlist** s
 the date and venue plus a message that the list is being assembled. That is not the empty state and
 must not look like one.
 
+How they are drawn (`list-states`, 4 October 2026). Four shared components in `:core:ui`, package
+`com.bbbjam.core.ui.state`, each taking only its UiModel, so `past-jams-list` draws the same states:
+
+- **Loading** — `SkeletonList`: a header placeholder (three bars) and five row placeholders the size
+  of a collapsed song row (`surfaceRaised` bars on `surface` rows, at least 64dp, no dp literal).
+  **Static**: no shimmer or pulse (battery, and WCAG 2.2.2 for moving content). A screen reader
+  reads the whole list as one node ("Cargando la próxima jam"). Shown while nothing was ever fetched
+  and no read has failed, or while a retry runs; never "no jam" before a first read.
+- **Error** — `ListErrorBlock`: only when nothing is cached and the read failed. Title
+  (`songTitle`), message (`body`, `textMuted`; one for offline, one for any other failure, never the
+  failure's kind or detail), then a full-width `Reintentar` button, at least 48dp, in the
+  `primaryAction` amber (read only inside `ListStateDefaults`). At the top of the screen, not
+  centred. Not a Material `Button`.
+- **Offline** — `StalenessNotice` above the cached data (above the header), on `surfaceRaised`:
+  `Sin conexión` (or `No se pudo actualizar`), `Mostrando lo guardado hace 3 horas.`, and an
+  underlined text action `Reintentar` (not amber: the data is the content). While the retry runs the
+  detail reads `Actualizando…` (a polite live region) and the action is hidden. The notice is drawn
+  **only when the latest refresh failed**; data older than 30 minutes with no failure draws none,
+  because opening the screen already refreshes it. The age is computed when the data changes, not
+  ticked while the screen stays open.
+- **Empty** — `EmptyStateBlock`: a concrete title and an invitation (`Todavía no hay fecha` for no
+  upcoming jam; `Todavía no hay temas` for a published setlist with no song, with no filter bar).
+  No illustration.
+
+Retry is a read: it re-subscribes to the jams and calls `JamsRepository.refresh()`; it writes
+nothing. Previews: `NextJamStatesPreview.kt` (one per state) and the component previews in
+`:core:ui`; they compile in the gate but are not rendered by it.
+
 ## Responsive Baseline
 
 Phone, portrait. No tablet layout and no landscape-specific design for the MVP. The list must work

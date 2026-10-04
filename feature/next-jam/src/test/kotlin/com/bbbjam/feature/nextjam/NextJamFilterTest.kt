@@ -106,7 +106,7 @@ class NextJamFilterTest {
         bar().chips.single { it.label == label }.events(FilterChipUiModel.Event.Toggle)
 
     private suspend fun ReceiveTurbine<NextJamUiModel>.start(songs: List<JamSong> = filterSongs): NextJamUiModel {
-        assertEquals(NextJamUiModel.Loading, awaitItem())
+        assertEquals(NextJamUiModel.Loading("Cargando la próxima jam"), awaitItem())
         repository.snapshots.emit(snapshot(jam(Setlist.Available(songs))))
         return awaitItem()
     }

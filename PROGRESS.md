@@ -7,12 +7,17 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: eighteen of 37 slices accepted, the latest `instrument-filter-chips` (step D done
-  4 October 2026: the test jam is deleted; the app shows no upcoming jam). Next: `list-states`,
-  spec approved (C1, K1, S1), implementation starting.
+  4 October 2026: the test jam is deleted; the app shows no upcoming jam). `list-states` is
+  `passing` (session 062), awaiting independent validation.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 4 October 2026 (session 061, `instrument-filter-chips`) — `CI=true ./init.sh`
+- Last verified at: 4 October 2026 (session 062, `list-states`) — `CI=true ./init.sh` exit 0,
+  `konsist: wired` (16/16, new `no-dp-literal-outside-core-ui`), `detekt: wired`, `ktlint: wired`;
+  49 result files, 290 tests, 0 failures. Pixel 5: offline first launch shows the error block,
+  Retry online shows the skeleton then the no-upcoming block, offline with cache shows the
+  staleness notice; empty crash buffer, every setting restored. Before that, session 061
+  (`instrument-filter-chips`) — `CI=true ./init.sh`
   exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 46 result files,
   263 tests, 0 failures: the 43 previous files unchanged except `ContrastTest` 9 → 11, plus
   `InstrumentFilterMapperTest` 8, `InstrumentFilterDefaultsTest` 3 and `NextJamFilterTest` 10. Lint
@@ -2045,6 +2050,70 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     failures.
 - Known risk or unresolved issue: step D; live regions and TalkBack wording unverified (T1).
 - Next: the user deletes the temporary jam (step D) and tells the orchestrator; then the validator.
+
+### Session 062 — 4 October 2026
+
+- Goal: implement `list-states` (spec `docs/specs/list-states.md`; User Approvals answered 4
+  October 2026: C1 copy as written, K1 the Konsist rule `no-dp-literal-outside-core-ui` in this
+  slice, demonstrated failing first, S1 catch `SQLException` in the jams read flow).
+- Status: `passing`, awaiting the validator. Not committed (the orchestrator commits).
+- Completed:
+  - `:core:data`: `DefaultJamsRepository.observeJams()` ends in `Flow.catch` for
+    `android.database.SQLException` only: one `JamsSnapshot(null, [], Freshness(null,
+    Storage(<class>), false))`, then completes; anything else is rethrown. KDoc on
+    `JamsRepository.observeJams()`. Catalog flow untouched.
+  - `:core:ui` `com.bbbjam.core.ui.state`: `ListStateUiModel.kt` (`EmptyStateUiModel`,
+    `ListErrorUiModel`, `StalenessNoticeUiModel`, each retry an `Event.Retry`), `ListStateMapper.kt`
+    (`listError`, `stalenessNotice`, negative age clamped), internal `ListStateCopy.kt` and
+    `ListStateDefaults.kt` (only reader of `primaryAction`), `SkeletonList.kt` (static, one
+    semantics node) and `ListStateBlocks.kt` (`ListErrorBlock`, `StalenessNotice`,
+    `EmptyStateBlock`, `ListStatePreviewFrame`), six `@Preview`s.
+  - `:feature:next-jam`: `Loading(description)`, `Failed(error)`, `NoUpcomingJam(empty,
+    staleness)`, `Jam(header, setlist, staleness)`, `SetlistUiModel.Empty(empty)`; presenter
+    Decision 1 table, Retry (subscription counter + `rememberCoroutineScope().launch {
+    refresh() }`), `now` from `JamCalendar` per snapshot; screen draws the four components (notice
+    above the header); `NextJamStatesPreview.kt` with seven previews built through `toUiModel`.
+    Copy in `NextJamCopy` (`LOADING`, `LOAD_FAILED`, `NO_UPCOMING_TITLE`, `EMPTY_SETLIST_TITLE`,
+    `EMPTY_SETLIST`).
+  - `:konsist-test`: `no-dp-literal-outside-core-ui` (16th rule).
+  - Docs: `DESIGN.md` "Required States" (how each state is drawn, no notice on age alone, static
+    skeleton, components and package); architecture `SKILL.md` (the `state` package as the fourth
+    example, the retry pattern, the jams read-exception behaviour, the 16th rule);
+    `docs/risks-and-open-questions.md` (frozen age, no automatic refresh after 30 min, catalog
+    flow still throws, previews not rendered, TalkBack unverified); `docs/technical-discovery.md`
+    (how screens read `Freshness`). `CONTEXT.md`, `AGENTS.md`, `domain-model.md`: not needed
+    (spec).
+- Deviations from the spec body: the composables are in two files, `SkeletonList.kt` and
+  `ListStateBlocks.kt`, not one (detekt `TooManyFunctions`, split rather than suppressed);
+  `toUiModel` gains `now` (default: the fetch time) and `onRetry` as trailing defaulted
+  parameters so existing call sites keep compiling; demonstration 3 ("retry button reading
+  `slotOpen`") cannot fail by colour value (every amber role is the same colour), so
+  `ListStateDefaultsTest` reads the roles from `ListStateDefaults.kt`'s source, the way
+  `WindowBackgroundTest` reads `colors.xml`; the spec's `Songs.filterBar` stays nullable, but the
+  presenter no longer has a `songs.isEmpty()` branch for it (that case is now `Empty`).
+- Verification run:
+  - Baseline at `660c09f`: `CI=true ./init.sh` exit 0, 46 files, 263 tests, Konsist 15/15.
+  - S1 red → green: the new read-failure test failed with `android.database.sqlite.SQLiteException`
+    before the catch, passed after (`DefaultJamsRepositoryTest` 21/21).
+  - `./gradlew ktlintFormat` exit 0. First gate exit 1 (detekt MagicNumber in preview dates,
+    TooManyFunctions), fixed by restructuring. Final `CI=true ./init.sh` exit 0, three `wired`,
+    Konsist 16/16, 49 files, 290 tests, 0 failures (per class in the feature's evidence).
+  - K1 shown failing first: `4.dp` in `NextJamScreen.kt` → "Assert 'no-dp-literal-outside-core-ui'
+    was violated (1 time). Invalid files: File NextJamScreen.kt"; restored (SHA-1 `dc8b595b…`).
+  - Demonstrations 1–6 (isStale notice, Failed while refreshing, retry on `slotOpen`,
+    `primaryAction` in the screen, no catch, copy change) each failed as expected and were restored
+    by SHA-1; messages in the feature's evidence.
+  - Greps: no dp/sp literal, `Color(`, `MaterialTheme.`, progress indicator, infinite transition or
+    tú form in `feature/next-jam/src/main` and `core/ui/.../state`; `primaryAction` only in
+    `ListStateDefaults.kt`.
+  - Pixel 5: steps (a)–(d) of the spec with airplane mode (on and off twice, restored to 0; wifi,
+    mobile data, screen timeout and accessibility unchanged), app data cleared once. Error block
+    with a 48dp full-width `Reintentar`; skeleton captured right after Retry; notice "Sin conexión /
+    Mostrando lo guardado hace 1 minuto. / Reintentar" above "Todavía no hay fecha"; notice gone
+    after an online Retry. `Actualizando…` too brief to capture. Crash buffer empty.
+- Known risk or unresolved issue: notice age frozen while the screen stays open; no TalkBack run;
+  previews not rendered; catalog read flow still throws (no screen reads it).
+- Next: the validator for `list-states`.
 
 ## Notes For The Next Session
 

@@ -68,7 +68,10 @@ emits the cached songs with a `Freshness` (`fetchedAt`, `lastFailure`, `isRefres
 `isStale(now)`); the data is stale after 30 minutes or after a failed attempt; the app refreshes
 once per process start, and collecting the catalog refreshes in the background when stale, never
 sooner than 60 s after the last attempt (user approval Q3). A failed read never touches the cache;
-a valid one replaces it whole.
+a valid one replaces it whole. Screens read `Freshness` for their states (`list-states`): a notice
+above the cached data exactly when `fetchedAt` is set and `lastFailure` is not (age alone draws
+none), and an error block with a retry only when nothing was ever fetched and the latest read
+failed.
 
 The Sheet's schema is defined in `sheet-schema.md`: a `Catalogo` tab with stable song ids, a `Jams`
 index, one tab per jam date referencing catalog ids with one column per slot, and a `Config` tab

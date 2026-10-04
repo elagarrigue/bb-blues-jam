@@ -5,21 +5,34 @@ import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.state.ListErrorUiModel
+import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 
 /**
  * Everything Próxima jam draws, as plain values. Rows expand in place (`song-row-expansion`) and
- * can be filtered by instrument (`instrument-filter-chips`);
- * loading, error and offline get their designs in `list-states`.
+ * can be filtered by instrument (`instrument-filter-chips`). Every non-happy path is its own state
+ * (`list-states`): skeleton rows while nothing was read, an error block when nothing is cached and
+ * the read failed, an empty block when there is nothing to list, and a staleness notice above
+ * cached data whose latest refresh failed.
  */
 sealed interface NextJamUiModel : UiModel {
-    /** Nothing to show yet: no emission, or nothing was ever fetched. The screen draws only the background. */
-    data object Loading : NextJamUiModel
+    /**
+     * Nothing to show yet: no emission, or nothing was ever fetched and a read is running (or none
+     * has failed yet). Drawn as skeleton rows; [description] is what a screen reader says for them.
+     */
+    data class Loading(val description: String) : NextJamUiModel
 
-    /** The jams were read and none is upcoming. */
-    data class NoUpcomingJam(val message: String) : NextJamUiModel
+    /** Nothing was ever fetched and the latest read failed: the error block with a retry button. */
+    data class Failed(val error: ListErrorUiModel) : NextJamUiModel
 
-    data class Jam(val header: JamHeaderUiModel, val setlist: SetlistUiModel) : NextJamUiModel
+    /** The jams were read and none is upcoming. [staleness] is set when the latest refresh failed. */
+    data class NoUpcomingJam(val empty: EmptyStateUiModel, val staleness: StalenessNoticeUiModel?) : NextJamUiModel
+
+    /** [staleness] is set exactly when something is cached and the latest refresh failed. */
+    data class Jam(val header: JamHeaderUiModel, val setlist: SetlistUiModel, val staleness: StalenessNoticeUiModel?) :
+        NextJamUiModel
 }
 
 /** [date] is "Sábado 31 de octubre · 21:00"; [venue] is the Sheet's `lugar` as written. */
@@ -37,6 +50,9 @@ sealed interface SetlistUiModel : UiModel {
         val droppedRowsNote: String?,
         val filterBar: InstrumentFilterBarUiModel?,
     ) : SetlistUiModel
+
+    /** A published setlist with no song: the empty block, and no filter bar. */
+    data class Empty(val empty: EmptyStateUiModel) : SetlistUiModel
 
     /** The setlist is withheld (a draft) or unavailable: one line instead of rows. */
     data class NotShown(val message: String) : SetlistUiModel

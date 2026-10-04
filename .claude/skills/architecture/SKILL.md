@@ -87,6 +87,20 @@ is. There is no `:feature:admin`.
   `{key}`). Handlers carry the **change**, never a precomputed set: an unchanged chip compares equal
   to its previous model, Compose may keep its old handler, and a stale set would undo another
   chip's selection.
+- The list states are the fourth example (`list-states`): `com.bbbjam.core.ui.state` holds
+  `SkeletonList(description)`, `ListErrorBlock(model)`, `StalenessNotice(model)` and
+  `EmptyStateBlock(model)`, their UiModels (`EmptyStateUiModel`, `ListErrorUiModel`,
+  `StalenessNoticeUiModel`, each retry an `Event.Retry`), the pure mappers
+  `listError(title, isOffline, onRetry)` and `stalenessNotice(isOffline, age, isRefreshing, onRetry)`,
+  internal `ListStateCopy` (shared copy and ages) and `ListStateDefaults` (the only reader of
+  `primaryAction`, for the error block's retry button, so `:feature:next-jam` stays at `{key}`).
+  Feature-specific titles and the skeleton's description stay in the feature's `<Name>Copy`.
+  **Retry pattern**: the presenter holds `var subscription by remember { mutableIntStateOf(0) }`
+  and collects `remember(subscription) { repo.observe…() }`; `onRetry` increments it (re-subscribing
+  recovers from a failed local read) and `scope.launch { repo.refresh() }` with
+  `rememberCoroutineScope()`, ignoring the outcome, which comes back through `Freshness`. The counter
+  is created once, so an earlier model's handler still works. The staleness notice is drawn only
+  when `fetchedAt != null && lastFailure != null`, never on age alone.
 - Per-row UI state of a list (which rows are expanded) → **one state object in the parent
   presenter**, keyed by a stable id, passed into the pure mapping; not a child presenter called in a
   loop. A `remember` inside a child presenter called in `map {}` is keyed by call order, so removing
@@ -142,14 +156,18 @@ outside `:core:ui` and `:konsist-test`) and `amber-roles-allowlisted` (outside `
 matches, so an import alias of `MaterialTheme`, `with(MaterialTheme) { … }` or an alias of the
 colors object (`val c = BluesJamTheme.colors; c.key`) escapes; a Material component left on its
 default colors (amber `primary`) escapes; and the rule cannot judge whether an allowed role is
-drawn on the right element. All of them live in
+drawn on the right element. `no-dp-literal-outside-core-ui` (`list-states`, K1) is the same
+shape for sizes: outside `:core:ui` and `:konsist-test`, no `<number>.dp`, `.sp`, `.em` (also
+`0.5f.dp`) and no `Dp(<number>`; known limits: a text match, so `n.dp` on a variable or a
+constant escapes, and literals inside `:core:ui` components are not checked. All of them live in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 15 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 16 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
 `jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
-`amber-roles-allowlisted`, with `next-jam-read-only-list`); the two that read build files are
+`amber-roles-allowlisted`, with `next-jam-read-only-list`; the 16th,
+`no-dp-literal-outside-core-ui`, with `list-states`); the two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
@@ -292,8 +310,12 @@ them.
   `IllegalArgumentException` and becomes `InvalidResponse("mapping: …")`. **Never catch
   `Exception`, `RuntimeException`, `IllegalStateException` or `Throwable`**: coroutine cancellation
   is an `IllegalStateException`. As a last resort `DataScope.create` (bound in `dataModule`) and
-  `BluesJamApp`'s scope carry a `CoroutineExceptionHandler` that logs instead of crashing. The read
-  Flows still throw on a Room read exception (left to `list-states`).
+  `BluesJamApp`'s scope carry a `CoroutineExceptionHandler` that logs instead of crashing.
+  A Room **read** exception: `JamsRepository.observeJams()` catches `android.database.SQLException`
+  only (`Flow.catch`, `list-states`), emits one snapshot with no jams and
+  `Freshness(null, Storage(<class>), isRefreshing = false)`, and completes; collecting it again
+  retries. Anything else is rethrown. The catalog read Flow still throws on a Room read exception
+  (no screen reads it yet).
 - **The Apps Script URL** never enters a tracked file. `app/build.gradle.kts` reads
   `bluesjam.appsScriptUrl` from the git-ignored `local.properties` into
   `BuildConfig.APPS_SCRIPT_URL` (`""` when missing), and `appModule` binds

@@ -1,5 +1,6 @@
 package com.bbbjam.core.data.jams
 
+import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteFullException
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.DataScope
@@ -8,6 +9,7 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.MutableClock
 import com.bbbjam.core.data.cache.CatalogSongEntity
 import com.bbbjam.core.data.cache.JamRows
+import com.bbbjam.core.data.cache.JamWithChildren
 import com.bbbjam.core.data.cache.JamsDao
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.AppsScriptTransport
@@ -26,7 +28,10 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
@@ -323,6 +328,41 @@ class DefaultJamsRepositoryTest {
     }
 
     @Test
+    fun `a failed local read emits one storage failure with nothing fetched, then completes`() = runTest {
+        dao.failRead = SQLiteException("no such table: jam")
+        val repository = repository()
+
+        val emitted = repository.observeJams().toList()
+
+        assertEquals(
+            listOf(
+                JamsSnapshot(
+                    upcoming = null,
+                    past = emptyList(),
+                    freshness = Freshness(null, DataFailure.Storage("SQLiteException"), isRefreshing = false),
+                ),
+            ),
+            emitted,
+        )
+        assertEquals(0, transport.calls)
+
+        // Re-subscribing once the read works serves the cache again (list-states retry).
+        dao.failRead = null
+        repository.refresh()
+        assertEquals(LocalDate.of(2026, 7, 25), repository.observeJams().first().upcoming?.date)
+    }
+
+    @Test
+    fun `a read failure that is not a SQLException is rethrown`() = runTest {
+        dao.failRead = IllegalArgumentException("not a storage failure")
+        val repository = repository()
+
+        val thrown = runCatching { repository.observeJams().first() }.exceptionOrNull()
+
+        assertTrue(thrown is IllegalArgumentException)
+    }
+
+    @Test
     fun `collecting an empty cache starts one background refresh`() = runTest {
         val repository = repository()
 
@@ -409,6 +449,14 @@ class DefaultJamsRepositoryTest {
     private class FailingJamsDao(private val real: JamsDao) : JamsDao by real {
         var failReplace = false
         var failRecord = false
+
+        /** When set, collecting [observeJams] throws it, as a Room read that fails. */
+        var failRead: Throwable? = null
+
+        override fun observeJams(): Flow<List<JamWithChildren>> {
+            val failure = failRead ?: return real.observeJams()
+            return flow { throw failure }
+        }
 
         override suspend fun replaceJams(rows: JamRows, state: SyncStateEntity) {
             if (failReplace) throw SQLiteFullException("disk full")

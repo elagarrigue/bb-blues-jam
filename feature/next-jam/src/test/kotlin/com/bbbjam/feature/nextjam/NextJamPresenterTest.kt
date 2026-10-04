@@ -22,6 +22,9 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.lineup.LineupLineUiModel
 import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.state.ListErrorUiModel
+import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 import java.time.Clock
@@ -34,9 +37,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Every user-facing string expected here is written out from the approved copy table in
- * `docs/specs/next-jam-read-only-list.md`, never read from [NextJamCopy], so any change to the
- * shipped copy fails this class.
+ * Every user-facing string expected here is written out from the approved copy tables in
+ * `docs/specs/next-jam-read-only-list.md` and `docs/specs/list-states.md`, never read from
+ * [NextJamCopy], so any change to the shipped copy fails this class.
  */
 class NextJamPresenterTest {
     private val repository = FakeJamsRepository()
@@ -178,16 +181,59 @@ class NextJamPresenterTest {
 
     private fun presenter(calendar: JamCalendar = octoberSecond) = NextJamPresenter(repository, calendar)
 
-    private suspend fun ReceiveTurbine<NextJamUiModel>.awaitAfterLoading(): NextJamUiModel {
+    private suspend fun ReceiveTurbine<NextJamUiModel>.awaitAfterLoading(): NextJamUiModel =
+        awaitMatching { it !is NextJamUiModel.Loading }
+
+    /** Skips models until one matches: a re-subscription may recompose once with the same model. */
+    private suspend fun ReceiveTurbine<NextJamUiModel>.awaitMatching(
+        predicate: (NextJamUiModel) -> Boolean,
+    ): NextJamUiModel {
         var item = awaitItem()
-        while (item == NextJamUiModel.Loading) item = awaitItem()
+        while (!predicate(item)) item = awaitItem()
         return item
     }
+
+    private val octoberSecondNoon = Instant.parse("2026-10-02T15:00:00Z")
+
+    private val loading = NextJamUiModel.Loading("Cargando la próxima jam")
+
+    private val noUpcomingJam = NextJamUiModel.NoUpcomingJam(
+        EmptyStateUiModel(
+            "Todavía no hay fecha",
+            "La próxima jam todavía no tiene fecha. Cuando se confirme, la vas a ver acá.",
+        ),
+        staleness = null,
+    )
+
+    private val emptySetlist = SetlistUiModel.Empty(
+        EmptyStateUiModel(
+            "Todavía no hay temas",
+            "La lista está publicada pero todavía no tiene temas. ¿Tenés uno en mente? Contáselo a la organización.",
+        ),
+    )
+
+    private val offlineError = NextJamUiModel.Failed(
+        ListErrorUiModel(
+            "No pudimos cargar la próxima jam",
+            "No hay conexión y todavía no hay nada guardado. Revisá los datos o el wifi y probá de nuevo.",
+            "Reintentar",
+            EventHandler {},
+        ),
+    )
+
+    private val otherError = NextJamUiModel.Failed(
+        ListErrorUiModel(
+            "No pudimos cargar la próxima jam",
+            "Algo falló al leer los datos. Probá de nuevo en un rato; si sigue fallando, avisale a la organización.",
+            "Reintentar",
+            EventHandler {},
+        ),
+    )
 
     @Test
     fun `loading, then a published jam with its header and every row`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs))))
             val expectedRows = listOf(
                 row("01", "Sweet Little Angel", "B"),
@@ -204,7 +250,10 @@ class NextJamPresenterTest {
                 row("12", "Blues de Rosario", "E"),
                 row("13", "Tres Palabras", "A"),
             )
-            assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(13))), awaitItem())
+            assertEquals(
+                NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(13)), staleness = null),
+                awaitItem(),
+            )
         }
         assertEquals(0, repository.refreshCalls)
     }
@@ -212,12 +261,10 @@ class NextJamPresenterTest {
     @Test
     fun `no upcoming jam after a fetch, then the jam appears`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(upcoming = null))
             assertEquals(
-                NextJamUiModel.NoUpcomingJam(
-                    "La próxima jam todavía no tiene fecha. Cuando se confirme, la vas a ver acá.",
-                ),
+                noUpcomingJam,
                 awaitItem(),
             )
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(1)))))
@@ -229,6 +276,7 @@ class NextJamPresenterTest {
                         null,
                         bar(1),
                     ),
+                    staleness = null,
                 ),
                 awaitItem(),
             )
@@ -236,24 +284,116 @@ class NextJamPresenterTest {
     }
 
     @Test
-    fun `nothing ever fetched stays loading, with or without a failure`() = runTest {
-        assertEquals(NextJamUiModel.Loading, snapshot(null, neverFetched).toUiModel(LocalDate.of(2026, 10, 2)))
+    fun `nothing ever fetched is loading while reading and the error once a read failed`() = runTest {
+        assertEquals(loading, snapshot(null, neverFetched).toUiModel(LocalDate.of(2026, 10, 2)))
         val offline = Freshness(fetchedAt = null, lastFailure = DataFailure.Offline, isRefreshing = false)
-        assertEquals(NextJamUiModel.Loading, snapshot(null, offline).toUiModel(LocalDate.of(2026, 10, 2)))
+        assertEquals(offlineError, snapshot(null, offline).toUiModel(LocalDate.of(2026, 10, 2)))
 
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(null, neverFetched))
-            repository.snapshots.emit(snapshot(null, offline))
             repository.snapshots.emit(snapshot(null, fetched))
             // Every model before the fetched snapshot is Loading, never "no jam".
+            assertEquals(noUpcomingJam, awaitAfterLoading())
+        }
+    }
+
+    @Test
+    fun `skeleton, then the offline error, then Retry re-subscribes and refreshes, then the jam`() = runTest {
+        val offline = Freshness(fetchedAt = null, lastFailure = DataFailure.Offline, isRefreshing = false)
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+            assertEquals(loading, awaitItem())
+            repository.snapshots.emit(snapshot(null, offline))
+            val failed = awaitItem()
+            assertEquals(offlineError, failed)
+            assertEquals(1, repository.subscriptions)
+            assertEquals(0, repository.refreshCalls)
+
+            (failed as NextJamUiModel.Failed).error.events(ListErrorUiModel.Event.Retry)
+            // The refresh is running: the skeleton again, not the error.
+            repository.snapshots.emit(snapshot(null, offline.copy(isRefreshing = true)))
+            assertEquals(loading, awaitMatching { it != failed })
+            assertEquals(1, repository.refreshCalls)
+            assertEquals(2, repository.subscriptions)
+
+            repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(1)))))
             assertEquals(
-                NextJamUiModel.NoUpcomingJam(
-                    "La próxima jam todavía no tiene fecha. Cuando se confirme, la vas a ver acá.",
+                NextJamUiModel.Jam(
+                    header,
+                    SetlistUiModel.Songs(listOf(row("01", "Sweet Little Angel", "B")), null, bar(1)),
+                    staleness = null,
                 ),
-                awaitAfterLoading(),
+                awaitItem(),
             )
         }
+        assertEquals(1, repository.refreshCalls)
+    }
+
+    @Test
+    fun `the notice appears when a refresh fails, says refreshing on Retry, and goes on success`() = runTest {
+        val cached = jam(Setlist.Available(seedSongs.take(1)))
+        val twoHoursAgo = Instant.parse("2026-10-02T13:00:00Z")
+        val failedOffline = Freshness(twoHoursAgo, DataFailure.Offline, isRefreshing = false)
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+            assertEquals(loading, awaitItem())
+            repository.snapshots.emit(snapshot(cached, failedOffline))
+            val stale = awaitItem() as NextJamUiModel.Jam
+            val notice = checkNotNull(stale.staleness)
+            assertEquals("Sin conexión", notice.title)
+            assertEquals("Mostrando lo guardado hace 2 horas.", notice.detail)
+            assertEquals("Reintentar", notice.retryLabel)
+            // The header and rows are still drawn, filter bar included.
+            assertEquals(header, stale.header)
+            assertEquals(listOf(row("01", "Sweet Little Angel", "B")), stale.rows())
+            assertEquals(bar(1), (stale.setlist as SetlistUiModel.Songs).filterBar)
+
+            notice.events(StalenessNoticeUiModel.Event.Retry)
+            repository.snapshots.emit(snapshot(cached, failedOffline.copy(isRefreshing = true)))
+            val refreshing = awaitMatching { it != stale } as NextJamUiModel.Jam
+            assertEquals("Actualizando…", refreshing.staleness?.detail)
+            assertEquals(null, refreshing.staleness?.retryLabel)
+            assertEquals(1, repository.refreshCalls)
+
+            repository.snapshots.emit(snapshot(cached, Freshness(octoberSecondNoon, null, isRefreshing = false)))
+            assertEquals(null, (awaitItem() as NextJamUiModel.Jam).staleness)
+        }
+    }
+
+    @Test
+    fun `an earlier model's Retry handler still re-subscribes and refreshes`() = runTest {
+        val offline = Freshness(fetchedAt = null, lastFailure = DataFailure.Offline, isRefreshing = false)
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+            assertEquals(loading, awaitItem())
+            repository.snapshots.emit(snapshot(null, offline))
+            val first = awaitItem() as NextJamUiModel.Failed
+            first.error.events(ListErrorUiModel.Event.Retry)
+            repository.snapshots.emit(snapshot(null, offline.copy(isRefreshing = true)))
+            assertEquals(loading, awaitMatching { it != first })
+            repository.snapshots.emit(snapshot(null, offline.copy(lastFailure = DataFailure.Service("internal"))))
+            assertEquals(otherError, awaitItem())
+
+            // The first model's handler, not the latest one's.
+            first.error.events(ListErrorUiModel.Event.Retry)
+            repository.snapshots.emit(snapshot(null, fetched))
+            assertEquals(noUpcomingJam, awaitMatching { it != otherError })
+            assertEquals(2, repository.refreshCalls)
+            assertEquals(3, repository.subscriptions)
+        }
+    }
+
+    @Test
+    fun `a published setlist with no song is the empty block, a filter with no match is not`() = runTest {
+        val today = LocalDate.of(2026, 10, 2)
+        assertEquals(
+            NextJamUiModel.Jam(header, emptySetlist, staleness = null),
+            snapshot(jam(Setlist.Available(emptyList()))).toUiModel(today),
+        )
+        // Song 1 has no open harmonica slot: the filter's own no-results, rows empty, bar kept.
+        val filtered = snapshot(jam(Setlist.Available(listOf(seedSongs[0].copy(lineup = mixedLineup)))))
+            .toUiModel(today, filter = setOf(Instrument.HARMONICA))
+        val songs = (filtered as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs
+        assertEquals(emptyList<SongRowUiModel>(), songs.rows)
+        assertEquals("Ningún tema tiene cupo libre para armónica.", songs.filterBar?.noResults)
     }
 
     @Test
@@ -265,20 +405,28 @@ class NextJamPresenterTest {
             row("03", "Dust My Broom", "D"),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, null, bar(2))),
+            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, null, bar(2)), staleness = null),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 0))).toUiModel(today),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, "Falta 1 tema: no se pudo leer.", bar(2))),
+            NextJamUiModel.Jam(
+                header,
+                SetlistUiModel.Songs(gapRows, "Falta 1 tema: no se pudo leer.", bar(2)),
+                staleness = null,
+            ),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 1))).toUiModel(today),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, "Faltan 2 temas: no se pudieron leer.", bar(2))),
+            NextJamUiModel.Jam(
+                header,
+                SetlistUiModel.Songs(gapRows, "Faltan 2 temas: no se pudieron leer.", bar(2)),
+                staleness = null,
+            ),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 2))).toUiModel(today),
         )
         assertEquals(
-            // An empty setlist draws no filter bar: that is the empty case, not no-results.
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(emptyList(), null, filterBar = null)),
+            // An empty setlist is the empty block, with no filter bar: not the filter's no-results.
+            NextJamUiModel.Jam(header, emptySetlist, staleness = null),
             snapshot(jam(Setlist.Available(emptyList()))).toUiModel(today),
         )
     }
@@ -289,10 +437,12 @@ class NextJamPresenterTest {
         val withheld = NextJamUiModel.Jam(
             header,
             SetlistUiModel.NotShown("La lista de temas se está armando. Cuando se publique, la vas a ver acá."),
+            staleness = null,
         )
         val unavailable = NextJamUiModel.Jam(
             header,
             SetlistUiModel.NotShown("No se pudo leer la lista de temas de esta jam. Avisale a la organización."),
+            staleness = null,
         )
         assertEquals(withheld, snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)).toUiModel(today))
         SetlistProblem.entries.forEach { problem ->
@@ -300,7 +450,7 @@ class NextJamPresenterTest {
         }
 
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)))
             assertEquals(withheld, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Unavailable(SetlistProblem.MISSING_TAB))))
@@ -314,7 +464,7 @@ class NextJamPresenterTest {
 
         // 23:30 in Buenos Aires on 30 October is already 31 October in UTC.
         moleculeFlow(RecompositionMode.Immediate) { presenter(calendarAt("2026-10-31T02:30:00Z")).present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(upcoming)
             assertEquals("Mañana", (awaitItem() as NextJamUiModel.Jam).header.timeRemaining)
         }
@@ -362,7 +512,10 @@ class NextJamPresenterTest {
         ).toUiModel(LocalDate.of(2026, 10, 2))
         // Song 1 is open for guitar, drums and vocals; song 2 has no slot at all.
         val counts = listOf(1, 0, 1, 1, 0, 0)
-        assertEquals(NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(2, counts))), model)
+        assertEquals(
+            NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(2, counts)), staleness = null),
+            model,
+        )
         // The extra is never open: the open chips are exactly the lineup's open slots (D-18).
         val rows = ((model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
         val chips = rows[0].instruments
@@ -390,7 +543,7 @@ class NextJamPresenterTest {
     @Test
     fun `rows start collapsed, a tap expands only that row, and two rows stay expanded at once`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(3)))))
             val first = awaitItem()
             assertEquals(
@@ -405,6 +558,7 @@ class NextJamPresenterTest {
                         null,
                         bar(3),
                     ),
+                    staleness = null,
                 ),
                 first,
             )
@@ -438,7 +592,7 @@ class NextJamPresenterTest {
     @Test
     fun `expansion follows the position through a refresh, and a new jam starts collapsed`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(3)))))
             awaitItem().toggle(2)
             assertEquals(listOf(2), awaitItem().expandedPositions())
@@ -468,7 +622,7 @@ class NextJamPresenterTest {
     @Test
     fun `an earlier model's handler still writes through the same state after a refresh`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
-            assertEquals(NextJamUiModel.Loading, awaitItem())
+            assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(2)))))
             val stale = awaitItem()
             repository.snapshots.emit(

@@ -30,7 +30,8 @@ import org.junit.Test
  * Two rules guard D-17 in screens as text matches: `no-material-theme-outside-core-ui` (no
  * `MaterialTheme.colorScheme`/`.typography`/`.shapes` outside `:core:ui`) and
  * `amber-roles-allowlisted` (an amber role outside `:core:ui` only where `AMBER_ROLE_ALLOWLIST`
- * allows it for that module).
+ * allows it for that module). `no-dp-literal-outside-core-ui` does the same for sizes: no `dp`,
+ * `sp` or `em` built from a number literal outside `:core:ui`.
  */
 class ModuleIsolationTest {
 
@@ -146,6 +147,15 @@ class ModuleIsolationTest {
             .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
             .assertFalse(testName = "no-color-literal-outside-core-ui") { file ->
                 COLOR_LITERAL.containsMatchIn(file.text)
+            }
+    }
+
+    @Test
+    fun `dimensions outside core ui come from its tokens`() {
+        scope.files
+            .filter { it.modulePath != CORE_UI && it.modulePath != KONSIST_TEST }
+            .assertFalse(testName = "no-dp-literal-outside-core-ui") { file ->
+                DIMENSION_LITERAL.containsMatchIn(file.text)
             }
     }
 
@@ -338,6 +348,14 @@ class ModuleIsolationTest {
         val AMBER_ROLE_ALLOWLIST: Map<String, Set<String>> = mapOf(
             "feature/next-jam" to setOf("key"),
         )
+
+        /**
+         * A dimension built from a number literal (`list-states`, K1): `4.dp`, `0.5f.dp`, `14.sp`,
+         * `1.2.em` or `Dp(4…)`. Screens read `BluesJamTheme.spacing` and `.shapes`. Known limits: a
+         * text match, so `n.dp` on a variable or a constant, and literals inside `:core:ui`
+         * components, are not caught.
+         */
+        val DIMENSION_LITERAL = Regex("""\b\d+(\.\d+)?f?\s*\.\s*(dp|sp|em)\b|\bDp\(\s*\d""")
 
         /** A `Color(…)` built from a number, or an ARGB hex literal such as a preview `backgroundColor`. */
         val COLOR_LITERAL = Regex("""\bColor\(\s*(0x|\d)|\b0x[0-9A-Fa-f]{8}L?\b""")
