@@ -532,7 +532,7 @@
     "depends_on": [
       "list-states"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "A presenter test asserts no songs are exposed for a DRAFT jam",
       "The message is visibly distinct from the empty state",
@@ -545,7 +545,8 @@
       "Failure demonstrations restored by SHA-1 (NextJamPresenter.kt 0d02e32669f2cd3eb82e949f0b51ac08852fcd72, Jam.kt 5637490d153a8d101463e13cde72691e588d9fb2): (a) map jam.setlist -> 3 failed (NextJamDraftTest scenario 2 and filter-before-draft, NextJamStatesTest draft test); (b) setlistForMusicians() = setlist -> JamTest 'a draft with an available setlist is still withheld for musicians' failed; (c) Withheld -> Empty -> 6 failed (NextJamDraftTest scenarios 1, 2, 5, filter; NextJamStatesTest scenario 3 and draft test).",
       "Read endpoint does not serve draft songs: node --test backend/apps-script/test/*.test.js 70/70 pass (outside the gate), including the jams.test.js and router.test.js draft tests; no backend file changed.",
       "Release: ./gradlew :app:assembleRelease :app:assembleDebug exit 0; release dex (4) has no DemoUpcomingJam, DemoUpcomingJamRepository or 'Demo (solo debug)', only the DebugOverridesKt no-op; debug dex (23) has all; release BuildConfig DEMO_UPCOMING_JAM=false, DEMO_UPCOMING_JAM_DRAFT=false.",
-      "Pixel 5 (manual): draft flag on, real 2026-10-31 jam won online; airplane on + pm clear -> log 'jams cache: upcoming 2026-10-15 draft (demo), past 0, songs 8'; uiautomator dump: badge, title, message separate non-clickable text nodes, no demo song title, musician, key or filter bar. Not observed on device: heading semantics (dump has no heading attribute) and the staleness notice above a draft (no fetchedAt with the demo); both covered by code/JVM test/preview. Draft flag removed, reinstalled, published demo back offline. Restored: airplane 0, accessibility null, rotation 1, font 1.0; crash buffer empty; demoUpcomingJam=true, draft flag absent. No Sheet change, no accessibility service enabled."
+      "Pixel 5 (manual): draft flag on, real 2026-10-31 jam won online; airplane on + pm clear -> log 'jams cache: upcoming 2026-10-15 draft (demo), past 0, songs 8'; uiautomator dump: badge, title, message separate non-clickable text nodes, no demo song title, musician, key or filter bar. Not observed on device: heading semantics (dump has no heading attribute) and the staleness notice above a draft (no fetchedAt with the demo); both covered by code/JVM test/preview. Draft flag removed, reinstalled, published demo back offline. Restored: airplane 0, accessibility null, rotation 1, font 1.0; crash buffer empty; demoUpcomingJam=true, draft flag absent. No Sheet change, no accessibility service enabled.",
+      "Validator (5 Oct 2026, commit 425aea7): accept. CI=true ./init.sh exit 0, 3 wired, Konsist 17/17, 374 tests 0 failures; node 70/70; release BuildConfig demo flags false, no demo in release dex; own mutation (SongDetailPresenter reading jam.setlist) fails scenario 4, restored by SHA-1; Pixel 5 draft demo card observed with no song data in the dump; local.properties, airplane and accessibility restored."
     ],
     "notes": "Hiding in the UI is not sufficient; the data should not reach an unauthenticated client at all. Recorded in docs/user-and-access-model.md."
   },

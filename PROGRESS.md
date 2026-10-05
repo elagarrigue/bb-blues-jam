@@ -6,9 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty-three of 38 slices accepted, the latest `bottom-navigation` (5 October
-  2026). `unpublished-setlist-state` is `passing` (session 067), awaiting the validator; then
-  `past-jam-detail` (spec approved).
+- Current state: twenty-four of 38 slices accepted, the latest `unpublished-setlist-state` (5
+  October 2026). Next: `past-jam-detail` (spec approved, song list only).
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
