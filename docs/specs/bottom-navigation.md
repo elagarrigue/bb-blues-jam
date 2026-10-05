@@ -282,6 +282,12 @@ A–G with screenshot/dump notes. Never record the Apps Script URL.
 
 ## User Approvals
 
+Answered by the user on 5 October 2026 (recommended option in all three): **I1** icons from
+`material-icons-core` as listed; **M1** 150 ms tab crossfade and 250 ms detail slide; **D1**
+deeplinks deferred to `action-contract-registry`.
+
+The questions as asked:
+
 - **I1 — tab icons.** No new dependency; from `material-icons-core`, drawn in `:core:ui`:
   Próxima jam `List` (setlist), Anteriores `DateRange` (calendar), Info `Info` (outlined).
   *Recommended:* approve. Alternatives: (b) hand-copy the export's `queue_music`/`history`/
