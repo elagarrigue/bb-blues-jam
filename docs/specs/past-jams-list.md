@@ -273,6 +273,11 @@ and (if run) the device dump excerpt and screenshot, in `feature_list.json` and 
 
 ## User Approvals
 
+Answered by the user on 4 October 2026: **C1** copy approved as written; **P1** list a past draft
+with the line `La lista de esta jam no se publicó.` (recommended).
+
+The questions as asked:
+
 - **C1 — copy** (Rioplatense, vos). *Recommended:* approve as written.
 
   | Use | Text |

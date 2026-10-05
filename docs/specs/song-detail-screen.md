@@ -455,7 +455,11 @@ Answered by the user on 4 October 2026:
   exception.
 - **C1:** copy approved as written.
 
-**New questions from the N1 revision (pending):**
+**New questions from the N1 revision — answered by the user on 4 October 2026:** R1 = string
+routes (recommended); K2 = yes, add `navigation-only-in-app` in this slice, demonstrated failing
+first (Konsist 17/17).
+
+The questions as asked:
 
 - **R1 — route style.** *Recommended:* string routes (Decision 12): `song/{jamDate}/{position}`,
   built and parsed only in `AppRoutes`, tested on the JVM. No serialization in `:app`, no build-logic
