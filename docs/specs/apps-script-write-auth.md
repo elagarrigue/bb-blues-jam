@@ -301,6 +301,14 @@ any output, by stating it, never by grepping the value into a log. Everything go
 
 ## User Approvals
 
+Answered by the user on 5 October 2026: **W1 (a)** the passphrase once in git-ignored
+`local.properties` as `bluesjam.debugAdminPassphrase`, read only by the agent's check script, never
+printed; **W2 (a)** global 10 failed guesses per fixed 10-minute window; **W3 — the device stays in
+admin mode** (the alternative, not the recommendation): a rejected write shows an error and keeps the
+stored passphrase and the controls. The spec body must be revised to match.
+
+The questions as asked:
+
 - **W1: how a valid write is verified live (recommended: a).**
   - (a) You add `bluesjam.debugAdminPassphrase` once to the git-ignored `local.properties`. Only the
     agent's scratchpad check script reads it, without printing it. No build reads it in this slice.
