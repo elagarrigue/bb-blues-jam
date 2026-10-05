@@ -7,17 +7,19 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: nineteen of 37 slices accepted, the latest `list-states` (session 062, validator
-  accept 4 October 2026). `song-detail-screen` is `passing` (session 063), awaiting the validator
-  and the device steps that need a temporary upcoming jam from the user.
+  accept 4 October 2026). `song-detail-screen` is `passing` (session 063, commit 6612720), device
+  steps done on 5 October with the user's temporary jam; awaiting the validator. The temporary jam
+  (2026-10-31) is still in the Sheet on purpose; step D (its deletion) follows the validator.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
 - Last verified at: 4 October 2026 (session 063, `song-detail-screen`) — `CI=true ./init.sh` exit
   0, `konsist: wired` (17/17, new `navigation-only-in-app`), `detekt: wired`, `ktlint: wired`; 56
   result files, 321 tests, 0 failures. Navigation Compose 2.9.8 added to `:app` with no resolved
-  version moving. Pixel 5: the app starts on the NavHost's tabs destination, tabs and rotation
-  work, system back closes the app; opening the detail not yet checked (no upcoming jam in the
-  Sheet). Before that, session 062 (`list-states`) — `CI=true ./init.sh` exit 0,
+  version moving. Pixel 5 (5 October, temporary jam 2026-10-31): detail opened from an expanded
+  row with a filter and a scroll set; key the tallest node, 48dp "Volver", one "Tonalidad A" node;
+  Volver, system back, fast double taps and rotation all return an identical list; "Bm" on one line
+  at font scale 2.0; settings restored, empty crash buffer. Before that, session 062 (`list-states`) — `CI=true ./init.sh` exit 0,
   `konsist: wired` (16/16, new `no-dp-literal-outside-core-ui`), `detekt: wired`, `ktlint: wired`;
   49 result files, 290 tests, 0 failures. Pixel 5: offline first launch shows the error block,
   Retry online shows the skeleton then the no-upcoming block, offline with cache shows the
@@ -2186,18 +2188,23 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - Lint: `:app` 15 warnings (14 + the navigation 2.10.2 notice for the deliberate pin).
   - Pixel 5: install, start on the tabs destination, Info and back, rotation on Info, system back
     closes the app; rotation restored to `1`/`0`; empty crash buffer.
-- Device steps NOT done (need a temporary upcoming jam in the Sheet from the user; no agent writes
-  it): A. the user adds a temporary upcoming jam tab and `Jams` row; B. fills a few slots and an
-  `Otros`. Then: scroll a little, select a filter, expand a row, tap `Ver detalle del tema` → detail
-  full screen, no tab bar; key bounds the tallest text; back button ≥ 48dp, description `Volver`;
-  one node "Tonalidad X". Back button → list with the same filter, expansion and scroll offset.
-  Open again, system back → the same. Open, double-tap the back button fast → list, not blank.
-  Open, rotate → same song; back → list restored. Largest font size: the key fits on one line.
-  D. the user deletes the temporary jam; a relaunch logs `upcoming none`. Crash buffer empty.
+- Device steps with the temporary jam (5 October 2026; the user loaded it, no agent wrote the
+  Sheet). Log: `jams cache: upcoming 2026-10-31, past 1, songs 26`. Settings before: rotation
+  `1`/`0`, font_scale 1.0. Filter Guitarra on, list scrolled ~305 px, row 02 expanded, tap `Ver
+  detalle del tema` → detail full screen, no tab bar; back target 132×132 px (48dp) described
+  `Volver`; one node "Tonalidad A", 356 px tall against a 92 px title; groups Guitarra, Bajo,
+  Batería, Voz, Teclados, then Otros. Volver → the list's 38 labelled nodes identical, bounds
+  included, to the dump before opening (filter, expansion, scroll). System back → identical. Fast
+  double tap on Volver, four tries → the identical list every time, never blank (the second tap's
+  timing cannot be proven from adb; it never cleared the filter chip under it). Rotation on the
+  detail → same song; back in landscape and in portrait → the list restored. Font scale 2.0 on row
+  05 → "Bm" on one line, 368×397 px, still the tallest. Restored font_scale 1.0 and rotation `1`/`0`;
+  crash buffer empty, no FATAL. Nothing failed. Step D (the user deletes the jam; relaunch logs
+  `upcoming none`) is pending on purpose until the validator has looked at it.
 - Known risk or unresolved issue: no staleness notice on the detail; NavHost behaviour only
   device-checked; previews compile but are not rendered; the one-off Konsist scan error above.
-- Next: the device steps with the user's temporary jam, then the validator for
-  `song-detail-screen`. Note for `bottom-navigation` (orchestrator to record): the library is
+- Next: the validator for `song-detail-screen`, then step D (the user deletes the temporary
+  jam). Note for `bottom-navigation` (orchestrator to record): the library is
   chosen; that slice replaces the `TABS` destination with per-tab routes.
 
 ## Notes For The Next Session
