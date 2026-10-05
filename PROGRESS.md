@@ -6,9 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty-six of 38 slices accepted, the latest `admin-passphrase-login` (5 October
-  2026). The Apps Script now runs on a new deployment (user, 5 October 2026); `local.properties`
-  points to it. Next: `apps-script-write-auth`. `enrichment-background-fetch` deferred.
+- Current state: twenty-seven of 39 slices accepted, the latest `debug-admin-session` (5 October
+  2026). Device checks use debug overrides (demo jam, draft, admin), never the user. Next:
+  `apps-script-write-auth` (spec in planning). `enrichment-background-fetch` deferred.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
