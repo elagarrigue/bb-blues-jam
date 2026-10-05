@@ -258,6 +258,11 @@ nothing visible changed.
 
 ## User Approvals
 
+Answered by the user on 5 October 2026: **U1 — defer** until after the admin chain or the start of
+phase 2. U2–U4 stay open until then.
+
+The questions as asked:
+
 - **U1 — Scope and timing.** *Recommended:* (a) narrow to MusicBrainz artist country only, no
   visible effect, and schedule it after the admin chain or at the start of phase 2. Alternatives:
   (b) add Deezer artwork shown on the song detail — reverses `DESIGN.md`'s "Not shown: artwork",

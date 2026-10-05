@@ -648,7 +648,7 @@
     "depends_on": [
       "past-jams-list"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "No admin control and no filter appears, even when logged in as admin",
       "The row model carries no lineup, slot or musician field (shape test)"
@@ -659,7 +659,8 @@
       "Verification 'The row model carries no lineup, slot or musician field': PastJamDetailModelShapeTest asserts the exact row fields and no lineup|instrument|slot|musician|extra|filter|admin|edit|event field on any detail model, and that the presenter's only constructor parameter is JamsRepository (so it cannot read the admin flag: 'No admin control and no filter appears, even when logged in as admin' holds by construction; no admin login exists yet to try on the device).",
       "Failure demonstrations, restored by copy and sha1sum -c OK: (1) lineup field on PastSongRowUiModel -> shape test 2 of 3 failed ('forbidden field in PastSongRowUiModel: [..., lineup]'); (2) colors.slotOpen in PastJamDetailScreen.kt -> Konsist 'amber-roles-allowlisted' violated (1 time); (3) allowlist entry removed -> violated (2 times) in PastJamDetailDefaults.kt and its test; (4) rememberUpdatedState dropped in PastJamsPresenter -> 'expected:<[first 2026-06-27, second 2026-07-25]> but was:<[first 2026-06-27, first 2026-07-25]>'; (5) lookup in upcoming too -> mapping test 'the upcoming jam with the same date is ignored' failed.",
       "Greps on feature/past-jams/src/main: no androidx.navigation, MaterialTheme., Color(, dp/sp literal, InstrumentStrip, LineupPanel, AdminSession, InstrumentFilter or tu forms; 'lineup' only in two KDoc lines and two preview JamSong constructor arguments; no jam.setlist (only the UiModel's model.setlist).",
-      "Device, manual, Pixel 5 (09281FDD4004U6), real past jam 2026-07-25, Sheet untouched, no accessibility service: Anteriores row is one clickable focusable node 315 px tall (>= 48dp); tap opens full screen with no tab bar: Volver (only clickable node, 48dp), 'Sábado 25 de julio de 2026', 'La Macanuda', '13 temas', rows 01..13 with title, artist and key (content-desc 'Tonalidad B' ...), keys the only amber in the screenshot. Volver, system back and a fast double tap return to Anteriores with its tab selected (not blank); rotation keeps the detail open. Not exercised: Anteriores scroll restoration (one row, no scroll); the click label (not exported by uiautomator). Settings restored and read back (airplane 0, rotation auto 1 / user 0, font 1.0, accessibility 0/null); crash buffer empty."
+      "Device, manual, Pixel 5 (09281FDD4004U6), real past jam 2026-07-25, Sheet untouched, no accessibility service: Anteriores row is one clickable focusable node 315 px tall (>= 48dp); tap opens full screen with no tab bar: Volver (only clickable node, 48dp), 'Sábado 25 de julio de 2026', 'La Macanuda', '13 temas', rows 01..13 with title, artist and key (content-desc 'Tonalidad B' ...), keys the only amber in the screenshot. Volver, system back and a fast double tap return to Anteriores with its tab selected (not blank); rotation keeps the detail open. Not exercised: Anteriores scroll restoration (one row, no scroll); the click label (not exported by uiautomator). Settings restored and read back (airplane 0, rotation auto 1 / user 0, font 1.0, accessibility 0/null); crash buffer empty.",
+      "Validator (5 Oct 2026, commit e61550a): accept. Gate exit 0, three wired, Konsist 17/17. Own mutations restored by SHA-1: detail reading jam.setlist fails the draft case; openLabel without the Songs guard fails 3 tests. Pixel 5 with the real 2026-07-25 jam: one clickable row, full-screen detail without tab bar, 13 rows with title/artist/key, keys the only amber, Volver and system back return to Anteriores; no setting changed."
     ],
     "notes": "Editing history is not supported. Recorded in docs/user-and-access-model.md."
   },
@@ -926,6 +927,6 @@
       "With every API unreachable, the app remains fully usable"
     ],
     "evidence": [],
-    "notes": "D-09. MusicBrainz for identity and artistArea, Deezer for artwork and preview, Last.fm for similar artists. artistArea is what lets blues nacional argentino be filtered by data rather than by model memory, which matters for D-14. Fully removable if the timeline tightens."
+    "notes": "D-09. MusicBrainz for identity and artistArea, Deezer for artwork and preview, Last.fm for similar artists. artistArea is what lets blues nacional argentino be filtered by data rather than by model memory, which matters for D-14. Fully removable if the timeline tightens. Deferred by the user on 5 October 2026: run after the admin chain or at the start of phase 2 (spec docs/specs/enrichment-background-fetch.md; U2-U4 to be answered then). Only artist country from MusicBrainz is worth enriching under D-20; nothing visible."
   }
 ]

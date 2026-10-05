@@ -328,6 +328,14 @@ curl outputs (codes only, never the URL), device dumps, in `feature_list.json` a
 
 ## User Approvals
 
+Answered by the user on 5 October 2026 (recommended option in all seven): **A1** server-side check
+in Apps Script (new `Post` file, user redeploys a new version); **A2** DataStore Preferences, out of
+backups; **A3** the user confirms `Config` holds a passphrase and types it once on the Pixel 5;
+**A4** no expiry, logout on Info without confirmation; **A5** copy as written; **A6** both Konsist
+data changes, each demonstrated failing first; **A7** full-screen route.
+
+The questions as asked:
+
 - **A1 — Server-side check (recommended: yes).** Add a POST `checkPassphrase` action in a new file
   `Post.js`; no existing script file changes. Manual step for you: in Apps Script add a file `Post`,
   paste `src/Post.js`, save, verify one line, Manage deployments → New version (same URL). The
