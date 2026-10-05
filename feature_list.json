@@ -748,6 +748,24 @@
     "notes": "D-11. No Firebase Auth, no OAuth, no accounts. A visible logout belongs on the info screen. The local flag only draws controls; it authorizes nothing."
   },
   {
+    "id": "debug-admin-session",
+    "area": "harness",
+    "title": "Debug-only admin session for device checks",
+    "user_visible_behavior": "None in release. In a debug build with bluesjam.debugAdmin=true in local.properties, the app starts in admin mode without a login, so device checks of admin controls need no passphrase typed by the user. It authorizes nothing: the server still checks every write.",
+    "depends_on": [
+      "admin-passphrase-login",
+      "debug-demo-upcoming-jam"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Release BuildConfig.DEBUG_ADMIN is false and the release dex has no DebugAdminSession",
+      "JVM tests: forced admin, logout delegates, debug overrides independent of each other",
+      "Device: flag on shows Modo admin activo without login; flag off shows Entrar como admin"
+    ],
+    "notes": "Requested by the user on 5 October 2026 ('no quiero ser bloqueante, setea el modo admin vía código para hacer las pruebas'). Spec: docs/specs/debug-admin-session.md.",
+    "evidence": []
+  },
+  {
     "id": "apps-script-write-auth",
     "area": "backend",
     "title": "Validate the passphrase on every write endpoint",
