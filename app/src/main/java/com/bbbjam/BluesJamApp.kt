@@ -10,6 +10,8 @@ import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.toLogLine
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.debug.debugOverrides
+import com.bbbjam.debug.isDemo
 import com.bbbjam.di.appModule
 import com.bbbjam.feature.info.di.infoModule
 import com.bbbjam.feature.nextjam.di.nextJamModule
@@ -29,7 +31,9 @@ import org.koin.core.context.startKoin
  * and the jams once per process start, concurrently (user approval Q3), and logs each outcome:
  * counts, ids, dates, issues and the failure kind, never the URL or a musician's name. Once both are
  * done it logs one line from the jams cache: the upcoming/past split and how many setlist songs
- * resolve in the cached catalog. An exception that escapes is logged, not fatal.
+ * resolve in the cached catalog. An exception that escapes is logged, not fatal. In a debug build
+ * with `bluesjam.demoUpcomingJam=true` the jams are decorated with the demo upcoming jam, marked
+ * `(demo)` in that line.
  */
 class BluesJamApp : Application() {
     private val appScope = CoroutineScope(
@@ -44,6 +48,9 @@ class BluesJamApp : Application() {
             androidContext(this@BluesJamApp)
             modules(appModule, dataModule, infoModule, nextJamModule, songDetailModule)
         }.koin
+        // Debug only, behind bluesjam.demoUpcomingJam: the demo upcoming jam (debug-demo-upcoming-jam).
+        // Loaded after dataModule so it overrides JamsRepository; release loads nothing.
+        koin.loadModules(koin.debugOverrides(), allowOverride = true)
         val catalog = koin.get<CatalogRepository>()
         val jams = koin.get<JamsRepository>()
         appScope.launch {
@@ -59,10 +66,14 @@ class BluesJamApp : Application() {
     private companion object {
         const val LOG_TAG = "BluesJam"
 
-        /** `jams cache: upcoming <date|none>, past N, songs S (C from catalog)`: counts and dates only. */
+        /**
+         * `jams cache: upcoming <date|none>[ (demo)], past N, songs S (C from catalog)`: counts and
+         * dates only. `(demo)` marks the debug-only demo jam, so evidence never mistakes it for real data.
+         */
         fun JamsSnapshot.toCacheLine(inCatalog: (SongId) -> Boolean): String {
             val songs = (listOfNotNull(upcoming) + past).flatMap { (it.setlist as? Setlist.Available)?.songs.orEmpty() }
-            return "jams cache: upcoming ${upcoming?.date ?: "none"}, past ${past.size}, " +
+            val upcomingText = upcoming?.let { if (it.isDemo()) "${it.date} (demo)" else "${it.date}" } ?: "none"
+            return "jams cache: upcoming $upcomingText, past ${past.size}, " +
                 "songs ${songs.size} (${songs.count { inCatalog(it.songId) }} from catalog)"
         }
     }

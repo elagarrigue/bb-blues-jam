@@ -8,12 +8,16 @@ plugins {
 // The Apps Script /exec URL lives only in the git-ignored local.properties
 // (bluesjam.appsScriptUrl), never in a tracked file. Without it the app builds with "" and every
 // read fails as NotConfigured (docs/apps-script-api.md, Transport).
-val appsScriptUrl: String = rootProject.file("local.properties").let { file ->
-    if (!file.isFile) return@let ""
-    val properties = Properties()
-    file.inputStream().use { properties.load(it) }
-    properties.getProperty("bluesjam.appsScriptUrl", "").trim()
+val localProperties: Properties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.isFile) file.inputStream().use { load(it) }
 }
+val appsScriptUrl: String = localProperties.getProperty("bluesjam.appsScriptUrl", "").trim()
+
+// Debug-only demo upcoming jam (debug-demo-upcoming-jam): bluesjam.demoUpcomingJam=true in
+// local.properties shows a fixed demo jam built in app/src/debug when the Sheet has no upcoming jam,
+// so device checks need no temporary Sheet data. Absent means false; release is always false.
+val demoUpcomingJam: Boolean = localProperties.getProperty("bluesjam.demoUpcomingJam", "").trim() == "true"
 
 android {
     namespace = "com.bbbjam"
@@ -30,7 +34,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM", demoUpcomingJam.toString())
+        }
         release {
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM", "false")
             optimization {
                 enable = false
             }

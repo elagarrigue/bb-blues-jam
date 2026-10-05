@@ -7,13 +7,22 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty of 38 slices accepted, the latest `song-detail-screen` (5 October 2026,
-  validator accept; step D waived by the user). Next: `debug-demo-upcoming-jam` (harness, user
-  request), then `past-jams-list` (spec approved).
+  validator accept; step D waived by the user). `debug-demo-upcoming-jam` (harness, user request)
+  is `passing` (session 064), awaiting the validator; then `past-jams-list` (spec approved).
+- **Debug demo jam:** device checks that need an upcoming jam use the debug-only demo jam
+  (`bluesjam.demoUpcomingJam=true` in the git-ignored `local.properties`, currently **on**), not
+  Sheet test data. A real upcoming jam always wins, so with the Sheet's `2026-10-31` jam still
+  there the demo shows only with an empty cache offline (airplane mode + `pm clear com.bbbjam`).
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 4 October 2026 (session 063, `song-detail-screen`) — `CI=true ./init.sh` exit
+- Last verified at: 5 October 2026 (session 064, `debug-demo-upcoming-jam`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`; 57 result files,
+  327 tests, 0 failures (the 56 previous files plus `DemoUpcomingJamRepositoryTest` 6).
+  `:app:assembleRelease` exit 0 with no demo class in the release dex. Pixel 5: the demo jam on
+  Próxima jam and its song detail with the flag on, the Sheet's state with it off. Before that,
+  4 October 2026 (session 063, `song-detail-screen`) — `CI=true ./init.sh` exit
   0, `konsist: wired` (17/17, new `navigation-only-in-app`), `detekt: wired`, `ktlint: wired`; 56
   result files, 321 tests, 0 failures. Navigation Compose 2.9.8 added to `:app` with no resolved
   version moving. Pixel 5 (5 October, temporary jam 2026-10-31): detail opened from an expanded
@@ -2206,6 +2215,74 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Next: the validator for `song-detail-screen`, then step D (the user deletes the temporary
   jam). Note for `bottom-navigation` (orchestrator to record): the library is
   chosen; that slice replaces the `TABS` destination with per-tab routes.
+
+### Session 064 — 5 October 2026
+
+- Goal: implement `debug-demo-upcoming-jam` (spec `docs/specs/debug-demo-upcoming-jam.md` at
+  commit `6a46ed8`; requested by the user on 5 October 2026, no approval pending).
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator.
+- Completed:
+  - `app/build.gradle.kts`: reads `local.properties` once; `bluesjam.demoUpcomingJam` (absent →
+    false) becomes `BuildConfig.DEMO_UPCOMING_JAM` in `debug`, hard `false` in `release`.
+  - `app/src/debug/java/com/bbbjam/debug/`: `DemoUpcomingJam` (fixture: today in Buenos Aires + 10
+    days, 21:00, venue `Demo (solo debug)`, published, 8 catalog-seed songs: every instrument open
+    and filled somewhere, `got-my-mojo-working` with no open slot, `the-thrill-is-gone` all open,
+    `-` columns in four songs, `Otros` `saxo` and a 60-character instrument, keys `Bb` and `F#m`);
+    `DemoUpcomingJamRepository(real, calendar)` (fills only a null `upcoming`; `past`, `freshness`
+    untouched; `refresh()` delegates); `DebugOverrides.kt` (`Koin.debugOverrides()`: with the flag
+    on, resolves the real `JamsRepository` and `JamCalendar` and returns a module overriding
+    `JamsRepository` with the decorator; `Jam.isDemo()` by venue).
+  - `app/src/release/java/com/bbbjam/debug/DebugOverrides.kt`: the same two signatures, no module
+    and `false`.
+  - `BluesJamApp`: `koin.loadModules(koin.debugOverrides(), allowOverride = true)` right after
+    `startKoin`, before anything resolves `JamsRepository` for use; the `jams cache:` line prints
+    `upcoming <date> (demo)` for the demo.
+  - `app/src/testDebug/java/com/bbbjam/debug/DemoUpcomingJamRepositoryTest` (6 tests).
+  - Docs: architecture `SKILL.md` ("Debug demo jam"), `docs/technical-discovery.md` (Testing and
+    Verification). `AGENTS.md` unchanged (no command changed).
+- Deviations from the spec body: the variant function is `Koin.debugOverrides(): List<Module>`
+  (receiver instead of no argument) because the override must wrap the real repository, whose
+  implementation is internal to `:core:data`; the receiver lets the debug variant resolve it
+  before overriding, and the release no-op has no unused parameter for detekt. The `(demo)` marker
+  comes from a second variant function, `Jam.isDemo()`.
+- Verification run:
+  - `./gradlew ktlintFormat` exit 0 (it re-wrapped the fixture's argument lists).
+  - `CI=true ./init.sh` exit 0; `konsist: wired`, `detekt: wired`, `ktlint: wired`; Konsist 17/17;
+    57 result files, 327 tests, 0 failures. `:app` lint 0 errors, 15 warnings, all version notices
+    in `libs.versions.toml` (Room 2.8.5 is a new notice since session 063; nothing from this code).
+  - `./gradlew :app:assembleRelease :app:assembleDebug` exit 0. A Python `zipfile` scan of every
+    `.dex` in each APK: release (4 dex) has no `Lcom/bbbjam/debug/DemoUpcomingJam;`, no
+    `Lcom/bbbjam/debug/DemoUpcomingJamRepository;` and no `Demo (solo debug)`, only
+    `Lcom/bbbjam/debug/DebugOverridesKt;` (the no-op); debug (23 dex) has all four.
+    `app/build/intermediates/built_in_kotlinc/release/compileReleaseKotlin/classes/com/bbbjam/debug/`
+    holds only `DebugOverridesKt.class` (debug: 7 classes).
+  - Failure demonstrations (`DemoUpcomingJamRepository.kt` SHA-1
+    `a8597e691cc1a1f7262b3e3ce73276cacfacc60c` before and after each): (1) always replacing
+    `upcoming` → 6 run, 2 failed: `realUpcomingJamWinsAndPassesThroughUnchanged`,
+    `everyEmissionIsDecoratedOnItsOwn`; (2) also `past = emptyList()` → 6 run, 1 failed:
+    `pastAndFreshnessAreTheRealOnes`. Restored; the class reran 6/6.
+- Device (Pixel 5, serial 09281FDD4004U6, 5 October 2026). Airplane mode before: `0`.
+  - Flag on, online: `jams cache: upcoming 2026-10-31, past 1, songs 26 (26 from catalog)` (no
+    `(demo)`), screen `Sábado 31 de octubre · 21:00` / `La Macanuda`, no `Demo (solo debug)` node:
+    the real jam wins.
+  - Flag on, airplane mode on, `pm clear com.bbbjam`: `jams refresh: failed Offline`,
+    `jams cache: upcoming 2026-10-15 (demo), past 0, songs 8 (0 from catalog)`; screen `Jueves 15 de
+    octubre · 21:00` / `Demo (solo debug)` / `En 10 días`, filter `Todos 8`, rows `Bb`, `E`, `F#m`
+    as designed (screenshot checked). Row 06 Crossroads expanded → `Ver detalle del tema` → the
+    detail: `Crossroads`, `Eric Clapton`, `Tonalidad A`, groups Guitarra, Bajo, Batería, Voz,
+    Teclados, Otros; the long instrument ellipsized (`+ percusión de ma…  Camila`), node
+    description complete.
+  - Flag off (line removed), reinstall, still airplane mode, `pm clear`: `jams cache: upcoming
+    none, past 0, songs 0`, the error block `No pudimos cargar la próxima jam` / `Reintentar`, no
+    demo. Airplane mode restored (`0`), relaunch: `upcoming 2026-10-31`, `La Macanuda`.
+  - Flag back on (`bluesjam.demoUpcomingJam=true`, left on as the spec asks), reinstalled, launch:
+    `upcoming 2026-10-31` (real wins). Airplane mode `0`, crash buffer empty, `/sdcard/ui.xml`
+    removed. `local.properties` was never printed; the URL line untouched.
+- Known risk or unresolved issue: `Jam.isDemo()` matches by venue, so a real jam named
+  `Demo (solo debug)` would be logged `(demo)` (debug builds only, log only). The demo shows on
+  the device only while the Sheet has no upcoming jam; while the user's `2026-10-31` test jam is
+  there, use airplane mode + clear data.
+- Next: the validator for `debug-demo-upcoming-jam`, then `past-jams-list`.
 
 ## Notes For The Next Session
 

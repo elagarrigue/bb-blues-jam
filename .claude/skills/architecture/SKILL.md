@@ -355,6 +355,17 @@ them.
   that does not relax D-02 (no `viewModel()`, no `hiltViewModel`). Routes are strings (R1): typed
   routes would need the serialization plugin in `:app` and break the data-library rules. Upgrade it
   with Kotlin, the BOM and Koin.
+- **Debug demo jam** (`debug-demo-upcoming-jam`): device checks that need an upcoming jam use a
+  demo jam built in code, never temporary Sheet data. `bluesjam.demoUpcomingJam=true` in the
+  git-ignored `local.properties` becomes `BuildConfig.DEMO_UPCOMING_JAM` (debug only; release is
+  hard `false`). The code lives only in `app/src/debug/java/com/bbbjam/debug/`
+  (`DemoUpcomingJam` fixture, `DemoUpcomingJamRepository` decorator, `Koin.debugOverrides()`,
+  `Jam.isDemo()`); `app/src/release/` has the same two functions as no-ops, so a release build
+  cannot ship it. `BluesJamApp` loads `koin.debugOverrides()` with `allowOverride = true` after
+  `startKoin`. The decorator fills only a null `upcoming` (a real jam always wins) and never
+  touches `past`, `freshness`, Room or the Sheet; the startup log marks it `upcoming <date> (demo)`.
+  Tests in `app/src/testDebug/`. With a real upcoming jam in the Sheet, see the demo by clearing
+  the app's data in airplane mode.
 - **No Compose UI test harness** (`song-row-expansion`, T1 declined by the user on 3 October 2026):
   no Robolectric, `ui-test-junit4` or `ui-test-manifest`. Put everything a test must check into the
   `UiModel` (copy, state descriptions, order, kinds) and test it on the JVM; keep the visual rules

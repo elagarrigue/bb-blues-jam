@@ -175,6 +175,12 @@ first call to the new version took 3.97 s (not proven cold); the validator's lat
   are **outside `init.sh`** (user decision, 1 October 2026), so the gate does not depend on Node;
   revisit at `apps-script-write-auth`. A live deployment is checked with
   `backend/apps-script/tools/check-response.js`.
+- **Device checks use the debug-only demo jam** (`debug-demo-upcoming-jam`, 5 October 2026), not
+  temporary jams in the real Sheet. A debug build with `bluesjam.demoUpcomingJam=true` in the
+  git-ignored `local.properties` shows a fixed demo upcoming jam (venue `Demo (solo debug)`, the
+  log line says `(demo)`) whenever the Sheet has none; a real upcoming jam always wins. The code is
+  in `app/src/debug` only, and the release APK's dex is checked for its absence. To see it while
+  the Sheet has an upcoming jam: airplane mode, clear the app's data, launch, restore.
 - `init.sh` wraps the Gradle gate — `./gradlew build` and `./gradlew check` — and is run by
   `feature-flow` on every validation, so it must be fast and non-blocking.
 
