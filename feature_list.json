@@ -635,14 +635,14 @@
     "id": "past-jam-detail",
     "area": "feature-past-jams",
     "title": "Show a past jam read-only",
-    "user_visible_behavior": "Opening a past jam shows its setlist with keys and who played, with no filter and no notion of open slots.",
+    "user_visible_behavior": "Opening a past jam shows its song list in order: position, title, artist and key. No lineup, no musicians, no filter and no notion of open slots (user, 5 October 2026: 'para las jams pasadas no importa quién tocó, solo la lista de temas').",
     "depends_on": [
       "past-jams-list"
     ],
     "status": "not_started",
     "verification": [
       "No admin control and no filter appears, even when logged in as admin",
-      "Slots render as filled with no open-slot affordance"
+      "The row model carries no lineup, slot or musician field (shape test)"
     ],
     "evidence": [],
     "notes": "Editing history is not supported. Recorded in docs/user-and-access-model.md."
