@@ -6,13 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty of 38 slices accepted, the latest `song-detail-screen` (5 October 2026,
-  validator accept; step D waived by the user). `debug-demo-upcoming-jam` (harness, user request)
-  is `passing` (session 064), awaiting the validator; then `past-jams-list` (spec approved).
-- **Debug demo jam:** device checks that need an upcoming jam use the debug-only demo jam
-  (`bluesjam.demoUpcomingJam=true` in the git-ignored `local.properties`, currently **on**), not
-  Sheet test data. A real upcoming jam always wins, so with the Sheet's `2026-10-31` jam still
-  there the demo shows only with an empty cache offline (airplane mode + `pm clear com.bbbjam`).
+- Current state: twenty-one of 38 slices accepted, the latest `debug-demo-upcoming-jam` (5 October
+  2026). Device checks now use the demo jam, never Sheet test data. Next: `past-jams-list`.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by

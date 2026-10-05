@@ -591,7 +591,7 @@
     "depends_on": [
       "song-detail-screen"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "The demo code lives only in the debug source set; the release build compiles without it",
       "JVM test of the decorator: real upcoming jam wins, demo only fills an empty slot, past jams untouched",
@@ -602,7 +602,8 @@
       "Session 064 (5 Oct 2026, implementer, not accepted): ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0, konsist: wired (17/17, unchanged), detekt: wired, ktlint: wired; 57 result files, 327 tests, 0 failures (56 previous + DemoUpcomingJamRepositoryTest 6). :app lint 0 errors, 15 version-notice warnings only.",
       "Release: ./gradlew :app:assembleRelease :app:assembleDebug exit 0. Python zipfile scan of every .dex: app-release-unsigned.apk (4 dex) contains no 'Lcom/bbbjam/debug/DemoUpcomingJam;', no 'Lcom/bbbjam/debug/DemoUpcomingJamRepository;', no 'Demo (solo debug)', only 'Lcom/bbbjam/debug/DebugOverridesKt;' (the release no-op); app-debug.apk (23 dex) contains all four. compileReleaseKotlin classes/com/bbbjam/debug holds only DebugOverridesKt.class.",
       "Failure demonstrations on DemoUpcomingJamRepository.kt (SHA-1 a8597e691cc1a1f7262b3e3ce73276cacfacc60c before and after each): (1) always replacing upcoming -> 2 of 6 failed (realUpcomingJamWinsAndPassesThroughUnchanged, everyEmissionIsDecoratedOnItsOwn); (2) plus past = emptyList() -> 1 of 6 failed (pastAndFreshnessAreTheRealOnes). Restored, 6/6.",
-      "Pixel 5: flag on online -> 'jams cache: upcoming 2026-10-31, past 1, songs 26 (26 from catalog)', screen La Macanuda (real wins). Flag on + airplane mode + pm clear -> 'jams cache: upcoming 2026-10-15 (demo), past 0, songs 8 (0 from catalog)', screen 'Jueves 15 de octubre · 21:00' / 'Demo (solo debug)' / 'En 10 días', 8 rows; Crossroads detail opened, long Otros instrument ellipsized. Flag off + airplane + pm clear -> 'upcoming none', error block 'No pudimos cargar la próxima jam', no demo; airplane restored to 0 -> real jam 2026-10-31. Flag left on and reinstalled; crash buffer empty."
+      "Pixel 5: flag on online -> 'jams cache: upcoming 2026-10-31, past 1, songs 26 (26 from catalog)', screen La Macanuda (real wins). Flag on + airplane mode + pm clear -> 'jams cache: upcoming 2026-10-15 (demo), past 0, songs 8 (0 from catalog)', screen 'Jueves 15 de octubre · 21:00' / 'Demo (solo debug)' / 'En 10 días', 8 rows; Crossroads detail opened, long Otros instrument ellipsized. Flag off + airplane + pm clear -> 'upcoming none', error block 'No pudimos cargar la próxima jam', no demo; airplane restored to 0 -> real jam 2026-10-31. Flag left on and reinstalled; crash buffer empty.",
+      "Validator (5 Oct 2026, commit 0a623c3): accept. Gate exit 0, three wired, Konsist 17/17, 327 tests. Release BuildConfig.DEMO_UPCOMING_JAM hard false; release dex has no demo class or string (only the DebugOverridesKt no-op). Own mutation (forcing freshness on fill) fails 1 test, restored by SHA-1. Pixel 5: online the real 2026-10-31 jam wins; airplane + cleared data shows the demo 2026-10-15; airplane restored to 0."
     ]
   },
   {
