@@ -1,5 +1,7 @@
 package com.bbbjam.feature.pastjams
 
+import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
@@ -8,7 +10,8 @@ import java.time.LocalDate
 
 /**
  * Everything Anteriores draws, as plain values. Read-only: the Sheet owns past jams (D-04), so
- * there is no event but the states' Retry, which is a read. [title] ("Jams anteriores") is screen
+ * there is no event but the states' Retry, which is a read, and a row's Open, which navigates.
+ * [title] ("Jams anteriores") is screen
  * chrome, drawn in every state.
  */
 sealed interface PastJamsUiModel : UiModel {
@@ -37,15 +40,23 @@ sealed interface PastJamsUiModel : UiModel {
 
 /**
  * One past jam. [date] is its identity (the list key); [dateLabel] is "Sábado 25 de julio de 2026";
- * [venue] is the Sheet's `lugar` as written. Not tappable in this slice (`past-jam-detail` adds the
- * action).
+ * [venue] is the Sheet's `lugar` as written. A row with songs opens its jam (`past-jam-detail`):
+ * [openLabel] is the click label ("ver la lista de temas"), null for a [PastJamSummary.NotShown]
+ * row, which is not tappable; [events] receives [Event.Open].
  */
 data class PastJamRowUiModel(
     val date: LocalDate,
     val dateLabel: String,
     val venue: String,
     val summary: PastJamSummary,
-) : UiModel
+    val openLabel: String?,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        /** Open this jam's song list. Navigation only, never a write. */
+        data object Open : Event
+    }
+}
 
 /** What a past jam row says under its date and venue. */
 sealed interface PastJamSummary : UiModel {

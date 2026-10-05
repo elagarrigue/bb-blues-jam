@@ -123,6 +123,15 @@ Observed once: a gate run failed 15 of the 17 Konsist tests with
 `AssertionError: rootDir must be verified to be directory beforehand` (Konsist's project scan); the
 suite passed alone and on the next full gate run. Not reproduced; recorded in case it recurs.
 
+### Past jam detail (`past-jam-detail`, 5 October 2026)
+
+The song list only, per the user ("para las jams pasadas no importa quién tocó, solo la lista de
+temas"). Risks, not solved: like the song detail it draws **no staleness notice**, so a musician who
+opens a past jam offline sees cached data with no age (Anteriores shows the notice above the rows);
+`PastJamsCopy` repeats two strings of `NextJamCopy` (the key description and the dropped-rows note),
+so a wording change must touch both; the outer-host route `pastJam/{jamDate}`, its back stack and the
+double-tap guard have no JVM test (T1) and are checked only on the device.
+
 ### Bottom navigation (`bottom-navigation`, 5 October 2026)
 
 Settled with the user: icons from `material-icons-core` (I1), a 150 ms tab crossfade and a 250 ms

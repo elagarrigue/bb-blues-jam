@@ -384,13 +384,31 @@ row, tappable open slots for assignment, and a clear action on filled slots.
    `surface`). **No amber**: the list shows no keys. A past draft is listed with
    `La lista de esta jam no se publicó.` instead of count and hook; an unreadable list says
    `No se pudo leer la lista de esta jam.`, a list with no songs `Esta jam no tiene temas cargados.`
-   (never `0 temas`). Rows are one merged, non-clickable node each until `past-jam-detail` makes them
-   open the jam. States use the shared components: skeleton (`Cargando las jams anteriores`), error
+   (never `0 temas`). Rows are one merged node each. A row with songs opens the jam
+   (`past-jam-detail`): one clickable node, `Role.Button`, click label `ver la lista de temas`, at
+   least 48dp, ripple only (no chevron, colours unchanged); a row with a line instead of songs is not
+   clickable. States use the shared components: skeleton (`Cargando las jams anteriores`), error
    `No pudimos cargar las jams anteriores`, empty `Todavía no hay jams anteriores` /
    `Después de cada jam, su lista queda guardada acá para que veas qué se tocó.`, and the staleness
    notice above the rows. Reached through the middle tab, `Anteriores`.
-5. **Past jam detail** — same structure, read-only, muted archive treatment, amber only on keys, no
-   notion of open slots
+5. **Past jam detail** — read-only, muted archive treatment, amber only on keys, no notion of open
+   slots. As built (`past-jam-detail`, 5 October 2026), **the song list only**: the user's direction
+   "para las jams pasadas no importa quién tocó, solo la lista de temas" replaced the lineup strip and
+   the expansion of the design prompt §5. Full screen over the tabs (no bar), from a tap on an
+   Anteriores row. A back button (`Volver`, 48dp), then the header: the date with the year
+   (`Sábado 25 de julio de 2026`, `h1`, a heading), the venue (`body`, one line, ellipsis) with the
+   count at the end (`13 temas`). Then one row per song in position order, spaced `sm`: a `surface`
+   card (`shapes.md`, padding `md` × `sm`) with the position (`01`, `songTitle`), the title
+   (`songTitle`, two lines, ellipsis) and the key at the end (`key` typography, the amber `key` role,
+   read as `Tonalidad B`), the artist under them (`body`, drawn only when not blank). Archive colours
+   (`PastJamDetailDefaults`): header, position and title `textMuted`, artist `archive`, the
+   dropped-rows note `textMuted` (`caption`, `Faltan 2 temas: no se pudieron leer.`). Each row is one
+   merged node, not clickable: no strip, no expansion, no lineup, no slot, no filter, no admin
+   control. A past draft, an unreadable list or a list with no songs keeps the header (without a
+   count) and shows the Anteriores line instead of rows. Loading draws only the back button (screen
+   reader: `Cargando la jam`); a jam no longer in the archive shows `Esta jam ya no está en el
+   archivo` / `Puede que la organización la haya cambiado. Volvé a Anteriores para ver las jams
+   guardadas.` No staleness notice, as in the song detail.
 6. **Info** — who organizes (Bahía Blanca Blues), what the jam is and that it is monthly, the
    Hideaway radio program, social links, how to join, and a discreet admin entry point. No venue:
    it can change, so it belongs to each jam, shown in the next-jam header (D-19)

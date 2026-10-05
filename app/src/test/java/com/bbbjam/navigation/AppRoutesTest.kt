@@ -27,8 +27,14 @@ class AppRoutesTest {
         assertEquals("next-jam", AppRoutes.NEXT_JAM)
         assertEquals("past-jams", AppRoutes.PAST_JAMS)
         assertEquals("info", AppRoutes.INFO)
-        val routes =
-            listOf(AppRoutes.TABS, AppRoutes.NEXT_JAM, AppRoutes.PAST_JAMS, AppRoutes.INFO, AppRoutes.SONG_DETAIL)
+        val routes = listOf(
+            AppRoutes.TABS,
+            AppRoutes.NEXT_JAM,
+            AppRoutes.PAST_JAMS,
+            AppRoutes.INFO,
+            AppRoutes.SONG_DETAIL,
+            AppRoutes.PAST_JAM_DETAIL,
+        )
         assertEquals(routes.size, routes.toSet().size)
     }
 
@@ -55,6 +61,34 @@ class AppRoutesTest {
                 val date = LocalDate.of(2026, month, day)
                 val segments = AppRoutes.songDetail(date, 13).split('/')
                 assertEquals(SongDetailArgs(date, 13), AppRoutes.parseSongDetail(segments[1], segments[2].toInt()))
+            }
+        }
+    }
+
+    @Test
+    fun `the past jam detail route is the ISO date`() {
+        assertEquals("pastJam/{jamDate}", AppRoutes.PAST_JAM_DETAIL)
+        assertTrue(AppRoutes.PAST_JAM_DETAIL.contains("{${AppRoutes.JAM_DATE}}"))
+        assertEquals("pastJam/2026-07-25", AppRoutes.pastJamDetail(LocalDate.of(2026, 7, 25)))
+    }
+
+    @Test
+    fun `past jam parse accepts an ISO date and rejects a missing or malformed one`() {
+        assertEquals(LocalDate.of(2026, 7, 25), AppRoutes.parsePastJamDetail("2026-07-25"))
+        assertNull(AppRoutes.parsePastJamDetail(null))
+        assertNull(AppRoutes.parsePastJamDetail(""))
+        assertNull(AppRoutes.parsePastJamDetail("25/07/2026"))
+        assertNull(AppRoutes.parsePastJamDetail("2026-13-01"))
+    }
+
+    @Test
+    fun `every month round-trips through the past jam route`() {
+        (1..12).forEach { month ->
+            listOf(1, 9, 28).forEach { day ->
+                val date = LocalDate.of(2026, month, day)
+                val segments = AppRoutes.pastJamDetail(date).split('/')
+                assertEquals(2, segments.size)
+                assertEquals(date, AppRoutes.parsePastJamDetail(segments[1]))
             }
         }
     }

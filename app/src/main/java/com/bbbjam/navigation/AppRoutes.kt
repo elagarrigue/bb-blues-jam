@@ -15,7 +15,8 @@ import java.time.format.DateTimeParseException
 internal object AppRoutes {
     /**
      * The outer host's tabs shell (`TabsShell`): an inner host with the three tab routes below and
-     * the bottom bar. The song detail is beside it in the outer host, full screen over the bar.
+     * the bottom bar. The song detail and the past jam detail are beside it in the outer host, full
+     * screen over the bar.
      */
     const val TABS = "tabs"
 
@@ -36,6 +37,15 @@ internal object AppRoutes {
 
     /** `song/2026-10-31/2`: `LocalDate.toString()` is ISO-8601, never locale-dependent. */
     fun songDetail(jamDate: LocalDate, position: Int): String = "song/$jamDate/$position"
+
+    /** The past jam detail pattern, `pastJam/{jamDate}` (`past-jam-detail`). */
+    const val PAST_JAM_DETAIL = "pastJam/{$JAM_DATE}"
+
+    /** `pastJam/2026-07-25`: `LocalDate.toString()` is ISO-8601, never locale-dependent. */
+    fun pastJamDetail(jamDate: LocalDate): String = "pastJam/$jamDate"
+
+    /** The past jam detail's date, or null when it is missing or not ISO. */
+    fun parsePastJamDetail(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 
     /**
      * The song detail's arguments, or null when the date is missing or not ISO, or the position is

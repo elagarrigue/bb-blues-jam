@@ -7,13 +7,18 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-four of 38 slices accepted, the latest `unpublished-setlist-state` (5
-  October 2026). Next: `past-jam-detail` (spec approved, song list only).
+  October 2026). `past-jam-detail` is `passing` (session 068), awaiting the validator.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 067, `unpublished-setlist-state`, `passing`, not yet
-  accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+- Last verified at: 5 October 2026 (session 068, `past-jam-detail`, `passing`, not yet accepted)
+  — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 70 result files, 397 tests, 0 failures (`AppRoutesTest` 6 → 9,
+  `PastJamsPresenterTest` 5 → 6, `PastJamsStatesTest` 12 → 14, new `PastJamDetailMappingTest` 9,
+  `PastJamDetailPresenterTest` 2, `PastJamDetailModelShapeTest` 3, `PastJamDetailDefaultsTest` 3).
+  Pixel 5: Anteriores, then the 2026-07-25 detail with 13 rows and amber keys; back paths and
+  rotation. Before that, session 067 (`unpublished-setlist-state`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 66 result files, 374 tests, 0 failures (`JamTest` 6 → 10, `NextJamPresenterTest`
   17 → 16, `NextJamStatesTest` 9 → 11, `SongDetailMappingTest` 7 → 8, `DemoUpcomingJamRepositoryTest`
   6 → 8, new `NextJamDraftTest` 4 and `DraftSetlistDefaultsTest` 3). Node 70/70. Pixel 5: the draft
@@ -2563,6 +2568,104 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   the device (above). `past-jam-detail` should call `setlistForMusicians()` rather than its own
   guard.
 - Next: the validator for `unpublished-setlist-state`.
+
+### Session 068 — 5 October 2026
+
+- Goal: implement `past-jam-detail` (spec `docs/specs/past-jam-detail.md`, revision 3: song list
+  only — position, title, artist, key; no lineup, no expansion, no demo past jam). User approvals:
+  S1 superseded by "para las jams pasadas no importa quién tocó, solo la lista de temas"; D1 not
+  needed; C1 copy approved; K3 (keep the key) kept. `bottom-navigation` and
+  `unpublished-setlist-state` accepted; `Jam.setlistForMusicians()` exists and is used.
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator.
+- Completed:
+  - `:feature:past-jams` detail: `PastJamDetailPresenter(JamsRepository)` (`Params(jamDate,
+    onBack)`, `rememberUpdatedState(onBack)`), pure `JamsSnapshot.toPastJamDetail(jamDate, onBack)`
+    (past jams only, never `upcoming`; `jam.setlistForMusicians()`; `lineup`/`extraParticipants`
+    never read), `PastJamDetailUiModel` (`Loading`, `NotFound`, `Jam(header, setlist, back)`),
+    `PastJamHeaderUiModel`, `PastSetlistUiModel` (`Songs(rows, droppedRowsNote)`, `NotShown`),
+    `PastSongRowUiModel(position, positionLabel, title, artist, key, keyDescription)`,
+    `PastJamDetailDefaults` (archive colours, key in `key`), `PastJamDetailScreen`/`Content`,
+    `PastJamDetailPreview.kt` (Loading, NotFound, Jam with blank artist + dropped note, Withheld).
+    `PastJamsCopy` + `OPEN_JAM`, `DETAIL_LOADING`, `NOT_FOUND_TITLE`/`MESSAGE`, `keyDescription`,
+    `droppedRows` (C1). `pastJamsModule` + `factory { PastJamDetailPresenter(get()) }`.
+  - Anteriores entry point: `PastJamsPresenter : Presenter<PastJamsUiModel, Params(onOpenJam)>`
+    (`rememberUpdatedState`); `PastJamRowUiModel` + `openLabel` (`ver la lista de temas`, null for
+    `NotShown`) and `events` (`Event.Open`); the row summary now reads `setlistForMusicians()`.
+    `PastJamsScreen(onOpenJam, …)`: a row with `openLabel` is one clickable node (`Role.Button`,
+    click label, `heightIn(min = LocalMinimumInteractiveComponentSize.current)`), inside the
+    `Surface` so the ripple is clipped; a `NotShown` row stays one merged non-clickable node.
+  - `:app`: `AppRoutes.PAST_JAM_DETAIL = "pastJam/{jamDate}"`, `pastJamDetail(date)`,
+    `parsePastJamDetail(String?)`; outer-host destination in a private
+    `NavGraphBuilder.pastJamDetail(nav)` (extracted because detekt `LongMethod` flagged
+    `AppNavHost` at 77 > 60 lines) with the song route's slide, `Box`/`statusBarsPadding`,
+    `navigationBars` content padding, `RESUMED` back guard, and a pop on a null argument.
+    `TabsShell(onOpenSong, onOpenPastJam)` passes it to `PastJamsScreen(onOpenJam = onOpenPastJam)`.
+  - Konsist: `AMBER_ROLE_ALLOWLIST` + `"feature/past-jams" to setOf("key")` (rule count unchanged).
+  - Tests: new `PastJamDetailMappingTest` 9, `PastJamDetailPresenterTest` 2,
+    `PastJamDetailModelShapeTest` 3, `PastJamDetailDefaultsTest` 3, plus a test-only
+    `PastJamDetailFixtures.kt` (not in the spec's file list; shared fixtures, no production code);
+    `PastJamsPresenterTest` 5 → 6 (Open + stale handler), `PastJamsStatesTest` 12 → 14 (only Songs
+    rows open; a DRAFT with available songs is the not-published line), `PastJamsModuleTest`
+    (also resolves the detail presenter), `AppRoutesTest` 6 → 9.
+  - Docs: `DESIGN.md` Core Screens 4 (rows with songs open the jam) and 5 (as built, song list
+    only), architecture `SKILL.md` (`:feature:past-jams` detail, allowlist `{key}`, the outer
+    route, `setlistForMusicians()` readers), `docs/risks-and-open-questions.md` (no staleness
+    notice on the detail; duplicated copy; nav untested on the JVM).
+- Verification run:
+  - Baseline `CI=true ./init.sh` exit 0 before any change. `./gradlew ktlintFormat` before each
+    gate. First gate: detekt `MagicNumber` (`LocalTime.of(21, 0)` in the preview, now
+    `parse("21:00")`) and `MaxLineLength` (KDoc in `PastJamsModule.kt`); second: `LongMethod` on
+    `AppNavHost` (fixed by the extraction above). No suppression, baseline or config change. Final
+    `CI=true ./init.sh` exit 0; `konsist: wired`, `detekt: wired`, `ktlint: wired`; Konsist 17/17;
+    70 result files, 397 tests, 0 failures.
+  - Failure demonstrations, each restored by copy and checked with `sha1sum -c` (all OK):
+    `PastJamDetailUiModel.kt` `39273d10…`, `PastJamDetailScreen.kt` `b14299f5…`,
+    `ModuleIsolationTest.kt` `d66b3def…`, `PastJamsPresenter.kt` `64f36445…`,
+    `PastJamDetailPresenter.kt` `d117ced1…`.
+    (1) `val lineup: LineupPanelUiModel? = null` on `PastSongRowUiModel`: shape test 3 tests, 2
+    failed: "forbidden field in PastSongRowUiModel: [..., lineup]" and "expected:<[position,
+    positionLabel, title, artist, key, keyDescription]> but was:<[..., lineup]>".
+    (2) `colors.slotOpen` for the key in `PastJamDetailScreen.kt`: Konsist 17 tests, 1 failed:
+    "Assert 'amber-roles-allowlisted' was violated (1 time) … PastJamDetailScreen.kt".
+    (3) allowlist entry removed: 1 failed: "'amber-roles-allowlisted' was violated (2 times) …
+    PastJamDetailDefaults.kt … PastJamDetailDefaultsTest.kt".
+    (4) `rememberUpdatedState` dropped in `PastJamsPresenter`: `PastJamsPresenterTest` 6 tests, 1
+    failed: "expected:<[first 2026-06-27, second 2026-07-25]> but was:<[first 2026-06-27, first
+    2026-07-25]>".
+    (5) lookup in `listOfNotNull(upcoming) + past`: `PastJamDetailMappingTest` 9 tests, 1 failed:
+    "no past jam with that date is not found, and the upcoming jam with the same date is ignored".
+  - Greps on `feature/past-jams/src/main`: 0 hits for `androidx\.navigation`, `MaterialTheme\.`,
+    `Color\(`, dp/sp/em literals, `InstrumentStrip`, `LineupPanel`, `AdminSession`,
+    `InstrumentFilter`, tú forms. `lineup`: 4 hits, two KDoc lines saying it is never read or shown
+    and two preview `JamSong(lineup = Lineup.default())` constructor arguments (required by the
+    domain type). `\.setlist\b`: only `model.setlist` (the UiModel) in `PastJamDetailScreen.kt`; no
+    `jam.setlist`.
+- Device (Pixel 5, serial 09281FDD4004U6; manual, not part of the gate; Sheet untouched; no
+  accessibility service enabled). Before: airplane `0`, `accelerometer_rotation` `1`,
+  `user_rotation` `0`, `font_scale` `1.0`, `accessibility_enabled` `0`, services `null`.
+  - `:app:installDebug` exit 0; cold start 788 ms; `jams cache: upcoming 2026-10-31, past 1`.
+  - Anteriores: the 2026-07-25 row (`13 temas`, hook) is one `clickable=true focusable=true` node
+    [44,316][1036,631] (315 px, above 132 px = 48dp) with a Button-role node; the texts sit under
+    it. The click label is not exported by `uiautomator dump` (as recorded since `info-screen`); it
+    rests on the model test and the code. Anteriores has one row and does not scroll, so "same
+    scroll position" could not be exercised.
+  - Tap: full screen, no tab bar (no `Próxima jam`/`Info` text in the dump): `Volver` (the only
+    clickable node, [22,158][154,290] = 48dp), `Sábado 25 de julio de 2026`, `La Macanuda`,
+    `13 temas`, rows `01`…`13` (across two dumps after scrolling), each with title, artist and a
+    key node with `content-desc` `Tonalidad …` (B, A, D, C, Bm, A, G, E, C, A, C, E, A). No
+    dropped-rows note. Screenshot: muted header and titles, lighter-muted artists, the keys the only
+    amber.
+  - `Volver`: Anteriores title, Anteriores tab `selected=true`; system back: the same; two fast
+    taps on `Volver` (one `input` shell call): Anteriores selected, MainActivity resumed, not blank.
+    Rotation (accelerometer off, `user_rotation` 1 then 0) keeps the detail open with header and
+    count; back: Anteriores selected. Two early dumps taken 1.5 s after a tap came back empty (taken
+    mid-transition); repeated with 3 s waits, as recorded above.
+  - Restored: `accelerometer_rotation` `1`, `user_rotation` `0`; read back airplane `0`, font `1.0`,
+    accessibility `0`/`null`. `logcat -b crash -d` empty; no `FATAL` in `AndroidRuntime:E`.
+- Known risk or unresolved issue: no staleness notice on the detail (spec non-goal); click label and
+  heading semantics not observable with `uiautomator dump`; Anteriores scroll restoration not
+  exercised (one past jam).
+- Next: the validator for `past-jam-detail`.
 
 ## Notes For The Next Session
 

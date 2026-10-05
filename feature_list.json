@@ -648,12 +648,19 @@
     "depends_on": [
       "past-jams-list"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "No admin control and no filter appears, even when logged in as admin",
       "The row model carries no lineup, slot or musician field (shape test)"
     ],
-    "evidence": [],
+    "evidence": [
+      "5 Oct 2026 (session 068), implementer. Song list only (spec revision 3). :feature:past-jams: PastJamDetailPresenter(JamsRepository) with Params(jamDate, onBack) and rememberUpdatedState; pure JamsSnapshot.toPastJamDetail (past jams only, never upcoming; jam.setlistForMusicians(); lineup and extras never read); PastJamDetailUiModel (Loading, NotFound, Jam), PastSongRowUiModel(position, positionLabel, title, artist, key, keyDescription); PastJamDetailDefaults (archive colours, key in the key role); PastJamDetailScreen + previews. Anteriores rows with songs open the jam (PastJamsPresenter.Params(onOpenJam), Event.Open, openLabel 'ver la lista de temas', null for NotShown); the row summary now reads setlistForMusicians(). :app: AppRoutes.PAST_JAM_DETAIL 'pastJam/{jamDate}' in the outer host (same slide, insets and RESUMED double-tap guard as the song route), TabsShell(onOpenSong, onOpenPastJam). Konsist AMBER_ROLE_ALLOWLIST + feature/past-jams {key}.",
+      "CI=true ./init.sh exit 0 after ./gradlew ktlintFormat: konsist/detekt/ktlint wired, Konsist 17/17; 70 result files, 397 tests, 0 failures (AppRoutesTest 6->9, PastJamsPresenterTest 5->6, PastJamsStatesTest 12->14, new PastJamDetailMappingTest 9, PastJamDetailPresenterTest 2, PastJamDetailModelShapeTest 3, PastJamDetailDefaultsTest 3). Earlier gate runs failed on detekt MagicNumber, MaxLineLength and AppNavHost LongMethod; fixed in code (destination extracted into NavGraphBuilder.pastJamDetail), no suppression or baseline.",
+      "Verification 'The row model carries no lineup, slot or musician field': PastJamDetailModelShapeTest asserts the exact row fields and no lineup|instrument|slot|musician|extra|filter|admin|edit|event field on any detail model, and that the presenter's only constructor parameter is JamsRepository (so it cannot read the admin flag: 'No admin control and no filter appears, even when logged in as admin' holds by construction; no admin login exists yet to try on the device).",
+      "Failure demonstrations, restored by copy and sha1sum -c OK: (1) lineup field on PastSongRowUiModel -> shape test 2 of 3 failed ('forbidden field in PastSongRowUiModel: [..., lineup]'); (2) colors.slotOpen in PastJamDetailScreen.kt -> Konsist 'amber-roles-allowlisted' violated (1 time); (3) allowlist entry removed -> violated (2 times) in PastJamDetailDefaults.kt and its test; (4) rememberUpdatedState dropped in PastJamsPresenter -> 'expected:<[first 2026-06-27, second 2026-07-25]> but was:<[first 2026-06-27, first 2026-07-25]>'; (5) lookup in upcoming too -> mapping test 'the upcoming jam with the same date is ignored' failed.",
+      "Greps on feature/past-jams/src/main: no androidx.navigation, MaterialTheme., Color(, dp/sp literal, InstrumentStrip, LineupPanel, AdminSession, InstrumentFilter or tu forms; 'lineup' only in two KDoc lines and two preview JamSong constructor arguments; no jam.setlist (only the UiModel's model.setlist).",
+      "Device, manual, Pixel 5 (09281FDD4004U6), real past jam 2026-07-25, Sheet untouched, no accessibility service: Anteriores row is one clickable focusable node 315 px tall (>= 48dp); tap opens full screen with no tab bar: Volver (only clickable node, 48dp), 'Sábado 25 de julio de 2026', 'La Macanuda', '13 temas', rows 01..13 with title, artist and key (content-desc 'Tonalidad B' ...), keys the only amber in the screenshot. Volver, system back and a fast double tap return to Anteriores with its tab selected (not blank); rotation keeps the detail open. Not exercised: Anteriores scroll restoration (one row, no scroll); the click label (not exported by uiautomator). Settings restored and read back (airplane 0, rotation auto 1 / user 0, font 1.0, accessibility 0/null); crash buffer empty."
+    ],
     "notes": "Editing history is not supported. Recorded in docs/user-and-access-model.md."
   },
   {

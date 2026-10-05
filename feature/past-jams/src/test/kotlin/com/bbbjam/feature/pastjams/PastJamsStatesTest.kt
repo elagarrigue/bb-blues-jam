@@ -113,6 +113,8 @@ class PastJamsStatesTest {
                     "13 temas",
                     "Sweet Home Chicago, The Thrill Is Gone, Pride and Joy y 10 más",
                 ),
+                openLabel = "ver la lista de temas",
+                events = EventHandler {},
             ),
             onlyRow(jam("2026-07-25", Setlist.Available(songs(13)))),
         )
@@ -151,6 +153,8 @@ class PastJamsStatesTest {
                 "Sábado 29 de agosto de 2026",
                 "La Macanuda",
                 PastJamSummary.NotShown("La lista de esta jam no se publicó."),
+                openLabel = null,
+                events = EventHandler {},
             ),
             draft,
         )
@@ -222,5 +226,32 @@ class PastJamsStatesTest {
     fun `every state carries the title`() {
         assertEquals("Jams anteriores", model(emptyList()).title)
         assertEquals("Jams anteriores", model(listOf(jam("2026-07-25"))).title)
+    }
+
+    @Test
+    fun `only a row with songs opens, and Open calls onOpenJam with its date`() {
+        val opened = mutableListOf<LocalDate>()
+        val past = listOf(
+            jam("2026-07-25"),
+            jam("2026-06-27", Setlist.Unavailable(SetlistProblem.MISSING_TAB)),
+            jam("2026-05-30", Setlist.Available(emptyList())),
+            jam("2026-04-25", Setlist.Withheld, JamStatus.DRAFT),
+        )
+        val rows = (
+            JamsSnapshot(null, past, fetched).toUiModel(now, onOpenJam = {
+                opened += it
+            }) as PastJamsUiModel.Jams
+            )
+            .rows
+        assertEquals(listOf("ver la lista de temas", null, null, null), rows.map { it.openLabel })
+        rows.first().events(PastJamRowUiModel.Event.Open)
+        assertEquals(listOf(LocalDate.of(2026, 7, 25)), opened)
+    }
+
+    @Test
+    fun `a past draft whose songs reached the app is still the not-published line and does not open`() {
+        val row = onlyRow(jam("2026-08-29", Setlist.Available(songs(3)), JamStatus.DRAFT))
+        assertEquals(PastJamSummary.NotShown("La lista de esta jam no se publicó."), row.summary)
+        assertNull(row.openLabel)
     }
 }

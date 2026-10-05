@@ -33,10 +33,15 @@ import java.time.LocalDate
  * entered (`saveState`/`restoreState`); back from Anteriores or Info returns to Próxima jam (the
  * inner host's back handler wins while its stack has more than one entry), and from Próxima jam
  * the activity finishes. The status-bar inset is applied outside the scroll, over `background`, so
- * content never scrolls under the clock. [onOpenSong] opens a song's detail in the outer host.
+ * content never scrolls under the clock. [onOpenSong] opens a song's detail and [onOpenPastJam] a
+ * past jam's detail, both in the outer host.
  */
 @Composable
-internal fun TabsShell(onOpenSong: (jamDate: LocalDate, position: Int) -> Unit, modifier: Modifier = Modifier) {
+internal fun TabsShell(
+    onOpenSong: (jamDate: LocalDate, position: Int) -> Unit,
+    onOpenPastJam: (jamDate: LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val inner = rememberNavController()
     val entry by inner.currentBackStackEntryAsState()
     val selected = entry?.destination?.hierarchy?.firstNotNullOfOrNull { AppTab.fromRoute(it.route) }
@@ -56,7 +61,7 @@ internal fun TabsShell(onOpenSong: (jamDate: LocalDate, position: Int) -> Unit, 
             popExitTransition = { fadeOut(tween(AppMotion.TAB_FADE_MS)) },
         ) {
             composable(AppRoutes.NEXT_JAM) { NextJamScreen(onOpenSong = onOpenSong) }
-            composable(AppRoutes.PAST_JAMS) { PastJamsScreen() }
+            composable(AppRoutes.PAST_JAMS) { PastJamsScreen(onOpenJam = onOpenPastJam) }
             composable(AppRoutes.INFO) { InfoScreen() }
         }
         TabBar(tabBarModel(selected) { tab -> onSelect(tab) })

@@ -6,11 +6,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The archive treatment (DESIGN.md "Past jams list"): muted roles only, never amber. "Never amber"
- * is proven by the first test together with `BluesJamColorsTest` in `:core:ui`, which fails if
- * `surface`, `textMuted` or `archive` ever becomes amber. This class cannot name an amber role to
- * compare with: Konsist `amber-roles-allowlisted` reads test sources too, and this module has no
- * allowlist entry, on purpose.
+ * The archive treatment of the list (DESIGN.md "Past jams list"): muted roles only, never amber.
+ * "Never amber" is proven by the first test together with `BluesJamColorsTest` in `:core:ui`, which
+ * fails if `surface`, `textMuted` or `archive` ever becomes amber. The module may read `key` since
+ * `past-jam-detail` (its detail rows), and only there; the list reads no amber role.
  */
 class PastJamsDefaultsTest {
     private val colors = BluesJamColors

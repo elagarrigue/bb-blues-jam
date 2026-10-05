@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.jams.JamCalendar
@@ -13,12 +14,14 @@ import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.state.stalenessNotice
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 /**
@@ -28,14 +31,20 @@ import kotlinx.coroutines.launch
  * re-subscribes to the flow, which recovers from a failed local read, and calls
  * [JamsRepository.refresh], a read. The subscription counter is created once, so an earlier model's
  * Retry handler still works. "Now" comes only from [calendar], read once per snapshot, to age the
- * cached data for the staleness notice.
+ * cached data for the staleness notice. [Params.onOpenJam] is read through `rememberUpdatedState`,
+ * so an earlier model's Open handler calls the current callback.
  */
 class PastJamsPresenter(private val jams: JamsRepository, private val calendar: JamCalendar) :
-    Presenter<PastJamsUiModel, Unit> {
+    Presenter<PastJamsUiModel, PastJamsPresenter.Params> {
+
+    /** [onOpenJam] opens a past jam's detail (bound by `:app`). */
+    data class Params(val onOpenJam: (jamDate: LocalDate) -> Unit = {})
 
     @Composable
-    override fun present(params: Unit): PastJamsUiModel {
+    override fun present(params: Params): PastJamsUiModel {
         val scope = rememberCoroutineScope()
+        val currentOnOpenJam by rememberUpdatedState(params.onOpenJam)
+        val onOpenJam: (LocalDate) -> Unit = { date -> currentOnOpenJam(date) }
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val now = remember(snapshot) { calendar.now() }
@@ -43,7 +52,8 @@ class PastJamsPresenter(private val jams: JamsRepository, private val calendar: 
             subscription++
             scope.launch { jams.refresh() }
         }
-        return snapshot?.toUiModel(now, onRetry) ?: PastJamsUiModel.Loading(PastJamsCopy.TITLE, PastJamsCopy.LOADING)
+        return snapshot?.toUiModel(now, onRetry, onOpenJam)
+            ?: PastJamsUiModel.Loading(PastJamsCopy.TITLE, PastJamsCopy.LOADING)
     }
 }
 
@@ -53,11 +63,13 @@ class PastJamsPresenter(private val jams: JamsRepository, private val calendar: 
  * failed with nothing fetched and no retry running; the skeleton otherwise. The upcoming jam is
  * never listed. The notice is drawn exactly when something is cached and the latest refresh failed,
  * never on age alone. Rows are sorted here, newest first, not trusted to the repository's order.
- * [now] ages the cached data (by default the fetch time); [onRetry] is what both retries call.
+ * [now] ages the cached data (by default the fetch time); [onRetry] is what both retries call;
+ * [onOpenJam] is what a row with songs calls on Open.
  */
 internal fun JamsSnapshot.toUiModel(
     now: Instant = freshness.fetchedAt ?: Instant.EPOCH,
     onRetry: () -> Unit = {},
+    onOpenJam: (LocalDate) -> Unit = {},
 ): PastJamsUiModel {
     val fetchedAt = freshness.fetchedAt
     val failure = freshness.lastFailure
@@ -72,7 +84,7 @@ internal fun JamsSnapshot.toUiModel(
     return when {
         past.isNotEmpty() -> PastJamsUiModel.Jams(
             title = title,
-            rows = past.sortedByDescending { it.date }.map { it.toRow() },
+            rows = past.sortedByDescending { it.date }.map { it.toRow(onOpenJam) },
             staleness = staleness,
         )
 
@@ -94,16 +106,27 @@ internal fun JamsSnapshot.toUiModel(
 /** How many titles the hook shows before "y n más" (C1). */
 internal const val HOOK_TITLES = 3
 
-private fun Jam.toRow() = PastJamRowUiModel(
-    date = date,
-    dateLabel = pastJamDateLabel(date),
-    venue = venue,
-    summary = setlist.toSummary(),
-)
+/** A draft's songs are never shown to a musician: the summary reads `setlistForMusicians()`. */
+private fun Jam.toRow(onOpenJam: (LocalDate) -> Unit): PastJamRowUiModel {
+    val summary = setlistForMusicians().toSummary()
+    return PastJamRowUiModel(
+        date = date,
+        dateLabel = pastJamDateLabel(date),
+        venue = venue,
+        summary = summary,
+        // Only a row with songs opens: a NotShown row would open on the same line.
+        openLabel = PastJamsCopy.OPEN_JAM.takeIf { summary is PastJamSummary.Songs },
+        events = EventHandler { event ->
+            when (event) {
+                PastJamRowUiModel.Event.Open -> onOpenJam(date)
+            }
+        },
+    )
+}
 
 /**
  * The count is the readable songs: dropped rows are not counted, matching the rows `past-jam-detail`
- * will draw. A list with no song is a line, never "0 temas" (C1).
+ * draws. A list with no song is a line, never "0 temas" (C1).
  */
 private fun Setlist.toSummary(): PastJamSummary = when (this) {
     is Setlist.Available -> if (songs.isEmpty()) {

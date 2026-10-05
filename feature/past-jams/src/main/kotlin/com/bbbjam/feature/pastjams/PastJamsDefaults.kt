@@ -5,9 +5,9 @@ import com.bbbjam.core.ui.theme.BluesJamColors
 
 /**
  * The archive treatment of a past jam row, kept apart from the composable so a JVM test can check
- * it (DESIGN.md "Past jams list"). Muted, and never amber: the list shows no keys, so no amber role
- * is read in this module (`AMBER_ROLE_ALLOWLIST` has no entry for it). The screen reads row colours
- * only through here.
+ * it (DESIGN.md "Past jams list"). Muted, and never amber: the list shows no keys. The module's
+ * only amber role, `key`, is read by the detail (`PastJamDetailDefaults`). The screen reads row
+ * colours only through here.
  */
 internal object PastJamsDefaults {
     /** [message] is the line a past jam shows instead of count and hook (P1). */

@@ -21,7 +21,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and the song detail above it; `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination (a past-jam detail) goes in the **outer** host, beside the song route. | everything |
+| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`) and the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard; `TabsShell(onOpenSong, onOpenPastJam)` hands the callback to Anteriores); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
@@ -29,8 +29,13 @@ Feature modules are added by the slice that first needs them, not up front. `:fe
 (set by `info-screen`), `:feature:next-jam` exists (set by `next-jam-read-only-list`; the first
 feature that reads data, depending on `:core:ui` and `:core:data`), `:feature:song-detail`
 exists (set by `song-detail-screen`, same dependencies) and `:feature:past-jams` exists (set by
-`past-jams-list`, same dependencies; Anteriores, read-only, no amber allowlist entry; its row
-colours come only from `PastJamsDefaults`).
+`past-jams-list`, same dependencies; Anteriores, read-only; its row colours come only from
+`PastJamsDefaults`). `past-jam-detail` adds the past jam's detail to `:feature:past-jams`:
+`PastJamDetailPresenter(JamsRepository)` (its only dependency, so it cannot read the admin flag),
+`PastJamDetailUiModel`, the pure mapping `JamsSnapshot.toPastJamDetail(jamDate, onBack)` (past jams
+only, through `setlistForMusicians()`; rows are position, title, artist and key, never a lineup),
+`PastJamDetailScreen` and `PastJamDetailDefaults` (archive colours, the key in `key`); the list
+rows gain an `Open` event through `PastJamsPresenter.Params(onOpenJam)`.
 
 **Admin is a state, not a module.** An admin is a musician with extra controls on the same screens
 (one app, not two). Each presenter reads the admin flag from `AdminSession` in `:core:data` and adds
@@ -55,9 +60,10 @@ is. There is no `:feature:admin`.
   `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
 - Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
   `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` and `:feature:song-detail`
-  may read `key` only; `:feature:past-jams` has no entry and reads no amber role. The rule also
-  reads test sources, so a test in a module without an entry cannot name an amber role either
-  (`PastJamsDefaultsTest` proves "never amber" by allowed roles plus `BluesJamColorsTest`). A
+  may read `key` only; `:feature:past-jams` may read `key` only since `past-jam-detail` (the detail
+  rows' key, through `PastJamDetailDefaults`; the Anteriores list reads no amber role). The rule
+  also reads test sources, so a test in a module without an entry cannot name an amber role either
+  (`PastJamsDefaultsTest` proves the list "never amber" by allowed roles plus `BluesJamColorsTest`). A
   slice that adds an amber use (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds that
   role for its module in the same diff, so each amber use is a reviewed decision.
   Amber read **inside a `:core:ui` component** needs no allowlist entry: the instrument strip reads
@@ -66,8 +72,8 @@ is. There is no `:feature:admin`.
   panel (`com.bbbjam.core.ui.lineup`) does the same.
 - A musician screen reads a jam's songs through **`Jam.setlistForMusicians()`**
   (`unpublished-setlist-state`), never `jam.setlist`: it is `Withheld` for every DRAFT jam, whatever
-  the read returned. `NextJamPresenter` and the song detail lookup do so; a new musician screen
-  (`past-jam-detail`) does the same. The admin slices read `jam.setlist` behind the admin flag.
+  the read returned. `NextJamPresenter`, the song detail lookup, the Anteriores row summary and the past jam
+  detail (`past-jam-detail`) do so. The admin slices read `jam.setlist` behind the admin flag.
   On Próxima jam a draft is `SetlistUiModel.Withheld(DraftSetlistUiModel)` (the draft card, colours
   in `DraftSetlistDefaults`, no amber) and an unreadable setlist is `SetlistUiModel.Unavailable`.
 - "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as

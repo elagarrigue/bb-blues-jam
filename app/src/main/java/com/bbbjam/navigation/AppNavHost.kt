@@ -15,20 +15,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.pastjams.PastJamDetailScreen
 import com.bbbjam.feature.songdetail.SongDetailScreen
 
 /**
  * The app's navigation (`song-detail-screen`, N1; reshaped by `bottom-navigation`): Navigation
- * Compose, only in `:app`. The outer host has two destinations: the tabs shell ([TabsShell], with
- * its own inner host and the bottom bar) and the song detail, full screen over it with no bar. The
- * detail slides in from the end over the tabs, which stay drawn under it, and slides out to the end
- * on back (M1). System back pops the detail; on the tabs it is the inner host's (see [TabsShell]).
+ * Compose, only in `:app`. The outer host has three destinations: the tabs shell ([TabsShell], with
+ * its own inner host and the bottom bar), the song detail and the past jam detail
+ * (`past-jam-detail`), each full screen over it with no bar. A detail slides in from the end over
+ * the tabs, which stay drawn under it, and slides out to the end on back (M1). System back pops the
+ * detail; on the tabs it is the inner host's (see [TabsShell]).
  */
 @Composable
 internal fun AppNavHost(modifier: Modifier = Modifier) {
@@ -51,6 +55,9 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
             TabsShell(
                 onOpenSong = { date, position ->
                     nav.navigate(AppRoutes.songDetail(date, position)) { launchSingleTop = true }
+                },
+                onOpenPastJam = { date ->
+                    nav.navigate(AppRoutes.pastJamDetail(date)) { launchSingleTop = true }
                 },
             )
         }
@@ -84,6 +91,38 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
                         contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     )
                 }
+            }
+        }
+        pastJamDetail(nav)
+    }
+}
+
+/**
+ * The past jam detail (`past-jam-detail`), beside the song detail and drawn the same way: full
+ * screen over the tabs, the same slide, insets and double-tap guard.
+ */
+private fun NavGraphBuilder.pastJamDetail(nav: NavHostController) {
+    composable(
+        AppRoutes.PAST_JAM_DETAIL,
+        arguments = listOf(navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType }),
+        enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
+    ) { entry ->
+        val jamDate = AppRoutes.parsePastJamDetail(entry.arguments?.getString(AppRoutes.JAM_DATE))
+        if (jamDate == null) {
+            // Unreachable from the UI, which only builds routes through AppRoutes.pastJamDetail.
+            LaunchedEffect(Unit) { nav.popBackStack() }
+        } else {
+            // As the song detail: the status-bar inset outside the scroll, the bottom one inside it.
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+                PastJamDetailScreen(
+                    jamDate = jamDate,
+                    onBack = {
+                        // A second tap while the pop runs must never pop the tabs and leave a blank host.
+                        if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
+                    },
+                    contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                )
             }
         }
     }

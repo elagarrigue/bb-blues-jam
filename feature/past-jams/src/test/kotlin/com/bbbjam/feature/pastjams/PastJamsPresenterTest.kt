@@ -1,5 +1,8 @@
 package com.bbbjam.feature.pastjams
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.ReceiveTurbine
@@ -76,8 +79,14 @@ class PastJamsPresenterTest {
         Setlist.Available(listOf(song(1, "Sweet Home Chicago"))),
     )
 
-    private fun row(date: LocalDate, label: String, venue: String = "La Macanuda") =
-        PastJamRowUiModel(date, label, venue, PastJamSummary.Songs("1 tema", "Sweet Home Chicago"))
+    private fun row(date: LocalDate, label: String, venue: String = "La Macanuda") = PastJamRowUiModel(
+        date,
+        label,
+        venue,
+        PastJamSummary.Songs("1 tema", "Sweet Home Chicago"),
+        openLabel = "ver la lista de temas",
+        events = EventHandler {},
+    )
 
     private val julyRow = row(LocalDate.of(2026, 7, 25), "Sábado 25 de julio de 2026")
     private val juneRow = row(LocalDate.of(2026, 6, 27), "Sábado 27 de junio de 2026")
@@ -99,7 +108,7 @@ class PastJamsPresenterTest {
 
     @Test
     fun `loading, then the past jams newest first from out-of-order input`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(listOf(jam("2026-05-30"), jam("2026-07-25"), jam("2026-06-27"))))
             assertEquals(PastJamsUiModel.Jams(title, listOf(julyRow, juneRow, mayRow), staleness = null), awaitItem())
@@ -110,7 +119,7 @@ class PastJamsPresenterTest {
 
     @Test
     fun `the upcoming jam is never listed`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(past = emptyList(), upcoming = jam("2026-10-31")))
             assertEquals(empty, awaitItem())
@@ -121,7 +130,7 @@ class PastJamsPresenterTest {
 
     @Test
     fun `an empty snapshot after a fetch is the empty block`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(emptyList()))
             assertEquals(empty, awaitItem())
@@ -131,7 +140,7 @@ class PastJamsPresenterTest {
 
     @Test
     fun `the offline error, then Retry re-subscribes and refreshes once, then the skeleton, then the rows`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(emptyList(), offline))
             val failed = awaitItem()
@@ -156,7 +165,7 @@ class PastJamsPresenterTest {
     fun `the notice appears when a refresh fails and goes on success, and age alone draws none`() = runTest {
         val twoHoursAgo = Instant.parse("2026-10-05T13:00:00Z")
         val aMonthAgo = Instant.parse("2026-09-05T13:00:00Z")
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(listOf(jam("2026-07-25")), Freshness(aMonthAgo, null, false)))
             assertNull((awaitItem() as PastJamsUiModel.Jams).staleness)
@@ -185,4 +194,24 @@ class PastJamsPresenterTest {
         }
         assertEquals(1, repository.refreshCalls)
     }
+
+    @Test
+    fun `Open on a row calls onOpenJam with its date, and an earlier model's handler calls the current callback`() =
+        runTest {
+            val opened = mutableListOf<String>()
+            var params by mutableStateOf(PastJamsPresenter.Params { date -> opened += "first $date" })
+            moleculeFlow(RecompositionMode.Immediate) { presenter().present(params) }.test {
+                assertEquals(loading, awaitItem())
+                repository.snapshots.emit(snapshot(listOf(jam("2026-07-25"), jam("2026-06-27"))))
+                val first = awaitItem() as PastJamsUiModel.Jams
+                first.rows[1].events(PastJamRowUiModel.Event.Open)
+                assertEquals(listOf("first 2026-06-27"), opened)
+
+                params = PastJamsPresenter.Params { date -> opened += "second $date" }
+                awaitItem()
+                first.rows[0].events(PastJamRowUiModel.Event.Open)
+                assertEquals(listOf("first 2026-06-27", "second 2026-07-25"), opened)
+            }
+            assertEquals(0, repository.refreshCalls)
+        }
 }

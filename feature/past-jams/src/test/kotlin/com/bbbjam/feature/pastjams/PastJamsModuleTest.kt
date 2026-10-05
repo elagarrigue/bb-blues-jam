@@ -11,7 +11,7 @@ import org.koin.dsl.module
 
 class PastJamsModuleTest {
     @Test
-    fun `pastJamsModule resolves a new presenter each time once the data bindings exist`() {
+    fun `pastJamsModule resolves new list and detail presenters each time once the data bindings exist`() {
         val dataBindings = module {
             single<JamsRepository> { FakeJamsRepository() }
             single { JamCalendar(Clock.systemUTC(), JamCalendar.BUENOS_AIRES) }
@@ -22,6 +22,7 @@ class PastJamsModuleTest {
             val second = app.koin.get<PastJamsPresenter>()
             // factory, not single: presenters hold no state; the composition does.
             assertNotSame(first, second)
+            assertNotSame(app.koin.get<PastJamDetailPresenter>(), app.koin.get<PastJamDetailPresenter>())
         } finally {
             app.close()
         }

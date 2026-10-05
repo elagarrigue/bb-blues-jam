@@ -367,6 +367,8 @@ class ModuleIsolationTest {
         val AMBER_ROLE_ALLOWLIST: Map<String, Set<String>> = mapOf(
             "feature/next-jam" to setOf("key"),
             "feature/song-detail" to setOf("key"),
+            // past-jam-detail: the key of each song as played that night (K3).
+            "feature/past-jams" to setOf("key"),
         )
 
         /**

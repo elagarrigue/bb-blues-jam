@@ -25,6 +25,22 @@ internal object PastJamsCopy {
 
     /** The hook's tail after the first titles: "y 10 más". */
     fun andMore(count: Int): String = "y $count más"
+
+    /** The click label of a row that opens its jam (`past-jam-detail`, C1). */
+    const val OPEN_JAM = "ver la lista de temas"
+
+    /** What a screen reader says while the detail has nothing to show yet. */
+    const val DETAIL_LOADING = "Cargando la jam"
+    const val NOT_FOUND_TITLE = "Esta jam ya no está en el archivo"
+    const val NOT_FOUND_MESSAGE =
+        "Puede que la organización la haya cambiado. Volvé a Anteriores para ver las jams guardadas."
+
+    /** What a screen reader says for a past song's key: "Tonalidad B" (the next-jam form). */
+    fun keyDescription(key: String): String = "Tonalidad $key"
+
+    /** The note under a past setlist that lost [count] invalid rows (next-jam P4); [count] is at least 1. */
+    fun droppedRows(count: Int): String =
+        if (count == 1) "Falta 1 tema: no se pudo leer." else "Faltan $count temas: no se pudieron leer."
 }
 
 /** "Sábado 25 de julio de 2026": day, date and year, no time. */
