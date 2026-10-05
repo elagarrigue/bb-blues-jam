@@ -19,8 +19,8 @@ check that proves the deployment can create, write, read back and delete a tab.
 
 On the client, `:core:data` gets the shared write path every mutation repository will use. It takes
 the stored passphrase and the action, POSTs them and maps the answer to a public `WriteOutcome`. A
-rejected passphrase comes back as `AccessChanged` ("your access changed"), not as a network error
-(W3).
+rejected passphrase comes back as `AccessRefused`, never as a network error. The device stays in
+admin mode and keeps the stored passphrase (W3, the user's choice); the caller shows the error.
 
 ## Non-Goals
 
@@ -53,9 +53,11 @@ cosmetic, and rotating the passphrase revokes every device.
   POST action answers `invalid_passphrase` unless the request carries the current passphrase. After
   W2's limit of failed guesses, every action answers `rate_limited` until the window ends.
 - Admin device: the shared write path sends the stored passphrase. If the passphrase was rotated,
-  the first write is rejected and the device forgets it (W3).
+  every write is rejected with `AccessRefused`. The device keeps the stored passphrase and its admin
+  controls (W3). The admin recovers with Info → "Salir del modo admin" → "Entrar como admin" and the
+  new passphrase.
 - Debug admin session (`bluesjam.debugAdmin`): no passphrase is stored, so a write returns
-  `AccessChanged` and sends no request. It authorizes nothing.
+  `AccessRefused` and sends no request. It authorizes nothing.
 
 ## Acceptance Scenarios
 
@@ -81,13 +83,14 @@ cosmetic, and rotating the passphrase revokes every device.
    submitted passphrase.
 8. **Client.** `AdminWriter.write(action, fields)` behaves as follows:
    - `ok` gives `Done`.
-   - `invalid_passphrase` or `passphrase_not_set` gives `AccessChanged` and clears the stored
-     passphrase.
+   - `invalid_passphrase` or `passphrase_not_set` gives `AccessRefused`. The stored passphrase is
+     **kept**: `observeIsAdmin()` still emits true, and the next write sends the same value.
    - `rate_limited`, `busy`, `unknown_action`, `NotConfigured`, an HTML page or any invalid answer
-     gives `Unavailable`, and the store is kept.
+     gives `Unavailable`.
+   - `AdminWriter` never writes or clears the store, whatever the answer.
    - `Offline` gives `Offline`.
    - Any other service code gives `Rejected(code)`.
-   - With nothing stored it gives `AccessChanged` and sends no request.
+   - With nothing stored it gives `AccessRefused` and sends no request.
 9. **Unchanged.** The two GET routes give the same answers. `checkPassphrase` gives the same
    answers apart from `rate_limited`.
 
@@ -159,18 +162,20 @@ exclusion), `core/data/.../admin/*.kt`, `remote/AppsScriptTransport.kt`, `remote
 
 ### 2. `:core:data`, package `com.bbbjam.core.data.admin`
 
-- Public `sealed interface WriteOutcome { Done; AccessChanged; Offline; Unavailable; data class
+- Public `sealed interface WriteOutcome { Done; AccessRefused; Offline; Unavailable; data class
   Rejected(val code: String) }`, each with KDoc. These are the outcomes later mutation repositories
-  return to presenters.
+  return to presenters. The KDoc of `AccessRefused` says that the server refused the stored
+  passphrase, or none is stored, and that the device stays in admin mode. Recovery is to log out and
+  in again from Info.
 - Internal `AdminWriter(transport: AppsScriptPostTransport, store: AdminCredentialStore)` with
   `suspend fun write(action: String, fields: Map<String, JsonElement> = emptyMap()): WriteOutcome`:
-  1. If `store.passphrase()` is null, return `AccessChanged` and send no request.
+  1. If `store.passphrase()` is null, return `AccessRefused` and send no request. This is the only
+     call `AdminWriter` makes to the store: it never calls `save` or `clear`.
   2. Build a `JsonObject` with `action`, `passphrase` and the fields. A field named `action` or
      `passphrase` is a `require` failure. Encode it with `AppsScriptEnvelope.json`, never by
      concatenation.
   3. POST it and decode with `decodeOk`.
-  4. Map the answer as in scenario 8. On `AccessChanged` from the server, call `store.clear()` and
-     ignore an `IOException`.
+  4. Map the answer as in scenario 8. No outcome changes the store (W3).
   5. Never log. No type holds the passphrase in a `toString`.
 - `remote/`: constants for the codes the client maps (`invalid_passphrase`, `passphrase_not_set`,
   `rate_limited`, `busy`, `unknown_action`), shared with `DefaultAdminSession`.
@@ -202,6 +207,10 @@ decode. It builds bodies with `json.dumps` and prints **only** the error `code` 
   modify.
 - `core/data/src/test/.../admin/AdminWriterTest.kt`: create. Cover each row of scenario 8, the exact
   body keys, no request when logged out, reserved keys and a passphrase with quotes or a backslash.
+  Include "a refused write keeps the stored passphrase and admin mode": after `invalid_passphrase`
+  and after `passphrase_not_set`, `store.passphrase()` is unchanged, `observeIsAdmin()` emits true,
+  and a second write sends the same passphrase. Use the real `AdminCredentialStore` over a temp
+  file, as `StoreHarness` does.
 - `DefaultAdminSessionTest.kt` (`rate_limited` gives `Unavailable` and stores nothing) and
   `DataModuleTest.kt` (resolves `AdminWriter`): modify.
 - Docs, see below. No Gradle, Konsist, manifest or `:app` change.
@@ -215,10 +224,14 @@ UI involved: no. `DESIGN.md` is not touched.
 - `docs/apps-script-api.md`: update the POST actions section with the router guard and its order,
   the write request shape, `checkWriteAccess`, `rate_limited`, `busy`, the lock, and "no rate limit"
   replaced. Add the client `AdminWriter` mapping.
-- `docs/user-and-access-model.md`: add the write guard as built and W3. Rewrite the debug-session
-  sentence to say a write sends nothing and returns `AccessChanged`.
+- `docs/user-and-access-model.md`: add the write guard as built and W3. Under Revocation, a device
+  logged in before a rotation keeps its admin controls, and every write fails with `AccessRefused`,
+  until the admin taps "Salir del modo admin" and logs in with the new passphrase. Rewrite the
+  debug-session sentence to say a write sends nothing and returns `AccessRefused`.
 - `docs/risks-and-open-questions.md`: replace the rate-limit bullet with W2 and its lockout
-  trade-off. Mark the CacheService/LockService scope assumption as checked or not. Record write
+  trade-off. Reword the existing "a device logged in before a rotation keeps showing admin mode"
+  bullet with W3: the device keeps showing admin mode **after** the first rejected write too, and
+  recovery is Info → "Salir del modo admin" → "Entrar como admin". Mark the CacheService/LockService scope assumption as checked or not. Record write
   latency from L6 (the "Write latency: still open" research task).
 - `docs/sheet-schema.md` (Tabs): add `_prueba_escritura` as transient, created and deleted by
   `checkWriteAccess` in one request and never read.
@@ -236,13 +249,14 @@ UI involved: no. `DESIGN.md` is not touched.
    `sha1sum -c`:
    - (a) skip the guard for write actions in the router;
    - (b) cache the passphrase or omit the `Config` re-read;
-   - (c) `AdminWriter` not clearing on `invalid_passphrase`.
+   - (c) `AdminWriter` calling `store.clear()` on `invalid_passphrase`. The test "a refused write
+     keeps the stored passphrase and admin mode" must fail.
 3. **Client.** `WriteOutcome`, `AdminWriter`, DI and tests. Then `./gradlew ktlintFormat` and
    `CI=true ./init.sh`.
 4. Update the docs and README.
-5. **Hand off to the user.** Ask for the one batched manual step (below). The implementation must
-   start only after the concurrent `debug-admin-session` validation has been persisted, because both
-   touch `user-and-access-model.md` and the architecture skill.
+5. **Hand off to the user.** Ask for the one batched manual step (below). `debug-admin-session` is
+   accepted (d7dd7cd), so implementation may start now. Rebase the doc edits on that commit's
+   `user-and-access-model.md` and architecture skill.
 6. **Live checks L1–L6** after the user confirms. Then record the evidence and set status `passing`.
 
 ### Manual steps for the user (one batch, about 3 minutes)
@@ -284,6 +298,16 @@ latency, and the deployed `Post.gs` SHA-1 matching the repo. That the passphrase
 any output, by stating it, never by grepping the value into a log. Everything goes in
 `feature_list.json` evidence and `PROGRESS.md`.
 
+## Risks
+
+- **A rotated passphrase leaves admin controls that always fail (W3).** A device logged in before a
+  rotation keeps "Modo admin activo" and every admin control, and every write answers
+  `AccessRefused`. Nothing clears it automatically. The admin recovers on Info: "Salir del modo
+  admin", then "Entrar como admin" with the new passphrase. The first mutation slice's error copy
+  should tell them that.
+- W2 lets anyone with the URL lock the admins out for up to 10 minutes at a time, repeatedly.
+- CacheService and LockService needing no extra scope is an assumption until L4 and L6 run.
+
 ## Validator Checklist
 
 - [ ] Every `ACTIONS` entry passes the guard in `handlePost`, and no action calls it itself. The
@@ -292,8 +316,8 @@ any output, by stating it, never by grepping the value into a log. Everything go
   message.
 - [ ] Write actions run under the lock, after the guard. `checkWriteAccess` leaves no tab.
 - [ ] Rate limit as approved in W2. Cache failure fails open, and that is tested.
-- [ ] `AdminWriter` follows scenario 8. It clears only on `invalid_passphrase` or
-  `passphrase_not_set`, and it sends no request when logged out.
+- [ ] `AdminWriter` follows scenario 8. It never saves or clears the store, a refusal keeps admin
+  mode on (tested through `observeIsAdmin()`), and it sends no request when logged out.
 - [ ] No UI, Gradle, Konsist, manifest or `:app` change. `Code.js`, `Jams.js`, `Catalog.js` and
   `Normalize.js` are byte-identical.
 - [ ] The README marker and `Known:` list match the code. The docs are updated as listed.
@@ -305,7 +329,8 @@ Answered by the user on 5 October 2026: **W1 (a)** the passphrase once in git-ig
 `local.properties` as `bluesjam.debugAdminPassphrase`, read only by the agent's check script, never
 printed; **W2 (a)** global 10 failed guesses per fixed 10-minute window; **W3 — the device stays in
 admin mode** (the alternative, not the recommendation): a rejected write shows an error and keeps the
-stored passphrase and the controls. The spec body must be revised to match.
+stored passphrase and the controls. The spec body was revised to match: `AccessRefused`, and
+`AdminWriter` never touches the store.
 
 The questions as asked:
 
@@ -331,3 +356,5 @@ The questions as asked:
   `passphrase_not_set` from a write, the device forgets the stored passphrase. The admin controls
   disappear, and the outcome is `AccessChanged`, whose copy comes with the first mutation slice.
   Alternative: keep the passphrase and keep failing every write until a manual logout.
+  **Chosen: the alternative.** The device stays in admin mode, and the outcome was renamed
+  `AccessRefused`.
