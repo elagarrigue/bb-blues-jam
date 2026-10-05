@@ -92,7 +92,7 @@ class ContrastTest {
     @Test
     fun `text on a raised surface`() {
         val bar = TabBarDefaults.colors()
-        assertContrast(bar.selectedContent, bar.indicator, expected = 0.0)
+        assertContrast(bar.selectedContent, bar.indicator, expected = 12.75)
     }
 
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {

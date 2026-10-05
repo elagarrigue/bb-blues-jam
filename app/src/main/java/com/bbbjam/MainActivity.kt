@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         val darkBars = SystemBarStyle.dark(Color.TRANSPARENT)
         enableEdgeToEdge(statusBarStyle = darkBars, navigationBarStyle = darkBars)
         super.onCreate(savedInstanceState)
-        // AppNavHost hosts the temporary tabs (Próxima jam and Info) and the song detail.
+        // AppNavHost hosts the tabs shell (bottom bar, one route per tab) and the song detail above it.
         setContent { BluesJamTheme { AppNavHost() } }
     }
 }

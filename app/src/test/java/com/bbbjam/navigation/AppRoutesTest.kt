@@ -23,6 +23,16 @@ class AppRoutesTest {
     }
 
     @Test
+    fun `the tab routes are distinct plain strings`() {
+        assertEquals("next-jam", AppRoutes.NEXT_JAM)
+        assertEquals("past-jams", AppRoutes.PAST_JAMS)
+        assertEquals("info", AppRoutes.INFO)
+        val routes =
+            listOf(AppRoutes.TABS, AppRoutes.NEXT_JAM, AppRoutes.PAST_JAMS, AppRoutes.INFO, AppRoutes.SONG_DETAIL)
+        assertEquals(routes.size, routes.toSet().size)
+    }
+
+    @Test
     fun `parse accepts a valid date and position`() {
         assertEquals(SongDetailArgs(LocalDate.of(2026, 10, 31), 2), AppRoutes.parseSongDetail("2026-10-31", 2))
     }

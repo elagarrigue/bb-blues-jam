@@ -13,7 +13,12 @@
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 065, `past-jams-list`, not yet accepted) —
+- Last verified at: 5 October 2026 (session 066, `bottom-navigation`, `passing`, not yet accepted)
+  — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 64 result files, 359 tests, 0 failures (`ContrastTest` 14 → 15, `AppRoutesTest`
+  5 → 6, new `AppTabTest` 4 and `TabBarDefaultsTest` 3). Pixel 5: per-tab state across tab
+  switches, the song detail, rotation and process death. Before that, session 065
+  (`past-jams-list`) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`;
   62 result files, 350 tests, 0 failures (the 57 previous files unchanged except `ContrastTest`
   13 → 14, plus `SpanishDateNamesTest` 2, `PastJamsStatesTest` 12, `PastJamsPresenterTest` 5,
@@ -2366,6 +2371,95 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   (above). Scroll position is lost on tab switches until `bottom-navigation` (spec risk). Two
   presenters now collect `observeJams()`.
 - Next: the validator for `past-jams-list`.
+
+### Session 066 — 5 October 2026
+
+- Goal: implement `bottom-navigation` (spec `docs/specs/bottom-navigation.md`, commit 8daf7fe;
+  user approvals I1, M1, D1 answered 5 October 2026). No other slice in flight.
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator.
+- Baseline: `CI=true ./init.sh` exit 0, three `wired`, before any change; `:app:dependencies
+  --configuration debugRuntimeClasspath` saved for comparison.
+- Completed:
+  - `:core:ui` `com.bbbjam.core.ui.nav`: `TabBar(model)` (Material 3 `NavigationBar`, every color
+    from `TabBarDefaults`, label `caption`, `alwaysShowLabel`, icon without description, preview),
+    `TabBarUiModel`/`TabUiModel` (`Event.Select`), `enum TabIcon` (SETLIST, ARCHIVE, INFO), internal
+    `TabBarDefaults` (`colors()`: surface / text / surfaceRaised / textMuted; `icon()`:
+    `AutoMirrored.Filled.List`, `Filled.DateRange`, `Outlined.Info`). Tests: `TabBarDefaultsTest`
+    (3), `ContrastTest` + `text on a raised surface` = 12.75.
+  - `:app` `navigation/`: `AppRoutes` `NEXT_JAM`/`PAST_JAMS`/`INFO`, `TABS` KDoc (the shell) and the
+    D1 deeplink deferral; `AppTab` (bar order, labels moved from `TemporaryTabs`, `fromRoute`,
+    pure `tabBarModel`); `AppMotion` (`TAB_FADE_MS = 150`, `DETAIL_SLIDE_MS = 250`); `TabsShell`
+    (inner host + bar, `statusBarsPadding()` outside the scroll, select with
+    `popUpTo(start) { saveState }`/`launchSingleTop`/`restoreState`, reselect no-op);
+    `AppNavHost` rewritten (outer host: shell kept drawn under the detail with
+    `ExitTransition.KeepUntilTransitionsFinished`; detail slides in from the end / out to the end,
+    wrapped in a `background` `Box` with `statusBarsPadding()`, navigation-bar inset as
+    `contentPadding`; `RESUMED` guard and null-args pop kept). `TemporaryTabs.kt` deleted;
+    `MainActivity` comment only. Tests: `AppTabTest` (4), `AppRoutesTest` + tab routes.
+  - Docs: `DESIGN.md` (new "Bottom bar" subsection, song detail motion, filter chip state),
+    architecture `SKILL.md` (`:app` row, `nav` package, Still Open), `docs/risks-and-open-questions.md`
+    (bottom-navigation section with the deeplink open question; song-detail risk updated).
+- Verification run:
+  - `./gradlew ktlintFormat` exit 0 (before each gate). Final `CI=true ./init.sh` exit 0;
+    `konsist: wired`, `detekt: wired`, `ktlint: wired`; Konsist 17/17; 64 result files, 359 tests,
+    0 failures. Lint `:core:ui` "No issues found"; `:app` 0 errors, 15 warnings (as session 065).
+  - Static: `git grep -n "TemporaryTabs" -- '*.kt'` empty; `androidx.navigation` imported only in
+    `app/` (`AppNavHost.kt`, `TabsShell.kt`; the Konsist test names it); `navigationCompose =
+    "2.9.8"`; the `debugRuntimeClasspath` dependency report is identical before and after (`diff`
+    empty). No Gradle, manifest, `:feature:*` or `:core:data` file changed.
+  - Failure demonstrations, each restored and checked by SHA-1 (`TabBarDefaults.kt`
+    `4311281f40b0b51dbb5fae3ca72553c9f906bc6d`, `TabsShell.kt`
+    `f04e9eff0d8f6893ebd231772cf4b622a5f9c87a`, `AppTab.kt`
+    `377b2f4d11638b5b9bb24b36358ded2bf4d4ee6a`): (1) `selectedContent = colors.activeFilter` → 3
+    failed ("Color(1.0, 0.7019608, 0.0, …) is an amber role", the token equality, and contrast
+    9.16 vs 12.75); (2) `.padding(top = 8.dp)` in `TabsShell` → Konsist "Assert
+    'no-dp-literal-outside-core-ui' was violated (1 time)"; (3) label `Historial` → `AppTabTest`
+    "expected:<[Próxima jam, Anteriores, Info]> but was:<[Próxima jam, Historial, Info]>".
+- Device (Pixel 5, serial 09281FDD4004U6; manual, not part of the gate). Before: airplane `0`,
+  `accelerometer_rotation` `1`, `user_rotation` `0`, `enabled_accessibility_services` `null`,
+  `accessibility_enabled` `0`, window/transition scale `1.0`, `animator_duration_scale` `null`.
+  The real `2026-10-31` jam won online (`jams cache: upcoming 2026-10-31, past 1, songs 26`), so the
+  demo jam was not needed. `:app:installDebug`, cold start 954 ms.
+  - A. `uiautomator dump`: three items `Próxima jam`, `Anteriores`, `Info`, `selected="true"` only on
+    Próxima jam's item, each item [*,1988][*,2208] = 220 px = 80dp tall. Screenshot: bar on
+    `surface`, selected `text` on a raised pill, others muted, no amber in the bar.
+  - B. Próxima jam: filter `Bajo` ("2 de 13 temas con cupo libre para bajo"), row 07 Café Madrid
+    expanded, scrolled; Info scrolled; Anteriores visited (one past jam, nothing to scroll, so its
+    offset restoration was not observable); back to Próxima jam and Info: dumps identical to the
+    ones taken before leaving (`diff` empty, raw XML identical in the first run).
+  - C. Tapping the selected Info twice: dump unchanged; one system back then went to Próxima jam
+    (so no entry was added) with its state; back from Anteriores also → Próxima jam with state;
+    back from Próxima jam left the app (another app resumed).
+  - D. `Ver detalle del tema`: detail with no bar; `Volver` tapped twice in one `adb shell` call and
+    system back both return to an identical Próxima jam dump. With `animator_duration_scale` 10
+    (temporarily; deleted afterwards → `null`): mid-pop screenshot shows the detail sliding out to
+    the end **above** the tabs; mid-switch screenshot shows the tab crossfade.
+  - E. Rotation (auto-rotate off, `user_rotation` 1 then 0): Info stays selected; after rotating
+    back, Info and Próxima jam dumps identical. Process death: my first `am kill` right after HOME
+    did not kill (same pid; that run is not counted); after 5 s in the background `am kill` left no
+    pid, reopening from recents gave a new pid (19973): Info selected at the same offset, Próxima
+    jam with filter, expansion and offset identical. Repeated with the detail open (new pid 20152):
+    the detail restored, back to identical Próxima jam, Info identical. The spec's fallback was not
+    needed.
+  - F. Status bar: screenshots of Próxima jam and Info scrolled, and the detail, show a solid
+    `background` band under the clock, content cut below it (the detail's content fits the screen,
+    so it did not scroll).
+  - G. `logcat -b crash` empty, no `FATAL EXCEPTION`; every setting read back equal to its original
+    value (rotation restored to `1`/`0`, animator scale `null`); `/sdcard/ui.xml` removed.
+    `local.properties` untouched and never printed; TalkBack and accessibility services never
+    touched.
+- Known risk or unresolved issue: Anteriores' scroll restoration unobserved on the device (one past
+  jam); nested NavHosts have no JVM test (T1); deeplinks deferred (D1) and recorded as an open
+  question. `past-jam-detail` must re-read `AppNavHost.kt`/`AppRoutes.kt` and put its route in the
+  outer host.
+- **Commit hygiene finding:** commit `062a4f4` ("Record the user's decisions for
+  unpublished-setlist-state and past-jam-detail", made while this slice was in progress) swept in
+  two of this slice's work-in-progress hunks: `feature_list.json` `bottom-navigation` →
+  `in_progress`, and the `ContrastTest` test `text on a raised surface` with a placeholder
+  `expected = 0.0` that references `TabBarDefaults`, which is not in that commit. So `062a4f4` and
+  `3665c55` do not compile `:core:ui` tests on their own. The working tree has the correct value
+  (12.75) and the class; committing this slice repairs `HEAD`.
+- Next: the validator for `bottom-navigation`.
 
 ## Notes For The Next Session
 

@@ -116,12 +116,30 @@ checked only on the device, and the user-flow steps on the device need a tempora
 the Sheet; a typo in a route argument name inside `AppNavHost` is a runtime error that only
 `AppRoutesTest` and the device would catch (R1's cost); the previews (`SongDetailScreen.kt`,
 `InstrumentGroups.kt`, `BackButton.kt`) compile in the gate but are not rendered by it; 2.9.8 ends
-the 2.9 line, so staying on the pinned BOM blocks navigation fixes; switching to Info still loses
-Próxima jam's state (the two temporary tabs are one destination until `bottom-navigation`); a 96sp
+the 2.9 line, so staying on the pinned BOM blocks navigation fixes; switching to Info lost
+Próxima jam's state until `bottom-navigation` (resolved there, per-tab routes); a 96sp
 key at 200% font scale is assumed to fit 360dp (three condensed characters at most), not yet seen.
 Observed once: a gate run failed 15 of the 17 Konsist tests with
 `AssertionError: rootDir must be verified to be directory beforehand` (Konsist's project scan); the
 suite passed alone and on the next full gate run. Not reproduced; recorded in case it recurs.
+
+### Bottom navigation (`bottom-navigation`, 5 October 2026)
+
+Settled with the user: icons from `material-icons-core` (I1), a 150 ms tab crossfade and a 250 ms
+detail slide (M1), and **deeplinks deferred** (D1).
+
+Open question: **the deeplink scheme.** No destination declares `deepLinks` and the manifest has
+no intent filter. D-13 is met by repository functions registered in the `:app` action registry; a
+deeplink is the alternative, not a requirement. An exported URI entry point parses untrusted input
+and needs its own validation design, so it is decided with `action-contract-registry` (or a slice
+of its own).
+
+Risks, not solved: the two nested NavHosts (per-tab state, back, process death) have no JVM test
+(T1 declined) and are checked only on the device; Anteriores' scroll restoration was not observable
+on the device (the Sheet has one past jam, nothing to scroll); re-entering Próxima jam
+re-subscribes its presenter (non-saveable `remember` state such as the retry counter resets), and a
+list whose UiModel branch changes while away starts at the top; whether Compose honours the system
+"remove animations" setting was not verified.
 
 ## Implementation-Time Questions
 

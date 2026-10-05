@@ -21,7 +21,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here: `navigation/AppNavHost.kt` and the string routes in `navigation/AppRoutes.kt`, both internal), bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Until `bottom-navigation`, `TemporaryTabs.kt` (internal) switches between Próxima jam, Anteriores and Info (a state switch, no route per tab) as the `AppRoutes.TABS` destination; that slice deletes it. | everything |
+| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and the song detail above it; `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination (a past-jam detail) goes in the **outer** host, beside the song route. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
@@ -114,7 +114,11 @@ is. There is no `:feature:admin`.
   and an ellipsis bounded by `LineupPanelDefaults.INSTRUMENT_MAX_WIDTH`). `com.bbbjam.core.ui.nav`
   holds `BackButton(model)`, `BackUiModel` (`Event.Back`), the mapper `backUiModel(onBack)` and
   internal `NavCopy`; `nav` names the back control, not the library, and nothing in `:core:ui`
-  imports navigation. `BluesJamTypography.keyDisplay` (96sp) is used only by the detail.
+  imports navigation. `bottom-navigation` adds the bar there: `TabBar(model)` (Material 3
+  `NavigationBar`), `TabBarUiModel`/`TabUiModel` (`Event.Select`, navigation only), `enum TabIcon`
+  (mapped to `material-icons-core` vectors inside `:core:ui`, I1) and internal `TabBarDefaults`
+  (colors: `surface`, `text`, `surfaceRaised`, `textMuted`; no amber). `:app` owns the labels and
+  routes (`AppTab`). `BluesJamTypography.keyDisplay` (96sp) is used only by the detail.
 - **Navigation callbacks in presenter `Params`** (`song-detail-screen`): a screen takes plain
   callbacks (`onOpenSong(jamDate, position)`, `onBack`) and passes them to its presenter's `Params`
   (`NextJamPresenter.Params`, `SongDetailPresenter.Params`). The presenter reads each through
@@ -468,7 +472,10 @@ Then include the module in `settings.gradle.kts` and add its Koin module to `sta
 ## Still Open
 
 - Navigation library: **resolved** by `song-detail-screen` (N1, 4 October 2026): Navigation Compose
-  2.9.8 in `:app` only, string routes in `AppRoutes` (R1). `bottom-navigation` adds the tab
-  destinations, replaces `TemporaryTabs` with per-tab routes (`saveState`/`restoreState`), keeps
-  `AppRoutes.SONG_DETAIL` above the tabs, and owns transitions.
-- Deeplink scheme: still open (no destination declares `deepLinks`, no manifest intent filter).
+  2.9.8 in `:app` only, string routes in `AppRoutes` (R1). Tabs **resolved** by `bottom-navigation`
+  (5 October 2026): two hosts, per-tab routes with `saveState`/`restoreState`, the song detail
+  above the tabs, M1 motion; `TemporaryTabs` deleted. Per-tab state survived rotation and process
+  death on the device.
+- Deeplink scheme: still open, **deferred to `action-contract-registry`** (D1, 5 October 2026). No
+  destination declares `deepLinks`, no manifest intent filter; D-13 is met by repository functions
+  in the action registry.

@@ -158,6 +158,32 @@ arm's length on stage. It is the largest style in the app; rows keep `key` (44sp
 
 Three tabs in a bottom navigation bar: **Próxima jam**, **Anteriores**, **Info**.
 
+### Bottom bar
+
+Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
+
+- **Order and labels:** `Próxima jam`, `Anteriores`, `Info`, left to right, each with icon and
+  label (always shown). Icons from `material-icons-core` (I1): `List` (auto-mirrored), `DateRange`,
+  outlined `Info`; the icon has no description, the label names the item.
+- **Colors:** bar container `surface`; selected icon and label `text` on an indicator
+  `surfaceRaised` (12.75:1); unselected icon and label `textMuted`. **No amber**: the selected tab
+  is a location, not an action ("amber only for what the user can act on"); the export's amber
+  active tab is not adopted. Label in `caption`.
+- **Size and semantics:** Material 3 `NavigationBar` (80dp, 24dp icons); each item is a
+  screen-reader tab with its selected state and well over 48dp tall. The bar applies the
+  navigation-bar inset itself.
+- **Per-tab state:** each tab keeps its scroll, and Próxima jam its expanded rows and filter, across
+  tab switches, the song detail, rotation and process death. Tapping the selected tab does nothing.
+  Back from Anteriores or Info goes to Próxima jam; back from Próxima jam leaves the app.
+- **Status bar:** the status-bar area is a solid `background` band above every tab and the song
+  detail; content scrolls below it, never under the clock.
+- **Motion (M1):** tab switch, a 150 ms crossfade; song detail, slides in from the end in 250 ms
+  over the tabs (which stay drawn under it) and out to the end on back. No other motion.
+- **Deeplinks (D1):** none yet; deferred to `action-contract-registry`.
+
+The component is `TabBar` in `:core:ui` (`com.bbbjam.core.ui.nav`); its colors come only from
+`TabBarDefaults`.
+
 The next-jam screen is opened 90% of the time and must answer "where can I play?" without the user
 expanding anything:
 
@@ -265,7 +291,8 @@ screen readers), never amber. It opens the song detail (`song-detail-screen`).
 
 Decided 4 October 2026 (`song-detail-screen`; N1, K1, G1, C1, R1, K2):
 
-- **Full screen** over the tabs, with no tab bar and no transition (motion is `bottom-navigation`'s).
+- **Full screen** over the tabs, with no tab bar; it slides in from the end over the tabs in 250 ms
+  and out to the end on back (M1, `bottom-navigation`).
   A back arrow at the top start (`text`, never amber, 48dp target, described "Volver") and the
   system back both return to Próxima jam with the same tab, expanded rows, filter and scroll.
 - **Order:** back arrow; title (`h1`, `text`, wraps); artist (`body`, `textMuted`) only when there
@@ -325,7 +352,7 @@ Behaviour (`instrument-filter-chips`, approved 4 October 2026):
   description ("Bajo: 2 temas con cupo libre", "Todos los temas: 13"); the count line and the
   no-results message are polite live regions.
 - **State.** The selection belongs to the musician, not to the jam: it survives refreshes, rotation
-  and a new upcoming jam; it is lost on relaunch and on the temporary tab switch.
+  and a new upcoming jam; it is lost on relaunch, and kept across tab switches and the song detail.
 
 The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter`); amber
 `activeFilter` is read only there.

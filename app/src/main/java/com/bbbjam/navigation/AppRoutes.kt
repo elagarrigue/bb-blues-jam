@@ -5,11 +5,28 @@ import java.time.format.DateTimeParseException
 
 /**
  * The app's navigation routes, as strings (`song-detail-screen`, R1). They are built and parsed only
- * here, so features never see a route or the navigation library (D-03). No deeplink uses them yet.
+ * here, so features never see a route or the navigation library (D-03).
+ *
+ * No destination declares a deeplink and the manifest has no intent filter (`bottom-navigation`,
+ * user decision D1, 5 October 2026): the deeplink scheme is deferred to `action-contract-registry`.
+ * D-13 is met by repository functions registered in the `:app` action registry; an exported URI
+ * entry point needs its own validation design.
  */
 internal object AppRoutes {
-    /** The temporary two-tab host (Próxima jam and Info), until `bottom-navigation`. */
+    /**
+     * The outer host's tabs shell (`TabsShell`): an inner host with the three tab routes below and
+     * the bottom bar. The song detail is beside it in the outer host, full screen over the bar.
+     */
     const val TABS = "tabs"
+
+    /** The inner host's start tab, Próxima jam. */
+    const val NEXT_JAM = "next-jam"
+
+    /** The Anteriores tab. */
+    const val PAST_JAMS = "past-jams"
+
+    /** The Info tab. */
+    const val INFO = "info"
 
     const val JAM_DATE = "jamDate"
     const val POSITION = "position"
