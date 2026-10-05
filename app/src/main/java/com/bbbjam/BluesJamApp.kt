@@ -8,6 +8,7 @@ import com.bbbjam.core.data.di.dataModule
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.toLogLine
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.debug.debugOverrides
@@ -68,12 +69,17 @@ class BluesJamApp : Application() {
         const val LOG_TAG = "BluesJam"
 
         /**
-         * `jams cache: upcoming <date|none>[ (demo)], past N, songs S (C from catalog)`: counts and
-         * dates only. `(demo)` marks the debug-only demo jam, so evidence never mistakes it for real data.
+         * `jams cache: upcoming <date|none>[ draft][ (demo)], past N, songs S (C from catalog)`: counts
+         * and dates only. `draft` marks an upcoming jam whose status is DRAFT (`unpublished-setlist-state`);
+         * `(demo)` marks the debug-only demo jam, so evidence never mistakes it for real data.
          */
         fun JamsSnapshot.toCacheLine(inCatalog: (SongId) -> Boolean): String {
             val songs = (listOfNotNull(upcoming) + past).flatMap { (it.setlist as? Setlist.Available)?.songs.orEmpty() }
-            val upcomingText = upcoming?.let { if (it.isDemo()) "${it.date} (demo)" else "${it.date}" } ?: "none"
+            val upcomingText = upcoming?.let { jam ->
+                val draft = if (jam.status == JamStatus.DRAFT) " draft" else ""
+                val demo = if (jam.isDemo()) " (demo)" else ""
+                "${jam.date}$draft$demo"
+            } ?: "none"
             return "jams cache: upcoming $upcomingText, past ${past.size}, " +
                 "songs ${songs.size} (${songs.count { inCatalog(it.songId) }} from catalog)"
         }

@@ -92,6 +92,9 @@ DRAFT ──publish──> PUBLISHED ──(date passes)──> archived (implic
 
 - **DRAFT.** The admin is building the setlist. Musicians see the date and venue, and a message
   saying the list is being assembled — not an empty list, which would be misread as "no songs".
+  Every musician screen reads `Jam.setlistForMusicians()` (`unpublished-setlist-state`), which is
+  `Withheld` for any DRAFT jam whatever setlist the read returned; only the admin slices will read
+  `Jam.setlist` directly, behind the admin flag.
 - **PUBLISHED.** The setlist is visible to musicians. The admin may still edit; edits to a published
   jam are visible immediately. There is no republish step and no unpublish in the MVP.
 - **Archived** is not a stored status. A jam is historical when its date has passed; past jams are

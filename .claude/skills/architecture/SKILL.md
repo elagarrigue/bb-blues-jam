@@ -64,6 +64,12 @@ is. There is no `:feature:admin`.
   `slotOpen` in `com.bbbjam.core.ui.strip`, so `:feature:next-jam` stays at `{key}` and the rule
   guarantees the feature cannot draw open-slot amber outside the shared component. The lineup
   panel (`com.bbbjam.core.ui.lineup`) does the same.
+- A musician screen reads a jam's songs through **`Jam.setlistForMusicians()`**
+  (`unpublished-setlist-state`), never `jam.setlist`: it is `Withheld` for every DRAFT jam, whatever
+  the read returned. `NextJamPresenter` and the song detail lookup do so; a new musician screen
+  (`past-jam-detail`) does the same. The admin slices read `jam.setlist` behind the admin flag.
+  On Próxima jam a draft is `SetlistUiModel.Withheld(DraftSetlistUiModel)` (the draft card, colours
+  in `DraftSetlistDefaults`, no amber) and an unreadable setlist is `SetlistUiModel.Unavailable`.
 - "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as
   `remember(snapshot) { calendar.today() }` so a header agrees with the repository's upcoming/past
   split. Never `LocalDate.now()` or the device zone.
@@ -374,7 +380,11 @@ them.
   `startKoin`. The decorator fills only a null `upcoming` (a real jam always wins) and never
   touches `past`, `freshness`, Room or the Sheet; the startup log marks it `upcoming <date> (demo)`.
   Tests in `app/src/testDebug/`. With a real upcoming jam in the Sheet, see the demo by clearing
-  the app's data in airplane mode.
+  the app's data in airplane mode. `bluesjam.demoUpcomingJamDraft=true` (`unpublished-setlist-state`,
+  `BuildConfig.DEMO_UPCOMING_JAM_DRAFT`, release hard `false`, effective only with the demo flag)
+  makes the demo a DRAFT with the same songs (`DemoUpcomingJam.on(today, draft)`,
+  `DemoUpcomingJamRepository(real, calendar, draft)`); the startup line appends ` draft` after any
+  DRAFT upcoming date. Leave it off or absent.
 - **No Compose UI test harness** (`song-row-expansion`, T1 declined by the user on 3 October 2026):
   no Robolectric, `ui-test-junit4` or `ui-test-manifest`. Put everything a test must check into the
   `UiModel` (copy, state descriptions, order, kinds) and test it on the JVM; keep the visual rules

@@ -31,12 +31,16 @@ internal object DemoUpcomingJam {
 
     private const val START_TIME = "21:00"
 
-    /** The demo jam dated [DAYS_AHEAD] days after [today]. */
-    fun on(today: LocalDate): Jam = Jam(
+    /**
+     * The demo jam dated [DAYS_AHEAD] days after [today]. With [draft] it is a `DRAFT` holding the
+     * same available songs (`unpublished-setlist-state`): the strongest case, because the songs are
+     * in the data and the musician screens must still hide them.
+     */
+    fun on(today: LocalDate, draft: Boolean = false): Jam = Jam(
         date = today.plusDays(DAYS_AHEAD),
         startTime = LocalTime.parse(START_TIME),
         venue = VENUE,
-        status = JamStatus.PUBLISHED,
+        status = if (draft) JamStatus.DRAFT else JamStatus.PUBLISHED,
         setlist = Setlist.Available(SONGS.mapIndexed { index, song -> song.toJamSong(position = index + 1) }),
     )
 

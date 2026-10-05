@@ -56,6 +56,13 @@ class SongDetailMappingTest {
     }
 
     @Test
+    fun `a draft jam with available songs is not found (unpublished-setlist-state, scenario 4)`() {
+        val draft = jam(upcomingDate, Setlist.Available(listOf(song(1), song(2))), JamStatus.DRAFT)
+        assertEquals(notFound, snapshot(draft).toSongDetail(upcomingDate, 1) {})
+        assertEquals(notFound, snapshot(draft).toSongDetail(upcomingDate, 2) {})
+    }
+
+    @Test
     fun `a blank artist is null, and an empty lineup is the note, not an error`() {
         val bare =
             jam(

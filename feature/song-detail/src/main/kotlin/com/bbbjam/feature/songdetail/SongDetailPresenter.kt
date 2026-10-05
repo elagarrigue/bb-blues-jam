@@ -43,12 +43,14 @@ class SongDetailPresenter(private val jams: JamsRepository) :
 /**
  * Decision 2 of `song-detail-screen`: the jam is looked up by date among the upcoming and the past
  * jams, then the song by position in an available setlist. Anything else (no such jam or position,
- * a withheld or unavailable setlist, an empty snapshot after a failed cache read) is not found.
+ * a draft jam or a withheld or unavailable setlist, an empty snapshot after a failed cache read) is
+ * not found.
  */
 internal fun JamsSnapshot.toSongDetail(jamDate: LocalDate, position: Int, onBack: () -> Unit): SongDetailUiModel {
     val back = backUiModel(onBack)
     val jam = (listOfNotNull(upcoming) + past).firstOrNull { it.date == jamDate }
-    val song = (jam?.setlist as? Setlist.Available)?.songs?.firstOrNull { it.position == position }
+    // A draft's songs are never shown to a musician, even when they reached the app.
+    val song = (jam?.setlistForMusicians() as? Setlist.Available)?.songs?.firstOrNull { it.position == position }
         ?: return SongDetailUiModel.NotFound(
             EmptyStateUiModel(SongDetailCopy.NOT_FOUND_TITLE, SongDetailCopy.NOT_FOUND_MESSAGE),
             back,

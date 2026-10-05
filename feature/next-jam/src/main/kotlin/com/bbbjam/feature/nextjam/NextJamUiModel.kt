@@ -54,9 +54,21 @@ sealed interface SetlistUiModel : UiModel {
     /** A published setlist with no song: the empty block, and no filter bar. */
     data class Empty(val empty: EmptyStateUiModel) : SetlistUiModel
 
-    /** The setlist is withheld (a draft) or unavailable: one line instead of rows. */
-    data class NotShown(val message: String) : SetlistUiModel
+    /**
+     * The jam is a draft (`unpublished-setlist-state`): the draft card instead of rows, decided from
+     * the jam's status, so a draft never shows a song even when its setlist reached the app.
+     */
+    data class Withheld(val draft: DraftSetlistUiModel) : SetlistUiModel
+
+    /** A published setlist that could not be read: one muted line instead of rows. */
+    data class Unavailable(val message: String) : SetlistUiModel
 }
+
+/**
+ * The draft card: [label] is the badge (drawn uppercase, "EN PREPARACIÓN"), [title] the heading and
+ * [message] what the musician will see once the list is published. Nothing in it is clickable.
+ */
+data class DraftSetlistUiModel(val label: String, val title: String, val message: String) : UiModel
 
 /**
  * One song row. [position] is the Sheet's `posicion`, never renumbered; [positionLabel] is it

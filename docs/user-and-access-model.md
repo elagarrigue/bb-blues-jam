@@ -55,7 +55,11 @@ transfer and no per-record access rules.
   list is being assembled. The data should not be delivered to an unauthenticated client at all,
   rather than being delivered and hidden in the UI. The Apps Script `jams` route enforces this
   server-side: it serves a setlist only for an `estado` of exactly `PUBLICADA` and fails closed on
-  any other value, a typo included (`apps-script-api.md`).
+  any other value, a typo included (`apps-script-api.md`). The app adds two more layers:
+  `JamsMapper` turns every DRAFT into `Setlist.Withheld` and ignores any setlist sent with one, and
+  the musician screens decide from the jam's status through `Jam.setlistForMusicians()`
+  (`unpublished-setlist-state`), so a draft whose songs reached the app (a future admin read) still
+  shows no song on Próxima jam or in the song detail.
 - **Admin state is local.** A flag in DataStore after the passphrase validates against the Sheet
   through Apps Script.
 - **Write endpoints must validate the passphrase server-side** in Apps Script. A client-side flag

@@ -413,6 +413,18 @@ A sixth case is product-specific and easily missed: **an unpublished setlist** s
 the date and venue plus a message that the list is being assembled. That is not the empty state and
 must not look like one.
 
+How it is drawn (`unpublished-setlist-state`, 5 October 2026, V1 and C1 approved by the user): under
+the header, a **draft card** — a `surface` fill (the empty block has none) with `shapes.md` and
+`spacing.md` padding — holding, `spacing.sm` apart, the muted `badge-draft` (`EN PREPARACIÓN`,
+`caption`, `textMuted` on `surfaceRaised`, `shapes.sm`, wrapped to its content), the title `La lista
+se está armando` (`songTitle`, `text`, a heading) and the message `Cuando la organización la
+publique, vas a ver acá los temas, las tonalidades y los cupos libres.` (`body`, `textMuted`). No
+amber: draft is muted (Status badge). No song row, key, strip or filter bar. Three text nodes, none
+clickable. Colours only through `DraftSetlistDefaults` in `:feature:next-jam`. The decision is made
+from the jam's status (`Jam.setlistForMusicians()`), so a draft whose songs reached the app still
+shows only the card. With a failed refresh the staleness notice sits above the header, as for any
+cached data.
+
 How they are drawn (`list-states`, 4 October 2026). Four shared components in `:core:ui`, package
 `com.bbbjam.core.ui.state`, each taking only its UiModel, so `past-jams-list` draws the same states:
 
@@ -438,7 +450,8 @@ How they are drawn (`list-states`, 4 October 2026). Four shared components in `:
   No illustration.
 
 Retry is a read: it re-subscribes to the jams and calls `JamsRepository.refresh()`; it writes
-nothing. Previews: `NextJamStatesPreview.kt` (one per state) and the component previews in
+nothing. Previews: `NextJamStatesPreview.kt` (one per state), `NextJamDraftPreview.kt` (the draft
+card, fresh and offline) and the component previews in
 `:core:ui`; they compile in the gate but are not rendered by it.
 
 ## Responsive Baseline

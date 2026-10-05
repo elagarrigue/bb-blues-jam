@@ -53,7 +53,8 @@ import org.koin.compose.koinInject
 /**
  * Próxima jam: the upcoming jam's date, venue and time remaining, and its songs as rows (position,
  * title, key in the amber `key` role) with the instrument strip under each; tapping a row's header
- * expands it in place to the artist and the lineup panel. Under the header, the instrument filter
+ * expands it in place to the artist and the lineup panel. A draft jam shows the draft card instead
+ * of rows (`unpublished-setlist-state`). Under the header, the instrument filter
  * bar narrows the rows to songs with an open slot for the selected instruments. Loading, error,
  * empty and offline are drawn with the `:core:ui` state components (`list-states`). An expanded
  * row offers "Ver detalle del tema", which calls [onOpenSong] with the jam's date and the song's
@@ -129,7 +130,9 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
 
                 is SetlistUiModel.Empty -> item(key = EMPTY_KEY) { EmptyStateBlock(setlist.empty) }
 
-                is SetlistUiModel.NotShown -> item(key = NOTE_KEY) { Message(text = setlist.message) }
+                is SetlistUiModel.Withheld -> item(key = DRAFT_KEY) { DraftSetlistBlock(setlist.draft) }
+
+                is SetlistUiModel.Unavailable -> item(key = NOTE_KEY) { Message(text = setlist.message) }
             }
         }
     }
@@ -140,6 +143,7 @@ private const val NOTE_KEY = "note"
 private const val FILTER_KEY = "filter"
 private const val STALENESS_KEY = "staleness"
 private const val EMPTY_KEY = "empty"
+private const val DRAFT_KEY = "draft"
 
 @Composable
 private fun Header(header: JamHeaderUiModel) {

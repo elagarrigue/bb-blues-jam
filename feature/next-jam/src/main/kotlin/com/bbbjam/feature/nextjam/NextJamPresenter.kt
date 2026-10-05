@@ -131,7 +131,8 @@ internal fun JamsSnapshot.toUiModel(
     return when {
         jam != null -> NextJamUiModel.Jam(
             header = jam.toHeader(today),
-            setlist = jam.setlist.toUiModel(
+            // A draft is never shown to a musician, whatever the read returned (D-04, access model).
+            setlist = jam.setlistForMusicians().toUiModel(
                 jam.date,
                 RowState(expanded, onToggle, filter, onFilterChange, onOpenSong),
             ),
@@ -193,10 +194,12 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
         )
     }
 
-    Setlist.Withheld -> SetlistUiModel.NotShown(NextJamCopy.SETLIST_WITHHELD)
+    Setlist.Withheld -> SetlistUiModel.Withheld(
+        DraftSetlistUiModel(NextJamCopy.DRAFT_LABEL, NextJamCopy.DRAFT_TITLE, NextJamCopy.DRAFT_MESSAGE),
+    )
 
     // The problem is for logs and the admin, not for musicians.
-    is Setlist.Unavailable -> SetlistUiModel.NotShown(NextJamCopy.SETLIST_UNAVAILABLE)
+    is Setlist.Unavailable -> SetlistUiModel.Unavailable(NextJamCopy.SETLIST_UNAVAILABLE)
 }
 
 private const val POSITION_DIGITS = 2

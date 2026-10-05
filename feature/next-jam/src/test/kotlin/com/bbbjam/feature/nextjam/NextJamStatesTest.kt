@@ -20,6 +20,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -154,21 +155,55 @@ class NextJamStatesTest {
         )
     }
 
+    private val draftCard = SetlistUiModel.Withheld(
+        DraftSetlistUiModel(
+            "En preparación",
+            "La lista se está armando",
+            "Cuando la organización la publique, vas a ver acá los temas, las tonalidades y los cupos libres.",
+        ),
+    )
+
     @Test
-    fun `withheld and unavailable setlists are unchanged, plus the notice when failing`() {
+    fun `a draft jam exposes no song, withheld or available, plus the notice when failing`() {
+        val fresh = Freshness(threeHoursAgo, null, isRefreshing = false)
         val failing = Freshness(threeHoursAgo, DataFailure.Offline, isRefreshing = false)
+        listOf(Setlist.Withheld, Setlist.Available(listOf(song))).forEach { setlist ->
+            val draft = model(jam(setlist, JamStatus.DRAFT), fresh)
+            assertEquals(NextJamUiModel.Jam(header, draftCard, staleness = null), draft)
+            assertFalse("a song leaked: $draft", draft.toString().contains("Sweet Little Angel"))
+            // Scenario 6: offline with a cached draft, the notice above the header, then the card.
+            assertEquals(
+                NextJamUiModel.Jam(header, draftCard, notice("Sin conexión")),
+                model(jam(setlist, JamStatus.DRAFT), failing),
+            )
+        }
+    }
+
+    @Test
+    fun `scenario 3, the draft card is not the empty block and shares no sentence with it`() {
+        val fresh = Freshness(threeHoursAgo, null, isRefreshing = false)
+        val empty = model(jam(Setlist.Available(emptyList())), fresh) as NextJamUiModel.Jam
+        val draft = model(jam(Setlist.Withheld, JamStatus.DRAFT), fresh) as NextJamUiModel.Jam
+        assertEquals(emptySetlist, empty.setlist)
+        assertEquals(draftCard, draft.setlist)
+        val emptyText = emptySetlist.empty.title + " " + emptySetlist.empty.message
+        val card = draftCard.draft
+        listOf(card.label, card.title, card.message).forEach { line ->
+            sentences(line).forEach { sentence ->
+                assertFalse("'$sentence' is also in the empty block", emptyText.contains(sentence))
+            }
+        }
+        assertFalse(card.message.contains("no hay"))
+    }
+
+    private fun sentences(text: String) = text.split('.', '?', '¿').map { it.trim() }.filter { it.isNotEmpty() }
+
+    @Test
+    fun `an unavailable setlist keeps its one line`() {
         assertEquals(
             NextJamUiModel.Jam(
                 header,
-                SetlistUiModel.NotShown("La lista de temas se está armando. Cuando se publique, la vas a ver acá."),
-                notice("Sin conexión"),
-            ),
-            model(jam(Setlist.Withheld, JamStatus.DRAFT), failing),
-        )
-        assertEquals(
-            NextJamUiModel.Jam(
-                header,
-                SetlistUiModel.NotShown("No se pudo leer la lista de temas de esta jam. Avisale a la organización."),
+                SetlistUiModel.Unavailable("No se pudo leer la lista de temas de esta jam. Avisale a la organización."),
                 staleness = null,
             ),
             model(jam(Setlist.Unavailable(SetlistProblem.MISSING_TAB)), Freshness(threeHoursAgo, null, false)),

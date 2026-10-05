@@ -7,13 +7,19 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-three of 38 slices accepted, the latest `bottom-navigation` (5 October
-  2026). Next: `unpublished-setlist-state`, then `past-jam-detail` (both specs approved).
+  2026). `unpublished-setlist-state` is `passing` (session 067), awaiting the validator; then
+  `past-jam-detail` (spec approved).
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 066, `bottom-navigation`, `passing`, not yet accepted)
-  — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+- Last verified at: 5 October 2026 (session 067, `unpublished-setlist-state`, `passing`, not yet
+  accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 66 result files, 374 tests, 0 failures (`JamTest` 6 → 10, `NextJamPresenterTest`
+  17 → 16, `NextJamStatesTest` 9 → 11, `SongDetailMappingTest` 7 → 8, `DemoUpcomingJamRepositoryTest`
+  6 → 8, new `NextJamDraftTest` 4 and `DraftSetlistDefaultsTest` 3). Node 70/70. Pixel 5: the draft
+  card on the draft demo jam. Before that, session 066 (`bottom-navigation`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 64 result files, 359 tests, 0 failures (`ContrastTest` 14 → 15, `AppRoutesTest`
   5 → 6, new `AppTabTest` 4 and `TabBarDefaultsTest` 3). Pixel 5: per-tab state across tab
   switches, the song detail, rotation and process death. Before that, session 065
@@ -2459,6 +2465,105 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   `3665c55` do not compile `:core:ui` tests on their own. The working tree has the correct value
   (12.75) and the class; committing this slice repairs `HEAD`.
 - Next: the validator for `bottom-navigation`.
+
+### Session 067 — 5 October 2026
+
+- Goal: implement `unpublished-setlist-state` (spec `docs/specs/unpublished-setlist-state.md`; user
+  approvals C1 copy as written and V1 surface card with muted badge, no amber, answered 5 October
+  2026). `bottom-navigation` accepted (e9eaab1); this slice touches no `:app` navigation file. No
+  other slice in flight.
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator.
+- Completed:
+  - `:core:model` `Jam.setlistForMusicians()`: `Withheld` for every DRAFT jam, `setlist` itself
+    otherwise. `JamTest` + 4 cases.
+  - `:feature:next-jam`: `SetlistUiModel.NotShown` replaced by `Withheld(DraftSetlistUiModel)` and
+    `Unavailable(message)`; `NextJamCopy.SETLIST_WITHHELD` replaced by `DRAFT_LABEL`, `DRAFT_TITLE`,
+    `DRAFT_MESSAGE` (C1); the presenter maps `jam.setlistForMusicians()`; new
+    `DraftSetlistDefaults` (surface / surfaceRaised / textMuted / text / textMuted) and
+    `DraftSetlistBlock` (surface card, `shapes.md`, `spacing.md` padding, badge
+    `label.uppercase()` in `caption` on `surfaceRaised` with `shapes.sm`, title `songTitle` as
+    `heading()`, message `body`); new `NextJamDraftPreview.kt` (draft fresh and offline; the
+    shared preview fixtures in `NextJamStatesPreview.kt` became `internal`). Tests: new
+    `NextJamDraftTest` (scenarios 1, 2 incl. `toString()` leak check of title, artist, key,
+    musician and extra names, filter-before-draft, 5) and `DraftSetlistDefaultsTest`;
+    `NextJamStatesTest` (draft withheld/available + scenario 6, scenario 3 distinct-from-empty,
+    unavailable); the old withheld test removed from `NextJamPresenterTest`.
+  - `:feature:song-detail`: the lookup reads `jam?.setlistForMusicians()`; `SongDetailMappingTest`
+    + scenario 4 (a DRAFT jam with available songs is `NotFound`).
+  - `:app` debug: `bluesjam.demoUpcomingJamDraft` → `BuildConfig.DEMO_UPCOMING_JAM_DRAFT` (debug: the
+    flag; release: `false`); `DemoUpcomingJam.on(today, draft)`; `DemoUpcomingJamRepository(real,
+    calendar, draft)`; `Koin.debugOverrides()` passes the flag. Main: `toCacheLine` appends
+    ` draft` after a DRAFT upcoming date. `DemoUpcomingJamRepositoryTest` + 2.
+  - Docs: `DESIGN.md` (as-built draft card under Required States, previews line), architecture
+    `SKILL.md` (musician screens read `setlistForMusicians()`; draft demo flag),
+    `docs/domain-model.md` (DRAFT), `docs/technical-discovery.md` (draft demo flag),
+    `docs/user-and-access-model.md` (the client-side layers).
+- Verification run:
+  - `./gradlew ktlintFormat` before each gate. First gate: detekt `TooManyFunctions` on
+    `NextJamStatesPreview.kt` (13 > 11) and `LargeClass` on `NextJamPresenterTest`; fixed by
+    splitting (new `NextJamDraftPreview.kt`, new `NextJamDraftTest`), no suppression or baseline.
+    Final `CI=true ./init.sh` exit 0; `konsist: wired`, `detekt: wired`, `ktlint: wired`; Konsist
+    17/17; 66 result files, 374 tests, 0 failures (counts in Current Verified State).
+  - Static: no `NotShown`/`SETLIST_WITHHELD` in `feature/next-jam`, `feature/song-detail` or
+    `app`; `\.setlist\b` in those mains matches only `model.setlist` (the UiModel) in
+    `NextJamScreen.kt`. No change under `backend/`, `core/data/`, `feature/past-jams/`,
+    `konsist-test/` or `init.sh`; `AMBER_ROLE_ALLOWLIST` unchanged.
+  - Failure demonstrations, each restored and checked by SHA-1 (`NextJamPresenter.kt`
+    `0d02e32669f2cd3eb82e949f0b51ac08852fcd72`, `Jam.kt` `5637490d153a8d101463e13cde72691e588d9fb2`):
+    (a) presenter maps `jam.setlist` → 57 tests, 3 failed: `NextJamDraftTest` "scenario 2, a draft
+    with available songs exposes none of them", "a filter selected before a draft emission still
+    yields no rows and no bar", `NextJamStatesTest` "a draft jam exposes no song, withheld or
+    available, plus the notice when failing"; (b) `setlistForMusicians() = setlist` → 41 tests, 1
+    failed: `JamTest` "a draft with an available setlist is still withheld for musicians";
+    (c) `Setlist.Withheld -> SetlistUiModel.Empty(...)` → 57 tests, 6 failed: `NextJamDraftTest`
+    scenarios 1, 2, 5 and filter-before-draft, `NextJamStatesTest` "scenario 3, the draft card is
+    not the empty block…" and the draft test.
+  - Server side, outside the gate: `node --test backend/apps-script/test/*.test.js` 70 tests, 70
+    pass, 0 fail, including "a non-PUBLICADA jam is withheld: its tab is never requested and its
+    content never serialized", "fail closed: any status other than exactly PUBLICADA …", "a fecha
+    naming the passphrase tab or Catalogo, a draft and an orphan tab are never requested" and "a
+    passphrase query parameter changes nothing: same body, no draft, no secret". No backend file
+    changed.
+  - Release: `./gradlew :app:assembleRelease :app:assembleDebug` exit 0. Python zipfile scan of
+    every `.dex`: `app-release-unsigned.apk` (4 dex) has no `Lcom/bbbjam/debug/DemoUpcomingJam;`,
+    no `…DemoUpcomingJamRepository;`, no `Demo (solo debug)`, only `DebugOverridesKt` (the no-op);
+    `app-debug.apk` (23 dex) has all four. Release `BuildConfig`: `DEMO_UPCOMING_JAM = false`,
+    `DEMO_UPCOMING_JAM_DRAFT = false`.
+- Device (Pixel 5, serial 09281FDD4004U6; manual, not part of the gate). Before: airplane `0`,
+  `enabled_accessibility_services` `null`, `accelerometer_rotation` `1`, `font_scale` `1.0`.
+  `local.properties` had `bluesjam.demoUpcomingJam=true` and no draft flag (checked by key with
+  `grep`, file never printed).
+  - Added `bluesjam.demoUpcomingJamDraft=true`, `:app:installDebug` (debug `BuildConfig` draft
+    `true`). Online launch: `jams cache: upcoming 2026-10-31, past 1, songs 26` (the real jam wins).
+    Airplane on (`cmd connectivity airplane-mode enable`, read back `1`), `pm clear com.bbbjam`,
+    launch: `jams refresh: failed Offline`, `jams cache: upcoming 2026-10-15 draft (demo), past 0,
+    songs 8 (0 from catalog)`.
+  - Screenshot: header `Jueves 15 de octubre · 21:00`, `Demo (solo debug)`, `En 10 días`, then the
+    card on `surface` with the `EN PREPARACIÓN` badge on a raised fill, the title `La lista se está
+    armando` and the muted message; no song row, no filter bar, no amber anywhere on the screen
+    (the bar too).
+  - `uiautomator dump`: badge, title and message are three separate text nodes, all
+    `clickable=false`; no node holds a demo song title (`Sweet Little Angel`, `Got My Mojo`,
+    `Thrill`, `Crossroads`), a musician (`Martín`), a key (`Bb`, `F#m`) or `Filtrá`. The dump format
+    has no heading attribute, so "the title is the only new heading" is **not observed on the
+    device**; it rests on the code (`semantics { heading() }` on the title only). No accessibility
+    service was enabled to check it.
+  - **Not observed on the device:** the staleness notice above a draft. The demo fills only an empty
+    upcoming and a cleared install has no `fetchedAt`, so the notice (drawn only when something was
+    fetched and the refresh failed) cannot appear with the demo while the Sheet's real 2026-10-31 jam
+    wins any cached read. Covered on the JVM (`NextJamStatesTest`, scenario 6) and by
+    `DraftSetlistOfflinePreview`.
+  - Removed the draft flag line, reinstalled (debug draft `false`), `pm clear`, launch still offline:
+    `jams cache: upcoming 2026-10-15 (demo), past 0, songs 8`; dump has `Sweet Little Angel` and the
+    filter bar, no `PREPARACIÓN` (the published demo is back).
+  - Restored: airplane disabled, read back `0`; accessibility services `null`, rotation `1`, font
+    `1.0` read back; `logcat -b crash -d` empty; relaunch online: `jams cache: upcoming 2026-10-31,
+    past 1, songs 26`. `/sdcard/ui.xml` removed. App data was cleared twice (it refilled online).
+    End state: `bluesjam.demoUpcomingJam=true`, draft flag absent, debug build reinstalled.
+- Known risk or unresolved issue: heading semantics and the offline-draft notice not observed on
+  the device (above). `past-jam-detail` should call `setlistForMusicians()` rather than its own
+  guard.
+- Next: the validator for `unpublished-setlist-state`.
 
 ## Notes For The Next Session
 

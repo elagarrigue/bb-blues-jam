@@ -436,33 +436,6 @@ class NextJamPresenterTest {
     }
 
     @Test
-    fun `a withheld or unavailable setlist shows the header and one line, no rows`() = runTest {
-        val today = LocalDate.of(2026, 10, 2)
-        val withheld = NextJamUiModel.Jam(
-            header,
-            SetlistUiModel.NotShown("La lista de temas se está armando. Cuando se publique, la vas a ver acá."),
-            staleness = null,
-        )
-        val unavailable = NextJamUiModel.Jam(
-            header,
-            SetlistUiModel.NotShown("No se pudo leer la lista de temas de esta jam. Avisale a la organización."),
-            staleness = null,
-        )
-        assertEquals(withheld, snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)).toUiModel(today))
-        SetlistProblem.entries.forEach { problem ->
-            assertEquals(unavailable, snapshot(jam(Setlist.Unavailable(problem))).toUiModel(today))
-        }
-
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            assertEquals(loading, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)))
-            assertEquals(withheld, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Unavailable(SetlistProblem.MISSING_TAB))))
-            assertEquals(unavailable, awaitItem())
-        }
-    }
-
-    @Test
     fun `time remaining uses today in Buenos Aires, not UTC`() = runTest {
         val upcoming = snapshot(jam(Setlist.Available(seedSongs.take(1))))
 

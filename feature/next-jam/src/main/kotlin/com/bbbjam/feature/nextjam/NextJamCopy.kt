@@ -25,10 +25,17 @@ internal object NextJamCopy {
     const val EMPTY_SETLIST_TITLE = "Todavía no hay temas"
     const val EMPTY_SETLIST =
         "La lista está publicada pero todavía no tiene temas. ¿Tenés uno en mente? Contáselo a la organización."
-    const val SETLIST_WITHHELD =
-        "La lista de temas se está armando. Cuando se publique, la vas a ver acá."
     const val SETLIST_UNAVAILABLE =
         "No se pudo leer la lista de temas de esta jam. Avisale a la organización."
+
+    /**
+     * The draft card, approved on 5 October 2026 (`docs/specs/unpublished-setlist-state.md`, C1).
+     * [DRAFT_LABEL] is drawn uppercase ("EN PREPARACIÓN").
+     */
+    const val DRAFT_LABEL = "En preparación"
+    const val DRAFT_TITLE = "La lista se está armando"
+    const val DRAFT_MESSAGE =
+        "Cuando la organización la publique, vas a ver acá los temas, las tonalidades y los cupos libres."
 
     /**
      * A row's state and its action for screen readers, approved on 3 October 2026

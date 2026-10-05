@@ -22,11 +22,12 @@ import java.time.LocalTime
 
 /**
  * One preview per state of Próxima jam (`list-states`): loading, the two empty cases, the two
- * errors, and cached data with the staleness notice, idle and while refreshing. Each model is built
+ * errors, and cached data with the staleness notice, idle and while refreshing. The draft jam's two
+ * previews are in `NextJamDraftPreview.kt` and reuse the fixtures marked `internal` here. Each model is built
  * by the presenter's own mapping from a snapshot, so a preview shows what the device would draw.
  */
 @Composable
-private fun StatePreview(snapshot: JamsSnapshot?) {
+internal fun StatePreview(snapshot: JamsSnapshot?) {
     val model = snapshot?.toUiModel(PREVIEW_TODAY, now = PREVIEW_NOW) ?: NextJamUiModel.Loading(NextJamCopy.LOADING)
     BluesJamTheme { NextJamContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) }
 }
@@ -34,7 +35,7 @@ private fun StatePreview(snapshot: JamsSnapshot?) {
 /** 2 October 2026, 12:00 in Buenos Aires. */
 private val PREVIEW_NOW: Instant = Instant.parse("2026-10-02T15:00:00Z")
 private val PREVIEW_TODAY: LocalDate = LocalDate.of(2026, 10, 2)
-private val THREE_HOURS_AGO: Instant = PREVIEW_NOW.minus(Duration.ofHours(3))
+internal val THREE_HOURS_AGO: Instant = PREVIEW_NOW.minus(Duration.ofHours(3))
 
 private fun previewSong(position: Int, title: String, key: String) = JamSong(
     position = position,
@@ -45,23 +46,23 @@ private fun previewSong(position: Int, title: String, key: String) = JamSong(
     lineup = Lineup.default(),
 )
 
-private fun previewJam(songs: List<JamSong>) = Jam(
+internal fun previewJam(songs: List<JamSong>, status: JamStatus = JamStatus.PUBLISHED) = Jam(
     date = LocalDate.parse("2026-10-31"),
     startTime = LocalTime.parse("21:00"),
     venue = "La Macanuda",
-    status = JamStatus.PUBLISHED,
+    status = status,
     setlist = Setlist.Available(songs),
 )
 
-private val previewSongs = listOf(
+internal val previewSongs = listOf(
     previewSong(1, "Sweet Little Angel", "B"),
     previewSong(2, "Walking Thru the Park", "A"),
     previewSong(3, "The Thrill Is Gone", "Bm"),
 )
 
-private fun snapshot(upcoming: Jam?, freshness: Freshness) = JamsSnapshot(upcoming, emptyList(), freshness)
+internal fun previewSnapshot(upcoming: Jam?, freshness: Freshness) = JamsSnapshot(upcoming, emptyList(), freshness)
 
-private val fresh = Freshness(THREE_HOURS_AGO, lastFailure = null, isRefreshing = false)
+internal val previewFresh = Freshness(THREE_HOURS_AGO, lastFailure = null, isRefreshing = false)
 
 @Preview
 @Composable
@@ -69,30 +70,31 @@ private fun LoadingPreview() = StatePreview(snapshot = null)
 
 @Preview
 @Composable
-private fun EmptyNoUpcomingJamPreview() = StatePreview(snapshot(upcoming = null, fresh))
+private fun EmptyNoUpcomingJamPreview() = StatePreview(previewSnapshot(upcoming = null, previewFresh))
 
 @Preview
 @Composable
-private fun EmptySetlistPreview() = StatePreview(snapshot(previewJam(emptyList()), fresh))
+private fun EmptySetlistPreview() = StatePreview(previewSnapshot(previewJam(emptyList()), previewFresh))
 
 @Preview
 @Composable
 private fun ErrorOfflinePreview() =
-    StatePreview(snapshot(upcoming = null, Freshness(null, DataFailure.Offline, isRefreshing = false)))
+    StatePreview(previewSnapshot(upcoming = null, Freshness(null, DataFailure.Offline, isRefreshing = false)))
 
 @Preview
 @Composable
-private fun ErrorOtherPreview() =
-    StatePreview(snapshot(upcoming = null, Freshness(null, DataFailure.Service("internal"), isRefreshing = false)))
+private fun ErrorOtherPreview() = StatePreview(
+    previewSnapshot(upcoming = null, Freshness(null, DataFailure.Service("internal"), isRefreshing = false)),
+)
 
 @Preview
 @Composable
 private fun OfflineWithDataPreview() = StatePreview(
-    snapshot(previewJam(previewSongs), Freshness(THREE_HOURS_AGO, DataFailure.Offline, isRefreshing = false)),
+    previewSnapshot(previewJam(previewSongs), Freshness(THREE_HOURS_AGO, DataFailure.Offline, isRefreshing = false)),
 )
 
 @Preview
 @Composable
 private fun OfflineRefreshingPreview() = StatePreview(
-    snapshot(previewJam(previewSongs), Freshness(THREE_HOURS_AGO, DataFailure.Offline, isRefreshing = true)),
+    previewSnapshot(previewJam(previewSongs), Freshness(THREE_HOURS_AGO, DataFailure.Offline, isRefreshing = true)),
 )

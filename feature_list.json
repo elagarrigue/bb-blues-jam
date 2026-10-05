@@ -532,13 +532,21 @@
     "depends_on": [
       "list-states"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "A presenter test asserts no songs are exposed for a DRAFT jam",
       "The message is visibly distinct from the empty state",
       "The read endpoint does not serve draft songs to an unauthenticated client"
     ],
-    "evidence": [],
+    "evidence": [
+      "Session 067 (5 Oct 2026), implementer, not yet validated. Gate: ./gradlew ktlintFormat then CI=true ./init.sh exit 0; konsist/detekt/ktlint wired; Konsist 17/17; 66 result files, 374 tests, 0 failures (baseline 64/359): JamTest 6->10, NextJamPresenterTest 17->16, NextJamStatesTest 9->11, SongDetailMappingTest 7->8, DemoUpcomingJamRepositoryTest 6->8, new NextJamDraftTest 4, DraftSetlistDefaultsTest 3. First gate failed detekt TooManyFunctions (NextJamStatesPreview.kt) and LargeClass (NextJamPresenterTest); fixed by splitting files, no suppression or baseline.",
+      "Presenter test asserts no songs are exposed for a DRAFT jam: NextJamDraftTest 'scenario 2, a draft with available songs exposes none of them' (toUiModel and Molecule; toString() holds no title, artist, key, musician or extra name), 'a filter selected before a draft emission still yields no rows and no bar'; NextJamStatesTest 'a draft jam exposes no song, withheld or available, plus the notice when failing'; SongDetailMappingTest 'a draft jam with available songs is not found'. Jam.setlistForMusicians() in :core:model, JamTest 4 cases.",
+      "Distinct from empty: NextJamStatesTest 'scenario 3, the draft card is not the empty block and shares no sentence with it'; DraftSetlistDefaultsTest (surface card fill, which the empty block lacks; roles only surface/surfaceRaised/text/textMuted, never amber; AMBER_ROLE_ALLOWLIST unchanged). Pixel 5 screenshot: surface card, EN PREPARACION badge, heading, muted message; no rows, no filter bar, no amber.",
+      "Failure demonstrations restored by SHA-1 (NextJamPresenter.kt 0d02e32669f2cd3eb82e949f0b51ac08852fcd72, Jam.kt 5637490d153a8d101463e13cde72691e588d9fb2): (a) map jam.setlist -> 3 failed (NextJamDraftTest scenario 2 and filter-before-draft, NextJamStatesTest draft test); (b) setlistForMusicians() = setlist -> JamTest 'a draft with an available setlist is still withheld for musicians' failed; (c) Withheld -> Empty -> 6 failed (NextJamDraftTest scenarios 1, 2, 5, filter; NextJamStatesTest scenario 3 and draft test).",
+      "Read endpoint does not serve draft songs: node --test backend/apps-script/test/*.test.js 70/70 pass (outside the gate), including the jams.test.js and router.test.js draft tests; no backend file changed.",
+      "Release: ./gradlew :app:assembleRelease :app:assembleDebug exit 0; release dex (4) has no DemoUpcomingJam, DemoUpcomingJamRepository or 'Demo (solo debug)', only the DebugOverridesKt no-op; debug dex (23) has all; release BuildConfig DEMO_UPCOMING_JAM=false, DEMO_UPCOMING_JAM_DRAFT=false.",
+      "Pixel 5 (manual): draft flag on, real 2026-10-31 jam won online; airplane on + pm clear -> log 'jams cache: upcoming 2026-10-15 draft (demo), past 0, songs 8'; uiautomator dump: badge, title, message separate non-clickable text nodes, no demo song title, musician, key or filter bar. Not observed on device: heading semantics (dump has no heading attribute) and the staleness notice above a draft (no fetchedAt with the demo); both covered by code/JVM test/preview. Draft flag removed, reinstalled, published demo back offline. Restored: airplane 0, accessibility null, rotation 1, font 1.0; crash buffer empty; demoUpcomingJam=true, draft flag absent. No Sheet change, no accessibility service enabled."
+    ],
     "notes": "Hiding in the UI is not sufficient; the data should not reach an unauthenticated client at all. Recorded in docs/user-and-access-model.md."
   },
   {

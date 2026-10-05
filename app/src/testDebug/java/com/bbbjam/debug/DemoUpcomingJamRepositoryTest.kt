@@ -56,8 +56,25 @@ class DemoUpcomingJamRepositoryTest {
         }
     }
 
-    private fun observe(vararg snapshots: JamsSnapshot): List<JamsSnapshot> = runBlocking {
-        DemoUpcomingJamRepository(FakeJams(*snapshots), calendar).observeJams().toList()
+    private fun observe(vararg snapshots: JamsSnapshot, draft: Boolean = false): List<JamsSnapshot> = runBlocking {
+        DemoUpcomingJamRepository(FakeJams(*snapshots), calendar, draft).observeJams().toList()
+    }
+
+    @Test
+    fun draftDemoFillsAnEmptyUpcomingWithTheSameSongs() {
+        val upcoming = observe(JamsSnapshot(null, listOf(pastJam), freshness), draft = true).single().upcoming!!
+
+        assertEquals(JamStatus.DRAFT, upcoming.status)
+        assertTrue(upcoming.isDemo())
+        assertEquals(DemoUpcomingJam.on(today).setlist, upcoming.setlist)
+        assertEquals(DemoUpcomingJam.on(today).copy(status = JamStatus.DRAFT), upcoming)
+    }
+
+    @Test
+    fun realUpcomingJamStillWinsWithTheDraftDemo() {
+        val real = JamsSnapshot(realUpcoming, listOf(pastJam), freshness)
+
+        assertEquals(listOf(real), observe(real, draft = true))
     }
 
     @Test

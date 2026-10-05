@@ -181,6 +181,9 @@ first call to the new version took 3.97 s (not proven cold); the validator's lat
   log line says `(demo)`) whenever the Sheet has none; a real upcoming jam always wins. The code is
   in `app/src/debug` only, and the release APK's dex is checked for its absence. To see it while
   the Sheet has an upcoming jam: airplane mode, clear the app's data, launch, restore.
+  `bluesjam.demoUpcomingJamDraft=true` as well (`unpublished-setlist-state`; effective only with the
+  demo flag on, release hard `false`) makes the demo jam a DRAFT with the same songs, so the draft
+  card can be checked; the log then reads `upcoming <date> draft (demo)`. Leave it off or absent.
 - `init.sh` wraps the Gradle gate — `./gradlew build` and `./gradlew check` — and is run by
   `feature-flow` on every validation, so it must be fast and non-blocking.
 

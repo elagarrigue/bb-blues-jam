@@ -19,6 +19,12 @@ val appsScriptUrl: String = localProperties.getProperty("bluesjam.appsScriptUrl"
 // so device checks need no temporary Sheet data. Absent means false; release is always false.
 val demoUpcomingJam: Boolean = localProperties.getProperty("bluesjam.demoUpcomingJam", "").trim() == "true"
 
+// Draft variant (unpublished-setlist-state): bluesjam.demoUpcomingJamDraft=true makes the demo jam a
+// DRAFT with the same songs, so a device check can see the draft card. Effective only with the demo
+// flag on. Absent means false; release is always false.
+val demoUpcomingJamDraft: Boolean =
+    localProperties.getProperty("bluesjam.demoUpcomingJamDraft", "").trim() == "true"
+
 android {
     namespace = "com.bbbjam"
 
@@ -36,9 +42,11 @@ android {
     buildTypes {
         debug {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", demoUpcomingJam.toString())
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", demoUpcomingJamDraft.toString())
         }
         release {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", "false")
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", "false")
             optimization {
                 enable = false
             }

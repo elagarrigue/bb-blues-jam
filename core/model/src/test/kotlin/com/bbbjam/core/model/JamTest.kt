@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -60,6 +61,32 @@ class JamTest {
         assertTrue(jam.isHistorical(today = LocalDate.of(2026, 7, 26)))
         assertFalse(jam.isHistorical(today = LocalDate.of(2026, 7, 25)))
         assertFalse(jam.isHistorical(today = LocalDate.of(2026, 7, 24)))
+    }
+
+    @Test
+    fun `a withheld draft is withheld for musicians`() {
+        assertEquals(Setlist.Withheld, jam(JamStatus.DRAFT, Setlist.Withheld).setlistForMusicians())
+    }
+
+    @Test
+    fun `a draft with an available setlist is still withheld for musicians`() {
+        val draft = jam(JamStatus.DRAFT, Setlist.Available(listOf(jamSong(1), jamSong(2))))
+
+        assertEquals(Setlist.Withheld, draft.setlistForMusicians())
+    }
+
+    @Test
+    fun `a published available setlist is returned as the same instance`() {
+        val available = Setlist.Available(listOf(jamSong(1)))
+
+        assertSame(available, jam(JamStatus.PUBLISHED, available).setlistForMusicians())
+    }
+
+    @Test
+    fun `a published unavailable setlist is returned as the same instance`() {
+        val unavailable = Setlist.Unavailable(SetlistProblem.MISSING_TAB)
+
+        assertSame(unavailable, jam(JamStatus.PUBLISHED, unavailable).setlistForMusicians())
     }
 
     private fun jam(status: JamStatus, setlist: Setlist): Jam = Jam(

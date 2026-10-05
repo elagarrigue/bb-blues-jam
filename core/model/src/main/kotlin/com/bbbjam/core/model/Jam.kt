@@ -26,4 +26,12 @@ data class Jam(
      * caller owns the clock and the time zone.
      */
     fun isHistorical(today: LocalDate): Boolean = date.isBefore(today)
+
+    /**
+     * The setlist a musician may see: a draft is never shown to a musician, whatever the reader
+     * received, so a [JamStatus.DRAFT] jam is always [Setlist.Withheld] here, even when its
+     * [setlist] is available (an admin's read). Every other jam returns [setlist] itself. Musician
+     * screens read this, never [setlist]; the admin slices read [setlist] behind the admin flag.
+     */
+    fun setlistForMusicians(): Setlist = if (status == JamStatus.DRAFT) Setlist.Withheld else setlist
 }
