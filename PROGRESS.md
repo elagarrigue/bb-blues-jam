@@ -6,10 +6,10 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: nineteen of 37 slices accepted, the latest `list-states` (session 062, validator
-  accept 4 October 2026). `song-detail-screen` is `passing` (session 063, commit 6612720), device
-  steps done on 5 October with the user's temporary jam; awaiting the validator. The temporary jam
-  (2026-10-31) is still in the Sheet on purpose; step D (its deletion) follows the validator.
+- Current state: twenty of 38 slices accepted, the latest `song-detail-screen` (5 October 2026,
+  validator accept; step D waived by the user). Next: `debug-demo-upcoming-jam` (harness, user
+  request), then `past-jams-list` (spec approved).
+- **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
