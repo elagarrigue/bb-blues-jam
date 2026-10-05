@@ -13,8 +13,11 @@
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 069, `admin-passphrase-login`, `passing`, not yet
-  accepted) —
+- Last verified at: 5 October 2026 (session 070, `debug-admin-session`, `passing`, not yet
+  accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 75 result files, 433 tests, 0 failures (new `DebugAdminSessionTest` 6). Release
+  dex has no `DebugAdminSession`. Pixel 5: `Modo admin activo` with no login, flag left on. Before
+  that, session 069 (`admin-passphrase-login`, since accepted) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 74 result files, 427 tests, 0 failures; Node 83/83. Before that, session 068
   (`past-jam-detail`, since accepted)
@@ -2780,6 +2783,66 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   `background`-coloured notch over the `surface` container (Material behaviour; cosmetic).
 - Next: the validator for `admin-passphrase-login`. To be admin again on the Pixel 5, the user
   types the passphrase once more (the device was left logged out).
+
+### Session 070 — 5 October 2026
+
+- Goal: implement `debug-admin-session` (spec `docs/specs/debug-admin-session.md`, commit ca5d8f0),
+  requested by the user on 5 October 2026 so device checks of admin controls need no passphrase.
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator.
+- Completed:
+  - `app/build.gradle.kts`: `bluesjam.debugAdmin` → `BuildConfig.DEBUG_ADMIN` (debug: the flag,
+    `false` when absent; release hard `false`).
+  - `app/src/debug/.../DebugAdminSession.kt`: `DebugAdminSession(real: AdminSession)`; a
+    `MutableStateFlow(true)` forced state combined with the real flow (`forced || real`,
+    `distinctUntilChanged`); `logOut()` clears the forced state then calls the real one; `logIn`
+    delegates. No passphrase stored, sent or known.
+  - `DebugOverrides.kt` (debug): `DebugFlags(demoUpcomingJam, demoUpcomingJamDraft, debugAdmin)`
+    with `fromBuildConfig`; `Koin.debugOverrides()` delegates to `debugOverrides(flags)`, which adds
+    one module per flag on, independently (previously nothing unless the demo flag was on).
+    `debugAdminLogSuffix()` (debug: ` admin (debug)` when the flag is on; release no-op `""`).
+  - `BluesJamApp`: the `jams cache` startup line ends with `debugAdminLogSuffix()`. No UI copy
+    change; no `:core:data`, backend or feature change.
+  - Tests: `app/src/testDebug/.../DebugAdminSessionTest.kt` (6): forced true over a logged-out real
+    session; logout ends forcing, calls the real logout once, then follows the real value; `logIn`
+    delegates once with the same argument; admin flag alone overrides only `AdminSession`; demo flag
+    alone only `JamsRepository`; both / none (Koin `koinApplication` with fakes).
+  - Docs: architecture `SKILL.md` (debug admin session, independent overrides),
+    `docs/technical-discovery.md` (verification bullet), `docs/user-and-access-model.md` (debug-only
+    flag draws controls, authorizes nothing).
+- Verification run:
+  - `./gradlew ktlintFormat` (no changes), `CI=true ./init.sh` exit 0 twice (flag off; then flag on,
+    the final state): three tools `wired`, Konsist 17/17, 75 result files, 433 tests, 0 failures;
+    `:app` lint 0 errors, the same 15 version notices.
+  - Failure demonstrations, restored and checked with `sha1sum -c` (both OK;
+    `DebugAdminSession.kt` `f9057915…`, `DebugOverrides.kt` `c348e360…`): (1) `logOut` without
+    `real.logOut()` → 1 of 6 failed, `logOutEndsTheForcedStateAndCallsTheRealLogOutOnce`
+    ("expected:<1> but was:<0>"); (2) `if (!flags.demoUpcomingJam) return emptyList()` gating the
+    admin override again → 1 of 6 failed, `adminFlagAloneOverridesOnlyTheAdminSession`.
+  - Release: `:app:assembleRelease :app:assembleDebug` exit 0; release `BuildConfig.DEBUG_ADMIN =
+    false`. Python zipfile scan: `app-release-unsigned.apk` (5 dex) has no `DebugAdminSession`,
+    `DebugFlags`, ` admin (debug)` or demo class, only the no-op `DebugOverridesKt`; `app-debug.apk`
+    (24 dex) has them (` admin (debug)` only with the flag on, otherwise constant-folded).
+- Device (Pixel 5, 09281FDD4004U6; no accessibility service; Sheet untouched; no passphrase typed).
+  Before: airplane `0`, `accelerometer_rotation` `1`, `user_rotation` `0`, `font_scale` `1.0`,
+  `accessibility_enabled` `0`, services `null`, `touch_exploration_enabled` `0`.
+  - Added `bluesjam.debugAdmin=true` (keys checked by grep, file never printed); `installDebug`,
+    `pm clear com.bbbjam`, launch (863 ms): `jams cache: upcoming 2026-10-31, past 1, songs 26 (26
+    from catalog) admin (debug)`. Info, scrolled: `Modo admin activo` and `Salir del modo admin`,
+    no login (screenshot, muted text as before).
+  - `Salir del modo admin` → `Entrar como admin` at once; `files/datastore` does not exist (the
+    debug session stored nothing; the real logout on an empty store wrote no file).
+    `am force-stop` + relaunch: log ends ` admin (debug)`, Info shows `Modo admin activo` again.
+  - Flag line removed, `installDebug` (debug `DEBUG_ADMIN = false`), relaunch: log line without the
+    suffix; Info shows `Entrar como admin`.
+  - Flag restored, `installDebug` (`DEBUG_ADMIN = true`), relaunch: ` admin (debug)`, `Modo admin
+    activo`. Crash buffer empty; logcat 0 lines matching `passphrase|FATAL`. Settings read back as
+    before; `/sdcard/ui.xml` removed. App data cleared once (refilled online).
+  - End state: `local.properties` has `bluesjam.demoUpcomingJam=true` and
+    `bluesjam.debugAdmin=true`; the flag-on debug build is installed.
+- Known risk or unresolved issue: a write from a debug-admin session without a stored passphrase
+  will be rejected by the server; how write slices verify real writes remains their own question
+  (spec non-goal).
+- Next: the validator for `debug-admin-session`; then `apps-script-write-auth`.
 
 ## Notes For The Next Session
 

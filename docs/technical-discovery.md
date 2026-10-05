@@ -184,6 +184,13 @@ first call to the new version took 3.97 s (not proven cold); the validator's lat
   `bluesjam.demoUpcomingJamDraft=true` as well (`unpublished-setlist-state`; effective only with the
   demo flag on, release hard `false`) makes the demo jam a DRAFT with the same songs, so the draft
   card can be checked; the log then reads `upcoming <date> draft (demo)`. Leave it off or absent.
+- **Device checks of admin controls use the debug-only admin session** (`debug-admin-session`,
+  5 October 2026), not the user typing the passphrase. A debug build with `bluesjam.debugAdmin=true`
+  in `local.properties` (independent of the demo flags; release hard `false`) starts in admin mode
+  without a login and the startup `jams cache` line ends with ` admin (debug)`. "Salir del modo
+  admin" ends the forced state until the next process start. It authorizes nothing; real writes
+  still need a stored passphrase the server accepts. The code is in `app/src/debug` only, and the
+  release APK's dex is checked for `DebugAdminSession`'s absence.
 - `init.sh` wraps the Gradle gate — `./gradlew build` and `./gradlew check` — and is run by
   `feature-flow` on every validation, so it must be fast and non-blocking.
 

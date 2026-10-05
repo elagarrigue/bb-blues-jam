@@ -25,6 +25,12 @@ val demoUpcomingJam: Boolean = localProperties.getProperty("bluesjam.demoUpcomin
 val demoUpcomingJamDraft: Boolean =
     localProperties.getProperty("bluesjam.demoUpcomingJamDraft", "").trim() == "true"
 
+// Debug-only admin session (debug-admin-session): bluesjam.debugAdmin=true starts a debug build in
+// admin mode without a login, so device checks of admin controls need no passphrase typed. It draws
+// controls only and authorizes nothing (Apps Script checks every write). Absent means false; release
+// is always false.
+val debugAdmin: Boolean = localProperties.getProperty("bluesjam.debugAdmin", "").trim() == "true"
+
 android {
     namespace = "com.bbbjam"
 
@@ -43,10 +49,12 @@ android {
         debug {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", demoUpcomingJam.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", demoUpcomingJamDraft.toString())
+            buildConfigField("boolean", "DEBUG_ADMIN", debugAdmin.toString())
         }
         release {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", "false")
+            buildConfigField("boolean", "DEBUG_ADMIN", "false")
             optimization {
                 enable = false
             }

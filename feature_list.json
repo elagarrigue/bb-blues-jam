@@ -756,14 +756,20 @@
       "admin-passphrase-login",
       "debug-demo-upcoming-jam"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Release BuildConfig.DEBUG_ADMIN is false and the release dex has no DebugAdminSession",
       "JVM tests: forced admin, logout delegates, debug overrides independent of each other",
       "Device: flag on shows Modo admin activo without login; flag off shows Entrar como admin"
     ],
     "notes": "Requested by the user on 5 October 2026 ('no quiero ser bloqueante, setea el modo admin vía código para hacer las pruebas'). Spec: docs/specs/debug-admin-session.md.",
-    "evidence": []
+    "evidence": [
+      "Session 070 (5 Oct 2026, implementer, not accepted): ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0 (run twice: flag off, then flag on as left), konsist: wired (17/17, unchanged), detekt: wired, ktlint: wired; 75 result files, 433 tests, 0 failures (74 previous + DebugAdminSessionTest 6). :app lint 0 errors, 15 version-notice warnings only.",
+      "Release: ./gradlew :app:assembleRelease :app:assembleDebug exit 0. Release BuildConfig DEBUG_ADMIN = false (also DEMO_UPCOMING_JAM*). Python zipfile scan of every .dex: app-release-unsigned.apk (5 dex) has no 'Lcom/bbbjam/debug/DebugAdminSession;', no 'Lcom/bbbjam/debug/DebugFlags;', no ' admin (debug)', no demo classes; only 'Lcom/bbbjam/debug/DebugOverridesKt;' (the no-op). app-debug.apk (24 dex) has DebugAdminSession and DebugFlags; ' admin (debug)' appears in the debug dex only when the flag is on (constant-folded otherwise).",
+      "Failure demonstrations (SHA-1 DebugAdminSession.kt f9057915d74bac83150424a98fb6a893058840bd, DebugOverrides.kt c348e360da3c894b2a870cca705e26ab0f05af5e; sha1sum -c OK after each): (1) logOut without real.logOut() -> 1 of 6 failed, logOutEndsTheForcedStateAndCallsTheRealLogOutOnce 'expected:<1> but was:<0>'; (2) 'if (!flags.demoUpcomingJam) return emptyList()' at the top of debugOverrides(flags) -> 1 of 6 failed, adminFlagAloneOverridesOnlyTheAdminSession. Restored, 6/6.",
+      "Pixel 5 (09281FDD4004U6): flag on, installDebug, pm clear, launch -> 'jams cache: upcoming 2026-10-31, past 1, songs 26 (26 from catalog) admin (debug)'; Info shows 'Modo admin activo' / 'Salir del modo admin' with no login (screenshot). Tap Salir -> 'Entrar como admin'; files/datastore does not exist (nothing stored). force-stop + relaunch -> log ends ' admin (debug)', Info 'Modo admin activo' again. Flag removed, reinstall, relaunch -> log without suffix, Info 'Entrar como admin'. Flag restored, reinstall -> admin (debug) and 'Modo admin activo'. Crash buffer empty; 0 logcat lines matching passphrase|FATAL. Settings read back unchanged (airplane 0, rotation 1/0, font 1.0, accessibility 0, services null, touch exploration 0). No accessibility service enabled, Sheet untouched, passphrase never typed.",
+      "End state: local.properties has bluesjam.debugAdmin=true (key checked by grep; file never printed); debug build with DEBUG_ADMIN = true installed on the Pixel 5."
+    ]
   },
   {
     "id": "apps-script-write-auth",

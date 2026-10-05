@@ -73,6 +73,11 @@ transfer and no per-record access rules.
 - **Write endpoints must validate the passphrase server-side** in Apps Script. A client-side flag
   controls which controls are visible; it must not be what authorizes a write. Anyone can call the
   Apps Script URL directly, so the check belongs there.
+- **Debug-only admin flag** (`debug-admin-session`): a development build with
+  `bluesjam.debugAdmin=true` in the git-ignored `local.properties` starts in admin mode without a
+  login, so device checks of admin controls need no passphrase typed. It only draws controls and
+  authorizes nothing: it never stores, sends or knows the passphrase, so a write from such a session
+  fails as the server decides. Release builds never contain it.
 
 ## Revocation / Expiry
 

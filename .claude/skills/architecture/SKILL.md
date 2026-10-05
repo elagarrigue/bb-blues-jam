@@ -421,6 +421,15 @@ them.
   makes the demo a DRAFT with the same songs (`DemoUpcomingJam.on(today, draft)`,
   `DemoUpcomingJamRepository(real, calendar, draft)`); the startup line appends ` draft` after any
   DRAFT upcoming date. Leave it off or absent.
+- **Debug admin session** (`debug-admin-session`): device checks of admin controls never need the
+  real passphrase. `bluesjam.debugAdmin=true` becomes `BuildConfig.DEBUG_ADMIN` (debug only;
+  release hard `false`). `DebugAdminSession(real: AdminSession)` in `app/src/debug/` emits true
+  while a forced state is on (starts on), else the real value; `logOut()` ends the forced state and
+  calls the real one; `logIn` delegates. It never stores, sends or knows the passphrase and
+  authorizes nothing. **The overrides are independent**: `Koin.debugOverrides()` delegates to
+  `debugOverrides(DebugFlags)`, which adds one module per flag on (demo jam, admin), so a test turns
+  each flag on alone (`DebugAdminSessionTest`). The release `debugAdminLogSuffix()` returns `""`; in
+  debug the startup `jams cache` line ends with ` admin (debug)` when the flag is on.
 - **No Compose UI test harness** (`song-row-expansion`, T1 declined by the user on 3 October 2026):
   no Robolectric, `ui-test-junit4` or `ui-test-manifest`. Put everything a test must check into the
   `UiModel` (copy, state descriptions, order, kinds) and test it on the JVM; keep the visual rules
