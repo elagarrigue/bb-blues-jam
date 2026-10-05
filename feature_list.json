@@ -616,7 +616,7 @@
       "design-tokens-theme",
       "jams-repository-cache"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "A presenter test asserts reverse chronological ordering",
       "The archive treatment is muted, with amber reserved for keys",
@@ -626,7 +626,8 @@
       "Session 065 (5 Oct 2026, implementer, not accepted): ./gradlew ktlintFormat exit 0; CI=true ./init.sh exit 0, konsist: wired (17/17, unchanged), detekt: wired, ktlint: wired; 62 result files, 350 tests, 0 failures (57 previous unchanged except ContrastTest 13 -> 14 with 'archive on a surface' 5.39; new SpanishDateNamesTest 2, PastJamsStatesTest 12, PastJamsPresenterTest 5, PastJamsDefaultsTest 2, PastJamsModuleTest 1). JamDateTextTest unchanged, 7/7. Lint :feature:past-jams and :core:ui no issues; :app 0 errors, 15 version-notice warnings.",
       "Failure demonstrations, restored by SHA-1 (PastJamsPresenter.kt 01fa7892c20ee5ab6b78acc368824d3309b912b3, PastJamsScreen.kt 567323120eb679e2d54a560e5d3f1d956cc5edaf, PastJamsDefaults.kt 22f8ac62aa75ab81ca2ef9ef882f18d69d1f5a13): (1) no sortedByDescending -> 2 failed ('expected:<[2026-07-25, 2026-06-27, 2026-05-30]> but was:<[2026-05-30, 2026-07-25, 2026-06-27]>'); (2) colors.key in PastJamsScreen -> Konsist 'amber-roles-allowlisted' violated (1 time); (3) hook = colors.key in PastJamsDefaults -> PastJamsDefaultsTest 2 failed ('... is not an archive role'); (4) empty branch removed -> 5 failed (Empty expected, Loading got); (5) 4.dp in PastJamsScreen -> Konsist 'no-dp-literal-outside-core-ui' violated (1 time).",
       "Deviation (spec Implementation Findings): PastJamsDefaultsTest cannot name colors.key because Konsist amber-roles-allowlisted scans test sources; never-amber is proven by 'only surface/textMuted/archive' plus BluesJamColorsTest. RowStyle gained 'message' (textMuted).",
-      "Pixel 5: Anteriores is the middle tab; one row 'Sábado 25 de julio de 2026' / 'La Macanuda' / '13 temas' / 'Sweet Little Angel, Walking Thru the Park, Dust My Broom y 10 más' (screenshot, no amber); uiautomator: one container per row, no clickable node. Airplane on + relaunch: 'Sin conexión' / 'Mostrando lo guardado hace 1 minuto.' / 'Reintentar' above the row; airplane restored to 0. TalkBack merged-node focus NOT verified (enabling it opened its tutorial; accessibility settings restored to null/0 at once). Crash buffer empty."
+      "Pixel 5: Anteriores is the middle tab; one row 'Sábado 25 de julio de 2026' / 'La Macanuda' / '13 temas' / 'Sweet Little Angel, Walking Thru the Park, Dust My Broom y 10 más' (screenshot, no amber); uiautomator: one container per row, no clickable node. Airplane on + relaunch: 'Sin conexión' / 'Mostrando lo guardado hace 1 minuto.' / 'Reintentar' above the row; airplane restored to 0. TalkBack merged-node focus NOT verified (enabling it opened its tutorial; accessibility settings restored to null/0 at once). Crash buffer empty.",
+      "Validator (5 Oct 2026, commit f956f7f): accept. Gate exit 0, three wired, Konsist 17/17. Own mutations on PastJamsPresenter (notice on age alone: 8/20 fail; no sort: 2/20), restored by SHA-1. Pixel 5: Anteriores row for 2026-07-25 with muted colours, nothing clickable; offline notice; offline cleared-data error block; airplane restored to 0; TalkBack not touched. TalkBack row grouping judged from code only."
     ],
     "notes": "D-04: past jams are read-only, Sheet is their authority. Spec: docs/specs/past-jams-list.md (C1, P1 approved 4 Oct 2026)."
   },
