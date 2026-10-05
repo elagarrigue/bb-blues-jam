@@ -1117,6 +1117,40 @@ pase significa algo.
 prueba; el organizador la borró y el teléfono volvió a mostrar "La próxima jam todavía no tiene
 fecha".
 
+### 6.17 Sesiones del 4 y 5 de octubre — estados, detalle, archivo y una jam que no existe
+
+Cuatro rebanadas más cerraron `accepted` —`list-states`, `song-detail-screen`,
+`debug-demo-upcoming-jam` y `past-jams-list`— y van 22 de 38. La app ya no se rompe sin conexión,
+abre un tema con la tonalidad enorme y muestra qué se tocó en las jams anteriores.
+
+**El usuario eligió contra la recomendación, y el flujo lo absorbió.** Para navegar al detalle el
+`planner` recomendaba no sumar librería todavía; el organizador eligió Navigation Compose ya. En vez
+de discutir, la spec volvió al `planner` con la decisión tomada. Lo que volvió fue mejor que la
+versión original: fijó la versión 2.9.8 porque la 2.10 habría subido Compose y Kotlin, eligió rutas
+de texto para no abrir la serialización fuera de `:core:data`, y propuso una regla de Konsist para
+que ninguna feature pueda importar la navegación. La decisión fue del humano; las consecuencias
+técnicas las trabajó el agente y quedaron escritas.
+
+**"No quiero seguir siendo el blocker."** Cada rebanada con datos de jam necesitaba que el
+organizador cargara una jam de prueba en la planilla real y después la borrara. El 5 de octubre lo
+dijo sin vueltas y pidió resolverlo por código. La respuesta fue una rebanada de harness nueva: una
+jam de demo que existe solo en la app de desarrollo, con lugar "Demo (solo debug)", que aparece
+únicamente si la planilla no tiene una real. El `validator` abrió el APK de release y comprobó que la
+clase no está ahí. Es la lección más clara hasta ahora sobre el costo de los pasos manuales: un
+humano en el circuito de verificación es el cuello de botella, y vale la pena invertir código en
+sacarlo.
+
+**Una regla que se rompió por mi culpa.** Al probar el archivo, el `implementer` activó TalkBack
+por adb, algo que el usuario había pedido no hacer. La restricción estaba en mi memoria de la sesión
+pero no en el prompt que le pasé al agente. Los subagentes arrancan sin contexto: lo que el
+orquestador no les dice, no existe. Quedó escrito en PROGRESS y desde entonces cada prompt con
+dispositivo lo repite.
+
+**Lo que mide el validador.** En `list-states` el `validator` hizo que el aviso de "sin conexión"
+apareciera por antigüedad y no por falla: 15 tests en rojo. En el archivo, quitar el orden de más
+nueva a más vieja tumba dos. El gate pasa con 350 tests, y cada rebanada demuestra que esos tests
+pueden fallar antes de confiar en que pasen.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
