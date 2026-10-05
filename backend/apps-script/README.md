@@ -5,8 +5,10 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`. It never opens the
-`Config` tab, and it never reads the tab of a jam whose `estado` is not exactly `PUBLICADA`.
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and one POST
+action, `checkPassphrase` (`admin-passphrase-login`). The reads never open the `Config` tab, and
+never read the tab of a jam whose `estado` is not exactly `PUBLICADA`. Only `src/Post.js` opens
+`Config`, and no answer ever contains the passphrase.
 
 ## Layout
 
@@ -17,6 +19,7 @@ It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`.
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet)`, the `ACTIONS` table (`checkPassphrase`), `readPassphrase_` and `passphraseMatches_`. The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -72,7 +75,9 @@ Edit (pencil) → Version: New version → Deploy**. The URL stays the same. **N
 create a second URL, and the app would keep calling the old version. After deploying, check that
 `?resource=config` replies `unknown_resource` with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
-an old `Code.gs`.
+an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
+`unknown_action` with the message ending in `Known: checkPassphrase` (the action list of
+`src/Post.js`); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
 
 #### Verify the paste
 
@@ -84,6 +89,7 @@ In the Apps Script editor, open each file and search (Ctrl+F) for its distinctiv
 | `Jams.gs` | `var PUBLISHED_STATUS = 'PUBLICADA';` | |
 | `Normalize.gs` | `function isoDateCell(` and `class ContractError` | |
 | `Catalog.gs` | | `class ContractError` |
+| `Post.gs` | `checkPassphrase: checkPassphrase_,` | |
 
 If any check fails, paste that file again over its whole content, save, and check again.
 
@@ -120,6 +126,35 @@ The script is already deployed with the catalog route. This adds the `jams` rout
    - the Sheet's **File → Settings → Time zone** (expected `(GMT-03:00) Buenos Aires`);
    - which real jams are `BORRADOR`, if any, and whether every past jam is `PUBLICADA`.
 
+### Redeploy for the passphrase check (`admin-passphrase-login`)
+
+The script is already deployed with the two reads. This adds one file, `Post`, with the POST
+action `checkPassphrase`. **No existing file changes**: leave `Code.gs`, `Normalize.gs`,
+`Catalog.gs`, `Jams.gs` and `appsscript.json` as they are.
+
+1. Open the Sheet, then **Extensions → Apps Script**.
+2. Add one new file: **+ → Script**, name it `Post` (the editor adds `.gs`), delete the empty
+   `myFunction` it starts with, and paste the whole of `backend/apps-script/src/Post.js`.
+3. **Save** (Ctrl+S). The project now has five script files, `Code`, `Normalize`, `Catalog`,
+   `Jams` and `Post`, plus `appsscript.json`.
+4. **Verify the paste**: `Post.gs` must contain `checkPassphrase: checkPassphrase_,` (the table in
+   **Updating the code later**). If it does not, paste it again over its whole content and save.
+5. **Deploy → Manage deployments** → select the existing deployment → **Edit** (pencil icon) →
+   **Version: New version** → **Deploy**. Never choose **New deployment**: it creates a new URL,
+   and the app keeps calling the old one until `local.properties` is updated and the app rebuilt.
+6. The scope is unchanged (`spreadsheets.currentonly`), so no new authorization is expected.
+7. Confirm in the Sheet that the `Config` tab has a row with `clave` `passphrase` and a non-empty
+   `valor`. Never paste the passphrase into chat or into any file.
+8. Check the deployment (**Check a live deployment**, never the real passphrase):
+   `curl -sL -d '{}' "$URL"` replies `unknown_action` ending in `Known: checkPassphrase`; a
+   `checkPassphrase` with an obviously wrong value replies `invalid_passphrase` (a
+   `passphrase_not_set` means step 7 is not done); `?resource=config` still ends in
+   `Known: catalog, jams`.
+
+(5 October 2026: the user deployed this as a **new deployment**, so the URL changed; the
+orchestrator updated `local.properties` and the app was rebuilt. Later updates go through
+**Manage deployments → New version** on that new deployment.)
+
 ### Temporary test jam for the draft check (user approval A3)
 
 Sheet edits need no redeploy. Do each step only when the orchestrator asks for it.
@@ -140,10 +175,12 @@ The date is in the past on purpose: it cannot become a second upcoming jam.
 ## Check a live deployment
 
 From Git Bash at the repository root. `URL` is read from the git-ignored `local.properties`, where
-Android Studio may escape `:` as `\:`; the commands never print it.
+Android Studio may escape `:` as `\:`; the commands never print it. The decode uses Python
+(5 October 2026: in this Git Bash the earlier `sed 's/\\:/:/g'` left the backslash in place, and
+`tr -d` with a backslash deleted every `r`).
 
 ```bash
-URL=$(grep '^bluesjam.appsScriptUrl=' local.properties | cut -d= -f2- | sed 's/\\:/:/g' | tr -d '\r')
+URL=$(python -c "print(next(l.split('=',1)[1].strip().replace(chr(92),'') for l in open('local.properties',encoding='utf-8') if l.startswith('bluesjam.appsScriptUrl=')))")
 CHECK=backend/apps-script/tools/check-response.js
 OUT=backend/apps-script
 ```
@@ -155,6 +192,14 @@ curl -sL "$URL?resource=catalog" -o $OUT/catalog.local.json
 node $CHECK $OUT/catalog.local.json                                  # exit 0 = valid
 curl -sL "$URL?resource=config"                                      # unknown_resource, "... Known: catalog, jams"
 for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource=catalog"; done
+```
+
+Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
+
+```bash
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase"
+curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
+curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
 
 Jams (`apps-script-jams-read-endpoint`, checks L1 to L5):

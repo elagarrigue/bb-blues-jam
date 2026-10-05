@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 
 /** A decoded payload, or the failure that replaced it. */
@@ -40,6 +41,24 @@ internal object AppsScriptEnvelope {
             error != null -> serviceFailure(error)
             payload == null || payload is JsonNull -> invalid("missing $payloadKey")
             else -> decodePayload(payload, payloadKey, serializer)
+        }
+    }
+
+    /**
+     * Reads an action's answer (`docs/apps-script-api.md`, POST actions) in the same order as
+     * [decode]: a JSON object, `schemaVersion` 1, an `error` key as a [DataFailure.Service], then
+     * `ok` must be the JSON boolean `true`; anything else is an invalid response.
+     */
+    fun decodeOk(body: String): Decoded<Unit> {
+        val root = parseObject(body) ?: return invalid("body is not a JSON object")
+        val version = (root["schemaVersion"] as? JsonPrimitive)?.takeUnless { it.isString }?.intOrNull
+        val error = root["error"]
+        val ok = (root["ok"] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull
+        return when {
+            version != SCHEMA_VERSION -> invalid("schemaVersion ${version ?: "missing"}")
+            error != null -> serviceFailure(error)
+            ok != true -> invalid("ok is not true")
+            else -> Decoded.Ok(Unit)
         }
     }
 

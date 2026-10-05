@@ -31,6 +31,10 @@ sqlite = "2.6.2"
 # what the build resolves (stdlib 2.0.21, Compose 1.7.2, activity-compose 1.8.0). 2.10.x raises
 # Compose to 1.10 and activity-compose to 1.13 over the pinned BOM. Upgrade with Kotlin and the BOM.
 navigationCompose = "2.9.8"
+# DataStore Preferences (admin-passphrase-login, A2): the verified admin passphrase. 1.2.1 asks for
+# stdlib 2.0.21, coroutines 1.9.0 and okio 3.9.1, all at or below what the build resolves, so no
+# resolved version moves up on :app. Upgrade with Kotlin.
+datastore = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -63,6 +67,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 sqlite-bundled-jvm = { group = "androidx.sqlite", name = "sqlite-bundled-jvm", version.ref = "sqlite" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 # For build-logic only: the convention plugins compile against AGP and KGP (compileOnly).
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }

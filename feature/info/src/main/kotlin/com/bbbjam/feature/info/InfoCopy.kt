@@ -46,5 +46,8 @@ internal object InfoCopy {
     const val LINK_ERROR = "No se pudo abrir el enlace."
 
     const val ADMIN_ENTRY = "Entrar como admin"
-    const val ADMIN_NOT_ENABLED = "El ingreso de admin todavía no está habilitado."
+
+    // admin-passphrase-login (A5, approved 5 October 2026).
+    const val ADMIN_ACTIVE = "Modo admin activo"
+    const val ADMIN_LOG_OUT = "Salir del modo admin"
 }

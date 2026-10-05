@@ -15,8 +15,8 @@ import java.time.format.DateTimeParseException
 internal object AppRoutes {
     /**
      * The outer host's tabs shell (`TabsShell`): an inner host with the three tab routes below and
-     * the bottom bar. The song detail and the past jam detail are beside it in the outer host, full
-     * screen over the bar.
+     * the bottom bar. The song detail, the past jam detail and the admin login are beside it in the
+     * outer host, full screen over the bar.
      */
     const val TABS = "tabs"
 
@@ -28,6 +28,12 @@ internal object AppRoutes {
 
     /** The Info tab. */
     const val INFO = "info"
+
+    /**
+     * The admin login (`admin-passphrase-login`, A7): full screen in the outer host, opened from
+     * Info. No argument: the passphrase never enters a route or a saved Bundle.
+     */
+    const val ADMIN_LOGIN = "admin-login"
 
     const val JAM_DATE = "jamDate"
     const val POSITION = "position"

@@ -21,7 +21,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`) and the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard; `TabsShell(onOpenSong, onOpenPastJam)` hands the callback to Anteriores); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
+| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`) the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
@@ -43,6 +43,22 @@ admin events and controls to its own `UiModel`. The setlist mutations are drawn 
 `:feature:next-jam`; the passphrase login lives in `:feature:info`, where its discreet entry point
 is. There is no `:feature:admin`.
 
+As built by `admin-passphrase-login`: `:core:data` package `admin/` holds the public
+`AdminSession` (`observeIsAdmin(): Flow<Boolean>`, `suspend logIn(passphrase): LoginOutcome`,
+`suspend logOut()`) and `LoginOutcome` (`Success`, `WrongPassphrase`, `Offline`, `Unavailable`),
+and the internal `DefaultAdminSession(AppsScriptPostTransport, AdminCredentialStore)` and
+`AdminCredentialStore` (DataStore Preferences, file `admin_session`, key `admin_passphrase`; admin
+mode is "a non-blank passphrase is stored"; `passphrase()` for the write slices). `logIn` trims,
+sends nothing when blank, POSTs `checkPassphrase` and stores only on `ok`. `remote/` gains
+`AppsScriptPostTransport` (`suspend post(json)`, implemented by the same
+`OkHttpAppsScriptTransport` instance), `AppsScriptEnvelope.decodeOk` and the serializable
+`CheckPassphraseRequest`. `:feature:info` (now also depending on `:core:data`) holds
+`InfoPresenter(linkOpener, adminSession)` with `Params(onOpenAdminLogin)` and a sealed
+`AdminEntryUiModel` (`LoggedOut`, `LoggedIn`), and `AdminLoginPresenter(adminSession)` with
+`Params(onBack, onLoggedIn)`, `AdminLoginUiModel` (its `toString` hides the passphrase),
+`AdminLoginScreen`, `AdminLoginCopy` and `AdminLoginDefaults`. The typed passphrase lives in plain
+`remember`, never `rememberSaveable`. Every later admin slice reads `AdminSession.observeIsAdmin()`.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -61,7 +77,9 @@ is. There is no `:feature:admin`.
 - Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
   `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` and `:feature:song-detail`
   may read `key` only; `:feature:past-jams` may read `key` only since `past-jam-detail` (the detail
-  rows' key, through `PastJamDetailDefaults`; the Anteriores list reads no amber role). The rule
+  rows' key, through `PastJamDetailDefaults`; the Anteriores list reads no amber role);
+  `:feature:info` may read `primaryAction` and `onPrimaryAction` since `admin-passphrase-login`
+  (the login's "Entrar", `button-primary`, through `AdminLoginDefaults`; the field reads none). The rule
   also reads test sources, so a test in a module without an entry cannot name an amber role either
   (`PastJamsDefaultsTest` proves the list "never amber" by allowed roles plus `BluesJamColorsTest`). A
   slice that adds an amber use (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds that
@@ -170,8 +188,9 @@ is. There is no `:feature:admin`.
   today's date (`Jam.isHistorical(today)`) and owns the time zone.
 - External music APIs (MusicBrainz, Deezer, Last.fm) are called only from background enrichment in
   `:core:data`, cached in Room, never from a presenter or during list rendering (D-09).
-- Only `:core:data` imports or references `okhttp3.`, `androidx.room.` or
-  `kotlinx.serialization.`: Sheet I/O lives only in repositories (D-13). A feature sees repository
+- Only `:core:data` imports or references `okhttp3.`, `androidx.room.`,
+  `kotlinx.serialization.` or `androidx.datastore.`: Sheet I/O and stored state live only in
+  repositories (D-13). A feature sees repository
   interfaces and domain types.
 
 Konsist enforces the first four rules (the clock one as `core-model-no-system-clock`, a textual
@@ -180,7 +199,8 @@ match on each `:core:model` file), the data-library rule (`data-libraries-only-i
 `:core:data` and `:konsist-test`, because kotlinx-serialization-core reaches a feature transitively
 and a fully qualified reference there compiles; known limits: it is a line-based text match, so a
 qualified name split across lines at a dot, or with a backticked segment, is not caught, and the
-compile classpath still blocks okhttp3, Room and serialization-json but not serialization-core), the
+compile classpath still blocks okhttp3, Room, serialization-json and DataStore but not
+serialization-core; `androidx.datastore.` joined both lists with `admin-passphrase-login`), the
 package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
@@ -376,6 +396,16 @@ them.
   that does not relax D-02 (no `viewModel()`, no `hiltViewModel`). Routes are strings (R1): typed
   routes would need the serialization plugin in `:app` and break the data-library rules. Upgrade it
   with Kotlin, the BOM and Koin.
+- **DataStore pin** (`admin-passphrase-login`, A2): `androidx.datastore:datastore-preferences`
+  1.2.1 (catalog `androidx-datastore-preferences`), `implementation` in `core/data/build.gradle.kts`
+  only. It asks for stdlib 2.0.21, coroutines 1.9.0 and okio 3.9.1, all at or below what resolves;
+  the debug and release runtime classpaths of `:app` only gained the twelve `androidx.datastore`
+  artifacts (stdlib 2.2.10, coroutines 1.9.0, okio 3.15.0, Compose 1.9.1, lifecycle 2.9.3 unmoved).
+  `AdminCredentialStore.dataStore(...)` builds it over `OkioStorage` with `PreferencesSerializer`
+  (same file and format as the default), not the `File` storage: below API 26, the JVM tests
+  included, that one replaces with `File.renameTo`, which fails on Windows when the file exists.
+  Tests use the same factory over a temp file and cancel its scope to simulate a restart.
+  The file is excluded from backup and device transfer in `:app`'s `res/xml` rules.
 - **Debug demo jam** (`debug-demo-upcoming-jam`): device checks that need an upcoming jam use a
   demo jam built in code, never temporary Sheet data. `bluesjam.demoUpcomingJam=true` in the
   git-ignored `local.properties` becomes `BuildConfig.DEMO_UPCOMING_JAM` (debug only; release is

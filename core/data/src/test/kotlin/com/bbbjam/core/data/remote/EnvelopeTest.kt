@@ -96,6 +96,36 @@ class EnvelopeTest {
         assertEquals(Decoded.Ok(listOf(SongDto("a", "A", "B", "A", null, null, null, null))), decode(body))
     }
 
+    @Test
+    fun `decodeOk accepts only schemaVersion 1 with ok true`() {
+        assertEquals(Decoded.Ok(Unit), AppsScriptEnvelope.decodeOk("""{"schemaVersion":1,"ok":true}"""))
+        assertEquals(Decoded.Ok(Unit), AppsScriptEnvelope.decodeOk("""{"schemaVersion":1,"ok":true,"extra":1}"""))
+        val invalid = mapOf(
+            """{"schemaVersion":1}""" to "ok is not true",
+            """{"schemaVersion":1,"ok":false}""" to "ok is not true",
+            """{"schemaVersion":1,"ok":"true"}""" to "ok is not true",
+            """{"schemaVersion":1,"ok":null}""" to "ok is not true",
+            """{"schemaVersion":2,"ok":true}""" to "schemaVersion 2",
+            """{"ok":true}""" to "schemaVersion missing",
+            "<!DOCTYPE html><html><body>Script function not found: doPost</body></html>" to "body is not a JSON object",
+            "" to "body is not a JSON object",
+        )
+        invalid.forEach { (body, detail) ->
+            assertEquals(body, Decoded.Failed(DataFailure.InvalidResponse(detail)), AppsScriptEnvelope.decodeOk(body))
+        }
+    }
+
+    @Test
+    fun `decodeOk reads an error envelope as a service failure, before ok`() {
+        val body = """{"schemaVersion":1,"ok":true,"error":{"code":"invalid_passphrase","message":"m"}}"""
+
+        assertEquals(Decoded.Failed(DataFailure.Service("invalid_passphrase")), AppsScriptEnvelope.decodeOk(body))
+        assertEquals(
+            Decoded.Failed(DataFailure.InvalidResponse("malformed error")),
+            AppsScriptEnvelope.decodeOk("""{"schemaVersion":1,"error":{}}"""),
+        )
+    }
+
     private fun decode(body: String) = AppsScriptEnvelope.decode(body, "songs", SongDto.serializer())
 
     private fun invalid(decoded: Decoded<*>): DataFailure.InvalidResponse =

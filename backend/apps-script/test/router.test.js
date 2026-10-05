@@ -204,8 +204,10 @@ test('a structural error in the Jams tab travels as its code', () => {
   assertError(handleGet({ resource: 'jams' }, spreadsheet), 'missing_header');
 });
 
-test('no file in src/ names the passphrase tab, and none defines doPost', () => {
-  const files = fs.readdirSync(SRC_DIR).filter((f) => f.endsWith('.js'));
+// admin-passphrase-login: Post.js, the POST entry point, is the one file that may name the tab and
+// define doPost (its guarantees are in post.test.js). Every file the GET routes use stays clean.
+test('no file in src/ but Post.js names the passphrase tab, and none but Post.js defines doPost', () => {
+  const files = fs.readdirSync(SRC_DIR).filter((f) => f.endsWith('.js') && f !== 'Post.js');
   assert.ok(files.length >= 4, `found ${files}`);
   for (const file of files) {
     const source = fs.readFileSync(path.join(SRC_DIR, file), 'utf8');

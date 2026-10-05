@@ -8,6 +8,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -102,5 +103,60 @@ class OkHttpAppsScriptTransportTest {
         assertNull(server.takeRequest(100, TimeUnit.MILLISECONDS))
     }
 
+    @Test
+    fun `a POST carries the JSON body to the base URL with no query`() = runTest {
+        server.enqueue(MockResponse.Builder().body(OK).build())
+        val json = CheckPassphraseRequest.encode(TEST_VALUE)
+
+        val result = transport(server.url("/macros/s/abc/exec").toString()).post(json)
+
+        assertEquals(TransportResult.Body(OK), result)
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/macros/s/abc/exec", request.url.encodedPath)
+        assertNull(request.url.encodedQuery)
+        assertEquals("application/json; charset=utf-8", request.headers["Content-Type"])
+        assertEquals(json, request.body?.utf8())
+        assertFalse(request.url.toString().contains(TEST_VALUE))
+    }
+
+    @Test
+    fun `a 302 after a POST is followed as a GET, and the passphrase is in no URL`() = runTest {
+        redirectTarget.enqueue(MockResponse.Builder().body(OK).build())
+        server.enqueue(
+            MockResponse.Builder()
+                .code(302)
+                .addHeader("Location", redirectTarget.url("/macros/echo?user_content_key=k").toString())
+                .build(),
+        )
+
+        val result = transport(server.url("/exec").toString()).post(CheckPassphraseRequest.encode(TEST_VALUE))
+
+        assertEquals(TransportResult.Body(OK), result)
+        val first = server.takeRequest()
+        val followed = redirectTarget.takeRequest()
+        assertEquals("POST", first.method)
+        assertEquals("GET", followed.method)
+        assertEquals("k", followed.url.queryParameter("user_content_key"))
+        listOf(first, followed).forEach { assertFalse(it.url.toString().contains(TEST_VALUE)) }
+    }
+
+    @Test
+    fun `a POST maps failures as a GET does`() = runTest {
+        server.enqueue(MockResponse.Builder().code(500).body("<html>error</html>").build())
+        val url = server.url("/exec").toString()
+
+        assertEquals(TransportResult.Failed(DataFailure.InvalidResponse("HTTP 500")), transport(url).post("{}"))
+        assertEquals(TransportResult.Failed(DataFailure.NotConfigured), transport(null).post("{}"))
+        assertEquals(1, server.requestCount)
+        server.close()
+        assertEquals(TransportResult.Failed(DataFailure.Offline), transport(url).post("{}"))
+    }
+
     private fun transport(url: String?) = OkHttpAppsScriptTransport(OkHttpAppsScriptTransport.client(), url)
+
+    private companion object {
+        const val TEST_VALUE = "not-a-real-passphrase"
+        const val OK = """{"schemaVersion":1,"ok":true}"""
+    }
 }

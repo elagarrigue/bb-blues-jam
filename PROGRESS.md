@@ -7,13 +7,17 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-five of 38 slices accepted, the latest `past-jam-detail` (5 October 2026).
-  Next: `admin-passphrase-login` (spec approved; needs a user redeploy of `Post.js`).
-  `enrichment-background-fetch` deferred by the user.
+  `admin-passphrase-login` is **`in_progress`** (session 069): implemented and gate-green, `Post.js`
+  deployed by the user; only the device success path remains (the user types the real passphrase
+  once on the Pixel 5, A3). `enrichment-background-fetch` deferred by the user.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 068, `past-jam-detail`, `passing`, not yet accepted)
+- Last verified at: 5 October 2026 (session 069, `admin-passphrase-login`, `in_progress`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 74 result files, 427 tests, 0 failures; Node 83/83. Before that, session 068
+  (`past-jam-detail`, since accepted)
   — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 70 result files, 397 tests, 0 failures (`AppRoutesTest` 6 → 9,
   `PastJamsPresenterTest` 5 → 6, `PastJamsStatesTest` 12 → 14, new `PastJamDetailMappingTest` 9,
@@ -2667,6 +2671,105 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   heading semantics not observable with `uiautomator dump`; Anteriores scroll restoration not
   exercised (one past jam).
 - Next: the validator for `past-jam-detail`.
+
+### Session 069 — 5 October 2026
+
+- Goal: implement `admin-passphrase-login` (spec `docs/specs/admin-passphrase-login.md`, commit
+  82322a5). User approvals A1–A7 answered with the recommended option. `past-jam-detail` accepted
+  (navigation files re-read).
+- Status: **`in_progress`** — implemented, self-verified on the JVM, Node, live endpoint and device
+  except the success path, which needs the user to type the real passphrase once (A3).
+- Completed:
+  - Backend: new `backend/apps-script/src/Post.js` (`doPost`, `handlePost`, `ACTIONS =
+    { checkPassphrase }`, `readPassphrase_`, `passphraseMatches_`; fail closed: the stored value is
+    read and checked non-blank before comparing). No other script file changed. **Deviation:**
+    `Post.js` has its own `postErrorBody_`/`postErrorMessage_` (same bodies as `Code.js`'s), because
+    `Code.js` does not export its helpers to the Node loader and the spec forbids touching it.
+    `test/helpers/load.js` + `Post.js`; new `test/post.test.js` (13 tests). **Spec gap:**
+    `router.test.js`'s "no file in src/ names the passphrase tab, and none defines doPost" could not
+    stay unchanged with an approved `doPost` file; it now excludes `Post.js` only (every other
+    GET-side assertion unchanged).
+  - `:core:data`: catalog `datastore = "1.2.1"` / `androidx-datastore-preferences`, `implementation`
+    in `core/data` only. `admin/`: public `AdminSession`, `LoginOutcome`; internal
+    `DefaultAdminSession`, `AdminCredentialStore` (file `admin_session`, key `admin_passphrase`).
+    `remote/`: `AppsScriptPostTransport` (same `OkHttpAppsScriptTransport` instance; POST to the base
+    URL, no query, `application/json; charset=utf-8`), `AppsScriptEnvelope.decodeOk`,
+    `CheckPassphraseRequest` (kotlinx-serialization). `dataModule` binds the transport once for both
+    interfaces, the store and `AdminSession`. **Deviation:** the store is built over `OkioStorage`
+    with `PreferencesSerializer`, not `PreferenceDataStoreFactory.create(produceFile)`: the `File`
+    storage replaces with `File.renameTo` below API 26 (the JVM tests), which on Windows fails when
+    the file exists ("Unable to rename …", a save then a clear). Same file name and format;
+    `createWithPath` was tried first and delegates to the `File` storage on Android/JVM.
+  - `:feature:info` (+ `implementation(project(":core:data"))`): `AdminLoginPresenter`,
+    `AdminLoginUiModel` (`toString` hides the passphrase, also in `PassphraseChanged`),
+    `AdminLoginScreen` (outlined field with explicit token colours, Mostrar/Ocultar, error as polite
+    supporting text, `Entrar` as `button-primary`, `imePadding`), `AdminLoginCopy`,
+    `AdminLoginDefaults`. `InfoPresenter(linkOpener, adminSession)` + `Params(onOpenAdminLogin)`,
+    sealed `AdminEntryUiModel` (`LoggedOut`, `LoggedIn`), `LogOut` event; `ADMIN_NOT_ENABLED`
+    removed. Two-field updates in the login presenter use `Snapshot.withMutableSnapshot` (a test
+    caught an intermediate model with the new text and the old error).
+  - `:app`: `AppRoutes.ADMIN_LOGIN = "admin-login"`; outer-host `adminLogin(nav)` (slide, insets;
+    back under the `RESUMED` guard). **Deviation:** a successful login pops with
+    `popBackStack(ADMIN_LOGIN, inclusive = true)` rather than under the `RESUMED` guard, because it
+    lands after a network round trip, possibly with the app in the background, where the guard
+    would leave the login open over an already-stored session; popping a route that is gone is a
+    no-op. `TabsShell(…, onOpenAdminLogin)`. `backup_rules.xml` and `data_extraction_rules.xml`
+    (cloud-backup and device-transfer) exclude `datastore/admin_session.preferences_pb`.
+  - Konsist (A6): `androidx.datastore.` in `DATA_LIBRARY_PREFIXES` and `QUALIFIED_DATA_LIBRARY`;
+    `"feature/info" to setOf("primaryAction", "onPrimaryAction")`. Still 17 rules.
+  - Docs: `docs/apps-script-api.md` (POST transport, `checkPassphrase`, the four codes, the client
+    mapping), `backend/apps-script/README.md` (layout row, "Redeploy for the passphrase check",
+    verify-paste row `Post.gs` → `checkPassphrase: checkPassphrase_,`, the `Known: checkPassphrase`
+    deploy check, POST curl checks, and a **Python URL decode** replacing the `sed`/`tr` one-liner
+    that fails in this Git Bash, per the orchestrator), `docs/user-and-access-model.md`,
+    `docs/risks-and-open-questions.md` (no rate limit, passphrase in a UiModel, plaintext, the new
+    deployment URL), `DESIGN.md` screens 6 and 7 as built, architecture `SKILL.md`.
+- Verification run:
+  - Dependency check first (A2): resolved-version lists of `:app` debug and release runtime
+    classpaths before/after: only twelve `androidx.datastore` artifacts added. `dependencyInsight`
+    (both): stdlib 2.2.10, coroutines-core 1.9.0, okio 3.15.0, compose runtime 1.9.1,
+    lifecycle-runtime 2.9.3, all unchanged.
+  - `./gradlew ktlintFormat` before each gate. Gate 1: detekt `MaxLineLength` (AppNavHost KDoc);
+    gate 2: `ReturnCount` (`logIn`, split into `check`/`save`). Final `CI=true ./init.sh` exit 0,
+    three tools `wired`, Konsist 17/17, 74 result files, 427 tests, 0 failures. Lint `:core:data` and
+    `:feature:info` no issues; `:app` the same 15 version notices. Node 83/83.
+  - Failure demonstrations, restored and checked with `sha1sum -c` (all OK): (1) a probe in
+    `:feature:info` importing and qualifying `androidx.datastore.core.DataStore` passed Konsist
+    before the list change (17/0) and failed both data-library rules after it; probe deleted.
+    (2) Failing first: `AdminLoginDefaults` reading `primaryAction` without the entry →
+    `amber-roles-allowlisted` violated 2 times (`AdminLoginDefaults.kt`,
+    `AdminLoginDefaultsTest.kt`); entry added → 17/17. (3) `DefaultAdminSession` (`9fef4ff3…`)
+    storing before the outcome: 3 of 8 failed ("expected null, but was:<…>"). (4) `Post.js`
+    (`a8e13c69…`) without the blank check: Node 1 of 83 failed ("an unset passphrase rejects every
+    attempt, blank included").
+  - Live (orchestrator after the user's deploy, then this session; Python urllib, codes only, URL
+    never printed): `{}` → `unknown_action … Known: checkPassphrase`; wrong and empty →
+    `invalid_passphrase` (so `Config` holds a non-empty passphrase); `not json` →
+    `invalid_request`; `?resource=config` → `… Known: catalog, jams`.
+  - Greps: no `Log.` call mentions a passphrase; `rememberSaveable` only in a KDoc saying it is not
+    used; no navigation, `MaterialTheme.`, `Color(` or dp/sp literal in `feature/info/src/main`;
+    `Code.js`, `Normalize.js`, `Catalog.js`, `Jams.js`, `appsscript.json` unchanged.
+- Device (Pixel 5, 09281FDD4004U6; no accessibility service; Sheet untouched; only the test string
+  `definitely-wrong`). Before: airplane `0`, `accelerometer_rotation` `1`, `user_rotation` `0`,
+  `font_scale` `1.0`, `accessibility_enabled` `0`, services `null`, `touch_exploration_enabled` `0`.
+  - `:app:installDebug` (new URL) exit 0; cold start 818 ms. Info → `Entrar como admin` (132 px
+    clickable) → full-screen login, no tab bar: `Volver` 132 px, title, `EditText password=true`,
+    `Mostrar` 132 px, `Entrar` 132 px and disabled while blank.
+  - Typed the test string: 16 dots, `Entrar` enabled. Tap: `Verificando…` (disabled), then
+    `La frase de acceso no es correcta.` under the field, text kept. Screenshot: amber only on
+    `Entrar`; red border and error text; no amber in the field. One more character cleared the
+    error. Airplane on: `No hay conexión. Para entrar como admin necesitás internet.`; airplane off
+    again. `Mostrar` showed the test text, toggle `Ocultar`. `Volver` and system back return to Info
+    with `Entrar como admin`. `files/datastore` never created. Crash buffer empty; logcat 0 hits for
+    the test string or `passphrase`, no `FATAL`. Settings read back as before.
+- Not run: the success path, restart persistence and logout on the device (A3, the user's
+  passphrase); the `No se pudo verificar…` copy live (the user deployed before the device check; it
+  rests on `DefaultAdminSessionTest`'s HTML-page case and `AdminLoginPresenterTest`).
+- Known risk or unresolved issue: the user made a **new deployment** (new URL) instead of a new
+  version; other installed builds keep the old URL. The outlined field's floating label sits on a
+  `background`-coloured notch over the `surface` container (Material behaviour; cosmetic).
+- Next: the user types the real passphrase once on the Pixel 5; then the agent checks
+  `Modo admin activo`, force-stop + relaunch, `Salir del modo admin`, and sets `passing`.
 
 ## Notes For The Next Session
 

@@ -132,6 +132,28 @@ opens a past jam offline sees cached data with no age (Anteriores shows the noti
 so a wording change must touch both; the outer-host route `pastJam/{jamDate}`, its back stack and the
 double-tap guard have no JVM test (T1) and are checked only on the device.
 
+### Admin login (`admin-passphrase-login`, 5 October 2026)
+
+Settled with the user (A1–A7): a server-side check in a new `Post.js` (`checkPassphrase`), the
+verified passphrase stored in DataStore and excluded from backups, no expiry, logout on Info, a
+full-screen login route. Risks, not solved:
+
+- **No rate limit on passphrase guesses.** The `/exec` URL is public and `checkPassphrase` answers
+  every attempt, so the passphrase can be guessed online at Apps Script's pace. Accepted for the MVP
+  (D-11: a small community, recovery by rotation); revisit in `apps-script-write-auth`.
+- **The login UiModel carries the typed passphrase** (`AdminLoginUiModel.passphrase`, so the screen
+  stays a pure renderer). Its `toString` hides it, but the phase 2 assistant context, which exposes
+  UiModels as-is, must exclude it.
+- The stored passphrase is plaintext in app-private storage: a rooted device or a debuggable build
+  (`run-as`) can read it.
+- A device logged in before a rotation keeps showing admin mode until a write fails (by design: no
+  re-check on start).
+- The login route and its back stack have no JVM test (T1) and are checked only on the device.
+- 5 October 2026: the user deployed `Post.js` as a **new deployment**, so the `/exec` URL changed
+  (the README asks for **Manage deployments → New version**). `local.properties` was updated; any
+  other installed build still calls the old URL, which has no `doPost`, and its login answers
+  "No se pudo verificar…".
+
 ### Bottom navigation (`bottom-navigation`, 5 October 2026)
 
 Settled with the user: icons from `material-icons-core` (I1), a 150 ms tab crossfade and a 250 ms

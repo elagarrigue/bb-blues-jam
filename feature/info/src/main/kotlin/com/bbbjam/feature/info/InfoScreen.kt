@@ -21,21 +21,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.bbbjam.core.data.admin.AdminSession
+import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import org.koin.compose.koinInject
 
 /**
  * The Info screen: who runs the jam, the Hideaway program, how to join, the social links and the
- * discreet admin entry. It renders [InfoUiModel] and forwards events; the presenter decides.
- * [contentPadding] goes inside the scroll, so the background runs edge to edge.
+ * discreet admin line. It renders [InfoUiModel] and forwards events; the presenter decides.
+ * [onOpenAdminLogin] opens the admin login. [contentPadding] goes inside the scroll, so the
+ * background runs edge to edge.
  */
 @Composable
 fun InfoScreen(
+    onOpenAdminLogin: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     presenter: InfoPresenter = koinInject(),
 ) {
-    InfoContent(model = presenter.present(Unit), modifier = modifier, contentPadding = contentPadding)
+    InfoContent(
+        model = presenter.present(InfoPresenter.Params(onOpenAdminLogin = onOpenAdminLogin)),
+        modifier = modifier,
+        contentPadding = contentPadding,
+    )
 }
 
 @Composable
@@ -75,7 +85,7 @@ private fun InfoContent(model: InfoUiModel, modifier: Modifier, contentPadding: 
                 }
             }
         }
-        AdminEntry(model = model.adminEntry, onClick = { model.events(InfoUiModel.Event.AdminEntryTapped) })
+        AdminLine(model = model.adminEntry, onEvent = { model.events(it) })
     }
 }
 
@@ -112,31 +122,49 @@ private fun LinkRow(link: InfoLinkUiModel, onClick: () -> Unit) {
     }
 }
 
+/** The admin line: the same discreet caption in both states, each action a 48dp text target. */
 @Composable
-private fun AdminEntry(model: AdminEntryUiModel, onClick: () -> Unit) {
+private fun AdminLine(model: AdminEntryUiModel, onEvent: (InfoUiModel.Event) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                .clickable(role = Role.Button, onClick = onClick)
-                .padding(horizontal = BluesJamTheme.spacing.md),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = model.label, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
+        when (model) {
+            is AdminEntryUiModel.LoggedOut ->
+                CaptionAction(text = model.label, onClick = { onEvent(InfoUiModel.Event.AdminEntryTapped) })
+
+            is AdminEntryUiModel.LoggedIn -> {
+                Text(
+                    text = model.status,
+                    style = BluesJamTheme.typography.caption,
+                    color = BluesJamTheme.colors.textMuted,
+                    textAlign = TextAlign.Center,
+                )
+                CaptionAction(text = model.logoutLabel, onClick = { onEvent(InfoUiModel.Event.LogOut) })
+            }
         }
-        model.notice?.let { notice ->
-            Text(
-                text = notice,
-                style = BluesJamTheme.typography.caption,
-                color = BluesJamTheme.colors.textMuted,
-                textAlign = TextAlign.Center,
-            )
-        }
+    }
+}
+
+@Composable
+private fun CaptionAction(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = BluesJamTheme.spacing.md),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = text, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
     }
 }
 
 @Preview
 @Composable
 private fun InfoScreenPreview() {
-    BluesJamTheme { InfoScreen(presenter = InfoPresenter { true }) }
+    val session = object : AdminSession {
+        override fun observeIsAdmin(): Flow<Boolean> = flowOf(true)
+
+        override suspend fun logIn(passphrase: String): LoginOutcome = LoginOutcome.Success
+
+        override suspend fun logOut() = Unit
+    }
+    BluesJamTheme { InfoScreen(onOpenAdminLogin = {}, presenter = InfoPresenter({ true }, session)) }
 }

@@ -61,7 +61,15 @@ transfer and no per-record access rules.
   (`unpublished-setlist-state`), so a draft whose songs reached the app (a future admin read) still
   shows no song on Próxima jam or in the song detail.
 - **Admin state is local.** A flag in DataStore after the passphrase validates against the Sheet
-  through Apps Script.
+  through Apps Script. As built (`admin-passphrase-login`, 5 October 2026): the login on Info POSTs
+  the trimmed passphrase to the `checkPassphrase` action (`docs/apps-script-api.md`), and only an
+  `ok` answer stores it. What is stored is **the verified passphrase itself** (the write slices
+  must send it), in DataStore Preferences, file `admin_session` (key `admin_passphrase`), plaintext
+  in app-private storage, **excluded from cloud backup and device transfer** (`:app`'s
+  `backup_rules.xml` and `data_extraction_rules.xml`). Admin mode is "a non-blank passphrase is
+  stored", so the flag and the credential cannot disagree. A wrong passphrase, no connection or an
+  unavailable check stores nothing. The passphrase is never logged, never in a URL, and never in
+  the saved-state Bundle (the login field is plain `remember`; a rotation clears it).
 - **Write endpoints must validate the passphrase server-side** in Apps Script. A client-side flag
   controls which controls are visible; it must not be what authorizes a write. Anyone can call the
   Apps Script URL directly, so the check belongs there.
@@ -76,7 +84,11 @@ transfer and no per-record access rules.
   local flag will still show admin controls until their next write fails — the server-side check is
   what actually stops them.
 - A visible logout action is available from the info screen so a borrowed or shared phone can be
-  cleared deliberately.
+  cleared deliberately. As built: "Salir del modo admin" under "Modo admin activo", no
+  confirmation (A4); it deletes the stored passphrase and makes no request.
+- **No re-check on start** (`admin-passphrase-login`): a device keeps admin mode across restarts
+  without asking the server again. A rotated passphrase is caught by the first write, which
+  `apps-script-write-auth` rejects.
 
 ## Edge Cases
 

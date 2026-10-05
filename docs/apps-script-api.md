@@ -5,8 +5,9 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`). Writes, the passphrase check and the admin's read of a draft
-come with `apps-script-write-auth`.
+(`apps-script-jams-read-endpoint`), and one POST action, `checkPassphrase`
+(`admin-passphrase-login`). Writes, the guard on writes and the admin's read of a draft come with
+`apps-script-write-auth`.
 
 ## Transport
 
@@ -24,11 +25,15 @@ come with `apps-script-write-auth`.
   15 s, read 30 s and a whole-call 45 s. Any `IOException` (timeouts included) is `Offline`; a
   non-2xx status is `InvalidResponse`. Requests are `GET <url>?resource=<route>`, built with
   `HttpUrl.newBuilder()`, and the body is read as UTF-8.
-- **Method:** `GET`, with the route in the query: `<url>?resource=catalog`. Matching is exact and
-  case-sensitive.
+- **Method:** `GET` for reads, with the route in the query: `<url>?resource=catalog`. Matching is
+  exact and case-sensitive. `POST` for actions (see **POST actions**), with a JSON body and no
+  query. **A passphrase only ever travels in a POST body, never in a URL** (a URL ends up in logs
+  and histories).
 - **Redirect:** the web app answers with a `302` to a one-time URL on
   `script.googleusercontent.com`. The client must follow redirects. OkHttp does by default; `curl`
-  needs `-L`. (Google, "Content Service" guide, checked 1 October 2026.)
+  needs `-L`. (Google, "Content Service" guide, checked 1 October 2026.) After a POST, the `302`
+  is followed as a `GET` (OkHttp's default for a 302, and `curl -L -d` does the same), which is
+  what Apps Script expects; the body is not sent again and the passphrase is in no URL.
 - **Status:** `ContentService` cannot set an HTTP status, so **every response is HTTP 200, errors
   included**. The client decides by the body: an `error` key means failure. A non-JSON body (an
   HTML page from Google) is a transport failure, not a contract error.
@@ -98,7 +103,8 @@ Rules:
   `catalog-repository-cache`, which turns this response into `Song` (`sheet-schema.md`, **Mapper
   rules**).
 - `Config` is never opened and never returned, by this or any read route (the `jams` route
-  included: see **The draft rule**).
+  included: see **The draft rule**). Only the POST actions open it (`src/Post.js`), and none
+  returns its value.
 
 Samples, both produced by `buildCatalog` and asserted equal to its output by
 `backend/apps-script/test/catalog.test.js`:
@@ -221,6 +227,42 @@ dispatches on `jams` or `songs`, always enforces the draft rule (a `status` othe
 implies `setlist: null` and `setlistError: null`), and with `--strict` also rejects a `date`,
 `startTime` or `position` outside its format and any `setlistError`. `jams-edge.json` passes
 without `--strict` and fails with it, by design.
+
+## POST actions
+
+`POST <url>` with a JSON object body, `{"action": "<name>", …}`, content type
+`application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
+that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
+on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
+message ends `Known: checkPassphrase` (the list of the deployed `Post.gs`; a deploy check).
+
+### `checkPassphrase` (`admin-passphrase-login`)
+
+Request: `{"action":"checkPassphrase","passphrase":"…"}`. The client trims the passphrase before
+sending; the server compares it **exactly** (case-sensitive) with the trimmed `valor` of the
+`Config` row whose `clave` is `passphrase` (`sheet-schema.md`, read with `getDisplayValues`).
+
+| Case | Body |
+|---|---|
+| match | `{"schemaVersion":1,"ok":true}` |
+| body missing, not JSON, or not a JSON object | error `invalid_request` |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase`) |
+| `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
+| `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
+| any other exception | error `internal_error` |
+
+The stored value is read **before** comparing, so an unset passphrase rejects every attempt
+(fail closed) and a blank submission can never match a blank cell. No message ever contains the
+stored or the submitted value. There is no rate limit (`risks-and-open-questions.md`).
+`readPassphrase_(spreadsheet)` and `passphraseMatches_(spreadsheet, submitted)` are named for
+`apps-script-write-auth`, which adds write actions to `ACTIONS` and guards them with the same check.
+
+Client (`:core:data`, `admin/`): `DefaultAdminSession.logIn` POSTs through
+`AppsScriptPostTransport` (the same `OkHttpAppsScriptTransport` instance), decodes with
+`AppsScriptEnvelope.decodeOk` and maps: `ok` → store, `Success`; `invalid_passphrase` →
+`WrongPassphrase`; `Offline` → `Offline`; anything else (`NotConfigured`, `passphrase_not_set`,
+`unknown_action`, an HTML page from a deployment without `doPost`, any invalid answer) →
+`Unavailable`. Nothing is stored unless the server said `ok`.
 
 ## Quotas
 

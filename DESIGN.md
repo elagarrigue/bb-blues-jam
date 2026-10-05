@@ -411,9 +411,27 @@ row, tappable open slots for assignment, and a clear action on filled slots.
    guardadas.` No staleness notice, as in the song detail.
 6. **Info** — who organizes (Bahía Blanca Blues), what the jam is and that it is monthly, the
    Hideaway radio program, social links, how to join, and a discreet admin entry point. No venue:
-   it can change, so it belongs to each jam, shown in the next-jam header (D-19)
+   it can change, so it belongs to each jam, shown in the next-jam header (D-19). The admin line
+   as built (`admin-passphrase-login`, 5 October 2026), centred at the end, `caption` in
+   `textMuted`, each action a 48dp text target: logged out, `Entrar como admin` (opens the login);
+   logged in, `Modo admin activo` and under it `Salir del modo admin` (no confirmation). The line
+   swaps text in place; nothing else on Info moves.
 7. **Admin login** — a single passphrase field and a button; no registration, no recovery, no email;
-   error state included
+   error state included. As built (`admin-passphrase-login`, 5 October 2026): full screen over the
+   tabs (no bar), from Info. A back button (`Volver`, 48dp), the title `Entrar como admin` (`h1`, a
+   heading), then a Material 3 outlined field labelled `Frase de acceso` with explicit token colours
+   (`AdminLoginDefaults`: container `surface`, text and focused border and cursor `text`, label
+   `textMuted`, unfocused border `border`, error border and supporting text `error`; **no amber**),
+   masked by default, password keyboard, no autocorrect, `Done` submits, and a 48dp
+   `Mostrar`/`Ocultar` text toggle at its end (`caption`, `textMuted`). The error shows under the
+   field as supporting text, read politely: `La frase de acceso no es correcta.`,
+   `No hay conexión. Para entrar como admin necesitás internet.` or
+   `No se pudo verificar la frase de acceso. Probá de nuevo en un rato.`; typing clears it. Then the
+   full-width `Entrar` button (`button-primary`: `primaryAction`/`onPrimaryAction`, `rounded.md`,
+   at least 48dp), disabled (`surfaceRaised`/`textMuted`) while the field is blank, labelled
+   `Verificando…` (disabled) while the server is asked. The only amber on the screen is that
+   button. The content sits above the keyboard (`imePadding`). Success closes the screen back to
+   Info.
 8. **Assign musician to a slot** — bottom sheet; the instrument is already determined by the slot
    and shown as a header, with a name field suggesting musicians who have played before
 

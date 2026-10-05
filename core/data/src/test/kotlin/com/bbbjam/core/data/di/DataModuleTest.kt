@@ -5,12 +5,16 @@ import android.content.ContextWrapper
 import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Fixtures
+import com.bbbjam.core.data.admin.AdminSession
+import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRefreshOutcome
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.remote.AppsScriptPostTransport
+import com.bbbjam.core.data.remote.AppsScriptTransport
 import java.time.Clock
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
@@ -45,6 +49,13 @@ class DataModuleTest {
             assertSame(jams, app.koin.get<JamsRepository>())
             assertEquals(ZoneId.of("America/Argentina/Buenos_Aires"), app.koin.get<JamCalendar>().zone)
             assertEquals(JamsRefreshOutcome.Failed(DataFailure.NotConfigured), runBlocking { jams.refresh() })
+
+            // admin-passphrase-login: one session, and GET and POST share the one transport. Resolving
+            // it does not open the DataStore file (produceFile is lazy), which needs a real Context.
+            val session = app.koin.get<AdminSession>()
+            assertSame(session, app.koin.get<AdminSession>())
+            assertSame(app.koin.get<AppsScriptTransport>(), app.koin.get<AppsScriptPostTransport>())
+            assertEquals(LoginOutcome.WrongPassphrase, runBlocking { session.logIn("   ") })
         } finally {
             app.close()
             database.close()

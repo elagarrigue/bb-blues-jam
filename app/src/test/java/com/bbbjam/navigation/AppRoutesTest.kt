@@ -27,6 +27,7 @@ class AppRoutesTest {
         assertEquals("next-jam", AppRoutes.NEXT_JAM)
         assertEquals("past-jams", AppRoutes.PAST_JAMS)
         assertEquals("info", AppRoutes.INFO)
+        assertEquals("admin-login", AppRoutes.ADMIN_LOGIN)
         val routes = listOf(
             AppRoutes.TABS,
             AppRoutes.NEXT_JAM,
@@ -34,6 +35,7 @@ class AppRoutesTest {
             AppRoutes.INFO,
             AppRoutes.SONG_DETAIL,
             AppRoutes.PAST_JAM_DETAIL,
+            AppRoutes.ADMIN_LOGIN,
         )
         assertEquals(routes.size, routes.toSet().size)
     }

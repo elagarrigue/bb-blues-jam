@@ -12,6 +12,7 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.datastore.preferences)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     testImplementation(libs.okhttp.mockwebserver)

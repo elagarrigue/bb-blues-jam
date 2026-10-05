@@ -297,10 +297,12 @@ class ModuleIsolationTest {
         val VIEWMODEL_NAMES = setOf("ViewModel", "AndroidViewModel")
 
         /**
-         * HTTP, the Room cache and JSON belong to `:core:data`: Sheet I/O lives only in repositories
-         * (D-13), so no other module may import them.
+         * HTTP, the Room cache, JSON and DataStore (the admin passphrase, `admin-passphrase-login`
+         * A6) belong to `:core:data`: Sheet I/O and stored state live only in repositories (D-13),
+         * so no other module may import them.
          */
-        val DATA_LIBRARY_PREFIXES = listOf("okhttp3.", "androidx.room.", "kotlinx.serialization.")
+        val DATA_LIBRARY_PREFIXES =
+            listOf("okhttp3.", "androidx.room.", "kotlinx.serialization.", "androidx.datastore.")
 
         /**
          * A reference to a data library outside an import line, such as a fully qualified
@@ -309,10 +311,11 @@ class ModuleIsolationTest {
          *
          * Known limits: it is a line-based text match, so a qualified name split across lines at a
          * dot, or written with a backticked segment, is not caught. The compile classpath still
-         * blocks okhttp3, Room and serialization-json outside `:core:data`, but not
+         * blocks okhttp3, Room, serialization-json and DataStore outside `:core:data`, but not
          * serialization-core.
          */
-        val QUALIFIED_DATA_LIBRARY = Regex("""\b(okhttp3|androidx\.room|kotlinx\.serialization)\.""")
+        val QUALIFIED_DATA_LIBRARY =
+            Regex("""\b(okhttp3|androidx\.room|kotlinx\.serialization|androidx\.datastore)\.""")
 
         /**
          * Navigation Compose is `:app`'s (`song-detail-screen`, N1 and K2): features take callbacks
@@ -369,6 +372,8 @@ class ModuleIsolationTest {
             "feature/song-detail" to setOf("key"),
             // past-jam-detail: the key of each song as played that night (K3).
             "feature/past-jams" to setOf("key"),
+            // admin-passphrase-login (A6): the "Entrar" button of the admin login, `button-primary`.
+            "feature/info" to setOf("primaryAction", "onPrimaryAction"),
         )
 
         /**

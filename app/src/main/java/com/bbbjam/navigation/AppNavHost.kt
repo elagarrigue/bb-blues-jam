@@ -23,16 +23,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.info.AdminLoginScreen
 import com.bbbjam.feature.pastjams.PastJamDetailScreen
 import com.bbbjam.feature.songdetail.SongDetailScreen
 
 /**
  * The app's navigation (`song-detail-screen`, N1; reshaped by `bottom-navigation`): Navigation
- * Compose, only in `:app`. The outer host has three destinations: the tabs shell ([TabsShell], with
- * its own inner host and the bottom bar), the song detail and the past jam detail
- * (`past-jam-detail`), each full screen over it with no bar. A detail slides in from the end over
- * the tabs, which stay drawn under it, and slides out to the end on back (M1). System back pops the
- * detail; on the tabs it is the inner host's (see [TabsShell]).
+ * Compose, only in `:app`. The outer host has four destinations: the tabs shell ([TabsShell], with
+ * its own inner host and the bottom bar), the song detail, the past jam detail (`past-jam-detail`)
+ * and the admin login (`admin-passphrase-login`), each full screen over it with no bar. A detail
+ * slides in from the end over the tabs, which stay drawn under it, and slides out to the end on
+ * back (M1). System back pops the detail; on the tabs it is the inner host's (see [TabsShell]).
  */
 @Composable
 internal fun AppNavHost(modifier: Modifier = Modifier) {
@@ -59,6 +60,7 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
                 onOpenPastJam = { date ->
                     nav.navigate(AppRoutes.pastJamDetail(date)) { launchSingleTop = true }
                 },
+                onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
             )
         }
         composable(
@@ -94,6 +96,7 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
             }
         }
         pastJamDetail(nav)
+        adminLogin(nav)
     }
 }
 
@@ -124,6 +127,31 @@ private fun NavGraphBuilder.pastJamDetail(nav: NavHostController) {
                     contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                 )
             }
+        }
+    }
+}
+
+/**
+ * The admin login (`admin-passphrase-login`, A7), beside the details and drawn the same way: full
+ * screen over the tabs, the same slide and insets. Back pops only while the entry is resumed (a
+ * second tap during the pop must never pop the tabs). A successful login pops by route instead:
+ * it lands after a network round trip, possibly while the app is in the background, and popping
+ * the route is a no-op once it is gone, so a late or repeated call is harmless.
+ */
+private fun NavGraphBuilder.adminLogin(nav: NavHostController) {
+    composable(
+        AppRoutes.ADMIN_LOGIN,
+        enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
+    ) { entry ->
+        Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+            AdminLoginScreen(
+                onBack = {
+                    if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
+                },
+                onLoggedIn = { nav.popBackStack(AppRoutes.ADMIN_LOGIN, inclusive = true) },
+                contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            )
         }
     }
 }
