@@ -7,14 +7,14 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-five of 38 slices accepted, the latest `past-jam-detail` (5 October 2026).
-  `admin-passphrase-login` is **`in_progress`** (session 069): implemented and gate-green, `Post.js`
-  deployed by the user; only the device success path remains (the user types the real passphrase
-  once on the Pixel 5, A3). `enrichment-background-fetch` deferred by the user.
+  `admin-passphrase-login` is **`passing`** (session 069), awaiting the validator.
+  `enrichment-background-fetch` deferred by the user.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 069, `admin-passphrase-login`, `in_progress`) —
+- Last verified at: 5 October 2026 (session 069, `admin-passphrase-login`, `passing`, not yet
+  accepted) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 74 result files, 427 tests, 0 failures; Node 83/83. Before that, session 068
   (`past-jam-detail`, since accepted)
@@ -2677,8 +2677,9 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Goal: implement `admin-passphrase-login` (spec `docs/specs/admin-passphrase-login.md`, commit
   82322a5). User approvals A1–A7 answered with the recommended option. `past-jam-detail` accepted
   (navigation files re-read).
-- Status: **`in_progress`** — implemented, self-verified on the JVM, Node, live endpoint and device
-  except the success path, which needs the user to type the real passphrase once (A3).
+- Status: **`passing`** — implemented and self-verified (JVM, Node, live endpoint, device including
+  the success path after the user typed the real passphrase once, A3); not accepted. Awaiting the
+  validator.
 - Completed:
   - Backend: new `backend/apps-script/src/Post.js` (`doPost`, `handlePost`, `ACTIONS =
     { checkPassphrase }`, `readPassphrase_`, `passphraseMatches_`; fail closed: the stored value is
@@ -2762,14 +2763,23 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     again. `Mostrar` showed the test text, toggle `Ocultar`. `Volver` and system back return to Info
     with `Entrar como admin`. `files/datastore` never created. Crash buffer empty; logcat 0 hits for
     the test string or `passphrase`, no `FATAL`. Settings read back as before.
-- Not run: the success path, restart persistence and logout on the device (A3, the user's
-  passphrase); the `No se pudo verificar…` copy live (the user deployed before the device check; it
+  - Success path (A3): the user typed the real passphrase on the Pixel 5 and tapped `Entrar`; the
+    login closed to Info (the agent never saw, typed or printed it). Agent: Info shows
+    `Modo admin activo` and `Salir del modo admin`; `files/datastore/admin_session.preferences_pb`
+    exists (existence only, never read). `am force-stop` (no pid) + relaunch (cold start 1028 ms):
+    still `Modo admin activo`; the logout is a 132 px clickable node. `Salir del modo admin`:
+    `Entrar como admin` at once; the file stays but is 0 bytes (`stat` size only; DataStore writes an
+    empty preference set); after another force-stop + relaunch still `Entrar como admin`. Left
+    logged out. Crash buffer empty; logcat 9578 lines (since the session's clear, covering the
+    user's login), 0 matches for `passphrase` or the test string, no `FATAL` (counts only).
+    Settings read back unchanged.
+- Not run: the `No se pudo verificar…` copy live (the user deployed before the device check; it
   rests on `DefaultAdminSessionTest`'s HTML-page case and `AdminLoginPresenterTest`).
 - Known risk or unresolved issue: the user made a **new deployment** (new URL) instead of a new
   version; other installed builds keep the old URL. The outlined field's floating label sits on a
   `background`-coloured notch over the `surface` container (Material behaviour; cosmetic).
-- Next: the user types the real passphrase once on the Pixel 5; then the agent checks
-  `Modo admin activo`, force-stop + relaunch, `Salir del modo admin`, and sets `passing`.
+- Next: the validator for `admin-passphrase-login`. To be admin again on the Pixel 5, the user
+  types the passphrase once more (the device was left logged out).
 
 ## Notes For The Next Session
 
