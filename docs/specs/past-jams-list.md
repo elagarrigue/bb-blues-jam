@@ -296,3 +296,18 @@ The questions as asked:
 - **P1 — past drafts.** A past jam whose status is still `BORRADOR` is listed with the "no se
   publicó" line (C1). *Recommended:* list it — the jam happened and the Sheet says so; hiding it
   would make the archive silently incomplete. Alternative: omit past drafts from the list.
+
+## Implementation Findings
+
+Recorded by the implementer on 5 October 2026 (session 065). No scope change.
+
+- **`PastJamsDefaultsTest` does not compare with `colors.key`.** Konsist `amber-roles-allowlisted`
+  reads test sources too (`Konsist.scopeFromProject()`), so naming an amber role in a
+  `:feature:past-jams` test would need an allowlist entry, which this spec forbids. "Never amber" is
+  proven instead by "every row colour is `surface`, `textMuted` or `archive`" plus
+  `BluesJamColorsTest` in `:core:ui`, which fails if any of those three becomes amber. Failure
+  demonstration (3) still fails `PastJamsDefaultsTest`.
+- **`RowStyle` has a sixth colour, `message`** (`textMuted`), for the `NotShown` line, so the screen
+  reads every row colour from `PastJamsDefaults` as Technical Approach 5 requires.
+- **Konsist count is 17**, not 16: `navigation-only-in-app` came with `song-detail-screen` after
+  this spec was written. Unchanged by this slice.

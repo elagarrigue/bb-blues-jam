@@ -26,14 +26,16 @@ import androidx.compose.ui.semantics.Role
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.InfoScreen
 import com.bbbjam.feature.nextjam.NextJamScreen
+import com.bbbjam.feature.pastjams.PastJamsScreen
 import java.time.LocalDate
 
 /**
- * A plain two-tab switch, Próxima jam (first) and Info, until `bottom-navigation` replaces this file
- * with the real bar (three tabs with icons, the navigation library, per-tab state and the status-bar
- * scrim). Switching disposes the other screen, so its scroll position is lost; accepted until then.
- * No amber: the selected tab is `text`, the other `textMuted`. Since `song-detail-screen` it is one
- * destination of `AppNavHost`; [onOpenSong] opens a song's detail from Próxima jam.
+ * A plain three-tab switch, Próxima jam, Anteriores and Info (the order of DESIGN.md's bar; Anteriores
+ * since `past-jams-list`), until `bottom-navigation` replaces this file with the real bar (icons,
+ * per-tab routes and state, and the status-bar scrim). Switching disposes the other screens, so
+ * their scroll position is lost; accepted until then. No amber: the selected tab is `text`, the
+ * others `textMuted`. Since `song-detail-screen` it is one destination of `AppNavHost`;
+ * [onOpenSong] opens a song's detail from Próxima jam.
  */
 @Composable
 internal fun TemporaryTabs(onOpenSong: (jamDate: LocalDate, position: Int) -> Unit, modifier: Modifier = Modifier) {
@@ -43,6 +45,7 @@ internal fun TemporaryTabs(onOpenSong: (jamDate: LocalDate, position: Int) -> Un
         Box(modifier = Modifier.weight(1f)) {
             when (selected) {
                 Tab.NEXT_JAM -> NextJamScreen(contentPadding = screenPadding, onOpenSong = onOpenSong)
+                Tab.PAST_JAMS -> PastJamsScreen(contentPadding = screenPadding)
                 Tab.INFO -> InfoScreen(contentPadding = screenPadding)
             }
         }
@@ -74,9 +77,11 @@ internal fun TemporaryTabs(onOpenSong: (jamDate: LocalDate, position: Int) -> Un
 }
 
 private const val NEXT_JAM_LABEL = "Próxima jam"
+private const val PAST_JAMS_LABEL = "Anteriores"
 private const val INFO_LABEL = "Info"
 
 private enum class Tab(val label: String) {
     NEXT_JAM(NEXT_JAM_LABEL),
+    PAST_JAMS(PAST_JAMS_LABEL),
     INFO(INFO_LABEL),
 }

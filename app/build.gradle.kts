@@ -52,6 +52,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":feature:info"))
     implementation(project(":feature:next-jam"))
+    implementation(project(":feature:past-jams"))
     implementation(project(":feature:song-detail"))
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

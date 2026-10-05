@@ -21,14 +21,16 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here: `navigation/AppNavHost.kt` and the string routes in `navigation/AppRoutes.kt`, both internal), bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Until `bottom-navigation`, `TemporaryTabs.kt` (internal) switches between Próxima jam and Info as the `AppRoutes.TABS` destination; that slice deletes it. | everything |
+| `:app` | Navigation (Navigation Compose, only here: `navigation/AppNavHost.kt` and the string routes in `navigation/AppRoutes.kt`, both internal), bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Until `bottom-navigation`, `TemporaryTabs.kt` (internal) switches between Próxima jam, Anteriores and Info (a state switch, no route per tab) as the `AppRoutes.TABS` destination; that slice deletes it. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
 (set by `info-screen`), `:feature:next-jam` exists (set by `next-jam-read-only-list`; the first
-feature that reads data, depending on `:core:ui` and `:core:data`) and `:feature:song-detail`
-exists (set by `song-detail-screen`, same dependencies); the planned one is `:feature:past-jams`.
+feature that reads data, depending on `:core:ui` and `:core:data`), `:feature:song-detail`
+exists (set by `song-detail-screen`, same dependencies) and `:feature:past-jams` exists (set by
+`past-jams-list`, same dependencies; Anteriores, read-only, no amber allowlist entry; its row
+colours come only from `PastJamsDefaults`).
 
 **Admin is a state, not a module.** An admin is a musician with extra controls on the same screens
 (one app, not two). Each presenter reads the admin flag from `AdminSession` in `:core:data` and adds
@@ -53,7 +55,9 @@ is. There is no `:feature:admin`.
   `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
 - Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
   `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` and `:feature:song-detail`
-  may read `key` only. A
+  may read `key` only; `:feature:past-jams` has no entry and reads no amber role. The rule also
+  reads test sources, so a test in a module without an entry cannot name an amber role either
+  (`PastJamsDefaultsTest` proves "never amber" by allowed roles plus `BluesJamColorsTest`). A
   slice that adds an amber use (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds that
   role for its module in the same diff, so each amber use is a reviewed decision.
   Amber read **inside a `:core:ui` component** needs no allowlist entry: the instrument strip reads
@@ -63,8 +67,9 @@ is. There is no `:feature:admin`.
 - "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as
   `remember(snapshot) { calendar.today() }` so a header agrees with the repository's upcoming/past
   split. Never `LocalDate.now()` or the device zone.
-- Spanish day and month names → hand-written `when` tables in the feature's `<Name>Copy`, not
-  `DateTimeFormatter` with a `Locale`: desugared java.time on API 24–25 and the JVM may render
+- Spanish day and month names → `SpanishDateNames.day(...)`/`.month(...)` in `:core:ui`
+  (`com.bbbjam.core.ui.text`, moved there from `NextJamCopy` by `past-jams-list` because two
+  features write dates), hand-written `when` tables, not `DateTimeFormatter` with a `Locale`: desugared java.time on API 24–25 and the JVM may render
   locale text differently, and the copy must be identical on the device and in tests. Times are
   padded with `padStart`, not `String.format` (locale-sensitive).
 - A component used by two features → `:core:ui`. Never copy it between features.

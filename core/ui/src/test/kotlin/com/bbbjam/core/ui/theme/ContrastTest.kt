@@ -83,6 +83,10 @@ class ContrastTest {
     @Test
     fun `muted text on the notice`() = assertContrast(colors.textMuted, ListStateDefaults.noticeFill(), expected = 9.66)
 
+    /** A past jam's hook (the first titles, `body` size) on its row's fill (`past-jams-list`). */
+    @Test
+    fun `archive on a surface`() = assertContrast(colors.archive, colors.surface, expected = 5.39)
+
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {
         val lighter = maxOf(foreground.luminance(), background.luminance())
         val darker = minOf(foreground.luminance(), background.luminance())

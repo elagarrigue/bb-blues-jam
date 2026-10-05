@@ -1,5 +1,6 @@
 package com.bbbjam.feature.nextjam
 
+import com.bbbjam.core.ui.text.SpanishDateNames
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
@@ -25,8 +26,8 @@ internal fun timeRemaining(today: LocalDate, date: LocalDate, startTime: LocalTi
 
 /** "Sábado 31 de octubre · 21:00": day, date and start time, no year. */
 internal fun jamDateLabel(date: LocalDate, startTime: LocalTime): String {
-    val day = NextJamCopy.dayName(date.dayOfWeek)
-    val month = NextJamCopy.monthName(date.month)
+    val day = SpanishDateNames.day(date.dayOfWeek)
+    val month = SpanishDateNames.month(date.month)
     val time = "${startTime.hour.twoDigits()}:${startTime.minute.twoDigits()}"
     return "$day ${date.dayOfMonth} de $month · $time"
 }

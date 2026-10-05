@@ -1,0 +1,40 @@
+package com.bbbjam.feature.pastjams
+
+import com.bbbjam.core.ui.theme.BluesJamColors
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * The archive treatment (DESIGN.md "Past jams list"): muted roles only, never amber. "Never amber"
+ * is proven by the first test together with `BluesJamColorsTest` in `:core:ui`, which fails if
+ * `surface`, `textMuted` or `archive` ever becomes amber. This class cannot name an amber role to
+ * compare with: Konsist `amber-roles-allowlisted` reads test sources too, and this module has no
+ * allowlist entry, on purpose.
+ */
+class PastJamsDefaultsTest {
+    private val colors = BluesJamColors
+    private val style = PastJamsDefaults.rowStyle()
+    private val all = listOf(style.fill, style.date, style.venue, style.count, style.hook, style.message)
+
+    @Test
+    fun `every row colour is surface, muted text or archive`() {
+        val allowed = setOf(colors.surface, colors.textMuted, colors.archive)
+        all.forEach { color -> assertTrue("$color is not an archive role", color in allowed) }
+    }
+
+    @Test
+    fun `the roles are the specified ones`() {
+        assertEquals(
+            PastJamsDefaults.RowStyle(
+                fill = colors.surface,
+                date = colors.textMuted,
+                venue = colors.textMuted,
+                count = colors.textMuted,
+                hook = colors.archive,
+                message = colors.textMuted,
+            ),
+            style,
+        )
+    }
+}

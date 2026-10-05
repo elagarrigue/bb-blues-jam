@@ -347,7 +347,21 @@ row, tappable open slots for assignment, and a clear action on filled slots.
 3. **Song detail** — key displayed very large as the main element, and the full lineup grouped by
    instrument. No tags, tempo, difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first
-   few titles
+   few titles. As built (`past-jams-list`, 5 October 2026): the title `Jams anteriores` (`h1`,
+   `text`, a heading, drawn in every state), then one row per past jam, newest first, spaced `sm`.
+   A row is a `surface` card (`shapes.md`, padding `md` × `sm`): the date with the year
+   (`Sábado 25 de julio de 2026`, `songTitle`), then the venue (`body`, one line, ellipsis) with the
+   count at the end (`13 temas` / `1 tema`), then the hook — the first three titles in position
+   order, `, `-separated, then `y 10 más` when there are more (`body`, two lines, ellipsis). Archive
+   colours (`PastJamsDefaults`): date, venue and count `textMuted`, hook `archive` (5.39:1 on
+   `surface`). **No amber**: the list shows no keys. A past draft is listed with
+   `La lista de esta jam no se publicó.` instead of count and hook; an unreadable list says
+   `No se pudo leer la lista de esta jam.`, a list with no songs `Esta jam no tiene temas cargados.`
+   (never `0 temas`). Rows are one merged, non-clickable node each until `past-jam-detail` makes them
+   open the jam. States use the shared components: skeleton (`Cargando las jams anteriores`), error
+   `No pudimos cargar las jams anteriores`, empty `Todavía no hay jams anteriores` /
+   `Después de cada jam, su lista queda guardada acá para que veas qué se tocó.`, and the staleness
+   notice above the rows. Reached through the middle tab, `Anteriores`.
 5. **Past jam detail** — same structure, read-only, muted archive treatment, amber only on keys, no
    notion of open slots
 6. **Info** — who organizes (Bahía Blanca Blues), what the jam is and that it is monthly, the

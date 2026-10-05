@@ -7,12 +7,19 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-one of 38 slices accepted, the latest `debug-demo-upcoming-jam` (5 October
-  2026). Device checks now use the demo jam, never Sheet test data. Next: `past-jams-list`.
+  2026). `past-jams-list` is `passing` (session 065), awaiting the validator. Device checks use the
+  demo jam, never Sheet test data.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 064, `debug-demo-upcoming-jam`) — `CI=true ./init.sh`
+- Last verified at: 5 October 2026 (session 065, `past-jams-list`, not yet accepted) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`;
+  62 result files, 350 tests, 0 failures (the 57 previous files unchanged except `ContrastTest`
+  13 → 14, plus `SpanishDateNamesTest` 2, `PastJamsStatesTest` 12, `PastJamsPresenterTest` 5,
+  `PastJamsDefaultsTest` 2, `PastJamsModuleTest` 1). Pixel 5: Anteriores shows the 2026-07-25 row;
+  offline relaunch shows the staleness notice above it. Before that, session 064
+  (`debug-demo-upcoming-jam`) — `CI=true ./init.sh`
   exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`; 57 result files,
   327 tests, 0 failures (the 56 previous files plus `DemoUpcomingJamRepositoryTest` 6).
   `:app:assembleRelease` exit 0 with no demo class in the release dex. Pixel 5: the demo jam on
@@ -2279,6 +2286,87 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   there, use airplane mode + clear data.
 - Next: the validator for `debug-demo-upcoming-jam`, then `past-jams-list`.
 
+### Session 065 — 5 October 2026
+
+- Goal: implement `past-jams-list` (spec `docs/specs/past-jams-list.md`; user approvals C1 and P1
+  answered 4 October 2026). Sequencing met: `song-detail-screen` and `debug-demo-upcoming-jam`
+  accepted; the tabs are still `TemporaryTabs` inside the `tabs` destination, so Anteriores is a
+  third tab value there (no route, no navigation dependency in the feature).
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator.
+- Baseline: `CI=true ./init.sh` exit 0, three `wired`, before any change.
+- Completed:
+  - `:core:ui` `com.bbbjam.core.ui.text.SpanishDateNames` (`day`, `month`, the tables moved verbatim
+    from `NextJamCopy`) + `SpanishDateNamesTest` (7 days, 12 months). `JamDateText.jamDateLabel`
+    uses it; `NextJamCopy` lost both tables. `JamDateTextTest` unchanged and green (7/7).
+  - `ContrastTest`: `archive on a surface` = 5.39.
+  - New module `:feature:past-jams` (`com.bbbjam.feature.pastjams`; deps `:core:ui`, `:core:data`
+    only; own `.gitignore`; in `settings.gradle.kts`): `PastJamsCopy` (C1 and P1 strings,
+    `pastJamDateLabel`), `PastJamsUiModel` (`Loading`/`Failed`/`Empty`/`Jams`, all with `title`;
+    `PastJamRowUiModel`; `PastJamSummary.Songs`/`NotShown`), `PastJamsPresenter`
+    (`Presenter<PastJamsUiModel, Unit>`, retry-counter pattern) and the pure
+    `JamsSnapshot.toUiModel(now, onRetry)` (spec state table; `past.sortedByDescending { it.date }`;
+    upcoming never read), `PastJamsDefaults.rowStyle` (surface / textMuted / archive),
+    `PastJamsScreen` + `PastJamsContent` (LazyColumn: title heading, then the state; rows a merged,
+    non-clickable `Surface`), `PastJamsStatesPreview` (5 previews), `di/pastJamsModule` (factory).
+    Tests: `PastJamsStatesTest`, `PastJamsPresenterTest`, `PastJamsDefaultsTest`,
+    `PastJamsModuleTest`, own `FakeJamsRepository` copy.
+  - `:app`: `implementation(project(":feature:past-jams"))`, `pastJamsModule` in `startKoin`,
+    `TemporaryTabs` gains `Tab.PAST_JAMS` ("Anteriores") between Próxima jam and Info, with the
+    status-bar insets as `contentPadding`; KDoc now "three-tab switch".
+  - Docs: architecture `SKILL.md` (module list, `SpanishDateNames`, third temporary tab, the amber
+    rule reads tests), `DESIGN.md` (screen 4 as built), spec "Implementation Findings".
+- Deviations (recorded in the spec): `PastJamsDefaultsTest` does not compare with `colors.key`
+  because Konsist `amber-roles-allowlisted` scans test sources and this module has no allowlist
+  entry; "never amber" is proven by "only surface / textMuted / archive" plus `BluesJamColorsTest`.
+  `RowStyle` has a sixth colour, `message` (`textMuted`), for the `NotShown` line.
+- Verification run:
+  - `./gradlew ktlintFormat` exit 0 (twice).
+  - First `CI=true ./init.sh` failed on detekt `MaxLineLength` in the `TemporaryTabs` KDoc I had
+    edited; re-wrapped. Final `CI=true ./init.sh` exit 0; `konsist: wired`, `detekt: wired`,
+    `ktlint: wired`; Konsist 17/17; 62 result files, 350 tests, 0 failures. Lint
+    `:feature:past-jams` and `:core:ui` "No issues found"; `:app` 0 errors, 15 warnings (the same
+    version notices as session 064).
+  - Failure demonstrations, each restored and checked by SHA-1 (`PastJamsPresenter.kt`
+    `01fa7892c20ee5ab6b78acc368824d3309b912b3`, `PastJamsScreen.kt`
+    `567323120eb679e2d54a560e5d3f1d956cc5edaf`, `PastJamsDefaults.kt`
+    `22f8ac62aa75ab81ca2ef9ef882f18d69d1f5a13`):
+    (1) `past.map` without the sort → 20 run, 2 failed: `rows are newest first whatever the
+    repository order` ("expected:<[2026-07-25, 2026-06-27, 2026-05-30]> but
+    was:<[2026-05-30, 2026-07-25, 2026-06-27]>") and the presenter's out-of-order test;
+    (2) `BluesJamTheme.colors.key` for the title in `PastJamsScreen.kt` → Konsist "Assert
+    'amber-roles-allowlisted' was violated (1 time). Invalid files: PastJamsScreen.kt";
+    (3) `hook = colors.key` in `PastJamsDefaults` → 2 failed, "Color(1.0, 0.7019608, 0.0, …) is
+    not an archive role" and `the roles are the specified ones`;
+    (4) the `fetchedAt != null -> Empty` branch removed → 5 failed (every empty-state assertion got
+    `Loading`); (5) `Arrangement.spacedBy(4.dp)` in `PastJamsScreen.kt` → Konsist "Assert
+    'no-dp-literal-outside-core-ui' was violated (1 time)".
+  - Greps on `feature/past-jams/src/main`: no `n.dp`/`n.sp`, `Color(`, `MaterialTheme.`,
+    spinner, navigation import, other-feature import, `LocalDate.now` or tú form; `clickable` and
+    `published` appear only in KDoc. Build file: `:core:ui` and `:core:data` only.
+- Device (Pixel 5, serial 09281FDD4004U6). Before: airplane mode `0`;
+  `enabled_accessibility_services` `null`, `accessibility_enabled` `0`.
+  - `:app:installDebug`, cold start 839 ms; `jams cache: upcoming 2026-10-31, past 1, songs 26 (26
+    from catalog)`. Tab bar `Próxima jam`, `Anteriores`, `Info`. Anteriores: `Jams anteriores`, one
+    row `Sábado 25 de julio de 2026` / `La Macanuda` / `13 temas` / `Sweet Little Angel, Walking Thru
+    the Park, Dust My Broom y 10 más` (screenshot: muted colours, no amber). `uiautomator dump`: one
+    container View per row ([44,316][1036,631]) holding the four texts, every node
+    `clickable="false"`.
+  - Merged-node focus with TalkBack: **not verified**. I enabled TalkBack temporarily through
+    `settings`; it opened its tutorial over the app, so no focus check was possible. Restored at
+    once (`enabled_accessibility_services` deleted → `null`, `accessibility_enabled` `0`,
+    `dumpsys accessibility` "Enabled services:{}"), tutorial dismissed with Back. The merge is in
+    code (`semantics(mergeDescendants = true)`), not proven on the device.
+  - Airplane mode on, force-stop, relaunch, Anteriores (> 60 s after the online fetch): `jams
+    refresh: failed Offline`; screen shows `Sin conexión` / `Mostrando lo guardado hace 1 minuto.` /
+    `Reintentar` above the same row (screenshot). Airplane mode restored to `0`.
+  - Crash buffer empty, no `FATAL EXCEPTION`; `/sdcard/ui.xml` removed. Draft, unreadable, empty and
+    many-jam cases are covered on the JVM only (the live Sheet has one past jam; the demo was not
+    extended). `local.properties` never printed.
+- Known risk or unresolved issue: TalkBack reading of a row as one node is unverified on device
+  (above). Scroll position is lost on tab switches until `bottom-navigation` (spec risk). Two
+  presenters now collect `observeJams()`.
+- Next: the validator for `past-jams-list`.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`) and the seed is imported (user's report).
@@ -2291,3 +2379,9 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Capture course evidence as it appears rather than reconstructing it later: the Konsist output, the
   feature-module diff when the assistant lands, and a timed recording of the manual flow before the
   app replaces it.
+
+- **Orchestrator note:** the implementer briefly enabled TalkBack via adb, against a standing
+  constraint (no TalkBack via adb) that the orchestrator's prompt failed to restate. It opened its
+  tutorial; the implementer turned it off at once. Read back by the orchestrator: no accessibility
+  service enabled, `accessibility_enabled 0`, `touch_exploration_enabled 0`, airplane 0. Future
+  device prompts restate the constraint.

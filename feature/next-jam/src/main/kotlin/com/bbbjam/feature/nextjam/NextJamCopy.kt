@@ -1,15 +1,11 @@
 package com.bbbjam.feature.nextjam
 
-import java.time.DayOfWeek
-import java.time.Month
-
 /**
  * The Próxima jam copy, approved by the user on 2 October 2026 (`docs/specs/next-jam-read-only-list.md`,
  * C1). Rioplatense Spanish with vos (D-12). Kept in Kotlin, not string resources, as in `InfoCopy`.
  *
- * Day and month names are written out here instead of coming from `DateTimeFormatter` and a
- * `Locale`: desugared java.time on API 24–25 and the JVM may render locale text differently, and the
- * copy must be identical on the device and in tests (Decision 5).
+ * Day and month names come from `SpanishDateNames` in `:core:ui` (shared with Anteriores since
+ * `past-jams-list`), hand-written rather than from `DateTimeFormatter` and a `Locale` (Decision 5).
  */
 internal object NextJamCopy {
     const val TONIGHT = "Esta noche"
@@ -59,29 +55,4 @@ internal object NextJamCopy {
 
     /** What a screen reader says for the key: "Tonalidad Bm". */
     fun keyDescription(key: String): String = "Tonalidad $key"
-
-    fun dayName(day: DayOfWeek): String = when (day) {
-        DayOfWeek.MONDAY -> "Lunes"
-        DayOfWeek.TUESDAY -> "Martes"
-        DayOfWeek.WEDNESDAY -> "Miércoles"
-        DayOfWeek.THURSDAY -> "Jueves"
-        DayOfWeek.FRIDAY -> "Viernes"
-        DayOfWeek.SATURDAY -> "Sábado"
-        DayOfWeek.SUNDAY -> "Domingo"
-    }
-
-    fun monthName(month: Month): String = when (month) {
-        Month.JANUARY -> "enero"
-        Month.FEBRUARY -> "febrero"
-        Month.MARCH -> "marzo"
-        Month.APRIL -> "abril"
-        Month.MAY -> "mayo"
-        Month.JUNE -> "junio"
-        Month.JULY -> "julio"
-        Month.AUGUST -> "agosto"
-        Month.SEPTEMBER -> "septiembre"
-        Month.OCTOBER -> "octubre"
-        Month.NOVEMBER -> "noviembre"
-        Month.DECEMBER -> "diciembre"
-    }
 }
