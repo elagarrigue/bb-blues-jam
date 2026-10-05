@@ -293,6 +293,11 @@ settings, all recorded in `PROGRESS.md` and the feature's `evidence`.
 
 ## User Approvals
 
+Answered by the user on 5 October 2026 (recommended in both): **C1** copy approved as written;
+**V1** the `surface` card with the muted `EN PREPARACIÓN` badge, heading and message, no amber.
+
+The questions as asked:
+
 - **C1 — Draft copy.** Approve the three strings in the Copy table? *Recommended: approve as
   written.* Alternatives: keep only today's approved line (`La lista de temas se está armando.
   Cuando se publique, la vas a ver acá.`) as the message, under the new title and badge.

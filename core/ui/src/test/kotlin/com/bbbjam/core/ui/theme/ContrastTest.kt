@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import com.bbbjam.core.ui.filter.InstrumentFilterDefaults
+import com.bbbjam.core.ui.nav.TabBarDefaults
 import com.bbbjam.core.ui.state.ListStateDefaults
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
@@ -86,6 +87,13 @@ class ContrastTest {
     /** A past jam's hook (the first titles, `body` size) on its row's fill (`past-jams-list`). */
     @Test
     fun `archive on a surface`() = assertContrast(colors.archive, colors.surface, expected = 5.39)
+
+    /** The selected bottom-bar tab: icon and label in `text` on the `surfaceRaised` indicator (`bottom-navigation`). */
+    @Test
+    fun `text on a raised surface`() {
+        val bar = TabBarDefaults.colors()
+        assertContrast(bar.selectedContent, bar.indicator, expected = 0.0)
+    }
 
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {
         val lighter = maxOf(foreground.luminance(), background.luminance())

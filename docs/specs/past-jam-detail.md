@@ -300,6 +300,13 @@ and screenshots (if run), in `feature_list.json` and `PROGRESS.md`.
 
 ## User Approvals
 
+Answered by the user on 5 October 2026: **S1 expandable rows** (the alternative, not the
+recommendation): the spec must be revised before implementation, including the `:core:ui` panel
+variant without free-slot messages. **C1** copy approved as written. **D1** yes: debug-only demo past
+jam behind `bluesjam.demoPastJam`.
+
+The questions as asked:
+
 - **S1 — row structure.** *Recommended:* non-expandable rows (position, title, key, artist, strip
   with filled slots and `Otros`), no link to the song detail, and only `Songs` rows in Anteriores
   are tappable. Reason: the panel and the song detail always show "No quedan cupos libres." or the

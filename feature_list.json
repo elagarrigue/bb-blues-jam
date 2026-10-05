@@ -685,7 +685,7 @@
       "past-jams-list",
       "info-screen"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "Switching tabs preserves each tab's state",
       "Binding happens in :app with no feature-to-feature dependency",
