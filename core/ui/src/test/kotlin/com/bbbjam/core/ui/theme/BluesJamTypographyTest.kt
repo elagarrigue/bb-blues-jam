@@ -24,6 +24,14 @@ class BluesJamTypographyTest {
     }
 
     @Test
+    fun `keyDisplay is Barlow Condensed ExtraBold 96sp on a 96sp line`() {
+        val style = BluesJamTypography.keyDisplay
+        assertStyle("keyDisplay", style, BluesJamFonts.BarlowCondensed, 96.sp, FontWeight.ExtraBold)
+        assertEquals("keyDisplay line height", 96.sp, style.lineHeight)
+        assertEquals("read through the theme", style, BluesJamTheme.typography.keyDisplay)
+    }
+
+    @Test
     fun `every Material typography style uses a bundled family`() {
         val typography = BluesJamMaterial.typography
         val styles = typography.javaClass.methods

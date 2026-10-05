@@ -48,6 +48,17 @@ object BluesJamTypography {
         fontSize = 44.sp,
         lineHeight = 44.sp,
     )
+
+    /**
+     * The key as the main element of the song detail (`song-detail-screen`, K1): read from arm's
+     * length on stage, so it is the largest style. Used only by the detail; rows keep [key].
+     */
+    val keyDisplay: TextStyle = TextStyle(
+        fontFamily = BluesJamFonts.BarlowCondensed,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 96.sp,
+        lineHeight = 96.sp,
+    )
     val body: TextStyle = TextStyle(
         fontFamily = BluesJamFonts.Chivo,
         fontWeight = FontWeight.Normal,

@@ -44,6 +44,12 @@ internal object NextJamCopy {
     const val SHOW_SLOTS = "ver los cupos"
     const val HIDE_SLOTS = "ocultar los cupos"
 
+    /**
+     * The expanded row's entry to the song detail, approved on 4 October 2026
+     * (`docs/specs/song-detail-screen.md`, C1).
+     */
+    const val OPEN_DETAIL = "Ver detalle del tema"
+
     /** "En 29 días": always days, no weeks (exact and short). Only for two days or more. */
     fun inDays(days: Long): String = "En $days días"
 

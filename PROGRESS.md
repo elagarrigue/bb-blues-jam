@@ -7,11 +7,17 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: nineteen of 37 slices accepted, the latest `list-states` (session 062, validator
-  accept 4 October 2026). Next: `song-detail-screen` (spec in planning).
+  accept 4 October 2026). `song-detail-screen` is `passing` (session 063), awaiting the validator
+  and the device steps that need a temporary upcoming jam from the user.
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 4 October 2026 (session 062, `list-states`) — `CI=true ./init.sh` exit 0,
+- Last verified at: 4 October 2026 (session 063, `song-detail-screen`) — `CI=true ./init.sh` exit
+  0, `konsist: wired` (17/17, new `navigation-only-in-app`), `detekt: wired`, `ktlint: wired`; 56
+  result files, 321 tests, 0 failures. Navigation Compose 2.9.8 added to `:app` with no resolved
+  version moving. Pixel 5: the app starts on the NavHost's tabs destination, tabs and rotation
+  work, system back closes the app; opening the detail not yet checked (no upcoming jam in the
+  Sheet). Before that, session 062 (`list-states`) — `CI=true ./init.sh` exit 0,
   `konsist: wired` (16/16, new `no-dp-literal-outside-core-ui`), `detekt: wired`, `ktlint: wired`;
   49 result files, 290 tests, 0 failures. Pixel 5: offline first launch shows the error block,
   Retry online shows the skeleton then the no-upcoming block, offline with cache shows the
@@ -2114,6 +2120,85 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Known risk or unresolved issue: notice age frozen while the screen stays open; no TalkBack run;
   previews not rendered; catalog read flow still throws (no screen reads it).
 - Next: the validator for `list-states`.
+
+### Session 063 — 4 October 2026
+
+- Goal: implement `song-detail-screen` (spec `docs/specs/song-detail-screen.md` at commit
+  `72282d9`; User Approvals answered 4 October 2026: N1 Navigation Compose 2.9.8 in `:app` only,
+  K1 `keyDisplay` 96sp, G1 grouped by instrument, C1 copy as written, R1 string routes, K2 the
+  Konsist rule `navigation-only-in-app`, demonstrated failing first).
+- Status: **`passing`** — implemented and self-verified; not accepted. Awaiting the validator and
+  the device steps that need a temporary upcoming jam (listed below). The session resumed after a
+  rate-limit cut; the tree was clean at resume, so nothing from the cut attempt survived.
+- Completed:
+  - Catalog `navigationCompose = "2.9.8"` + `androidx-navigation-compose`, with the pin's reason;
+    `app/build.gradle.kts` declares it and `:feature:song-detail`; `settings.gradle.kts` includes
+    the module.
+  - `:core:ui`: `BluesJamTypography.keyDisplay` (Barlow Condensed ExtraBold 96/96sp);
+    `com.bbbjam.core.ui.nav` (`BackButton`, `BackUiModel` + `Event.Back`, `backUiModel(onBack)`,
+    internal `NavCopy.BACK = "Volver"`); `com.bbbjam.core.ui.lineup` `InstrumentGroups`,
+    `InstrumentGroupsUiModel`/`InstrumentGroupUiModel`, `Lineup.toInstrumentGroups(extras)`;
+    `LineupPanel.kt`'s `Line` internal with `showInstrument`, its instrument text ellipsized and
+    bounded by `LineupPanelDefaults.INSTRUMENT_MAX_WIDTH` (160dp; the song-row-expansion
+    validation note); the panel's note/hint and line builders shared as internal functions.
+  - `:feature:song-detail` (new): `SongDetailPresenter` (`Params(jamDate, position, onBack)`,
+    `onBack` through `rememberUpdatedState`), pure `JamsSnapshot.toSongDetail`, `SongDetailUiModel`
+    (`Loading`, `NotFound`, `Song` with exactly title, artist?, keyLabel, key, keyDescription,
+    lineup, back), `SongDetailScreen` + `SongDetailContent` and three previews, `SongDetailCopy`,
+    `SongDetailDefaults`, `songDetailModule`; own `FakeJamsRepository` and fixtures.
+  - `:feature:next-jam`: `SongRowUiModel.detailLabel` + `Event.OpenDetail`;
+    `NextJamPresenter.Params(onOpenSong)` read through `rememberUpdatedState`; `toUiModel(…,
+    onOpenSong)`; the expanded row draws "Ver detalle del tema" under the panel (underlined `text`,
+    48dp, `Role.Button`); `NextJamScreen(onOpenSong = …)`; `NextJamCopy.OPEN_DETAIL`.
+  - `:app`: `navigation/AppRoutes.kt` (`TABS`, `SONG_DETAIL = "song/{jamDate}/{position}"`,
+    `songDetail`, `parseSongDetail`), `navigation/AppNavHost.kt` (two destinations, no
+    transitions, the double-tap guard on `RESUMED`, defensive pop on bad arguments),
+    `MainActivity` sets `AppNavHost()`, `TemporaryTabs(onOpenSong)`, `songDetailModule` in
+    `startKoin`; `AppRoutesTest`.
+  - `:konsist-test`: `navigation-only-in-app` (17th rule); `AMBER_ROLE_ALLOWLIST`
+    `feature/song-detail -> {key}`.
+  - Docs: `DESIGN.md` (`keyDisplay` in the front matter and Typography, the row's detail action,
+    the panel's width bound, a "Song detail" section with the G1 exception); architecture
+    `SKILL.md` (module table and feature list, the fifth `:core:ui` example, navigation callbacks in
+    `Params`, the navigation pin, the 17th rule, the allowlist, "Still Open" resolved for the
+    library, deeplink scheme still open); `docs/technical-discovery.md` (stack);
+    `docs/risks-and-open-questions.md` (song detail risks). Not the bitácora (orchestrator).
+- Deviations from the spec body: the dependency check ran right after adding the catalog entry and
+  the `:app` line (before any other code, as the orchestrator asked), and again after wiring the
+  feature; the shared back copy is reached through a public `backUiModel(onBack)` mapper, because
+  `NavCopy` is internal to `:core:ui` (the `listError` pattern); `SongDetailDefaults` also exposes
+  `keyColor(colors)` and `otherStyles`; the spec's "coroutines 1.10.2" is the test pin — the
+  runtime classpath resolves 1.9.0 before and after; `AppRoutes.parseSongDetail` delegates the date
+  parse to a private helper (detekt `ReturnCount`).
+- Verification run:
+  - Dependency check (reports in the feature's evidence): only `androidx.navigation` 2.9.8 and
+    `lifecycle-viewmodel-compose` 2.9.3 added on both runtime classpaths; stdlib 2.2.10, Compose
+    1.9.1, material3 1.3.2, activity-compose 1.11.0, serialization-core 1.9.0, lifecycle 2.9.3
+    unchanged; nothing removed or moved.
+  - `./gradlew ktlintFormat` exit 0. Gate runs: exit 1 (detekt `ReturnCount`, fixed), exit 1
+    (Konsist 15/17 with "rootDir must be verified to be directory beforehand", passed alone and on
+    the next run; recorded as a risk), then exit 0 with konsist/detekt/ktlint `wired`, Konsist
+    17/17, 56 files, 321 tests, 0 failures.
+  - Demonstrations 1–8 each failed as expected and were restored by SHA-1 (messages in the
+    feature's evidence); K2's first demonstration also caught a real `96.sp` in a test.
+  - Greps: no navigation outside `:app`; no serialization, `viewModel(` or `deepLinks` in `:app`;
+    no D-20 words, dp/sp literals, `MaterialTheme.`, link intents or tú forms in the new feature.
+  - Lint: `:app` 15 warnings (14 + the navigation 2.10.2 notice for the deliberate pin).
+  - Pixel 5: install, start on the tabs destination, Info and back, rotation on Info, system back
+    closes the app; rotation restored to `1`/`0`; empty crash buffer.
+- Device steps NOT done (need a temporary upcoming jam in the Sheet from the user; no agent writes
+  it): A. the user adds a temporary upcoming jam tab and `Jams` row; B. fills a few slots and an
+  `Otros`. Then: scroll a little, select a filter, expand a row, tap `Ver detalle del tema` → detail
+  full screen, no tab bar; key bounds the tallest text; back button ≥ 48dp, description `Volver`;
+  one node "Tonalidad X". Back button → list with the same filter, expansion and scroll offset.
+  Open again, system back → the same. Open, double-tap the back button fast → list, not blank.
+  Open, rotate → same song; back → list restored. Largest font size: the key fits on one line.
+  D. the user deletes the temporary jam; a relaunch logs `upcoming none`. Crash buffer empty.
+- Known risk or unresolved issue: no staleness notice on the detail; NavHost behaviour only
+  device-checked; previews compile but are not rendered; the one-off Konsist scan error above.
+- Next: the device steps with the user's temporary jam, then the validator for
+  `song-detail-screen`. Note for `bottom-navigation` (orchestrator to record): the library is
+  chosen; that slice replaces the `TABS` destination with per-tab routes.
 
 ## Notes For The Next Session
 

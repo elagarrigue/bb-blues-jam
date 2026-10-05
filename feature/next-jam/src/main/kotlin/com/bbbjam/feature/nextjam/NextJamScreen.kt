@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.model.ExtraParticipant
@@ -44,6 +47,7 @@ import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.strip.InstrumentStrip
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import java.time.LocalDate
 import org.koin.compose.koinInject
 
 /**
@@ -51,17 +55,21 @@ import org.koin.compose.koinInject
  * title, key in the amber `key` role) with the instrument strip under each; tapping a row's header
  * expands it in place to the artist and the lineup panel. Under the header, the instrument filter
  * bar narrows the rows to songs with an open slot for the selected instruments. Loading, error,
- * empty and offline are drawn with the `:core:ui` state components (`list-states`). It renders
- * [NextJamUiModel] and forwards events; the presenter decides. [contentPadding] goes inside the
- * list, so the background runs edge to edge.
+ * empty and offline are drawn with the `:core:ui` state components (`list-states`). An expanded
+ * row offers "Ver detalle del tema", which calls [onOpenSong] with the jam's date and the song's
+ * position (`song-detail-screen`); `:app` binds it to navigation. It renders [NextJamUiModel] and
+ * forwards events; the presenter decides. [contentPadding] goes inside the list, so the background
+ * runs edge to edge.
  */
 @Composable
 fun NextJamScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
     presenter: NextJamPresenter = koinInject(),
 ) {
-    NextJamContent(model = presenter.present(Unit), modifier = modifier, contentPadding = contentPadding)
+    val model = presenter.present(NextJamPresenter.Params(onOpenSong))
+    NextJamContent(model = model, modifier = modifier, contentPadding = contentPadding)
 }
 
 @Composable
@@ -172,10 +180,35 @@ private fun SongRow(row: SongRowUiModel) {
             if (row.isExpanded) {
                 LineupPanel(
                     model = row.lineup,
-                    modifier = Modifier.padding(start = spacing.md, end = spacing.md, bottom = spacing.md),
+                    modifier = Modifier.padding(start = spacing.md, end = spacing.md),
                 )
+                OpenDetailAction(row)
             }
         }
+    }
+}
+
+/**
+ * The expanded row's entry to the song detail: a full-width text action, underlined like the other
+ * secondary text actions, `text` and never amber, at least 48dp tall. Drawn only while expanded.
+ */
+@Composable
+private fun OpenDetailAction(row: SongRowUiModel) {
+    val spacing = BluesJamTheme.spacing
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clickable(role = Role.Button) { row.events(SongRowUiModel.Event.OpenDetail) }
+            .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = row.detailLabel,
+            style = BluesJamTheme.typography.body,
+            color = BluesJamTheme.colors.text,
+            textDecoration = TextDecoration.Underline,
+        )
     }
 }
 
@@ -253,6 +286,7 @@ private fun previewRow(
     stateDescription = if (isExpanded) NextJamCopy.ROW_EXPANDED else NextJamCopy.ROW_COLLAPSED,
     toggleLabel = if (isExpanded) NextJamCopy.HIDE_SLOTS else NextJamCopy.SHOW_SLOTS,
     lineup = lineup.toLineupPanel(extras),
+    detailLabel = NextJamCopy.OPEN_DETAIL,
     events = EventHandler {},
 )
 

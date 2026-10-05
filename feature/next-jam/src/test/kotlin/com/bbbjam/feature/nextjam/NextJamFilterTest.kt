@@ -113,7 +113,7 @@ class NextJamFilterTest {
 
     @Test
     fun `the bar counts each instrument, Todos is checked and every row shows`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val first = start()
             assertEquals(bar(7, filterCounts), first.bar())
             assertEquals((1..7).toList(), first.positions())
@@ -130,7 +130,7 @@ class NextJamFilterTest {
             Triple("Armónica", listOf(4), "1 de 7 temas con cupo libre para armónica"),
             Triple("Teclados", listOf(1), "1 de 7 temas con cupo libre para teclados"),
         )
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             var model = start()
             expected.forEach { (label, positions, summary) ->
                 model.tap(label)
@@ -151,7 +151,7 @@ class NextJamFilterTest {
 
     @Test
     fun `instruments add up with OR, the line joins them with o, and Todos clears`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             start().tap("Bajo")
             val bass = awaitItem()
             assertEquals(listOf(2, 3), bass.positions())
@@ -184,7 +184,7 @@ class NextJamFilterTest {
 
     @Test
     fun `an extra never counts and an all-filled song shows only under Todos`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val first = start()
             // Song 5 (every slot filled) is listed under Todos.
             assertEquals(true, 5 in first.positions())
@@ -209,7 +209,7 @@ class NextJamFilterTest {
         // Songs 1, 2, 3, 5 and 7: armónica and batería are open nowhere.
         val songs = filterSongs.filterIndexed { index, _ -> index in listOf(0, 1, 2, 4, 6) }
         val counts = listOf(2, 2, 0, 1, 0, 1)
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val first = start(songs)
             assertEquals("0", first.bar().chips[5].count)
 
@@ -240,7 +240,7 @@ class NextJamFilterTest {
 
     @Test
     fun `tapping Todos with nothing selected changes nothing`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val first = start()
             first.tap("Todos")
             expectNoEvents()
@@ -254,7 +254,7 @@ class NextJamFilterTest {
 
     @Test
     fun `filtering keeps every row's expansion, shown or hidden`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             start().toggle(3)
             awaitItem().toggle(1)
             val expanded = awaitItem()
@@ -273,7 +273,7 @@ class NextJamFilterTest {
 
     @Test
     fun `the selection survives a refresh and a new upcoming jam`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             start().tap("Bajo")
             assertEquals(listOf(2, 3), awaitItem().positions())
 
@@ -298,7 +298,7 @@ class NextJamFilterTest {
 
     @Test
     fun `an earlier model's chip handler still writes through the current selection`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(Unit) }.test {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val stale = start()
             repository.snapshots.emit(snapshot(jam(Setlist.Available(filterSongs.take(6)))))
             assertEquals((1..6).toList(), awaitItem().positions())

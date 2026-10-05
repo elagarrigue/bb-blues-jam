@@ -21,14 +21,14 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation, bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Until `bottom-navigation`, `TemporaryTabs.kt` (internal) switches between Próxima jam and Info; that slice deletes it. | everything |
+| `:app` | Navigation (Navigation Compose, only here: `navigation/AppNavHost.kt` and the string routes in `navigation/AppRoutes.kt`, both internal), bottom bar, `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Until `bottom-navigation`, `TemporaryTabs.kt` (internal) switches between Próxima jam and Info as the `AppRoutes.TABS` destination; that slice deletes it. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
-(set by `info-screen`) and `:feature:next-jam` exists (set by `next-jam-read-only-list`; the first
-feature that reads data, depending on `:core:ui` and `:core:data`); the planned ones are
-`:feature:song-detail` and `:feature:past-jams`.
+(set by `info-screen`), `:feature:next-jam` exists (set by `next-jam-read-only-list`; the first
+feature that reads data, depending on `:core:ui` and `:core:data`) and `:feature:song-detail`
+exists (set by `song-detail-screen`, same dependencies); the planned one is `:feature:past-jams`.
 
 **Admin is a state, not a module.** An admin is a musician with extra controls on the same screens
 (one app, not two). Each presenter reads the admin flag from `AdminSession` in `:core:data` and adds
@@ -52,7 +52,8 @@ is. There is no `:feature:admin`.
   colors). A component slice that uses a Material 3 component sets its colors explicitly from
   `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
 - Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
-  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` may read `key` only. A
+  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` and `:feature:song-detail`
+  may read `key` only. A
   slice that adds an amber use (`slotOpen`, `activeFilter`, `published`, `primaryAction`) adds that
   role for its module in the same diff, so each amber use is a reviewed decision.
   Amber read **inside a `:core:ui` component** needs no allowlist entry: the instrument strip reads
@@ -101,6 +102,21 @@ is. There is no `:feature:admin`.
   `rememberCoroutineScope()`, ignoring the outcome, which comes back through `Freshness`. The counter
   is created once, so an earlier model's handler still works. The staleness notice is drawn only
   when `fetchedAt != null && lastFailure != null`, never on age alone.
+- The song detail is the fifth example (`song-detail-screen`): `com.bbbjam.core.ui.lineup` adds
+  `InstrumentGroups(model)`, `InstrumentGroupsUiModel`/`InstrumentGroupUiModel` and the pure mapper
+  `Lineup.toInstrumentGroups(extras)` (groups in first-appearance order, open before filled inside a
+  group, extras never merged), reusing the panel's internal `Line` (now with a `showInstrument` flag
+  and an ellipsis bounded by `LineupPanelDefaults.INSTRUMENT_MAX_WIDTH`). `com.bbbjam.core.ui.nav`
+  holds `BackButton(model)`, `BackUiModel` (`Event.Back`), the mapper `backUiModel(onBack)` and
+  internal `NavCopy`; `nav` names the back control, not the library, and nothing in `:core:ui`
+  imports navigation. `BluesJamTypography.keyDisplay` (96sp) is used only by the detail.
+- **Navigation callbacks in presenter `Params`** (`song-detail-screen`): a screen takes plain
+  callbacks (`onOpenSong(jamDate, position)`, `onBack`) and passes them to its presenter's `Params`
+  (`NextJamPresenter.Params`, `SongDetailPresenter.Params`). The presenter reads each through
+  `val current by rememberUpdatedState(params.callback)` and builds handlers that call `current`, so
+  an earlier model's handler (Compose may keep it, handlers compare equal) still calls the current
+  callback. `:app` binds the callbacks to `NavController` calls; routes are built and parsed only in
+  `AppRoutes`. Features never import `androidx.navigation` (Konsist `navigation-only-in-app`).
 - Per-row UI state of a list (which rows are expanded) → **one state object in the parent
   presenter**, keyed by a stable id, passed into the pure mapping; not a child presenter called in a
   loop. A `remember` inside a child presenter called in `map {}` is keyed by call order, so removing
@@ -157,17 +173,20 @@ matches, so an import alias of `MaterialTheme`, `with(MaterialTheme) { … }` or
 colors object (`val c = BluesJamTheme.colors; c.key`) escapes; a Material component left on its
 default colors (amber `primary`) escapes; and the rule cannot judge whether an allowed role is
 drawn on the right element. `no-dp-literal-outside-core-ui` (`list-states`, K1) is the same
-shape for sizes: outside `:core:ui` and `:konsist-test`, no `<number>.dp`, `.sp`, `.em` (also
+shape for sizes (it also reads test sources, so a test compares `fontSize.value`, not `96.sp`): outside `:core:ui` and `:konsist-test`, no `<number>.dp`, `.sp`, `.em` (also
 `0.5f.dp`) and no `Dp(<number>`; known limits: a text match, so `n.dp` on a variable or a
 constant escapes, and literals inside `:core:ui` components are not checked. All of them live in
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 16 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 17 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
 `jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
 `amber-roles-allowlisted`, with `next-jam-read-only-list`; the 16th,
-`no-dp-literal-outside-core-ui`, with `list-states`); the two that read build files are
+`no-dp-literal-outside-core-ui`, with `list-states`; the 17th, `navigation-only-in-app` (outside
+`:app` and `:konsist-test`, no import of `androidx.navigation.`; an import text match, a fully
+qualified use escapes but would not compile, because only `:app` declares the library), with
+`song-detail-screen`); the two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
@@ -327,6 +346,15 @@ them.
   `:app`'s runtime classpath: OkHttp 5.2+ needs stdlib 2.2.20+, serialization 1.10 needs 2.3.0
   (the Koin 4.2 trap again). KSP 2.2.10-2.0.2 fails under built-in Kotlin ("Using
   kotlin.sourceSets DSL to add Kotlin sources is not allowed"). Upgrade them with Kotlin.
+- **Navigation pin** (`song-detail-screen`, N1): Navigation Compose 2.9.8 (catalog
+  `androidx-navigation-compose`), declared in `app/build.gradle.kts` only, never in a convention or
+  another module. The last 2.9.x; it resolves with no version moving up (stdlib 2.2.10, Compose
+  1.9.1, activity-compose 1.11.0, serialization 1.9.0, lifecycle 2.9.3), adding only
+  `androidx.navigation` and `lifecycle-viewmodel-compose` 2.9.3. 2.10.x raises Compose to 1.10 and
+  activity-compose to 1.13 (the Koin 4.2 trap again). It brings ViewModel artifacts transitively;
+  that does not relax D-02 (no `viewModel()`, no `hiltViewModel`). Routes are strings (R1): typed
+  routes would need the serialization plugin in `:app` and break the data-library rules. Upgrade it
+  with Kotlin, the BOM and Koin.
 - **No Compose UI test harness** (`song-row-expansion`, T1 declined by the user on 3 October 2026):
   no Robolectric, `ui-test-junit4` or `ui-test-manifest`. Put everything a test must check into the
   `UiModel` (copy, state descriptions, order, kinds) and test it on the JVM; keep the visual rules
@@ -423,4 +451,8 @@ Then include the module in `settings.gradle.kts` and add its Koin module to `sta
 
 ## Still Open
 
-- Navigation library and the deeplink scheme: decided by `bottom-navigation`, recorded here.
+- Navigation library: **resolved** by `song-detail-screen` (N1, 4 October 2026): Navigation Compose
+  2.9.8 in `:app` only, string routes in `AppRoutes` (R1). `bottom-navigation` adds the tab
+  destinations, replaces `TemporaryTabs` with per-tab routes (`saveState`/`restoreState`), keeps
+  `AppRoutes.SONG_DETAIL` above the tabs, and owns transitions.
+- Deeplink scheme: still open (no destination declares `deepLinks`, no manifest intent filter).

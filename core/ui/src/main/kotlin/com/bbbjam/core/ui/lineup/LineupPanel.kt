@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -73,8 +74,14 @@ private fun Caption(text: String) {
     Text(text = text, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
 }
 
+/**
+ * One compact line: glyph, instrument and detail, one screen-reader node with the line's
+ * description. [showInstrument] is false where a heading already names the instrument (the song
+ * detail's groups). The instrument text is cut with "…" at [LineupPanelDefaults.INSTRUMENT_MAX_WIDTH],
+ * so a long free-text extra instrument never squeezes the name.
+ */
 @Composable
-private fun Line(line: LineupLineUiModel) {
+internal fun Line(line: LineupLineUiModel, showInstrument: Boolean = true) {
     val spacing = BluesJamTheme.spacing
     val textStyle = BluesJamTheme.typography.body
     val style = LineupPanelDefaults.style(line.kind)
@@ -88,7 +95,16 @@ private fun Line(line: LineupLineUiModel) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LineGlyph(style)
-        Text(text = line.instrument, style = textStyle, color = style.textColor, maxLines = 1)
+        if (showInstrument) {
+            Text(
+                text = line.instrument,
+                style = textStyle,
+                color = style.textColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = LineupPanelDefaults.INSTRUMENT_MAX_WIDTH),
+            )
+        }
         Text(
             text = line.detail,
             style = textStyle,
@@ -146,6 +162,13 @@ private fun MixedWithExtraPreview() = PanelPreview(
         ),
     ),
     extras = listOf(ExtraParticipant("Juan", "saxo")),
+)
+
+@Preview
+@Composable
+private fun LongExtraInstrumentPreview() = PanelPreview(
+    Lineup(listOf(Slot(Instrument.GUITAR, "Tincho"))),
+    extras = listOf(ExtraParticipant("Juan", "saxofón barítono con pedal de octavador y wah")),
 )
 
 @Preview

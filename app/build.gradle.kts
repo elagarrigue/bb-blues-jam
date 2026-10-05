@@ -44,10 +44,14 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":feature:info"))
     implementation(project(":feature:next-jam"))
+    implementation(project(":feature:song-detail"))
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    // Navigation Compose lives only in :app (D-03, Konsist navigation-only-in-app): features take
+    // callbacks and plain values, never a NavController.
+    implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)

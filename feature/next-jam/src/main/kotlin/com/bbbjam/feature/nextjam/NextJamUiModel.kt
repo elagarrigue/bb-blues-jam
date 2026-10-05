@@ -65,7 +65,8 @@ sealed interface SetlistUiModel : UiModel {
  * collapsed. When [isExpanded], the row shows [artist] and [lineup] (open slots first) instead.
  * [stateDescription] ("expandido"/"contraído") and [toggleLabel] ("ocultar los cupos"/"ver los
  * cupos") are the header's state and action for screen readers. [lineup] is built for every row,
- * so the whole setlist is data whether or not it is drawn.
+ * so the whole setlist is data whether or not it is drawn. [detailLabel] ("Ver detalle del tema")
+ * is the expanded row's action that opens the song detail (`song-detail-screen`).
  */
 data class SongRowUiModel(
     val position: Int,
@@ -79,10 +80,14 @@ data class SongRowUiModel(
     val stateDescription: String,
     val toggleLabel: String,
     val lineup: LineupPanelUiModel,
+    val detailLabel: String,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
         /** Expand a collapsed row or collapse an expanded one; other rows keep their state. */
         data object ToggleExpanded : Event
+
+        /** Open this song's detail. Navigation only, never a write. */
+        data object OpenDetail : Event
     }
 }

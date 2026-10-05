@@ -26,21 +26,23 @@ import androidx.compose.ui.semantics.Role
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.InfoScreen
 import com.bbbjam.feature.nextjam.NextJamScreen
+import java.time.LocalDate
 
 /**
  * A plain two-tab switch, Próxima jam (first) and Info, until `bottom-navigation` replaces this file
  * with the real bar (three tabs with icons, the navigation library, per-tab state and the status-bar
  * scrim). Switching disposes the other screen, so its scroll position is lost; accepted until then.
- * No amber: the selected tab is `text`, the other `textMuted`.
+ * No amber: the selected tab is `text`, the other `textMuted`. Since `song-detail-screen` it is one
+ * destination of `AppNavHost`; [onOpenSong] opens a song's detail from Próxima jam.
  */
 @Composable
-internal fun TemporaryTabs(modifier: Modifier = Modifier) {
+internal fun TemporaryTabs(onOpenSong: (jamDate: LocalDate, position: Int) -> Unit, modifier: Modifier = Modifier) {
     var selected by rememberSaveable { mutableStateOf(Tab.NEXT_JAM) }
     val screenPadding = WindowInsets.statusBars.asPaddingValues()
     Column(modifier = modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
         Box(modifier = Modifier.weight(1f)) {
             when (selected) {
-                Tab.NEXT_JAM -> NextJamScreen(contentPadding = screenPadding)
+                Tab.NEXT_JAM -> NextJamScreen(contentPadding = screenPadding, onOpenSong = onOpenSong)
                 Tab.INFO -> InfoScreen(contentPadding = screenPadding)
             }
         }

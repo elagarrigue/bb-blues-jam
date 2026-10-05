@@ -103,6 +103,26 @@ run, T1 declined): the error block's and notice's TalkBack wording and the `Actu
 region; on the Pixel 5, `Actualizando…` was too brief to capture offline (the refresh fails at
 once).
 
+### Song detail (`song-detail-screen`, 4 October 2026)
+
+Settled with the user before implementation: Navigation Compose now (N1, 2.9.8 in `:app` only),
+`keyDisplay` 96sp (K1), grouped by instrument (G1), the copy (C1), string routes (R1) and the
+Konsist rule `navigation-only-in-app` (K2).
+
+Risks, not solved: the detail draws **no staleness notice**, so a musician who opens it offline
+sees no age (the list did); the NavHost's behaviour (back stack, state restored on return, the
+double-tap guard, rotation, process death) has **no JVM test** (no Robolectric, T1 declined) and is
+checked only on the device, and the user-flow steps on the device need a temporary upcoming jam in
+the Sheet; a typo in a route argument name inside `AppNavHost` is a runtime error that only
+`AppRoutesTest` and the device would catch (R1's cost); the previews (`SongDetailScreen.kt`,
+`InstrumentGroups.kt`, `BackButton.kt`) compile in the gate but are not rendered by it; 2.9.8 ends
+the 2.9 line, so staying on the pinned BOM blocks navigation fixes; switching to Info still loses
+Próxima jam's state (the two temporary tabs are one destination until `bottom-navigation`); a 96sp
+key at 200% font scale is assumed to fit 360dp (three condensed characters at most), not yet seen.
+Observed once: a gate run failed 15 of the 17 Konsist tests with
+`AssertionError: rootDir must be verified to be directory beforehand` (Konsist's project scan); the
+suite passed alone and on the next full gate run. Not reproduced; recorded in case it recurs.
+
 ## Implementation-Time Questions
 
 - **Offline mutations.** Reads are cached, but what happens when an admin edits with no connection?

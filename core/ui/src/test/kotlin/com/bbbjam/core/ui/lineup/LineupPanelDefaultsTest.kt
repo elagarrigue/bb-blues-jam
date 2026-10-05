@@ -1,6 +1,7 @@
 package com.bbbjam.core.ui.lineup
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults.Glyph
 import com.bbbjam.core.ui.theme.BluesJamColors
@@ -41,5 +42,10 @@ class LineupPanelDefaultsTest {
         val detail = LineupPanelDefaults.detailColor(InstrumentChipKind.EXTRA)
         assertNotEquals(colors.slotOpen, detail)
         assertEquals(colors.textMuted, detail)
+    }
+
+    @Test
+    fun `a line's instrument text is bounded so a long extra cannot squeeze the name`() {
+        assertEquals(160.dp, LineupPanelDefaults.INSTRUMENT_MAX_WIDTH)
     }
 }

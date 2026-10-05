@@ -19,12 +19,18 @@ fun Lineup.toLineupPanel(extras: List<ExtraParticipant>): LineupPanelUiModel {
         openSlots = open.map { it.toLine() },
         filledSlots = filled.map { it.toLine() },
         extras = extras.map { it.toLine() },
-        noOpenSlotsNote = if (open.isEmpty()) LineupPanelCopy.NO_OPEN_SLOTS else null,
-        hint = if (open.isEmpty()) null else LineupPanelCopy.HINT,
+        noOpenSlotsNote = noOpenSlotsNote(hasOpenSlot = open.isNotEmpty()),
+        hint = openSlotsHint(hasOpenSlot = open.isNotEmpty()),
     )
 }
 
-private fun Slot.toLine(): LineupLineUiModel {
+/** The note drawn when no slot is open, or null. Shared with the instrument groups. */
+internal fun noOpenSlotsNote(hasOpenSlot: Boolean): String? = if (hasOpenSlot) null else LineupPanelCopy.NO_OPEN_SLOTS
+
+/** The hint drawn when at least one slot is open, or null. Shared with the instrument groups. */
+internal fun openSlotsHint(hasOpenSlot: Boolean): String? = if (hasOpenSlot) LineupPanelCopy.HINT else null
+
+internal fun Slot.toLine(): LineupLineUiModel {
     val name = musicianName
     return if (name == null) {
         LineupLineUiModel(
@@ -43,7 +49,7 @@ private fun Slot.toLine(): LineupLineUiModel {
     }
 }
 
-private fun ExtraParticipant.toLine() = LineupLineUiModel(
+internal fun ExtraParticipant.toLine() = LineupLineUiModel(
     instrument = LineupPanelCopy.extraInstrument(instrument),
     detail = name,
     contentDescription = InstrumentStripCopy.extraDescription(instrument, name),

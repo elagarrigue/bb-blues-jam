@@ -27,6 +27,10 @@ okhttp = "5.1.0"
 kotlinxSerialization = "1.9.0"
 desugarJdkLibs = "2.1.5"
 sqlite = "2.6.2"
+# Navigation (song-detail-screen, N1). 2.9.8 is the last 2.9.x and asks only for versions at or below
+# what the build resolves (stdlib 2.0.21, Compose 1.7.2, activity-compose 1.8.0). 2.10.x raises
+# Compose to 1.10 and activity-compose to 1.13 over the pinned BOM. Upgrade with Kotlin and the BOM.
+navigationCompose = "2.9.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -58,6 +62,7 @@ okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver3"
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 sqlite-bundled-jvm = { group = "androidx.sqlite", name = "sqlite-bundled-jvm", version.ref = "sqlite" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 # For build-logic only: the convention plugins compile against AGP and KGP (compileOnly).
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }

@@ -31,7 +31,8 @@ import org.junit.Test
  * `MaterialTheme.colorScheme`/`.typography`/`.shapes` outside `:core:ui`) and
  * `amber-roles-allowlisted` (an amber role outside `:core:ui` only where `AMBER_ROLE_ALLOWLIST`
  * allows it for that module). `no-dp-literal-outside-core-ui` does the same for sizes: no `dp`,
- * `sp` or `em` built from a number literal outside `:core:ui`.
+ * `sp` or `em` built from a number literal outside `:core:ui`. `navigation-only-in-app` keeps
+ * `androidx.navigation.` imports in `:app` (D-03: features never see the navigation library).
  */
 class ModuleIsolationTest {
 
@@ -138,6 +139,16 @@ class ModuleIsolationTest {
                 file.text.lineSequence()
                     .filterNot { it.trimStart().startsWith("import ") }
                     .any { QUALIFIED_DATA_LIBRARY.containsMatchIn(it) }
+            }
+    }
+
+    @Test
+    fun `only the app imports the navigation library`() {
+        scope.files
+            .filter { it.modulePath != APP && it.modulePath != KONSIST_TEST }
+            .flatMap { it.imports }
+            .assertFalse(testName = "navigation-only-in-app") { import ->
+                import.name.startsWith(NAVIGATION_PREFIX)
             }
     }
 
@@ -303,6 +314,14 @@ class ModuleIsolationTest {
          */
         val QUALIFIED_DATA_LIBRARY = Regex("""\b(okhttp3|androidx\.room|kotlinx\.serialization)\.""")
 
+        /**
+         * Navigation Compose is `:app`'s (`song-detail-screen`, N1 and K2): features take callbacks
+         * and plain values, and routes live in `AppRoutes`. Known limits: an import text match, so a
+         * fully qualified use escapes; it would not compile anyway, because only `:app` declares the
+         * library and nothing exposes it as `api`.
+         */
+        const val NAVIGATION_PREFIX = "androidx.navigation."
+
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")
         val TYPE_SAFE_ACCESSOR = Regex("""\bprojects\.""")
@@ -347,6 +366,7 @@ class ModuleIsolationTest {
          */
         val AMBER_ROLE_ALLOWLIST: Map<String, Set<String>> = mapOf(
             "feature/next-jam" to setOf("key"),
+            "feature/song-detail" to setOf("key"),
         )
 
         /**

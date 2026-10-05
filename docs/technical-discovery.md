@@ -39,6 +39,12 @@ and no hidden gestures without a visible alternative.
   kotlin-stdlib stays at 2.2.10: OkHttp 5.2+ needs stdlib 2.2.20+ and serialization 1.10 needs
   2.3.0. A Kotlin upgrade moves OkHttp, serialization and Koin together.
 - **DataStore** for the admin flag.
+- **Navigation Compose 2.9.8** (`song-detail-screen`, N1, 4 October 2026), declared only in `:app`
+  with string routes built and parsed in `AppRoutes` (R1); features take callbacks and plain values,
+  and the Konsist rule `navigation-only-in-app` keeps the library out of every other module (K2).
+  2.9.8 is the last 2.9.x and resolves under the pinned Kotlin 2.2.10 and Compose BOM 2025.09.00
+  with no version moving up; 2.10.x would raise Compose to 1.10 and activity-compose to 1.13.
+  Upgrade it together with Kotlin, the BOM and Koin. The deeplink scheme is still open.
 - **Gradle** with a `check` task covering tests, Konsist, detekt, and ktlint.
 
 Two corrections were made to the reference composable-presenter pattern: `hashCode` derived from

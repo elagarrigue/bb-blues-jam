@@ -38,6 +38,11 @@ typography:
     fontFamily: Barlow Condensed
     fontSize: 44sp
     fontWeight: 800
+  keyDisplay:
+    fontFamily: Barlow Condensed
+    fontSize: 96sp
+    lineHeight: 96sp
+    fontWeight: 800
   body:
     fontFamily: Chivo
     fontSize: 16sp
@@ -145,6 +150,10 @@ Two families: a condensed sans with character for headings, and a neutral, highl
 data and lists. Song titles and keys must be readable at a glance in near-darkness, which makes the
 key's weight and size a functional requirement rather than a stylistic one.
 
+`keyDisplay` (96sp, line height 96sp, ExtraBold; `song-detail-screen`, K1 approved 4 October
+2026) is used only by the song detail, where the key is the screen's main element and is read from
+arm's length on stage. It is the largest style in the app; rows keep `key` (44sp).
+
 ## Layout
 
 Three tabs in a bottom navigation bar: **Próxima jam**, **Anteriores**, **Info**.
@@ -245,7 +254,40 @@ Decided 3 October 2026 (`song-row-expansion`):
   nodes, so each slot is spoken once in either state.
 
 The component is `LineupPanel` in `:core:ui` (`com.bbbjam.core.ui.lineup`), with `ExpandIndicator`
-for the chevron.
+for the chevron. A line's instrument text is cut with "…" at 160dp (`LineupPanelDefaults
+.INSTRUMENT_MAX_WIDTH`), so a long free-text extra instrument cannot squeeze the name.
+
+Under the panel, an expanded row ends with **`Ver detalle del tema`**: a full-width text action
+(`body`, `text`, underlined like the other secondary text actions, at least 48dp tall, a button for
+screen readers), never amber. It opens the song detail (`song-detail-screen`).
+
+### Song detail
+
+Decided 4 October 2026 (`song-detail-screen`; N1, K1, G1, C1, R1, K2):
+
+- **Full screen** over the tabs, with no tab bar and no transition (motion is `bottom-navigation`'s).
+  A back arrow at the top start (`text`, never amber, 48dp target, described "Volver") and the
+  system back both return to Próxima jam with the same tab, expanded rows, filter and scroll.
+- **Order:** back arrow; title (`h1`, `text`, wraps); artist (`body`, `textMuted`) only when there
+  is one; the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in `keyDisplay`,
+  colour `key`, one screen-reader node "Tonalidad Bm"; then the lineup on a `surface` block with
+  `rounded.md`.
+- **Lineup grouped by instrument** (G1): the note ("No quedan cupos libres.") or the hint first,
+  then one uppercase caption heading per instrument in the Sheet's column order (an instrument with
+  no slot has no group) with its lines, then `OTROS` and the extras. Within a group, **open first**,
+  then filled. This is the detail's one exception to "open above filled, always": a filled Guitarra
+  group sits above an open Bajo slot. Extras are never merged into a group, even "guitarra" typed as
+  free text. A slot line draws its glyph and detail only (the heading names the instrument); an
+  extra line draws `+ saxo` and the name. Not interactive, compact lines, amber only inside
+  `:core:ui`.
+- **States:** while the local read runs, only the back arrow (no skeleton); a song that is no longer
+  in the list, or a setlist that is not shown, is the empty block "Este tema ya no está en la
+  lista" / "Puede que la organización haya cambiado la lista. Volvé a la próxima jam para ver la
+  actual." Never an error, and no staleness notice (the list shows it).
+- **Not shown** (D-20, D-09): tempo, tags, difficulty, songsterr, artwork, the jam's date or venue.
+
+The components are `InstrumentGroups` (`com.bbbjam.core.ui.lineup`) and `BackButton`
+(`com.bbbjam.core.ui.nav`) in `:core:ui`.
 
 ### Jam summary counter
 
