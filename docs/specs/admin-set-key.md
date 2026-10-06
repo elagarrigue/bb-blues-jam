@@ -405,6 +405,16 @@ Record all of the following:
 
 ## User Approvals
 
+Answered by the user on 6 October 2026: **B1 (a)** one batched deploy with remove-song (its server
+half first, set-key on top); **V1** as specified; **O1 — optimistic** (the alternative, not the
+recommendation): the new key shows at once and reverts if the write fails; **L1 (a)** extend
+`checkSetlistWrite`; **R1** accepted as the reading for this slice, and the user asked for a new
+feature: refresh every 30 seconds from 30 minutes before the show until 4 hours after, plus
+pull-to-refresh (`live-refresh-during-jam`). Also from remove-song R1: find the row by `id_tema`,
+not by position. The spec body must be revised to match.
+
+The questions as asked:
+
 Not yet answered. Each question has a recommendation.
 
 - **B1: one deploy for several slices (recommended: a).**

@@ -956,6 +956,23 @@
     "notes": "D-13, and the highest-stakes mutation in the product. A silently failed publish means the admin believes the list is live while musicians read something stale: the worst outcome this app can produce. Optimistic state is not acceptable here without explicit confirmation."
   },
   {
+    "id": "live-refresh-during-jam",
+    "area": "feature-next-jam",
+    "title": "Refresh often during the jam, and pull to refresh",
+    "user_visible_behavior": "While the current time is between 30 minutes before the upcoming jam's start and 4 hours after it, Próxima jam refreshes every 30 seconds, so musicians see the admin's changes during the night. Any list can also be refreshed by pulling down.",
+    "depends_on": [
+      "list-states"
+    ],
+    "status": "not_started",
+    "verification": [
+      "JVM: the refresh window opens 30 min before the start and closes 4 h after, in Buenos Aires time",
+      "JVM: no periodic refresh outside the window; pull to refresh triggers exactly one refresh",
+      "Load estimate against Apps Script quotas recorded in the risks doc"
+    ],
+    "notes": "Requested by the user on 6 October 2026 while answering admin-set-key R1: 'Actualizar cada 30'' si el timestamp actual está entre media hora antes de que arranque el show y 4hs después. Además, agregar un pull to refresh'. Planner must check Apps Script quotas (about 40 phones x every 30 s x 4.5 h is about 20,000 requests per night) and battery.",
+    "evidence": []
+  },
+  {
     "id": "action-contract-registry",
     "area": "app",
     "title": "Register every mutation in one action contract",

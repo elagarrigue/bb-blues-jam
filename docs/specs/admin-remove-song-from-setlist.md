@@ -327,6 +327,12 @@ musician name appeared in any output.
 
 ## User Approvals
 
+Answered by the user on 6 October 2026 (recommended in all three): **R1 (a)** find the row by
+`id_tema` and renumber 1..n (set-key also finds its row by song id); **U1** as specified; **B1 (a)**
+one batched Post.js deploy for remove-song and set-key, remove-song's server half first.
+
+The questions as asked:
+
 Ask before implementing. Each has a recommendation.
 
 - **R1: positions and row identity after a removal (recommended: a).**
