@@ -6,12 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty-seven of 39 slices accepted. `apps-script-write-auth` is `passing`
-  (session 071; deployed 6 October 2026, live L1–L6 green, valid write 4.94 s),
-  awaiting the validator. **Exception approved by the user (6 October 2026):** Part A
-  of `admin-add-song-to-setlist` is implemented on top of it before acceptance, so a single Post.js
-  deploy covers both; two features are `in_progress` at once until that deploy. Validation still
-  runs per feature, write-auth first.
+- Current state: twenty-eight of 39 slices accepted, the latest `apps-script-write-auth` (6 October
+  2026). `admin-add-song-to-setlist` is `in_progress`: Part A (backend and data) deployed in the same
+  Post.js, its live checks next; Part B (UI) after.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
