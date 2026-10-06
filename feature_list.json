@@ -810,7 +810,7 @@
       "apps-script-write-auth",
       "next-jam-read-only-list"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "The song appears locally and is present in the Sheet after a reload",
       "The mutation is a repository function, not UI-only logic",
@@ -830,7 +830,8 @@
       "Part B: NextJamPresenter admin layer (badge, note, pending rows, failure cards, Agregar tema; admin hint with no jam; admin empty copy; one refresh per login), AddSongPresenter/AddSongScreen picker (sorted, accent-insensitive search, listed songs muted, catalog default key K1 (a), single pick), AdminControls(Defaults), AddSongDefaults (key only), :app addSong route, non-amber text selection in BluesJamTheme. addSong now runs in DataScope from its first instruction.",
       "./gradlew ktlintFormat, CI=true ./init.sh exit 0: konsist wired (17/17, no allowlist change), detekt wired, ktlint wired; 83 result files, 489 tests, 0 failures. Node 113/113.",
       "Part B failure demonstrations restored by sha1sum -c: musicians mapped from jam.setlist -> 5 fail; no double-tap guard -> 1 fails; row stored on refusal -> 2 of 9 fail; addSong in the caller -> 1 of 9 fails.",
-      "Pixel 5 (no passphrase stored, verified; flags restored byte-identical): admin view of the real published jam with Agregar tema after the rows; picker search, listed songs not clickable, rotation keeps the query, back; pick -> AccessRefused card, Cerrar removes it; demo draft (airplane, cleared data) with BORRADOR badge and note; debugAdmin off -> musician draft card. Settings restored, accessibility never touched, empty crash buffer."
+      "Pixel 5 (no passphrase stored, verified; flags restored byte-identical): admin view of the real published jam with Agregar tema after the rows; picker search, listed songs not clickable, rotation keeps the query, back; pick -> AccessRefused card, Cerrar removes it; demo draft (airplane, cleared data) with BORRADOR badge and note; debugAdmin off -> musician draft card. Settings restored, accessibility never touched, empty crash buffer.",
+      "Validator (6 Oct 2026, 29d3b54 + 2163aab): accept. Gate exit 0, three wired, Konsist 17/17, 489 JVM tests; Node 113/113; deployed Post.js 94bb9154 matches. Own mutations restored by SHA-1: past-jam guard removed (Node catches), add button on a withheld list (1 test). Live L1, L4 (readJams ok, 2 jams), L6 (checkSetlistWrite ok); no real jam written, no wrong passphrase sent. Pixel 5 with demo + debugAdmin: button after row 13, picker sorted and accent-insensitive, listed songs muted, grey text selection, double tap gives one AccessRefused card, no DataStore dir; settings unchanged. Accepted-risk judgement on one failing readJams per cold start after rotation: sound."
     ],
     "notes": "D-13: the first mutation, so it sets the pattern for every later one. Apps Script latency is expected; optimistic state with later confirmation, and a real rollback path. Session 072: Part A done (in_progress until Part B and the live checks). Part B must read SetlistRepository/observeAdds and trigger jams.refresh() on login; K1 (a) means the picker passes Song.defaultKey explicitly to addSong. From apps-script-write-auth validation (6 Oct 2026): DefaultJamsRepository sends a readJams POST whenever a passphrase is stored; after a rotation each process start counts one failed guess before falling back to GET — review when Part A is validated."
   },
@@ -848,7 +849,7 @@
       "Removing a song does not affect the catalog entry"
     ],
     "evidence": [],
-    "notes": "D-13."
+    "notes": "D-13. From admin-add-song validation (6 Oct 2026): appendSetlistRow_ makes 26 separate cell calls (likely part of the 4-7 s write latency) — batch range writes where this slice touches rows."
   },
   {
     "id": "admin-set-key",
@@ -865,7 +866,7 @@
       "The change is visible on a published jam immediately"
     ],
     "evidence": [],
-    "notes": "D-08, D-13. The key belongs to the JamSong, not to the Song: that distinction is the whole reason the two types are separate."
+    "notes": "D-08, D-13. The key belongs to the JamSong, not to the Song: that distinction is the whole reason the two types are separate. From admin-add-song validation (6 Oct 2026): appendSetlistRow_ makes 26 separate cell calls (likely part of the 4-7 s write latency) — batch range writes where this slice touches rows."
   },
   {
     "id": "admin-adjust-lineup",
@@ -934,7 +935,7 @@
       "The reorder affordance meets the 48dp touch target minimum"
     ],
     "evidence": [],
-    "notes": "D-13. Drag-to-reorder versus explicit move actions is an open design question: dragging conflicts with 48dp targets on a dense one-handed list."
+    "notes": "D-13. Drag-to-reorder versus explicit move actions is an open design question: dragging conflicts with 48dp targets on a dense one-handed list. From admin-add-song validation (6 Oct 2026): appendSetlistRow_ makes 26 separate cell calls (likely part of the 4-7 s write latency) — batch range writes where this slice touches rows."
   },
   {
     "id": "admin-publish-setlist",

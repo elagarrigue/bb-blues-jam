@@ -6,9 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty-eight of 39 slices accepted, the latest `apps-script-write-auth` (6 October
-  2026). `admin-add-song-to-setlist` is `passing` (Parts A and B, live checks done, session 073),
-  awaiting independent validation.
+- Current state: twenty-nine of 39 slices accepted, the latest `admin-add-song-to-setlist` (6 October
+  2026). Next: `admin-remove-song-from-setlist` and `admin-set-key` (specs in planning, a single
+  Post.js deploy proposed for both).
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by

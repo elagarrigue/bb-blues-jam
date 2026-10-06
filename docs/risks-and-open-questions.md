@@ -327,3 +327,7 @@ Stated so they can be challenged rather than silently relied upon.
 - [x] Reconcile the DESIGN.md palette — done 19 September 2026 against the Stitch export.
       Background, surfaces, border and amber now carry real values; `textMuted`, `slotFilled`,
       `archive` and `error` remain derived.
+
+- **Server and client "today" can disagree** (admin-add-song validation, 6 October 2026): Apps
+  Script decides whether a jam is past in the spreadsheet's time zone, the app in Buenos Aires
+  (`JamCalendar`). They agree only while the Sheet's time zone is Buenos Aires; keep it so.
