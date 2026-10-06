@@ -806,14 +806,23 @@
       "apps-script-write-auth",
       "next-jam-read-only-list"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "The song appears locally and is present in the Sheet after a reload",
       "The mutation is a repository function, not UI-only logic",
       "A failed write surfaces visibly and does not leave a phantom row"
     ],
-    "evidence": [],
-    "notes": "D-13: the first mutation, so it sets the pattern for every later one. Apps Script latency is expected; optimistic state with later confirmation, and a real rollback path."
+    "evidence": [
+      "Session 072 (6 Oct 2026, implementer): Part A only (backend and :core:data, no UI), built on the undeployed apps-script-write-auth Post.js by user exception (one paste, one deploy). Only src/Post.js changed in backend/apps-script/src (Code.js, Jams.js, Catalog.js, Normalize.js: git diff --quiet HEAD exit 0). New router-guarded actions: readJams (read), addSong (write, all checks before any write), checkSetlistWrite (write, self-cleaning on _prueba_lista). Final Post.js SHA-1 94bb91548469d3f9c6c868788f09d3d2684c5cf1.",
+      "node --test backend/apps-script/test/*.test.js: 113/113 (97 before; new setlist.test.js 16). post.test.js changed only in enumerations: the five-action table, the Known: list (2 places), the opened-tab allow-list of the leak test (+ _prueba_lista, Jams, Catalogo) and the README marker test (+ addSong marker).",
+      "Server failure demonstrations, each restored with sha1sum -c (Post.js 94bb9154... OK): (a) tab created before the catalog check -> 1 fail ('unknown_song ... wrote'); (b1) past drafts released by readJams -> 2 fail; (b2) every non-PUBLICADA status read as a draft -> 1 fail; (e) @ format not set -> 4 fail.",
+      "Client: Envelope.decodeOkObject, AdminWriter.send/AdminAnswer (W3 unchanged), JamsMapper.map(rows, includeDrafts = false), DefaultJamsRepository admin read (readJams POST when a passphrase is stored; AccessRefused remembered in memory -> GET fallback; other failures keep the cache, no GET; adminRead in outcome and log), CatalogDao.song, new SetlistDao (IGNORE insert only while AVAILABLE; separate DAO because detekt TooManyFunctions on JamsDao; no schema change), new setlist/ SetlistRepository, AddSongOutcome, SetlistAdd, DefaultSetlistRepository; dataModule singles.",
+      "The three verification bullets at JVM level: 'the song appears locally' = DefaultSetlistRepositoryTest over real in-memory Room (row + seven open slots from the server's answer); 'repository function, not UI-only' = addSong called with no UI in every DefaultSetlistRepositoryTest test; 'failed write visible, no phantom row' = 12 non-ok answers each leave Room unchanged and publish a Failed entry. 'Present in the Sheet after a reload' = Node: the appended row is read back by buildSetlist and readJams; live part pending L6.",
+      "Kotlin failure demonstrations, restored with sha1sum -c: (c) row stored on a refused answer -> DefaultSetlistRepositoryTest 2 of 8 fail (DefaultSetlistRepository.kt 4fc9861f...); (d) includeDrafts default true -> 4 fail (JamsMapper.kt df9da60b...); (f) GET fallback on every refusal -> DefaultJamsRepositoryTest 1 of 26 fails (DefaultJamsRepository.kt eaa1708d...).",
+      "./gradlew ktlintFormat, then CI=true ./init.sh exit 0: konsist wired (ModuleIsolationTest 17/17), detekt wired, ktlint wired; 78 result files, 464 tests, 0 failures (443 before). New/changed: SetlistDaoTest 1, DefaultSetlistRepositoryTest 8, DefaultJamsRepositoryTest 26 (+5), JamsMapperTest 22 (+3), EnvelopeTest 14 (+1), AdminWriterTest 11 (+1), CatalogDaoTest 6 (+1), JamsRefreshOutcomeTest 4 (+1), DataModuleTest 1.",
+      "Not run: live checks L1-L6 (deploy pending), Part B (UI), device checks. No device touched. Passphrase, URL and musician names in no output."
+    ],
+    "notes": "D-13: the first mutation, so it sets the pattern for every later one. Apps Script latency is expected; optimistic state with later confirmation, and a real rollback path. Session 072: Part A done (in_progress until Part B and the live checks). Part B must read SetlistRepository/observeAdds and trigger jams.refresh() on login; K1 (a) means the picker passes Song.defaultKey explicitly to addSong."
   },
   {
     "id": "admin-remove-song-from-setlist",

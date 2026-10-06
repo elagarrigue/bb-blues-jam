@@ -7,22 +7,27 @@ import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.Fixtures
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.MutableClock
+import com.bbbjam.core.data.admin.AdminCredentialStore
+import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.cache.CatalogSongEntity
 import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.JamWithChildren
 import com.bbbjam.core.data.cache.JamsDao
 import com.bbbjam.core.data.cache.SyncStateEntity
+import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.JamDto
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
 import com.bbbjam.core.data.remote.TransportResult
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.Slot
+import java.io.File
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -41,7 +46,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 /**
  * The repository over a real in-memory Room cache and a fake transport (one test uses OkHttp against
@@ -49,11 +56,18 @@ import org.junit.Test
  * exception escaping a background refresh fails the test.
  */
 class DefaultJamsRepositoryTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
     private val database = Fixtures.inMemoryDatabase()
     private val dao = FailingJamsDao(database.jamsDao())
     private val clock = MutableClock(JULY_20)
     private val calendar = JamCalendar(clock, JamCalendar.BUENOS_AIRES)
     private val transport = FakeTransport(TransportResult.Body(Fixtures.sample("jams-seed.json")))
+    private val post = FakePost(adminBody())
+
+    /** One store per test: DataStore allows a single active instance per file. */
+    private var adminStore: AdminCredentialStore? = null
 
     @After
     fun tearDown() {
@@ -239,7 +253,7 @@ class DefaultJamsRepositoryTest {
     fun `a mapper exception is an invalid response, not a crash, and the cache is untouched`() = runTest {
         repository().refresh()
         val repository =
-            repository(mapper = { throw IllegalArgumentException("Setlist positions [2, 1]\nsecond line") })
+            repository(mapper = { _, _ -> throw IllegalArgumentException("Setlist positions [2, 1]\nsecond line") })
 
         val outcome = repository.refresh()
 
@@ -427,6 +441,101 @@ class DefaultJamsRepositoryTest {
         assertFalse(repository.observeJams().first().freshness.isRefreshing)
     }
 
+    // ---- admin-add-song-to-setlist: the admin read ----
+
+    @Test
+    fun `with no passphrase stored the refresh is the anonymous GET and nothing is posted`() = runTest {
+        val repository = repository()
+
+        repository.refresh()
+
+        assertEquals(1, transport.calls)
+        assertTrue(post.bodies.isEmpty())
+    }
+
+    @Test
+    fun `with a passphrase stored the refresh is the admin read, and the cache holds the draft's songs`() = runTest {
+        val repository = repository()
+        adminStore().save(TEST_VALUE)
+        post.answer =
+            adminBody(jamJson("2026-07-25", "BORRADOR", "[${rowJson(2, "red-house")},${rowJson(1, "crossroads")}]"))
+
+        val outcome = repository.refresh()
+
+        assertEquals(JamsRefreshOutcome.Updated(1, emptyList(), emptyList(), emptyList(), adminRead = true), outcome)
+        assertTrue(outcome.toLogLine().endsWith(" (admin read)"))
+        assertFalse(outcome.toLogLine().contains(TEST_VALUE))
+        assertEquals(0, transport.calls)
+        assertEquals(listOf("readJams"), post.actions())
+        val upcoming = checkNotNull(repository.observeJams().first().upcoming)
+        assertEquals(JamStatus.DRAFT, upcoming.status)
+        assertEquals(listOf("crossroads", "red-house"), upcoming.songs().map { it.songId.value })
+        assertTrue(upcoming.songs().all { it.lineup == Lineup.default() })
+        // The musicians' view of the same cache still withholds the draft.
+        assertEquals(Setlist.Withheld, upcoming.setlistForMusicians())
+    }
+
+    @Test
+    fun `for the admin a draft with no tab yet is an empty available setlist`() = runTest {
+        val repository = repository()
+        adminStore().save(TEST_VALUE)
+        post.answer = adminBody(jamJson("2026-07-25", "BORRADOR", null, """{"code":"missing_tab","message":"m"}"""))
+
+        repository.refresh()
+
+        assertEquals(Setlist.Available(emptyList()), repository.observeJams().first().upcoming?.setlist)
+    }
+
+    @Test
+    fun `a refused passphrase falls back to the GET and is not sent again until another one is stored`() = runTest {
+        val repository = repository()
+        adminStore().save(TEST_VALUE)
+        post.answer = TransportResult.Body(error("invalid_passphrase"))
+
+        assertEquals(JamsRefreshOutcome.Updated(1, emptyList(), emptyList(), emptyList()), repository.refresh())
+        assertEquals(JamsRefreshOutcome.Updated(1, emptyList(), emptyList(), emptyList()), repository.refresh())
+
+        assertEquals(1, post.bodies.size)
+        assertEquals(2, transport.calls)
+        assertEquals(TEST_VALUE, adminStore().passphrase())
+
+        adminStore().save("$TEST_VALUE-new")
+        post.answer = adminBody(jamJson("2026-07-25", "BORRADOR", "[${rowJson(1, "crossroads")}]"))
+        assertEquals(
+            JamsRefreshOutcome.Updated(1, emptyList(), emptyList(), emptyList(), adminRead = true),
+            repository.refresh(),
+        )
+        assertEquals(2, post.bodies.size)
+        assertEquals(2, transport.calls)
+    }
+
+    @Test
+    fun `any other admin read failure is a failed refresh that keeps the draft songs and never falls back`() = runTest {
+        val repository = repository()
+        adminStore().save(TEST_VALUE)
+        post.answer = adminBody(jamJson("2026-07-25", "BORRADOR", "[${rowJson(1, "crossroads")}]"))
+        repository.refresh()
+        val failures = listOf(
+            TransportResult.Failed(DataFailure.Offline) to DataFailure.Offline,
+            TransportResult.Body(error("busy")) to DataFailure.Service("busy"),
+            TransportResult.Body(error("rate_limited")) to DataFailure.Service("rate_limited"),
+            TransportResult.Body(error("internal_error")) to DataFailure.Service("internal_error"),
+            TransportResult.Body("<html></html>") to DataFailure.InvalidResponse("body is not a JSON object"),
+            TransportResult.Body("""{"schemaVersion":1,"ok":true}""") to DataFailure.InvalidResponse("missing jams"),
+        )
+
+        failures.forEach { (answer, failure) ->
+            post.answer = answer
+
+            assertEquals(answer.toString(), JamsRefreshOutcome.Failed(failure, adminRead = true), repository.refresh())
+            val snapshot = repository.observeJams().first()
+            assertEquals(answer.toString(), listOf("crossroads"), snapshot.upcoming?.songs()?.map { it.songId.value })
+            assertEquals(answer.toString(), failure, snapshot.freshness.lastFailure)
+        }
+        assertEquals(0, transport.calls)
+        assertEquals(TEST_VALUE, adminStore().passphrase())
+    }
+
     private fun Jam.songs() = (setlist as Setlist.Available).songs
 
     /** Collects the first snapshot and runs whatever refresh that collection launched up to its request. */
@@ -435,10 +544,31 @@ class DefaultJamsRepositoryTest {
         testScheduler.runCurrent()
     }
 
+    /**
+     * The repository over this test's store. The store runs on the test scheduler ([backgroundScope]),
+     * so `runCurrent` still drives a refresh up to its request.
+     */
     private fun TestScope.repository(
         transport: AppsScriptTransport = this@DefaultJamsRepositoryTest.transport,
-        mapper: (List<JamDto>) -> MappedJams = JamsMapper::map,
-    ) = DefaultJamsRepository(transport, dao, calendar, DataScope(backgroundScope), mapper)
+        mapper: (List<JamDto>, Boolean) -> MappedJams = JamsMapper::map,
+    ): DefaultJamsRepository {
+        val store = adminStore()
+        return DefaultJamsRepository(
+            transport,
+            dao,
+            calendar,
+            DataScope(backgroundScope),
+            AdminWriter(post, store),
+            store,
+            mapper,
+        )
+    }
+
+    private fun TestScope.adminStore(): AdminCredentialStore = adminStore ?: AdminCredentialStore(
+        AdminCredentialStore.dataStore(backgroundScope) {
+            File(folder.root, "${AdminCredentialStore.FILE_NAME}.preferences_pb")
+        },
+    ).also { adminStore = it }
 
     private fun catalogSong(id: String, title: String) =
         CatalogSongEntity(id, 1, title, "Artista del catálogo", "E", null, null, emptyList(), null)
@@ -469,6 +599,17 @@ class DefaultJamsRepositoryTest {
         }
     }
 
+    private class FakePost(var answer: TransportResult) : AppsScriptPostTransport {
+        val bodies = mutableListOf<String>()
+
+        fun actions(): List<String> = bodies.map { Regex("\"action\":\"([^\"]+)\"").find(it)!!.groupValues[1] }
+
+        override suspend fun post(json: String): TransportResult {
+            bodies += json
+            return answer
+        }
+    }
+
     private class FakeTransport(var result: TransportResult) : AppsScriptTransport {
         var calls = 0
         val resources = mutableListOf<String>()
@@ -488,5 +629,23 @@ class DefaultJamsRepositoryTest {
 
         /** 12:00 on 2 October 2026 in Buenos Aires. */
         val OCTOBER_2: Instant = Instant.parse("2026-10-02T15:00:00Z")
+
+        const val TEST_VALUE = "not-a-real-passphrase"
+
+        fun adminBody(vararg jams: String) =
+            TransportResult.Body("""{"schemaVersion":1,"ok":true,"jams":[${jams.joinToString(",")}]}""")
+
+        fun jamJson(date: String, status: String, setlist: String?, error: String? = null) =
+            """{"date":"$date","startTime":"21:00","venue":"La Macanuda","status":"$status",""" +
+                """"setlist":${setlist ?: "null"},"setlistError":${error ?: "null"}}"""
+
+        fun rowJson(position: Int, songId: String): String {
+            val slots = listOf("guitar1", "guitar2", "bass", "drums", "vocals", "harmonica", "keyboards")
+                .joinToString(",") { "\"$it\":null" }
+            return """{"position":"$position","songId":"$songId","title":"T","artist":"A","key":"A",""" +
+                """"slots":{$slots},"extraParticipants":null}"""
+        }
+
+        fun error(code: String) = """{"schemaVersion":1,"error":{"code":"$code","message":"m"}}"""
     }
 }

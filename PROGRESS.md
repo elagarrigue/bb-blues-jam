@@ -15,8 +15,11 @@
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 5 October 2026 (session 070, `debug-admin-session`, `passing`, not yet
-  accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+- Last verified at: 6 October 2026 (session 072, `admin-add-song-to-setlist` Part A, backend and
+  `:core:data`, status `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17,
+  unchanged), `detekt: wired`, `ktlint: wired`; 78 result files, 464 tests, 0 failures; Node
+  113/113. Combined Post.js SHA-1 `94bb91548469d3f9c6c868788f09d3d2684c5cf1`, not deployed yet.
+  Before that, 5 October 2026 (session 070, `debug-admin-session`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 75 result files, 433 tests, 0 failures (new `DebugAdminSessionTest` 6). Release
   dex has no `DebugAdminSession`. Pixel 5: `Modo admin activo` with no login, flag left on. Before
   that, session 069 (`admin-passphrase-login`, since accepted) —
@@ -2902,6 +2905,113 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Next: user pastes `Post.js` into `Post.gs`, verifies the marker, deploys **Manage deployments →
   Edit → New version** on the current deployment, and (W1) adds `bluesjam.debugAdminPassphrase`;
   then L1–L6, evidence, docs (scope status, write latency) and status `passing`.
+
+### Session 072 — 6 October 2026
+
+- Feature: `admin-add-song-to-setlist`, **Part A only** (backend and `:core:data`, no UI), spec
+  `docs/specs/admin-add-song-to-setlist.md` (a60039d). User approvals: S1 (b) one feature over two
+  sessions (this one is Part A), K1 (a) the catalog default key (applied by Part B's picker; the
+  repository and the server take the key they are given), J1 all three edge rules, V1 and C1 for
+  Part B, L1 (a) `checkSetlistWrite` on `_prueba_lista` plus the probes and the `readJams` read.
+  **User exception (6 October 2026):** built on top of the undeployed, unaccepted
+  `apps-script-write-auth` Post.js (c9ca15f) so one paste and one deploy cover both. Both features
+  stay `in_progress`. Write-auth's recorded SHA-1 `c4c12993…` is superseded for deployment by the
+  combined file below; its behaviour is unchanged.
+- What changed:
+  - `backend/apps-script/src/Post.js` (the only `src` file changed; `Code.js`, `Jams.js`,
+    `Catalog.js`, `Normalize.js` byte-identical, `git diff --quiet HEAD` on them exit 0). New
+    `ACTIONS` entries, guarded by the unchanged router: `readJams` (read; `ROUTES.jams` plus the
+    tab of every exactly-`BORRADOR` jam dated today or later in the spreadsheet zone, with the GET's
+    per-jam guards; answers `{ok, jams}`), `addSong` (write; validation in the spec's order before
+    any write: `invalid_date`, `invalid_song`, `invalid_key`, `unknown_jam`/`duplicate_date`,
+    `jam_not_editable`, `unknown_song`, `missing_header`/`duplicate_header`,
+    `song_already_in_setlist`; creates a missing tab with the documented header; appends at
+    1 + max valid `posicion`, mapped columns only, `@` format before each value, key from the
+    request, seven empty slots; answers `{ok, position, title, artist}`) and `checkSetlistWrite`
+    (write; self-cleaning on `_prueba_lista` with marker title `7/4` and key `Bbm`, read back with
+    `buildSetlist`). Helpers `todayIso_`, `isCalendarDate_`, `requireEditableJam_` (dates through
+    `buildJams` with no tab reads), `catalogSong_` (never reads `tono_default`), `nextPosition_`,
+    `createSetlistTab_`, `appendSetlistRow_`. Final SHA-1
+    `94bb91548469d3f9c6c868788f09d3d2684c5cf1`.
+  - `backend/apps-script/test/setlist.test.js` (new, 16 tests): a grid-backed fake spreadsheet that
+    turns `d/m` into a date unless the cell is `@`; readJams (current/future drafts only, today's
+    boundary at Buenos Aires midnight, per-jam errors, lowercase status not a draft, GET
+    unchanged); addSong (append, op order, column order, `7/4`, tab creation, consecutive adds,
+    30 validation cases each with no write and the lock released, editable rules, key never from
+    `tono_default`); checkSetlistWrite (ok, leftover, a converting Sheet → `internal_error` with
+    the tab deleted); the guard on all three.
+  - `backend/apps-script/test/post.test.js`: only enumerations changed (write-auth behaviour
+    untouched): the action-table test now lists five actions, the two `Known:` assertions carry
+    the new list, the leak test's allow-list of opened tabs adds `_prueba_lista`, `Jams` and
+    `Catalogo` (the tabs the new actions are documented to open), and the README-marker test also
+    looks for `addSong: { write: true, run: addSong_ },`.
+  - `:core:data`: `remote/Envelope.kt` `decodeOkObject` (same checks as `decodeOk`, which now
+    delegates to it); `admin/AdminWriter.kt` `send(action, fields): AdminAnswer`
+    (`Ok(body)`/`Refused(outcome, failure)`; `write` = `send` with `Ok` → `Done`; W3 unchanged);
+    `jams/JamsMapper.map(rows, includeDrafts = false)` (a draft maps like a published jam when
+    true, `missing_tab` → `Available(emptyList())`); `jams/DefaultJamsRepository` takes
+    `AdminWriter` and `AdminCredentialStore`: with a passphrase stored the refresh is the
+    `readJams` POST; `AccessRefused` remembers the refused passphrase in memory and falls back to
+    the GET; any other failure is a failed refresh with the cache untouched and no GET;
+    `JamsRefreshOutcome.Updated`/`Failed` gain `adminRead` and the log line ends ` (admin read)`;
+    `cache/CatalogDao.song(id)`; new `cache/SetlistDao` (`insertSetlistSong`: IGNORE, only while
+    the cached setlist is `AVAILABLE`, one transaction) registered in `BluesJamDatabase` with no
+    schema or version change (a separate DAO because detekt's `TooManyFunctions` limit of 11 on
+    `JamsDao`; the spec put it in `JamsDao`); new `setlist/` (`SetlistRepository`,
+    `AddSongOutcome`, `SetlistAdd`, `DefaultSetlistRepository(AdminWriter, SetlistDao, CatalogDao,
+    DataScope)`); `dataModule` binds `SetlistDao` and `SetlistRepository` as singles.
+  - Tests: `EnvelopeTest` +1, `AdminWriterTest` +1 (`send`), `JamsMapperTest` +3,
+    `JamsRefreshOutcomeTest` +1, `CatalogDaoTest` +1, `DefaultJamsRepositoryTest` +5 (admin read,
+    empty draft, refused fallback remembered per passphrase, failures keep the cache, no POST
+    without a passphrase), `DataModuleTest` (the store over a temp file; one `SetlistRepository`),
+    new `SetlistDaoTest` 1 and `DefaultSetlistRepositoryTest` 8 (no-UI add with the Sending entry
+    and the POST body, 12 failing answers with no phantom row, dismiss, unknown song, no
+    passphrase, call order, caller cancellation, refresh-wins and non-available jam).
+  - Docs: `docs/apps-script-api.md` (routes, `readJams`, `addSong` with its validation order,
+    `checkSetlistWrite`, `AdminWriter.send`, how the admin reads a draft, `SetlistRepository`,
+    the `Known:` list), `docs/sheet-schema.md` (`_prueba_lista`, how Apps Script writes a jam tab,
+    the `readJams` half of the draft rule), `backend/apps-script/README.md` (intro, layout, Known
+    list, Verify-the-paste with both markers, **Redeploy for write auth and add song, in one
+    paste**, add-song live commands), architecture `SKILL.md` (Part A as built). Not touched yet,
+    left for Part B with the UI: `docs/domain-model.md`, `docs/user-and-access-model.md`,
+    `docs/risks-and-open-questions.md`, `DESIGN.md`.
+- Verification run:
+  - `node --test backend/apps-script/test/*.test.js`: 113/113 (97 before; `setlist.test.js` 16).
+  - Failure demonstrations on the final Post.js, each restored and checked with
+    `sha1sum -c` (Post.js `94bb9154…` OK every time): (a) `addSong_` creates the tab before the
+    catalog check → 1 fail ("addSong validates in order and writes nothing on any failure":
+    `unknown_song {"songId":"zz-no-existe"} wrote`); (b1) `readJamsAsAdmin_` without the
+    `date < today` guard (releases a past draft) → 2 fail; (b2) every non-`PUBLICADA` status read
+    as a draft → 1 fail (the lowercase `borrador` test); (e) the `@` format not set → 4 fail
+    (append, `7/4`, both `checkSetlistWrite` tests). An earlier variant "PUBLICADA also re-read"
+    passed all tests: re-reading a published tab returns what the GET already served, so it is not
+    observable, and was replaced by (b2).
+  - Kotlin demonstrations, restored with `sha1sum -c` (OK): (c) `DefaultSetlistRepository` storing
+    a row on a refused answer → `DefaultSetlistRepositoryTest` 2 of 8 fail ("every answer but a
+    well-formed ok leaves no phantom row…", "with no passphrase stored…": expected `[1]` was
+    `[1, 2]`), file `4fc9861f…`; (d) `includeDrafts` defaulting to `true` → 4 fail
+    (`JamsMapperTest` 3, `JamsRefreshOutcomeTest` 1), `JamsMapper.kt` `df9da60b…`; (f) the admin
+    read falling back to the GET on every refusal → `DefaultJamsRepositoryTest` 1 of 26 fails
+    ("any other admin read failure…": `Updated` instead of `Failed(Offline, adminRead = true)`),
+    `DefaultJamsRepository.kt` `eaa1708d…`.
+  - `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0: `konsist: wired` (ModuleIsolationTest
+    17/17, no rule change), `detekt: wired`, `ktlint: wired`; 78 result files, 464 tests, 0
+    failures (443 before: +21). The first gate run failed detekt (6 findings: `TooManyFunctions` on
+    `JamsDao`, two `ReturnCount`, `ComplexCondition`, two `MaxLineLength`); all fixed in code, no
+    baseline or suppression.
+  - `DefaultSetlistRepositoryTest`, `DefaultJamsRepositoryTest` and `DataModuleTest` re-run three
+    times with `--rerun`: no failure.
+  - No Gradle dependency, Konsist, manifest, Room version, UI or `:app` change. No device work; the
+    device was not touched. No live check (nothing is deployed yet). The passphrase, the URL and
+    musician names appear in no output, file or log of this session.
+- Not run yet: live checks L1–L6 of this feature and of write-auth (they need the one paste and
+  deploy). Part B (UI) not started.
+- Next: the user pastes `src/Post.js` into `Post.gs`, verifies both markers
+  (`checkWriteAccess: { write: true, run: checkWriteAccess_ },` and
+  `addSong: { write: true, run: addSong_ },`, and that `checkPassphrase: checkPassphrase_,` is
+  absent), deploys **Manage deployments → Edit → New version**; then write-auth's L1–L6 (its
+  `Known:` check now expects the five-action list), validation of write-auth, this feature's
+  L1–L6, then Part B.
 
 ## Notes For The Next Session
 

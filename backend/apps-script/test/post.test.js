@@ -3,6 +3,8 @@
 // passphrase is never returned, an unset passphrase rejects everything, and only Config is opened.
 // apps-script-write-auth: the guard every action passes in the router, the rate limit (W2), the
 // write lock and the checkWriteAccess deploy check.
+// admin-add-song-to-setlist adds readJams, addSong and checkSetlistWrite to the action table; their
+// behaviour is in setlist.test.js, and the table-driven guard tests here cover them unchanged.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -11,7 +13,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { loadScript, SRC_DIR, SRC_FILES } = require('./helpers/load.js');
 
-const { handlePost, doPost, ACTIONS, WRITE_CHECK_TAB, requirePassphrase_, handleGet } = loadScript();
+const { handlePost, doPost, ACTIONS, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, requirePassphrase_, handleGet } = loadScript();
 
 const STORED = 'Blues-Pass 42';
 const CONFIG_TAB = 'Config';
@@ -185,10 +187,13 @@ const ACTION_NAMES = Object.keys(ACTIONS);
 const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
-test('the action table is checkPassphrase (read) and checkWriteAccess (write), each with a run function', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess']);
+test('the action table: checkPassphrase and readJams read, checkWriteAccess, addSong and checkSetlistWrite write', () => {
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
+  assert.equal(ACTIONS.readJams.write, false);
+  assert.equal(ACTIONS.addSong.write, true);
+  assert.equal(ACTIONS.checkSetlistWrite.write, true);
   for (const name of ACTION_NAMES) {
     assert.deepStrictEqual(Object.keys(ACTIONS[name]).sort(), ['run', 'write']);
     assert.equal(typeof ACTIONS[name].run, 'function');
@@ -473,7 +478,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -499,7 +504,9 @@ test('no response, message, cache key or cache value contains the stored or the 
             assert.ok(!text.includes(STORED), `stored passphrase leaked: ${text}`);
             assert.ok(!text.includes('zz-submitted-marker') && !text.includes('definitely-wrong'), `submitted passphrase leaked: ${text}`);
           }
-          assert.ok(fake.requested.every((name) => name === CONFIG_TAB || name === WRITE_CHECK_TAB), `requested ${fake.requested}`);
+          // The tabs the actions are documented to open (docs/apps-script-api.md); never any other.
+          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, 'Jams', 'Catalogo'];
+          assert.ok(fake.requested.every((name) => allowed.includes(name)), `requested ${fake.requested}`);
           for (const [key, value] of services.cache.store) {
             assert.match(key, /^auth_failures_\d+$/);
             assert.match(value, /^\d+$/);
@@ -576,7 +583,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess'));
+    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite'));
   });
   withAppsScript({
     getActiveSpreadsheet() {
@@ -624,5 +631,6 @@ test('Post.js runs as Apps Script does: one shared scope with the other files, n
 test('Post.js holds the lines the README tells the user to look for after pasting', () => {
   const source = fs.readFileSync(path.join(SRC_DIR, 'Post.js'), 'utf8');
   assert.ok(source.includes('checkWriteAccess: { write: true, run: checkWriteAccess_ },'));
+  assert.ok(source.includes('addSong: { write: true, run: addSong_ },'));
   assert.ok(!source.includes('checkPassphrase: checkPassphrase_,'), 'the old marker must be gone, so an old paste is detectable');
 });

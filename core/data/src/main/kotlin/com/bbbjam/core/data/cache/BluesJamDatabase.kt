@@ -10,7 +10,8 @@ import androidx.room.TypeConverters
  * The on-device cache. Every table is a re-fetchable copy of Sheet data, so a schema change simply
  * drops the tables and refetches: no exported schema and no migrations. Version 2 added the jam
  * tables and the `jam_song_resolved` view (`jams-repository-cache`); upgrading from 1 drops the
- * cached catalog too, which the next start refetches.
+ * cached catalog too, which the next start refetches. [SetlistDao] (`admin-add-song-to-setlist`)
+ * writes to the same tables, so it changed nothing in the schema.
  */
 @Database(
     entities = [
@@ -30,6 +31,8 @@ internal abstract class BluesJamDatabase : RoomDatabase() {
     abstract fun catalogDao(): CatalogDao
 
     abstract fun jamsDao(): JamsDao
+
+    abstract fun setlistDao(): SetlistDao
 
     companion object {
         const val FILE_NAME = "bluesjam-cache.db"

@@ -175,6 +175,39 @@ class AdminWriterTest {
         }
     }
 
+    @Test
+    fun `send keeps an ok answer's payload and refuses everything else as write maps it`() {
+        val payload = """{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads"}"""
+        withWriter(body(payload)) { writer, post, harness ->
+            val answer = writer.send(ACTION, mapOf("songId" to JsonPrimitive("crossroads")))
+
+            val ok = answer as AdminAnswer.Ok
+            assertEquals(Json.parseToJsonElement(payload), ok.body)
+            assertEquals(1, post.bodies.size)
+            assertEquals(TEST_VALUE, harness.store.passphrase())
+        }
+        val refused = listOf(
+            body(error("invalid_passphrase")) to WriteOutcome.AccessRefused,
+            body(error("busy")) to WriteOutcome.Unavailable,
+            body(error("unknown_song")) to WriteOutcome.Rejected("unknown_song"),
+            body("""{"schemaVersion":1,"ok":false}""") to WriteOutcome.Unavailable,
+            TransportResult.Failed(DataFailure.Offline) to WriteOutcome.Offline,
+        )
+        refused.forEach { (answer, outcome) ->
+            withWriter(answer) { writer, _, harness ->
+                val sent = writer.send(ACTION) as AdminAnswer.Refused
+                assertEquals(answer.toString(), outcome, sent.outcome)
+                assertEquals(answer.toString(), outcome, writer.write(ACTION))
+                assertTrue(answer.toString(), sent.failure != null)
+                assertEquals(answer.toString(), TEST_VALUE, harness.store.passphrase())
+            }
+        }
+        withWriter(body(payload), stored = null) { writer, post, _ ->
+            assertEquals(AdminAnswer.Refused(WriteOutcome.AccessRefused, failure = null), writer.send(ACTION))
+            assertTrue(post.bodies.isEmpty())
+        }
+    }
+
     private companion object {
         const val ACTION = "checkWriteAccess"
         const val TEST_VALUE = "not-a-real-passphrase"

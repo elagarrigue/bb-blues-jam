@@ -73,6 +73,33 @@ to `ACTIONS` in `backend/apps-script/src/Post.js` and never call the passphrase 
 action; `handlePost` runs the guard (rate limit, `Config` re-read) for every action and the script
 lock for every write. `checkWriteAccess` is a deploy check with no repository function.
 
+As built by `admin-add-song-to-setlist` Part A (backend and `:core:data`, no UI yet): `AdminWriter`
+gains `internal suspend fun send(action, fields): AdminAnswer` (`Ok(body: JsonObject)` or
+`Refused(outcome, failure)`, never `Done`; `write` is `send` with `Ok` → `Done`), over
+`AppsScriptEnvelope.decodeOkObject`. **A mutation whose answer carries a payload uses `send`.**
+The jams refresh **is** the admin read when a passphrase is stored: `DefaultJamsRepository(transport,
+dao, calendar, scope, AdminWriter, AdminCredentialStore, mapper)` POSTs `readJams` and maps with
+`JamsMapper.map(rows, includeDrafts = true)` (a draft maps like a published jam; a draft with
+`missing_tab` is `Available(emptyList())`); `AccessRefused` remembers the refused passphrase in
+memory and falls back to the GET; any other failure is a failed refresh that keeps the cache (no
+GET fallback, it would wipe the draft); `JamsRefreshOutcome.Updated`/`Failed` carry `adminRead`
+and the log line ends ` (admin read)`. The new package `setlist/` holds the public
+`SetlistRepository` (`addSong(jamDate, songId, key): AddSongOutcome`, `observeAdds()`,
+`dismiss(id)`), `AddSongOutcome` (`Added(position)`, `NotAdded(reason: WriteOutcome)`) and
+`SetlistAdd` (`State.Sending`, `State.Failed(reason)`), and the internal
+`DefaultSetlistRepository(AdminWriter, SetlistDao, CatalogDao, DataScope)`: title and artist from
+`CatalogDao.song(id)` (not cached → `Rejected("unknown_song")`, nothing sent), writes in
+`DataScope` behind fair mutexes (call order, the caller's cancellation does not cancel one), the
+confirmed row and seven open slots inserted by `cache/SetlistDao.insertSetlistSong` (IGNORE, only
+while the cached setlist is `AVAILABLE`, one transaction), and nothing in Room on any failure.
+`SetlistDao` is its own DAO beside `JamsDao` (a mutation adds rows; a read replaces them), with no
+schema change. The entries live in memory. **A later setlist mutation goes in `SetlistRepository`
+and writes Room only from the server's answer**, through `SetlistDao`. Server side, `Post.js`
+holds `readJams` (read), `addSong` and the deploy check `checkSetlistWrite` (writes), and the
+shared `createSetlistTab_`/`appendSetlistRow_` (plain-text cells set before values, mapped columns
+only); `Code.js`, `Jams.js`, `Catalog.js` and `Normalize.js` were not touched. Part B (the UI in
+`:feature:next-jam` and `:app`) is still to come.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

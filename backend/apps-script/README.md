@@ -5,13 +5,15 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and two POST
-actions, `checkPassphrase` (`admin-passphrase-login`) and the self-cleaning deploy check
-`checkWriteAccess` (`apps-script-write-auth`). Every POST action passes one passphrase guard in the
-router, with a rate limit of 10 failed guesses per 10 minutes; write actions run under the script
-lock. The reads never open the `Config` tab, and never read the tab of a jam whose `estado` is not
-exactly `PUBLICADA`. Only `src/Post.js` opens `Config`, and no answer ever contains the
-passphrase.
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and five POST
+actions: `checkPassphrase` (`admin-passphrase-login`), the self-cleaning deploy check
+`checkWriteAccess` (`apps-script-write-auth`), and the admin read `readJams`, the setlist write
+`addSong` and its self-cleaning deploy check `checkSetlistWrite` (`admin-add-song-to-setlist`).
+Every POST action passes one passphrase guard in the router, with a rate limit of 10 failed
+guesses per 10 minutes; write actions run under the script lock. The GET reads never open the
+`Config` tab, and never read the tab of a jam whose `estado` is not exactly `PUBLICADA`; only the
+guarded `readJams` reads a current or future `BORRADOR` jam's tab. Only `src/Post.js` opens
+`Config`, and no answer ever contains the passphrase.
 
 ## Layout
 
@@ -22,7 +24,7 @@ passphrase.
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`. The only file that opens `Config`. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`, and the setlist write path (`addSong_`, `createSetlistTab_`, `appendSetlistRow_`). The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -79,9 +81,10 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` with the message ending in `Known: checkPassphrase, checkWriteAccess` (the action
-list of `src/Post.js` since `apps-script-write-auth`; `Known: checkPassphrase` alone means the old
-`Post.gs`); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
+`unknown_action` with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite`
+(the action list of `src/Post.js` since `admin-add-song-to-setlist`; `Known: checkPassphrase,
+checkWriteAccess` means the `apps-script-write-auth` version, `Known: checkPassphrase` alone the
+one before it); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
 
 #### Verify the paste
 
@@ -93,7 +96,7 @@ In the Apps Script editor, open each file and search (Ctrl+F) for its distinctiv
 | `Jams.gs` | `var PUBLISHED_STATUS = 'PUBLICADA';` | |
 | `Normalize.gs` | `function isoDateCell(` and `class ContractError` | |
 | `Catalog.gs` | | `class ContractError` |
-| `Post.gs` | `checkWriteAccess: { write: true, run: checkWriteAccess_ },` | `checkPassphrase: checkPassphrase_,` |
+| `Post.gs` | `checkWriteAccess: { write: true, run: checkWriteAccess_ },` **and** `addSong: { write: true, run: addSong_ },` | `checkPassphrase: checkPassphrase_,` |
 
 If any check fails, paste that file again over its whole content, save, and check again.
 
@@ -186,6 +189,31 @@ file, `Post`: it adds the passphrase guard on every action, the rate limit, the 
    creates a tab named `_prueba_escritura` and deletes it within the same request: if the Sheet is
    open you may see it flash for about a second.
 
+### Redeploy for write auth and add song, in one paste (`apps-script-write-auth` + `admin-add-song-to-setlist`)
+
+User exception of 6 October 2026: the write-auth `Post.js` was not deployed before Part A of
+`admin-add-song-to-setlist` was built on top of it, so **one** paste and **one** new version deploy
+both. Follow the write-auth steps above with this file, and verify **both** markers. **No other
+file changes**: `Code.gs`, `Normalize.gs`, `Catalog.gs`, `Jams.gs` and `appsscript.json` stay as
+they are, so the musicians' GET reads cannot regress.
+
+1. Open the Sheet, then **Extensions → Apps Script**.
+2. Open `Post.gs`, select all its content and replace it with the whole of
+   `backend/apps-script/src/Post.js`. **Save** (Ctrl+S).
+3. **Verify the paste** (Ctrl+F in `Post.gs`): it must contain
+   `checkWriteAccess: { write: true, run: checkWriteAccess_ },` (the write-auth guard and lock) and
+   `addSong: { write: true, run: addSong_ },` (the add-song actions), and must **not** contain
+   `checkPassphrase: checkPassphrase_,`. If any check fails, paste again over the whole content and
+   save.
+4. **Deploy → Manage deployments** → select the current deployment → **Edit** (pencil icon) →
+   **Version: New version** → **Deploy**. Never **New deployment**.
+5. No new scope is expected (`spreadsheets.currentonly` covers inserting and deleting tabs). If
+   Google asks to authorize anyway, accept as the first time and say so in chat.
+6. Tell the orchestrator. It runs the write-auth checks, then the add-song checks (**Check a live
+   deployment**). The valid checks create `_prueba_escritura` and `_prueba_lista` and delete each
+   within its own request: if the Sheet is open you may see them flash for about a second. No
+   check adds a song to a real jam.
+
 ### Temporary test jam for the draft check (user approval A3)
 
 Sheet edits need no redeploy. Do each step only when the orchestrator asks for it.
@@ -228,7 +256,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
@@ -246,6 +274,21 @@ The valid write (`checkWriteAccess` with the real passphrase, answer `{"schemaVe
 is never typed on a command line: the passphrase would land in the shell history. The agent runs it
 from a scratchpad Python script that reads `bluesjam.debugAdminPassphrase` from `local.properties`
 (user approval W1), builds the body with `json.dumps` and prints only `ok` or the error code.
+
+Add song (`admin-add-song-to-setlist`). Only obviously wrong values on the command line; each
+counts one failed guess toward the same 10-per-10-minutes limit:
+
+```bash
+curl -sL -d '{"action":"readJams"}' "$URL"                           # invalid_passphrase (no passphrase)
+curl -sL -d '{"action":"addSong","passphrase":"definitely-wrong","date":"2026-10-31","songId":"crossroads","key":"A"}' "$URL"  # invalid_passphrase
+```
+
+`readJams`, the non-mutating `addSong` probes (a bad date, a bad key, `1999-01-01` for
+`unknown_jam`, a past jam for `jam_not_editable`, the upcoming date with `zz-no-existe` for
+`unknown_song`) and `checkSetlistWrite` need the real passphrase, so the agent runs them from the
+same kind of scratchpad Python script, printing only codes, counts and latencies (for `readJams`:
+the jam count, the statuses and the song count per jam, never a name). Every probe fails a check
+before anything is written, so none changes the Sheet.
 
 Jams (`apps-script-jams-read-endpoint`, checks L1 to L5):
 

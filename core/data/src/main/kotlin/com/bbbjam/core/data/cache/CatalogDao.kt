@@ -13,6 +13,10 @@ internal interface CatalogDao {
     @Query("SELECT * FROM catalog_song ORDER BY sheet_order")
     fun observeSongs(): Flow<List<CatalogSongEntity>>
 
+    /** The cached song with [id], or null. */
+    @Query("SELECT * FROM catalog_song WHERE id = :id")
+    suspend fun song(id: String): CatalogSongEntity?
+
     @Query("SELECT * FROM sync_state WHERE resource = :resource")
     fun observeSyncState(resource: String): Flow<SyncStateEntity?>
 

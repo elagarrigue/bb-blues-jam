@@ -219,6 +219,69 @@ class JamsMapperTest {
     }
 
     @Test
+    fun `with drafts included, a draft's setlist and error map like a published jam's`() {
+        val rows = listOf(
+            jam(date = "2026-07-25", status = "BORRADOR", setlist = listOf(row("2"), row("1", "red-house"))),
+            jam(date = "2026-08-29", status = "BORRADOR", setlist = emptyList()),
+            jam(
+                date = "2026-09-26",
+                status = "BORRADOR",
+                setlist = null,
+                error = SetlistErrorDto("missing_header", "m"),
+            ),
+            jam(date = "2026-10-31", status = "BORRADOR", setlist = null),
+        )
+
+        val mapped = JamsMapper.map(rows, includeDrafts = true)
+
+        val first = mapped.jams[0].jam
+        assertEquals(JamStatus.DRAFT, first.status)
+        assertEquals(listOf(1, 2), first.available().songs.map { it.position })
+        assertEquals(mapOf(1 to (0..6).toList(), 2 to (0..6).toList()), mapped.jams[0].slotColumns)
+        assertEquals(Setlist.Available(emptyList()), mapped.jams[1].jam.setlist)
+        assertEquals(Setlist.Unavailable(SetlistProblem.INVALID_TAB), mapped.jams[2].jam.setlist)
+        assertEquals(Setlist.Unavailable(SetlistProblem.UNKNOWN), mapped.jams[3].jam.setlist)
+        assertEquals(
+            listOf(
+                SetlistIssue.SetlistError(LocalDate.of(2026, 9, 26), "missing_header"),
+                SetlistIssue.SetlistMissing(LocalDate.of(2026, 10, 31)),
+            ),
+            mapped.issues,
+        )
+    }
+
+    @Test
+    fun `with drafts included, a draft with no tab yet is an empty available setlist, a published one is not`() {
+        val missing = SetlistErrorDto("missing_tab", "m")
+        val rows = listOf(
+            jam(date = "2026-07-25", status = "BORRADOR", setlist = null, error = missing),
+            jam(date = "2026-08-29", status = "PUBLICADA", setlist = null, error = missing),
+        )
+
+        val mapped = JamsMapper.map(rows, includeDrafts = true)
+
+        assertEquals(Setlist.Available(emptyList()), mapped.jams[0].jam.setlist)
+        assertEquals(Setlist.Unavailable(SetlistProblem.MISSING_TAB), mapped.jams[1].jam.setlist)
+        assertEquals(listOf(SetlistIssue.SetlistError(LocalDate.of(2026, 8, 29), "missing_tab")), mapped.issues)
+    }
+
+    @Test
+    fun `a published jam maps identically with or without drafts, and the default leaves drafts withheld`() {
+        val samples = Fixtures.sampleJams("jams-edge.json")
+
+        assertEquals(JamsMapper.map(samples, includeDrafts = false), JamsMapper.map(samples))
+        val withDrafts = JamsMapper.map(samples, includeDrafts = true)
+        val published = { m: MappedJams -> m.jams.filter { it.jam.status == JamStatus.PUBLISHED } }
+        assertEquals(published(JamsMapper.map(samples)), published(withDrafts))
+        assertTrue(
+            JamsMapper.map(samples).jams.filter { it.jam.status == JamStatus.DRAFT }.all {
+                it.jam.setlist ==
+                    Setlist.Withheld
+            },
+        )
+    }
+
+    @Test
     fun `a published jam's setlistError makes it unavailable, never empty`() {
         val cases = mapOf(
             "missing_tab" to SetlistProblem.MISSING_TAB,

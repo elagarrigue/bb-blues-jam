@@ -5,10 +5,11 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and two POST actions, `checkPassphrase`
-(`admin-passphrase-login`) and the deploy check `checkWriteAccess` (`apps-script-write-auth`).
-Every POST action passes the passphrase guard in the router. The admin mutations come with their
-own slices, and the admin's read of a draft with `admin-add-song-to-setlist`.
+(`apps-script-jams-read-endpoint`), and five POST actions: `checkPassphrase`
+(`admin-passphrase-login`), the deploy check `checkWriteAccess` (`apps-script-write-auth`), and
+the admin read `readJams`, the first setlist write `addSong` and its deploy check
+`checkSetlistWrite` (`admin-add-song-to-setlist`, Part A). Every POST action passes the passphrase
+guard in the router. The other admin mutations come with their own slices.
 
 ## Transport
 
@@ -136,8 +137,8 @@ other value (`BORRADOR`, `Publicada`, a typo, empty) the jam is served with `set
 interprets: withholding a draft cannot be left to the client. Failing closed is deliberate, so a
 past jam left in `BORRADOR` shows no setlist until the admin marks it `PUBLICADA` (user approval
 A1). No query parameter changes this: `?resource=jams&passphrase=…` gives the same body as
-`?resource=jams`. How the admin reads a draft is not part of this route; it must use POST with the
-passphrase in the body (recommended home: `admin-add-song-to-setlist`).
+`?resource=jams`. The admin reads a draft through the POST action `readJams` (below), with the
+passphrase in the body; this route never changes for it.
 
 A tab is requested only by a `date` that is `YYYY-MM-DD`, so a `fecha` such as `Config` or
 `Catalogo` can never name another tab. The spreadsheet is accessed only through `getSheetByName`
@@ -235,8 +236,8 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess` (the list of the deployed `Post.gs`; a
-deploy check).
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite` (the list of the deployed
+`Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
 
@@ -274,7 +275,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -308,6 +309,61 @@ deletes a leftover `_prueba_escritura` tab if one exists, creates `_prueba_escri
 deleted. It touches no other tab. It proves the deployment can create, write, read back and
 delete a tab with the owner's authorization.
 
+### `readJams` (`admin-add-song-to-setlist`)
+
+Request: `{"action":"readJams","passphrase":"…"}`. A read action: no lock. The answer is
+`{"schemaVersion":1,"ok":true,"jams":[…]}`, the `jams` array in exactly the GET's shape (**Jam**,
+**Setlist row**), built by the same route function (`ROUTES.jams`, so the `Jams` tab errors are
+the GET's), with one difference: every jam whose `status` is exactly `BORRADOR` **and** whose
+`date` is `YYYY-MM-DD` and today or later in the spreadsheet's time zone (`todayIso_`, from
+`services.now`) also carries its tab's rows, with the GET's per-jam guards: `duplicate_date`,
+`missing_tab`, and `buildSetlist`'s `missing_header`/`duplicate_header`, all in `setlistError`.
+Every other jam is left exactly as the GET built it: a past draft, a `Publicada` typo or a draft
+whose `fecha` is not a date never has its tab opened. Only the admin's device receives draft songs.
+
+### `addSong` (`admin-add-song-to-setlist`)
+
+Request: `{"action":"addSong","passphrase":"…","date":"2026-10-31","songId":"crossroads","key":"A"}`.
+A write action, under the lock. Every check runs **before anything is written**, in this order:
+
+| Order | Check | Code |
+|---|---|---|
+| 1 | `date` is a string, `YYYY-MM-DD`, a real calendar day | `invalid_date` |
+| 2 | `songId` is a string matching `^[a-z0-9]+(-[a-z0-9]+)*$` | `invalid_song` |
+| 3 | `key` is a string matching `^[A-G][#b]?m?$` | `invalid_key` |
+| 4 | the `Jams` tab has exactly one row with that `fecha` (dates normalized as the reads do) | `unknown_jam`, `duplicate_date` (and the `Jams` tab's own `missing_tab`/`missing_header`) |
+| 5 | that jam's `estado` is `BORRADOR` or `PUBLICADA`, its date is today or later, and no jam with a known `estado` falls between today and it (it is the upcoming jam) | `jam_not_editable` |
+| 6 | `songId` is on exactly one `Catalogo` row (trimmed `id`), with a non-blank `titulo` and `artista` | `unknown_song` (and `Catalogo`'s own `missing_tab`/`missing_header`) |
+| 7 | the jam's tab, when it exists, has every required header once | `missing_header`, `duplicate_header` |
+| 8 | `songId` is not already in the tab (user approval J1) | `song_already_in_setlist` |
+
+Then: when the tab does not exist it is inserted with the header row `posicion, id_tema, titulo,
+artista, tono, Guitarra 1, Guitarra 2, Bajo, Batería, Voz, Armónica, Teclados, Otros`. The row goes
+on `getLastRow() + 1`, at `posicion` = 1 + the largest whole-number `posicion` in the tab (invalid
+cells ignored; 1 for an empty tab). Only the mapped columns are written, found by header as the
+reads find them; each cell is set to the plain-text format `@` **before** its value, so Sheets
+cannot turn a title such as `7/4` into a date. `posicion` is written as text (the read path
+accepts it, `integerTextCell`). `titulo` and `artista` are the catalog's; `tono` is the request's
+`key`, never `tono_default` (D-08); the seven slot cells and `Otros` are written empty (open,
+D-18). The answer is `{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads",
+"artist":"Eric Clapton"}`, `position` a JSON number.
+
+Codes are English and never contain the passphrase. A Sheets failure after the checks (rare) is
+`internal_error`; a tab created just before such a failure stays, empty, and reads as an empty
+setlist.
+
+### `checkSetlistWrite` (`admin-add-song-to-setlist`)
+
+Request: `{"action":"checkSetlistWrite","passphrase":"…"}`. A write action, under the lock. A
+**self-cleaning deploy check** for `addSong`'s write path (user approval L1 (a)), with no
+repository function: it deletes a leftover `_prueba_lista` tab, creates `_prueba_lista` with the
+jam tab header (the same function `addSong` uses), appends the marker row `1, zz-prueba-lista,
+7/4, Prueba <ISO time>, Bbm` with `addSong`'s own append function, reads it back with
+`buildSetlist`, deletes the tab and answers `{"schemaVersion":1,"ok":true}`. A read-back that
+differs (a title turned into a date, a slot not open) is `internal_error`, after the tab is
+deleted. `_prueba_lista` has no `Jams` row, so no read ever serves it. Only the glue between a
+`Jams` row and its tab name is left to the Node tests.
+
 ### Client write path (`AdminWriter`)
 
 Every admin mutation repository writes through the internal `AdminWriter(AppsScriptPostTransport,
@@ -328,6 +384,52 @@ it and decodes with `decodeOk`:
 `AdminWriter` never saves or clears the stored passphrase, whatever the answer (user decision
 W3): a refused write leaves the device in admin mode, and the admin recovers on Info with "Salir
 del modo admin" and "Entrar como admin". It never logs.
+
+`AdminWriter.send(action, fields): AdminAnswer` (`admin-add-song-to-setlist`) is the same path for
+an action whose answer carries a payload: `AdminAnswer.Ok(body)` with the whole answer object
+(decoded by `AppsScriptEnvelope.decodeOkObject`, the same checks as `decodeOk`), or
+`AdminAnswer.Refused(outcome, failure)` with the `WriteOutcome` above (never `Done`) and the
+`DataFailure` behind it (null when nothing was sent). `write` is `send` with `Ok` mapped to `Done`.
+
+### How the admin reads a draft (`admin-add-song-to-setlist`)
+
+The admin read **is** the jams refresh. `DefaultJamsRepository.refresh()` with a passphrase stored
+POSTs `readJams` through `AdminWriter.send` and stores the answer in place of the GET's, mapped
+with `JamsMapper.map(rows, includeDrafts = true)`: a draft's setlist and `setlistError` are mapped
+like a published jam's, and a draft with `missing_tab` is an empty available setlist (no song
+added yet). A separate draft read would be wiped by the next GET, which replaces the whole cache.
+
+| Admin read answer | Refresh |
+|---|---|
+| `ok` | stores it; `JamsRefreshOutcome.Updated(…, adminRead = true)`, log line ends ` (admin read)` |
+| `AccessRefused` (`invalid_passphrase`, `passphrase_not_set`) | remembers the refused passphrase **in memory** for this process (compared, never persisted or logged) and falls back to the anonymous GET; the next refresh goes straight to the GET until another passphrase is stored, so a stale device spends one guess per process, not one per refresh (W2) |
+| `Offline`, `Unavailable` (`busy`, `rate_limited`, an HTML page, a body with no `jams`), `Rejected` | a failed refresh (`Failed(…, adminRead = true)`, recorded in `sync_state`); the cache, draft songs included, is untouched and the GET is **not** tried, because it would wipe the draft the admin is editing |
+
+With no passphrase stored the refresh is the anonymous GET, as before. Musician screens keep
+reading `Jam.setlistForMusicians()`, which withholds every draft whatever the cache holds.
+
+### Client setlist mutations (`SetlistRepository`)
+
+`:core:data` `setlist/` holds the public `SetlistRepository` (`addSong(jamDate, songId, key):
+AddSongOutcome`, `observeAdds(): Flow<List<SetlistAdd>>`, `dismiss(id)`), `AddSongOutcome`
+(`Added(position)`, `NotAdded(reason: WriteOutcome)`, never `Done`), `SetlistAdd(id, jamDate,
+songId, title, artist, key, state)` with `State.Sending`/`State.Failed(reason)`, and the internal
+`DefaultSetlistRepository(AdminWriter, SetlistDao, CatalogDao, DataScope)`:
+
+1. The title and artist come from the cached catalog (`CatalogDao.song(id)`). A song not cached
+   is `NotAdded(Rejected("unknown_song"))`: a `Failed` entry, no request.
+2. A `Sending` entry is published, and the write is queued in `DataScope` behind a fair mutex, so
+   writes go one at a time in call order and the caller's cancellation does not cancel one.
+3. `ok` with a JSON-number `position` above 0 and non-blank `title`/`artist` → the song and seven
+   open slots (`Lineup.DEFAULT_INSTRUMENTS`, columns 0..6) are inserted in one transaction by
+   `SetlistDao.insertSetlistSong` (IGNORE: a row a refresh already brought wins; only while the
+   cached jam's setlist is `AVAILABLE`), the entry is removed, and the answer is `Added`. A
+   malformed `ok` is `NotAdded(Unavailable)`.
+4. Anything else → the entry becomes `Failed(reason)` and **nothing** is written to Room.
+   `dismiss(id)` removes a failed entry. Entries live in memory and are lost with the process.
+
+`addSong` is a plain repository function, usable with no UI (D-13); `action-contract-registry`
+registers it later.
 
 ## Quotas
 

@@ -55,6 +55,7 @@ Seed files for import live in `docs/sheet-seed/`.
 | `YYYY-MM-DD`, one tab per jam | JamSong in that jam's setlist | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `Config` | Setting | Sheet | The admin, by hand |
 | `_prueba_escritura` | Nothing (transient) | Apps Script | Created and deleted by the `checkWriteAccess` deploy check within one request (`apps-script-write-auth`); never read by any route, never served |
+| `_prueba_lista` | Nothing (transient) | Apps Script | Created with the jam tab header, given one marker row and deleted by the `checkSetlistWrite` deploy check within one request (`admin-add-song-to-setlist`); it has no `Jams` row, so no route ever serves it |
 
 A jam tab is named with its ISO date, for example `2026-07-25`, so tabs sort chronologically and the
 name is the join key with `Jams.fecha`. No other tab may use that name pattern.
@@ -113,6 +114,19 @@ carries a time, and the header of the next-jam screen needs it.
 the jam tab exist so the admin can read the tab, and so a setlist stays readable if a song is later
 removed from the catalog — the app falls back to them only when `id_tema` is not found. Keep them
 as plain text rather than a lookup formula, or the fallback breaks exactly when it is needed.
+
+**How Apps Script writes a jam tab** (`addSong`, `admin-add-song-to-setlist`; contract in
+`apps-script-api.md`). Append only: it never edits, moves or deletes an existing row. Only the
+upcoming jam's tab is written (its `Jams` row is the earliest with a known `estado` that is today or
+later, `BORRADOR` or `PUBLICADA`); a past jam's tab never (D-04). When the tab does not exist yet it
+is created with the header row above, in that order. The new row goes after the last row, at
+`posicion` = 1 + the largest whole-number `posicion` (invalid cells ignored), into the mapped
+columns only (found by header, so an extra column the admin added is left alone), with every
+written cell set to plain text (`@`) first: `posicion` is stored as text, which the read path
+accepts. `id_tema`, `titulo` and `artista` come from `Catalogo` (exactly one row with that `id`, a
+title and an artist), `tono` is the key the app sent (never `tono_default`, D-08), the seven slot
+cells and `Otros` are written empty (the default lineup, all open, D-18). A song already in the
+tab is refused (`song_already_in_setlist`). Every check runs before the first write.
 
 ### Slot columns
 
@@ -322,7 +336,11 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
   only by a `fecha` that is `YYYY-MM-DD` (else `invalid_date`) and that appears on one row only
   (else `duplicate_date`); a `PUBLICADA` row with no tab arrives with `missing_tab`, a tab missing
   a slot header with `missing_header`; a tab with no `Jams` row is ignored. A per-jam error never
-  fails the whole response. Enforced by the endpoint.
+  fails the whole response. Enforced by the endpoint. The guarded POST `readJams`
+  (`admin-add-song-to-setlist`) additionally reads the tab of every jam whose `estado` is exactly
+  `BORRADOR` and whose `fecha` is today or later, with the same guards; only a device holding the
+  passphrase receives it, and the app maps it with `includeDrafts`, where a draft with no tab yet
+  is an empty setlist. Musician screens still withhold every draft (`setlistForMusicians()`).
 - Every rejected row, dropped row, malformed `Otros` entry, ignored draft setlist, `setlistError`
   and held-back jam is reported in the refresh outcome and the startup log line
   (`jams refresh: …`), by index and date, never with a musician's name. Nothing is persisted, and no

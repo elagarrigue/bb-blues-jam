@@ -67,6 +67,16 @@ class CatalogDaoTest {
     }
 
     @Test
+    fun `song reads one cached song by id, null when absent`() = runTest {
+        val songs = listOf(song("b", 2), song("a", 1))
+        dao.replaceCatalog(songs, SyncStateEntity("catalog", 1, 1, null))
+
+        assertEquals(songs[1], dao.song("a"))
+        assertEquals(null, dao.song("zz-no-existe"))
+        assertEquals(null, dao.song("A"))
+    }
+
+    @Test
     fun `every column round-trips, tags included`() = runTest {
         val full = CatalogSongEntity(
             id = "the-thrill-is-gone",

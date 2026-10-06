@@ -49,7 +49,17 @@ internal object AppsScriptEnvelope {
      * [decode]: a JSON object, `schemaVersion` 1, an `error` key as a [DataFailure.Service], then
      * `ok` must be the JSON boolean `true`; anything else is an invalid response.
      */
-    fun decodeOk(body: String): Decoded<Unit> {
+    fun decodeOk(body: String): Decoded<Unit> = when (val decoded = decodeOkObject(body)) {
+        is Decoded.Ok -> Decoded.Ok(Unit)
+        is Decoded.Failed -> decoded
+    }
+
+    /**
+     * [decodeOk] with the root object kept, for an action whose answer carries a payload beside
+     * `ok` (`readJams`, `addSong`). The same checks in the same order; reading the payload is the
+     * caller's job.
+     */
+    fun decodeOkObject(body: String): Decoded<JsonObject> {
         val root = parseObject(body) ?: return invalid("body is not a JSON object")
         val version = (root["schemaVersion"] as? JsonPrimitive)?.takeUnless { it.isString }?.intOrNull
         val error = root["error"]
@@ -58,7 +68,7 @@ internal object AppsScriptEnvelope {
             version != SCHEMA_VERSION -> invalid("schemaVersion ${version ?: "missing"}")
             error != null -> serviceFailure(error)
             ok != true -> invalid("ok is not true")
-            else -> Decoded.Ok(Unit)
+            else -> Decoded.Ok(root)
         }
     }
 

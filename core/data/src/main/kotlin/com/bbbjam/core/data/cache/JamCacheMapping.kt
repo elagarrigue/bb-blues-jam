@@ -14,7 +14,10 @@ import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import java.time.LocalTime
 
-private const val AVAILABLE = "AVAILABLE"
+/** The `setlist_state` of a jam whose songs are cached; [SetlistDao.insertSetlistSong] checks it. */
+internal const val SETLIST_AVAILABLE = "AVAILABLE"
+
+private const val AVAILABLE = SETLIST_AVAILABLE
 private const val WITHHELD = "WITHHELD"
 private const val UNAVAILABLE = "UNAVAILABLE"
 

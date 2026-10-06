@@ -36,16 +36,23 @@ internal data class MappedJam(val jam: Jam, val slotColumns: Map<Int, List<Int>>
 internal object JamsMapper {
     private val DATE = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
     private val TIME = Regex("([01][0-9]|2[0-3]):([0-5][0-9])")
+    private const val MISSING_TAB = "missing_tab"
     private val STATUSES = mapOf("BORRADOR" to JamStatus.DRAFT, "PUBLICADA" to JamStatus.PUBLISHED)
 
     /** `setlistError` codes of `docs/apps-script-api.md`; any other code reads as [SetlistProblem.UNKNOWN]. */
     private val PROBLEMS = mapOf(
-        "missing_tab" to SetlistProblem.MISSING_TAB,
+        MISSING_TAB to SetlistProblem.MISSING_TAB,
         "missing_header" to SetlistProblem.INVALID_TAB,
         "duplicate_header" to SetlistProblem.INVALID_TAB,
     )
 
-    fun map(rows: List<JamDto>): MappedJams {
+    /**
+     * With [includeDrafts] (the admin read, `admin-add-song-to-setlist`), a draft's setlist and
+     * error are mapped like a published jam's, except that a draft with `missing_tab` has an empty
+     * available setlist: the admin has not added a song yet. A published jam maps identically
+     * either way. Musicians' reads always use the default, `false`.
+     */
+    fun map(rows: List<JamDto>, includeDrafts: Boolean = false): MappedJams {
         val checked = rows.mapIndexed { position, row -> checkRow(position + 1, row) }
         val dateCounts = checked.mapNotNull { it.date }.groupingBy { it }.eachCount()
         val jams = mutableListOf<MappedJam>()
@@ -55,7 +62,7 @@ internal object JamsMapper {
             val shared = row.date != null && dateCounts.getValue(row.date) > 1
             val rowIssues = if (shared) row.issues + JamIssue.DuplicateDate else row.issues
             if (rowIssues.isEmpty()) {
-                val setlist = mapSetlist(row)
+                val setlist = mapSetlist(row, includeDrafts)
                 jams += MappedJam(
                     Jam(
                         date = checkNotNull(row.date),
@@ -114,20 +121,27 @@ internal object JamsMapper {
     }
 
     /**
-     * A draft is always [Setlist.Withheld]; a setlist or error sent with it breaks the contract and
-     * is ignored (fail closed). A published jam's `setlistError` makes it [Setlist.Unavailable]; with
-     * neither a setlist nor an error it is unavailable for an unknown reason.
+     * Without [includeDrafts] a draft is always [Setlist.Withheld]; a setlist or error sent with it
+     * breaks the contract and is ignored (fail closed). A published jam's `setlistError` makes it
+     * [Setlist.Unavailable]; with neither a setlist nor an error it is unavailable for an unknown
+     * reason.
      */
-    private fun mapSetlist(row: CheckedRow): MappedSetlist {
+    private fun mapSetlist(row: CheckedRow, includeDrafts: Boolean): MappedSetlist {
         val date = checkNotNull(row.date)
         val error = row.dto.setlistError
         val rows = row.dto.setlist
+        val draft = row.status == JamStatus.DRAFT
         return when {
-            row.status == JamStatus.DRAFT -> MappedSetlist(
+            draft && !includeDrafts -> MappedSetlist(
                 Setlist.Withheld,
                 issues = listOfNotNull(
                     SetlistIssue.DraftSetlistIgnored(date).takeIf { rows != null || error != null },
                 ),
+            )
+
+            draft && rows == null && error?.code == MISSING_TAB -> MappedSetlist(
+                Setlist.Available(emptyList()),
+                issues = emptyList(),
             )
 
             error != null -> MappedSetlist(

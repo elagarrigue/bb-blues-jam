@@ -59,4 +59,16 @@ class JamsRefreshOutcomeTest {
         )
         assertEquals("jams refresh: failed Offline", JamsRefreshOutcome.Failed(DataFailure.Offline).toLogLine())
     }
+
+    @Test
+    fun `an admin read is marked at the end of the line, updated or failed`() {
+        assertEquals(
+            "jams refresh: updated 2 jams, 0 rejected, 0 setlist issues, 0 held back (admin read)",
+            JamsRefreshOutcome.Updated(2, emptyList(), emptyList(), emptyList(), adminRead = true).toLogLine(),
+        )
+        assertEquals(
+            "jams refresh: failed Service(code=busy) (admin read)",
+            JamsRefreshOutcome.Failed(DataFailure.Service("busy"), adminRead = true).toLogLine(),
+        )
+    }
 }

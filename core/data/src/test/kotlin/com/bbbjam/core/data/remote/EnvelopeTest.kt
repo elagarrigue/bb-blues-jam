@@ -126,6 +126,26 @@ class EnvelopeTest {
         )
     }
 
+    @Test
+    fun `decodeOkObject keeps the whole answer and fails exactly where decodeOk fails`() {
+        val body = """{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads"}"""
+        val root = (AppsScriptEnvelope.decodeOkObject(body) as Decoded.Ok).value
+        assertEquals(setOf("schemaVersion", "ok", "position", "title"), root.keys)
+        assertEquals("4", root.getValue("position").toString())
+
+        val bodies = listOf(
+            """{"schemaVersion":1}""",
+            """{"schemaVersion":1,"ok":"true"}""",
+            """{"schemaVersion":2,"ok":true}""",
+            """{"schemaVersion":1,"ok":true,"error":{"code":"unknown_song","message":"m"}}""",
+            """{"schemaVersion":1,"error":{}}""",
+            "<html></html>",
+        )
+        bodies.forEach { failing ->
+            assertEquals(failing, AppsScriptEnvelope.decodeOk(failing), AppsScriptEnvelope.decodeOkObject(failing))
+        }
+    }
+
     private fun decode(body: String) = AppsScriptEnvelope.decode(body, "songs", SongDto.serializer())
 
     private fun invalid(decoded: Decoded<*>): DataFailure.InvalidResponse =

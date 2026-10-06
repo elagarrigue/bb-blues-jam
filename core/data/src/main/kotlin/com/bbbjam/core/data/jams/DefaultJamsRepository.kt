@@ -4,6 +4,10 @@ import android.database.SQLException
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.Freshness
+import com.bbbjam.core.data.admin.AdminAnswer
+import com.bbbjam.core.data.admin.AdminCredentialStore
+import com.bbbjam.core.data.admin.AdminWriter
+import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.JamWithChildren
 import com.bbbjam.core.data.cache.JamsDao
 import com.bbbjam.core.data.cache.SyncStateEntity
@@ -39,18 +43,32 @@ import kotlinx.coroutines.sync.withLock
  * Cache-first [JamsRepository]: Room is the source of every emission, the network only replaces it.
  * Refreshes run in [scope], so one outlives the caller that started it, and are single-flight. The
  * upcoming/past split is computed on each emission with [calendar]'s today, never stored.
+ *
+ * With a passphrase stored, the refresh **is** the admin read (`admin-add-song-to-setlist`): one
+ * `readJams` POST through [writer], whose answer also carries the current and future drafts' songs,
+ * replaces the cache, so the next refresh cannot wipe them. A passphrase the server refuses is
+ * remembered in memory for this process (never persisted or logged) and the refresh falls back to
+ * the anonymous GET, so a stale device does not spend the guard's rate limit on every refresh. Any
+ * other failure of the admin read is a failed refresh that leaves the cache as it is: falling back
+ * to the GET then would wipe the draft songs the admin is editing.
  */
 internal class DefaultJamsRepository(
     private val transport: AppsScriptTransport,
     private val dao: JamsDao,
     private val calendar: JamCalendar,
     private val scope: DataScope,
-    private val mapper: (List<JamDto>) -> MappedJams = JamsMapper::map,
+    private val writer: AdminWriter,
+    private val store: AdminCredentialStore,
+    private val mapper: (List<JamDto>, Boolean) -> MappedJams = JamsMapper::map,
 ) : JamsRepository {
 
     private val refreshing = MutableStateFlow(false)
     private val mutex = Mutex()
     private var inFlight: Deferred<JamsRefreshOutcome>? = null
+
+    /** The stored passphrase the server last refused, in memory only; compared, never logged. */
+    @Volatile
+    private var refusedPassphrase: String? = null
 
     override fun observeJams(): Flow<JamsSnapshot> = flow {
         var checked = false
@@ -81,27 +99,60 @@ internal class DefaultJamsRepository(
     private suspend fun fetchAndStore(): JamsRefreshOutcome {
         refreshing.value = true
         try {
-            val result = transport.get(Resources.JAMS)
-            val now = calendar.now().toEpochMilli()
-            val decoded = when (result) {
-                is TransportResult.Failed -> Decoded.Failed(result.failure)
-                is TransportResult.Body -> AppsScriptEnvelope.decode(result.text, JAMS, JamDto.serializer())
-            }
-            return when (decoded) {
-                is Decoded.Failed -> failed(now, decoded.failure)
-                is Decoded.Ok -> store(now, decoded.value)
-            }
+            return adminRead() ?: anonymousRead()
         } finally {
             refreshing.value = false
         }
     }
 
+    /**
+     * The admin read, or null when it does not apply (no passphrase stored, or the stored one was
+     * refused earlier in this process) or the server refuses the passphrase now: the caller then
+     * reads anonymously.
+     */
+    private suspend fun adminRead(): JamsRefreshOutcome? {
+        val passphrase = store.passphrase()
+        if (passphrase == null || passphrase == refusedPassphrase) return null
+        val answer = writer.send(READ_JAMS)
+        val now = calendar.now().toEpochMilli()
+        return when (answer) {
+            is AdminAnswer.Ok -> when (val decoded = decodeJams(answer.body.toString())) {
+                is Decoded.Failed -> failed(now, decoded.failure, adminRead = true)
+                is Decoded.Ok -> store(now, decoded.value, adminRead = true)
+            }
+
+            is AdminAnswer.Refused -> if (answer.outcome == WriteOutcome.AccessRefused) {
+                refusedPassphrase = passphrase
+                null
+            } else {
+                val failure = answer.failure ?: DataFailure.InvalidResponse(answer.outcome.toString())
+                failed(now, failure, adminRead = true)
+            }
+        }
+    }
+
+    private suspend fun anonymousRead(): JamsRefreshOutcome {
+        val result = transport.get(Resources.JAMS)
+        val now = calendar.now().toEpochMilli()
+        val decoded = when (result) {
+            is TransportResult.Failed -> Decoded.Failed(result.failure)
+            is TransportResult.Body -> decodeJams(result.text)
+        }
+        return when (decoded) {
+            is Decoded.Failed -> failed(now, decoded.failure, adminRead = false)
+            is Decoded.Ok -> store(now, decoded.value, adminRead = false)
+        }
+    }
+
+    private fun decodeJams(body: String): Decoded<List<JamDto>> =
+        AppsScriptEnvelope.decode(body, JAMS, JamDto.serializer())
+
     /** Maps and stores [rows]; a mapper bug or a refused write is a failure, never a crash. */
-    private suspend fun store(now: Long, rows: List<JamDto>): JamsRefreshOutcome {
+    private suspend fun store(now: Long, rows: List<JamDto>, adminRead: Boolean): JamsRefreshOutcome {
         val mapped = try {
-            mapper(rows)
+            mapper(rows, adminRead)
         } catch (e: IllegalArgumentException) {
-            return failed(now, mappingFailure(e))
+            return failed(now, mappingFailure(e), adminRead)
         }
         return try {
             val jams = mapped.jams.map { it.jam }
@@ -109,14 +160,20 @@ internal class DefaultJamsRepository(
                 jamRows(mapped.jams.map { it.jam to it.slotColumns }),
                 SyncStateEntity(Resources.JAMS, now, now, failure = null),
             )
-            JamsRefreshOutcome.Updated(jams.size, mapped.rejected, mapped.issues, heldBack(jams, calendar.today()))
+            JamsRefreshOutcome.Updated(
+                jams.size,
+                mapped.rejected,
+                mapped.issues,
+                heldBack(jams, calendar.today()),
+                adminRead,
+            )
         } catch (e: SQLException) {
-            failed(now, e.toStorageFailure())
+            failed(now, e.toStorageFailure(), adminRead)
         }
     }
 
-    private suspend fun failed(now: Long, failure: DataFailure): JamsRefreshOutcome.Failed =
-        JamsRefreshOutcome.Failed(recordedFailure(failure) { dao.recordFailure(Resources.JAMS, now, it) })
+    private suspend fun failed(now: Long, failure: DataFailure, adminRead: Boolean): JamsRefreshOutcome.Failed =
+        JamsRefreshOutcome.Failed(recordedFailure(failure) { dao.recordFailure(Resources.JAMS, now, it) }, adminRead)
 
     private class CachedJams(val jams: List<JamWithChildren>, val state: SyncStateEntity?, val isRefreshing: Boolean) {
         fun toSnapshot(today: LocalDate): JamsSnapshot {
@@ -131,6 +188,7 @@ internal class DefaultJamsRepository(
 
     private companion object {
         const val JAMS = "jams"
+        const val READ_JAMS = "readJams"
 
         /** The future jams after the upcoming one, in date order (user approval P5). */
         fun heldBack(jams: List<Jam>, today: LocalDate): List<LocalDate> =

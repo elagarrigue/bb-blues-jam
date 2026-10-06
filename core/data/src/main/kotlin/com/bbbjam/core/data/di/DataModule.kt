@@ -16,6 +16,8 @@ import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
+import com.bbbjam.core.data.setlist.DefaultSetlistRepository
+import com.bbbjam.core.data.setlist.SetlistRepository
 import java.time.Clock
 import org.koin.dsl.module
 
@@ -27,7 +29,8 @@ private const val LOG_TAG = "BluesJam"
  * from [JamCalendar] in Buenos Aires (user approval P7 of `jams-repository-cache`). The GET and
  * POST transports are the same OkHttp instance; [AdminSession] keeps the verified passphrase in
  * DataStore (`admin-passphrase-login`), and [AdminWriter] sends it with every admin write
- * (`apps-script-write-auth`).
+ * (`apps-script-write-auth`), the jams refresh's admin read and [SetlistRepository]'s mutations
+ * (`admin-add-song-to-setlist`).
  */
 val dataModule = module {
     single<Clock> { Clock.systemUTC() }
@@ -41,8 +44,10 @@ val dataModule = module {
     single { get<BluesJamDatabase>().catalogDao() }
     single<CatalogRepository> { DefaultCatalogRepository(get(), get(), get(), get()) }
     single { get<BluesJamDatabase>().jamsDao() }
-    single<JamsRepository> { DefaultJamsRepository(get(), get(), get(), get()) }
+    single<JamsRepository> { DefaultJamsRepository(get(), get(), get(), get(), get(), get()) }
     single { AdminCredentialStore(AdminCredentialStore.dataStore(get())) }
     single<AdminSession> { DefaultAdminSession(get(), get()) }
     single { AdminWriter(get(), get()) }
+    single { get<BluesJamDatabase>().setlistDao() }
+    single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get()) }
 }
