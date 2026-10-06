@@ -183,7 +183,8 @@ class NextJamPresenterTest {
 
     private val header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días")
 
-    private fun presenter(calendar: JamCalendar = octoberSecond) = NextJamPresenter(repository, calendar)
+    private fun presenter(calendar: JamCalendar = octoberSecond) =
+        NextJamPresenter(repository, calendar, FakeAdminSession(), FakeSetlistRepository())
 
     private suspend fun ReceiveTurbine<NextJamUiModel>.awaitAfterLoading(): NextJamUiModel =
         awaitMatching { it !is NextJamUiModel.Loading }

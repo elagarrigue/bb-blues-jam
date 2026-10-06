@@ -1,5 +1,7 @@
 package com.bbbjam.core.ui.theme
 
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +27,13 @@ fun BluesJamTheme(content: @Composable () -> Unit) {
         shapes = BluesJamMaterial.shapes,
     ) {
         // MaterialTheme does not set LocalContentColor; without this, Text outside a Surface is black.
-        CompositionLocalProvider(LocalContentColor provides BluesJamColors.text, content = content)
+        // It does set the text selection colours, from the amber primary: replaced app-wide by
+        // non-amber ones (`admin-add-song-to-setlist`, V1), so no text field selects in amber.
+        CompositionLocalProvider(
+            LocalContentColor provides BluesJamColors.text,
+            LocalTextSelectionColors provides BluesJamMaterial.textSelectionColors,
+            content = content,
+        )
     }
 }
 
@@ -99,6 +107,14 @@ internal object BluesJamMaterial {
         labelMedium = BluesJamTypography.caption,
         labelSmall = BluesJamTypography.caption,
     )
+
+    /** Selection handle in `text`, selected background `text` at 40%: never amber. */
+    val textSelectionColors: TextSelectionColors = TextSelectionColors(
+        handleColor = BluesJamPalette.Text,
+        backgroundColor = BluesJamPalette.Text.copy(alpha = SELECTION_ALPHA),
+    )
+
+    const val SELECTION_ALPHA = 0.4f
 
     val shapes: Shapes = Shapes(
         extraSmall = BluesJamShapes.sm,

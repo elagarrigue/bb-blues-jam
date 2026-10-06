@@ -53,6 +53,30 @@ internal object NextJamCopy {
      */
     const val OPEN_DETAIL = "Ver detalle del tema"
 
+    /**
+     * The admin's controls on Próxima jam, approved on 5–6 October 2026
+     * (`docs/specs/admin-add-song-to-setlist.md`, C1 and J1). [DRAFT_BADGE] is drawn uppercase.
+     */
+    const val ADD_SONG = "Agregar tema"
+    const val ADDING = "Agregando…"
+    const val DRAFT_BADGE = "Borrador"
+    const val DRAFT_NOTE = "Los músicos todavía no ven esta lista."
+    const val ADMIN_EMPTY_TITLE = "Todavía no hay temas"
+    const val ADMIN_EMPTY = "Agregá el primero desde el catálogo."
+    const val ADMIN_NO_UPCOMING = "Para armar la lista, cargá la fecha en la pestaña Jams de la planilla."
+    const val CLOSE = "Cerrar"
+    const val ACCESS_REFUSED =
+        "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar."
+    const val OFFLINE = "No hay conexión. Probá de nuevo cuando tengas internet."
+    const val UNAVAILABLE = "El servidor no respondió. Probá de nuevo en un rato."
+    const val ALREADY_LISTED = "Ese tema ya está en la lista."
+    const val NOT_IN_CATALOG = "Ese tema ya no está en el catálogo."
+    const val JAM_CHANGED = "La jam cambió en la planilla. Actualizá y probá de nuevo."
+    const val SHEET_REFUSED = "La planilla rechazó el cambio. Revisala y probá de nuevo."
+
+    /** The failure card's title: `No se pudo agregar «Crossroads»`. */
+    fun addFailed(title: String): String = "No se pudo agregar «$title»"
+
     /** "En 29 días": always days, no weeks (exact and short). Only for two days or more. */
     fun inDays(days: Long): String = "En $days días"
 

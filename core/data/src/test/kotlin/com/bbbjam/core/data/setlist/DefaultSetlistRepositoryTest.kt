@@ -22,6 +22,7 @@ import com.bbbjam.core.model.SongId
 import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -209,6 +210,20 @@ class DefaultSetlistRepositoryTest {
         assertTrue(caller.isCancelled)
         assertEquals(listOf(1, 2), cachedSongs().map { it.position })
         assertEquals(emptyList<SetlistAdd>(), repository.observeAdds().first())
+    }
+
+    @Test
+    fun `a caller cancelled at once, before the song is even resolved, still adds it`() = runTest {
+        val repository = seeded()
+        post.answers += ok(position = 2)
+
+        val caller = launch(start = CoroutineStart.UNDISPATCHED) { repository.addSong(DATE, CROSSROADS, Key("A")) }
+        caller.cancel()
+        jamsDao.observeJams().first { jams -> jams.single().songs.size == 2 }
+
+        assertTrue(caller.isCancelled)
+        assertEquals(1, post.bodies.size)
+        assertEquals(listOf(1, 2), cachedSongs().map { it.position })
     }
 
     @Test

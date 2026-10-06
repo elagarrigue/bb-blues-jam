@@ -50,6 +50,18 @@ internal object AppRoutes {
     /** `pastJam/2026-07-25`: `LocalDate.toString()` is ISO-8601, never locale-dependent. */
     fun pastJamDetail(jamDate: LocalDate): String = "pastJam/$jamDate"
 
+    /**
+     * The admin's catalog picker (`admin-add-song-to-setlist`), `addSong/{jamDate}`: full screen in
+     * the outer host, opened from Próxima jam's "Agregar tema".
+     */
+    const val ADD_SONG = "addSong/{$JAM_DATE}"
+
+    /** `addSong/2026-10-31`: `LocalDate.toString()` is ISO-8601, never locale-dependent. */
+    fun addSong(jamDate: LocalDate): String = "addSong/$jamDate"
+
+    /** The picker's jam date, or null when it is missing or not ISO. */
+    fun parseAddSong(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
+
     /** The past jam detail's date, or null when it is missing or not ISO. */
     fun parsePastJamDetail(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 

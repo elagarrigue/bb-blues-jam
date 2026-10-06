@@ -97,8 +97,28 @@ schema change. The entries live in memory. **A later setlist mutation goes in `S
 and writes Room only from the server's answer**, through `SetlistDao`. Server side, `Post.js`
 holds `readJams` (read), `addSong` and the deploy check `checkSetlistWrite` (writes), and the
 shared `createSetlistTab_`/`appendSetlistRow_` (plain-text cells set before values, mapped columns
-only); `Code.js`, `Jams.js`, `Catalog.js` and `Normalize.js` were not touched. Part B (the UI in
-`:feature:next-jam` and `:app`) is still to come.
+only); `Code.js`, `Jams.js`, `Catalog.js` and `Normalize.js` were not touched. `addSong` runs in
+`DataScope` from its first instruction (undispatched), so a presenter may launch it and close its
+screen at once.
+
+As built by `admin-add-song-to-setlist` Part B: `NextJamPresenter(jams, calendar, AdminSession,
+SetlistRepository)` with `Params(onAddSong, onOpenSong)` (`onOpenSong` last, so a trailing lambda
+still names it). The flag is collected for drawing (`initial = false`) and, separately, in a
+`LaunchedEffect(Unit)` over the flag's real values, which asks for one `jams.refresh()` per login
+(a saveable `adminRefreshed`; a logout resets it), so returning to the tab does not refresh again.
+For the admin the list maps `jam.setlist` and `NextJamUiModel.Jam.admin` holds
+`NextJamAdminUiModel` (badge, note, pending rows, failure cards, `AddSongActionUiModel`); for
+musicians `admin` is null and nothing else changes. `NoUpcomingJam.adminHint` (J1). The picker is
+`AddSongPresenter(CatalogRepository, JamsRepository, SetlistRepository)` with
+`Params(jamDate, onBack, onAdded)`, the pure `addSongContent(...)` and `listedSongs(...)`, and
+`AddSongScreen`; a pick launches `addSong` undispatched and calls `onAdded` once (a double tap adds
+once). Composables in `AdminControls.kt` (`adminItems` appends to the list), colours in
+`AdminControlsDefaults` (no amber) and `AddSongDefaults` (`key` only), copy in `NextJamCopy` and
+`AddSongCopy`. `:app`: `AppRoutes.ADD_SONG` (`addSong/{jamDate}`, `addSong(date)`,
+`parseAddSong`), an `addSong` destination in `AppNavHost` beside the admin login (same slide,
+insets and `RESUMED` back guard; a pick pops by route), `TabsShell(onOpenAddSong)` →
+`NextJamScreen(onAddSong)`. `:core:ui` `BluesJamTheme` provides non-amber `LocalTextSelectionColors`.
+Konsist unchanged (17 rules, `:feature:next-jam` still `{key}`).
 
 ## Where Each Piece Goes
 

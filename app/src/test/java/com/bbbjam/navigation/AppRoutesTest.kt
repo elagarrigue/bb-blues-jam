@@ -94,4 +94,16 @@ class AppRoutesTest {
             }
         }
     }
+
+    @Test
+    fun `the add song route is the ISO date, and parse rejects a missing or malformed one`() {
+        assertEquals("addSong/{jamDate}", AppRoutes.ADD_SONG)
+        assertEquals("addSong/2026-10-31", AppRoutes.addSong(LocalDate.of(2026, 10, 31)))
+        assertEquals(LocalDate.of(2026, 10, 31), AppRoutes.parseAddSong("2026-10-31"))
+        assertNull(AppRoutes.parseAddSong(null))
+        assertNull(AppRoutes.parseAddSong("31/10/2026"))
+        assertNull(AppRoutes.parseAddSong("2026-02-30"))
+        val segments = AppRoutes.addSong(LocalDate.of(2026, 1, 9)).split('/')
+        assertEquals(LocalDate.of(2026, 1, 9), AppRoutes.parseAddSong(segments[1]))
+    }
 }

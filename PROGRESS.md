@@ -7,16 +7,18 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-eight of 39 slices accepted, the latest `apps-script-write-auth` (6 October
-  2026). `admin-add-song-to-setlist` is `in_progress`: Part A (backend and data) deployed in the same
-  Post.js, its live checks next; Part B (UI) after.
+  2026). `admin-add-song-to-setlist` is `passing` (Parts A and B, live checks done, session 073),
+  awaiting independent validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 6 October 2026 (session 072, `admin-add-song-to-setlist` Part A, backend and
-  `:core:data`, status `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17,
-  unchanged), `detekt: wired`, `ktlint: wired`; 78 result files, 464 tests, 0 failures; Node
-  113/113. Combined Post.js SHA-1 `94bb91548469d3f9c6c868788f09d3d2684c5cf1`, not deployed yet.
+- Last verified at: 6 October 2026 (session 073, `admin-add-song-to-setlist` Parts A and B,
+  `passing`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 83 result files, 489 tests, 0 failures; Node 113/113. Deployed Post.js SHA-1
+  `94bb91548469d3f9c6c868788f09d3d2684c5cf1`; live checks L1–L6 as expected. Pixel 5: admin view,
+  picker, `AccessRefused` card, demo draft, musician view; settings restored. Before that, session
+  072 (Part A): 78 result files, 464 tests.
   Before that, 5 October 2026 (session 070, `debug-admin-session`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 75 result files, 433 tests, 0 failures (new `DebugAdminSessionTest` 6). Release
   dex has no `DebugAdminSession`. Pixel 5: `Modo admin activo` with no login, flag left on. Before
@@ -3032,6 +3034,94 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   absent), deploys **Manage deployments → Edit → New version**; then write-auth's L1–L6 (its
   `Known:` check now expects the five-action list), validation of write-auth, this feature's
   L1–L6, then Part B.
+
+### Session 073 — 6 October 2026
+
+- Feature: `admin-add-song-to-setlist`: Part A live checks, the review note, then **Part B (UI)**.
+  The user deployed the combined Post.js (SHA-1 `94bb9154…`, same URL) and `apps-script-write-auth`
+  was accepted before this session's work.
+- Live checks (scratchpad script reading `local.properties`; it printed only codes, counts, dates
+  and timings, never the URL, the passphrase or a name):
+  - L1 `{}`: `unknown_action`, tail `Known: checkPassphrase, checkWriteAccess, readJams, addSong,
+    checkSetlistWrite` (1.74 s).
+  - L2 `readJams` with no passphrase: `invalid_passphrase` (3.14 s). L3 `addSong` with
+    `definitely-wrong`: `invalid_passphrase` (2.85 s). These were the only two deliberate wrong
+    guesses.
+  - L4 `readJams` with the passphrase: `ok`, 2 jams: `2026-07-25 PUBLICADA` 13 songs and
+    `2026-10-31 PUBLICADA` 13 songs, no `setlistError` (3.78, 3.62, 3.69 s). No draft exists, so
+    the draft branch was not exercised live (Node covers it).
+  - L5 non-mutating `addSong` probes, all as expected: `31/10/2026` → `invalid_date` (3.06 s);
+    key `H` → `invalid_key` (2.44 s); `1999-01-01` → `unknown_jam` (2.60 s); `2026-07-25` →
+    `jam_not_editable` (4.21 s); `2026-10-31` with `zz-no-existe` → `unknown_song` (5.11 s).
+  - L6 `checkSetlistWrite`: `ok` (4.91, 4.43, 5.09 s). No song was added to a real jam.
+- Review note (one failing `readJams` per process start after a rotation): **kept, recorded as an
+  accepted risk** in `docs/risks-and-open-questions.md`. One guess per cold start of a stale admin
+  device; persisting the refusal would mean storing something derived from the passphrase.
+- Part A change: `DefaultSetlistRepository.addSong` now runs in `DataScope` from its first
+  instruction (`scope.async(start = UNDISPATCHED)`), so a caller cancelled before the song is
+  resolved still adds it (the picker closes at once). New test "a caller cancelled at once…".
+- Part B, what changed:
+  - `:feature:next-jam`: `NextJamPresenter(jams, calendar, AdminSession, SetlistRepository)`,
+    `Params(onAddSong, onOpenSong)`; admin layer `NextJamAdminUiModel` (badge, note, pending rows,
+    failure cards, `AddSongActionUiModel`), `NoUpcomingJam.adminHint`, admin empty copy, failure
+    messages by outcome (C1); one `jams.refresh()` per login from the flag's real values. New
+    `AdminControls.kt`, `AdminControlsDefaults.kt`, `AddSongPresenter.kt`, `AddSongUiModel.kt`,
+    `AddSongScreen.kt`, `AddSongCopy.kt`, `AddSongDefaults.kt`; `NextJamScreen` appends the admin
+    items after the rows (the setlist and admin items moved into `LazyListScope` functions for
+    detekt's `CyclomaticComplexMethod`/`LongMethod`/`TooManyFunctions`); `nextJamModule` binds both
+    presenters.
+  - `:app`: `AppRoutes.ADD_SONG`/`addSong`/`parseAddSong`, the `addSong` destination (the song
+    detail destination moved into its own `NavGraphBuilder` function for detekt `LongMethod`),
+    `TabsShell(onOpenAddSong)`.
+  - `:core:ui`: `BluesJamTheme` provides non-amber `LocalTextSelectionColors`.
+  - Tests: new `NextJamAdminTest` 10, `AddSongPresenterTest` 7, `AdminControlsDefaultsTest` 2,
+    `AddSongDefaultsTest` 3, `TextSelectionColorsTest` 1, `AppRoutesTest` +1, `NextJamModuleTest`
+    (both presenters), `DefaultSetlistRepositoryTest` +1; shared fakes `AdminFakes.kt`; the three
+    existing presenter tests construct the presenter with a musician `FakeAdminSession`.
+  - Docs: `DESIGN.md` (Admin controls as built, screen 2), architecture `SKILL.md` (Part B),
+    `docs/risks-and-open-questions.md` (offline mutations decided, draft read settled, add-song
+    risks, write latency), `docs/domain-model.md`, `docs/user-and-access-model.md`.
+- Verification run:
+  - `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0: `konsist: wired` (17/17, no rule or
+    allowlist change), `detekt: wired`, `ktlint: wired`; 83 result files, 489 tests, 0 failures
+    (464 before). Earlier gate runs failed detekt (`LongMethod` on `AppNavHost` and
+    `NextJamContent`, `CyclomaticComplexMethod`, then `TooManyFunctions` on `NextJamScreen.kt`),
+    all fixed by extraction; no baseline or suppression. A first test run failed because the
+    nullable admin flag added an extra recomposition to musician models (24 failures); fixed by
+    collecting the flag separately in the effect.
+  - Node 113/113; Post.js SHA-1 unchanged.
+  - Failure demonstrations, restored with `sha1sum -c` (OK): (g) musicians mapped from
+    `jam.setlist` → 5 fail (`NextJamDraftTest` 2, `NextJamStatesTest` 1, `NextJamAdminTest` 2),
+    `NextJamPresenter.kt` `f34a8968…`; (h) no double-tap guard → `AddSongPresenterTest` 1 fails,
+    `AddSongPresenter.kt` `e05bb183…`; (c') a row stored on a refused answer → 2 of 9 fail, and (j)
+    `addSong` run in the caller instead of `DataScope` → 1 of 9 fails,
+    `DefaultSetlistRepository.kt` `58cee21f…`.
+  - Device, Pixel 5 (debug build; flags recorded first: `demoUpcomingJam=true`, `debugAdmin=true`,
+    `demoUpcomingJamDraft` absent; `local.properties` backed up, edited only to add or flip those
+    flags, restored byte-identical by SHA-1 and the backup deleted). No passphrase stored on the
+    device at any point (`run-as … ls files/datastore`: no such directory, before and after the
+    pick), so no add could reach the server:
+    1. Online, `debugAdmin`: the real published 2026-10-31 jam with its 13 rows unchanged and
+       `Agregar tema` after row 13 (no badge, published). Startup line `… songs 26 (26 from
+       catalog) admin (debug)`.
+    2. Picker: title, field, catalog sorted by title; listed songs muted with `Ya está en la
+       lista` and not clickable (dump: no clickable node for them); `CLAPTON` filtered to the
+       Clapton songs; rotation kept the query; system back returns to the list.
+    3. Picked `Cocaine`: the picker closed and the card `No se pudo agregar «Cocaine»` with the
+       `AccessRefused` message and `Cerrar` (clickable node 132 px tall, 48dp) appeared above the
+       button; the pending row was too short-lived to capture (no request is sent). `Cerrar`
+       removed it.
+    4. Airplane mode + cleared data + `demoUpcomingJamDraft=true`: the demo draft with `BORRADOR`
+       and `Los músicos todavía no ven esta lista.` under the header, its 8 songs and the button;
+       the picker offline showed `No pudimos cargar el catálogo` with `Reintentar`.
+    5. `debugAdmin=false`: the same demo draft shows the musician card (`EN PREPARACIÓN`), no admin
+       control.
+    Restored: original flags rebuilt and installed, airplane mode 0, rotation auto (1/0), font
+    scale 1.0, accessibility off (`enabled_accessibility_services null`, `accessibility_enabled
+    0`, `touch_exploration_enabled 0`), empty crash buffer, `/sdcard/ui.xml` removed. TalkBack and
+    accessibility settings were never touched. App data was cleared twice (a re-fetchable cache);
+    the last launch online repopulated it (`upcoming 2026-10-31`).
+- Status: `passing` (not accepted). Next: independent validation.
 
 ## Notes For The Next Session
 

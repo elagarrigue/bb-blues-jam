@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
@@ -58,18 +59,21 @@ import org.koin.compose.koinInject
  * bar narrows the rows to songs with an open slot for the selected instruments. Loading, error,
  * empty and offline are drawn with the `:core:ui` state components (`list-states`). An expanded
  * row offers "Ver detalle del tema", which calls [onOpenSong] with the jam's date and the song's
- * position (`song-detail-screen`); `:app` binds it to navigation. It renders [NextJamUiModel] and
- * forwards events; the presenter decides. [contentPadding] goes inside the list, so the background
- * runs edge to edge.
+ * position (`song-detail-screen`); `:app` binds it to navigation. For the admin
+ * (`admin-add-song-to-setlist`) the draft badge sits under the header and the pending adds, the
+ * failure cards and "Agregar tema" (which calls [onAddSong]) come after the rows, so nothing above
+ * them moves. It renders [NextJamUiModel] and forwards events; the presenter decides.
+ * [contentPadding] goes inside the list, so the background runs edge to edge.
  */
 @Composable
 fun NextJamScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
+    onAddSong: (jamDate: LocalDate) -> Unit = {},
     presenter: NextJamPresenter = koinInject(),
 ) {
-    val model = presenter.present(NextJamPresenter.Params(onOpenSong))
+    val model = presenter.present(NextJamPresenter.Params(onAddSong = onAddSong, onOpenSong = onOpenSong))
     NextJamContent(model = model, modifier = modifier, contentPadding = contentPadding)
 }
 
@@ -103,6 +107,7 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
         ) {
             model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
             item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
+            model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
         }
 
         is NextJamUiModel.Jam -> LazyColumn(
@@ -113,28 +118,37 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
             // The notice sits above the header: on the offline screen the cached data is the content.
             model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
             item(key = HEADER_KEY) { Header(model.header) }
-            when (val setlist = model.setlist) {
-                is SetlistUiModel.Songs -> {
-                    setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
-                    items(setlist.rows, key = { it.position }) { row -> SongRow(row) }
-                    setlist.droppedRowsNote?.let { note ->
-                        item(key = NOTE_KEY) {
-                            Text(
-                                text = note,
-                                style = BluesJamTheme.typography.caption,
-                                color = BluesJamTheme.colors.textMuted,
-                            )
-                        }
-                    }
+            model.admin?.draftBadge?.let { badge ->
+                item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
+            }
+            setlistItems(model.setlist)
+            model.admin?.let { admin -> adminItems(admin) }
+        }
+    }
+}
+
+/** The setlist's items: the filter bar, rows and note, or the one block that replaces them. */
+private fun LazyListScope.setlistItems(setlist: SetlistUiModel) {
+    when (setlist) {
+        is SetlistUiModel.Songs -> {
+            setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
+            items(setlist.rows, key = { it.position }) { row -> SongRow(row) }
+            setlist.droppedRowsNote?.let { note ->
+                item(key = NOTE_KEY) {
+                    Text(
+                        text = note,
+                        style = BluesJamTheme.typography.caption,
+                        color = BluesJamTheme.colors.textMuted,
+                    )
                 }
-
-                is SetlistUiModel.Empty -> item(key = EMPTY_KEY) { EmptyStateBlock(setlist.empty) }
-
-                is SetlistUiModel.Withheld -> item(key = DRAFT_KEY) { DraftSetlistBlock(setlist.draft) }
-
-                is SetlistUiModel.Unavailable -> item(key = NOTE_KEY) { Message(text = setlist.message) }
             }
         }
+
+        is SetlistUiModel.Empty -> item(key = EMPTY_KEY) { EmptyStateBlock(setlist.empty) }
+
+        is SetlistUiModel.Withheld -> item(key = DRAFT_KEY) { DraftSetlistBlock(setlist.draft) }
+
+        is SetlistUiModel.Unavailable -> item(key = NOTE_KEY) { Message(text = setlist.message) }
     }
 }
 
@@ -144,6 +158,8 @@ private const val FILTER_KEY = "filter"
 private const val STALENESS_KEY = "staleness"
 private const val EMPTY_KEY = "empty"
 private const val DRAFT_KEY = "draft"
+private const val ADMIN_DRAFT_KEY = "admin-draft"
+private const val ADMIN_HINT_KEY = "admin-hint"
 
 @Composable
 private fun Header(header: JamHeaderUiModel) {

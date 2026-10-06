@@ -58,7 +58,7 @@ transfer and no per-record access rules.
   any other value, a typo included (`apps-script-api.md`). The app adds two more layers:
   `JamsMapper` turns every DRAFT into `Setlist.Withheld` and ignores any setlist sent with one, and
   the musician screens decide from the jam's status through `Jam.setlistForMusicians()`
-  (`unpublished-setlist-state`), so a draft whose songs reached the app (a future admin read) still
+  (`unpublished-setlist-state`), so a draft whose songs reached the app (the admin read, below) still
   shows no song on Próxima jam or in the song detail.
 - **Admin state is local.** A flag in DataStore after the passphrase validates against the Sheet
   through Apps Script. As built (`admin-passphrase-login`, 5 October 2026): the login on Info POSTs
@@ -124,3 +124,14 @@ transfer and no per-record access rules.
   write fails with `AccessRefused`, and it keeps doing so after the first failure (W3). The failure
   should read as "your access changed" and point to logging out and in again from Info, not as a
   generic network error; that copy comes with the first mutation slice.
+
+## Admin read and add song (`admin-add-song-to-setlist`)
+
+- On a device that stores a passphrase, the jams refresh is the guarded POST `readJams`, so the
+  Room cache holds the current and future drafts' songs. They are drawn only while the admin flag
+  is on; musician screens decide from `Jam.setlistForMusicians()`. After logout they stay cached,
+  never drawn, until the next refresh (the anonymous GET) replaces them.
+- A refused admin read (rotated passphrase) falls back to the anonymous GET for the rest of the
+  process; the refused value is remembered in memory only.
+- "Agregar tema" is drawn from the admin flag; the add itself is authorized by Apps Script. With the
+  debug admin flag and no stored passphrase, an add answers `AccessRefused` without a request.

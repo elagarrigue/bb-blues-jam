@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -13,12 +14,17 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.DataFailure
+import com.bbbjam.core.data.admin.AdminSession
+import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.filter.InstrumentFilterChange
 import com.bbbjam.core.ui.filter.instrumentFilterBar
@@ -61,17 +67,58 @@ import kotlinx.coroutines.launch
  * Opening a song's detail (`song-detail-screen`) is [Params.onOpenSong], a plain callback that
  * `:app` binds to navigation; this module never sees the navigation library (D-03). It is read
  * through `rememberUpdatedState`, so an earlier model's row handler calls the current callback.
+ *
+ * Admin (`admin-add-song-to-setlist`, D-15): the flag comes from [adminSession]; it only decides
+ * what is drawn, never what is allowed (Apps Script authorizes every write). For the admin the
+ * list maps `jam.setlist`, draft songs included, and the model gains [NextJamAdminUiModel]: the
+ * draft badge, the pending and failed adds of [setlist] and "Agregar tema", which calls
+ * [Params.onAddSong]. Musicians keep `setlistForMusicians()` and a model with no admin part. When
+ * the flag turns on, the presenter asks for one refresh, which is the admin read (draft songs);
+ * whether it already did is saveable, so returning to the tab does not repeat it.
  */
-class NextJamPresenter(private val jams: JamsRepository, private val calendar: JamCalendar) :
-    Presenter<NextJamUiModel, NextJamPresenter.Params> {
+class NextJamPresenter(
+    private val jams: JamsRepository,
+    private val calendar: JamCalendar,
+    private val adminSession: AdminSession,
+    private val setlist: SetlistRepository,
+) : Presenter<NextJamUiModel, NextJamPresenter.Params> {
 
-    /** [onOpenSong] receives the jam's date and the song's position when a row's detail is opened. */
-    data class Params(val onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> })
+    /**
+     * [onOpenSong] receives the jam's date and the song's position when a row's detail is opened;
+     * [onAddSong] the jam's date when the admin taps "Agregar tema". [onOpenSong] stays last, so
+     * `Params { date, position -> … }` still names it.
+     */
+    data class Params(
+        val onAddSong: (jamDate: LocalDate) -> Unit = {},
+        val onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
+    )
 
     @Composable
     override fun present(params: Params): NextJamUiModel {
         val currentOnOpenSong by rememberUpdatedState(params.onOpenSong)
         val onOpenSong: (LocalDate, Int) -> Unit = { date, position -> currentOnOpenSong(date, position) }
+        val currentOnAddSong by rememberUpdatedState(params.onAddSong)
+        val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
+        val adds by remember { setlist.observeAdds() }.collectAsState(initial = emptyList())
+        // Read only by the effect, never by the composition, so writing it recomposes nothing.
+        var adminRefreshed by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            // The flag's real values only (not the composition's initial false), so coming back to
+            // the tab with admin on does not count as a new login.
+            adminSession.observeIsAdmin().collect { flag ->
+                if (!flag) {
+                    adminRefreshed = false
+                } else if (!adminRefreshed) {
+                    adminRefreshed = true
+                    jams.refresh()
+                }
+            }
+        }
+        val admin = if (isAdmin) {
+            AdminState(adds, onAddSong = { date -> currentOnAddSong(date) }, onDismiss = { id -> setlist.dismiss(id) })
+        } else {
+            null
+        }
         val scope = rememberCoroutineScope()
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
@@ -85,7 +132,7 @@ class NextJamPresenter(private val jams: JamsRepository, private val calendar: J
             subscription++
             scope.launch { jams.refresh() }
         }
-        return snapshot?.toUiModel(today, expanded, onToggle, filter, onFilterChange, now, onRetry, onOpenSong)
+        return snapshot?.toUiModel(today, expanded, onToggle, filter, onFilterChange, now, onRetry, onOpenSong, admin)
             ?: NextJamUiModel.Loading(NextJamCopy.LOADING)
     }
 }
@@ -117,6 +164,7 @@ internal fun JamsSnapshot.toUiModel(
     now: Instant = freshness.fetchedAt ?: Instant.EPOCH,
     onRetry: () -> Unit = {},
     onOpenSong: (LocalDate, Int) -> Unit = { _, _ -> },
+    admin: AdminState? = null,
 ): NextJamUiModel {
     val jam = upcoming
     val fetchedAt = freshness.fetchedAt
@@ -131,17 +179,20 @@ internal fun JamsSnapshot.toUiModel(
     return when {
         jam != null -> NextJamUiModel.Jam(
             header = jam.toHeader(today),
-            // A draft is never shown to a musician, whatever the read returned (D-04, access model).
-            setlist = jam.setlistForMusicians().toUiModel(
+            // A draft is never shown to a musician, whatever the read returned (D-04, access model);
+            // the admin sees the songs the admin read brought.
+            setlist = (if (admin == null) jam.setlistForMusicians() else jam.setlist).toUiModel(
                 jam.date,
-                RowState(expanded, onToggle, filter, onFilterChange, onOpenSong),
+                RowState(expanded, onToggle, filter, onFilterChange, onOpenSong, isAdmin = admin != null),
             ),
             staleness = staleness,
+            admin = admin?.toUiModel(jam),
         )
 
         fetchedAt != null -> NextJamUiModel.NoUpcomingJam(
             empty = EmptyStateUiModel(NextJamCopy.NO_UPCOMING_TITLE, NextJamCopy.NO_UPCOMING_JAM),
             staleness = staleness,
+            adminHint = if (admin == null) null else NextJamCopy.ADMIN_NO_UPCOMING,
         )
 
         // Nothing was ever read: never claim there is no jam. An error only once a read has failed
@@ -166,7 +217,67 @@ private class RowState(
     val filter: Set<Instrument>,
     val onFilterChange: (InstrumentFilterChange) -> Unit,
     val onOpenSong: (LocalDate, Int) -> Unit,
+    val isAdmin: Boolean,
 )
+
+/**
+ * What the presenter knows only for an admin: the adds of `SetlistRepository.observeAdds()` and
+ * the two admin callbacks. Null for musicians.
+ */
+internal class AdminState(
+    val adds: List<SetlistAdd>,
+    val onAddSong: (LocalDate) -> Unit,
+    val onDismiss: (Long) -> Unit,
+)
+
+/**
+ * The admin layer for [jam]: the adds for its date only, sending ones as pending rows and failed
+ * ones as cards, and "Agregar tema" only while the setlist is readable. Handlers are keyed by what
+ * they act on, so a model for another jam or entry never keeps an earlier handler.
+ */
+private fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
+    val mine = adds.filter { it.jamDate == jam.date }
+    val isDraft = jam.status == JamStatus.DRAFT
+    return NextJamAdminUiModel(
+        draftBadge = if (isDraft) NextJamCopy.DRAFT_BADGE else null,
+        draftNote = if (isDraft) NextJamCopy.DRAFT_NOTE else null,
+        pending = mine.filter { it.state == SetlistAdd.State.Sending }
+            .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },
+        failures = mine.mapNotNull { add ->
+            (add.state as? SetlistAdd.State.Failed)?.let { failed ->
+                AddFailureUiModel(
+                    id = add.id,
+                    title = NextJamCopy.addFailed(add.title),
+                    message = failureMessage(failed.reason),
+                    dismissLabel = NextJamCopy.CLOSE,
+                    events = EventHandler(key = add.id) { onDismiss(add.id) },
+                )
+            }
+        },
+        addSong = if (jam.setlist is Setlist.Available) {
+            AddSongActionUiModel(NextJamCopy.ADD_SONG, EventHandler(key = jam.date) { onAddSong(jam.date) })
+        } else {
+            null
+        },
+    )
+}
+
+/** The failure card's message by outcome and code (C1). */
+internal fun failureMessage(reason: WriteOutcome): String = when (reason) {
+    WriteOutcome.AccessRefused -> NextJamCopy.ACCESS_REFUSED
+
+    WriteOutcome.Offline -> NextJamCopy.OFFLINE
+
+    // Done never reaches a failure; the generic server line is the safe fallback.
+    WriteOutcome.Unavailable, WriteOutcome.Done -> NextJamCopy.UNAVAILABLE
+
+    is WriteOutcome.Rejected -> when (reason.code) {
+        "song_already_in_setlist" -> NextJamCopy.ALREADY_LISTED
+        "unknown_song" -> NextJamCopy.NOT_IN_CATALOG
+        "unknown_jam", "jam_not_editable", "duplicate_date" -> NextJamCopy.JAM_CHANGED
+        else -> NextJamCopy.SHEET_REFUSED
+    }
+}
 
 /**
  * Rows the filter hides keep their expansion (keyed by position) and come back as they were. The
@@ -176,8 +287,15 @@ private class RowState(
  */
 private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel = when (this) {
     is Setlist.Available -> if (songs.isEmpty()) {
-        // No song means no dropped row either (domain invariant), so no note is lost.
-        SetlistUiModel.Empty(EmptyStateUiModel(NextJamCopy.EMPTY_SETLIST_TITLE, NextJamCopy.EMPTY_SETLIST))
+        // No song means no dropped row either (domain invariant), so no note is lost. The admin's
+        // empty list is a draft being built, not a published empty list.
+        SetlistUiModel.Empty(
+            if (state.isAdmin) {
+                EmptyStateUiModel(NextJamCopy.ADMIN_EMPTY_TITLE, NextJamCopy.ADMIN_EMPTY)
+            } else {
+                EmptyStateUiModel(NextJamCopy.EMPTY_SETLIST_TITLE, NextJamCopy.EMPTY_SETLIST)
+            },
+        )
     } else {
         SetlistUiModel.Songs(
             rows = songs

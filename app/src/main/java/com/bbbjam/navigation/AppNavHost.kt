@@ -24,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.AdminLoginScreen
+import com.bbbjam.feature.nextjam.AddSongScreen
 import com.bbbjam.feature.pastjams.PastJamDetailScreen
 import com.bbbjam.feature.songdetail.SongDetailScreen
 
@@ -61,42 +62,80 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
                     nav.navigate(AppRoutes.pastJamDetail(date)) { launchSingleTop = true }
                 },
                 onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
+                onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
             )
         }
-        composable(
-            AppRoutes.SONG_DETAIL,
-            arguments = listOf(
-                navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType },
-                navArgument(AppRoutes.POSITION) { type = NavType.IntType },
-            ),
-            enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
-            popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
-        ) { entry ->
-            val arguments = entry.arguments
-            val args = AppRoutes.parseSongDetail(
-                jamDate = arguments?.getString(AppRoutes.JAM_DATE),
-                position = arguments?.takeIf { it.containsKey(AppRoutes.POSITION) }?.getInt(AppRoutes.POSITION),
-            )
-            if (args == null) {
-                // Unreachable from the UI, which only builds routes through AppRoutes.songDetail.
-                LaunchedEffect(Unit) { nav.popBackStack() }
-            } else {
-                // The status-bar inset sits outside the scroll, over a solid band; the bottom one inside it.
-                Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
-                    SongDetailScreen(
-                        jamDate = args.jamDate,
-                        position = args.position,
-                        onBack = {
-                            // A second tap while the pop runs must never pop the tabs and leave a blank host.
-                            if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
-                        },
-                        contentPadding = WindowInsets.navigationBars.asPaddingValues(),
-                    )
-                }
-            }
-        }
+        songDetail(nav)
         pastJamDetail(nav)
         adminLogin(nav)
+        addSong(nav)
+    }
+}
+
+/**
+ * The admin's catalog picker (`admin-add-song-to-setlist`), beside the admin login and drawn the
+ * same way: full screen over the tabs, the same slide and insets, back only while resumed. A pick
+ * pops by route, a no-op once the picker is gone, so a late or repeated call is harmless.
+ */
+private fun NavGraphBuilder.addSong(nav: NavHostController) {
+    composable(
+        AppRoutes.ADD_SONG,
+        arguments = listOf(navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType }),
+        enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
+    ) { entry ->
+        val jamDate = AppRoutes.parseAddSong(entry.arguments?.getString(AppRoutes.JAM_DATE))
+        if (jamDate == null) {
+            // Unreachable from the UI, which only builds routes through AppRoutes.addSong.
+            LaunchedEffect(Unit) { nav.popBackStack() }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+                AddSongScreen(
+                    jamDate = jamDate,
+                    onBack = {
+                        if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
+                    },
+                    onAdded = { nav.popBackStack(AppRoutes.ADD_SONG, inclusive = true) },
+                    contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                )
+            }
+        }
+    }
+}
+
+/** The song detail (`song-detail-screen`): full screen over the tabs, with the M1 slide. */
+private fun NavGraphBuilder.songDetail(nav: NavHostController) {
+    composable(
+        AppRoutes.SONG_DETAIL,
+        arguments = listOf(
+            navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType },
+            navArgument(AppRoutes.POSITION) { type = NavType.IntType },
+        ),
+        enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
+    ) { entry ->
+        val arguments = entry.arguments
+        val args = AppRoutes.parseSongDetail(
+            jamDate = arguments?.getString(AppRoutes.JAM_DATE),
+            position = arguments?.takeIf { it.containsKey(AppRoutes.POSITION) }?.getInt(AppRoutes.POSITION),
+        )
+        if (args == null) {
+            // Unreachable from the UI, which only builds routes through AppRoutes.songDetail.
+            LaunchedEffect(Unit) { nav.popBackStack() }
+        } else {
+            // The status-bar inset sits outside the scroll, over a solid band; the bottom one inside it.
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+                SongDetailScreen(
+                    jamDate = args.jamDate,
+                    position = args.position,
+                    onBack = {
+                        // A second tap while the pop runs must never pop the tabs and leave a blank host.
+                        if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
+                    },
+                    contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                )
+            }
+        }
     }
 }
 

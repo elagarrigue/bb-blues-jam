@@ -367,10 +367,39 @@ Layered onto the same screens — never a separate app, never a rearranged layou
 not substituted: a publish action prominent while in draft, an add-song button, a drag handle per
 row, tappable open slots for assignment, and a clear action on filled slots.
 
+As built (`admin-add-song-to-setlist`, 6 October 2026, V1 and C1 approved by the user), colours only
+through `AdminControlsDefaults`, **no amber**:
+
+- **Draft badge**: under the header, the muted `badge-draft` `BORRADOR` (`caption`, `textMuted` on
+  `surfaceRaised`, `shapes.sm`) and the note `Los músicos todavía no ven esta lista.` (`caption`,
+  `textMuted`). Only for a draft jam.
+- After the rows, in this order: **pending rows** (a `surface` card, `shapes.md`, at least 48dp,
+  title `songTitle` and `Agregando…` `body`, all `textMuted`, read politely), **failure cards** (a
+  `surface` card: `No se pudo agregar «…»` in `error`, the reason in `textMuted`, and an underlined
+  `Cerrar` in `text`, a 48dp target; it stays until closed) and the **`Agregar tema`** button
+  (full width, at least 48dp, `surfaceRaised` with `text`, `shapes.md`, `Role.Button`). The
+  instrument filter never hides the pending rows or the cards.
+- The admin's empty list: `Todavía no hay temas` / `Agregá el primero desde el catálogo.`, then the
+  button. With no upcoming jam: the no-date block plus the `caption` line `Para armar la lista,
+  cargá la fecha en la pestaña Jams de la planilla.` and no button.
+- **Catalog picker** (`AddSongScreen`, colours in `AddSongDefaults`): full screen over the tabs, a
+  48dp `Volver`, the title `Agregar tema` (`h1`, a heading), an outlined field `Buscar por título o
+  artista` with explicit token colours (no amber, as the admin login), then the catalog sorted by
+  title ignoring case and accents, matching title or artist the same way. A row is a `surface` card
+  (`shapes.md`, at least 48dp): the title (`songTitle`, two lines) with the default key at the end
+  (`songTitle` size, the amber `key` role, read as `Tonalidad A`), the artist under it (`body`,
+  `textMuted`); one merged node, `Role.Button`, click label `agregar a la lista`. A song already in
+  the list is all `textMuted`, adds `Ya está en la lista` (`caption`) and is not clickable. States:
+  skeleton `Cargando el catálogo`, error `No pudimos cargar el catálogo`, empty `El catálogo está
+  vacío` / `Cargá temas en la pestaña Catalogo de la planilla.`, and `Ningún tema coincide con «…».`
+  A pick closes the picker at once; the song shows on Próxima jam as a pending row.
+- Text selection is non-amber app-wide (`BluesJamTheme` provides `text` handles and `text` at 40%).
+
 ## Core Screens
 
 1. **Próxima jam, musician view** — the most important screen in the app
-2. **Próxima jam, admin view** — same screen plus controls
+2. **Próxima jam, admin view** — same screen plus controls. As built so far: the draft's songs,
+   the draft badge, pending adds, failure cards and `Agregar tema` (**Admin controls**)
 3. **Song detail** — key displayed very large as the main element, and the full lineup grouped by
    instrument. No tags, tempo, difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first

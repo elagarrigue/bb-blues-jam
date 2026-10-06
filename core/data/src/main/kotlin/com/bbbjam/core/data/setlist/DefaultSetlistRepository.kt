@@ -47,7 +47,15 @@ internal class DefaultSetlistRepository(
     private val order = Mutex()
     private val writes = Mutex()
 
-    override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
+    /**
+     * Runs in [scope] from the first instruction (undispatched), so a caller cancelled at any point,
+     * even before the song is resolved, never cancels an add it started: a presenter may launch it
+     * and close its screen at once.
+     */
+    override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome =
+        scope.async(start = CoroutineStart.UNDISPATCHED) { enqueue(jamDate, songId, key) }.await()
+
+    private suspend fun enqueue(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         val write = order.withLock {
             val id = ids.incrementAndGet()
             val song = catalogDao.song(songId.value)

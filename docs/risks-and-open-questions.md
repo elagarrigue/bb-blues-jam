@@ -186,10 +186,25 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
 
 ## Implementation-Time Questions
 
-- **Offline mutations.** Reads are cached, but what happens when an admin edits with no connection?
-  Options: block mutations offline with a clear message (simplest, defensible given the admin
-  usually builds the list at home), or queue and replay (more work, and risks silent divergence).
-  Recommendation: block in the MVP, and make the message specific.
+- **Offline mutations — decided** (`admin-add-song-to-setlist`, 6 October 2026): blocked, with a
+  specific message. An add made offline fails at once (`WriteOutcome.Offline`) and the failure card
+  says `No hay conexión. Probá de nuevo cuando tengas internet.` No queue, no replay.
+- **Add-song risks** (`admin-add-song-to-setlist`, as built):
+  - *Refresh race*: a refresh whose read began before an add committed and stores after the local
+    insert hides the new row until the next refresh. The Sheet is correct.
+  - Pending and failed adds live in memory: a failure while the app is dying is silent; a write that
+    reached the server shows on the next refresh.
+  - Draft songs sit in the Room cache of a passphrase-holding device and stay after logout until the
+    next refresh; they are never drawn without the flag (`setlistForMusicians()`).
+  - After a passphrase rotation, a device that still stores the old one spends **one** failed guess
+    per process start (its first refresh is the admin read, refused, then remembered in memory and
+    the GET is used). Accepted, not fixed (review note, 6 October 2026): it costs at most one of
+    the 10 guesses per 10 minutes per cold start of a stale admin device (one or two devices), the
+    admin is told by the first refused add to log out and in, and persisting the refusal would mean
+    storing something derived from the passphrase, which W3 and the store design avoid.
+  - `addSong` writes `posicion` as plain text (`@`); the read path already accepts it.
+  - Two production deploy checks exist (`checkWriteAccess`, `checkSetlistWrite`), both guarded and
+    self-cleaning, neither listed by a read.
 - **Failed writes after optimistic update.** The mitigation for Apps Script latency is optimistic
   presenter state, which makes rollback the real question. A failed publish is the worst case in the
   product: the admin believes the list is live and musicians see something stale. Publish failure in
@@ -240,11 +255,12 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
 - **Draft data must not reach unauthenticated clients.** Settled for anonymous reads by
   `apps-script-jams-read-endpoint`: the `jams` route serves a setlist only for a jam whose
   `estado` is exactly `PUBLICADA`, fails closed on any other value, and never even opens a draft's
-  tab; a query parameter cannot unlock it. Still open, not done by `apps-script-write-auth`
-  (recommended home: `admin-add-song-to-setlist`): how the admin reads a draft. That read must use POST with the passphrase in the body,
-  never a GET parameter, or the passphrase lands in URLs and logs. Consequence of the rule (user
-  approval A1): a past jam left in `BORRADOR` shows no setlist until the admin marks it
-  `PUBLICADA`.
+  tab; a query parameter cannot unlock it. **The admin's read is settled** by
+  `admin-add-song-to-setlist`: the guarded POST action `readJams` (passphrase in the body, never a
+  URL) adds the songs of current and future `BORRADOR` jams, and with a passphrase stored the jams
+  refresh **is** that read (`apps-script-api.md`). Consequence of the rule (user approval A1): a
+  past jam left in `BORRADOR` shows no setlist until the admin marks it `PUBLICADA`; `readJams`
+  does not release it either.
 
 ## Later / Not MVP
 
@@ -300,7 +316,11 @@ Stated so they can be challenged rather than silently relied upon.
       `technical-discovery.md`); a true cold-start figure is still open. Write latency: one
       sample, 6 October 2026: `checkWriteAccess` (guard, lock, create tab, write and read A1,
       delete tab) took 4.94 s end to end (`apps-script-write-auth` L6). A single call, not a
-      median, and heavier than one cell edit; the first mutation slice should measure its own.
+      median, and heavier than one cell edit. `admin-add-song-to-setlist` live checks (6 October
+      2026, same deployment): `checkSetlistWrite` (guard, lock, create a jam tab, append a row,
+      read it back, delete) 4.91, 4.43 and 5.09 s; `readJams` 3.78, 3.62, 3.69 s; the
+      non-mutating `addSong` probes 2.4–5.1 s (the deeper the check, the slower). An add is
+      therefore about 5 s, which the pending row covers.
 - [ ] Confirm the full mutation list for the action contract before slicing features.
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.

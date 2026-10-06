@@ -27,12 +27,70 @@ sealed interface NextJamUiModel : UiModel {
     /** Nothing was ever fetched and the latest read failed: the error block with a retry button. */
     data class Failed(val error: ListErrorUiModel) : NextJamUiModel
 
-    /** The jams were read and none is upcoming. [staleness] is set when the latest refresh failed. */
-    data class NoUpcomingJam(val empty: EmptyStateUiModel, val staleness: StalenessNoticeUiModel?) : NextJamUiModel
+    /**
+     * The jams were read and none is upcoming. [staleness] is set when the latest refresh failed.
+     * [adminHint] is the admin's line on how to create a jam (J1), null for musicians: adding never
+     * creates a jam, so there is no add button here.
+     */
+    data class NoUpcomingJam(
+        val empty: EmptyStateUiModel,
+        val staleness: StalenessNoticeUiModel?,
+        val adminHint: String? = null,
+    ) : NextJamUiModel
 
-    /** [staleness] is set exactly when something is cached and the latest refresh failed. */
-    data class Jam(val header: JamHeaderUiModel, val setlist: SetlistUiModel, val staleness: StalenessNoticeUiModel?) :
-        NextJamUiModel
+    /**
+     * [staleness] is set exactly when something is cached and the latest refresh failed. [admin] is
+     * the admin's controls (`admin-add-song-to-setlist`), null for musicians, so a musician's model
+     * is exactly what it was before admin controls existed.
+     */
+    data class Jam(
+        val header: JamHeaderUiModel,
+        val setlist: SetlistUiModel,
+        val staleness: StalenessNoticeUiModel?,
+        val admin: NextJamAdminUiModel? = null,
+    ) : NextJamUiModel
+}
+
+/**
+ * The admin's layer on Próxima jam (D-15: a state of the same screen). Everything here is drawn
+ * after what a musician sees, so nothing above it moves (DESIGN.md "Admin controls"): the draft
+ * badge and note under the header, then, after the rows, the [pending] adds, the [failures] and
+ * the [addSong] button. [draftBadge] and [draftNote] are set only for a draft jam; [addSong] only
+ * when the setlist is readable (empty included). The filter never hides pending rows or failures.
+ */
+data class NextJamAdminUiModel(
+    val draftBadge: String?,
+    val draftNote: String?,
+    val pending: List<PendingRowUiModel>,
+    val failures: List<AddFailureUiModel>,
+    val addSong: AddSongActionUiModel?,
+) : UiModel
+
+/** An add in flight: [title] and [status] ("Agregando…"), at the end of the list. */
+data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
+
+/**
+ * A failed add, kept until the admin closes it: [title] ("No se pudo agregar «Crossroads»"),
+ * [message] by outcome (C1) and [dismissLabel] ("Cerrar").
+ */
+data class AddFailureUiModel(
+    val id: Long,
+    val title: String,
+    val message: String,
+    val dismissLabel: String,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        /** Remove this card. Removes only the in-memory entry; nothing is written. */
+        data object Dismiss : Event
+    }
+}
+
+/** "Agregar tema": opens the catalog picker for the jam. Navigation only. */
+data class AddSongActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Open : Event
+    }
 }
 
 /** [date] is "Sábado 31 de octubre · 21:00"; [venue] is the Sheet's `lugar` as written. */

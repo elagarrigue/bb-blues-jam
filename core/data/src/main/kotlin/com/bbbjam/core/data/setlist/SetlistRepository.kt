@@ -17,8 +17,8 @@ interface SetlistRepository {
      * the write runs; on success the song is in the cache from the server's answer and the entry is
      * gone, otherwise the entry turns [SetlistAdd.State.Failed] and nothing is cached.
      *
-     * Writes are sent one at a time, in call order. Cancelling the caller does not cancel a write
-     * already sent: it runs in the data layer's scope.
+     * Writes are sent one at a time, in call order. Cancelling the caller never cancels an add it
+     * started: the whole add runs in the data layer's scope from its first instruction.
      */
     suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome
 

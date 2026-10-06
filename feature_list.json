@@ -810,7 +810,7 @@
       "apps-script-write-auth",
       "next-jam-read-only-list"
     ],
-    "status": "in_progress",
+    "status": "passing",
     "verification": [
       "The song appears locally and is present in the Sheet after a reload",
       "The mutation is a repository function, not UI-only logic",
@@ -824,7 +824,13 @@
       "The three verification bullets at JVM level: 'the song appears locally' = DefaultSetlistRepositoryTest over real in-memory Room (row + seven open slots from the server's answer); 'repository function, not UI-only' = addSong called with no UI in every DefaultSetlistRepositoryTest test; 'failed write visible, no phantom row' = 12 non-ok answers each leave Room unchanged and publish a Failed entry. 'Present in the Sheet after a reload' = Node: the appended row is read back by buildSetlist and readJams; live part pending L6.",
       "Kotlin failure demonstrations, restored with sha1sum -c: (c) row stored on a refused answer -> DefaultSetlistRepositoryTest 2 of 8 fail (DefaultSetlistRepository.kt 4fc9861f...); (d) includeDrafts default true -> 4 fail (JamsMapper.kt df9da60b...); (f) GET fallback on every refusal -> DefaultJamsRepositoryTest 1 of 26 fails (DefaultJamsRepository.kt eaa1708d...).",
       "./gradlew ktlintFormat, then CI=true ./init.sh exit 0: konsist wired (ModuleIsolationTest 17/17), detekt wired, ktlint wired; 78 result files, 464 tests, 0 failures (443 before). New/changed: SetlistDaoTest 1, DefaultSetlistRepositoryTest 8, DefaultJamsRepositoryTest 26 (+5), JamsMapperTest 22 (+3), EnvelopeTest 14 (+1), AdminWriterTest 11 (+1), CatalogDaoTest 6 (+1), JamsRefreshOutcomeTest 4 (+1), DataModuleTest 1.",
-      "Not run: live checks L1-L6 (deploy pending), Part B (UI), device checks. No device touched. Passphrase, URL and musician names in no output."
+      "Not run: live checks L1-L6 (deploy pending), Part B (UI), device checks. No device touched. Passphrase, URL and musician names in no output.",
+      "Session 073 live checks on the deployed Post.js 94bb9154... (prints codes/counts/timings only): L1 Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite; L2 readJams no passphrase -> invalid_passphrase; L3 addSong wrong passphrase -> invalid_passphrase (the only 2 deliberate wrong guesses); L4 readJams ok, 2 jams (2026-07-25 PUBLICADA 13, 2026-10-31 PUBLICADA 13), 3.6-3.8 s; L5 addSong probes invalid_date, invalid_key, unknown_jam (1999-01-01), jam_not_editable (2026-07-25), unknown_song (2026-10-31 zz-no-existe), 2.4-5.1 s; L6 checkSetlistWrite ok 4.43-5.09 s. No song added to a real jam.",
+      "Review note (one failing readJams per process start after rotation): accepted risk, recorded in docs/risks-and-open-questions.md.",
+      "Part B: NextJamPresenter admin layer (badge, note, pending rows, failure cards, Agregar tema; admin hint with no jam; admin empty copy; one refresh per login), AddSongPresenter/AddSongScreen picker (sorted, accent-insensitive search, listed songs muted, catalog default key K1 (a), single pick), AdminControls(Defaults), AddSongDefaults (key only), :app addSong route, non-amber text selection in BluesJamTheme. addSong now runs in DataScope from its first instruction.",
+      "./gradlew ktlintFormat, CI=true ./init.sh exit 0: konsist wired (17/17, no allowlist change), detekt wired, ktlint wired; 83 result files, 489 tests, 0 failures. Node 113/113.",
+      "Part B failure demonstrations restored by sha1sum -c: musicians mapped from jam.setlist -> 5 fail; no double-tap guard -> 1 fails; row stored on refusal -> 2 of 9 fail; addSong in the caller -> 1 of 9 fails.",
+      "Pixel 5 (no passphrase stored, verified; flags restored byte-identical): admin view of the real published jam with Agregar tema after the rows; picker search, listed songs not clickable, rotation keeps the query, back; pick -> AccessRefused card, Cerrar removes it; demo draft (airplane, cleared data) with BORRADOR badge and note; debugAdmin off -> musician draft card. Settings restored, accessibility never touched, empty crash buffer."
     ],
     "notes": "D-13: the first mutation, so it sets the pattern for every later one. Apps Script latency is expected; optimistic state with later confirmation, and a real rollback path. Session 072: Part A done (in_progress until Part B and the live checks). Part B must read SetlistRepository/observeAdds and trigger jams.refresh() on login; K1 (a) means the picker passes Song.defaultKey explicitly to addSong. From apps-script-write-auth validation (6 Oct 2026): DefaultJamsRepository sends a readJams POST whenever a passphrase is stored; after a rotation each process start counts one failed guess before falling back to GET — review when Part A is validated."
   },

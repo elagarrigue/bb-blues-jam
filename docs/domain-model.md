@@ -39,7 +39,9 @@ is never read as "no songs" (`jams-repository-cache`, decision D1):
   (`droppedRows`), so a screen can say the list is incomplete instead of showing a silent gap. A
   published tab with headers and no rows is an empty available setlist.
 - **Withheld** — the Jam is a draft, so the list is not served to musicians. A published Jam is
-  never withheld; a draft may be withheld (a musician's read) or available (the admin's, later).
+  never withheld; a draft may be withheld (a musician's read) or available (the admin's read,
+  `readJams`, since `admin-add-song-to-setlist`; a draft with no tab yet is an empty available
+  setlist for the admin).
 - **Unavailable(problem)** — the Jam is published but the setlist cannot be shown: its tab is
   missing (`MISSING_TAB`), lacks or doubles a header (`INVALID_TAB`), has rows of which none is
   valid (`INVALID_ROWS`, never an empty available list), or the reason is unknown (`UNKNOWN`).
@@ -70,6 +72,10 @@ the model's memory, which is exactly where an LLM is weakest on this repertoire 
 ## Relationships
 
 - A **Jam** has exactly one ordered setlist of **JamSongs**. Order is explicit via `position`.
+- **Adding a song** (`admin-add-song-to-setlist`, `SetlistRepository.addSong`) appends a catalog
+  song to the upcoming jam only, at `position` = 1 + the largest existing one, in the key the admin
+  sent (the picker sends the catalog default, K1 (a); D-08) and with the default lineup, all seven
+  slots open (D-18). The same song twice in one setlist is refused. Adding never creates a jam.
 - A **JamSong** references exactly one **Song** and owns exactly one **Lineup**.
 - A **Lineup** is a list of **Slots**. Default: 2 guitars, 1 bass, 1 drums, 1 vocals, 1 harmonica,
   1 keyboards — adjustable per JamSong only by removing Slots, never beyond the default (D-18).
