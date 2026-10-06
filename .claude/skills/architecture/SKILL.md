@@ -136,6 +136,22 @@ the song, slots and extras from that position, then the later ones reinserted on
 (positions are in the primary keys; the foreign keys have no `onUpdate`). Room changes only on
 `Done` or `Rejected("song_not_in_setlist")`.
 
+As built by `admin-set-key` Part A (backend and `:core:data`, no UI yet): `Post.js` adds `setKey`
+(writes only the matched row's `tono` cell, plain text, never opens `Catalogo`) and extracts the
+row scan into **`findSongRow_(sheet, columns, values, songId)`**, the one finder every later
+row-changing setlist mutation reuses (`song_not_in_setlist`, `duplicate_song`, before any write).
+Its deploy proof is an extra step in `checkSetlistWrite` (the marker's key rewritten with
+`writeKeyCell_`), not a new check action. `SetlistRepository` gains `setKey(jamDate, songId, key):
+SetKeyOutcome` (`KeySet`, `NotSet(reason)`), `observeKeyChanges()` with `KeyChange`
+(`State.Sending`, `State.Failed(reason)`), and `dismiss(id)` covers all three kinds (one id
+counter). The internal `SetlistKeyChanges` holds the entries, the request and the mirror, built by
+the repository like `SetlistRemovals`; the shared internal `displayedTitle` resolves an entry's
+title by the `jam_song_resolved` rule. `SetlistDao.updateKey(date, songId, key): Int` is one
+`UPDATE` statement whose `WHERE` carries the `AVAILABLE` and exactly-one-id conditions (one DAO
+function, not a `@Transaction` pair, so the DAO stays under detekt's `TooManyFunctions`). On `Done`
+the cache is updated **before** the entry is removed; any other answer leaves Room alone. **An
+optimistic value comes from `Sending` entries only; a failure is the revert** (Part B draws it).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

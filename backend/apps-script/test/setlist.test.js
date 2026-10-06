@@ -4,6 +4,7 @@
 // fake spreadsheet that holds real cell grids and logs every write.
 // admin-remove-song-from-setlist: the write `removeSong` and the deploy check `checkSetlistRemove`,
 // against the same fake, which also deletes and inserts rows.
+// admin-set-key: the write `setKey` and the extended `checkSetlistWrite`, against the same fake.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -63,8 +64,9 @@ const PAST_TAB = [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric Clapton
  * test can prove the format is set first. `convertAlways` simulates a Sheet that ignores the format.
  * The grid has exactly as many rows as `rows` (a trimmed tab): `getMaxRows` is that count, so a
  * trailing blank row in `rows` is a spare row. `brokenDelete` simulates a deleteRow that does nothing.
+ * `lostValues` lists values whose setValue is logged but not stored (a write Sheets dropped).
  */
-function gridSheet(name, rows, log, convertAlways, brokenDelete) {
+function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []) {
   const cells = rows.map((r) => r.map((value) => ({ value, format: '' })));
   const cell = (r, c) => {
     while (cells.length < r) {
@@ -132,6 +134,9 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete) {
         },
         setValue(value) {
           log.push(['setValue', name, r, c, value]);
+          if (lostValues.includes(value)) {
+            return;
+          }
           const target = cell(r, c);
           const converts = convertAlways || target.format !== '@';
           target.value = converts && /^\d+\/\d+$/.test(String(value)) ? new Date(0) : value;
@@ -154,7 +159,7 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete) {
 }
 
 /** A spreadsheet of grid tabs; `requested` lists every getSheetByName, `log` every write. */
-function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlways = false, brokenDelete = false } = {}) {
+function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlways = false, brokenDelete = false, lostValues = [] } = {}) {
   const log = [];
   const requested = [];
   const all = {
@@ -181,7 +186,7 @@ function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlw
     insertSheet(name) {
       log.push(['insertSheet', name]);
       assert.ok(!(name in all), `insertSheet: ${name} already exists`);
-      all[name] = gridSheet(name, [], log, convertAlways, brokenDelete);
+      all[name] = gridSheet(name, [], log, convertAlways, brokenDelete, lostValues);
       return all[name];
     },
     deleteSheet(sheet) {
@@ -697,6 +702,158 @@ test('checkSetlistRemove with a Sheet whose deleteRow does nothing is internal_e
   const fake = fakeSpreadsheet({ brokenDelete: true });
   const svc = services();
   assertError(call(fake, 'checkSetlistRemove', {}, svc), 'internal_error');
+  assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+  assert.equal(svc.lock.releases, 1);
+});
+
+// ---- setKey ----
+
+function setKey(fake, fields, svc) {
+  return call(fake, 'setKey', Object.assign({ date: UPCOMING, songId: HOOCHIE, key: 'Bb' }, fields), svc);
+}
+
+test('setKey writes only the tono cell of the row found by id_tema, as plain text, format first', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: FOUR_SONGS } });
+  const catalogBefore = JSON.stringify(fake.tabs.Catalogo.cells);
+  const before = readTab(fake, UPCOMING);
+  const svc = services();
+
+  assert.deepStrictEqual(setKey(fake, {}, svc), { schemaVersion: 1, ok: true });
+
+  assert.equal(svc.lock.tries, 1);
+  assert.equal(svc.lock.releases, 1);
+  // HOOCHIE is on sheet row 5; tono is column 5. Exactly two calls, on that one cell.
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 5, 5, '@'],
+    ['setValue', UPCOMING, 5, 5, 'Bb'],
+  ]);
+  const after = readTab(fake, UPCOMING);
+  assert.deepStrictEqual(after, before.map((r) => (r.songId === HOOCHIE ? Object.assign({}, r, { key: 'Bb' }) : r)));
+  // The admin read returns it too. Catalogo, and so tono_default, is never opened (D-08).
+  assert.equal(call(fake, 'readJams').jams[2].setlist.find((r) => r.songId === HOOCHIE).key, 'Bb');
+  assert.equal(JSON.stringify(fake.tabs.Catalogo.cells), catalogBefore);
+  assert.ok(!fake.requested.includes('Catalogo'), 'the catalog was opened');
+});
+
+test('setKey keeps the admin spelling and finds the cell in the tab own column order', () => {
+  const header = ['notas', 'tono', 'id_tema', 'posicion', 'artista', 'titulo'].concat(SLOT_HEADERS, ['Otros']);
+  const tabs = {
+    [UPCOMING]: [
+      header,
+      ['ojo', 'A', ' crossroads ', '1', 'Eric Clapton', 'Crossroads', '', '', '', '', '', '', '', ''],
+      ['', 'E', 'red-house', '2', 'Jimi Hendrix', 'Red House', '', '', '', '', '', '', '', ''],
+    ],
+  };
+  for (const key of ['A#', 'Bb', 'C#m', 'Ebm']) {
+    const fake = fakeSpreadsheet({ tabs });
+    assert.deepStrictEqual(setKey(fake, { songId: 'crossroads', key }), { schemaVersion: 1, ok: true });
+    assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', UPCOMING, 2, 2, '@'], ['setValue', UPCOMING, 2, 2, key]]);
+    assert.deepStrictEqual(readTab(fake, UPCOMING).map((r) => [r.songId, r.key]), [['crossroads', key], ['red-house', 'E']]);
+    assert.equal(fake.tabs[UPCOMING].cells[1][0].value, 'ojo', 'the unmapped column was touched');
+  }
+});
+
+test('setKey on a published upcoming jam is what the musicians GET returns next', () => {
+  const jams = [JAMS[0], [UPCOMING, '21:00', 'La Macanuda', 'PUBLICADA']];
+  const fake = fakeSpreadsheet({ jams, tabs: { [UPCOMING]: FOUR_SONGS } });
+  const before = handleGet({ resource: 'jams' }, fake.spreadsheet).jams.find((j) => j.date === UPCOMING).setlist.find((r) => r.songId === HOOCHIE);
+  assert.equal(before.key, 'A');
+  assert.deepStrictEqual(setKey(fake, { key: 'Bb' }), { schemaVersion: 1, ok: true });
+  const get = handleGet({ resource: 'jams' }, fake.spreadsheet).jams.find((j) => j.date === UPCOMING);
+  assert.equal(get.setlist.find((r) => r.songId === HOOCHIE).key, 'Bb');
+  assert.deepStrictEqual(get.setlist.map((r) => r.songId), ['the-thrill-is-gone', 'crossroads', PRIDE, HOOCHIE]);
+});
+
+test('setKey after another admin removed an earlier song still hits the right row', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: FOUR_SONGS } });
+  const svc = services();
+  // PRIDE is on sheet row 4; removing crossroads (row 3) moves it to row 3 and renumbers.
+  assert.equal(removeSong(fake, { songId: 'crossroads' }, svc).position, 1);
+  fake.log.length = 0;
+  assert.deepStrictEqual(setKey(fake, { songId: PRIDE, key: 'G' }, svc), { schemaVersion: 1, ok: true });
+  assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', UPCOMING, 3, 5, '@'], ['setValue', UPCOMING, 3, 5, 'G']]);
+  assert.deepStrictEqual(readTab(fake, UPCOMING).map((r) => [r.songId, r.position, r.key]), [
+    ['the-thrill-is-gone', '2', 'Bm'],
+    [PRIDE, '3', 'G'],
+    [HOOCHIE, '1', 'A'],
+  ]);
+});
+
+test('setKey validates in order and writes nothing on any failure', () => {
+  const brokenTab = { [UPCOMING]: [TAB_HEADER.filter((h) => h !== 'tono')] };
+  const duplicatedHeader = { [UPCOMING]: [TAB_HEADER.concat(['Bajo'])] };
+  const duplicatedSong = { [UPCOMING]: UPCOMING_TAB.concat([row('4', ' the-thrill-is-gone', 'Otra vez', 'B.B. King', 'C')]) };
+  const jamsWith = (...extra) => ({ jams: JAMS.concat(extra) });
+  const cases = [
+    [{ date: undefined }, 'invalid_date'],
+    [{ date: 20261031 }, 'invalid_date'],
+    [{ date: '31/10/2026' }, 'invalid_date'],
+    [{ date: '2026-02-30', songId: 'BAD', key: 'H' }, 'invalid_date'],
+    [{ songId: undefined }, 'invalid_song'],
+    [{ songId: 'Crossroads', key: 'H', date: '1999-01-01' }, 'invalid_song'],
+    [{ songId: ' crossroads' }, 'invalid_song'],
+    [{ key: undefined }, 'invalid_key'],
+    [{ key: 'H', date: '1999-01-01' }, 'invalid_key'],
+    [{ key: 'a' }, 'invalid_key'],
+    [{ key: 'Am7' }, 'invalid_key'],
+    [{ key: ' A' }, 'invalid_key'],
+    [{ key: '' }, 'invalid_key'],
+    [{ date: '1999-01-01', songId: 'zz-no-existe' }, 'unknown_jam'],
+    [{ date: PAST, songId: 'crossroads' }, 'jam_not_editable'],
+    [{ date: PAST_DRAFT, songId: DRAFT_MARKER }, 'jam_not_editable'],
+    [{ date: LATER }, 'jam_not_editable'],
+    [{ songId: 'the-thrill-is-gone' }, 'duplicate_date', jamsWith([UPCOMING, '22:00', 'Otro', 'BORRADOR'])],
+    [{ songId: 'the-thrill-is-gone' }, 'jam_not_editable', jamsWith(['2026-10-10', '21:00', 'Antes', 'PUBLICADA'])],
+    [{}, 'song_not_in_setlist', { tabs: { [UPCOMING]: null } }],
+    [{ songId: 'zz-no-existe' }, 'missing_header', { tabs: brokenTab }],
+    [{ songId: 'zz-no-existe' }, 'duplicate_header', { tabs: duplicatedHeader }],
+    [{ songId: 'zz-no-existe' }, 'song_not_in_setlist'],
+    [{ songId: 'crossroads' }, 'song_not_in_setlist'],
+    [{}, 'song_not_in_setlist', { tabs: { [UPCOMING]: [TAB_HEADER] } }],
+    [{ songId: 'the-thrill-is-gone' }, 'duplicate_song', { tabs: duplicatedSong }],
+    [{}, 'missing_tab', { jams: [], tabs: { Jams: null } }],
+  ];
+  for (const [fields, code, options = {}] of cases) {
+    const fake = fakeSpreadsheet(options);
+    const svc = services();
+    const body = setKey(fake, fields, svc);
+    assertError(body, code);
+    assert.deepStrictEqual(writes(fake.log), [], `${code} ${JSON.stringify(fields)} wrote`);
+    assert.equal(svc.lock.releases, svc.lock.tries, 'the lock was left held');
+    assert.ok(!fake.requested.includes('Catalogo'), `${code} opened the catalog`);
+  }
+});
+
+test('setKey needs the passphrase like every other action', () => {
+  const fake = fakeSpreadsheet();
+  assertError(handlePost({ action: 'setKey', date: UPCOMING, songId: 'the-thrill-is-gone', key: 'A' }, fake.spreadsheet, services()), 'invalid_passphrase');
+  assert.deepStrictEqual(fake.requested, ['Config']);
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.equal(ACTIONS.setKey.write, true);
+});
+
+// ---- checkSetlistWrite, extended by admin-set-key ----
+
+test('checkSetlistWrite changes the marker key with the setKey finder and cell writer before reading it back', () => {
+  const fake = fakeSpreadsheet();
+  assert.deepStrictEqual(call(fake, 'checkSetlistWrite'), { schemaVersion: 1, ok: true });
+  // The marker row is appended (Bbm), then only its tono cell is rewritten to F#m, format first.
+  const keyOps = fake.log.filter((op) => op[2] === 2 && op[3] === 5);
+  assert.deepStrictEqual(keyOps, [
+    ['setNumberFormat', SETLIST_CHECK_TAB, 2, 5, '@'],
+    ['setValue', SETLIST_CHECK_TAB, 2, 5, 'Bbm'],
+    ['setNumberFormat', SETLIST_CHECK_TAB, 2, 5, '@'],
+    ['setValue', SETLIST_CHECK_TAB, 2, 5, 'F#m'],
+  ]);
+  assert.ok(fake.log.every((op) => op[1] === SETLIST_CHECK_TAB), 'another tab was touched');
+  assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+});
+
+test('checkSetlistWrite with a Sheet that drops the key write is internal_error and still deletes the tab', () => {
+  const fake = fakeSpreadsheet({ lostValues: ['F#m'] });
+  const svc = services();
+  assertError(call(fake, 'checkSetlistWrite', {}, svc), 'internal_error');
+  assert.ok(fake.log.some((op) => op[0] === 'setValue' && op[4] === 'F#m'), 'the key write was not attempted');
   assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
   assert.equal(svc.lock.releases, 1);
 });

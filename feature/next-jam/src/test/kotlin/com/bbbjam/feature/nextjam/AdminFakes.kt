@@ -3,7 +3,9 @@ package com.bbbjam.feature.nextjam
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.setlist.AddSongOutcome
+import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
+import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
@@ -38,6 +40,8 @@ class FakeSetlistRepository : SetlistRepository {
     val dismissed = mutableListOf<Long>()
     val removes = MutableStateFlow<List<SetlistRemove>>(emptyList())
     val removeCalls = mutableListOf<Pair<LocalDate, SongId>>()
+    val keyChanges = MutableStateFlow<List<KeyChange>>(emptyList())
+    val keyCalls = mutableListOf<AddCall>()
 
     override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         addCalls += AddCall(jamDate, songId, key)
@@ -52,6 +56,13 @@ class FakeSetlistRepository : SetlistRepository {
     }
 
     override fun observeRemoves(): Flow<List<SetlistRemove>> = removes
+
+    override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome {
+        keyCalls += AddCall(jamDate, songId, key)
+        return SetKeyOutcome.KeySet
+    }
+
+    override fun observeKeyChanges(): Flow<List<KeyChange>> = keyChanges
 
     override fun dismiss(id: Long) {
         dismissed += id

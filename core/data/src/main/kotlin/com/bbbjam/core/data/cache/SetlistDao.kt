@@ -80,6 +80,23 @@ internal interface SetlistDao {
         )
         return true
     }
+
+    /**
+     * Mirrors one key change the server confirmed (`setKey`, `admin-set-key`): sets `key` of the song
+     * [songId] of [date], and nothing else. Only while the cached setlist is available and exactly one
+     * cached song of [date] has that id; otherwise nothing changes and the next refresh brings the
+     * Sheet's state. One statement, so the conditions and the update are atomic. The catalog's
+     * default key is never touched (D-08). Returns the rows changed: 1 when updated, else 0.
+     */
+    @Query(
+        """
+        UPDATE jam_song SET key = :key
+        WHERE jam_date = :date AND song_id = :songId
+          AND (SELECT setlist_state FROM jam WHERE date = :date) = '$SETLIST_AVAILABLE'
+          AND (SELECT COUNT(*) FROM jam_song WHERE jam_date = :date AND song_id = :songId) = 1
+        """,
+    )
+    suspend fun updateKey(date: String, songId: String, key: String): Int
 }
 
 /** What an IGNORE insert returns when the row already existed. */

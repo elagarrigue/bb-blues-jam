@@ -869,13 +869,20 @@
     "depends_on": [
       "admin-add-song-to-setlist"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "The key persists to the Sheet",
       "The catalog song's defaultKey is left untouched",
       "The change is visible on a published jam immediately"
     ],
-    "evidence": [],
+    "evidence": [
+      "Session 075, Part A only (server half and :core:data, no UI), on top of remove-song's Part A (e3c7287). Status stays in_progress until the single batched Post.js deploy (user decision B1 (a); exception recorded in session 074).",
+      "Post.js (the only src file changed; Code/Jams/Catalog/Normalize byte-identical, git diff --quiet HEAD exit 0): ACTIONS.setKey {write: true, run: setKey_}; findSongRow_ extracted from removeSetlistRow_ (remove-song's Node tests green unchanged); writeKeyCell_ (setNumberFormat('@') then setValue on the tono cell); checkSetlistWrite gains the findSongRow_ + writeKeyCell_('F#m') step. SHA-1 be205ea3f5d5081e5896666d3490ae30cab06119, NOT deployed.",
+      "node --test backend/apps-script/test/*.test.js: 132/132 (124 before; setlist.test.js +8: success one-cell write, spelling and column order, published jam then GET, renumbered tab, validation table of 27 cases writing nothing and never opening Catalogo, guard, extended check, check with a dropped key write -> internal_error). post.test.js: enumerations only (eight actions, Known x2, README marker).",
+      "Failure demonstrations, each restored from a byte copy in the scratchpad and checked with sha1sum -c (OK): (a) setKey_ writes the first match before findSongRow_ -> Node 4 fail incl. 'duplicate_song {\"songId\":\"the-thrill-is-gone\"} wrote'; Post.js be205ea3... OK, 132/132 again. (b) updateKey without song_id in WHERE -> SetlistDaoTest 'updateKey sets only the key...' (expected 1 but was 4) and the repository success test fail; SetlistDao.kt 5a1f1256... OK. (c) SetlistKeyChanges mirrors into Room on Rejected -> 'every failed key change leaves the cache and the catalog as they were...' fails; SetlistKeyChanges.kt 222e8fbf... OK.",
+      "./gradlew ktlintFormat (no change), then CI=true ./init.sh exit 0: konsist: wired (ModuleIsolationTest 17/17), detekt: wired, ktlint: wired; 83 result files, 509 tests, 0 failures (498 before; SetlistDaoTest 4 -> 6, DefaultSetlistRepositoryTest 15 -> 24).",
+      "Not run: live checks L1-L5 (after the batched deploy), Part B (UI), device checks. No URL, passphrase or musician name appeared in any output."
+    ],
     "notes": "D-08, D-13. The key belongs to the JamSong, not to the Song: that distinction is the whole reason the two types are separate. From admin-add-song validation (6 Oct 2026): appendSetlistRow_ makes 26 separate cell calls (likely part of the 4-7 s write latency) — batch range writes where this slice touches rows."
   },
   {

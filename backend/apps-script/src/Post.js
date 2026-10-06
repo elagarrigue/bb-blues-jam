@@ -19,6 +19,11 @@
  * stays numbered 1..n and a renumber by one admin can never make another admin's write hit the
  * wrong song. (`fecha`, `posicion`) remains the read identity.
  *
+ * admin-set-key adds `setKey`, which writes only the `tono` cell of the row found by `id_tema`
+ * (findSongRow_, shared with removeSong) and never opens Catalogo (D-08). Its deploy proof is one
+ * more step in `checkSetlistWrite`: the marker row's key is changed with the same finder and cell
+ * writer and read back.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
  * SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
  * from Catalog.js, and ContractError, mapColumns and textCell from Normalize.js (shared global scope
@@ -57,6 +62,9 @@ var POST_ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
 var SONG_ID_ = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 var KEY_ = /^[A-G][#b]?m?$/;
 
+/** The key checkSetlistWrite gives its marker row with setKey's cell writer (the marker starts in Bbm). */
+var CHECK_KEY_ = 'F#m';
+
 /** Sheets' plain-text number format: a value such as 7/4 or 007 stays the text it was sent as. */
 var PLAIN_TEXT_FORMAT = '@';
 
@@ -72,6 +80,7 @@ var ACTIONS = {
   checkSetlistWrite: { write: true, run: checkSetlistWrite_ },
   removeSong: { write: true, run: removeSong_ },
   checkSetlistRemove: { write: true, run: checkSetlistRemove_ },
+  setKey: { write: true, run: setKey_ },
 };
 
 /**
@@ -310,11 +319,13 @@ function addSong_(request, spreadsheet, services) {
 }
 
 /**
- * A self-cleaning deploy check for addSong's write path: creates the tab SETLIST_CHECK_TAB (deleting
- * a leftover first) with the jam tab header, appends a marker row with the same function as addSong,
+ * A self-cleaning deploy check for addSong's and setKey's write paths: creates the tab
+ * SETLIST_CHECK_TAB (deleting a leftover first) with the jam tab header, appends a marker row with
+ * the same function as addSong, changes its key to CHECK_KEY_ with setKey's finder and cell writer,
  * reads it back with buildSetlist and deletes the tab. The marker title `7/4` proves the plain-text
- * format: without it Sheets turns it into a date. A read-back that differs is an Error, so
- * `internal_error`, after the tab is deleted. Touches no other tab and is never listed by a read.
+ * format: without it Sheets turns it into a date. A read-back that differs (the marker with key
+ * CHECK_KEY_) is an Error, so `internal_error`, after the tab is deleted. Touches no other tab and is
+ * never listed by a read.
  */
 function checkSetlistWrite_(request, spreadsheet, services) {
   const leftover = spreadsheet.getSheetByName(SETLIST_CHECK_TAB);
@@ -332,12 +343,15 @@ function checkSetlistWrite_(request, spreadsheet, services) {
   let rows;
   try {
     appendSetlistRow_(sheet, marker);
+    const written = sheet.getDataRange().getDisplayValues();
+    const columns = mapColumns(SETLIST_CHECK_TAB, setlistSpecs_(), written[0]);
+    writeKeyCell_(sheet, findSongRow_(sheet, columns, written, marker.songId), columns, CHECK_KEY_);
     const range = sheet.getDataRange();
     rows = buildSetlist(range.getDisplayValues(), range.getValues(), SETLIST_CHECK_TAB);
   } finally {
     spreadsheet.deleteSheet(sheet);
   }
-  if (!isMarkerRow_(rows, marker)) {
+  if (!isMarkerRow_(rows, Object.assign({}, marker, { key: CHECK_KEY_ }))) {
     throw new Error('The setlist write check read back a different row');
   }
   return { ok: true };
@@ -401,20 +415,7 @@ function removeSetlistRow_(sheet, songId) {
   const display = range.getDisplayValues();
   const raw = range.getValues();
   const columns = mapColumns(sheet.getName(), setlistSpecs_(), display.length > 0 ? display[0] : []);
-  const matches = [];
-  for (let r = 1; r < display.length; r++) {
-    if (textCell((display[r] || [])[columns.songId]) === songId) {
-      matches.push(r);
-    }
-  }
-  if (matches.length === 0) {
-    throw notInSetlist_(songId, sheet.getName());
-  }
-  if (matches.length > 1) {
-    throw new ContractError('duplicate_song', songId + ' is on more than one row of ' + sheet.getName());
-  }
-
-  const index = matches[0];
+  const index = findSongRow_(sheet, columns, display, songId) - 1;
   const removed = wholePosition_((raw[index] || [])[columns.position]);
   const later = [];
   if (removed !== null) {
@@ -471,6 +472,29 @@ function wholePosition_(raw) {
   return Number(text);
 }
 
+/**
+ * The 1-based sheet row of the one data row of `sheet` whose trimmed `id_tema` is `songId`, scanned
+ * in `values` (the tab's display values, header first, mapped by `columns`). Throws
+ * `song_not_in_setlist` when no row has it and `duplicate_song` when more than one does. Reads only;
+ * shared by removeSong and setKey (user decision R1: a mutation finds its row by id, never by
+ * position).
+ */
+function findSongRow_(sheet, columns, values, songId) {
+  const matches = [];
+  for (let r = 1; r < values.length; r++) {
+    if (textCell((values[r] || [])[columns.songId]) === songId) {
+      matches.push(r);
+    }
+  }
+  if (matches.length === 0) {
+    throw notInSetlist_(songId, sheet.getName());
+  }
+  if (matches.length > 1) {
+    throw new ContractError('duplicate_song', songId + ' is on more than one row of ' + sheet.getName());
+  }
+  return matches[0] + 1;
+}
+
 function notInSetlist_(songId, tabName) {
   return new ContractError('song_not_in_setlist', songId + ' is not in the setlist of ' + tabName);
 }
@@ -511,6 +535,48 @@ function checkSetlistRemove_(request, spreadsheet, services) {
     throw new Error('The setlist remove check read back different rows');
   }
   return { ok: true };
+}
+
+/**
+ * Sets the key of one song of the upcoming jam's tab (`setKey`, a write action: under the lock).
+ * Request `{ date, songId, key }`. Every check runs before anything is written, in this order (the
+ * same codes and order as removeSong, plus `invalid_key`): `invalid_date`, `invalid_song`,
+ * `invalid_key`, `unknown_jam` / `duplicate_date`, `jam_not_editable`, `song_not_in_setlist` (no
+ * tab), `missing_header` / `duplicate_header`, `song_not_in_setlist` (no row with that trimmed
+ * `id_tema`), `duplicate_song`. Then only that row's `tono` cell is written, as plain text, in the
+ * spelling the admin picked. Catalogo, and so `tono_default`, is never opened (D-08). Answers
+ * `{ ok }`.
+ */
+function setKey_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug such as sweet-little-angel');
+  }
+  const key = request.key;
+  if (typeof key !== 'string' || !KEY_.test(key)) {
+    throw new ContractError('invalid_key', 'key must be A-G, an optional # or b, and an optional m');
+  }
+
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) {
+    throw notInSetlist_(songId, date);
+  }
+  const display = sheet.getDataRange().getDisplayValues();
+  const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
+  writeKeyCell_(sheet, findSongRow_(sheet, columns, display, songId), columns, key);
+  return { ok: true };
+}
+
+/** Writes `key` to the `tono` cell of sheet row `row` (1-based), plain text first, then the value. */
+function writeKeyCell_(sheet, row, columns, key) {
+  const cell = sheet.getRange(row, columns.key + 1);
+  cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cell.setValue(key);
 }
 
 /** Today in the spreadsheet's time zone, as YYYY-MM-DD: the zone the admin's dates are typed in. */

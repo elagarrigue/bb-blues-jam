@@ -7,15 +7,20 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-nine of 39 slices accepted, the latest `admin-add-song-to-setlist` (6 October
-  2026). `admin-remove-song-from-setlist` is `in_progress`: Part A (server half and `:core:data`)
-  done and self-verified in session 074, not deployed. Next: `admin-set-key`'s server half on top
-  of the same `Post.js`, then **one** batched deploy for both (user decision B1 (a); both stay
-  `in_progress` until it), then each feature's live checks, Part B and validation.
+  2026). `admin-remove-song-from-setlist` and `admin-set-key` are both `in_progress`: each Part A
+  (server half and `:core:data`) done and self-verified (sessions 074 and 075), in one `Post.js`
+  that is **not deployed**. Next: the user's **one** batched paste and **New version** (user
+  decision B1 (a); README "Redeploy for remove song and set key, in one paste"), then each
+  feature's live checks, Part B and validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 6 October 2026 (session 074, `admin-remove-song-from-setlist` Part A,
+- Last verified at: 6 October 2026 (session 075, `admin-set-key` Part A, `in_progress`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 83 result files, 509 tests, 0 failures; Node 132/132. `src/Post.js` SHA-1
+  `be205ea3f5d5081e5896666d3490ae30cab06119` (both Part A halves), **not deployed** (the deployed one is
+  still `94bb9154…`). Before that, session 074 (`admin-remove-song-from-setlist` Part A,
   `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 83 result files, 498 tests, 0 failures; Node 124/124. `src/Post.js` SHA-1
   `faf0fd85d53ce9277b3882e6573fedfe6ad64256`, **not deployed** (the deployed one is still
@@ -3196,6 +3201,73 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   the batched-redeploy section and extends the `Known:` list), then the user's single paste and
   **New version** deploy, then remove-song's LR1–LR5 (LR1 `Known:` must include `removeSong,
   checkSetlistRemove` plus set-key's actions), then Part B.
+### Session 075 — 6 October 2026
+
+- Feature: `admin-set-key`, **Part A only** (server half and `:core:data`, no UI), spec
+  `docs/specs/admin-set-key.md`. Approvals recorded through f026cc3: B1 (a) one batched deploy with
+  remove-song, V1, O1 optimistic, L1 (a) extend `checkSetlistWrite`, R1, C2 `Guardando…`, row found
+  by `id_tema`. Built on remove-song's Part A (e3c7287, `Post.js` `faf0fd85…`, not deployed).
+  **Same user-approved exception as session 074:** both features stay `in_progress` until the one
+  paste and deploy. Dependency `admin-add-song-to-setlist` is `accepted` (7e56ed1).
+- What changed:
+  - `backend/apps-script/src/Post.js` (the only `src` file changed; the other four byte-identical,
+    `git diff --quiet HEAD` exit 0): `ACTIONS.setKey` (`write: true`, guarded by the unchanged
+    router). Remove-song's row scan extracted as `findSongRow_(sheet, columns, values, songId)`
+    (1-based row; `song_not_in_setlist`, `duplicate_song`); `removeSetlistRow_` calls it and
+    remove-song's Node tests pass unchanged. `setKey_` validates `invalid_date`, `invalid_song`,
+    `invalid_key`, `requireEditableJam_`, no tab → `song_not_in_setlist`, header mapping, then
+    `findSongRow_`, and only then `writeKeyCell_` (`setNumberFormat('@')`, `setValue(key)` on the
+    one `tono` cell). Never opens `Catalogo`. Answers `{ok:true}`. `checkSetlistWrite_` gains one
+    step: after appending the `Bbm` marker, `findSongRow_` + `writeKeyCell_(…, 'F#m')`; the
+    read-back must be the marker with `F#m`. Header comment updated. SHA-1
+    `be205ea3f5d5081e5896666d3490ae30cab06119`.
+  - `backend/apps-script/test/setlist.test.js` +8 tests; the fake sheet gained an additive
+    `lostValues` option (a dropped `setValue`). `post.test.js`: enumerations only (eight actions,
+    `Known:` x2, the README marker `setKey: { write: true, run: setKey_ },`).
+  - `:core:data`: `SetlistRepository.setKey`/`observeKeyChanges`, `dismiss` for all three kinds;
+    new `SetKeyOutcome` (`KeySet`, `NotSet(reason)`), `KeyChange` (`Sending`, `Failed(reason)`),
+    internal `SetlistKeyChanges` (entries, request, mirror; built by `DefaultSetlistRepository`,
+    constructor and `dataModule` unchanged) and internal `displayedTitle` in `SongTitles.kt` (the
+    `jam_song_resolved` title rule, moved out of `SetlistRemovals`, which now calls it).
+    `SetlistDao.updateKey(date, songId, key): Int`. On `Done` the cache is updated first, then the
+    entry removed; every other answer leaves Room alone. No schema or version change.
+    **Deviation from the spec:** the spec named `@Transaction suspend fun updateKey(…): Boolean`
+    reusing `songTitle` and a separate `UPDATE`. `songTitle` does not exist (remove-song's
+    deviation), and a second DAO function would push `SetlistDao` past detekt `TooManyFunctions`
+    (10 → 12). Instead `updateKey` is **one** `@Query UPDATE` whose `WHERE` carries the `AVAILABLE`
+    and exactly-one-cached-id conditions as subqueries (atomic as one statement), returning the
+    rows changed (1 or 0). Same behaviour, no suppression.
+  - Test-only support: `feature/next-jam` `AdminFakes.FakeSetlistRepository` implements the two
+    new interface members (no production change in `:feature:next-jam`).
+  - Docs: `docs/apps-script-api.md` (`setKey` section, `findSongRow_` note, extended
+    `checkSetlistWrite`, `Known:` x2, client key change), `backend/apps-script/README.md` (intro,
+    file table, `Known:` x3, verify-the-paste table, the batched-redeploy section with both markers
+    and the final `Known:` list, set-key probes), `docs/sheet-schema.md` (`setKey` writes one
+    `tono` cell; `_prueba_lista`), `docs/domain-model.md` (setting a key as built), architecture
+    `SKILL.md` (Part A as built, the overlay rule). Part B owns `DESIGN.md` and
+    `risks-and-open-questions.md`.
+- Verification run:
+  - `node --test backend/apps-script/test/*.test.js`: 132/132 (124 before).
+  - Failure demonstrations, each restored from a byte copy in the scratchpad (not `git checkout`)
+    and checked with `sha1sum -c` (OK): (a) `setKey_` writes the first matching row before
+    `findSongRow_` → Node 4 fail, among them `duplicate_song {"songId":"the-thrill-is-gone"}
+    wrote`; `Post.js` `be205ea3…` OK and 132/132 again. (b) `updateKey` without `song_id` in its
+    `WHERE` → `SetlistDaoTest` "updateKey sets only the key of the matching song of that date"
+    (expected 1, was 4) and the repository success test fail; `SetlistDao.kt` `5a1f1256…` OK.
+    (c) `SetlistKeyChanges` mirroring into Room on `Rejected` → "every failed key change leaves
+    the cache and the catalog as they were…" fails; `SetlistKeyChanges.kt` `222e8fbf…` OK.
+  - `./gradlew ktlintFormat` (no change), then `CI=true ./init.sh` exit 0: `konsist: wired`
+    (ModuleIsolationTest 17/17, no rule change), `detekt: wired`, `ktlint: wired`; 83 result
+    files, 509 tests, 0 failures (498 before; `SetlistDaoTest` 4 → 6,
+    `DefaultSetlistRepositoryTest` 15 → 24).
+  - No Gradle dependency, Konsist, manifest, Room version, UI or `:app` change. No device touched.
+    No live check (not deployed). The passphrase, the URL and musician names appear in no output.
+- Not run yet: the deploy, remove-song's LR1–LR5 and set-key's L1–L5, both Parts B, device checks.
+- Next: the user pastes `src/Post.js` (SHA-1 `be205ea3f5d5081e5896666d3490ae30cab06119`) into `Post.gs`,
+  verifies the markers `removeSong: { write: true, run: removeSong_ },` and
+  `setKey: { write: true, run: setKey_ },` (and that `checkPassphrase: checkPassphrase_,` is
+  absent), and deploys **New version**; then the live checks (L1 `Known:` ends `removeSong,
+  checkSetlistRemove, setKey`), then remove-song's Part B, then set-key's Part B.
 
 ## Notes For The Next Session
 

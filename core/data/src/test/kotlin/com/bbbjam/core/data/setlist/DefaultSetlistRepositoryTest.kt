@@ -1,5 +1,6 @@
 package com.bbbjam.core.data.setlist
 
+import android.database.SQLException
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.Fixtures
@@ -12,6 +13,7 @@ import com.bbbjam.core.data.cache.JamExtraEntity
 import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
+import com.bbbjam.core.data.cache.SetlistDao
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.cache.toDomain
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
@@ -41,8 +43,8 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 /**
- * The add and remove mutations with no UI: a real in-memory Room cache, a real DataStore file, the real
- * [AdminWriter] and a fake POST transport. Writes run in the test's background scope.
+ * The add, remove and set-key mutations with no UI: a real in-memory Room cache, a real DataStore
+ * file, the real [AdminWriter] and a fake POST transport. Writes run in the test's background scope.
  */
 class DefaultSetlistRepositoryTest {
     @get:Rule
@@ -375,6 +377,229 @@ class DefaultSetlistRepositoryTest {
         assertEquals(1, post.bodies.size)
     }
 
+    // ---- setKey ----
+
+    @Test
+    fun `setKey, called with no UI, sends the key, updates only that cached song and clears its entry`() = runTest {
+        val repository = seeded()
+        seedFour()
+        val catalogBefore = catalogDao.song("crossroads")
+        post.answers += body("""{"schemaVersion":1,"ok":true}""")
+        val gate = CompletableDeferred<Unit>().also { post.gate = it }
+
+        val change = async { repository.setKey(DATE, CROSSROADS, Key("Bb")) }
+        val sending = repository.observeKeyChanges().first { it.isNotEmpty() }.single()
+        assertEquals(KeyChange.State.Sending, sending.state)
+        assertEquals(listOf("Crossroads", Key("Bb"), CROSSROADS), listOf(sending.title, sending.key, sending.songId))
+        // Nothing is cached while sending: the pending key lives only in the entry.
+        assertEquals(Key("A"), cachedSongs()[1].key)
+        gate.complete(Unit)
+
+        assertEquals(SetKeyOutcome.KeySet, change.await())
+        assertEquals(
+            listOf("red-house" to "Bb", "crossroads" to "Bb", "hoochie-coochie-man" to "A", "pride-and-joy" to "E"),
+            cachedSongs().map { it.songId.value to it.key.value },
+        )
+        assertEquals(listOf(1, 2, 3, 4), cachedSongs().map { it.position })
+        assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
+        // The catalog entry, and its default key, is untouched (D-08).
+        assertEquals(catalogBefore, catalogDao.song("crossroads"))
+
+        val body = Json.parseToJsonElement(post.bodies.single()).jsonObject
+        assertEquals(setOf("action", "passphrase", "date", "songId", "key"), body.keys)
+        assertEquals("setKey", body.getValue("action").jsonPrimitive.content)
+        assertEquals("2026-10-31", body.getValue("date").jsonPrimitive.content)
+        assertEquals("crossroads", body.getValue("songId").jsonPrimitive.content)
+        assertEquals("Bb", body.getValue("key").jsonPrimitive.content)
+    }
+
+    @Test
+    fun `every failed key change leaves the cache and the catalog as they were and publishes a failed entry`() =
+        runTest {
+            val repository = seeded()
+            seedFour()
+            val answers = listOf(
+                body(error("invalid_passphrase")) to WriteOutcome.AccessRefused,
+                TransportResult.Failed(DataFailure.Offline) to WriteOutcome.Offline,
+                body(error("busy")) to WriteOutcome.Unavailable,
+                body(error("song_not_in_setlist")) to WriteOutcome.Rejected("song_not_in_setlist"),
+                body(error("duplicate_song")) to WriteOutcome.Rejected("duplicate_song"),
+                body(error("jam_not_editable")) to WriteOutcome.Rejected("jam_not_editable"),
+                body("<html></html>") to WriteOutcome.Unavailable,
+            )
+            val before = jamsDao.observeJams().first()
+            val catalogBefore = catalogDao.song("crossroads")
+
+            answers.forEach { (answer, reason) ->
+                post.answers += answer
+
+                assertEquals(
+                    answer.toString(),
+                    SetKeyOutcome.NotSet(reason),
+                    repository.setKey(DATE, CROSSROADS, Key("Bb")),
+                )
+                assertEquals(answer.toString(), before, jamsDao.observeJams().first())
+                val entry = repository.observeKeyChanges().first().last()
+                assertEquals(answer.toString(), KeyChange.State.Failed(reason), entry.state)
+            }
+            assertEquals(answers.size, repository.observeKeyChanges().first().size)
+            assertEquals(catalogBefore, catalogDao.song("crossroads"))
+        }
+
+    @Test
+    fun `the cache holds the new key before the entry is removed`() = runTest {
+        lateinit var repository: DefaultSetlistRepository
+        val seen = mutableListOf<List<KeyChange.State>>()
+        val real = database.setlistDao()
+        val spy = object : SetlistDao by real {
+            override suspend fun updateKey(date: String, songId: String, key: String): Int {
+                seen += repository.observeKeyChanges().first().map { it.state }
+                return real.updateKey(date, songId, key)
+            }
+        }
+        repository = seeded(setlistDao = spy)
+        post.answers += body("""{"schemaVersion":1,"ok":true}""")
+
+        assertEquals(SetKeyOutcome.KeySet, repository.setKey(DATE, SongId("red-house"), Key("C")))
+
+        // When the cache was written, the pending entry was still there; now it is gone.
+        assertEquals(listOf(listOf<KeyChange.State>(KeyChange.State.Sending)), seen)
+        assertEquals(Key("C"), cachedSongs().single().key)
+        assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
+    }
+
+    @Test
+    fun `a cache that refuses the key still answers KeySet and clears the entry`() = runTest {
+        val real = database.setlistDao()
+        val refusing = object : SetlistDao by real {
+            override suspend fun updateKey(date: String, songId: String, key: String): Int = throw SQLException()
+        }
+        val repository = seeded(setlistDao = refusing)
+        post.answers += body("""{"schemaVersion":1,"ok":true}""")
+
+        assertEquals(SetKeyOutcome.KeySet, repository.setKey(DATE, SongId("red-house"), Key("C")))
+
+        assertEquals(Key("Bb"), cachedSongs().single().key)
+        assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
+    }
+
+    @Test
+    fun `with no passphrase stored it is AccessRefused, nothing is sent and the key stays`() = runTest {
+        val repository = seeded(passphrase = null)
+
+        assertEquals(
+            SetKeyOutcome.NotSet(WriteOutcome.AccessRefused),
+            repository.setKey(DATE, SongId("red-house"), Key("C")),
+        )
+        assertTrue(post.bodies.isEmpty())
+        assertEquals(Key("Bb"), cachedSongs().single().key)
+        val entry = repository.observeKeyChanges().first().single()
+        // Not in the cached catalog: the title is the tab's copy.
+        assertEquals("Red House", entry.title)
+        assertEquals(KeyChange.State.Failed(WriteOutcome.AccessRefused), entry.state)
+    }
+
+    @Test
+    fun `adds, removes and key changes share one id counter, one dismiss and one write queue in call order`() =
+        runTest {
+            val repository = seeded()
+            post.answers += body(error("busy"))
+            repository.setKey(DATE, SongId("zz-no-existe"), Key("A"))
+            val failedKey = repository.observeKeyChanges().first().single()
+            assertEquals("zz-no-existe", failedKey.title)
+
+            post.answers += ok(position = 2)
+            post.answers += body("""{"schemaVersion":1,"ok":true,"position":1}""")
+            post.answers += body("""{"schemaVersion":1,"ok":true}""")
+            val gate = CompletableDeferred<Unit>().also { post.gate = it }
+            val add = async { repository.addSong(DATE, CROSSROADS, Key("A")) }
+            val remove = async { repository.removeSong(DATE, SongId("red-house")) }
+            val change = async { repository.setKey(DATE, CROSSROADS, Key("G")) }
+            repository.observeKeyChanges().first { it.size == 2 }
+            post.posted.first { it == 2 }
+            // The removal and the key change wait for the add, which the gate holds.
+            assertEquals(2, post.bodies.size)
+            val ids = listOf(
+                failedKey.id,
+                repository.observeAdds().first().single().id,
+                repository.observeRemoves().first().single().id,
+                repository.observeKeyChanges().first().last().id,
+            )
+            assertEquals(ids.sorted().distinct(), ids)
+            gate.complete(Unit)
+
+            assertEquals(AddSongOutcome.Added(2), add.await())
+            assertEquals(RemoveSongOutcome.Removed, remove.await())
+            assertEquals(SetKeyOutcome.KeySet, change.await())
+            assertEquals(listOf("setKey", "addSong", "removeSong", "setKey"), post.bodies.map { actionOf(it) })
+            assertEquals(listOf(CROSSROADS to Key("G")), cachedSongs().map { it.songId to it.key })
+
+            assertEquals(listOf(failedKey.id), repository.observeKeyChanges().first().map { it.id })
+            repository.dismiss(failedKey.id)
+            assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
+        }
+
+    @Test
+    fun `two quick changes are sent in call order, and a later failure leaves the earlier confirmed key`() = runTest {
+        val repository = seeded()
+        post.answers += body("""{"schemaVersion":1,"ok":true}""")
+        post.answers += body(error("busy"))
+        val gate = CompletableDeferred<Unit>().also { post.gate = it }
+
+        val first = async { repository.setKey(DATE, SongId("red-house"), Key("C")) }
+        val second = async { repository.setKey(DATE, SongId("red-house"), Key("D")) }
+        val both = repository.observeKeyChanges().first { it.size == 2 }
+        assertEquals(listOf(Key("C"), Key("D")), both.map { it.key })
+        assertTrue("ids are unique and increasing", both[0].id < both[1].id)
+        gate.complete(Unit)
+
+        assertEquals(SetKeyOutcome.KeySet, first.await())
+        assertEquals(SetKeyOutcome.NotSet(WriteOutcome.Unavailable), second.await())
+        assertEquals(listOf("C", "D"), post.bodies.map { keyOf(it) })
+        assertEquals(Key("C"), cachedSongs().single().key)
+        val left = repository.observeKeyChanges().first().single()
+        assertEquals(both[1].id, left.id)
+        assertEquals(KeyChange.State.Failed(WriteOutcome.Unavailable), left.state)
+    }
+
+    @Test
+    fun `a sending key change is not dismissed, a failed one is`() = runTest {
+        val repository = seeded()
+        post.answers += body(error("busy"))
+        repository.setKey(DATE, SongId("red-house"), Key("C"))
+        val failed = repository.observeKeyChanges().first().single()
+
+        post.answers += body("""{"schemaVersion":1,"ok":true}""")
+        val gate = CompletableDeferred<Unit>().also { post.gate = it }
+        val change = async { repository.setKey(DATE, SongId("red-house"), Key("D")) }
+        val sending = repository.observeKeyChanges().first { it.size == 2 }.last()
+
+        repository.dismiss(sending.id)
+        repository.dismiss(999)
+        assertEquals(listOf(failed.id, sending.id), repository.observeKeyChanges().first().map { it.id })
+        repository.dismiss(failed.id)
+        assertEquals(listOf(sending.id), repository.observeKeyChanges().first().map { it.id })
+        gate.complete(Unit)
+        change.await()
+        assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
+    }
+
+    @Test
+    fun `cancelling the caller of a key change does not cancel it`() = runTest {
+        val repository = seeded()
+        post.answers += body("""{"schemaVersion":1,"ok":true}""")
+
+        val caller = launch(start = CoroutineStart.UNDISPATCHED) {
+            repository.setKey(DATE, SongId("red-house"), Key("C"))
+        }
+        caller.cancel()
+        jamsDao.observeJams().first { jams -> jams.single().songs.single().key == "C" }
+
+        assertTrue(caller.isCancelled)
+        assertEquals(1, post.bodies.size)
+        assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
+    }
+
     // ---- fixtures ----
 
     /** Red House, Crossroads, Hoochie Coochie Man and Pride and Joy at 1..4; the last two with an extra. */
@@ -397,7 +622,10 @@ class DefaultSetlistRepositoryTest {
         Json.parseToJsonElement(json).jsonObject.getValue("action").jsonPrimitive.content
 
     /** A repository over a cache holding the catalog and the upcoming draft with Red House at 1. */
-    private suspend fun TestScope.seeded(passphrase: String? = TEST_VALUE): DefaultSetlistRepository {
+    private suspend fun TestScope.seeded(
+        passphrase: String? = TEST_VALUE,
+        setlistDao: SetlistDao = database.setlistDao(),
+    ): DefaultSetlistRepository {
         catalogDao.replaceCatalog(
             listOf(
                 CatalogSongEntity("crossroads", 1, "Crossroads", "Eric Clapton", "A", null, null, emptyList(), null),
@@ -417,7 +645,7 @@ class DefaultSetlistRepositoryTest {
         if (passphrase != null) store.save(passphrase)
         return DefaultSetlistRepository(
             AdminWriter(post, store),
-            database.setlistDao(),
+            setlistDao,
             catalogDao,
             DataScope(backgroundScope),
         )
@@ -434,6 +662,8 @@ class DefaultSetlistRepositoryTest {
     }
 
     private fun state() = SyncStateEntity("jams", 1, 1, null)
+
+    private fun keyOf(json: String) = Json.parseToJsonElement(json).jsonObject.getValue("key").jsonPrimitive.content
 
     private fun songIdOf(json: String) =
         Json.parseToJsonElement(json).jsonObject.getValue("songId").jsonPrimitive.content

@@ -5,12 +5,13 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and seven POST actions: `checkPassphrase`
+(`apps-script-jams-read-endpoint`), and eight POST actions: `checkPassphrase`
 (`admin-passphrase-login`), the deploy check `checkWriteAccess` (`apps-script-write-auth`), the
 admin read `readJams`, the first setlist write `addSong` and its deploy check `checkSetlistWrite`
-(`admin-add-song-to-setlist`), and `removeSong` with its deploy check `checkSetlistRemove`
-(`admin-remove-song-from-setlist`, Part A; **not deployed yet**: it ships in one batched `Post.gs`
-deploy with `admin-set-key`'s server half, user decision B1 (a)). Every POST action passes the
+(`admin-add-song-to-setlist`), `removeSong` with its deploy check `checkSetlistRemove`
+(`admin-remove-song-from-setlist`, Part A) and `setKey` (`admin-set-key`, Part A; its deploy proof
+is a step added to `checkSetlistWrite`). **`removeSong`, `checkSetlistRemove` and `setKey` are not
+deployed yet**: they ship in one batched `Post.gs` deploy, user decision B1 (a). Every POST action passes the
 passphrase guard in the router. The other admin mutations come with their own slices.
 
 ## Transport
@@ -238,7 +239,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove` (the list of the deployed
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey` (the list of the deployed
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -277,7 +278,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -361,9 +362,12 @@ Request: `{"action":"checkSetlistWrite","passphrase":"…"}`. A write action, un
 repository function: it deletes a leftover `_prueba_lista` tab, creates `_prueba_lista` with the
 jam tab header (the same function `addSong` uses), appends the marker row `1, zz-prueba-lista,
 7/4, Prueba <ISO time>, Bbm` with `addSong`'s own append function, reads it back with
-`buildSetlist`, deletes the tab and answers `{"schemaVersion":1,"ok":true}`. A read-back that
-differs (a title turned into a date, a slot not open) is `internal_error`, after the tab is
-deleted. `_prueba_lista` has no `Jams` row, so no read ever serves it. Only the glue between a
+`buildSetlist`, deletes the tab and answers `{"schemaVersion":1,"ok":true}`. Since
+`admin-set-key` (user approval L1 (a)) one step sits between the append and the read-back: the
+marker row is found with `setKey`'s own finder (`findSongRow_`) and its key rewritten to `F#m` with
+`setKey`'s own cell writer (`writeKeyCell_`), so the read-back must be the marker with key `F#m`.
+A read-back that differs (a title turned into a date, a slot not open, the key not rewritten) is
+`internal_error`, after the tab is deleted. `_prueba_lista` has no `Jams` row, so no read ever serves it. Only the glue between a
 `Jams` row and its tab name is left to the Node tests.
 
 ### Row identity of setlist mutations (`admin-remove-song-from-setlist`, user decision R1 (a))
@@ -374,6 +378,11 @@ and clear later) **locates the row by its trimmed `id_tema`** in the jam's tab, 
 `addSong` keeps `id_tema` unique within a tab. A renumber by one admin therefore never makes
 another admin's write hit the wrong song. A tab where the id is on more than one row (a hand edit)
 is refused with `duplicate_song`.
+
+The scan is one shared function, `findSongRow_(sheet, columns, values, songId)` (since
+`admin-set-key`): it returns the 1-based sheet row of the one data row whose trimmed `id_tema` is
+`songId`, or throws `song_not_in_setlist` (none) or `duplicate_song` (more than one). It only
+reads. `removeSong` (through `removeSetlistRow_`) and `setKey` both call it.
 
 ### `removeSong` (`admin-remove-song-from-setlist`)
 
@@ -415,6 +424,29 @@ function, removes `zz-prueba-dos` with `removeSong`'s own row function (`removeS
 reads the tab back with `buildSetlist`, deletes it and answers `{"schemaVersion":1,"ok":true}`.
 Anything but exactly `zz-prueba-uno` at `"1"` and `zz-prueba-tres` at `"2"` is `internal_error`,
 after the tab is deleted. It proves `deleteRow` and the renumbering on real Sheets.
+
+### `setKey` (`admin-set-key`)
+
+Request: `{"action":"setKey","passphrase":"…","date":"2026-10-31","songId":"crossroads","key":"Bb"}`.
+A write action, under the lock. Every check runs **before anything is written**, in this order (the
+same codes and order as `removeSong`, plus `invalid_key`):
+
+| Order | Check | Code |
+|---|---|---|
+| 1 | `date` is a string, `YYYY-MM-DD`, a real calendar day | `invalid_date` |
+| 2 | `songId` is a string matching `^[a-z0-9]+(-[a-z0-9]+)*$` | `invalid_song` |
+| 3 | `key` is a string matching `^[A-G][#b]?m?$` | `invalid_key` |
+| 4 | the `Jams` tab has exactly one row with that `fecha` | `unknown_jam`, `duplicate_date` (and the `Jams` tab's own `missing_tab`/`missing_header`) |
+| 5 | that jam is the upcoming jam (the same rule as `addSong`; a `PUBLICADA` jam is allowed) | `jam_not_editable` |
+| 6 | the jam's tab exists, then has every required header once | `song_not_in_setlist` (no tab), then `missing_header`, `duplicate_header` |
+| 7 | exactly one row's trimmed `id_tema` equals `songId` (`findSongRow_`) | `song_not_in_setlist`, `duplicate_song` |
+
+Then `writeKeyCell_` writes **only that row's `tono` cell**: `setNumberFormat('@')`, then
+`setValue(key)`, in the spelling the admin picked (`A#` stays `A#`; nothing is normalized). No other
+cell, row or tab is written, and `Catalogo` is never opened, so `tono_default` is never read or
+written (D-08). The answer is `{"schemaVersion":1,"ok":true}`. Because the row is found by id, a
+removal that renumbered the tab in between never misdirects the write. A published jam's new key
+is what the next GET returns.
 
 ### Client write path (`AdminWriter`)
 
@@ -501,7 +533,28 @@ repository, no binding of its own) holds the entries, the request and the cache 
 4. Anything else → `Failed(reason)` and the cache is untouched. A Room `SQLException` in the
    mirror never changes the outcome; the next refresh fixes the cache.
 
-`addSong` and `removeSong` are plain repository functions, usable with no UI (D-13);
+Key change (`admin-set-key`, Part A): `setKey(jamDate, songId, key): SetKeyOutcome` (`KeySet` or
+`NotSet(reason: WriteOutcome)`, never `Done`), `observeKeyChanges(): Flow<List<KeyChange>>` and
+`KeyChange(id, jamDate, songId, title, key, state)` with `State.Sending`/`State.Failed(reason)`.
+The internal `SetlistKeyChanges` (built by the repository like `SetlistRemovals`) holds the entries,
+the request and the cache mirror:
+
+1. Under the same order mutex, the title is resolved by the same rule as a removal's (the shared
+   internal `displayedTitle`) and a `Sending` entry is published; the write queues on the same
+   write mutex, after any queued add or removal. Ids share the one counter; `dismiss(id)` removes a
+   failed entry of any kind.
+2. `AdminWriter.write("setKey", {date, songId, key})`. `Done` → **first**
+   `SetlistDao.updateKey(date, songId, key)` (one `UPDATE` statement on `jam_song.key`, only while
+   the cached setlist is `AVAILABLE` and exactly one cached song of that date has the id; a Room
+   `SQLException` is swallowed), **then** the entry is removed, `KeySet`. Updating first keeps the
+   confirmed key in place before the pending one goes.
+3. Anything else, `song_not_in_setlist` included → `Failed(reason)` and Room is untouched; the
+   failed entry is the revert. `catalog_song` is never written.
+
+A `Sending` entry's `key` is the only source of an optimistic key (user decision O1, drawn by
+Part B).
+
+`addSong`, `removeSong` and `setKey` are plain repository functions, usable with no UI (D-13);
 `action-contract-registry` registers them later.
 
 ## Quotas

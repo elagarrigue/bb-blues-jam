@@ -30,7 +30,8 @@ import kotlinx.serialization.json.intOrNull
  * [SetlistRepository] over the admin POST path. The pending and failed entries live in memory; the
  * cache only ever receives a song the server confirmed, built from its answer, so a failed write
  * leaves no row anywhere. A removal changes the cache only when the server removed the song, or
- * answered that the Sheet no longer has it.
+ * answered that the Sheet no longer has it. A key change changes the cache only when the server
+ * wrote the key, and before its entry is removed.
  *
  * Ordering: [order] is held while a call resolves its song, publishes its entry and queues its write
  * on [writes] (both mutexes are fair), so writes are sent one at a time in call order. The write
@@ -45,6 +46,7 @@ internal class DefaultSetlistRepository(
 
     private val entries = MutableStateFlow<List<SetlistAdd>>(emptyList())
     private val removals = SetlistRemovals(writer, setlistDao, catalogDao)
+    private val keyChanges = SetlistKeyChanges(writer, setlistDao, catalogDao)
     private val ids = AtomicLong(0)
     private val order = Mutex()
     private val writes = Mutex()
@@ -78,6 +80,7 @@ internal class DefaultSetlistRepository(
     override fun dismiss(id: Long) {
         entries.update { list -> list.filterNot { it.id == id && it.state is SetlistAdd.State.Failed } }
         removals.dismiss(id)
+        keyChanges.dismiss(id)
     }
 
     /**
@@ -93,6 +96,20 @@ internal class DefaultSetlistRepository(
         }.await()
 
     override fun observeRemoves(): Flow<List<SetlistRemove>> = removals.observe()
+
+    /**
+     * Runs in [scope] from the first instruction, like [addSong], and queues behind earlier writes of
+     * any kind: the entry is published under [order] and the request sent under [writes].
+     */
+    override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome =
+        scope.async(start = CoroutineStart.UNDISPATCHED) {
+            order.withLock {
+                val entry = keyChanges.start(ids.incrementAndGet(), jamDate, songId, key)
+                scope.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { keyChanges.send(entry) } }
+            }.await()
+        }.await()
+
+    override fun observeKeyChanges(): Flow<List<KeyChange>> = keyChanges.observe()
 
     private suspend fun send(entry: SetlistAdd): AddSongOutcome {
         val fields = mapOf(

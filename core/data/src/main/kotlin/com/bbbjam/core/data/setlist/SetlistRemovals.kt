@@ -29,7 +29,8 @@ internal class SetlistRemovals(
 
     /** Publishes a [SetlistRemove.State.Sending] entry [id] with the song's displayed title. */
     suspend fun start(id: Long, jamDate: LocalDate, songId: SongId): SetlistRemove {
-        val entry = SetlistRemove(id, jamDate, songId, titleOf(jamDate, songId), SetlistRemove.State.Sending)
+        val title = displayedTitle(catalogDao, setlistDao, jamDate, songId)
+        val entry = SetlistRemove(id, jamDate, songId, title, SetlistRemove.State.Sending)
         entries.update { it + entry }
         return entry
     }
@@ -75,14 +76,6 @@ internal class SetlistRemovals(
             // The Sheet changed; only the local copy waits for the next refresh.
         }
     }
-
-    /**
-     * The title the setlist shows for [songId], resolved as the `jam_song_resolved` view does: the
-     * cached catalog's, else the tab's copy, else the id itself.
-     */
-    private suspend fun titleOf(jamDate: LocalDate, songId: SongId): String = catalogDao.song(songId.value)?.title
-        ?: setlistDao.songsOf(jamDate.toString()).firstOrNull { it.songId == songId.value }?.titleCopy
-        ?: songId.value
 
     private companion object {
         const val REMOVE_SONG = "removeSong"

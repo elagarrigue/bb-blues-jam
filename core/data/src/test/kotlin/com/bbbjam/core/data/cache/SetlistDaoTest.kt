@@ -110,6 +110,49 @@ class SetlistDaoTest {
         assertEquals(emptyList<JamSlotEntity>(), jam.slots)
     }
 
+    @Test
+    fun `updateKey sets only the key of the matching song of that date`() = runTest {
+        jamsDao.replaceJams(fourSongs(), SyncStateEntity("jams", 1, 1, null))
+        val before = jamsDao.observeJams().first()
+
+        assertEquals(1, dao.updateKey(UPCOMING, "crossroads", "Bb"))
+
+        val after = jamsDao.observeJams().first()
+        val upcoming = after.single { it.jam.date == UPCOMING }
+        assertEquals(
+            listOf("crossroads" to "Bb", "hoochie" to "A", "thrill" to "Bm", "pride" to "E"),
+            upcoming.songs.sortedBy { it.position }.map { it.songId to it.key },
+        )
+        // Everything else is as it was: the other columns, the slots, the extras and the other jam,
+        // which has the same song id.
+        val unchanged = before.single { it.jam.date == UPCOMING }
+        assertEquals(
+            unchanged.songs.sortedBy { it.position }.map { it.copy(key = "") },
+            upcoming.songs.sortedBy { it.position }.map { it.copy(key = "") },
+        )
+        assertEquals(unchanged.slots.toSet(), upcoming.slots.toSet())
+        assertEquals(unchanged.extras.toSet(), upcoming.extras.toSet())
+        assertEquals(before.single { it.jam.date == LATER }, after.single { it.jam.date == LATER })
+    }
+
+    @Test
+    fun `updateKey changes nothing for an unknown id, a repeated id or a jam that is not available`() = runTest {
+        val rows = fourSongs()
+        val repeated = rows.copy(
+            jams = rows.jams.map { if (it.date == LATER) it.copy(setlistState = "WITHHELD") else it },
+            songs = rows.songs + JamSongEntity(UPCOMING, 5, "pride", "T", "A", "C"),
+        )
+        jamsDao.replaceJams(repeated, SyncStateEntity("jams", 1, 1, null))
+        val before = jamsDao.observeJams().first()
+
+        assertEquals(0, dao.updateKey(UPCOMING, "zz-no-existe", "Bb"))
+        assertEquals(0, dao.updateKey(UPCOMING, "pride", "Bb"))
+        assertEquals(0, dao.updateKey(LATER, "crossroads", "Bb"))
+        assertEquals(0, dao.updateKey("2026-12-19", "crossroads", "Bb"))
+
+        assertEquals(before, jamsDao.observeJams().first())
+    }
+
     /** The upcoming jam with four songs in a known order, each with a filled slot or an extra. */
     private fun fourSongs(): JamRows {
         val available = JamEntity(UPCOMING, 1, "21:00", "Lugar", "DRAFT", "AVAILABLE", null, 0)

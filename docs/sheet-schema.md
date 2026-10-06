@@ -55,7 +55,7 @@ Seed files for import live in `docs/sheet-seed/`.
 | `YYYY-MM-DD`, one tab per jam | JamSong in that jam's setlist | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `Config` | Setting | Sheet | The admin, by hand |
 | `_prueba_escritura` | Nothing (transient) | Apps Script | Created and deleted by the `checkWriteAccess` deploy check within one request (`apps-script-write-auth`); never read by any route, never served |
-| `_prueba_lista` | Nothing (transient) | Apps Script | Created with the jam tab header, given one marker row and deleted by the `checkSetlistWrite` deploy check within one request (`admin-add-song-to-setlist`), or given three marker rows, one removed, and deleted by the `checkSetlistRemove` deploy check (`admin-remove-song-from-setlist`); it has no `Jams` row, so no route ever serves it |
+| `_prueba_lista` | Nothing (transient) | Apps Script | Created with the jam tab header, given one marker row and deleted by the `checkSetlistWrite` deploy check within one request (`admin-add-song-to-setlist`), or given three marker rows, one removed, and deleted by the `checkSetlistRemove` deploy check (`admin-remove-song-from-setlist`); since `admin-set-key` the `checkSetlistWrite` marker's `tono` is also rewritten (`Bbm` to `F#m`) before the read-back; it has no `Jams` row, so no route ever serves it |
 
 A jam tab is named with its ISO date, for example `2026-07-25`, so tabs sort chronologically and the
 name is the join key with `Jams.fecha`. No other tab may use that name pattern.
@@ -136,6 +136,11 @@ that whole row (its slots and `Otros` with it) and rewrites every later whole-nu
 `posicion - 1`, in plain text, in ascending order, so the tab stays numbered 1..n. A failure midway
 can leave a gap, never a duplicate. `Catalogo` is never opened. **Every later setlist mutation that
 changes an existing row also locates it by `id_tema`.**
+
+`setKey` (`admin-set-key`) finds its row the same way (the shared `findSongRow_`, same codes, all
+before any write) and writes **only that row's `tono` cell**, as plain text (`@` first, then the
+value), in the spelling the admin picked (`A#` and `Bb` are both kept as sent; `[A-G][#b]?m?`).
+No other cell is written and `Catalogo`, so `tono_default`, is never opened (D-08).
 
 ### Slot columns
 

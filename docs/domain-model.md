@@ -157,6 +157,13 @@ The admin edits the key on a JamSong of a published jam. The change is immediate
 everyone. The catalog Song's `defaultKey` is untouched — that night's key is a property of the
 JamSong, not the Song.
 
+As built (`admin-set-key`, `SetlistRepository.setKey(jamDate, songId, key)`): only the upcoming
+jam's JamSongs (draft or published) can change key. Apps Script finds the row by song id and
+writes only its `tono` cell; the catalog is never read or written (D-08). The cache changes only
+after the server confirms. "Immediately visible" means the next read: the admin's own device shows
+the new key at once (optimistic, user decision O1, reverting on failure), and musicians see it on
+their next refresh (faster refresh is `live-refresh-during-jam`).
+
 ### The same song in a later jam
 
 Adding a Song already played in a past jam creates a new JamSong with a fresh lineup and its own
