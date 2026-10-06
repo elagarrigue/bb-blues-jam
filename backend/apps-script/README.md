@@ -5,10 +5,12 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and five POST
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and seven POST
 actions: `checkPassphrase` (`admin-passphrase-login`), the self-cleaning deploy check
-`checkWriteAccess` (`apps-script-write-auth`), and the admin read `readJams`, the setlist write
-`addSong` and its self-cleaning deploy check `checkSetlistWrite` (`admin-add-song-to-setlist`).
+`checkWriteAccess` (`apps-script-write-auth`), the admin read `readJams`, the setlist write
+`addSong` and its self-cleaning deploy check `checkSetlistWrite` (`admin-add-song-to-setlist`),
+and the setlist write `removeSong` with its self-cleaning deploy check `checkSetlistRemove`
+(`admin-remove-song-from-setlist`; in `src/Post.js`, not deployed until the batched paste below).
 Every POST action passes one passphrase guard in the router, with a rate limit of 10 failed
 guesses per 10 minutes; write actions run under the script lock. The GET reads never open the
 `Config` tab, and never read the tab of a jam whose `estado` is not exactly `PUBLICADA`; only the
@@ -24,7 +26,7 @@ guarded `readJams` reads a current or future `BORRADOR` jam's tab. Only `src/Pos
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`, and the setlist write path (`addSong_`, `createSetlistTab_`, `appendSetlistRow_`). The only file that opens `Config`. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`, and the setlist write path (`addSong_`, `createSetlistTab_`, `appendSetlistRow_`, `removeSong_`, `removeSetlistRow_`, which finds a row by `id_tema`, deletes it and renumbers the later `posicion` cells). The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -81,10 +83,11 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite`
-(the action list of `src/Post.js` since `admin-add-song-to-setlist`; `Known: checkPassphrase,
-checkWriteAccess` means the `apps-script-write-auth` version, `Known: checkPassphrase` alone the
-one before it); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
+`unknown_action` with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove`
+(the action list of `src/Post.js` since `admin-remove-song-from-setlist`; a list ending in
+`checkSetlistWrite` means the `admin-add-song-to-setlist` version, `Known: checkPassphrase,
+checkWriteAccess` the `apps-script-write-auth` one, `Known: checkPassphrase` alone the one before
+it); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
 
 #### Verify the paste
 
@@ -96,7 +99,7 @@ In the Apps Script editor, open each file and search (Ctrl+F) for its distinctiv
 | `Jams.gs` | `var PUBLISHED_STATUS = 'PUBLICADA';` | |
 | `Normalize.gs` | `function isoDateCell(` and `class ContractError` | |
 | `Catalog.gs` | | `class ContractError` |
-| `Post.gs` | `checkWriteAccess: { write: true, run: checkWriteAccess_ },` **and** `addSong: { write: true, run: addSong_ },` | `checkPassphrase: checkPassphrase_,` |
+| `Post.gs` | `checkWriteAccess: { write: true, run: checkWriteAccess_ },` **and** `addSong: { write: true, run: addSong_ },` **and** `removeSong: { write: true, run: removeSong_ },` | `checkPassphrase: checkPassphrase_,` |
 
 If any check fails, paste that file again over its whole content, save, and check again.
 
@@ -214,6 +217,29 @@ they are, so the musicians' GET reads cannot regress.
    within its own request: if the Sheet is open you may see them flash for about a second. No
    check adds a song to a real jam.
 
+### Redeploy for remove song and set key, in one paste (`admin-remove-song-from-setlist` + `admin-set-key`)
+
+User decision B1 (a), 6 October 2026: remove-song's server half and set-key's server half ship in
+**one** paste and **one** new version. Remove-song's half is in `src/Post.js` now; set-key's is
+added on top of it by that slice, which also adds its own marker to step 3. Both features stay
+`in_progress` until this deploy. **Do not deploy before set-key's half is in.** **No other file
+changes**: `Code.gs`, `Normalize.gs`, `Catalog.gs`, `Jams.gs` and `appsscript.json` stay as they
+are.
+
+1. Open the Sheet, then **Extensions → Apps Script**.
+2. Open `Post.gs`, select all its content and replace it with the whole of
+   `backend/apps-script/src/Post.js`. **Save** (Ctrl+S).
+3. **Verify the paste** (Ctrl+F in `Post.gs`): it must contain
+   `removeSong: { write: true, run: removeSong_ },` (and set-key's marker, once that slice adds
+   it), still contain `addSong: { write: true, run: addSong_ },`, and must **not** contain
+   `checkPassphrase: checkPassphrase_,`. If any check fails, paste again over the whole content
+   and save.
+4. **Deploy → Manage deployments** → select the current deployment → **Edit** (pencil icon) →
+   **Version: New version** → **Deploy**. Never **New deployment**.
+5. No new scope is expected (`spreadsheets.currentonly` covers deleting and inserting rows).
+6. Tell the orchestrator. It runs remove-song's checks (`checkSetlistRemove` creates and deletes
+   `_prueba_lista` within one request), then set-key's. No check removes a song from a real jam.
+
 ### Temporary test jam for the draft check (user approval A3)
 
 Sheet edits need no redeploy. Do each step only when the orchestrator asks for it.
@@ -256,7 +282,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
@@ -289,6 +315,19 @@ curl -sL -d '{"action":"addSong","passphrase":"definitely-wrong","date":"2026-10
 same kind of scratchpad Python script, printing only codes, counts and latencies (for `readJams`:
 the jam count, the statuses and the song count per jam, never a name). Every probe fails a check
 before anything is written, so none changes the Sheet.
+
+Remove song (`admin-remove-song-from-setlist`). One obviously wrong value on the command line (it
+counts one failed guess):
+
+```bash
+curl -sL -d '{"action":"removeSong","passphrase":"definitely-wrong","date":"2026-10-31","songId":"crossroads"}' "$URL"  # invalid_passphrase
+```
+
+The probes with the real passphrase (a bad date, a bad id, `1999-01-01` for `unknown_jam`, a past
+jam for `jam_not_editable`, the upcoming date with `zz-no-existe` for `song_not_in_setlist`) and
+`checkSetlistRemove` run from the scratchpad script, printing only codes, counts and latencies,
+with a `readJams` song count per jam before and after to show no real jam changed. **Never call
+`removeSong` with a real song id.**
 
 Jams (`apps-script-jams-read-endpoint`, checks L1 to L5):
 

@@ -13,6 +13,12 @@
  * check `checkSetlistWrite`. They reuse the read path's builders unchanged: a jam tab is read with
  * buildSetlist, so what addSong appends is exactly what the reads return.
  *
+ * admin-remove-song-from-setlist adds `removeSong` and its self-cleaning deploy check
+ * `checkSetlistRemove`. A setlist mutation locates its row by `id_tema` (user decision R1), never by
+ * `posicion`: removeSong deletes that row and moves every later `posicion` up by one, so the tab
+ * stays numbered 1..n and a renumber by one admin can never make another admin's write hit the
+ * wrong song. (`fecha`, `posicion`) remains the read identity.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
  * SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
  * from Catalog.js, and ContractError, mapColumns and textCell from Normalize.js (shared global scope
@@ -64,6 +70,8 @@ var ACTIONS = {
   readJams: { write: false, run: readJamsAsAdmin_ },
   addSong: { write: true, run: addSong_ },
   checkSetlistWrite: { write: true, run: checkSetlistWrite_ },
+  removeSong: { write: true, run: removeSong_ },
+  checkSetlistRemove: { write: true, run: checkSetlistRemove_ },
 };
 
 /**
@@ -346,6 +354,163 @@ function isMarkerRow_(rows, marker) {
   });
   return row.position === String(marker.position) && row.songId === marker.songId && row.title === marker.title &&
     row.artist === marker.artist && row.key === marker.key && slotsOpen && row.extraParticipants === null;
+}
+
+/**
+ * Removes one song from the upcoming jam's tab (`removeSong`, a write action: under the lock).
+ * Request `{ date, songId }`. Every check runs before anything is written, in this order:
+ * `invalid_date`, `invalid_song`, `unknown_jam` / `duplicate_date`, `jam_not_editable` (the same
+ * rule as addSong), `missing_header` / `duplicate_header`, `song_not_in_setlist` (no row with that
+ * trimmed `id_tema`, or no tab at all), `duplicate_song`. Then removeSetlistRow_ deletes the row and
+ * renumbers the later ones. The catalog is never opened. Answers `{ ok, position }`, the removed
+ * row's `posicion` as a number, or null when it was not a whole number.
+ */
+function removeSong_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug such as sweet-little-angel');
+  }
+
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) {
+    throw notInSetlist_(songId, date);
+  }
+  return { ok: true, position: removeSetlistRow_(sheet, songId) };
+}
+
+/**
+ * Deletes the one row of `sheet` whose trimmed `id_tema` is `songId` and moves every row whose
+ * `posicion` is a whole number above the removed one's up by one, so the tab stays 1..n. Returns
+ * the removed `posicion` as a number, or null when it was not a whole number (then nothing is
+ * renumbered). Header errors (as the reads), `song_not_in_setlist` and `duplicate_song` are thrown
+ * before anything is written.
+ *
+ * Renumbering writes in ascending `posicion` order with as few range calls as possible: consecutive
+ * positions on consecutive rows are one `@` format call plus one setValues. Ascending order means a
+ * failure midway can leave a gap (which the reads tolerate) but never two rows with one position.
+ * The grid's last row is never deleted directly: a row is inserted after it first, because Sheets
+ * refuses to delete the only non-frozen row of a trimmed tab.
+ */
+function removeSetlistRow_(sheet, songId) {
+  const range = sheet.getDataRange();
+  const display = range.getDisplayValues();
+  const raw = range.getValues();
+  const columns = mapColumns(sheet.getName(), setlistSpecs_(), display.length > 0 ? display[0] : []);
+  const matches = [];
+  for (let r = 1; r < display.length; r++) {
+    if (textCell((display[r] || [])[columns.songId]) === songId) {
+      matches.push(r);
+    }
+  }
+  if (matches.length === 0) {
+    throw notInSetlist_(songId, sheet.getName());
+  }
+  if (matches.length > 1) {
+    throw new ContractError('duplicate_song', songId + ' is on more than one row of ' + sheet.getName());
+  }
+
+  const index = matches[0];
+  const removed = wholePosition_((raw[index] || [])[columns.position]);
+  const later = [];
+  if (removed !== null) {
+    for (let r = 1; r < raw.length; r++) {
+      const position = r === index ? null : wholePosition_((raw[r] || [])[columns.position]);
+      if (position !== null && position > removed) {
+        later.push({ row: r + 1, position: position });
+      }
+    }
+  }
+
+  const rowNumber = index + 1;
+  if (rowNumber >= sheet.getMaxRows()) {
+    sheet.insertRowAfter(rowNumber);
+  }
+  sheet.deleteRow(rowNumber);
+
+  later.sort(function (a, b) {
+    return a.position - b.position;
+  });
+  positionRuns_(later, rowNumber).forEach(function (run) {
+    const cells = sheet.getRange(run.row, columns.position + 1, run.values.length, 1);
+    cells.setNumberFormat(PLAIN_TEXT_FORMAT);
+    cells.setValues(run.values);
+  });
+  return removed;
+}
+
+/**
+ * Groups the rows to renumber (sorted by position) into runs of consecutive sheet rows, keeping the
+ * ascending order across runs. Rows below `deletedRow` have moved up by one. Each run is
+ * `{ row, values }`, `values` the new `posicion` texts as a one-column grid.
+ */
+function positionRuns_(sorted, deletedRow) {
+  const runs = [];
+  let run = null;
+  sorted.forEach(function (item) {
+    const row = item.row > deletedRow ? item.row - 1 : item.row;
+    if (run === null || row !== run.row + run.values.length) {
+      run = { row: row, values: [] };
+      runs.push(run);
+    }
+    run.values.push([String(item.position - 1)]);
+  });
+  return runs;
+}
+
+/** A `posicion` cell as a whole number of at least 1, read as the reads read it; null otherwise. */
+function wholePosition_(raw) {
+  const text = integerTextCell(raw);
+  if (text === null || !/^\d+$/.test(text) || Number(text) < 1) {
+    return null;
+  }
+  return Number(text);
+}
+
+function notInSetlist_(songId, tabName) {
+  return new ContractError('song_not_in_setlist', songId + ' is not in the setlist of ' + tabName);
+}
+
+/**
+ * A self-cleaning deploy check for removeSong's write path: creates the tab SETLIST_CHECK_TAB
+ * (deleting a leftover first) with the jam tab header, appends three marker rows at 1, 2 and 3 with
+ * addSong's function, removes the second with removeSong's function, reads the tab back with
+ * buildSetlist and deletes it. Anything but the first marker at "1" and the third at "2" is an
+ * Error, so `internal_error`, after the tab is deleted. Touches no other tab and is never listed by
+ * a read.
+ */
+function checkSetlistRemove_(request, spreadsheet, services) {
+  const leftover = spreadsheet.getSheetByName(SETLIST_CHECK_TAB);
+  if (leftover) {
+    spreadsheet.deleteSheet(leftover);
+  }
+  const stamp = new Date(services.now).toISOString();
+  const markers = ['uno', 'dos', 'tres'].map(function (name, i) {
+    return { position: i + 1, songId: 'zz-prueba-' + name, title: 'Prueba ' + name, artist: 'Prueba ' + stamp, key: 'A' };
+  });
+  const sheet = createSetlistTab_(spreadsheet, SETLIST_CHECK_TAB);
+  let rows;
+  try {
+    markers.forEach(function (marker) {
+      appendSetlistRow_(sheet, marker);
+    });
+    removeSetlistRow_(sheet, markers[1].songId);
+    const range = sheet.getDataRange();
+    rows = buildSetlist(range.getDisplayValues(), range.getValues(), SETLIST_CHECK_TAB);
+  } finally {
+    spreadsheet.deleteSheet(sheet);
+  }
+  const ok = rows.length === 2 &&
+    rows[0].songId === markers[0].songId && rows[0].position === '1' &&
+    rows[1].songId === markers[2].songId && rows[1].position === '2';
+  if (!ok) {
+    throw new Error('The setlist remove check read back different rows');
+  }
+  return { ok: true };
 }
 
 /** Today in the spreadsheet's time zone, as YYYY-MM-DD: the zone the admin's dates are typed in. */

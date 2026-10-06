@@ -3,7 +3,9 @@ package com.bbbjam.feature.nextjam
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.setlist.AddSongOutcome
+import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
@@ -24,13 +26,18 @@ class FakeAdminSession(isAdmin: Boolean = false) : AdminSession {
     }
 }
 
-/** Records every add and dismiss; [adds] is what `observeAdds` emits, set by the test. */
+/**
+ * Records every add, remove and dismiss; [adds] and [removes] are what `observeAdds` and
+ * `observeRemoves` emit, set by the test.
+ */
 class FakeSetlistRepository : SetlistRepository {
     data class AddCall(val jamDate: LocalDate, val songId: SongId, val key: Key)
 
     val adds = MutableStateFlow<List<SetlistAdd>>(emptyList())
     val addCalls = mutableListOf<AddCall>()
     val dismissed = mutableListOf<Long>()
+    val removes = MutableStateFlow<List<SetlistRemove>>(emptyList())
+    val removeCalls = mutableListOf<Pair<LocalDate, SongId>>()
 
     override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         addCalls += AddCall(jamDate, songId, key)
@@ -38,6 +45,13 @@ class FakeSetlistRepository : SetlistRepository {
     }
 
     override fun observeAdds(): Flow<List<SetlistAdd>> = adds
+
+    override suspend fun removeSong(jamDate: LocalDate, songId: SongId): RemoveSongOutcome {
+        removeCalls += jamDate to songId
+        return RemoveSongOutcome.Removed
+    }
+
+    override fun observeRemoves(): Flow<List<SetlistRemove>> = removes
 
     override fun dismiss(id: Long) {
         dismissed += id

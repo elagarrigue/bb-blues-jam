@@ -7,13 +7,19 @@
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
 - Current state: twenty-nine of 39 slices accepted, the latest `admin-add-song-to-setlist` (6 October
-  2026). Next: `admin-remove-song-from-setlist` and `admin-set-key` (specs in planning, a single
-  Post.js deploy proposed for both).
+  2026). `admin-remove-song-from-setlist` is `in_progress`: Part A (server half and `:core:data`)
+  done and self-verified in session 074, not deployed. Next: `admin-set-key`'s server half on top
+  of the same `Post.js`, then **one** batched deploy for both (user decision B1 (a); both stay
+  `in_progress` until it), then each feature's live checks, Part B and validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 6 October 2026 (session 073, `admin-add-song-to-setlist` Parts A and B,
+- Last verified at: 6 October 2026 (session 074, `admin-remove-song-from-setlist` Part A,
+  `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 83 result files, 498 tests, 0 failures; Node 124/124. `src/Post.js` SHA-1
+  `faf0fd85d53ce9277b3882e6573fedfe6ad64256`, **not deployed** (the deployed one is still
+  `94bb9154…`). Before that, session 073 (`admin-add-song-to-setlist` Parts A and B,
   `passing`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 83 result files, 489 tests, 0 failures; Node 113/113. Deployed Post.js SHA-1
   `94bb91548469d3f9c6c868788f09d3d2684c5cf1`; live checks L1–L6 as expected. Pixel 5: admin view,
@@ -3122,6 +3128,74 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     accessibility settings were never touched. App data was cleared twice (a re-fetchable cache);
     the last launch online repopulated it (`upcoming 2026-10-31`).
 - Status: `passing` (not accepted). Next: independent validation.
+
+### Session 074 — 6 October 2026
+
+- Feature: `admin-remove-song-from-setlist`, **Part A only** (server half and `:core:data`, no UI),
+  spec `docs/specs/admin-remove-song-from-setlist.md`. User approvals recorded in 00aa192: R1 (a)
+  find the row by `id_tema` and renumber 1..n; U1 as specified (Part B); B1 (a) one batched
+  `Post.js` deploy with `admin-set-key`, remove-song's server half first.
+  **User-approved exception (B1 (a), as write-auth/add-song):** set-key's server half is added on
+  top of this `Post.js` by a later implementer, and both features stay `in_progress` until the one
+  paste and deploy. Dependency `admin-add-song-to-setlist` is `accepted` (7e56ed1); deployed
+  `Post.js` `94bb9154…`.
+- What changed:
+  - `backend/apps-script/src/Post.js` (the only `src` file changed; the other four byte-identical,
+    `git diff --quiet HEAD` exit 0): `ACTIONS.removeSong` and `ACTIONS.checkSetlistRemove` (both
+    `write: true`, guarded by the unchanged router). `removeSong_` validates `invalid_date`,
+    `invalid_song`, `requireEditableJam_` (unchanged), then no tab → `song_not_in_setlist`;
+    `removeSetlistRow_(sheet, songId)` maps the header (`missing_header`/`duplicate_header`), finds
+    the row by trimmed `id_tema` (`song_not_in_setlist`, `duplicate_song`), and only then writes:
+    `insertRowAfter` when the row is the grid's last, `deleteRow`, and the later whole-number
+    positions rewritten as `posicion - 1` in plain text, in ascending order, **batched** by runs of
+    consecutive rows (`positionRuns_`: one `setNumberFormat` and one `setValues` per run; an
+    app-built tab is one run). Answers `{ok, position}` (number or null). `checkSetlistRemove_` on
+    `_prueba_lista`: three markers appended with `appendSetlistRow_`, the second removed with
+    `removeSetlistRow_`, read back with `buildSetlist`, tab deleted in `finally`. SHA-1
+    `faf0fd85d53ce9277b3882e6573fedfe6ad64256`.
+  - `backend/apps-script/test/setlist.test.js` +11 tests; the fake sheet gained `getMaxRows`,
+    `deleteRow`, `insertRowAfter` and range-wide `setNumberFormat`. `post.test.js`: enumerations
+    only (seven actions, `Known:` x2, the README marker test).
+  - `:core:data`: `SetlistRepository.removeSong`/`observeRemoves`, `dismiss` for either kind;
+    new `RemoveSongOutcome`, `SetlistRemove`, internal `SetlistRemovals` (entries, request, cache
+    mirror; built by `DefaultSetlistRepository`, which keeps the shared mutexes, ids and
+    `DataScope`; constructor and `dataModule` unchanged); `SetlistDao.removeSetlistSong` (one
+    transaction, explicit deletes children first, later rows reinserted one position up) with
+    `songsOf`, `slotsFrom`, `extrasFrom`, `deleteRows`, `insertRows`. No schema or version change.
+    **Deviation:** no `SetlistDao.songTitle`; the title is resolved in `SetlistRemovals` by the
+    `jam_song_resolved` rule (catalog title, else the tab copy, else the id), because a twelfth DAO
+    function trips detekt `TooManyFunctions`.
+  - Test-only support: `feature/next-jam` `AdminFakes.FakeSetlistRepository` implements the two new
+    interface members (no production change in `:feature:next-jam`).
+  - KDoc: `core/model` `Setlist.kt` and `SetlistMapper.kt` now say positions are the read identity
+    and are never renumbered **by the read path**.
+  - Docs: `docs/apps-script-api.md`, `backend/apps-script/README.md` (marker
+    `removeSong: { write: true, run: removeSong_ },`, Known list, new batched-redeploy section that
+    set-key will extend), `docs/sheet-schema.md` ("(`fecha`, `posicion`) is the read identity",
+    rows located by `id_tema`, how `removeSong` writes, `_prueba_lista`), `docs/domain-model.md`
+    (identity sentence), architecture `SKILL.md` (Part A as built). Part B owns `DESIGN.md`,
+    `user-and-access-model.md`, `risks-and-open-questions.md`.
+- Verification run:
+  - `node --test backend/apps-script/test/*.test.js`: 124/124 (113 before).
+  - Failure demonstrations, each restored from a byte copy in the scratchpad (not `git checkout`,
+    because of `core.autocrlf`) and checked with `sha1sum -c` (OK): (a) a row deleted before the
+    `duplicate_song` throw → Node 1 fail (`duplicate_song … wrote`); (b) renumbering `setValues`
+    skipped → Node 7 fail; Post.js `faf0fd85…` OK and 124/124 again; (c) `SetlistRemovals`
+    mirroring into Room on every outcome → `DefaultSetlistRepositoryTest` 2 of 15 fail,
+    `SetlistRemovals.kt` `c45fae3b…` OK and the suite green again. (d) is Part B.
+  - `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0: `konsist: wired`
+    (ModuleIsolationTest 17/17, no rule change), `detekt: wired`, `ktlint: wired`; 83 result files,
+    498 tests, 0 failures (489 before; `SetlistDaoTest` 1 → 4, `DefaultSetlistRepositoryTest`
+    9 → 15). The first gate failed detekt `TooManyFunctions` on `DefaultSetlistRepository` (13);
+    fixed by extracting `SetlistRemovals`, no baseline or suppression. One targeted test run failed
+    on a test-fixture bug (the LATER jam was `AVAILABLE`), fixed in the fixture.
+  - No Gradle dependency, Konsist, manifest, Room version, UI or `:app` change. No device touched.
+    No live check (not deployed). The passphrase, the URL and musician names appear in no output.
+- Not run yet: live checks LR1–LR5 (after the batched deploy), Part B (UI), device checks.
+- Next: `admin-set-key`'s server half on top of this `Post.js` (it adds its own README marker to
+  the batched-redeploy section and extends the `Known:` list), then the user's single paste and
+  **New version** deploy, then remove-song's LR1–LR5 (LR1 `Known:` must include `removeSong,
+  checkSetlistRemove` plus set-key's actions), then Part B.
 
 ## Notes For The Next Session
 

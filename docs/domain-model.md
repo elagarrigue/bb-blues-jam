@@ -21,9 +21,11 @@ Song(id, title, artist, defaultKey, tempo?, tags, difficulty?,
 `Key` follows the **Keys** format and `SongId` the `Catalogo.id` slug of `sheet-schema.md`. The
 types live in `:core:model` (package `com.bbbjam.core.model`), and `Jam.isHistorical(today)` takes
 today's date from the caller. In an available setlist, positions are at least 1, unique and
-ascending; gaps are allowed and positions are never renumbered, because they are the Sheet's
-`posicion`, the write identity of a JamSong (user approval P4 of `jams-repository-cache`,
+ascending; gaps are allowed and positions are never renumbered by the read path, because they are
+the Sheet's `posicion`, the read identity of a JamSong (user approval P4 of `jams-repository-cache`,
 2 October 2026). The Sheet should still number 1..n; a gap means a row was dropped as invalid.
+Setlist mutations locate a row by its song id, not its position, and a removal renumbers the later
+songs so the Sheet stays 1..n (user decision R1 (a), `admin-remove-song-from-setlist`).
 
 ### Jam
 

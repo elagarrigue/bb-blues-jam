@@ -6,8 +6,9 @@ package com.bbbjam.core.model
  */
 sealed interface Setlist {
     /**
-     * The songs, in position order. Positions are the Sheet's `posicion` and are never renumbered,
-     * because they are the write identity of a [JamSong]: they are at least 1, unique and
+     * The songs, in position order. Positions are the Sheet's `posicion` and are never renumbered
+     * by the read path, because they are the read identity of a [JamSong] (a setlist mutation finds
+     * its row by song id, and a removal renumbers the Sheet itself): they are at least 1, unique and
      * ascending, and gaps are allowed. [droppedRows] counts the tab rows left out as invalid (user
      * approval P4 of `jams-repository-cache`), so a screen can say the list is incomplete instead of
      * showing a silent gap. When every row was dropped the setlist is

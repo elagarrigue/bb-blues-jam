@@ -120,6 +120,22 @@ insets and `RESUMED` back guard; a pick pops by route), `TabsShell(onOpenAddSong
 `NextJamScreen(onAddSong)`. `:core:ui` `BluesJamTheme` provides non-amber `LocalTextSelectionColors`.
 Konsist unchanged (17 rules, `:feature:next-jam` still `{key}`).
 
+As built by `admin-remove-song-from-setlist` Part A (backend and `:core:data`, no UI yet):
+**setlist mutations identify a row by `songId` (`id_tema`), never by position** (user decision
+R1 (a)); (`fecha`, `posicion`) is only the read identity. `Post.js` adds `removeSong` (deletes the
+row, renumbers later `posicion` cells in ascending order with batched range writes) and the deploy
+check `checkSetlistRemove`, sharing `removeSetlistRow_`. `SetlistRepository` gains
+`removeSong(jamDate, songId): RemoveSongOutcome` (`Removed`, `NotRemoved(reason)`),
+`observeRemoves()` with `SetlistRemove` (`State.Sending`, `State.Failed(reason)`), and `dismiss(id)`
+for either kind (one id counter). `DefaultSetlistRepository` keeps the shared `order`/`writes`
+mutexes, ids and `DataScope`, and delegates the removal's entries, request and cache mirror to the
+internal `SetlistRemovals` it builds itself (no Koin binding; split out for detekt's
+`TooManyFunctions`). `SetlistDao.removeSetlistSong(date, songId)` mirrors a confirmed removal in
+one transaction (only while `AVAILABLE` and exactly one cached song has the id): explicit deletes of
+the song, slots and extras from that position, then the later ones reinserted one position up
+(positions are in the primary keys; the foreign keys have no `onUpdate`). Room changes only on
+`Done` or `Rejected("song_not_in_setlist")`.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

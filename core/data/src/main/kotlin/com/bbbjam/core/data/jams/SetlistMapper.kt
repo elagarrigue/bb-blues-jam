@@ -28,7 +28,8 @@ internal data class MappedSetlist(
 /**
  * Turns one published jam's tab rows into a [Setlist] (`docs/sheet-schema.md`, jam tab and Mapper
  * rules). An invalid row is dropped and reported and the rest stay [Setlist.Available], sorted by
- * position and never renumbered: positions are the write identity (user approval P4). Every row
+ * position and never renumbered here: positions are the read identity (user approval P4; setlist
+ * mutations find a row by song id, `admin-remove-song-from-setlist`). Every row
  * whose position parses and is shared is dropped, valid or not. When rows existed and all were
  * dropped the setlist is [Setlist.Unavailable] with [SetlistProblem.INVALID_ROWS]. The key is
  * always the tab's, never the catalog default (D-08).

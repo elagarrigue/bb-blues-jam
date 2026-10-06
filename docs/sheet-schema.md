@@ -55,7 +55,7 @@ Seed files for import live in `docs/sheet-seed/`.
 | `YYYY-MM-DD`, one tab per jam | JamSong in that jam's setlist | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `Config` | Setting | Sheet | The admin, by hand |
 | `_prueba_escritura` | Nothing (transient) | Apps Script | Created and deleted by the `checkWriteAccess` deploy check within one request (`apps-script-write-auth`); never read by any route, never served |
-| `_prueba_lista` | Nothing (transient) | Apps Script | Created with the jam tab header, given one marker row and deleted by the `checkSetlistWrite` deploy check within one request (`admin-add-song-to-setlist`); it has no `Jams` row, so no route ever serves it |
+| `_prueba_lista` | Nothing (transient) | Apps Script | Created with the jam tab header, given one marker row and deleted by the `checkSetlistWrite` deploy check within one request (`admin-add-song-to-setlist`), or given three marker rows, one removed, and deleted by the `checkSetlistRemove` deploy check (`admin-remove-song-from-setlist`); it has no `Jams` row, so no route ever serves it |
 
 A jam tab is named with its ISO date, for example `2026-07-25`, so tabs sort chronologically and the
 name is the join key with `Jams.fecha`. No other tab may use that name pattern.
@@ -115,8 +115,10 @@ the jam tab exist so the admin can read the tab, and so a setlist stays readable
 removed from the catalog — the app falls back to them only when `id_tema` is not found. Keep them
 as plain text rather than a lookup formula, or the fallback breaks exactly when it is needed.
 
-**How Apps Script writes a jam tab** (`addSong`, `admin-add-song-to-setlist`; contract in
-`apps-script-api.md`). Append only: it never edits, moves or deletes an existing row. Only the
+**How Apps Script writes a jam tab** (`addSong`, `admin-add-song-to-setlist`, and `removeSong`,
+`admin-remove-song-from-setlist`; contract in `apps-script-api.md`). `addSong` appends and never
+edits an existing row; `removeSong` deletes one row and rewrites later `posicion` cells (below).
+Only the
 upcoming jam's tab is written (its `Jams` row is the earliest with a known `estado` that is today or
 later, `BORRADOR` or `PUBLICADA`); a past jam's tab never (D-04). When the tab does not exist yet it
 is created with the header row above, in that order. The new row goes after the last row, at
@@ -127,6 +129,13 @@ accepts. `id_tema`, `titulo` and `artista` come from `Catalogo` (exactly one row
 title and an artist), `tono` is the key the app sent (never `tono_default`, D-08), the seven slot
 cells and `Otros` are written empty (the default lineup, all open, D-18). A song already in the
 tab is refused (`song_already_in_setlist`). Every check runs before the first write.
+
+`removeSong` (user decision R1 (a)) finds its row by the trimmed `id_tema`, never by `posicion`
+(no row: `song_not_in_setlist`; more than one: `duplicate_song`; both before any write), deletes
+that whole row (its slots and `Otros` with it) and rewrites every later whole-number `posicion` as
+`posicion - 1`, in plain text, in ascending order, so the tab stays numbered 1..n. A failure midway
+can leave a gap, never a duplicate. `Catalogo` is never opened. **Every later setlist mutation that
+changes an existing row also locates it by `id_tema`.**
 
 ### Slot columns
 
@@ -199,7 +208,10 @@ typo shows up when the tab is read, not on stage.
   hyphens (`[a-z0-9]+(-[a-z0-9]+)*`, as `SongId` enforces). No accents, spaces, uppercase, or
   leading, trailing or doubled hyphens. `Café Madrid` becomes `cafe-madrid`.
 - `Jam` → `Jams.fecha`, which is also the tab name.
-- `JamSong` → (`fecha`, `posicion`).
+- `JamSong` → (`fecha`, `posicion`) is the **read identity**: the order of the setlist and the
+  key of the cached row. Setlist mutations locate a row by (`fecha`, `id_tema`) instead (user
+  decision R1 (a), `admin-remove-song-from-setlist`): `addSong` keeps `id_tema` unique within a
+  tab, and a removal renumbers later positions, so a position is not stable across writes.
 - `Slot` → (`fecha`, `posicion`, instrument, ordinal among that instrument's slots). The k-th slot
   of an instrument is the k-th column of that instrument, in header order, whose cell is not `-`.
   With `Guitarra 1 = -` and `Guitarra 2 = Pedro`, the song's only guitar slot is `Guitarra 2`;
@@ -311,10 +323,11 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
 
 - **A rejected `Jams` row never stops the others**, and a dropped setlist row never stops the
   rest of its setlist (user approval P4): the setlist stays available with its valid rows, sorted by
-  `posicion` and **never renumbered**, because (`fecha`, `posicion`) is the write identity of a
-  JamSong. A gap is therefore possible; the setlist carries how many rows were dropped so a screen
+  `posicion` and **never renumbered by the read path**, because (`fecha`, `posicion`) is the read
+  identity of a JamSong. A gap is therefore possible; the setlist carries how many rows were dropped so a screen
   can say it is incomplete. A setlist whose rows are all invalid is **unavailable**
-  (`INVALID_ROWS`), never an empty list. The Sheet itself should still number 1..n.
+  (`INVALID_ROWS`), never an empty list. The Sheet itself should still number 1..n; `removeSong`
+  keeps it so.
 - **The setlist state.** A `BORRADOR` jam is always **withheld**; a setlist or error that arrives
   with one breaks the contract, is ignored (fail closed) and is reported. A `PUBLICADA` jam with a
   `setlistError` is **unavailable** (P3): `missing_tab` → `MISSING_TAB`, `missing_header` and

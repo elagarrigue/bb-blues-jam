@@ -5,6 +5,7 @@
 // write lock and the checkWriteAccess deploy check.
 // admin-add-song-to-setlist adds readJams, addSong and checkSetlistWrite to the action table; their
 // behaviour is in setlist.test.js, and the table-driven guard tests here cover them unchanged.
+// admin-remove-song-from-setlist adds removeSong and checkSetlistRemove the same way (setlist.test.js).
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -187,13 +188,15 @@ const ACTION_NAMES = Object.keys(ACTIONS);
 const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
-test('the action table: checkPassphrase and readJams read, checkWriteAccess, addSong and checkSetlistWrite write', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite']);
+test('the action table: checkPassphrase and readJams read, every other action writes', () => {
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
   assert.equal(ACTIONS.addSong.write, true);
   assert.equal(ACTIONS.checkSetlistWrite.write, true);
+  assert.equal(ACTIONS.removeSong.write, true);
+  assert.equal(ACTIONS.checkSetlistRemove.write, true);
   for (const name of ACTION_NAMES) {
     assert.deepStrictEqual(Object.keys(ACTIONS[name]).sort(), ['run', 'write']);
     assert.equal(typeof ACTIONS[name].run, 'function');
@@ -478,7 +481,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -583,7 +586,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite'));
+    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove'));
   });
   withAppsScript({
     getActiveSpreadsheet() {
@@ -632,5 +635,6 @@ test('Post.js holds the lines the README tells the user to look for after pastin
   const source = fs.readFileSync(path.join(SRC_DIR, 'Post.js'), 'utf8');
   assert.ok(source.includes('checkWriteAccess: { write: true, run: checkWriteAccess_ },'));
   assert.ok(source.includes('addSong: { write: true, run: addSong_ },'));
+  assert.ok(source.includes('removeSong: { write: true, run: removeSong_ },'));
   assert.ok(!source.includes('checkPassphrase: checkPassphrase_,'), 'the old marker must be gone, so an old paste is detectable');
 });

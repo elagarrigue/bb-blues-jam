@@ -8,6 +8,7 @@ import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.CatalogSongEntity
 import com.bbbjam.core.data.cache.JamEntity
+import com.bbbjam.core.data.cache.JamExtraEntity
 import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
@@ -40,7 +41,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 /**
- * The add mutation with no UI: a real in-memory Room cache, a real DataStore file, the real
+ * The add and remove mutations with no UI: a real in-memory Room cache, a real DataStore file, the real
  * [AdminWriter] and a fake POST transport. Writes run in the test's background scope.
  */
 class DefaultSetlistRepositoryTest {
@@ -242,7 +243,158 @@ class DefaultSetlistRepositoryTest {
         assertEquals(Setlist.Withheld, jamsDao.observeJams().first().single().toDomain().setlist)
     }
 
+    // ---- removeSong ----
+
+    @Test
+    fun `removeSong, called with no UI, mirrors the removal and renumbering and clears its entry`() = runTest {
+        val repository = seeded()
+        seedFour()
+        val catalogBefore = catalogDao.song("crossroads")
+        post.answers += body("""{"schemaVersion":1,"ok":true,"position":2}""")
+        val gate = CompletableDeferred<Unit>().also { post.gate = it }
+
+        val remove = async { repository.removeSong(DATE, HOOCHIE) }
+        val sending = repository.observeRemoves().first { it.isNotEmpty() }.single()
+        assertEquals(SetlistRemove.State.Sending, sending.state)
+        // Not in the catalog: the tab's title copy.
+        assertEquals("Hoochie Coochie Man", sending.title)
+        assertEquals(listOf(1, 2, 3, 4), cachedSongs().map { it.position })
+        gate.complete(Unit)
+
+        assertEquals(RemoveSongOutcome.Removed, remove.await())
+        val songs = cachedSongs()
+        assertEquals(listOf("red-house", "crossroads", "pride-and-joy"), songs.map { it.songId.value })
+        assertEquals(listOf(1, 2, 3), songs.map { it.position })
+        assertEquals(Key("E"), songs[2].key)
+        assertEquals(1, jamsDao.observeJams().first().single().extras.size)
+        assertEquals(emptyList<SetlistRemove>(), repository.observeRemoves().first())
+        // The catalog entry is untouched.
+        assertEquals(catalogBefore, catalogDao.song("crossroads"))
+
+        val body = Json.parseToJsonElement(post.bodies.single()).jsonObject
+        assertEquals(setOf("action", "passphrase", "date", "songId"), body.keys)
+        assertEquals("removeSong", body.getValue("action").jsonPrimitive.content)
+        assertEquals("2026-10-31", body.getValue("date").jsonPrimitive.content)
+        assertEquals("hoochie-coochie-man", body.getValue("songId").jsonPrimitive.content)
+    }
+
+    @Test
+    fun `every failed removal leaves the cache as it was and publishes a failed entry`() = runTest {
+        val repository = seeded()
+        seedFour()
+        val answers = listOf(
+            body(error("invalid_passphrase")) to WriteOutcome.AccessRefused,
+            TransportResult.Failed(DataFailure.Offline) to WriteOutcome.Offline,
+            body(error("busy")) to WriteOutcome.Unavailable,
+            body(error("duplicate_song")) to WriteOutcome.Rejected("duplicate_song"),
+            body(error("jam_not_editable")) to WriteOutcome.Rejected("jam_not_editable"),
+            body("<html></html>") to WriteOutcome.Unavailable,
+        )
+        val before = jamsDao.observeJams().first()
+
+        answers.forEach { (answer, reason) ->
+            post.answers += answer
+
+            assertEquals(answer.toString(), RemoveSongOutcome.NotRemoved(reason), repository.removeSong(DATE, HOOCHIE))
+            assertEquals(answer.toString(), before, jamsDao.observeJams().first())
+            val entry = repository.observeRemoves().first().last()
+            assertEquals(answer.toString(), SetlistRemove.State.Failed(reason), entry.state)
+        }
+        assertEquals(answers.size, repository.observeRemoves().first().size)
+    }
+
+    @Test
+    fun `song_not_in_setlist also removes the cached row, and the entry still fails`() = runTest {
+        val repository = seeded()
+        seedFour()
+        post.answers += body(error("song_not_in_setlist"))
+
+        val outcome = repository.removeSong(DATE, HOOCHIE)
+
+        val reason = WriteOutcome.Rejected("song_not_in_setlist")
+        assertEquals(RemoveSongOutcome.NotRemoved(reason), outcome)
+        assertEquals(listOf("red-house", "crossroads", "pride-and-joy"), cachedSongs().map { it.songId.value })
+        assertEquals(listOf(1, 2, 3), cachedSongs().map { it.position })
+        assertEquals(SetlistRemove.State.Failed(reason), repository.observeRemoves().first().single().state)
+    }
+
+    @Test
+    fun `with no passphrase stored it is AccessRefused, nothing is sent and the row stays`() = runTest {
+        val repository = seeded(passphrase = null)
+
+        assertEquals(
+            RemoveSongOutcome.NotRemoved(WriteOutcome.AccessRefused),
+            repository.removeSong(DATE, SongId("red-house")),
+        )
+        assertTrue(post.bodies.isEmpty())
+        assertEquals(listOf(1), cachedSongs().map { it.position })
+        // Not in the cached catalog: the title is the tab's copy.
+        assertEquals("Red House", repository.observeRemoves().first().single().title)
+    }
+
+    @Test
+    fun `adds and removes share one id counter, one dismiss and one write queue in call order`() = runTest {
+        val repository = seeded()
+        post.answers += body(error("busy"))
+        repository.removeSong(DATE, SongId("zz-no-existe"))
+        val failedRemove = repository.observeRemoves().first().single()
+        assertEquals("zz-no-existe", failedRemove.title)
+
+        post.answers += ok(position = 2)
+        post.answers += body("""{"schemaVersion":1,"ok":true,"position":1}""")
+        val gate = CompletableDeferred<Unit>().also { post.gate = it }
+        val add = async { repository.addSong(DATE, CROSSROADS, Key("A")) }
+        val remove = async { repository.removeSong(DATE, SongId("red-house")) }
+        repository.observeRemoves().first { it.size == 2 }
+        post.posted.first { it == 2 }
+        // The removal waits for the add, which the gate holds.
+        assertEquals(2, post.bodies.size)
+        gate.complete(Unit)
+
+        assertEquals(AddSongOutcome.Added(2), add.await())
+        assertEquals(RemoveSongOutcome.Removed, remove.await())
+        assertEquals(listOf("removeSong", "addSong", "removeSong"), post.bodies.map { actionOf(it) })
+        assertEquals(listOf(CROSSROADS to 1), cachedSongs().map { it.songId to it.position })
+
+        assertEquals(emptyList<SetlistAdd>(), repository.observeAdds().first())
+        assertEquals(listOf(failedRemove.id), repository.observeRemoves().first().map { it.id })
+        repository.dismiss(failedRemove.id)
+        assertEquals(emptyList<SetlistRemove>(), repository.observeRemoves().first())
+    }
+
+    @Test
+    fun `cancelling the caller of a removal does not cancel it`() = runTest {
+        val repository = seeded()
+        post.answers += body("""{"schemaVersion":1,"ok":true,"position":1}""")
+
+        val caller = launch(start = CoroutineStart.UNDISPATCHED) { repository.removeSong(DATE, SongId("red-house")) }
+        caller.cancel()
+        jamsDao.observeJams().first { jams -> jams.single().songs.isEmpty() }
+
+        assertTrue(caller.isCancelled)
+        assertEquals(1, post.bodies.size)
+    }
+
     // ---- fixtures ----
+
+    /** Red House, Crossroads, Hoochie Coochie Man and Pride and Joy at 1..4; the last two with an extra. */
+    private suspend fun seedFour() {
+        val date = DATE.toString()
+        val songs = listOf(
+            JamSongEntity(date, 1, "red-house", "Red House", "Jimi Hendrix", "Bb"),
+            JamSongEntity(date, 2, "crossroads", "Crossroads", "Eric Clapton", "A"),
+            JamSongEntity(date, 3, HOOCHIE.value, "Hoochie Coochie Man", "Muddy Waters", "A"),
+            JamSongEntity(date, 4, "pride-and-joy", "Pride and Joy", "Stevie Ray Vaughan", "E"),
+        )
+        val extras = listOf(
+            JamExtraEntity(date, 3, 1, "Hugo", "Trompeta"),
+            JamExtraEntity(date, 4, 1, "Eva", "Saxo"),
+        )
+        jamsDao.replaceJams(JamRows(listOf(jam("AVAILABLE")), songs, (1..4).flatMap { slots(it) }, extras), state())
+    }
+
+    private fun actionOf(json: String) =
+        Json.parseToJsonElement(json).jsonObject.getValue("action").jsonPrimitive.content
 
     /** A repository over a cache holding the catalog and the upcoming draft with Red House at 1. */
     private suspend fun TestScope.seeded(passphrase: String? = TEST_VALUE): DefaultSetlistRepository {
@@ -305,6 +457,7 @@ class DefaultSetlistRepositoryTest {
         val DATE: LocalDate = LocalDate.of(2026, 10, 31)
         val CROSSROADS = SongId("crossroads")
         val THRILL = SongId("the-thrill-is-gone")
+        val HOOCHIE = SongId("hoochie-coochie-man")
         const val TEST_VALUE = "not-a-real-passphrase"
 
         fun body(text: String) = TransportResult.Body(text)
