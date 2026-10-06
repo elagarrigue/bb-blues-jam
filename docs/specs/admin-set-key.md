@@ -431,6 +431,7 @@ Answered by the user on 6 October 2026:
 - **R1:** accepted as the reading for this slice. The user asked for a new feature,
   `live-refresh-during-jam`: refresh every 30 seconds from 30 minutes before the show until 4 hours
   after, plus pull-to-refresh.
+- **C2** (asked after the revision): the status line while saving is `Guardando…` (recommended).
 
 Also, from remove-song's R1: find the row by `id_tema`, not by position. The spec above reflects all
 of these.
