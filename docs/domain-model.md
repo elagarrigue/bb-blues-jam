@@ -184,6 +184,10 @@ deliberate choice.
   title and artist it needs to render, so the setlist stays readable. Resolved in `sheet-schema.md`:
   each jam tab keeps plain-text copies of title and artist, used only when `id_tema` is no longer in
   `Catalogo`.
+- **A song removed from the setlist** (`admin-remove-song-from-setlist`): its JamSong, Slots and
+  extra participants go with the row (no orphan assignment), later songs move up one position, and
+  the catalog Song is untouched. Allowed on a draft or a published upcoming jam, never on a past one
+  (D-04). There is no undo: adding the song again starts from the default lineup and a new key.
 - **No upcoming jam scheduled.** The Next jam tab shows an empty state with a concrete invitation,
   distinct from the DRAFT "list is being assembled" message.
 - **Offline.** The app shows the last cached data with a staleness indicator rather than an error.

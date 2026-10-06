@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
@@ -28,7 +29,8 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /*
  * The admin's controls on Próxima jam (`admin-add-song-to-setlist`). They are only appended: the
- * draft badge under the header, the rest after the rows, so nothing a musician sees moves. Colours
+ * draft badge under the header, the rest after the rows, and the row actions at the end of an
+ * expanded row's panel (`admin-remove-song-from-setlist`), so nothing a musician sees moves. Colours
  * come only from [AdminControlsDefaults]; no amber.
  */
 
@@ -136,6 +138,85 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
         contentAlignment = Alignment.Center,
     ) {
         Text(text = model.label, style = BluesJamTheme.typography.body, color = style.content)
+    }
+}
+
+/**
+ * The admin's part of an expanded row, after "Ver detalle del tema". Each action is a full-width,
+ * 48dp, underlined text action, as the detail action. Later row actions (`admin-set-key`'s
+ * "Cambiar tonalidad") go before the removal, which stays last.
+ */
+@Composable
+internal fun AdminRowActions(model: SongRowAdminUiModel) {
+    RemovalControl(model.removal)
+}
+
+/**
+ * Removing the song (U1): the action, the inline confirmation (prompt, details, "Quitar" and
+ * "Cancelar"), or "Quitando…", read politely. Colours from [AdminControlsDefaults.removal]; no amber.
+ */
+@Composable
+private fun RemovalControl(model: RemovalUiModel) {
+    val spacing = BluesJamTheme.spacing
+    val style = AdminControlsDefaults.removal()
+    when (model) {
+        is RemovalUiModel.Idle -> RowTextAction(model.label, style.action) {
+            model.events(RemovalUiModel.Event.RequestRemove)
+        }
+
+        is RemovalUiModel.Confirming -> Column(modifier = Modifier.padding(top = spacing.xs)) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = spacing.md)
+                    .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
+            ) {
+                Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.prompt)
+                model.details.forEach { line ->
+                    Text(text = line, style = BluesJamTheme.typography.caption, color = style.details)
+                }
+            }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                RowTextAction(model.confirmLabel, style.confirm, Modifier.weight(1f)) {
+                    model.events(RemovalUiModel.Event.Confirm)
+                }
+                RowTextAction(model.cancelLabel, style.cancel, Modifier.weight(1f)) {
+                    model.events(RemovalUiModel.Event.Cancel)
+                }
+            }
+        }
+
+        is RemovalUiModel.Removing -> Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+                .semantics { liveRegion = LiveRegionMode.Polite }
+                .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(text = model.status, style = BluesJamTheme.typography.body, color = style.status)
+        }
+    }
+}
+
+/** A 48dp underlined text action in [color], as the row's "Ver detalle del tema". */
+@Composable
+private fun RowTextAction(label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val spacing = BluesJamTheme.spacing
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = label,
+            style = BluesJamTheme.typography.body,
+            color = color,
+            textDecoration = TextDecoration.Underline,
+        )
     }
 }
 

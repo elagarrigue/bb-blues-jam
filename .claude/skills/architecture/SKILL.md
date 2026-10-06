@@ -136,6 +136,19 @@ the song, slots and extras from that position, then the later ones reinserted on
 (positions are in the primary keys; the foreign keys have no `onUpdate`). Room changes only on
 `Done` or `Rejected("song_not_in_setlist")`.
 
+As built by `admin-remove-song-from-setlist` Part B (UI): `SongRowUiModel.admin:
+SongRowAdminUiModel?` (null for musicians, so their rows are unchanged) holds `removal:
+RemovalUiModel` (`Idle`, `Confirming(prompt, details, confirmLabel, cancelLabel)`, `Removing(status)`;
+events `RequestRemove`, `Confirm`, `Cancel`). `NextJamPresenter` collects `observeRemoves()` and
+holds the confirming row as one saveable `String` key (`removalKey(date, songId)`, "date|songId");
+`Confirm` acts only while that key is the row's, clears it and launches `removeSong` undispatched,
+so a double tap removes once. `AdminState` gains `removal: RemovalState(removes, confirming,
+onEvent)`; row handlers are keyed by (date, songId, step). `NextJamAdminUiModel.failures` merges
+failed adds and removes in id order (type name `AddFailureUiModel` kept). The screen draws
+`AdminRowActions(row.admin)` after `Ver detalle del tema` in an expanded row; **a later row action
+goes inside `AdminRowActions`, before the removal**, which stays last. Colours in
+`AdminControlsDefaults.removal()` (`error`, `text`, `textMuted`; no amber).
+
 As built by `admin-set-key` Part A (backend and `:core:data`, no UI yet): `Post.js` adds `setKey`
 (writes only the matched row's `tono` cell, plain text, never opens `Catalogo`) and extracts the
 row scan into **`findSongRow_(sheet, columns, values, songId)`**, the one finder every later
@@ -254,9 +267,12 @@ optimistic value comes from `Sending` entries only; a failure is the revert** (P
   presenter**, keyed by a stable id, passed into the pure mapping; not a child presenter called in a
   loop. A `remember` inside a child presenter called in `map {}` is keyed by call order, so removing
   or inserting a row moves its state to a neighbour unless each call is wrapped in `key(id)`.
-  `NextJamPresenter` holds `ExpandedRows(jamDate, positions)` in
+  `NextJamPresenter` holds `ExpandedRows(jamDate, songIds)` in
   `rememberSaveable(stateSaver = ExpandedRows.Saver)` (survives rotation; in Molecule it behaves as
-  `remember`), keyed by the Sheet's `posicion` and scoped to the jam date. **Never recreate such a
+  `remember`), keyed by the song id and scoped to the jam date (since
+  `admin-remove-song-from-setlist`: a removal renumbers positions, and a position key would hand the
+  removed song's expansion to the song that moves up). The lazy list keeps position keys, because a
+  hand-edited tab may repeat a song id and lazy keys must be unique. **Never recreate such a
   state object** (`remember(snapshot) { … }`): handlers without a key compare equal, so Compose may
   keep an earlier model's handler, and it must still write through the same state. A child
   presenter pays off only when a row has its own dependencies (the admin slot mutations).

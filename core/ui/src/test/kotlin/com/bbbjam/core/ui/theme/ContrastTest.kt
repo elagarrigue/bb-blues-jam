@@ -95,6 +95,13 @@ class ContrastTest {
         assertContrast(bar.selectedContent, bar.indicator, expected = 12.75)
     }
 
+    /**
+     * The admin's destructive text on a row (`admin-remove-song-from-setlist`): "Quitar de la lista"
+     * and "Quitar" in `error` on the row's `surface`, as the failure cards' titles.
+     */
+    @Test
+    fun `error on a surface`() = assertContrast(colors.error, colors.surface, expected = 10.12)
+
     private fun assertContrast(foreground: Color, background: Color, expected: Double) {
         val lighter = maxOf(foreground.luminance(), background.luminance())
         val darker = minOf(foreground.luminance(), background.luminance())

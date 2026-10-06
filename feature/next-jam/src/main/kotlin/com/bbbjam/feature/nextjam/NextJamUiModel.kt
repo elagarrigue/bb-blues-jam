@@ -70,8 +70,9 @@ data class NextJamAdminUiModel(
 data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
 
 /**
- * A failed add, kept until the admin closes it: [title] ("No se pudo agregar «Crossroads»"),
- * [message] by outcome (C1) and [dismissLabel] ("Cerrar").
+ * A failed add or remove (`admin-remove-song-from-setlist` reuses the shape; the name stays to
+ * avoid churn), kept until the admin closes it: [title] ("No se pudo agregar «Crossroads»" or "No se
+ * pudo quitar «Crossroads»"), [message] by outcome (C1) and [dismissLabel] ("Cerrar").
  */
 data class AddFailureUiModel(
     val id: Long,
@@ -129,14 +130,17 @@ sealed interface SetlistUiModel : UiModel {
 data class DraftSetlistUiModel(val label: String, val title: String, val message: String) : UiModel
 
 /**
- * One song row. [position] is the Sheet's `posicion`, never renumbered; [positionLabel] is it
+ * One song row. [position] is the Sheet's `posicion`, never renumbered by the read path (a removal
+ * renumbers the Sheet itself, `admin-remove-song-from-setlist`); [positionLabel] is it
  * zero-padded ("01"). [keyDescription] is what a screen reader says for [key]. [instruments] is the
  * instrument strip (slots in Sheet column order, then the extra participants), drawn while
  * collapsed. When [isExpanded], the row shows [artist] and [lineup] (open slots first) instead.
  * [stateDescription] ("expandido"/"contraído") and [toggleLabel] ("ocultar los cupos"/"ver los
  * cupos") are the header's state and action for screen readers. [lineup] is built for every row,
  * so the whole setlist is data whether or not it is drawn. [detailLabel] ("Ver detalle del tema")
- * is the expanded row's action that opens the song detail (`song-detail-screen`).
+ * is the expanded row's action that opens the song detail (`song-detail-screen`). [admin] is the
+ * admin's part of the row, drawn in the expanded panel after the detail action; null for musicians,
+ * so a musician's row is exactly what it was before admin controls existed.
  */
 data class SongRowUiModel(
     val position: Int,
@@ -152,6 +156,7 @@ data class SongRowUiModel(
     val lineup: LineupPanelUiModel,
     val detailLabel: String,
     val events: EventHandler<Event>,
+    val admin: SongRowAdminUiModel? = null,
 ) : UiModel {
     sealed interface Event : UiEvent {
         /** Expand a collapsed row or collapse an expanded one; other rows keep their state. */
@@ -160,4 +165,48 @@ data class SongRowUiModel(
         /** Open this song's detail. Navigation only, never a write. */
         data object OpenDetail : Event
     }
+}
+
+/**
+ * The admin's part of one row (D-15), drawn only while the row is expanded. [removal] is the remove
+ * action, its inline confirmation, or the status while the removal is sent
+ * (`admin-remove-song-from-setlist`, U1).
+ */
+data class SongRowAdminUiModel(val removal: RemovalUiModel) : UiModel
+
+/**
+ * Removing one song from the setlist, in three steps. Nothing is written until [Confirming]'s
+ * [RemovalUiModel.Event.Confirm]; there is no undo, and the row disappears only when the server
+ * confirms (no optimistic hide).
+ */
+sealed interface RemovalUiModel : UiModel {
+    sealed interface Event : UiEvent {
+        /** Show the confirmation instead of the action. Changes nothing anywhere. */
+        data object RequestRemove : Event
+
+        /** Send the removal. Acts only while this row is still confirming, so a double tap removes once. */
+        data object Confirm : Event
+
+        /** Back to the action. Changes nothing anywhere. */
+        data object Cancel : Event
+    }
+
+    /** "Quitar de la lista". */
+    data class Idle(val label: String, val events: EventHandler<Event>) : RemovalUiModel
+
+    /**
+     * [prompt] ("¿Quitar «Crossroads» de la lista?"), then [details]: how many assigned musicians go
+     * with the row, and whether the list is published (each line only when it applies), then
+     * [confirmLabel] ("Quitar") and [cancelLabel] ("Cancelar").
+     */
+    data class Confirming(
+        val prompt: String,
+        val details: List<String>,
+        val confirmLabel: String,
+        val cancelLabel: String,
+        val events: EventHandler<Event>,
+    ) : RemovalUiModel
+
+    /** "Quitando…" while the removal is sent; no control. */
+    data class Removing(val status: String) : RemovalUiModel
 }

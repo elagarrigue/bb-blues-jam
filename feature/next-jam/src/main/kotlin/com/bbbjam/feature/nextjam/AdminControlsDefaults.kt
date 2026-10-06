@@ -26,6 +26,29 @@ internal object AdminControlsDefaults {
     fun failureCard(colors: BluesJamColors = BluesJamColors): FailureStyle =
         FailureStyle(container = colors.surface, title = colors.error, message = colors.textMuted, action = colors.text)
 
+    data class RemovalStyle(
+        val action: Color,
+        val prompt: Color,
+        val details: Color,
+        val confirm: Color,
+        val cancel: Color,
+        val status: Color,
+    )
+
+    /**
+     * Removing a song (`admin-remove-song-from-setlist`): "Quitar de la lista" and "Quitar" in
+     * `error` (a destructive action, never amber), "Cancelar" and the prompt in `text`, the details
+     * and "Quitando…" in `textMuted`. Drawn on the row's `surface`.
+     */
+    fun removal(colors: BluesJamColors = BluesJamColors): RemovalStyle = RemovalStyle(
+        action = colors.error,
+        prompt = colors.text,
+        details = colors.textMuted,
+        confirm = colors.error,
+        cancel = colors.text,
+        status = colors.textMuted,
+    )
+
     /** The draft badge (`badge-draft`: `textMuted` on `surfaceRaised`) and its note (`textMuted`). */
     fun draft(colors: BluesJamColors = BluesJamColors): DraftStyle =
         DraftStyle(badgeFill = colors.surfaceRaised, badgeText = colors.textMuted, note = colors.textMuted)

@@ -74,6 +74,28 @@ internal object NextJamCopy {
     const val JAM_CHANGED = "La jam cambió en la planilla. Actualizá y probá de nuevo."
     const val SHEET_REFUSED = "La planilla rechazó el cambio. Revisala y probá de nuevo."
 
+    /**
+     * Removing a song, approved on 6 October 2026 (`docs/specs/admin-remove-song-from-setlist.md`,
+     * U1 and the copy table).
+     */
+    const val REMOVE = "Quitar de la lista"
+    const val CONFIRM_REMOVE = "Quitar"
+    const val CANCEL = "Cancelar"
+    const val REMOVING = "Quitando…"
+    const val PUBLISHED_REMOVE_NOTE = "La lista está publicada: los músicos van a dejar de verlo."
+    const val NOT_IN_SETLIST = "Ese tema ya no estaba en la lista."
+    const val DUPLICATE_SONG = "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo."
+
+    /** The confirmation's question: `¿Quitar «Crossroads» de la lista?`. */
+    fun removePrompt(title: String): String = "¿Quitar «$title» de la lista?"
+
+    /** The confirmation's line for [count] assigned musicians (filled slots plus extras), at least 1. */
+    fun assignedMusicians(count: Int): String =
+        if (count == 1) "Se borra también el músico anotado." else "Se borran también los $count músicos anotados."
+
+    /** A failed removal's card title: `No se pudo quitar «Crossroads»`. */
+    fun removeFailed(title: String): String = "No se pudo quitar «$title»"
+
     /** The failure card's title: `No se pudo agregar «Crossroads»`. */
     fun addFailed(title: String): String = "No se pudo agregar «$title»"
 

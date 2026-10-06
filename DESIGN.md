@@ -393,13 +393,29 @@ through `AdminControlsDefaults`, **no amber**:
   skeleton `Cargando el catálogo`, error `No pudimos cargar el catálogo`, empty `El catálogo está
   vacío` / `Cargá temas en la pestaña Catalogo de la planilla.`, and `Ningún tema coincide con «…».`
   A pick closes the picker at once; the song shows on Próxima jam as a pending row.
+- **Removing a song** (`admin-remove-song-from-setlist`, U1 approved by the user, 6 October 2026):
+  admin only, at the end of an **expanded** row's panel, after `Ver detalle del tema` (later row
+  actions such as `Cambiar tonalidad` go between the two). Colours in
+  `AdminControlsDefaults.removal()`, **no amber**. Idle: `Quitar de la lista`, a full-width, 48dp,
+  underlined `body` text action in `error` (10.12:1 on `surface`, `ContrastTest`), `Role.Button`.
+  Tapping it changes nothing anywhere; it draws the inline confirmation in its place: the prompt
+  `¿Quitar «Crossroads» de la lista?` (`body`, `text`), then, each only when it applies, `Se borra
+  también el músico anotado.` / `Se borran también los n músicos anotados.` (filled slots plus
+  extras) and `La lista está publicada: los músicos van a dejar de verlo.` (`caption`, `textMuted`),
+  read politely as one node; then two 48dp underlined actions side by side, `Quitar` (`error`) and
+  `Cancelar` (`text`). No dialog, no swipe, no undo, no trash icon (the export's red icon became a
+  labelled text action). While sending, `Quitando…` (`body`, `textMuted`, a polite live region)
+  replaces the controls; the row disappears only when the server confirms. A failure draws the row
+  as before plus a card after the rows, `No se pudo quitar «…»` with the reason and `Cerrar`, as the
+  add-song cards. Expansion follows the song id, so the song that moves up is not drawn expanded.
 - Text selection is non-amber app-wide (`BluesJamTheme` provides `text` handles and `text` at 40%).
 
 ## Core Screens
 
 1. **Próxima jam, musician view** — the most important screen in the app
 2. **Próxima jam, admin view** — same screen plus controls. As built so far: the draft's songs,
-   the draft badge, pending adds, failure cards and `Agregar tema` (**Admin controls**)
+   the draft badge, pending adds, failure cards, `Agregar tema` and the expanded row's
+   `Quitar de la lista` with its inline confirmation (**Admin controls**)
 3. **Song detail** — key displayed very large as the main element, and the full lineup grouped by
    instrument. No tags, tempo, difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first

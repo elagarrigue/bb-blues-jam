@@ -20,12 +20,14 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.InstrumentFilterChange
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.filter.matchesInstrumentFilter
@@ -40,6 +42,7 @@ import com.bbbjam.core.ui.strip.toInstrumentChips
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 /**
@@ -53,7 +56,7 @@ import kotlinx.coroutines.launch
  * "Today" and "now" come only from [calendar], read once per snapshot, so the header
  * agrees with the repository's upcoming/past split (P7), never from the device clock or UTC.
  *
- * Which rows are expanded is one [ExpandedRows] held here, keyed by jam date and position, not a
+ * Which rows are expanded is one [ExpandedRows] held here, keyed by jam date and song id, not a
  * child presenter per row: a `remember` inside a presenter called in a loop is keyed by call order,
  * so a dropped row would hand its expansion to a neighbour. The state object is created once and
  * never recreated (no `remember(snapshot)` around it): row handlers have no key, so Compose may keep
@@ -75,6 +78,13 @@ import kotlinx.coroutines.launch
  * [Params.onAddSong]. Musicians keep `setlistForMusicians()` and a model with no admin part. When
  * the flag turns on, the presenter asks for one refresh, which is the admin read (draft songs);
  * whether it already did is saveable, so returning to the tab does not repeat it.
+ *
+ * Removing a song (`admin-remove-song-from-setlist`, U1): which row is confirming is one saveable
+ * key ("date|songId"), so the confirmation survives rotation and only one row confirms at a time.
+ * Confirm acts only while that key is still the row's, clears it and launches
+ * [SetlistRepository.removeSong] undispatched, so the `Sending` entry exists before the next frame
+ * and a double tap removes once. The row shows "Quitando…" while a `Sending` removal exists for its
+ * (date, songId); a failed one is a card, and the row is drawn as before.
  */
 class NextJamPresenter(
     private val jams: JamsRepository,
@@ -100,6 +110,9 @@ class NextJamPresenter(
         val currentOnAddSong by rememberUpdatedState(params.onAddSong)
         val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
         val adds by remember { setlist.observeAdds() }.collectAsState(initial = emptyList())
+        val removes by remember { setlist.observeRemoves() }.collectAsState(initial = emptyList())
+        var confirming by rememberSaveable { mutableStateOf<String?>(null) }
+        val scope = rememberCoroutineScope()
         // Read only by the effect, never by the composition, so writing it recomposes nothing.
         var adminRefreshed by rememberSaveable { mutableStateOf(false) }
         LaunchedEffect(Unit) {
@@ -114,18 +127,35 @@ class NextJamPresenter(
                 }
             }
         }
+        val onRemoval: (LocalDate, SongId, RemovalUiModel.Event) -> Unit = { date, songId, event ->
+            val key = removalKey(date, songId)
+            when (event) {
+                RemovalUiModel.Event.RequestRemove -> confirming = key
+
+                RemovalUiModel.Event.Cancel -> if (confirming == key) confirming = null
+
+                RemovalUiModel.Event.Confirm -> if (confirming == key) {
+                    confirming = null
+                    scope.launch(start = CoroutineStart.UNDISPATCHED) { setlist.removeSong(date, songId) }
+                }
+            }
+        }
         val admin = if (isAdmin) {
-            AdminState(adds, onAddSong = { date -> currentOnAddSong(date) }, onDismiss = { id -> setlist.dismiss(id) })
+            AdminState(
+                adds,
+                onAddSong = { date -> currentOnAddSong(date) },
+                onDismiss = { id -> setlist.dismiss(id) },
+                removal = RemovalState(removes, confirming, onRemoval),
+            )
         } else {
             null
         }
-        val scope = rememberCoroutineScope()
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val today = remember(snapshot) { calendar.today() }
         val now = remember(snapshot) { calendar.now() }
         var expanded by rememberSaveable(stateSaver = ExpandedRows.Saver) { mutableStateOf(ExpandedRows.NONE) }
-        val onToggle: (LocalDate, Int) -> Unit = { date, position -> expanded = expanded.toggle(date, position) }
+        val onToggle: (LocalDate, SongId) -> Unit = { date, songId -> expanded = expanded.toggle(date, songId) }
         var filter by rememberSaveable(stateSaver = InstrumentFilterSaver) { mutableStateOf(emptySet<Instrument>()) }
         val onFilterChange: (InstrumentFilterChange) -> Unit = { change -> filter = filter.updatedBy(change) }
         val onRetry: () -> Unit = {
@@ -158,7 +188,7 @@ internal val InstrumentFilterSaver: Saver<Set<Instrument>, Any> = listSaver(
 internal fun JamsSnapshot.toUiModel(
     today: LocalDate,
     expanded: ExpandedRows = ExpandedRows.NONE,
-    onToggle: (LocalDate, Int) -> Unit = { _, _ -> },
+    onToggle: (LocalDate, SongId) -> Unit = { _, _ -> },
     filter: Set<Instrument> = emptySet(),
     onFilterChange: (InstrumentFilterChange) -> Unit = {},
     now: Instant = freshness.fetchedAt ?: Instant.EPOCH,
@@ -183,7 +213,16 @@ internal fun JamsSnapshot.toUiModel(
             // the admin sees the songs the admin read brought.
             setlist = (if (admin == null) jam.setlistForMusicians() else jam.setlist).toUiModel(
                 jam.date,
-                RowState(expanded, onToggle, filter, onFilterChange, onOpenSong, isAdmin = admin != null),
+                RowState(
+                    expanded,
+                    onToggle,
+                    filter,
+                    onFilterChange,
+                    onOpenSong,
+                    admin?.let {
+                        RowAdmin(it.removal, jam)
+                    },
+                ),
             ),
             staleness = staleness,
             admin = admin?.toUiModel(jam),
@@ -213,22 +252,42 @@ private fun DomainJam.toHeader(today: LocalDate) = JamHeaderUiModel(
 /** The presenter's list state, passed down as one value. */
 private class RowState(
     val expanded: ExpandedRows,
-    val onToggle: (LocalDate, Int) -> Unit,
+    val onToggle: (LocalDate, SongId) -> Unit,
     val filter: Set<Instrument>,
     val onFilterChange: (InstrumentFilterChange) -> Unit,
     val onOpenSong: (LocalDate, Int) -> Unit,
-    val isAdmin: Boolean,
-)
+    val admin: RowAdmin?,
+) {
+    val isAdmin: Boolean
+        get() = admin != null
+}
+
+/** The admin's row state for one jam: the removals and the jam (its date and whether it is published). */
+private class RowAdmin(val removal: RemovalState, val jam: DomainJam)
 
 /**
- * What the presenter knows only for an admin: the adds of `SetlistRepository.observeAdds()` and
- * the two admin callbacks. Null for musicians.
+ * What the presenter knows only for an admin: the adds of `SetlistRepository.observeAdds()`, the
+ * two admin callbacks, and the [removal] state. Null for musicians.
  */
 internal class AdminState(
     val adds: List<SetlistAdd>,
     val onAddSong: (LocalDate) -> Unit,
     val onDismiss: (Long) -> Unit,
+    val removal: RemovalState = RemovalState(),
 )
+
+/**
+ * The removals of `SetlistRepository.observeRemoves()`, the row that is [confirming] (its
+ * [removalKey], or null) and the one handler every row's removal events go to.
+ */
+internal class RemovalState(
+    val removes: List<SetlistRemove> = emptyList(),
+    val confirming: String? = null,
+    val onEvent: (LocalDate, SongId, RemovalUiModel.Event) -> Unit = { _, _, _ -> },
+)
+
+/** The confirming row's saveable key: bundle-safe, unique per jam and song. */
+internal fun removalKey(date: LocalDate, songId: SongId): String = "$date|${songId.value}"
 
 /**
  * The admin layer for [jam]: the adds for its date only, sending ones as pending rows and failed
@@ -243,23 +302,34 @@ private fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
         draftNote = if (isDraft) NextJamCopy.DRAFT_NOTE else null,
         pending = mine.filter { it.state == SetlistAdd.State.Sending }
             .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },
-        failures = mine.mapNotNull { add ->
-            (add.state as? SetlistAdd.State.Failed)?.let { failed ->
-                AddFailureUiModel(
-                    id = add.id,
-                    title = NextJamCopy.addFailed(add.title),
-                    message = failureMessage(failed.reason),
-                    dismissLabel = NextJamCopy.CLOSE,
-                    events = EventHandler(key = add.id) { onDismiss(add.id) },
-                )
-            }
-        },
+        failures = failures(jam.date),
         addSong = if (jam.setlist is Setlist.Available) {
             AddSongActionUiModel(NextJamCopy.ADD_SONG, EventHandler(key = jam.date) { onAddSong(jam.date) })
         } else {
             null
         },
     )
+}
+
+/** The failed adds and removals of [date], as cards in id order (call order). */
+private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
+    val failedAdds = adds.filter { it.jamDate == date }.mapNotNull { add ->
+        (add.state as? SetlistAdd.State.Failed)?.let { Triple(add.id, NextJamCopy.addFailed(add.title), it.reason) }
+    }
+    val failedRemoves = removal.removes.filter { it.jamDate == date }.mapNotNull { remove ->
+        (remove.state as? SetlistRemove.State.Failed)?.let {
+            Triple(remove.id, NextJamCopy.removeFailed(remove.title), it.reason)
+        }
+    }
+    return (failedAdds + failedRemoves).sortedBy { it.first }.map { (id, title, reason) ->
+        AddFailureUiModel(
+            id = id,
+            title = title,
+            message = failureMessage(reason),
+            dismissLabel = NextJamCopy.CLOSE,
+            events = EventHandler(key = id) { onDismiss(id) },
+        )
+    }
 }
 
 /** The failure card's message by outcome and code (C1). */
@@ -273,6 +343,8 @@ internal fun failureMessage(reason: WriteOutcome): String = when (reason) {
 
     is WriteOutcome.Rejected -> when (reason.code) {
         "song_already_in_setlist" -> NextJamCopy.ALREADY_LISTED
+        "song_not_in_setlist" -> NextJamCopy.NOT_IN_SETLIST
+        "duplicate_song" -> NextJamCopy.DUPLICATE_SONG
         "unknown_song" -> NextJamCopy.NOT_IN_CATALOG
         "unknown_jam", "jam_not_editable", "duplicate_date" -> NextJamCopy.JAM_CHANGED
         else -> NextJamCopy.SHEET_REFUSED
@@ -280,7 +352,7 @@ internal fun failureMessage(reason: WriteOutcome): String = when (reason) {
 }
 
 /**
- * Rows the filter hides keep their expansion (keyed by position) and come back as they were. The
+ * Rows the filter hides keep their expansion (keyed by song id) and come back as they were. The
  * bar counts every song; the rows are those matching the selection, so the count line's number is
  * the number of rows. A setlist with no song is the empty block, with no bar: that is the empty
  * case, not the filter's no-results case.
@@ -302,10 +374,10 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
                 .filter { it.lineup.matchesInstrumentFilter(state.filter) }
                 .map { song ->
                     song.toRow(
-                        isExpanded = state.expanded.isExpanded(date, song.position),
-                        toggle = { state.onToggle(date, song.position) },
+                        isExpanded = state.expanded.isExpanded(date, song.songId),
+                        toggle = { state.onToggle(date, song.songId) },
                         openDetail = { state.onOpenSong(date, song.position) },
-                    )
+                    ).copy(admin = state.admin?.rowAdmin(song))
                 },
             droppedRowsNote = if (droppedRows == 0) null else NextJamCopy.droppedRows(droppedRows),
             filterBar = instrumentFilterBar(songs.map { it.lineup }, state.filter, state.onFilterChange),
@@ -321,6 +393,44 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
 }
 
 private const val POSITION_DIGITS = 2
+
+/**
+ * The admin's part of [song]'s row: "Quitando…" while a removal of it is sending, the confirmation
+ * while it is the confirming row, else the action. Handlers are keyed by (date, songId, step), so a
+ * model for another song never keeps an earlier handler.
+ */
+private fun RowAdmin.rowAdmin(song: JamSong): SongRowAdminUiModel {
+    val key = removalKey(jam.date, song.songId)
+    val sending = removal.removes.any {
+        it.jamDate == jam.date && it.songId == song.songId && it.state == SetlistRemove.State.Sending
+    }
+    val handler: (String) -> EventHandler<RemovalUiModel.Event> = { step ->
+        EventHandler(key = "$key|$step") { event -> removal.onEvent(jam.date, song.songId, event) }
+    }
+    val model = when {
+        sending -> RemovalUiModel.Removing(NextJamCopy.REMOVING)
+
+        removal.confirming == key -> RemovalUiModel.Confirming(
+            prompt = NextJamCopy.removePrompt(song.title),
+            details = removalDetails(song),
+            confirmLabel = NextJamCopy.CONFIRM_REMOVE,
+            cancelLabel = NextJamCopy.CANCEL,
+            events = handler("confirming"),
+        )
+
+        else -> RemovalUiModel.Idle(NextJamCopy.REMOVE, handler("idle"))
+    }
+    return SongRowAdminUiModel(model)
+}
+
+/** The confirmation's lines: assigned musicians (filled slots plus extras), then the published note. */
+private fun RowAdmin.removalDetails(song: JamSong): List<String> {
+    val assigned = song.lineup.slots.count { it.isFilled } + song.extraParticipants.size
+    return listOfNotNull(
+        if (assigned > 0) NextJamCopy.assignedMusicians(assigned) else null,
+        if (jam.status == JamStatus.PUBLISHED) NextJamCopy.PUBLISHED_REMOVE_NOTE else null,
+    )
+}
 
 private fun JamSong.toRow(isExpanded: Boolean, toggle: () -> Unit, openDetail: () -> Unit) = SongRowUiModel(
     position = position,

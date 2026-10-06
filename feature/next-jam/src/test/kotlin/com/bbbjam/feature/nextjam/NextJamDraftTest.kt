@@ -105,7 +105,7 @@ class NextJamDraftTest {
         assertEquals(withheldDraft, model)
         model.assertNoSecret()
         // Expansion and filter state have nothing to apply to.
-        val expanded = ExpandedRows(jamDate, setOf(1, 2))
+        val expanded = ExpandedRows(jamDate, setOf("secret-song", "crossroads"))
         val withState = snapshot(draft).toUiModel(today, expanded, filter = setOf(Instrument.BASS))
         assertEquals(withheldDraft, withState)
 

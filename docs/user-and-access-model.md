@@ -135,3 +135,12 @@ transfer and no per-record access rules.
   process; the refused value is remembered in memory only.
 - "Agregar tema" is drawn from the admin flag; the add itself is authorized by Apps Script. With the
   debug admin flag and no stored passphrase, an add answers `AccessRefused` without a request.
+
+## Remove song (`admin-remove-song-from-setlist`)
+
+- "Quitar de la lista" is drawn from the admin flag, in an expanded row; the removal is authorized by
+  Apps Script (router guard), never by the flag. A refused removal keeps admin mode (W3). With the
+  debug admin flag and no stored passphrase, a removal answers `AccessRefused` without a request.
+- Removing from a published list is allowed; the confirmation says musicians stop seeing the song.
+  It reaches musician devices on their next refresh (cache-first, stale after 30 minutes), not
+  instantly. Musicians never see the admin's row part (`SongRowUiModel.admin` is null for them).

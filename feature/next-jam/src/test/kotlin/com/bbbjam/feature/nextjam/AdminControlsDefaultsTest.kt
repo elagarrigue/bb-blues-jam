@@ -21,7 +21,9 @@ class AdminControlsDefaultsTest {
         val pending = AdminControlsDefaults.pendingRow()
         val failure = AdminControlsDefaults.failureCard()
         val draft = AdminControlsDefaults.draft()
+        val removal = AdminControlsDefaults.removal()
         listOf(
+            removal.action, removal.prompt, removal.details, removal.confirm, removal.cancel, removal.status,
             add.container, add.content, pending.container, pending.content,
             failure.container, failure.title, failure.message, failure.action,
             draft.badgeFill, draft.badgeText, draft.note,
@@ -35,6 +37,18 @@ class AdminControlsDefaultsTest {
         assertEquals(
             AdminControlsDefaults.FailureStyle(colors.surface, colors.error, colors.textMuted, colors.text),
             AdminControlsDefaults.failureCard(),
+        )
+        // Removing a song: the destructive action and "Quitar" in error, never amber.
+        assertEquals(
+            AdminControlsDefaults.RemovalStyle(
+                action = colors.error,
+                prompt = colors.text,
+                details = colors.textMuted,
+                confirm = colors.error,
+                cancel = colors.text,
+                status = colors.textMuted,
+            ),
+            AdminControlsDefaults.removal(),
         )
         // The badge is the musician draft card's badge (`badge-draft`).
         val card = DraftSetlistDefaults.style()

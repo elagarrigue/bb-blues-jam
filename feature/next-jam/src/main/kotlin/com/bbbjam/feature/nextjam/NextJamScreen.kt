@@ -62,7 +62,10 @@ import org.koin.compose.koinInject
  * position (`song-detail-screen`); `:app` binds it to navigation. For the admin
  * (`admin-add-song-to-setlist`) the draft badge sits under the header and the pending adds, the
  * failure cards and "Agregar tema" (which calls [onAddSong]) come after the rows, so nothing above
- * them moves. It renders [NextJamUiModel] and forwards events; the presenter decides.
+ * them moves; an expanded row ends with the admin's row actions ("Quitar de la lista",
+ * `admin-remove-song-from-setlist`). Rows stay keyed by position in the list: a hand-edited tab may
+ * repeat a song id, and a lazy list key must be unique. It renders [NextJamUiModel] and forwards
+ * events; the presenter decides.
  * [contentPadding] goes inside the list, so the background runs edge to edge.
  */
 @Composable
@@ -203,6 +206,7 @@ private fun SongRow(row: SongRowUiModel) {
                     modifier = Modifier.padding(start = spacing.md, end = spacing.md),
                 )
                 OpenDetailAction(row)
+                row.admin?.let { admin -> AdminRowActions(admin) }
             }
         }
     }
@@ -286,7 +290,7 @@ private fun TitleLine(row: SongRowUiModel) {
     }
 }
 
-private fun previewRow(
+internal fun previewRow(
     position: Int,
     title: String,
     artist: String,

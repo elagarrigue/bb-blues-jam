@@ -205,6 +205,23 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   - `addSong` writes `posicion` as plain text (`@`); the read path already accepts it.
   - Two production deploy checks exist (`checkWriteAccess`, `checkSetlistWrite`), both guarded and
     self-cleaning, neither listed by a read.
+- **Remove-song risks** (`admin-remove-song-from-setlist`, as built; latency from the live checks
+  is still to be recorded after the batched deploy):
+  - *Partial renumber*: Apps Script has no transaction; a failure after `deleteRow` can leave a gap
+    in `posicion` (never a duplicate, the renumber is ascending). The read path tolerates it; the
+    next removal or reorder closes it.
+  - *Refresh race* (as add-song): a refresh read before the removal and stored after it brings the
+    row back until the next refresh.
+  - *Latency* grows with the songs after the removed one (batched by runs of consecutive rows).
+  - Pending and failed removals live in memory, lost with the process.
+  - `song_not_in_setlist` also removes the cached row; if the Sheet changed in another way the
+    cache stays off until the next refresh.
+  - No undo (U1): recovery is adding the song again, which does not restore its key or assignments.
+    The inline confirmation names the assigned musicians and, on a published list, says musicians
+    stop seeing it.
+  - The row's "Quitando…" state is drawn only while the row is expanded (the action lives in the
+    panel); collapsing it during the write hides the status, and the card or the row's disappearance
+    still reports the outcome.
 - **Failed writes after optimistic update.** The mitigation for Apps Script latency is optimistic
   presenter state, which makes rollback the real question. A failed publish is the worst case in the
   product: the admin believes the list is live and musicians see something stale. Publish failure in

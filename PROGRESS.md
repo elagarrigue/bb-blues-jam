@@ -9,14 +9,19 @@
 - Current state: twenty-nine of 39 slices accepted, the latest `admin-add-song-to-setlist` (6 October
   2026). `admin-remove-song-from-setlist` and `admin-set-key` are both `in_progress`: each Part A
   (server half and `:core:data`) done and self-verified (sessions 074 and 075), in one `Post.js`
-  that is **not deployed**. Next: the user's **one** batched paste and **New version** (user
-  decision B1 (a); README "Redeploy for remove song and set key, in one paste"), then each
-  feature's live checks, Part B and validation.
+  that is **not deployed**; remove-song's Part B (UI) also done and self-verified (session 076).
+  Next: the user's **one** batched paste and **New version** (user decision B1 (a); README
+  "Redeploy for remove song and set key, in one paste"), then remove-song's live checks LR1–LR5 and
+  validation, then set-key's live checks, Part B and validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 6 October 2026 (session 075, `admin-set-key` Part A, `in_progress`) —
+- Last verified at: 6 October 2026 (session 076, `admin-remove-song-from-setlist` Part B,
+  `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 84 result files, 519 tests, 0 failures. Pixel 5: confirmation, rotation,
+  `AccessRefused` card, no DataStore dir before or after; settings restored. Before that, session
+  075 (`admin-set-key` Part A, `in_progress`) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 83 result files, 509 tests, 0 failures; Node 132/132. `src/Post.js` SHA-1
   `be205ea3f5d5081e5896666d3490ae30cab06119` (both Part A halves), **not deployed** (the deployed one is
@@ -3268,6 +3273,59 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   `setKey: { write: true, run: setKey_ },` (and that `checkPassphrase: checkPassphrase_,` is
   absent), and deploys **New version**; then the live checks (L1 `Known:` ends `removeSong,
   checkSetlistRemove, setKey`), then remove-song's Part B, then set-key's Part B.
+
+### Session 076 — 6 October 2026
+
+- Feature: `admin-remove-song-from-setlist`, **Part B (UI)**, spec
+  `docs/specs/admin-remove-song-from-setlist.md` (approvals R1 (a), U1 as specified, B1 (a)). Built
+  on a2c9a0e (set-key Part A on top of remove-song Part A). Status stays `in_progress`: the batched
+  `Post.js` is not deployed and live checks LR1–LR5 are the orchestrator's after the deploy.
+- What changed (`:feature:next-jam`, plus one `:core:ui` test):
+  - `ExpandedRows` keyed by (date, song id text), not position (scenario 9); Saver stores strings.
+    The lazy list keeps position keys (a hand-edited tab may repeat a song id).
+  - `SongRowUiModel.admin: SongRowAdminUiModel?` (null for musicians) with `removal:
+    RemovalUiModel` — `Idle`, `Confirming(prompt, details, confirmLabel, cancelLabel)`,
+    `Removing(status)`; events `RequestRemove`, `Confirm`, `Cancel`.
+  - `NextJamPresenter`: collects `observeRemoves()`; the confirming row is one `rememberSaveable`
+    String (`removalKey` = "date|songId"); `Confirm` acts only while that key is the row's, clears
+    it and launches `removeSong` undispatched (double tap removes once). `AdminState.removal:
+    RemovalState`. Failures merge failed adds and removes in id order (`AddFailureUiModel` kept);
+    `failureMessage` adds `song_not_in_setlist` and `duplicate_song`.
+  - Screen: `AdminRowActions` after `Ver detalle del tema` in an expanded row (set-key's `Cambiar
+    tonalidad` goes inside it, before the removal); the confirmation block and `Quitando…` with
+    polite live regions; colours `AdminControlsDefaults.removal()` (`error`, `text`, `textMuted`; no
+    amber); 48dp `Role.Button` targets. Copy in `NextJamCopy` as approved. New preview file
+    `NextJamRemovalPreview.kt`.
+  - Tests: new `NextJamRemoveTest` (9), `ExpandedRowsTest` for song ids, three `ExpandedRows(...)`
+    call sites in `NextJamDraftTest`/`NextJamPresenterTest`, `AdminControlsDefaultsTest` (removal
+    roles), `ContrastTest` `error on a surface` 10.12:1.
+  - Docs: `DESIGN.md`, `docs/user-and-access-model.md`, `docs/risks-and-open-questions.md`,
+    `docs/domain-model.md` (removal edge case), architecture `SKILL.md`.
+- Verification run:
+  - Failure demonstrations, `NextJamPresenter.kt` restored from a byte copy in the scratchpad (not
+    `git checkout`), `sha1sum -c` OK each time: (d) expansion keyed by position → 2 of 88 fail,
+    scenario 9 among them; (e) `Confirm` without the key check → 2 of 88 fail (double tap; stale
+    Confirm after Cancel). Green after each restore.
+  - `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0: `konsist: wired` (17/17,
+    `konsist-test` and the amber allowlist unchanged), `detekt: wired`, `ktlint: wired`; 84 result
+    files, 519 tests, 0 failures (509 before). The first gate failed detekt on `NextJamScreen.kt`
+    (`TooManyFunctions` 12/11, one KDoc `MaxLineLength`); fixed by moving the preview out, no
+    suppression.
+  - Device, Pixel 5, debug build (`demoUpcomingJam`, `debugAdmin` on; the demo published jam, 13
+    songs): no `files/datastore` before. Expanded row 02 → `Quitar de la lista` (48dp); tap → the
+    prompt, `Se borran también los 3 músicos anotados.`, the published line, `Quitar`/`Cancelar`;
+    `Cancelar` → back; requested again, rotated to landscape and back, still confirming; `Quitar` →
+    row back to the action, card `No se pudo quitar «Walking Thru the Park»` with the access copy
+    and `Cerrar`, 13 rows intact; `Cerrar` → card gone. `Quitando…` not observable (no request is
+    made without a passphrase). No `files/datastore` after. Settings recorded and read back equal
+    (rotation, airplane, accessibility 0, no services, touch exploration 0, timeout, stay-on).
+    TalkBack never touched. Not done on the device: flag off (covered by the JVM musician test).
+  - No live check (not deployed). No secret, URL or real musician name in any output.
+- Next: the user's batched deploy (`Post.js` `be205ea3…`), then remove-song's LR1–LR5 (including
+  `removeSong` latency for the risks doc) and validation; then set-key's live checks and Part B.
+  Note for set-key Part B: its spec maps `song_not_in_setlist` to `JAM_CHANGED` for a key change,
+  while `failureMessage` now maps it to remove-song's `Ese tema ya no estaba en la lista.`; set-key
+  needs a per-kind message for that code.
 
 ## Notes For The Next Session
 

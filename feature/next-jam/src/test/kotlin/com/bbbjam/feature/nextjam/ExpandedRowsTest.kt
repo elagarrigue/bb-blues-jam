@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import androidx.compose.runtime.saveable.SaverScope
+import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,38 +12,41 @@ class ExpandedRowsTest {
 
     private val october = LocalDate.of(2026, 10, 31)
     private val november = LocalDate.of(2026, 11, 28)
+    private val crossroads = SongId("crossroads")
+    private val hoochie = SongId("hoochie")
+    private val thrill = SongId("thrill")
 
     @Test
     fun `nothing is expanded at first`() {
-        assertFalse(ExpandedRows.NONE.isExpanded(october, 1))
+        assertFalse(ExpandedRows.NONE.isExpanded(october, crossroads))
     }
 
     @Test
-    fun `a toggle expands one position and a second toggle collapses it`() {
-        val once = ExpandedRows.NONE.toggle(october, 2)
-        assertTrue(once.isExpanded(october, 2))
-        assertFalse(once.isExpanded(october, 1))
-        assertFalse(once.toggle(october, 2).isExpanded(october, 2))
+    fun `a toggle expands one song and a second toggle collapses it`() {
+        val once = ExpandedRows.NONE.toggle(october, hoochie)
+        assertTrue(once.isExpanded(october, hoochie))
+        assertFalse(once.isExpanded(october, crossroads))
+        assertFalse(once.toggle(october, hoochie).isExpanded(october, hoochie))
     }
 
     @Test
-    fun `two positions stay expanded together and collapse independently`() {
-        val both = ExpandedRows.NONE.toggle(october, 1).toggle(october, 3)
-        assertEquals(ExpandedRows(october, setOf(1, 3)), both)
-        assertEquals(ExpandedRows(october, setOf(1)), both.toggle(october, 3))
+    fun `two songs stay expanded together and collapse independently`() {
+        val both = ExpandedRows.NONE.toggle(october, crossroads).toggle(october, thrill)
+        assertEquals(ExpandedRows(october, setOf("crossroads", "thrill")), both)
+        assertEquals(ExpandedRows(october, setOf("crossroads")), both.toggle(october, thrill))
     }
 
     @Test
     fun `another jam date reads as collapsed and a toggle there starts afresh`() {
-        val expanded = ExpandedRows.NONE.toggle(october, 1).toggle(october, 2)
-        assertFalse(expanded.isExpanded(november, 1))
-        assertEquals(ExpandedRows(november, setOf(4)), expanded.toggle(november, 4))
+        val expanded = ExpandedRows.NONE.toggle(october, crossroads).toggle(october, hoochie)
+        assertFalse(expanded.isExpanded(november, crossroads))
+        assertEquals(ExpandedRows(november, setOf("thrill")), expanded.toggle(november, thrill))
     }
 
     @Test
     fun `the saver round-trips through bundle-safe values`() {
         val scope = SaverScope { true }
-        listOf(ExpandedRows.NONE, ExpandedRows(october, setOf(1, 3, 12))).forEach { value ->
+        listOf(ExpandedRows.NONE, ExpandedRows(october, setOf("crossroads", "thrill", "pride"))).forEach { value ->
             val saved = with(ExpandedRows.Saver) { scope.save(value) }
             requireNotNull(saved)
             assertEquals(value, ExpandedRows.Saver.restore(saved))

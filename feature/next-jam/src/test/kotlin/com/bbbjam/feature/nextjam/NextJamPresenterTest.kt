@@ -629,7 +629,7 @@ class NextJamPresenterTest {
         )
         val date = LocalDate.of(2026, 10, 31)
         val model = snapshot(jam(Setlist.Available(listOf(song, seedSongs[1]))))
-            .toUiModel(LocalDate.of(2026, 10, 2), ExpandedRows(date, setOf(1)))
+            .toUiModel(LocalDate.of(2026, 10, 2), ExpandedRows(date, setOf("sweet-little-angel")))
         val expanded = model.rows()[0]
         assertEquals(true, expanded.isExpanded)
         assertEquals("B.B. King", expanded.artist)
@@ -644,7 +644,7 @@ class NextJamPresenterTest {
         assertEquals(false, model.rows()[1].isExpanded)
         // Another jam's date never expands this jam's rows.
         val otherJam = snapshot(jam(Setlist.Available(listOf(song))))
-            .toUiModel(LocalDate.of(2026, 10, 2), ExpandedRows(LocalDate.of(2026, 7, 25), setOf(1)))
+            .toUiModel(LocalDate.of(2026, 10, 2), ExpandedRows(LocalDate.of(2026, 7, 25), setOf("sweet-little-angel")))
         assertEquals(false, otherJam.rows()[0].isExpanded)
     }
 
