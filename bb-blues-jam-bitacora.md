@@ -1151,6 +1151,40 @@ apareciera por antigüedad y no por falla: 15 tests en rojo. En el archivo, quit
 nueva a más vieja tumba dos. El gate pasa con 350 tests, y cada rebanada demuestra que esos tests
 pueden fallar antes de confiar en que pasen.
 
+### 6.18 Sesión del 5 de octubre — navegación, archivo y el primer candado
+
+Seis rebanadas más cerraron `accepted` —`bottom-navigation`, `unpublished-setlist-state`,
+`past-jam-detail`, `admin-passphrase-login`, `debug-admin-session` y la ya contada jam de demo— y
+van 27 de 39. La app tiene barra de navegación, muestra "En preparación" cuando la lista es borrador,
+abre las jams anteriores y deja entrar al organizador como admin.
+
+**"Solo la lista de temas."** Para el detalle de una jam pasada, el `planner` propuso filas fijas;
+el organizador eligió filas que se abren; el `planner` rehízo la spec con un panel de formación sin
+cupos libres. Al preguntar un detalle de texto, la respuesta cambió todo: "para las jams pasadas no
+importa quién tocó, solo la lista de temas". La spec volvió a achicarse, sin tocar `:core:ui`. Es el
+caso más claro de algo que el método obliga a aceptar: las preguntas concretas sacan a la luz lo que
+el usuario realmente quiere, y a veces eso invalida lo que ya se había decidido. Rehacer una spec es
+barato; implementar la equivocada no.
+
+**El segundo "no quiero ser bloqueante".** El login de admin necesitaba que el organizador escribiera
+la frase real en el teléfono. Lo hizo una vez, y pidió que no hiciera falta más. La respuesta fue la
+misma que con la jam de demo: una sesión de admin solo para desarrollo, que dibuja los controles pero
+no conoce la frase. El servidor sigue validando cada escritura, así que el atajo no abre nada. El
+patrón ya está claro: cada vez que una verificación depende de una persona, se busca un reemplazo en
+código que no exista en la versión que usan los músicos.
+
+**El servidor es la única autoridad.** La frase de admin vive en la pestaña `Config` y nunca en el
+repo, que es público. El Apps Script la compara en cada pedido, rechaza todo si está vacía y limita
+los intentos fallidos a diez cada diez minutos. El usuario eligió que un rechazo no saque al teléfono
+del modo admin, en contra de la recomendación: el costo, escrito en los riesgos, es que tras cambiar
+la frase hay que salir y volver a entrar a mano.
+
+**Dos errores del orquestador.** Un `git commit -a` hecho mientras un `implementer` trabajaba se llevó
+cambios suyos a medio hacer y dejó dos commits que no compilaban. Y un comando del README para leer
+la URL resultó no funcionar en esta terminal, lo que me hizo afirmar algo sin poder comprobarlo. Los
+dos quedaron anotados y corregidos: commits por ruta explícita mientras corre un agente, y la URL
+leída con Python. Un orquestador también necesita su propio gate.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
