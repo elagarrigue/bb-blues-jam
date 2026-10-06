@@ -154,8 +154,12 @@ full-screen login route. Risks, not solved:
   logs it out. Recovery is Info → "Salir del modo admin" → "Entrar como admin" with the new
   passphrase; the first mutation slice's error copy must say so.
 - **CacheService and LockService scopes** (`apps-script-write-auth`): assumed to need no OAuth
-  scope beyond `spreadsheets.currentonly`. Status: not yet checked
-  live (checks L4 and L6, after the redeploy).
+  scope beyond `spreadsheets.currentonly`. Status: checked live (6 October 2026, checks L4 and
+  L6), no new authorization asked. L4: a wrong `checkPassphrase` answered `invalid_passphrase`, not
+  `internal_error`, so `doPost` obtains the script cache and lock with no extra scope. L6: a valid
+  `checkWriteAccess` answered `ok`, so `tryLock`, `insertSheet`, the A1 write and read-back and
+  `deleteSheet` work under the manifest. Still not provable from outside: that `cache.get`/`put`
+  succeed, because the guard fails open and a failing cache would answer the same.
 - The login route and its back stack have no JVM test (T1) and are checked only on the device.
 - 5 October 2026: the user deployed `Post.js` as a **new deployment**, so the `/exec` URL changed
   (the README asks for **Manage deployments → New version**). `local.properties` was updated; any
@@ -293,8 +297,10 @@ Stated so they can be challenged rather than silently relied upon.
 - [ ] Load real repertoire with keys. Tempo, tags and difficulty are not used for now (D-20).
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload. Quotas checked
       (assumption 6). Read latency measured (warm median about 2.5 s; see
-      `technical-discovery.md`); a true cold-start figure is still open. Write latency:
-      pending live check L6 of `apps-script-write-auth` (`checkWriteAccess`).
+      `technical-discovery.md`); a true cold-start figure is still open. Write latency: one
+      sample, 6 October 2026: `checkWriteAccess` (guard, lock, create tab, write and read A1,
+      delete tab) took 4.94 s end to end (`apps-script-write-auth` L6). A single call, not a
+      median, and heavier than one cell edit; the first mutation slice should measure its own.
 - [ ] Confirm the full mutation list for the action contract before slicing features.
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.

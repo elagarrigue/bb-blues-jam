@@ -6,8 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty-seven of 39 slices accepted. `apps-script-write-auth` is `in_progress`,
-  waiting for the user's Post.js deploy. **Exception approved by the user (6 October 2026):** Part A
+- Current state: twenty-seven of 39 slices accepted. `apps-script-write-auth` is `passing`
+  (session 071; deployed 6 October 2026, live L1–L6 green, valid write 4.94 s),
+  awaiting the validator. **Exception approved by the user (6 October 2026):** Part A
   of `admin-add-song-to-setlist` is implemented on top of it before acceptance, so a single Post.js
   deploy covers both; two features are `in_progress` at once until that deploy. Validation still
   runs per feature, write-auth first.
@@ -2900,11 +2901,33 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     the device was not touched.
   - `local.properties`: `bluesjam.appsScriptUrl` present, `bluesjam.debugAdminPassphrase` absent
     (`grep -c`, values never printed). No build reads the passphrase key.
-- Not run yet: live checks L1–L6 (need the user's paste and new version). The scratchpad script
-  prints only codes, `Known:` tails and the L6 time.
-- Next: user pastes `Post.js` into `Post.gs`, verifies the marker, deploys **Manage deployments →
-  Edit → New version** on the current deployment, and (W1) adds `bluesjam.debugAdminPassphrase`;
-  then L1–L6, evidence, docs (scope status, write latency) and status `passing`.
+- Live checks (6 October 2026, after the user's deploy on the same URL). The deployed `Post.gs` is
+  not `c4c12993…`: by a user-approved single-deploy exception it is the Part A version of
+  `admin-add-song-to-setlist` (commit 29d3b54, `Post.js` SHA-1
+  `94bb91548469d3f9c6c868788f09d3d2684c5cf1`, the working tree's file at the time of the checks),
+  with the write-auth router, guard, rate limit and lock unchanged. Scratchpad Python script (URL
+  decoded from `local.properties`, nothing but codes and `Known:` tails printed; one call per
+  check, 3 counted failures, no lockout):
+  - L1 `{}` → `unknown_action`, `Known: checkPassphrase, checkWriteAccess, readJams, addSong,
+    checkSetlistWrite` (the five actions of the deployed file).
+  - L2 `checkWriteAccess` with no passphrase → `invalid_passphrase`.
+  - L3 `checkWriteAccess` with `definitely-wrong` → `invalid_passphrase`.
+  - L4 `checkPassphrase` with `definitely-wrong` → `invalid_passphrase` (not `internal_error`:
+    `doPost` obtained the script cache and lock without extra authorization; cache get/put and
+    `tryLock` themselves are not proven live, see the risks doc).
+  - L5 `?resource=config` → `unknown_resource`, `Known: catalog, jams`; `?resource=jams` saved to
+    the git-ignored `backend/apps-script/jams.local.json`, `check-response.js --strict` exit 0
+    ("2 jams, 2 published with setlist, 0 withheld, 0 with errors, 26 setlist rows").
+  - L6, first pass **skipped**: `bluesjam.debugAdminPassphrase` absent (`grep -c` = 0). After the
+    user added it (W1; key presence checked with `grep -c`, value never read into output), L6 ran
+    once: `checkWriteAccess` with the stored passphrase → `ok`, 4.94 s end to end. The lock, tab
+    create, write, read-back and delete work live; no new authorization was asked. Rotation,
+    lockout and busy not run live, by design.
+  - No passphrase was read or printed; the URL never appeared in output.
+- Docs: risks doc scope status (checked live, L4 and L6; cache get/put not provable from outside)
+  and write latency (one sample, 4.94 s).
+- Status `passing` (implemented and self-verified, L1–L6 live), awaiting the validator.
+- Next: the validator for `apps-script-write-auth`.
 
 ### Session 072 — 6 October 2026
 
