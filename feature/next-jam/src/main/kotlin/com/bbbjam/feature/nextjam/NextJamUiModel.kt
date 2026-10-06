@@ -70,9 +70,10 @@ data class NextJamAdminUiModel(
 data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
 
 /**
- * A failed add or remove (`admin-remove-song-from-setlist` reuses the shape; the name stays to
- * avoid churn), kept until the admin closes it: [title] ("No se pudo agregar «Crossroads»" or "No se
- * pudo quitar «Crossroads»"), [message] by outcome (C1) and [dismissLabel] ("Cerrar").
+ * A failed add, remove or key change (`admin-remove-song-from-setlist` and `admin-set-key` reuse the
+ * shape; the name stays to avoid churn), kept until the admin closes it: [title] ("No se pudo
+ * agregar «Crossroads»", "No se pudo quitar «Crossroads»" or "No se pudo cambiar la tonalidad de
+ * «Crossroads»"), [message] by outcome (C1) and [dismissLabel] ("Cerrar").
  */
 data class AddFailureUiModel(
     val id: Long,
@@ -168,11 +169,24 @@ data class SongRowUiModel(
 }
 
 /**
- * The admin's part of one row (D-15), drawn only while the row is expanded. [removal] is the remove
- * action, its inline confirmation, or the status while the removal is sent
- * (`admin-remove-song-from-setlist`, U1).
+ * The admin's part of one row (D-15). [setKey] ("Cambiar tonalidad", `admin-set-key`) and [removal]
+ * (the remove action, its inline confirmation, or the status while the removal is sent,
+ * `admin-remove-song-from-setlist`, U1) are drawn only while the row is expanded, in that order: the
+ * removal stays last. [keyStatus] is "Guardando…" while the row's key is a pending change drawn
+ * ahead of the server (O1), else null; it is drawn under the title line in both states.
  */
-data class SongRowAdminUiModel(val removal: RemovalUiModel) : UiModel
+data class SongRowAdminUiModel(
+    val setKey: SetKeyActionUiModel,
+    val removal: RemovalUiModel,
+    val keyStatus: String? = null,
+) : UiModel
+
+/** "Cambiar tonalidad": opens the key picker for this row's song. Navigation only. */
+data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Open : Event
+    }
+}
 
 /**
  * Removing one song from the setlist, in three steps. Nothing is written until [Confirming]'s

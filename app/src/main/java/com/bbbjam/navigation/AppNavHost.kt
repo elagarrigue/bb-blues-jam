@@ -25,14 +25,16 @@ import androidx.navigation.navArgument
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.AdminLoginScreen
 import com.bbbjam.feature.nextjam.AddSongScreen
+import com.bbbjam.feature.nextjam.SetKeyScreen
 import com.bbbjam.feature.pastjams.PastJamDetailScreen
 import com.bbbjam.feature.songdetail.SongDetailScreen
 
 /**
  * The app's navigation (`song-detail-screen`, N1; reshaped by `bottom-navigation`): Navigation
- * Compose, only in `:app`. The outer host has four destinations: the tabs shell ([TabsShell], with
- * its own inner host and the bottom bar), the song detail, the past jam detail (`past-jam-detail`)
- * and the admin login (`admin-passphrase-login`), each full screen over it with no bar. A detail
+ * Compose, only in `:app`. The outer host has six destinations: the tabs shell ([TabsShell], with
+ * its own inner host and the bottom bar), the song detail, the past jam detail (`past-jam-detail`),
+ * the admin login (`admin-passphrase-login`) and the admin's pickers (`admin-add-song-to-setlist`,
+ * `admin-set-key`), each full screen over it with no bar. A detail
  * slides in from the end over the tabs, which stay drawn under it, and slides out to the end on
  * back (M1). System back pops the detail; on the tabs it is the inner host's (see [TabsShell]).
  */
@@ -63,12 +65,54 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
                 },
                 onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
                 onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
+                onOpenSetKey = { date, songId ->
+                    nav.navigate(AppRoutes.setKey(date, songId)) { launchSingleTop = true }
+                },
             )
         }
         songDetail(nav)
         pastJamDetail(nav)
         adminLogin(nav)
         addSong(nav)
+        setKey(nav)
+    }
+}
+
+/**
+ * The admin's key picker (`admin-set-key`), beside the catalog picker and drawn the same way: full
+ * screen over the tabs, the same slide and insets, back only while resumed. A pick pops by route,
+ * a no-op once the picker is gone, so a late or repeated call is harmless.
+ */
+private fun NavGraphBuilder.setKey(nav: NavHostController) {
+    composable(
+        AppRoutes.SET_KEY,
+        arguments = listOf(
+            navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType },
+            navArgument(AppRoutes.SONG_ID) { type = NavType.StringType },
+        ),
+        enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
+    ) { entry ->
+        val args = AppRoutes.parseSetKey(
+            jamDate = entry.arguments?.getString(AppRoutes.JAM_DATE),
+            songId = entry.arguments?.getString(AppRoutes.SONG_ID),
+        )
+        if (args == null) {
+            // Unreachable from the UI, which only builds routes through AppRoutes.setKey.
+            LaunchedEffect(Unit) { nav.popBackStack() }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+                SetKeyScreen(
+                    jamDate = args.jamDate,
+                    songId = args.songId,
+                    onBack = {
+                        if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
+                    },
+                    onDone = { nav.popBackStack(AppRoutes.SET_KEY, inclusive = true) },
+                    contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                )
+            }
+        }
     }
 }
 

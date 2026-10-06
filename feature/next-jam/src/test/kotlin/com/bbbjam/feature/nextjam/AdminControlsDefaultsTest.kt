@@ -22,7 +22,9 @@ class AdminControlsDefaultsTest {
         val failure = AdminControlsDefaults.failureCard()
         val draft = AdminControlsDefaults.draft()
         val removal = AdminControlsDefaults.removal()
+        val keyChange = AdminControlsDefaults.keyChange()
         listOf(
+            keyChange.action, keyChange.status,
             removal.action, removal.prompt, removal.details, removal.confirm, removal.cancel, removal.status,
             add.container, add.content, pending.container, pending.content,
             failure.container, failure.title, failure.message, failure.action,
@@ -49,6 +51,11 @@ class AdminControlsDefaultsTest {
                 status = colors.textMuted,
             ),
             AdminControlsDefaults.removal(),
+        )
+        // Setting a key: a quiet text action and a muted status line (`admin-set-key`).
+        assertEquals(
+            AdminControlsDefaults.KeyChangeStyle(action = colors.text, status = colors.textMuted),
+            AdminControlsDefaults.keyChange(),
         )
         // The badge is the musician draft card's badge (`badge-draft`).
         val card = DraftSetlistDefaults.style()

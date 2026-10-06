@@ -395,7 +395,7 @@ through `AdminControlsDefaults`, **no amber**:
   A pick closes the picker at once; the song shows on Próxima jam as a pending row.
 - **Removing a song** (`admin-remove-song-from-setlist`, U1 approved by the user, 6 October 2026):
   admin only, at the end of an **expanded** row's panel, after `Ver detalle del tema` (later row
-  actions such as `Cambiar tonalidad` go between the two). Colours in
+  actions such as `Cambiar tonalidad` go between the two, as built by `admin-set-key`). Colours in
   `AdminControlsDefaults.removal()`, **no amber**. Idle: `Quitar de la lista`, a full-width, 48dp,
   underlined `body` text action in `error` (10.12:1 on `surface`, `ContrastTest`), `Role.Button`.
   Tapping it changes nothing anywhere; it draws the inline confirmation in its place: the prompt
@@ -408,6 +408,29 @@ through `AdminControlsDefaults`, **no amber**:
   replaces the controls; the row disappears only when the server confirms. A failure draws the row
   as before plus a card after the rows, `No se pudo quitar «…»` with the reason and `Cerrar`, as the
   add-song cards. Expansion follows the song id, so the song that moves up is not drawn expanded.
+- **Setting a key** (`admin-set-key`, V1, O1 and C2 approved by the user, 6 October 2026): admin
+  only, in an **expanded** row's panel after `Ver detalle del tema` and before `Quitar de la lista`
+  (the removal stays last): `Cambiar tonalidad`, a full-width, 48dp, underlined `body` text action in
+  `text` (`AdminControlsDefaults.keyChange()`), `Role.Button`, never amber. It opens the key picker.
+  **The optimistic rule**: after a pick the row shows the new key at once in the amber `key` role,
+  with `Guardando…` (`caption`, `textMuted`, a polite live region) under the title line in both
+  states, until the server answers. Only a change still sending is drawn; the latest of two wins. On
+  success the key stays and the line goes; on failure the row **reverts** to the confirmed key and a
+  card after the rows says `No se pudo cambiar la tonalidad de «…»` with the reason and `Cerrar`, as
+  the other cards. Musicians never see a pending key.
+- **Key picker, as built** (`SetKeyScreen`, colours in `SetKeyDefaults`): full screen over the tabs,
+  scrollable; a 48dp `Volver`, the title `Cambiar tonalidad` (`h1`, a heading), the song title
+  (`songTitle`, two lines, `text`), `TONALIDAD ACTUAL` (`caption`, `textMuted`) over the current key
+  (`key` typography, the amber `key` role, read `Tonalidad A`; the pending key when one is saving, so
+  it agrees with the row), then `MAYORES` and `MENORES` (`caption`, `textMuted`, headings), each a
+  4-column grid of 3 rows, chromatic from C: C, Db, D, Eb, E, F, F#, G, Ab, A, Bb, B and Cm, C#m, Dm,
+  Ebm, Em, Fm, F#m, Gm, G#m, Am, Bbm, Bm. A cell is `surfaceRaised` with the key in `songTitle`,
+  `text`, `shapes.md`, at least 48dp, `Role.Button`, read `Tonalidad Bb` with the click label `elegir
+  esta tonalidad`. The cell spelled exactly as the current key is `surface` with a hairline `border`
+  outline, the key in the amber `key` role and the caption `actual` (`textMuted`), and is not
+  clickable; a non-canonical key (`A#`) marks no cell. Amber is never on a selectable cell. A tap
+  closes the picker at once. Gone state: `Este tema ya no está en la lista` / `Volvé a la próxima
+  jam para ver la actual.`
 - Text selection is non-amber app-wide (`BluesJamTheme` provides `text` handles and `text` at 40%).
 
 ## Core Screens
@@ -415,7 +438,8 @@ through `AdminControlsDefaults`, **no amber**:
 1. **Próxima jam, musician view** — the most important screen in the app
 2. **Próxima jam, admin view** — same screen plus controls. As built so far: the draft's songs,
    the draft badge, pending adds, failure cards, `Agregar tema` and the expanded row's
-   `Quitar de la lista` with its inline confirmation (**Admin controls**)
+   `Cambiar tonalidad` (the key picker, optimistic key with `Guardando…`) and `Quitar de la lista`
+   with its inline confirmation (**Admin controls**)
 3. **Song detail** — key displayed very large as the main element, and the full lineup grouped by
    instrument. No tags, tempo, difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first

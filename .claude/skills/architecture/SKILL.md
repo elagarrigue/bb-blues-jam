@@ -165,6 +165,26 @@ function, not a `@Transaction` pair, so the DAO stays under detekt's `TooManyFun
 the cache is updated **before** the entry is removed; any other answer leaves Room alone. **An
 optimistic value comes from `Sending` entries only; a failure is the revert** (Part B draws it).
 
+As built by `admin-set-key` Part B (UI): `KeyChangeOverlay.kt` holds
+`List<KeyChange>.pendingKey(date, songId)` (the highest-id `Sending` entry, else null), the one
+overlay rule both Próxima jam and the picker use; `FailureMessages.kt` holds `failureMessage` and
+`keyFailureMessage` (a key change maps `song_not_in_setlist` to the jam-changed line, while a
+removal keeps "Ese tema ya no estaba en la lista."). `NextJamPresenter.Params(onAddSong, onSetKey,
+onOpenSong)` collects `observeKeyChanges()` into `AdminState.keyChanges`; for the admin a row with a
+pending change draws its key and `keyDescription` with `SongRowAdminUiModel.keyStatus`
+(`Guardando…`); `SongRowAdminUiModel(setKey: SetKeyActionUiModel, removal, keyStatus)`. Musicians
+never get an overlay. Row admin actions, in order: `Cambiar tonalidad`, then the removal (last).
+Failure cards merge adds, removals and key changes by id. The picker is
+`SetKeyPresenter(JamsRepository, AdminSession, SetlistRepository)` with `Params(jamDate, songId,
+onBack, onDone)` and the pure `setKeyModel(...)` (`Loading` until the flag and the jams are read,
+`Gone` for a musician or a song no longer in the upcoming readable setlist, else `Content`); a pick
+launches `setKey` undispatched and calls `onDone` once, and the current cell does nothing. Keys and
+colours in `SetKeyDefaults` (`key` only, on the current key), copy in `SetKeyCopy`. `:app`:
+`AppRoutes.SET_KEY` (`setKey/{jamDate}/{songId}`, `setKey(date, songId)`, `parseSetKey` with an ISO
+date and `SongId.parseOrNull`), a `setKey` destination beside `addSong` (same slide, insets and
+`RESUMED` back guard; a pick pops by route), `TabsShell(onOpenSetKey)` → `NextJamScreen(onSetKey)`.
+Konsist unchanged (17 rules, `:feature:next-jam` still `{key}`).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

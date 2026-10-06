@@ -1,5 +1,6 @@
 package com.bbbjam.navigation
 
+import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -105,5 +106,33 @@ class AppRoutesTest {
         assertNull(AppRoutes.parseAddSong("2026-02-30"))
         val segments = AppRoutes.addSong(LocalDate.of(2026, 1, 9)).split('/')
         assertEquals(LocalDate.of(2026, 1, 9), AppRoutes.parseAddSong(segments[1]))
+    }
+
+    @Test
+    fun `the set key route is the ISO date and the song id, and parse rejects anything else`() {
+        assertEquals("setKey/{jamDate}/{songId}", AppRoutes.SET_KEY)
+        assertEquals(
+            "setKey/2026-10-31/sweet-little-angel",
+            AppRoutes.setKey(LocalDate.of(2026, 10, 31), SongId("sweet-little-angel")),
+        )
+        assertEquals(
+            SetKeyArgs(LocalDate.of(2026, 10, 31), SongId("crossroads")),
+            AppRoutes.parseSetKey("2026-10-31", "crossroads"),
+        )
+        assertNull(AppRoutes.parseSetKey(null, "crossroads"))
+        assertNull(AppRoutes.parseSetKey("2026-10-31", null))
+        assertNull(AppRoutes.parseSetKey("31/10/2026", "crossroads"))
+        assertNull(AppRoutes.parseSetKey("2026-02-30", "crossroads"))
+        assertNull(AppRoutes.parseSetKey("2026-10-31", ""))
+        assertNull(AppRoutes.parseSetKey("2026-10-31", "Crossroads"))
+        assertNull(AppRoutes.parseSetKey("2026-10-31", "cross roads"))
+        val segments = AppRoutes.setKey(LocalDate.of(2026, 1, 9), SongId("red-house")).split('/')
+        assertEquals(3, segments.size)
+        assertEquals(
+            SetKeyArgs(LocalDate.of(2026, 1, 9), SongId("red-house")),
+            AppRoutes.parseSetKey(segments[1], segments[2]),
+        )
+        val routes = listOf(AppRoutes.SONG_DETAIL, AppRoutes.PAST_JAM_DETAIL, AppRoutes.ADD_SONG, AppRoutes.SET_KEY)
+        assertEquals(routes.size, routes.toSet().size)
     }
 }

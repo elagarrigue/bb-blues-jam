@@ -49,6 +49,16 @@ internal object AdminControlsDefaults {
         status = colors.textMuted,
     )
 
+    data class KeyChangeStyle(val action: Color, val status: Color)
+
+    /**
+     * Setting a key (`admin-set-key`): "Cambiar tonalidad" in `text`, a quiet text action like "Ver
+     * detalle del tema", and the "Guardando…" line under the title in `textMuted`. Never amber: the
+     * only amber on the row stays the key itself.
+     */
+    fun keyChange(colors: BluesJamColors = BluesJamColors): KeyChangeStyle =
+        KeyChangeStyle(action = colors.text, status = colors.textMuted)
+
     /** The draft badge (`badge-draft`: `textMuted` on `surfaceRaised`) and its note (`textMuted`). */
     fun draft(colors: BluesJamColors = BluesJamColors): DraftStyle =
         DraftStyle(badgeFill = colors.surfaceRaised, badgeText = colors.textMuted, note = colors.textMuted)

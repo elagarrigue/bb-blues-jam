@@ -86,6 +86,16 @@ internal object NextJamCopy {
     const val NOT_IN_SETLIST = "Ese tema ya no estaba en la lista."
     const val DUPLICATE_SONG = "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo."
 
+    /**
+     * Setting a key, approved on 6 October 2026 (`docs/specs/admin-set-key.md`, V1, O1 and C2). The
+     * row shows the new key at once with [SAVING] under the title until the server answers.
+     */
+    const val SET_KEY = "Cambiar tonalidad"
+    const val SAVING = "Guardando…"
+
+    /** A failed key change's card title: `No se pudo cambiar la tonalidad de «Crossroads»`. */
+    fun keyFailed(title: String): String = "No se pudo cambiar la tonalidad de «$title»"
+
     /** The confirmation's question: `¿Quitar «Crossroads» de la lista?`. */
     fun removePrompt(title: String): String = "¿Quitar «$title» de la lista?"
 

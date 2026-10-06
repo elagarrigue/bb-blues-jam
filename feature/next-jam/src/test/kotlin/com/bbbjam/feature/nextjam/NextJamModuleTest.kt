@@ -33,6 +33,7 @@ class NextJamModuleTest {
             // factory, not single: presenters hold no state; the composition does.
             assertNotSame(first, second)
             assertNotSame(app.koin.get<AddSongPresenter>(), app.koin.get<AddSongPresenter>())
+            assertNotSame(app.koin.get<SetKeyPresenter>(), app.koin.get<SetKeyPresenter>())
         } finally {
             app.close()
         }

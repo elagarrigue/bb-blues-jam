@@ -9,15 +9,20 @@
 - Current state: twenty-nine of 39 slices accepted, the latest `admin-add-song-to-setlist` (6 October
   2026). `admin-remove-song-from-setlist` and `admin-set-key` are both `in_progress`: each Part A
   (server half and `:core:data`) done and self-verified (sessions 074 and 075), in one `Post.js`
-  that is **not deployed**; remove-song's Part B (UI) also done and self-verified (session 076).
+  that is **not deployed**; remove-song's Part B (UI) and set-key's Part B (UI) also done and
+  self-verified (sessions 076 and 077).
   Next: the user's **one** batched paste and **New version** (user decision B1 (a); README
   "Redeploy for remove song and set key, in one paste"), then remove-song's live checks LR1–LR5 and
-  validation, then set-key's live checks, Part B and validation.
+  validation, then set-key's live checks and validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 6 October 2026 (session 076, `admin-remove-song-from-setlist` Part B,
+- Last verified at: 6 October 2026 (session 077, `admin-set-key` Part B, `in_progress`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 87 result files, 538 tests, 0 failures. Pixel 5: picker, rotation, font scale
+  2.0, `AccessRefused` revert and card, musician view; no DataStore dir before or after; settings
+  restored. Before that, session 076 ( `admin-remove-song-from-setlist` Part B,
   `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 84 result files, 519 tests, 0 failures. Pixel 5: confirmation, rotation,
   `AccessRefused` card, no DataStore dir before or after; settings restored. Before that, session
@@ -3326,6 +3331,80 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   Note for set-key Part B: its spec maps `song_not_in_setlist` to `JAM_CHANGED` for a key change,
   while `failureMessage` now maps it to remove-song's `Ese tema ya no estaba en la lista.`; set-key
   needs a per-kind message for that code.
+
+### Session 077 — 6 October 2026
+
+- Feature: `admin-set-key`, **Part B (UI)**, spec `docs/specs/admin-set-key.md` (approvals B1 (a), V1
+  as specified, O1 optimistic, L1 (a), R1, C2 `Guardando…`; row found by `id_tema`; route
+  `setKey/{jamDate}/{songId}`). Built on 1aca145 (remove-song Part B). Status stays `in_progress`:
+  the batched `Post.js` (`be205ea3…`) is not deployed and the live checks L1–L5 are pending.
+- What changed:
+  - `:feature:next-jam`: `NextJamPresenter.Params(onAddSong, onSetKey, onOpenSong)`; collects
+    `observeKeyChanges()` into `AdminState.keyChanges`; for the admin, a row with a `Sending` change
+    draws the latest one's key (highest id) and `keyDescription`, with
+    `SongRowAdminUiModel.keyStatus` `Guardando…`. A `Failed` change never overlays (the revert).
+    `SongRowAdminUiModel(setKey: SetKeyActionUiModel, removal, keyStatus)`. Failure cards merge
+    adds, removals and key changes by id; key changes use `keyFailureMessage`
+    (`song_not_in_setlist` and the jam codes → `La jam cambió en la planilla…`, `duplicate_song` →
+    the shared duplicate line, else `failureMessage`), so remove-song keeps `Ese tema ya no estaba
+    en la lista.` New `KeyChangeOverlay.kt` (`pendingKey`) and `FailureMessages.kt` (moved
+    `failureMessage` out of `NextJamPresenter.kt` for detekt `TooManyFunctions`).
+  - Screen: `KeyStatusLine` under the title line (`caption`, `textMuted`, polite live region);
+    `AdminRowActions` draws `Cambiar tonalidad` (`AdminControlsDefaults.keyChange()`, `text`) before
+    the removal, which stays last.
+  - Picker: `SetKeyPresenter(JamsRepository, AdminSession, SetlistRepository)`, `SetKeyUiModel`
+    (`Loading`, `Gone`, `Content`), `SetKeyScreen` (scrollable, preview inside), `SetKeyCopy`,
+    `SetKeyDefaults` (24 keys, `COLUMNS = 4`, cell and header colours; `key` only on the current key;
+    outline `BorderStroke(Dp.Hairline, border)`, no dp literal). `di/NextJamModule` factory.
+  - `:app`: `AppRoutes.SET_KEY`, `setKey(date, songId)`, `parseSetKey` (ISO date,
+    `SongId.parseOrNull`) and `SetKeyArgs`; `AppNavHost` `setKey` destination beside `addSong` (same
+    slide, insets, `RESUMED` back guard; `onDone` pops by route); `TabsShell(onOpenSetKey)` →
+    `NextJamScreen(onSetKey)`.
+  - Tests: new `NextJamKeyChangeTest` 9, `SetKeyPresenterTest` 7, `SetKeyDefaultsTest` 2;
+    `AppRoutesTest` 10 → 11, `NextJamModuleTest` (SetKeyPresenter factory),
+    `AdminControlsDefaultsTest` (keyChange roles).
+  - Docs: `DESIGN.md` (Setting a key, the optimistic rule, Key picker as built, Core Screens item 2),
+    `docs/risks-and-open-questions.md` (Set-key risks), architecture `SKILL.md` (Part B as built).
+- Verification run:
+  - Failure demonstration (d): `pendingKey` without the `Sending` filter (a `Failed` entry overlays)
+    → 3 of 106 `:feature:next-jam` tests fail: `a sending change draws the new key with Guardando,
+    and a failure reverts it and adds a card` (expected A, was Bb), `when the later change fails
+    after the earlier one succeeded…` (expected Bb, was C) and the picker's `a pending change is the
+    current key… and a failed one is not` (expected A, was Bb). `KeyChangeOverlay.kt` restored from
+    a byte copy in the scratchpad, `sha1sum -c` OK (`40bf33ad897df61023fe1d7d2822d431d412c109`).
+  - `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0: `konsist: wired` (17/17,
+    `konsist-test` unchanged, so `AMBER_ROLE_ALLOWLIST` still `{key}` for `:feature:next-jam`),
+    `detekt: wired`, `ktlint: wired`; 87 result files, 538 tests, 0 failures (519 before). Two
+    earlier gate runs failed detekt (a KDoc `MaxLineLength` in `NextJamScreen.kt`; `ReturnCount` 3/2
+    in `setKeyModel`); fixed by wrapping and restructuring, no suppression.
+  - Device, Pixel 5, debug build (`demoUpcomingJam`, `debugAdmin` on). The upcoming jam was the
+    Sheet's own `2026-10-31` test jam (startup line `upcoming 2026-10-31 … admin (debug)`, no
+    `(demo)`), 13 songs; no passphrase stored, so nothing was sent. No `files/datastore` before.
+    Expanded row 02 (Walking Thru the Park, A): `Ver detalle del tema`, `Cambiar tonalidad`, `Quitar
+    de la lista`, in that order. The picker: `Volver`, `Cambiar tonalidad`, the song title,
+    `TONALIDAD ACTUAL` over an amber `A`, `MAYORES`/`MENORES` 4×3 grids in the approved spelling,
+    the `A` cell outlined, amber, `actual`; `uiautomator dump`: 24 clickable nodes (Volver + 23
+    cells, the `A` cell not clickable), every cell described `Tonalidad X`, cell height 132 px (50dp).
+    Landscape (`user_rotation 1`) and back: the picker redrawn the same; in landscape the right-hand
+    navigation bar overlaps the last column's edge (recorded as a risk; the add-song picker shares
+    the inset pattern). Font scale 2.0: everything fits, `actual` on one line, the screen scrolls;
+    restored to 1.0. Tap `Bb` → the picker closed, row 02 shows `A` with no status line, and the
+    card `No se pudo cambiar la tonalidad de «Walking Thru the Park»` / `La frase de acceso cambió o
+    no es válida. Salí del modo admin en Info y volvé a entrar.` / `Cerrar` sits after the rows,
+    before `Agregar tema`. The optimistic `Bb` with `Guardando…` was **not** captured: three
+    back-to-back screencaps right after the tap already show `A` (AccessRefused returns without a
+    request); the overlay and the revert are proven by the JVM tests and demonstration (d).
+    `Cerrar` → card gone. Info → `Salir del modo admin` (ends the debug forced state) → Próxima jam:
+    expanded row 02 shows only `Ver detalle del tema` (musician view unchanged). App force-stopped
+    and relaunched: `admin (debug)` again. No `files/datastore` after; crash buffer empty.
+  - Settings: recorded before (`font_scale 1.0`, `accelerometer_rotation 1`, `user_rotation 0`,
+    `enabled_accessibility_services null`, `screen_off_timeout 1800000`,
+    `stay_on_while_plugged_in 7`) and read back equal after. `accelerometer_rotation` was 0 during
+    the rotation check and restored to 1. TalkBack and accessibility never touched.
+    `local.properties`, the URL and the passphrase never printed.
+  - No live check (not deployed).
+- Next: the user's batched deploy (`Post.js` `be205ea3…`), remove-song's LR1–LR5 and validation,
+  then set-key's L1–L5 (with the L3 latency for the risks doc) and validation.
 
 ## Notes For The Next Session
 

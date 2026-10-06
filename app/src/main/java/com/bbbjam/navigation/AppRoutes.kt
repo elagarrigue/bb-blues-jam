@@ -1,5 +1,6 @@
 package com.bbbjam.navigation
 
+import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
@@ -62,6 +63,24 @@ internal object AppRoutes {
     /** The picker's jam date, or null when it is missing or not ISO. */
     fun parseAddSong(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 
+    const val SONG_ID = "songId"
+
+    /**
+     * The admin's key picker (`admin-set-key`), `setKey/{jamDate}/{songId}`: full screen in the outer
+     * host, opened from an expanded row's "Cambiar tonalidad". The song is named by id, never by
+     * position: a removal renumbers positions (R1).
+     */
+    const val SET_KEY = "setKey/{$JAM_DATE}/{$SONG_ID}"
+
+    /** `setKey/2026-10-31/crossroads`: the ISO date, then the song id (`[a-z0-9-]`, path-safe). */
+    fun setKey(jamDate: LocalDate, songId: SongId): String = "setKey/$jamDate/${songId.value}"
+
+    /** The picker's arguments, or null when the date is missing or not ISO, or the id is missing or invalid. */
+    fun parseSetKey(jamDate: String?, songId: String?): SetKeyArgs? {
+        val id = songId?.let { SongId.parseOrNull(it) } ?: return null
+        return jamDate?.toIsoDateOrNull()?.let { SetKeyArgs(it, id) }
+    }
+
     /** The past jam detail's date, or null when it is missing or not ISO. */
     fun parsePastJamDetail(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 
@@ -83,3 +102,6 @@ internal object AppRoutes {
 
 /** A song of a jam, as the song detail route names it. */
 internal data class SongDetailArgs(val jamDate: LocalDate, val position: Int)
+
+/** A song of a jam, as the key picker route names it. */
+internal data class SetKeyArgs(val jamDate: LocalDate, val songId: SongId)

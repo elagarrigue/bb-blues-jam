@@ -143,12 +143,29 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
 
 /**
  * The admin's part of an expanded row, after "Ver detalle del tema". Each action is a full-width,
- * 48dp, underlined text action, as the detail action. Later row actions (`admin-set-key`'s
- * "Cambiar tonalidad") go before the removal, which stays last.
+ * 48dp, underlined text action, as the detail action: "Cambiar tonalidad" (`admin-set-key`), then
+ * the removal, which stays last. A later row action goes before the removal.
  */
 @Composable
 internal fun AdminRowActions(model: SongRowAdminUiModel) {
+    RowTextAction(model.setKey.label, AdminControlsDefaults.keyChange().action) {
+        model.setKey.events(SetKeyActionUiModel.Event.Open)
+    }
     RemovalControl(model.removal)
+}
+
+/**
+ * "Guardando…" under the row's title line while its key is a pending change (O1): `caption`,
+ * `textMuted`, read politely when it appears. Drawn inside the row header, in both states.
+ */
+@Composable
+internal fun KeyStatusLine(status: String) {
+    Text(
+        text = status,
+        style = BluesJamTheme.typography.caption,
+        color = AdminControlsDefaults.keyChange().status,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    )
 }
 
 /**

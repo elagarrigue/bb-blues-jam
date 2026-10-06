@@ -222,6 +222,31 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   - The row's "Quitando…" state is drawn only while the row is expanded (the action lives in the
     panel); collapsing it during the write hides the status, and the card or the row's disappearance
     still reports the outcome.
+- **Set-key risks** (`admin-set-key`, as built; latency from the live checks is still to be
+  recorded after the batched deploy):
+  - *An unsaved amber key* (user decision O1, optimistic): for the write's duration (about 5 s,
+    longer on a slow network) the admin's row shows the new key in the amber `key` role, marked only
+    by the muted `Guardando…` line under the title. If the admin reads it aloud before a revert,
+    musicians may play in a key the Sheet never got. Only the admin's own device shows it; a failure
+    reverts the row and leaves a persistent card.
+  - *Overlay hand-off*: the repository updates Room before it removes the `Sending` entry, but Room's
+    flow re-queries asynchronously, so one frame of the old key is possible in theory. Not observable
+    on the device yet: with no stored passphrase the write is refused at once, so even the
+    optimistic frame was too short to capture (session 077); the order is covered by the JVM tests.
+  - *Refresh race* (as add-song): a refresh read before the write and stored after it shows the old
+    key until the next refresh; the Sheet is correct.
+  - Pending and failed key changes live in memory: a pending overlay dies with the process, and the
+    cache then shows the key the Sheet last confirmed.
+  - The song detail shows the confirmed (cached) key only, so for a few seconds it can disagree with
+    the admin's row.
+  - `Guardando…` adds a line to the row while sending, so the rows below move down by one caption
+    line and back.
+  - A key in a non-canonical spelling (`A#`) is shown as is in the picker and marks no cell; picking
+    the canonical one (`Bb`) rewrites it.
+  - The full-screen pickers (catalog and key) pad only the top and bottom insets; in landscape the
+    three-button navigation bar on the right overlaps the last column's edge (seen on the Pixel 5,
+    session 077). The cells stay tappable; a horizontal inset is a shared fix for all outer-host
+    screens.
 - **Failed writes after optimistic update.** The mitigation for Apps Script latency is optimistic
   presenter state, which makes rollback the real question. A failed publish is the worst case in the
   product: the admin believes the list is live and musicians see something stale. Publish failure in

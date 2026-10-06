@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.TabBar
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.InfoScreen
@@ -34,8 +35,8 @@ import java.time.LocalDate
  * inner host's back handler wins while its stack has more than one entry), and from Próxima jam
  * the activity finishes. The status-bar inset is applied outside the scroll, over `background`, so
  * content never scrolls under the clock. [onOpenSong] opens a song's detail and [onOpenPastJam] a
- * past jam's detail, [onOpenAdminLogin] the admin login and [onOpenAddSong] the admin's catalog
- * picker, all in the outer host.
+ * past jam's detail, [onOpenAdminLogin] the admin login, [onOpenAddSong] the admin's catalog
+ * picker and [onOpenSetKey] the admin's key picker, all in the outer host.
  */
 @Composable
 internal fun TabsShell(
@@ -43,6 +44,7 @@ internal fun TabsShell(
     onOpenPastJam: (jamDate: LocalDate) -> Unit,
     onOpenAdminLogin: () -> Unit,
     onOpenAddSong: (jamDate: LocalDate) -> Unit,
+    onOpenSetKey: (jamDate: LocalDate, songId: SongId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inner = rememberNavController()
@@ -63,7 +65,9 @@ internal fun TabsShell(
             popEnterTransition = { fadeIn(tween(AppMotion.TAB_FADE_MS)) },
             popExitTransition = { fadeOut(tween(AppMotion.TAB_FADE_MS)) },
         ) {
-            composable(AppRoutes.NEXT_JAM) { NextJamScreen(onOpenSong = onOpenSong, onAddSong = onOpenAddSong) }
+            composable(AppRoutes.NEXT_JAM) {
+                NextJamScreen(onOpenSong = onOpenSong, onAddSong = onOpenAddSong, onSetKey = onOpenSetKey)
+            }
             composable(AppRoutes.PAST_JAMS) { PastJamsScreen(onOpenJam = onOpenPastJam) }
             composable(AppRoutes.INFO) { InfoScreen(onOpenAdminLogin = onOpenAdminLogin) }
         }

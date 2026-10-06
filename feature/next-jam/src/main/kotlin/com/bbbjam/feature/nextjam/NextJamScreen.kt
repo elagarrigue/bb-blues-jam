@@ -35,6 +35,7 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.InstrumentFilterBar
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.lineup.ExpandIndicator
@@ -62,10 +63,11 @@ import org.koin.compose.koinInject
  * position (`song-detail-screen`); `:app` binds it to navigation. For the admin
  * (`admin-add-song-to-setlist`) the draft badge sits under the header and the pending adds, the
  * failure cards and "Agregar tema" (which calls [onAddSong]) come after the rows, so nothing above
- * them moves; an expanded row ends with the admin's row actions ("Quitar de la lista",
- * `admin-remove-song-from-setlist`). Rows stay keyed by position in the list: a hand-edited tab may
- * repeat a song id, and a lazy list key must be unique. It renders [NextJamUiModel] and forwards
- * events; the presenter decides.
+ * them moves; an expanded row ends with the admin's row actions ("Cambiar tonalidad", which calls
+ * [onSetKey], `admin-set-key`, then "Quitar de la lista", `admin-remove-song-from-setlist`), and a
+ * row whose key change is still saving shows "Guardando…" under its title. Rows stay keyed by
+ * position in the list: a hand-edited tab may repeat a song id, and a lazy list key must be unique.
+ * It renders [NextJamUiModel] and forwards events; the presenter decides.
  * [contentPadding] goes inside the list, so the background runs edge to edge.
  */
 @Composable
@@ -74,9 +76,12 @@ fun NextJamScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
     onAddSong: (jamDate: LocalDate) -> Unit = {},
+    onSetKey: (jamDate: LocalDate, songId: SongId) -> Unit = { _, _ -> },
     presenter: NextJamPresenter = koinInject(),
 ) {
-    val model = presenter.present(NextJamPresenter.Params(onAddSong = onAddSong, onOpenSong = onOpenSong))
+    val model = presenter.present(
+        NextJamPresenter.Params(onAddSong = onAddSong, onSetKey = onSetKey, onOpenSong = onOpenSong),
+    )
     NextJamContent(model = model, modifier = modifier, contentPadding = contentPadding)
 }
 
@@ -252,6 +257,7 @@ private fun RowHeader(row: SongRowUiModel) {
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         TitleLine(row)
+        row.admin?.keyStatus?.let { status -> KeyStatusLine(status) }
         if (!row.isExpanded) {
             InstrumentStrip(row.instruments)
         } else if (row.artist.isNotBlank()) {

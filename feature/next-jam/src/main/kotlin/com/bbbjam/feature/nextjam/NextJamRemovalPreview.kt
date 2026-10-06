@@ -23,13 +23,14 @@ private fun NextJamRemovalPreview() {
         cancelLabel = NextJamCopy.CANCEL,
         events = EventHandler {},
     )
+    val setKey = SetKeyActionUiModel(NextJamCopy.SET_KEY, EventHandler {})
     val rows = listOf(
         previewRow(1, "Crossroads", "Cream", "A", Lineup.default(), isExpanded = true)
-            .copy(admin = SongRowAdminUiModel(RemovalUiModel.Idle(NextJamCopy.REMOVE, EventHandler {}))),
+            .copy(admin = SongRowAdminUiModel(setKey, RemovalUiModel.Idle(NextJamCopy.REMOVE, EventHandler {}))),
         previewRow(2, "Hoochie Coochie Man", "Muddy Waters", "A", filled, isExpanded = true)
-            .copy(admin = SongRowAdminUiModel(confirming)),
+            .copy(admin = SongRowAdminUiModel(setKey, confirming)),
         previewRow(3, "The Thrill Is Gone", "B.B. King", "Bm", Lineup.default(), isExpanded = true)
-            .copy(admin = SongRowAdminUiModel(RemovalUiModel.Removing(NextJamCopy.REMOVING))),
+            .copy(admin = SongRowAdminUiModel(setKey, RemovalUiModel.Removing(NextJamCopy.REMOVING))),
     )
     val model = NextJamUiModel.Jam(
         header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días"),
