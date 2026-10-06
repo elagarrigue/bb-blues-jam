@@ -443,6 +443,14 @@ Record all of the following in `feature_list.json` evidence and `PROGRESS.md`:
 
 ## User Approvals
 
+Answered by the user on 5–6 October 2026: **S1 (b)** one feature implemented over two sessions
+(Part A backend and data, then Part B UI; the alternative, not the recommendation); **K1 (a)** the
+catalog default key; **J1** all three edge rules as specified; **V1** as specified; **C1** copy as
+written; **L1 (a)** the self-cleaning `checkSetlistWrite` on `_prueba_lista` plus the probes and the
+`readJams` read.
+
+The questions as asked:
+
 Each question has a recommendation. Ask before implementing.
 
 - **S1: split (recommended: a).**
