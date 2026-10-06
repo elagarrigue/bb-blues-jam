@@ -36,7 +36,7 @@ internal class AdminCredentialStore(private val dataStore: DataStore<Preferences
         .map { !it[PASSPHRASE].isNullOrBlank() }
         .distinctUntilChanged()
 
-    /** The stored passphrase, for the write slices (`apps-script-write-auth`); null when logged out. */
+    /** The stored passphrase, read by [AdminWriter] for every write; null when logged out. */
     suspend fun passphrase(): String? = preferences().first()[PASSPHRASE]?.takeUnless { it.isBlank() }
 
     /** Throws [IOException] when the file cannot be written; nothing changes then. */

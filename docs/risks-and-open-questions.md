@@ -138,16 +138,24 @@ Settled with the user (A1–A7): a server-side check in a new `Post.js` (`checkP
 verified passphrase stored in DataStore and excluded from backups, no expiry, logout on Info, a
 full-screen login route. Risks, not solved:
 
-- **No rate limit on passphrase guesses.** The `/exec` URL is public and `checkPassphrase` answers
-  every attempt, so the passphrase can be guessed online at Apps Script's pace. Accepted for the MVP
-  (D-11: a small community, recovery by rotation); revisit in `apps-script-write-auth`.
+- **Rate limit on passphrase guesses, with a lockout cost** (`apps-script-write-auth`, user
+  approval W2). A global counter in CacheService allows 10 failed guesses per fixed 10-minute
+  window, about 1,440 a day; after that every action answers `rate_limited`, the right passphrase
+  included, until the window ends. The trade-off: anyone with the `/exec` URL can lock the admins
+  out for up to 10 minutes at a time, repeatedly. A cache failure fails open (the passphrase check
+  still runs), and the increment is not atomic, so simultaneous guesses may count once.
 - **The login UiModel carries the typed passphrase** (`AdminLoginUiModel.passphrase`, so the screen
   stays a pure renderer). Its `toString` hides it, but the phase 2 assistant context, which exposes
   UiModels as-is, must exclude it.
 - The stored passphrase is plaintext in app-private storage: a rooted device or a debuggable build
   (`run-as`) can read it.
-- A device logged in before a rotation keeps showing admin mode until a write fails (by design: no
-  re-check on start).
+- A device logged in before a rotation keeps showing admin mode, **after** its first rejected write
+  too (user decision W3, `apps-script-write-auth`): every write answers `AccessRefused` and nothing
+  logs it out. Recovery is Info → "Salir del modo admin" → "Entrar como admin" with the new
+  passphrase; the first mutation slice's error copy must say so.
+- **CacheService and LockService scopes** (`apps-script-write-auth`): assumed to need no OAuth
+  scope beyond `spreadsheets.currentonly`. Status: not yet checked
+  live (checks L4 and L6, after the redeploy).
 - The login route and its back stack have no JVM test (T1) and are checked only on the device.
 - 5 October 2026: the user deployed `Post.js` as a **new deployment**, so the `/exec` URL changed
   (the README asks for **Manage deployments → New version**). `local.properties` was updated; any
@@ -221,12 +229,15 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   an address is wanted, the admin types it into `lugar` ("La Macanuda, Moreno 223"); an address
   column would be a schema change and its own slice.
 - **Passphrase rotation UX.** When a stale local flag meets a rotated passphrase, the failure should
-  read as "your access changed", not as a generic network error.
+  read as "your access changed", not as a generic network error. Since `apps-script-write-auth` the
+  client distinguishes it (`WriteOutcome.AccessRefused`), and the device stays in admin mode (W3),
+  so the copy must also tell the admin to log out and in again from Info; it comes with the first
+  mutation slice.
 - **Draft data must not reach unauthenticated clients.** Settled for anonymous reads by
   `apps-script-jams-read-endpoint`: the `jams` route serves a setlist only for a jam whose
   `estado` is exactly `PUBLICADA`, fails closed on any other value, and never even opens a draft's
-  tab; a query parameter cannot unlock it. Still open, for `apps-script-write-auth` or an admin
-  slice: how the admin reads a draft. That read must use POST with the passphrase in the body,
+  tab; a query parameter cannot unlock it. Still open, not done by `apps-script-write-auth`
+  (recommended home: `admin-add-song-to-setlist`): how the admin reads a draft. That read must use POST with the passphrase in the body,
   never a GET parameter, or the passphrase lands in URLs and logs. Consequence of the rule (user
   approval A1): a past jam left in `BORRADOR` shows no setlist until the admin marks it
   `PUBLICADA`.
@@ -282,8 +293,8 @@ Stated so they can be challenged rather than silently relied upon.
 - [ ] Load real repertoire with keys. Tempo, tags and difficulty are not used for now (D-20).
 - [ ] Verify Apps Script quotas and typical write latency with a realistic payload. Quotas checked
       (assumption 6). Read latency measured (warm median about 2.5 s; see
-      `technical-discovery.md`); a true cold-start figure is still open. Write latency: still
-      open, for the first write slice.
+      `technical-discovery.md`); a true cold-start figure is still open. Write latency:
+      pending live check L6 of `apps-script-write-auth` (`checkWriteAccess`).
 - [ ] Confirm the full mutation list for the action contract before slicing features.
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.

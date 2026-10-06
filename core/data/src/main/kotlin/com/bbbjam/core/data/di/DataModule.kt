@@ -5,6 +5,7 @@ import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.admin.AdminCredentialStore
 import com.bbbjam.core.data.admin.AdminSession
+import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.DefaultAdminSession
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
@@ -25,7 +26,8 @@ private const val LOG_TAG = "BluesJam"
  * [AppsScriptEndpoint]. Everything is a `single`, built by constructor. Today's date for jams comes
  * from [JamCalendar] in Buenos Aires (user approval P7 of `jams-repository-cache`). The GET and
  * POST transports are the same OkHttp instance; [AdminSession] keeps the verified passphrase in
- * DataStore (`admin-passphrase-login`).
+ * DataStore (`admin-passphrase-login`), and [AdminWriter] sends it with every admin write
+ * (`apps-script-write-auth`).
  */
 val dataModule = module {
     single<Clock> { Clock.systemUTC() }
@@ -42,4 +44,5 @@ val dataModule = module {
     single<JamsRepository> { DefaultJamsRepository(get(), get(), get(), get()) }
     single { AdminCredentialStore(AdminCredentialStore.dataStore(get())) }
     single<AdminSession> { DefaultAdminSession(get(), get()) }
+    single { AdminWriter(get(), get()) }
 }

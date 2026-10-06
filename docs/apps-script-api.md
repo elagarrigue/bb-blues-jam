@@ -5,9 +5,10 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and one POST action, `checkPassphrase`
-(`admin-passphrase-login`). Writes, the guard on writes and the admin's read of a draft come with
-`apps-script-write-auth`.
+(`apps-script-jams-read-endpoint`), and two POST actions, `checkPassphrase`
+(`admin-passphrase-login`) and the deploy check `checkWriteAccess` (`apps-script-write-auth`).
+Every POST action passes the passphrase guard in the router. The admin mutations come with their
+own slices, and the admin's read of a draft with `admin-add-song-to-setlist`.
 
 ## Transport
 
@@ -135,8 +136,8 @@ other value (`BORRADOR`, `Publicada`, a typo, empty) the jam is served with `set
 interprets: withholding a draft cannot be left to the client. Failing closed is deliberate, so a
 past jam left in `BORRADOR` shows no setlist until the admin marks it `PUBLICADA` (user approval
 A1). No query parameter changes this: `?resource=jams&passphrase=…` gives the same body as
-`?resource=jams`. How the admin reads a draft is not part of this route; it belongs to
-`apps-script-write-auth` and must use POST with the passphrase in the body.
+`?resource=jams`. How the admin reads a draft is not part of this route; it must use POST with the
+passphrase in the body (recommended home: `admin-add-song-to-setlist`).
 
 A tab is requested only by a `date` that is `YYYY-MM-DD`, so a `fecha` such as `Config` or
 `Catalogo` can never name another tab. The spreadsheet is accessed only through `getSheetByName`
@@ -230,39 +231,103 @@ without `--strict` and fails with it, by design.
 
 ## POST actions
 
-`POST <url>` with a JSON object body, `{"action": "<name>", …}`, content type
+`POST <url>` with a JSON object body, `{"action": "<name>", "passphrase": "…", …}`, content type
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase` (the list of the deployed `Post.gs`; a deploy check).
+message ends `Known: checkPassphrase, checkWriteAccess` (the list of the deployed `Post.gs`; a
+deploy check).
+
+### The router and the guard (`apps-script-write-auth`)
+
+`ACTIONS` maps each name to `{ write: boolean, run: fn }`. `handlePost(request, spreadsheet,
+services)` runs, in order:
+
+1. `invalid_request` when the body is not a JSON object;
+2. `unknown_action` when the action is not in `ACTIONS`;
+3. **the passphrase guard** `requirePassphrase_`, for **every** action. No action calls it itself,
+   so an action added later cannot forget it;
+4. for a `write: true` action, the **script lock** (`LockService.getScriptLock().tryLock(10000)`),
+   otherwise `busy`; it is released in a `finally`;
+5. the action's `run(request, spreadsheet, services)`.
+
+`services` is `{ cache, lock, now }`; `doPost` builds it from `CacheService.getScriptCache()`,
+`LockService.getScriptLock()` and `Date.now()`, and the Node tests pass fakes.
+
+The guard, in order:
+
+1. **Rate limit** (user approval W2). The key is `auth_failures_<floor(now / 600000)>`: one global
+   counter per fixed 10-minute window. When it already holds 10 failures, the answer is
+   `rate_limited` and `Config` is not read, **whatever the passphrase**, the right one included,
+   until the window ends.
+2. `readPassphrase_` reads `Config` (`passphrase_not_set` when unusable). It is read on **every**
+   request and never cached, so rotating the passphrase rejects every device at once.
+3. The submitted `passphrase` must be a string exactly equal (case-sensitive) to the stored one.
+   A mismatch, a missing or a non-string value increments the counter (TTL 1200 s) and answers
+   `invalid_passphrase`. `passphrase_not_set` counts nothing.
+4. Any exception from the cache is ignored (**fails open**): the passphrase check still runs. The
+   increment is not atomic, so simultaneous failures may count once.
+
+The cache only ever holds a number under a key made of the window number: never the stored or the
+submitted passphrase. No response or message contains either.
+
+| Case (any action) | Body |
+|---|---|
+| body missing, not JSON, or not a JSON object | error `invalid_request` |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess`) |
+| 10 failed guesses already in the current 10-minute window | error `rate_limited` |
+| `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
+| `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
+| a write action while another write holds the lock for more than 10 s | error `busy` |
+| any other exception | error `internal_error` |
 
 ### `checkPassphrase` (`admin-passphrase-login`)
 
 Request: `{"action":"checkPassphrase","passphrase":"…"}`. The client trims the passphrase before
-sending; the server compares it **exactly** (case-sensitive) with the trimmed `valor` of the
-`Config` row whose `clave` is `passphrase` (`sheet-schema.md`, read with `getDisplayValues`).
-
-| Case | Body |
-|---|---|
-| match | `{"schemaVersion":1,"ok":true}` |
-| body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase`) |
-| `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
-| `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
-| any other exception | error `internal_error` |
-
-The stored value is read **before** comparing, so an unset passphrase rejects every attempt
-(fail closed) and a blank submission can never match a blank cell. No message ever contains the
-stored or the submitted value. There is no rate limit (`risks-and-open-questions.md`).
-`readPassphrase_(spreadsheet)` and `passphraseMatches_(spreadsheet, submitted)` are named for
-`apps-script-write-auth`, which adds write actions to `ACTIONS` and guards them with the same check.
+sending; the server compares it with the trimmed `valor` of the `Config` row whose `clave` is
+`passphrase` (`sheet-schema.md`, read with `getDisplayValues`). Not a write: no lock. After the
+guard it just answers `{"schemaVersion":1,"ok":true}`. The stored value is read **before**
+comparing, so an unset passphrase rejects every attempt (fail closed) and a blank submission can
+never match a blank cell.
 
 Client (`:core:data`, `admin/`): `DefaultAdminSession.logIn` POSTs through
 `AppsScriptPostTransport` (the same `OkHttpAppsScriptTransport` instance), decodes with
 `AppsScriptEnvelope.decodeOk` and maps: `ok` → store, `Success`; `invalid_passphrase` →
 `WrongPassphrase`; `Offline` → `Offline`; anything else (`NotConfigured`, `passphrase_not_set`,
-`unknown_action`, an HTML page from a deployment without `doPost`, any invalid answer) →
-`Unavailable`. Nothing is stored unless the server said `ok`.
+`rate_limited`, `unknown_action`, an HTML page from a deployment without `doPost`, any invalid
+answer) → `Unavailable` ("Probá de nuevo en un rato."). Nothing is stored unless the server said
+`ok`.
+
+### `checkWriteAccess` (`apps-script-write-auth`)
+
+Request: `{"action":"checkWriteAccess","passphrase":"…"}`. A write action, so it runs under the
+lock. A **self-cleaning deploy check**, not a product mutation (no repository function): it
+deletes a leftover `_prueba_escritura` tab if one exists, creates `_prueba_escritura`, writes
+`write check <ISO time>` to A1, reads A1 back with `getDisplayValue`, deletes the tab and answers
+`{"schemaVersion":1,"ok":true}`. A read-back that differs is `internal_error`, after the tab is
+deleted. It touches no other tab. It proves the deployment can create, write, read back and
+delete a tab with the owner's authorization.
+
+### Client write path (`AdminWriter`)
+
+Every admin mutation repository writes through the internal `AdminWriter(AppsScriptPostTransport,
+AdminCredentialStore)` in `:core:data` `admin/`: `suspend fun write(action, fields):
+WriteOutcome`. It reads the stored passphrase (with none stored it returns `AccessRefused` and
+sends nothing), builds a `JsonObject` with `action`, `passphrase` and the fields (a field named
+`action` or `passphrase` is a `require` failure), encodes it with `AppsScriptEnvelope.json`, POSTs
+it and decodes with `decodeOk`:
+
+| Answer | `WriteOutcome` |
+|---|---|
+| `ok` | `Done` |
+| `invalid_passphrase`, `passphrase_not_set` | `AccessRefused` |
+| `rate_limited`, `busy`, `unknown_action`, `NotConfigured`, an HTML page, any invalid answer | `Unavailable` |
+| `Offline` | `Offline` |
+| any other service code | `Rejected(code)` |
+
+`AdminWriter` never saves or clears the stored passphrase, whatever the answer (user decision
+W3): a refused write leaves the device in admin mode, and the admin recovers on Info with "Salir
+del modo admin" and "Entrar como admin". It never logs.
 
 ## Quotas
 

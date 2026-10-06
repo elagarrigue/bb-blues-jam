@@ -95,6 +95,9 @@ class DefaultAdminSessionTest {
             TransportResult.Failed(DataFailure.NotConfigured),
             TransportResult.Failed(DataFailure.InvalidResponse("HTTP 500")),
             body(error("passphrase_not_set")),
+            // apps-script-write-auth: the login maps the new codes like any other.
+            body(error("rate_limited")),
+            body(error("busy")),
             body(error("unknown_action")),
             body(error("internal_error")),
             body("<!DOCTYPE html><html><body>Script function not found: doPost</body></html>"),

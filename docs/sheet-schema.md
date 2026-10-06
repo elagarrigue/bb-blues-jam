@@ -54,6 +54,7 @@ Seed files for import live in `docs/sheet-seed/`.
 | `Jams` | Jam | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `YYYY-MM-DD`, one tab per jam | JamSong in that jam's setlist | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `Config` | Setting | Sheet | The admin, by hand |
+| `_prueba_escritura` | Nothing (transient) | Apps Script | Created and deleted by the `checkWriteAccess` deploy check within one request (`apps-script-write-auth`); never read by any route, never served |
 
 A jam tab is named with its ISO date, for example `2026-07-25`, so tabs sort chronologically and the
 name is the join key with `Jams.fecha`. No other tab may use that name pattern.

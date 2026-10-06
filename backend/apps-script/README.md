@@ -5,10 +5,13 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and one POST
-action, `checkPassphrase` (`admin-passphrase-login`). The reads never open the `Config` tab, and
-never read the tab of a jam whose `estado` is not exactly `PUBLICADA`. Only `src/Post.js` opens
-`Config`, and no answer ever contains the passphrase.
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and two POST
+actions, `checkPassphrase` (`admin-passphrase-login`) and the self-cleaning deploy check
+`checkWriteAccess` (`apps-script-write-auth`). Every POST action passes one passphrase guard in the
+router, with a rate limit of 10 failed guesses per 10 minutes; write actions run under the script
+lock. The reads never open the `Config` tab, and never read the tab of a jam whose `estado` is not
+exactly `PUBLICADA`. Only `src/Post.js` opens `Config`, and no answer ever contains the
+passphrase.
 
 ## Layout
 
@@ -19,7 +22,7 @@ never read the tab of a jam whose `estado` is not exactly `PUBLICADA`. Only `src
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet)`, the `ACTIONS` table (`checkPassphrase`), `readPassphrase_` and `passphraseMatches_`. The only file that opens `Config`. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`. The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -76,8 +79,9 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` with the message ending in `Known: checkPassphrase` (the action list of
-`src/Post.js`); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
+`unknown_action` with the message ending in `Known: checkPassphrase, checkWriteAccess` (the action
+list of `src/Post.js` since `apps-script-write-auth`; `Known: checkPassphrase` alone means the old
+`Post.gs`); an HTML page instead means the deployment has no `Post.gs` (no `doPost`).
 
 #### Verify the paste
 
@@ -89,7 +93,7 @@ In the Apps Script editor, open each file and search (Ctrl+F) for its distinctiv
 | `Jams.gs` | `var PUBLISHED_STATUS = 'PUBLICADA';` | |
 | `Normalize.gs` | `function isoDateCell(` and `class ContractError` | |
 | `Catalog.gs` | | `class ContractError` |
-| `Post.gs` | `checkPassphrase: checkPassphrase_,` | |
+| `Post.gs` | `checkWriteAccess: { write: true, run: checkWriteAccess_ },` | `checkPassphrase: checkPassphrase_,` |
 
 If any check fails, paste that file again over its whole content, save, and check again.
 
@@ -137,8 +141,9 @@ action `checkPassphrase`. **No existing file changes**: leave `Code.gs`, `Normal
    `myFunction` it starts with, and paste the whole of `backend/apps-script/src/Post.js`.
 3. **Save** (Ctrl+S). The project now has five script files, `Code`, `Normalize`, `Catalog`,
    `Jams` and `Post`, plus `appsscript.json`.
-4. **Verify the paste**: `Post.gs` must contain `checkPassphrase: checkPassphrase_,` (the table in
-   **Updating the code later**). If it does not, paste it again over its whole content and save.
+4. **Verify the paste**: `Post.gs` must contain `checkPassphrase: checkPassphrase_,` (the marker
+   of that version; since `apps-script-write-auth` the table in **Updating the code later** has
+   the current one). If it does not, paste it again over its whole content and save.
 5. **Deploy → Manage deployments** → select the existing deployment → **Edit** (pencil icon) →
    **Version: New version** → **Deploy**. Never choose **New deployment**: it creates a new URL,
    and the app keeps calling the old one until `local.properties` is updated and the app rebuilt.
@@ -154,6 +159,32 @@ action `checkPassphrase`. **No existing file changes**: leave `Code.gs`, `Normal
 (5 October 2026: the user deployed this as a **new deployment**, so the URL changed; the
 orchestrator updated `local.properties` and the app was rebuilt. Later updates go through
 **Manage deployments → New version** on that new deployment.)
+
+### Redeploy for write auth (`apps-script-write-auth`)
+
+The script is already deployed with the two reads and `checkPassphrase`. This replaces **one**
+file, `Post`: it adds the passphrase guard on every action, the rate limit, the write lock and the
+`checkWriteAccess` deploy check. **No other file changes**: leave `Code.gs`, `Normalize.gs`,
+`Catalog.gs`, `Jams.gs` and `appsscript.json` as they are.
+
+1. Open the Sheet, then **Extensions → Apps Script**.
+2. Open `Post.gs`, select all its content and replace it with the whole of
+   `backend/apps-script/src/Post.js`. **Save** (Ctrl+S).
+3. **Verify the paste** (Ctrl+F in `Post.gs`): it must contain
+   `checkWriteAccess: { write: true, run: checkWriteAccess_ },` and must **not** contain
+   `checkPassphrase: checkPassphrase_,` (the old version's line). If either check fails, paste
+   again over the whole content and save.
+4. **Deploy → Manage deployments** → select the current deployment → **Edit** (pencil icon) →
+   **Version: New version** → **Deploy**. Never choose **New deployment**: it creates a new URL,
+   and the app keeps calling the old one.
+5. The new code uses `CacheService` and `LockService`, which are expected to need no scope beyond
+   `spreadsheets.currentonly`. If Google asks to authorize anyway, accept as the first time and
+   say so in chat.
+6. Tell the orchestrator that the new version is deployed. It runs the checks in **Check a live
+   deployment** (only obviously wrong values on the command line; the valid write reads the
+   passphrase from `local.properties` inside a script and never prints it). The valid check
+   creates a tab named `_prueba_escritura` and deletes it within the same request: if the Sheet is
+   open you may see it flash for about a second.
 
 ### Temporary test jam for the draft check (user approval A3)
 
@@ -197,10 +228,24 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
+
+Write guard (`apps-script-write-auth`). Each wrong value counts one failed guess: 10 in a
+10-minute window lock **every** action, the real admin's login included, until the window ends
+(`rate_limited`). Never loop these:
+
+```bash
+curl -sL -d '{"action":"checkWriteAccess"}' "$URL"                   # invalid_passphrase (no passphrase)
+curl -sL -d '{"action":"checkWriteAccess","passphrase":"definitely-wrong"}' "$URL"  # invalid_passphrase
+```
+
+The valid write (`checkWriteAccess` with the real passphrase, answer `{"schemaVersion":1,"ok":true}`)
+is never typed on a command line: the passphrase would land in the shell history. The agent runs it
+from a scratchpad Python script that reads `bluesjam.debugAdminPassphrase` from `local.properties`
+(user approval W1), builds the body with `json.dumps` and prints only `ok` or the error code.
 
 Jams (`apps-script-jams-read-endpoint`, checks L1 to L5):
 

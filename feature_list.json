@@ -780,13 +780,21 @@
     "depends_on": [
       "admin-passphrase-login"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "A write with no passphrase is rejected",
       "A write with a stale passphrase after rotation is rejected",
       "A valid write succeeds"
     ],
-    "evidence": [],
+    "evidence": [
+      "Session 071 (5 Oct 2026, implementer): Post.js router guard (every ACTIONS entry passes requirePassphrase_ in handlePost; no action calls it), rate limit W2 (auth_failures_<window>, 10 per fixed 10 min, TTL 1200 s, fails open), script lock for write actions (tryLock 10000, busy, release in finally), checkWriteAccess deploy check on transient tab _prueba_escritura. Only src/Post.js changed in src/ (Code.js, Jams.js, Catalog.js, Normalize.js byte-identical, git status).",
+      "node --test backend/apps-script/test/*.test.js: 97/97 pass (83 before; post.test.js 13 -> 27 tests).",
+      "Failure demonstrations, restored with sha1sum -c (Post.js c4c12993306704e1e15276ea0e703783b93eb904 OK each time): (a) guard skipped for write actions -> 7 of 27 post tests fail (table-driven guard tests, rotation, rate limit, checkWriteAccess); (b1) stored passphrase cached across requests (no Config re-read) -> 8 fail incl. rotation; (b2) passphrase written to the cache -> 4 fail incl. 'no response, message, cache key or cache value contains the ... passphrase'.",
+      "Client: WriteOutcome (Done, AccessRefused, Offline, Unavailable, Rejected), internal AdminWriter (never saves or clears the store, W3), remote/ServiceCodes, dataModule single. AdminWriterTest 10/10; DefaultAdminSessionTest 8/8 (rate_limited and busy -> Unavailable, nothing stored); DataModuleTest resolves one AdminWriter.",
+      "Failure demonstration (c): AdminWriter calling store.clear() on AccessRefused -> AdminWriterTest 2 of 10 fail ('a refused write keeps the stored passphrase and admin mode': expected not-a-real-passphrase but was null; 'no answer ever changes the store'); restored, AdminWriter.kt e0d892dec86816cc0cf841126d7a35d4815a2663 sha1sum -c OK.",
+      "./gradlew ktlintFormat, then CI=true ./init.sh exit 0: konsist wired (ModuleIsolationTest 17/17), detekt wired, ktlint wired; 76 result files, 443 tests, 0 failures (433 before + AdminWriterTest 10).",
+      "Live checks L1-L6: NOT RUN YET. Waiting for the user to paste Post.js (SHA-1 c4c12993306704e1e15276ea0e703783b93eb904) into Post.gs and deploy a new version on the current deployment; bluesjam.debugAdminPassphrase key absent from local.properties at hand-off (grep -c = 0)."
+    ],
     "notes": "The Apps Script URL is reachable directly, so this is the only real access control in the product. Rotating the passphrase in the Sheet is the revocation mechanism. A rejected write after rotation must read as access changed, not as a generic network error. From apps-script-jams-read-endpoint validation: any change to backend/apps-script/src must update the README's 'Verify the paste' markers and the 'Known: …' route check in the same change; copy-paste deploys can silently keep an old file. From admin-passphrase-login validation (5 Oct 2026): the login field's text-selection colors default to the amber primary; set non-amber TextSelectionColors in a later admin slice. No rate limit on passphrase guesses yet (risks doc)."
   },
   {

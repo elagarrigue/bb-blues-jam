@@ -72,12 +72,23 @@ transfer and no per-record access rules.
   the saved-state Bundle (the login field is plain `remember`; a rotation clears it).
 - **Write endpoints must validate the passphrase server-side** in Apps Script. A client-side flag
   controls which controls are visible; it must not be what authorizes a write. Anyone can call the
-  Apps Script URL directly, so the check belongs there.
+  Apps Script URL directly, so the check belongs there. As built (`apps-script-write-auth`,
+  5 October 2026): every POST action passes one guard in the router of `src/Post.js`, before it
+  runs, and no action calls it itself. The guard reads `Config` on every request and caches
+  nothing. Failed guesses are limited globally to 10 per fixed 10-minute window (W2); after that
+  every action, login included, answers `rate_limited` until the window ends, even with the right
+  passphrase. Writes run under the script lock. On the device, every mutation goes through
+  `AdminWriter` in `:core:data`, which sends the stored passphrase in the POST body.
+- **A refused write keeps admin mode** (user decision W3). When the server answers
+  `invalid_passphrase` or `passphrase_not_set` to a write, the outcome is `AccessRefused`; the
+  device keeps the stored passphrase and its admin controls. Nothing logs the device out
+  automatically.
 - **Debug-only admin flag** (`debug-admin-session`): a development build with
   `bluesjam.debugAdmin=true` in the git-ignored `local.properties` starts in admin mode without a
   login, so device checks of admin controls need no passphrase typed. It only draws controls and
   authorizes nothing: it never stores, sends or knows the passphrase, so a write from such a session
-  fails as the server decides. Release builds never contain it.
+  sends no request and returns `AccessRefused` (`AdminWriter`, `apps-script-write-auth`). Release
+  builds never contain it.
 
 ## Revocation / Expiry
 
@@ -85,15 +96,16 @@ transfer and no per-record access rules.
   admin logs out. With one or two trusted people and no personal data at stake, timed expiry adds
   friction without reducing real risk.
 - **Revocation is by rotating the passphrase** in the Sheet. This invalidates every device at once,
-  which is the correct granularity when the credential is shared anyway. Devices holding a stale
-  local flag will still show admin controls until their next write fails — the server-side check is
-  what actually stops them.
+  which is the correct granularity when the credential is shared anyway. A device logged in before
+  the rotation keeps its admin controls, before and after its first rejected write (W3): every write
+  fails with `AccessRefused` until the admin taps "Salir del modo admin" on Info and logs in again
+  with the new passphrase ("Entrar como admin"). The server-side check is what actually stops it.
 - A visible logout action is available from the info screen so a borrowed or shared phone can be
   cleared deliberately. As built: "Salir del modo admin" under "Modo admin activo", no
   confirmation (A4); it deletes the stored passphrase and makes no request.
 - **No re-check on start** (`admin-passphrase-login`): a device keeps admin mode across restarts
-  without asking the server again. A rotated passphrase is caught by the first write, which
-  `apps-script-write-auth` rejects.
+  without asking the server again. After a rotation every write is rejected (`AccessRefused`),
+  and the device stays in admin mode until a manual logout (W3).
 
 ## Edge Cases
 
@@ -109,4 +121,6 @@ transfer and no per-record access rules.
   logged in keeps the local flag and stays in admin mode; whether their writes queue offline is an
   open question recorded in `risks-and-open-questions.md`.
 - **A stale local admin flag after rotation.** The device still renders admin controls but every
-  write fails. The failure should read as "your access changed", not as a generic network error.
+  write fails with `AccessRefused`, and it keeps doing so after the first failure (W3). The failure
+  should read as "your access changed" and point to logging out and in again from Info, not as a
+  generic network error; that copy comes with the first mutation slice.

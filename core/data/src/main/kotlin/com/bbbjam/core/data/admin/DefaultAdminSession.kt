@@ -5,6 +5,7 @@ import com.bbbjam.core.data.remote.AppsScriptEnvelope
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.CheckPassphraseRequest
 import com.bbbjam.core.data.remote.Decoded
+import com.bbbjam.core.data.remote.ServiceCodes
 import com.bbbjam.core.data.remote.TransportResult
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -57,11 +58,7 @@ internal class DefaultAdminSession(
 
     private fun DataFailure.toOutcome(): LoginOutcome = when {
         this == DataFailure.Offline -> LoginOutcome.Offline
-        this is DataFailure.Service && code == INVALID_PASSPHRASE -> LoginOutcome.WrongPassphrase
+        this is DataFailure.Service && code == ServiceCodes.INVALID_PASSPHRASE -> LoginOutcome.WrongPassphrase
         else -> LoginOutcome.Unavailable
-    }
-
-    private companion object {
-        const val INVALID_PASSPHRASE = "invalid_passphrase"
     }
 }

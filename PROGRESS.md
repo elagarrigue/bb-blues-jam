@@ -8,7 +8,9 @@
   `./gradlew check`
 - Current state: twenty-seven of 39 slices accepted, the latest `debug-admin-session` (5 October
   2026). Device checks use debug overrides (demo jam, draft, admin), never the user. Next:
-  `apps-script-write-auth` (spec in planning). `enrichment-background-fetch` deferred.
+  `apps-script-write-auth` (`in_progress`, session 071: code, Node and gate done; waiting for the
+  user to paste the new `Post.js` and deploy a new version, then live checks L1–L6).
+  `enrichment-background-fetch` deferred.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
@@ -2843,6 +2845,63 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   will be rejected by the server; how write slices verify real writes remains their own question
   (spec non-goal).
 - Next: the validator for `debug-admin-session`; then `apps-script-write-auth`.
+
+### Session 071 — 5 October 2026
+
+- Feature: `apps-script-write-auth` (spec `docs/specs/apps-script-write-auth.md`, revision 7caaf69;
+  user approvals W1 (a), W2 (a), W3 = a refused write keeps admin mode). Status `in_progress`:
+  everything but the live checks is done.
+- What changed:
+  - `backend/apps-script/src/Post.js` (the only `src` file changed; `Code.js`, `Jams.js`,
+    `Catalog.js`, `Normalize.js` untouched): `ACTIONS` entries are `{ write, run }`
+    (`checkPassphrase` read, `checkWriteAccess` write). `handlePost(request, spreadsheet, services)`
+    runs `invalid_request`, `unknown_action`, the guard `requirePassphrase_` for every action, the
+    script lock (`tryLock(10000)`, `busy`, release in `finally`) for write actions, then the action.
+    The guard: rate limit `auth_failures_<floor(now/600000)>` ≥ 10 → `rate_limited` without reading
+    `Config`; `readPassphrase_` on every request; a mismatch counts one failure (TTL 1200 s) and is
+    `invalid_passphrase`; cache exceptions ignored (fail open). `checkWriteAccess_` deletes a
+    leftover `_prueba_escritura`, inserts it, writes and reads back A1, deletes it; a mismatch is
+    `internal_error` after the delete. `doPost` builds `services` from `CacheService`,
+    `LockService` and `Date.now()`. Final SHA-1 `c4c12993306704e1e15276ea0e703783b93eb904`.
+  - `backend/apps-script/test/post.test.js`: fake cache, lock and writable spreadsheet; table-driven
+    guard tests over `Object.keys(ACTIONS)` with spy `run`s; rotation; rate-limit window, edge
+    millisecond and fail-open; busy and release; `checkWriteAccess` ops, leftover and mismatch; no
+    passphrase in responses, cache keys or values; doPost and the vm (Apps Script scope) run with
+    `CacheService`/`LockService`; the README marker (and the old one gone).
+  - `:core:data` `admin/`: public `WriteOutcome`, internal `AdminWriter` (reads the stored
+    passphrase; none → `AccessRefused`, no request; `JsonObject` body; never saves or clears the
+    store); `remote/ServiceCodes` (shared with `DefaultAdminSession`); `dataModule`
+    `single { AdminWriter(get(), get()) }`. Tests: new `AdminWriterTest` (10), `DefaultAdminSessionTest`
+    (`rate_limited`, `busy` → `Unavailable`), `DataModuleTest` (resolves one `AdminWriter`).
+  - Docs: `docs/apps-script-api.md` (router and guard, `checkWriteAccess`, `rate_limited`, `busy`,
+    `AdminWriter` mapping), `docs/user-and-access-model.md` (guard as built, W3, revocation, debug
+    session sends nothing), `docs/risks-and-open-questions.md` (W2 lockout trade-off, W3 bullet,
+    scope assumption and write latency pending the live checks), `docs/sheet-schema.md`
+    (`_prueba_escritura`), architecture `SKILL.md` (`AdminWriter`, `WriteOutcome`, router-guarded
+    actions), `backend/apps-script/README.md` (**Redeploy for write auth**, Verify-the-paste marker
+    `checkWriteAccess: { write: true, run: checkWriteAccess_ },` and the old marker as must-not,
+    `Known: checkPassphrase, checkWriteAccess`, live commands with wrong values only).
+- Verification run:
+  - `node --test backend/apps-script/test/*.test.js`: 97/97 (83 before; `post.test.js` 13 → 27).
+  - Failure demonstrations, each restored and checked with `sha1sum -c` (OK): (a) guard skipped for
+    write actions → 7 of 27 fail; (b1) the stored passphrase cached across requests → 8 of 27 fail,
+    rotation among them; (b2) the passphrase put in the cache → 4 of 27 fail, the leak test among
+    them; (c) `AdminWriter` calling `store.clear()` on `AccessRefused` → `AdminWriterTest` 2 of 10
+    fail ("a refused write keeps the stored passphrase and admin mode": expected the value, was
+    null), `AdminWriter.kt` `e0d892de…` restored. (An early restore of Post.js by `git checkout`
+    briefly reverted it to the committed version; it was rewritten and matched the recorded SHA-1
+    before any demonstration was counted.)
+  - `./gradlew ktlintFormat`, `CI=true ./init.sh` exit 0: `konsist: wired` (17/17, unchanged),
+    `detekt: wired`, `ktlint: wired`; 76 result files, 443 tests, 0 failures.
+  - No Gradle, Konsist, manifest, UI or `:app` change. No device check (nothing on screen changes);
+    the device was not touched.
+  - `local.properties`: `bluesjam.appsScriptUrl` present, `bluesjam.debugAdminPassphrase` absent
+    (`grep -c`, values never printed). No build reads the passphrase key.
+- Not run yet: live checks L1–L6 (need the user's paste and new version). The scratchpad script
+  prints only codes, `Known:` tails and the L6 time.
+- Next: user pastes `Post.js` into `Post.gs`, verifies the marker, deploys **Manage deployments →
+  Edit → New version** on the current deployment, and (W1) adds `bluesjam.debugAdminPassphrase`;
+  then L1–L6, evidence, docs (scope status, write latency) and status `passing`.
 
 ## Notes For The Next Session
 

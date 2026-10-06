@@ -59,12 +59,27 @@ sends nothing when blank, POSTs `checkPassphrase` and stores only on `ok`. `remo
 `AdminLoginScreen`, `AdminLoginCopy` and `AdminLoginDefaults`. The typed passphrase lives in plain
 `remember`, never `rememberSaveable`. Every later admin slice reads `AdminSession.observeIsAdmin()`.
 
+As built by `apps-script-write-auth`: `admin/` adds the public `WriteOutcome` (`Done`,
+`AccessRefused`, `Offline`, `Unavailable`, `Rejected(code)`) and the internal
+`AdminWriter(AppsScriptPostTransport, AdminCredentialStore)` with `suspend write(action, fields):
+WriteOutcome` (a `single` in `dataModule`). It sends the stored passphrase with the action in a
+`JsonObject` body (never concatenated; `action` and `passphrase` are reserved field names), sends
+nothing when none is stored, and **never saves or clears the store**: a refused write
+(`AccessRefused`) keeps admin mode on (user decision W3). `remote/ServiceCodes` holds the error
+codes the client maps, shared with `DefaultAdminSession`. **A mutation repository calls
+`AdminWriter`** and returns its `WriteOutcome` (or its own outcome mapped from it); it never builds
+a POST itself. **A new server action is guarded by the router**: add an entry `{ write: true, run }`
+to `ACTIONS` in `backend/apps-script/src/Post.js` and never call the passphrase guard from the
+action; `handlePost` runs the guard (rate limit, `Config` re-read) for every action and the script
+lock for every write. `checkWriteAccess` is a deploy check with no repository function.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
 - A read or a write against the Sheet → a repository function in `:core:data`.
 - A new Sheet read or write → a route in `backend/apps-script` plus a repository function in
-  `:core:data`.
+  `:core:data`. A write is an `ACTIONS` entry guarded by the router and a repository
+  function that calls `AdminWriter`.
 - **A mutation** → a repository function in `:core:data`, then registered in the `:app` action
   registry. Never a lambda that only exists in a composable.
 - A color, spacing or type value → `:core:ui` tokens from `DESIGN.md`. Never a literal in a feature.

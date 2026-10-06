@@ -6,6 +6,7 @@ import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Fixtures
 import com.bbbjam.core.data.admin.AdminSession
+import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
@@ -56,6 +57,9 @@ class DataModuleTest {
             assertSame(session, app.koin.get<AdminSession>())
             assertSame(app.koin.get<AppsScriptTransport>(), app.koin.get<AppsScriptPostTransport>())
             assertEquals(LoginOutcome.WrongPassphrase, runBlocking { session.logIn("   ") })
+
+            // apps-script-write-auth: one shared write path.
+            assertSame(app.koin.get<AdminWriter>(), app.koin.get<AdminWriter>())
         } finally {
             app.close()
             database.close()
