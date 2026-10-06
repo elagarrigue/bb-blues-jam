@@ -176,6 +176,12 @@ keeps it steady), and the next successful tick removes it. Recovery takes at mos
 
 ## User Approvals
 
+Answered by the user on 6 October 2026 (recommended in all four): **L1** accept the load at 30 s;
+**L2** pull to refresh on Próxima jam and Anteriores; **L3** the `Actualizar` accessibility action;
+**L4** keep refreshing until start + 4 h after midnight.
+
+The questions as asked:
+
 - **L1 — Load trade-off.** Accept ~4 concurrent executions on average and up to ~21,600 calls per
   jam night, with jitter, the 60 s failure back-off and visible-only polling. *Recommended: accept.*
   Alternative: 60 s interval (halves both).
