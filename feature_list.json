@@ -998,7 +998,7 @@
     "depends_on": [
       "list-states"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "JVM: the refresh window opens 30 min before the start and closes 4 h after, in Buenos Aires time",
       "JVM: no periodic refresh outside the window; pull to refresh triggers exactly one refresh",
@@ -1013,8 +1013,26 @@
       ":app:assembleRelease exit 0; release BuildConfig.DEMO_UPCOMING_JAM_LIVE=false; no demo string in any release dex.",
       "Pixel 5 with bluesjam.demoUpcomingJamLive: lines every 32-34 s while visible; none after Home (08:58:43-08:59:48) or on Anteriores (09:00:29-09:01:34), resumed 3-4 s after return; on 6 Oct screen off also stopped them (then the secure lock screen ended that run).",
       "Airplane: Failed ticks 60 s apart, recovered 13-20 s after airplane off; uiautomator dumps while offline show 'Sin conexión' / 'Mostrando lo guardado hace 1 minuto.' / 'Reintentar', never 'Actualizando…', incl. 1 s after a failed tick; notice gone after recovery.",
-      "Pull: one line per pull on Próxima jam (09:05:46) and Anteriores (09:06:03); indicator raised-surface disc, no amber. Flag removed (local.properties restored, SHA-1 match), reinstalled: real 2026-10-31 jam upcoming, no demo jams refresh and no further jams refresh line from launch 09:16:40 through 09:18:26. Settings unchanged, crash buffer empty. Actualizar custom action not checked on device (TalkBack off-limits)."
+      "Pull: one line per pull on Próxima jam (09:05:46) and Anteriores (09:06:03); indicator raised-surface disc, no amber. Flag removed (local.properties restored, SHA-1 match), reinstalled: real 2026-10-31 jam upcoming, no demo jams refresh and no further jams refresh line from launch 09:16:40 through 09:18:26. Settings unchanged, crash buffer empty. Actualizar custom action not checked on device (TalkBack off-limits).",
+      "Validator (7 Oct 2026, c493fd8): accept. Gate exit 0 twice, three wired, Konsist 17/17, 576 tests. Own mutations restored by SHA-1: loop keyed on snapshot + window end +1 s (6 fail), quiet=false (2), no second-pull guard on Anteriores (1). No new dependency (lifecycle-runtime-compose 2.9.3 transitive via compose ui); opt-in scoped to RefreshableContent; release dex free of the live demo. Device not rerun (recorded evidence specific). Open: the Actualizar action sits on a non-focusable container and may be unreachable with TalkBack — human check owed; if it fails, move it to a focusable node."
     ]
+  },
+  {
+    "id": "offline-notice-visible",
+    "area": "feature-next-jam",
+    "title": "Keep the offline notice in view when it appears",
+    "user_visible_behavior": "When the staleness notice (Sin conexión / No se pudo actualizar) appears while the list is at its top, the list scrolls so the notice is visible, instead of inserting it just above the visible area.",
+    "depends_on": [
+      "list-states",
+      "live-refresh-during-jam"
+    ],
+    "status": "not_started",
+    "verification": [
+      "JVM or presenter-level test: notice appearing with the header as first visible item keeps the notice in view",
+      "Device: airplane mode during the live window shows the notice without scrolling"
+    ],
+    "notes": "Found by the live-refresh-during-jam implementer and recommended by its validator (7 Oct 2026): during the jam, polling makes this frequent, and it is the moment the notice matters most.",
+    "evidence": []
   },
   {
     "id": "action-contract-registry",

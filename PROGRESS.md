@@ -6,8 +6,9 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty-one of 40 slices accepted, the latest `admin-set-key` (7 October 2026).
-  `live-refresh-during-jam` is `passing`, awaiting validation.
+- Current state: thirty-two of 41 slices accepted, the latest `live-refresh-during-jam` (7 October
+  2026). New backlog slice `offline-notice-visible`. Human check owed: the `Actualizar` action with
+  TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
@@ -2411,6 +2412,11 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   (above). Scroll position is lost on tab switches until `bottom-navigation` (spec risk). Two
   presenters now collect `observeJams()`.
 - Next: the validator for `past-jams-list`.
+- **Orchestrator note (Session 065, past-jams-list):** the implementer briefly enabled TalkBack via adb, against a standing
+  constraint (no TalkBack via adb) that the orchestrator's prompt failed to restate. It opened its
+  tutorial; the implementer turned it off at once. Read back by the orchestrator: no accessibility
+  service enabled, `accessibility_enabled 0`, `touch_exploration_enabled 0`, airplane 0. Future
+  device prompts restate the constraint.
 
 ### Session 066 — 5 October 2026
 
@@ -3546,8 +3552,3 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   feature-module diff when the assistant lands, and a timed recording of the manual flow before the
   app replaces it.
 
-- **Orchestrator note:** the implementer briefly enabled TalkBack via adb, against a standing
-  constraint (no TalkBack via adb) that the orchestrator's prompt failed to restate. It opened its
-  tutorial; the implementer turned it off at once. Read back by the orchestrator: no accessibility
-  service enabled, `accessibility_enabled 0`, `touch_exploration_enabled 0`, airplane 0. Future
-  device prompts restate the constraint.
