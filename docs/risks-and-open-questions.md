@@ -205,14 +205,16 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   - `addSong` writes `posicion` as plain text (`@`); the read path already accepts it.
   - Two production deploy checks exist (`checkWriteAccess`, `checkSetlistWrite`), both guarded and
     self-cleaning, neither listed by a read.
-- **Remove-song risks** (`admin-remove-song-from-setlist`, as built; latency from the live checks
-  is still to be recorded after the batched deploy):
+- **Remove-song risks** (`admin-remove-song-from-setlist`, as built; live checks 7 October 2026):
   - *Partial renumber*: Apps Script has no transaction; a failure after `deleteRow` can leave a gap
     in `posicion` (never a duplicate, the renumber is ascending). The read path tolerates it; the
     next removal or reorder closes it.
   - *Refresh race* (as add-song): a refresh read before the removal and stored after it brings the
     row back until the next refresh.
   - *Latency* grows with the songs after the removed one (batched by runs of consecutive rows).
+    Measured live: `checkSetlistRemove` (create tab, three appends, one removal with renumber,
+    read back, delete tab) 4.9–7.1 s; a refused `removeSong` 2.3–3.5 s. A real removal from a
+    13-song list was not measured (never called with a real id); expect it below the check's time.
   - Pending and failed removals live in memory, lost with the process.
   - `song_not_in_setlist` also removes the cached row; if the Sheet changed in another way the
     cache stays off until the next refresh.
@@ -222,8 +224,9 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   - The row's "Quitando…" state is drawn only while the row is expanded (the action lives in the
     panel); collapsing it during the write hides the status, and the card or the row's disappearance
     still reports the outcome.
-- **Set-key risks** (`admin-set-key`, as built; latency from the live checks is still to be
-  recorded after the batched deploy):
+- **Set-key risks** (`admin-set-key`, as built; live checks 7 October 2026: `checkSetlistWrite`
+  with the key rewrite 4.4 s, rejected `setKey` probes 1.9–6.5 s, `readJams` 4.3–6.8 s; a real
+  `setKey` is never run live, so its own latency is estimated from these, about 2–6 s):
   - *An unsaved amber key* (user decision O1, optimistic): for the write's duration (about 5 s,
     longer on a slow network) the admin's row shows the new key in the amber `key` role, marked only
     by the muted `Guardando…` line under the title. If the admin reads it aloud before a revert,

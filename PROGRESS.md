@@ -3336,6 +3336,17 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   Note for set-key Part B: its spec maps `song_not_in_setlist` to `JAM_CHANGED` for a key change,
   while `failureMessage` now maps it to remove-song's `Ese tema ya no estaba en la lista.`; set-key
   needs a per-kind message for that code.
+- **Live checks LR1–LR5** (7 October 2026, after the user's batched deploy of `Post.js`
+  `be205ea3…`; script in the scratchpad, URL and passphrase read inside it, never printed):
+  - LR1 `{}` → `unknown_action`, `Known:` ends `removeSong, checkSetlistRemove, setKey`.
+  - LR2 wrong passphrase → `invalid_passphrase` (one deliberate guess).
+  - LR3, all refused before any write: `invalid_date`, `invalid_song`, `unknown_jam`
+    (1999-01-01), `jam_not_editable` (past 2026-07-25), `song_not_in_setlist` (upcoming
+    2026-10-31, `zz-no-existe`); 2.3–3.5 s each.
+  - LR4 `checkSetlistRemove` → `ok` twice, 7.12 s and 4.91 s.
+  - LR5 `readJams` before and after: both jams 13 rows, counts and full body identical (no real jam
+    modified). `removeSong` was never called with a real song id.
+- Every check in the spec has now run; the feature is ready for independent validation.
 
 ### Session 077 — 6 October 2026
 
@@ -3410,6 +3421,21 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - No live check (not deployed).
 - Next: the user's batched deploy (`Post.js` `be205ea3…`), remove-song's LR1–LR5 and validation,
   then set-key's L1–L5 (with the L3 latency for the risks doc) and validation.
+- Addendum, 7 October 2026: live checks after the user's batched deploy (`Post.js`
+  `be205ea3f5d5081e5896666d3490ae30cab06119`, local SHA-1 read back equal). Scratchpad script
+  `live_setkey.py` (SHA-1 `4d97e857…`): URL and passphrase read inside Python from
+  `local.properties`, `json.dumps` bodies, only codes, counts and timings printed; `setKey` never
+  called with a real song id.
+  - L1 `{}` → `unknown_action`; the `Known:` list (8 actions) includes `setKey`, `removeSong` and
+    `checkSetlistRemove`.
+  - L2 `setKey` with a wrong passphrase → `invalid_passphrase` (one wrong guess).
+  - L3 `checkSetlistWrite` (now including the key rewrite on `_prueba_lista`) → `ok` in 4439 ms.
+  - L4 `readJams` → `ok`, upcoming `2026-10-31` with 13 songs, 1 past jam.
+  - L5, each writing nothing: `invalid_date` (2026-02-30), `invalid_song` (`No Valido`),
+    `invalid_key` (`H`), `unknown_jam` (1999-01-01), `jam_not_editable` (the past jam),
+    `song_not_in_setlist` (upcoming date, `zz-no-existe`). Latencies 1.9–6.5 s.
+  - `readJams` after: song counts and SHA-256 of the jams JSON identical to before.
+  - No URL, passphrase or name in any output. Next: independent validation of `admin-set-key`.
 
 ### Session 078 — 6–7 October 2026
 
