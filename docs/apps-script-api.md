@@ -10,8 +10,8 @@ Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
 admin read `readJams`, the first setlist write `addSong` and its deploy check `checkSetlistWrite`
 (`admin-add-song-to-setlist`), `removeSong` with its deploy check `checkSetlistRemove`
 (`admin-remove-song-from-setlist`, Part A) and `setKey` (`admin-set-key`, Part A; its deploy proof
-is a step added to `checkSetlistWrite`). **`removeSong`, `checkSetlistRemove` and `setKey` are not
-deployed yet**: they ship in one batched `Post.gs` deploy, user decision B1 (a). Every POST action passes the
+is a step added to `checkSetlistWrite`). `removeSong`, `checkSetlistRemove` and `setKey` shipped in one
+batched `Post.gs` deploy (user decision B1 (a)), deployed by the user on 7 October 2026. Every POST action passes the
 passphrase guard in the router. The other admin mutations come with their own slices.
 
 ## Transport
