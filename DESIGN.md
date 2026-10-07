@@ -555,7 +555,23 @@ How they are drawn (`list-states`, 4 October 2026). Four shared components in `:
   No illustration.
 
 Retry is a read: it re-subscribes to the jams and calls `JamsRepository.refresh()`; it writes
-nothing. Previews: `NextJamStatesPreview.kt` (one per state), `NextJamDraftPreview.kt` (the draft
+nothing. So is the pull to refresh.
+
+**Pull to refresh and the live window** (`live-refresh-during-jam`, 6 October 2026, L1–L4 approved).
+Próxima jam and Anteriores, in every state (loading, error, empty, list), can be pulled down to read
+the jams again: one pull is one read, and a pull while one runs is ignored. The indicator is Material
+3's pull indicator with explicit colours, read only inside `:core:ui` `PullRefreshDefaults`: a
+`surfaceRaised` disc with a `text` arc. **No amber**: refreshing is not a primary action. It spins
+only for a refresh the user pulled. A pull gesture is not reachable with a screen reader, so the list
+carries the custom accessibility action `Actualizar`, which does the same. No pull on the song
+detail, the past jam detail, the pickers or Info (L2). While Próxima jam is visible and "now" is in
+a jam's live window (30 min before its start to 4 h after, Buenos Aires; the jam that turned
+historical at midnight keeps its window, L4) it refreshes every 30 s, 60 s after a failure. These
+periodic refreshes are **quiet**: no indicator, the staleness notice keeps its age instead of
+flashing `Actualizando…` (and its polite live region stays silent), and the error block never turns
+back into the skeleton. A Retry or a pull still shows `Actualizando…` as before. No toast or
+snackbar reports a refresh's outcome; the notice appears after a failure and goes after the next
+success. Previews: `NextJamStatesPreview.kt` (one per state), `NextJamDraftPreview.kt` (the draft
 card, fresh and offline) and the component previews in
 `:core:ui`; they compile in the gate but are not rendered by it.
 

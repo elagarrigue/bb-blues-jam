@@ -128,6 +128,62 @@ class DemoUpcomingJamRepositoryTest {
     }
 
     @Test
+    fun liveDemoReplacesEvenARealUpcomingJamAndStartsTenMinutesAfterNow() = runBlocking {
+        // 12:00:42 UTC is 09:00:42 in Buenos Aires: truncated to 09:00, plus 10 minutes.
+        val clock =
+            JamCalendar(Clock.fixed(Instant.parse("2026-10-05T12:00:42Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
+        val real = JamsSnapshot(realUpcoming, listOf(pastJam), freshness)
+
+        val emitted = DemoUpcomingJamRepository(FakeJams(real, real), clock, live = true).observeJams().toList()
+
+        val upcoming = emitted.first().upcoming!!
+        assertTrue(upcoming.isDemo())
+        assertEquals(today, upcoming.date)
+        assertEquals(LocalTime.parse("09:10"), upcoming.startTime)
+        assertEquals(DemoUpcomingJam.on(today).setlist, upcoming.setlist)
+        // Computed once: every emission carries the same jam.
+        assertSame(upcoming, emitted.last().upcoming)
+        assertEquals(real.past, emitted.first().past)
+        assertEquals(real.freshness, emitted.first().freshness)
+    }
+
+    @Test
+    fun liveDemoStartTimeIsComputedOncePerInstance() = runBlocking {
+        var instant = Instant.parse("2026-10-05T12:00:00Z")
+        val moving = object : Clock() {
+            override fun getZone() = ZoneOffset.UTC
+
+            override fun withZone(zone: java.time.ZoneId?) = this
+
+            override fun instant(): Instant = instant
+        }
+        val repository = DemoUpcomingJamRepository(
+            FakeJams(JamsSnapshot(null, emptyList(), freshness)),
+            JamCalendar(moving, JamCalendar.BUENOS_AIRES),
+            live = true,
+        )
+
+        val first = repository.observeJams().toList().single().upcoming!!
+        instant = instant.plusSeconds(3_600)
+        val second = repository.observeJams().toList().single().upcoming!!
+
+        assertEquals(LocalTime.parse("09:10"), first.startTime)
+        assertSame(first, second)
+    }
+
+    @Test
+    fun liveDemoLogsEveryRefreshAndTheDefaultNever() = runBlocking {
+        val lines = mutableListOf<String>()
+        val real = FakeJams()
+
+        DemoUpcomingJamRepository(real, calendar, live = true, log = { lines += it }).refresh()
+        DemoUpcomingJamRepository(real, calendar, log = { lines += it }).refresh()
+
+        assertEquals(listOf("demo jams refresh: Failed at 2026-10-05T12:00:00Z"), lines)
+        assertEquals(2, real.refreshCalls)
+    }
+
+    @Test
     fun demoSetlistCoversTheDeviceChecks() {
         val songs = (DemoUpcomingJam.on(today).setlist as Setlist.Available).songs
         val slots = songs.flatMap { it.lineup.slots }

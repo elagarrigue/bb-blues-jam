@@ -82,6 +82,11 @@ Hideaway radio program). What the Info tab presents; facts in `docs/info-content
 The Google Sheets workbook that serves as the project's backend, reached through Apps Script. It is
 the authority for the Catalog and past Jams; the app is the authority for the upcoming Setlist.
 
+### Live Window
+The time around a Jam when Próxima jam refreshes itself often: from 30 minutes before its start to
+4 hours after, Buenos Aires time, even after the Jam turned past at midnight. Outside it the app only
+refreshes when opened, on Retry or on a pull.
+
 ### Enrichment
 Optional metadata fetched from external music APIs (MusicBrainz, Deezer, Last.fm) and cached
 locally. Never required for a Song to be usable; the MVP works with the Sheet alone.

@@ -185,6 +185,25 @@ date and `SongId.parseOrNull`), a `setKey` destination beside `addSong` (same sl
 `RESUMED` back guard; a pick pops by route), `TabsShell(onOpenSetKey)` → `NextJamScreen(onSetKey)`.
 Konsist unchanged (17 rules, `:feature:next-jam` still `{key}`).
 
+As built by `live-refresh-during-jam`: **periodic refresh lives in the presenter, gated by the
+screen's lifecycle**, never in a repository (it does not know what is visible), WorkManager or a
+service. `NextJamScreen` reads `LocalLifecycleOwner.current.lifecycle.currentStateAsState()`
+(`androidx.lifecycle.compose`, already on the classpath through Compose UI; no new dependency) and
+passes `NextJamPresenter.Params(isResumed = …)` (default `false`, so a presenter nobody marks
+visible never polls); each tab is its own `NavBackStackEntry`, so another tab, an outer destination,
+the background or the screen off all stop it. `LiveRefresh.kt` holds the pure parts: `LiveRefresh`
+(30 min before, 4 h after, 30 s, 60 s = `CatalogRepository.MIN_RETRY_INTERVAL`), `liveWindow(jam,
+zone)` (`[start − 30 min, start + 4 h)` in `calendar.zone`), `JamsSnapshot.liveJams()` (`upcoming`
+and `past.first()`, as date and start time only) and the suspend `runLiveRefresh(windows, now,
+lastFetchedAt, jitter, refresh)`, testable in virtual time. `NextJamRefreshes.kt`
+(`rememberNextJamRefreshes`) runs it in a `LaunchedEffect(isResumed, liveJams)`: **keyed by the
+window jams, never by the snapshot** (each refresh emits a new snapshot; a snapshot key would restart
+the loop and refresh at once, forever). Periodic refreshes are quiet: while one runs and no user
+refresh (Retry or pull) does, the snapshot is drawn with `isRefreshing = false`. `NextJamPresenter`
+takes a fifth constructor parameter `random: Random = Random.Default` for the jitter (Koin keeps four
+`get()`s). Anteriores has the pull only. The debug flag `bluesjam.demoUpcomingJamLive` (Build
+Conventions, Debug demo jam) makes the window observable on a device.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -264,6 +283,16 @@ Konsist unchanged (17 rules, `:feature:next-jam` still `{key}`).
   `rememberCoroutineScope()`, ignoring the outcome, which comes back through `Freshness`. The counter
   is created once, so an earlier model's handler still works. The staleness notice is drawn only
   when `fetchedAt != null && lastFailure != null`, never on age alone.
+- Pull to refresh is the sixth example (`live-refresh-during-jam`): `com.bbbjam.core.ui.state`
+  holds `PullRefreshUiModel(isRefreshing, events)` (`Event.Refresh`, `IDLE` with a keyless handler),
+  `RefreshableContent(model, modifier, content)` over Material 3's experimental `PullToRefreshBox`
+  (the opt-in stays inside `:core:ui`), internal `PullRefreshDefaults` (`surfaceRaised` disc, `text`
+  arc, no amber) and `PullRefreshCopy` (the `Actualizar` custom accessibility action). Every
+  `NextJamUiModel` and `PastJamsUiModel` variant has `pullRefresh` (abstract on the sealed interface,
+  defaulting to `IDLE`, so model-equality tests built without it still pass). The handler does what
+  Retry does (re-subscribe, one `refresh()`), ignores a pull while its own is running, and only a
+  pull spins the indicator. Content that is not a list scrolls (`verticalScroll`) so the gesture
+  reaches the box.
 - The song detail is the fifth example (`song-detail-screen`): `com.bbbjam.core.ui.lineup` adds
   `InstrumentGroups(model)`, `InstrumentGroupsUiModel`/`InstrumentGroupUiModel` and the pure mapper
   `Lineup.toInstrumentGroups(extras)` (groups in first-appearance order, open before filled inside a
@@ -550,7 +579,12 @@ them.
   `BuildConfig.DEMO_UPCOMING_JAM_DRAFT`, release hard `false`, effective only with the demo flag)
   makes the demo a DRAFT with the same songs (`DemoUpcomingJam.on(today, draft)`,
   `DemoUpcomingJamRepository(real, calendar, draft)`); the startup line appends ` draft` after any
-  DRAFT upcoming date. Leave it off or absent.
+  DRAFT upcoming date. Leave it off or absent. `bluesjam.demoUpcomingJamLive=true` (`live-refresh-during-jam`,
+  `BuildConfig.DEMO_UPCOMING_JAM_LIVE`, release hard `false`, works on its own) installs the same
+  decorator in live mode: the demo jam **replaces** the upcoming jam whatever the cache holds,
+  dated today with its start 10 minutes after the process started (Buenos Aires, truncated to the
+  minute, computed once), so the live window is open, and every `refresh()` logs `demo jams
+  refresh: <Updated|Failed> at <instant>` (tag `BluesJam`). Leave it off or absent.
 - **Debug admin session** (`debug-admin-session`): device checks of admin controls never need the
   real passphrase. `bluesjam.debugAdmin=true` becomes `BuildConfig.DEBUG_ADMIN` (debug only;
   release hard `false`). `DebugAdminSession(real: AdminSession)` in `app/src/debug/` emits true

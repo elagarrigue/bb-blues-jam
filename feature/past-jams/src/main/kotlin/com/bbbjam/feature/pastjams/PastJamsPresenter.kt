@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -17,6 +18,7 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.state.stalenessNotice
 import java.time.Duration
@@ -27,7 +29,9 @@ import kotlinx.coroutines.launch
 /**
  * Presents Anteriores: the past jams of [JamsRepository.observeJams], newest first. Read-only (D-04,
  * D-13); it never starts network work on its own (collecting the flow may start the repository's
- * own background refresh). The one exception is the musician's Retry (`list-states`): it
+ * own background refresh), and has no periodic refresh (`live-refresh-during-jam` polls only
+ * Próxima jam). The exceptions are the musician's Retry (`list-states`) and the pull to refresh
+ * (`live-refresh-during-jam`, one read per pull; a pull while one runs is ignored). Retry
  * re-subscribes to the flow, which recovers from a failed local read, and calls
  * [JamsRepository.refresh], a read. The subscription counter is created once, so an earlier model's
  * Retry handler still works. "Now" comes only from [calendar], read once per snapshot, to age the
@@ -52,9 +56,34 @@ class PastJamsPresenter(private val jams: JamsRepository, private val calendar: 
             subscription++
             scope.launch { jams.refresh() }
         }
-        return snapshot?.toUiModel(now, onRetry, onOpenJam)
+        var pulling by remember { mutableStateOf(false) }
+        val onPull: () -> Unit = {
+            // One pull is one read: a pull while one runs is ignored.
+            if (!pulling) {
+                pulling = true
+                subscription++
+                scope.launch {
+                    try {
+                        jams.refresh()
+                    } finally {
+                        pulling = false
+                    }
+                }
+            }
+        }
+        val pullRefresh = PullRefreshUiModel(isRefreshing = pulling, events = EventHandler { onPull() })
+        val model = snapshot?.toUiModel(now, onRetry, onOpenJam)
             ?: PastJamsUiModel.Loading(PastJamsCopy.TITLE, PastJamsCopy.LOADING)
+        return model.withPullRefresh(pullRefresh)
     }
+}
+
+/** This model with [pullRefresh]; every state can be pulled. */
+private fun PastJamsUiModel.withPullRefresh(pullRefresh: PullRefreshUiModel): PastJamsUiModel = when (this) {
+    is PastJamsUiModel.Loading -> copy(pullRefresh = pullRefresh)
+    is PastJamsUiModel.Failed -> copy(pullRefresh = pullRefresh)
+    is PastJamsUiModel.Empty -> copy(pullRefresh = pullRefresh)
+    is PastJamsUiModel.Jams -> copy(pullRefresh = pullRefresh)
 }
 
 /**

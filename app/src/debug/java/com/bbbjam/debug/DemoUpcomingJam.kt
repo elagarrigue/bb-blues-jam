@@ -10,7 +10,9 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 /**
@@ -43,6 +45,13 @@ internal object DemoUpcomingJam {
         status = if (draft) JamStatus.DRAFT else JamStatus.PUBLISHED,
         setlist = Setlist.Available(SONGS.mapIndexed { index, song -> song.toJamSong(position = index + 1) }),
     )
+
+    /** How long after the process started the live demo jam starts (`live-refresh-during-jam`). */
+    val LIVE_START_AFTER: Duration = Duration.ofMinutes(10)
+
+    /** The demo jam starting at [start] (Buenos Aires local date and time), for the live demo. */
+    fun startingAt(start: LocalDateTime, draft: Boolean = false): Jam =
+        on(start.toLocalDate(), draft).copy(date = start.toLocalDate(), startTime = start.toLocalTime())
 
     private class DemoSong(
         val id: String,

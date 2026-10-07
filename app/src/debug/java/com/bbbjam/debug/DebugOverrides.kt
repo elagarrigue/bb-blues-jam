@@ -1,5 +1,6 @@
 package com.bbbjam.debug
 
+import android.util.Log
 import com.bbbjam.BuildConfig
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
@@ -17,6 +18,7 @@ internal data class DebugFlags(
     val demoUpcomingJam: Boolean = false,
     val demoUpcomingJamDraft: Boolean = false,
     val debugAdmin: Boolean = false,
+    val demoUpcomingJamLive: Boolean = false,
 ) {
     companion object {
         /** The flags of this debug build. */
@@ -24,6 +26,7 @@ internal data class DebugFlags(
             demoUpcomingJam = BuildConfig.DEMO_UPCOMING_JAM,
             demoUpcomingJamDraft = BuildConfig.DEMO_UPCOMING_JAM_DRAFT,
             debugAdmin = BuildConfig.DEBUG_ADMIN,
+            demoUpcomingJamLive = BuildConfig.DEMO_UPCOMING_JAM_LIVE,
         )
     }
 }
@@ -36,20 +39,34 @@ internal data class DebugFlags(
  *   well ([BuildConfig.DEMO_UPCOMING_JAM_DRAFT], `unpublished-setlist-state`) the demo jam is a draft.
  * - `bluesjam.debugAdmin=true` ([BuildConfig.DEBUG_ADMIN], `debug-admin-session`) rebinds
  *   [AdminSession] to [DebugAdminSession] around the real one.
+ * - `bluesjam.demoUpcomingJamLive=true` ([BuildConfig.DEMO_UPCOMING_JAM_LIVE], `live-refresh-during-jam`)
+ *   also rebinds [JamsRepository] to [DemoUpcomingJamRepository], in live mode: the demo replaces the
+ *   upcoming jam and starts 10 minutes after the process started, and every refresh is logged with [log].
  *
  * Each real binding is resolved here once so the override can wrap it. The release variant returns
  * no module.
  */
 internal fun Koin.debugOverrides(): List<Module> = debugOverrides(DebugFlags.fromBuildConfig)
 
-internal fun Koin.debugOverrides(flags: DebugFlags): List<Module> = buildList {
-    if (flags.demoUpcomingJam) {
+internal fun Koin.debugOverrides(
+    flags: DebugFlags,
+    log: (String) -> Unit = {
+        Log.i(LOG_TAG, it)
+    },
+): List<Module> = buildList {
+    if (flags.demoUpcomingJam || flags.demoUpcomingJamLive) {
         val real = get<JamsRepository>()
         val calendar = get<JamCalendar>()
         add(
             module {
                 single<JamsRepository> {
-                    DemoUpcomingJamRepository(real, calendar, draft = flags.demoUpcomingJamDraft)
+                    DemoUpcomingJamRepository(
+                        real,
+                        calendar,
+                        draft = flags.demoUpcomingJamDraft,
+                        live = flags.demoUpcomingJamLive,
+                        log = log,
+                    )
                 }
             },
         )
@@ -68,3 +85,6 @@ internal fun Jam.isDemo(): Boolean = venue == DemoUpcomingJam.VENUE
  * startup log never passes for a real login. Always empty in release.
  */
 internal fun debugAdminLogSuffix(): String = if (BuildConfig.DEBUG_ADMIN) " admin (debug)" else ""
+
+/** The app's log tag (`BluesJamApp.LOG_TAG`, private there), so the demo lines sit with the startup lines. */
+private const val LOG_TAG = "BluesJam"

@@ -10,7 +10,9 @@
   2026). `admin-remove-song-from-setlist` and `admin-set-key` are both `in_progress`: each Part A
   (server half and `:core:data`) done and self-verified (sessions 074 and 075), in one `Post.js`
   that is **not deployed**; remove-song's Part B (UI) and set-key's Part B (UI) also done and
-  self-verified (sessions 076 and 077).
+  self-verified (sessions 076 and 077). `live-refresh-during-jam` (needs no deploy) is `passing`
+  since session 078, awaiting validation; **three features were `in_progress` at once** during that
+  session (the two awaiting the deploy, by user-approved exception, plus this one).
   Next: the user's **one** batched paste and **New version** (user decision B1 (a); README
   "Redeploy for remove song and set key, in one paste"), then remove-song's live checks LR1–LR5 and
   validation, then set-key's live checks and validation.
@@ -18,7 +20,10 @@
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 6 October 2026 (session 077, `admin-set-key` Part B, `in_progress`) —
+- Last verified at: 7 October 2026 (session 078, `live-refresh-during-jam`, `passing`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 92 result files, 576 tests, 0 failures. Pixel 5: device steps 1–6 of the spec;
+  see session 078. Before that, 6 October 2026 (session 077, `admin-set-key` Part B, `in_progress`) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 87 result files, 538 tests, 0 failures. Pixel 5: picker, rotation, font scale
   2.0, `AccessRefused` revert and card, musician view; no DataStore dir before or after; settings
@@ -3405,6 +3410,110 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   - No live check (not deployed).
 - Next: the user's batched deploy (`Post.js` `be205ea3…`), remove-song's LR1–LR5 and validation,
   then set-key's L1–L5 (with the L3 latency for the risks doc) and validation.
+
+### Session 078 — 6–7 October 2026
+
+- Feature: `live-refresh-during-jam`, spec `docs/specs/live-refresh-during-jam.md` (approvals L1–L4
+  recorded in c6feb11, all as recommended). Built on b981cbf. **Three features `in_progress` at
+  once** during the session: `admin-remove-song-from-setlist` and `admin-set-key` (code-complete,
+  waiting for the user's batched deploy and live checks, user-approved exception) and this one,
+  which needs no deploy. Status now **`passing`**, awaiting independent validation. The device run
+  was interrupted on 6 October by the phone's secure lock screen and finished on 7 October.
+- Task 1 (dependency check): `./gradlew :feature:next-jam:dependencies --configuration
+  debugCompileClasspath` shows `androidx.lifecycle:lifecycle-runtime-compose:2.8.7 -> 2.9.3` under
+  `androidx.compose.ui:ui:1.9.1` (an `api` of `:core:ui`); `LocalLifecycleOwner` and
+  `currentStateAsState` compiled in `:feature:next-jam` with no build file change. No new dependency.
+- What changed:
+  - `:core:ui` `state/PullRefresh.kt`: `PullRefreshUiModel` (`Event.Refresh`, `IDLE`),
+    `RefreshableContent` (Material 3 `PullToRefreshBox`, opt-in inside `:core:ui` only, custom
+    accessibility action `Actualizar`), internal `PullRefreshDefaults` (`surfaceRaised`, `text`) and
+    `PullRefreshCopy`.
+  - `:feature:next-jam`: `LiveRefresh.kt` (constants, `liveWindow`, `liveJams`, `jitter`,
+    `runLiveRefresh`); `NextJamRefreshes.kt` (`rememberNextJamRefreshes`: the loop in
+    `LaunchedEffect(isResumed, liveJams)`, quiet masking, pull and Retry as user refreshes; after a
+    periodic call it stays quiet until the snapshot says "not refreshing", bounded by 30 s, so the
+    notice cannot flash for one frame); `NextJamPresenter` (`Params.isResumed` default false, fifth
+    constructor parameter `random = Random.Default`, KDoc); `NextJamUiModel` (`pullRefresh` on every
+    variant); `NextJamScreen` (lifecycle to `isResumed`, `RefreshableContent` around every state; the
+    loading and error states scroll).
+  - `:feature:past-jams`: pull only (`PastJamsPresenter`, `PastJamsUiModel`, `PastJamsScreen`).
+  - `:app` debug: `bluesjam.demoUpcomingJamLive` to `BuildConfig.DEMO_UPCOMING_JAM_LIVE` (release
+    hard `false`), `DebugFlags.demoUpcomingJamLive`; the demo decorator in live mode replaces the
+    upcoming jam with the demo dated today, start = now (BA, minute) + 10 min, computed once, and
+    logs `demo jams refresh: <Updated|Failed> at <instant>`. The flag works on its own.
+  - Tests: new `PullRefreshDefaultsTest` 4, `LiveRefreshWindowTest` 5, `LiveRefreshLoopTest` 9,
+    `NextJamLiveRefreshTest` 13 (including the requested race check: a refresh landing mid-write
+    leaves the optimistic key, `Guardando…` and `Quitando…` in place; and a refresh already holding
+    an added song while its add is sending shows the row and the pending row until the add ends),
+    `PastJamsPullRefreshTest` 3; `DemoUpcomingJamRepositoryTest` 8 → 11, `DebugAdminSessionTest`
+    6 → 7. Both `FakeJamsRepository` fakes are now single-flight with `fetches`, `hold` and `fails`.
+    Existing admin tests (add, remove, set key) unchanged and green.
+  - Docs: `docs/risks-and-open-questions.md` (Live refresh risks: load estimate, growth, battery,
+    the race, TalkBack, the out-of-view notice, experimental API; assumption 6),
+    `docs/apps-script-api.md` Quotas (jam-night polling), `DESIGN.md` Required States (pull and live
+    window), `CONTEXT.md` (Live Window), architecture `SKILL.md` (live-refresh pattern, sixth
+    `core.ui.state` example, the debug flag), presenter KDoc.
+- Verification run:
+  - `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0: `konsist: wired` (17/17, unchanged),
+    `detekt: wired`, `ktlint: wired`; 92 result files, 576 tests, 0 failures (538 before). The first
+    gate run failed detekt (`MaxLineLength` in a `PastJamsScreen` KDoc; `TooManyFunctions` 12/11 in
+    `NextJamScreen.kt` from a new helper); fixed by wrapping and inlining, no suppression. No source
+    file changed after that run (docs and harness only).
+  - Failure demonstrations, each restored from a byte copy in the scratchpad with `sha1sum -c` OK:
+    (a) loop keyed on the snapshot: 2 of 133 fail (`a refresh that emits a new snapshot does not
+    restart the loop`, `a Retry during a periodic refresh shows Actualizando`: 3 calls, expected 2);
+    (b) no quiet masking: 2 fail (`a periodic refresh is quiet` saw `Actualizando…`; `a Failed model
+    stays Failed` got `Loading`); (c) no pull guard: 1 fails (the second pull made 2 calls). Restored
+    `NextJamRefreshes.kt` SHA-1 `200edac5cb34f773a173d3726abc991376443209`. (d) `liveJams` without
+    `past.first()`: 3 fail (window candidates, the after-midnight test, `a Failed model stays
+    Failed`); restored `LiveRefresh.kt` SHA-1 `d78bb93a94c28754740e4d61b89d61d7de1b7ae7`.
+  - `:app:assembleRelease` exit 0; release `BuildConfig.DEMO_UPCOMING_JAM_LIVE = false`; no
+    `demo jams refresh` or `DemoUpcomingJamRepository` string in any release dex (the debug dex has
+    the string, so the check can find it).
+  - Device, Pixel 5, debug build. `local.properties` backed up once; `bluesjam.demoUpcomingJamLive=true`
+    appended for each run (the file already had the demo and debug-admin flags on) and the file
+    restored from the byte copy after each run (SHA-1 match, `cmp` identical). The real Sheet still
+    has the 2026-10-31 test jam; the live demo replaced it, as designed.
+    - First run, 6 October. Startup `jams cache: upcoming 2026-10-06 (demo) … admin (debug)`, the
+      screen `Martes 6 de octubre · 15:18`, `Demo (solo debug)`, `Hoy`. Step 1: three
+      `demo jams refresh: Updated` lines at `15:08:57.412` (the startup refresh, the debug-admin
+      login refresh and the first periodic call joined one fetch: one `jams refresh: updated 2 jams`
+      line), then `15:09:30`, `15:10:02`, `15:10:35` (every 32–33 s: 30 s plus the call). Step 2:
+      Home at 15:10:37, no line until 15:11:47; screen off at 15:11:47, no line until 15:12:59. The
+      screen-off brought up the phone's secure lock screen (`deviceLocked=1`, screencap blank); the
+      agent cannot unlock it and did not try, so that run stopped (no polling behind the lock screen,
+      as intended).
+    - Second run, 7 October (phone unlocked). Launch 08:57:54, demo jam `Miércoles 7 de octubre ·
+      09:07`; lines 08:57:59 (three joined) and 08:58:33.
+    - Step 2: Home at 08:58:43, no line until back at 08:59:48; then 08:59:52 (data older than 30 s,
+      so at once) and 09:00:26.
+    - Step 3: Anteriores at 09:00:29, no line until back on Próxima jam at 09:01:34; then 09:01:37
+      and 09:02:10.
+    - Step 4: airplane on 09:02:30: `Failed` at 09:02:40 and 09:03:40 (60 s); off at 09:04:31,
+      `Updated` at 09:04:44, then 09:05:17. Repeated to read the notice (inserted above the header
+      while the list stays anchored on the header, it starts just out of view; two short swipes under
+      the pull threshold revealed it, and no extra refresh line appeared): `uiautomator dump` at
+      09:14:00, 09:14:23 (one second after the failed tick at 09:14:22) and every ~6 s to 09:15:03
+      read `Sin conexión` / `Mostrando lo guardado hace menos de un minuto.`, then `… hace 1 minuto.`
+      / `Reintentar`, never `Actualizando…`. Off at 09:15:06, `Updated` at 09:15:26; the dump at
+      09:16:16 had no notice. Airplane mode read back 0 after each run.
+    - Step 5: pull on Próxima jam at 09:05:42, one line at 09:05:46 (the 09:05:51 line is the
+      periodic tick due 30 s after 09:05:17 plus the call); pull on Anteriores at 09:05:55, one line
+      at 09:06:03. Both screenshots show the indicator: a raised-surface disc with a light arc, no
+      amber.
+    - Step 6: `local.properties` restored, flagless build reinstalled, launched 09:16:40: startup
+      lines only (`jams cache: upcoming 2026-10-31, … admin (debug)`, the real jam, more than 30 min
+      away) and no `demo jams refresh` and no further `jams refresh` line through 09:18:26 (106 s).
+  - Settings read back equal to the values recorded before (`airplane_mode_on 0`, `font_scale 1.0`,
+    `accelerometer_rotation 1`, `user_rotation 0`, `enabled_accessibility_services null`,
+    `accessibility_enabled 0`, `screen_off_timeout 1800000`, `stay_on_while_plugged_in 7`); crash
+    buffer empty. TalkBack and accessibility never touched (the `Actualizar` custom action is not
+    checked on a device); `local.properties`, the URL and the passphrase never printed.
+  - Finding outside this slice: a staleness notice that appears while the list is at its top is out
+    of view until the user scrolls up (a `list-states` behaviour that polling makes more frequent).
+    Recorded in the risks doc.
+- Next: independent validation of `live-refresh-during-jam`; the two admin slices still wait for the
+  batched deploy.
 
 ## Notes For The Next Session
 

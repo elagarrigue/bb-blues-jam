@@ -247,6 +247,40 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
     three-button navigation bar on the right overlaps the last column's edge (seen on the Pixel 5,
     session 077). The cells stay tappable; a horizontal inset is a shared fix for all outer-host
     screens.
+- **Live refresh risks** (`live-refresh-during-jam`, as built; approvals L1–L4 of 6 October 2026):
+  - *Load estimate* (L1, accepted): Próxima jam calls `JamsRepository.refresh()` every 30 s (60 s
+    after a failure) while it is visible and "now" is in a jam's live window, 30 min before the start
+    to 4 h after (Buenos Aires). Concurrency: N phones × call duration / period = 40 × 3 s / 30 s ≈
+    **4 simultaneous executions** on average, against the limit of 30 per user binding. Phases spread
+    by when each screen opened, plus a jitter in `[0, 30 s)` at window opening; reaching 30 needs a
+    synchronization the design avoids, and failures back off to 60 s, so overload sheds load.
+    Volume: upper bound 40 × 120/h × 4.5 h = **21,600 calls per night**, only if every phone keeps
+    Próxima jam visible the whole window; realistic is a fraction (screens go off). Google lists no
+    daily cap for web app executions, but quotas "may change without notice" and are not measured
+    under load (assumption 6). Lever: `LiveRefresh.INTERVAL`, one constant (60 s halves both).
+  - *Growth*: the `jams` route reads one tab per published jam, so latency, and with it the average
+    concurrency, grows over the year. Recorded, not solved here.
+  - *Battery*: polling only with the screen on and the app in front; one HTTPS call per 30 s keeps
+    the radio in its high-power tail part of the time. The display dominates; acceptable for one
+    night.
+  - *Refresh vs an in-flight add, removal or key change*: polling makes the refresh race of the
+    three admin slices likelier. A read answered just before a write commits can replace the cache
+    after the write's row lands, hiding it for up to one tick (30 s); the next tick self-heals. The
+    optimistic overlays come from the setlist entries, not the snapshot, so a refresh landing
+    mid-write leaves "Guardando…", the optimistic key and "Quitando…" in place (JVM:
+    `NextJamLiveRefreshTest`). A refresh that already holds an added song while its add is still
+    sending shows the row **and** the "Agregando…" pending row until the add's answer arrives
+    (seconds); not fixed, recorded.
+  - *TalkBack*: the pull gesture is not reachable with a screen reader; the list carries the custom
+    action `Actualizar` (L3). Not checked on a device (enabling TalkBack is off-limits for agents);
+    a human check is still owed.
+  - *Notice out of view* (seen on the Pixel 5, session 078): when a refresh fails while the list is
+    at its top, the staleness notice is inserted above the header and the lazy list stays anchored
+    on the header, so the notice starts just out of view until the user scrolls up. A `list-states`
+    behaviour, not introduced here, but polling makes a failure while the list is open more frequent;
+    a fix (scroll to the notice when it appears at the top) belongs to its own slice.
+  - `PullToRefreshBox` is `@ExperimentalMaterial3Api` in material3 1.3.2; a BOM bump may change its
+    API (it is used only in `:core:ui` `RefreshableContent`).
 - **Failed writes after optimistic update.** The mitigation for Apps Script latency is optimistic
   presenter state, which makes rollback the real question. A failed publish is the worst case in the
   product: the admin believes the list is live and musicians see something stale. Publish failure in
@@ -332,7 +366,9 @@ Stated so they can be challenged rather than silently relied upon.
    monthly peaks. Checked against Google's published limits on 1 October 2026 (page updated
    3 September 2026): 6 min per execution, 30 simultaneous executions per user, no daily cap listed
    for web app executions (`apps-script-api.md`, **Quotas**). Every anonymous call runs as the
-   owner, so the 30-concurrent limit is the one to watch; still unmeasured under real load.
+   owner, so the 30-concurrent limit is the one to watch; still unmeasured under real load. Since
+   `live-refresh-during-jam`, jam night is about 4 simultaneous executions on average and at most
+   about 21,600 reads per night (Implementation-Time Questions, **Live refresh risks**).
 
 ## Risks
 

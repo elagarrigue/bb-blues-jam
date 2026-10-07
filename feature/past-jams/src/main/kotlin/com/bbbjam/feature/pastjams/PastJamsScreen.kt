@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.ListErrorBlock
+import com.bbbjam.core.ui.state.RefreshableContent
 import com.bbbjam.core.ui.state.SkeletonList
 import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.theme.BluesJamTheme
@@ -35,9 +36,10 @@ import org.koin.compose.koinInject
 /**
  * Anteriores: the past jams, newest first, each a muted archive row (date with the year, venue,
  * song count and the first titles). Loading, error, empty and offline are drawn with the `:core:ui`
- * state components (`list-states`). Read-only; a row with songs opens its jam (`past-jam-detail`)
+ * state components (`list-states`); every state can be pulled to refresh
+ * (`live-refresh-during-jam`). Read-only; a row with songs opens its jam (`past-jam-detail`)
  * through [onOpenJam], which `:app` binds to navigation. It renders [PastJamsUiModel] and forwards
- * the retries and the rows' Open; the presenter decides. [contentPadding] goes inside the list, so
+ * the retries, the pull and the rows' Open; the presenter decides. [contentPadding] goes inside the list, so
  * the background runs edge to edge.
  */
 @Composable
@@ -61,12 +63,23 @@ internal fun PastJamsContent(model: PastJamsUiModel, modifier: Modifier, content
         end = contentPadding.calculateEndPadding(layoutDirection) + spacing.md,
         bottom = contentPadding.calculateBottomPadding() + spacing.lg,
     )
-    LazyColumn(
+    // Every state is a list, so every state can be pulled (`live-refresh-during-jam`).
+    RefreshableContent(
+        model.pullRefresh,
         modifier = modifier
             .fillMaxSize()
             .background(BluesJamTheme.colors.background),
+    ) {
+        PastJamsList(model, padding)
+    }
+}
+
+@Composable
+private fun PastJamsList(model: PastJamsUiModel, padding: PaddingValues) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         contentPadding = padding,
-        verticalArrangement = Arrangement.spacedBy(spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
     ) {
         item(key = TITLE_KEY) { Title(model.title) }
         when (model) {

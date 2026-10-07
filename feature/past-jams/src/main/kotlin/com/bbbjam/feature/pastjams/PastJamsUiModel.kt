@@ -5,29 +5,41 @@ import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
+import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import java.time.LocalDate
 
 /**
  * Everything Anteriores draws, as plain values. Read-only: the Sheet owns past jams (D-04), so
- * there is no event but the states' Retry, which is a read, and a row's Open, which navigates.
+ * there is no event but the states' Retry and the pull to refresh ([pullRefresh],
+ * `live-refresh-during-jam`), which are reads, and a row's Open, which navigates.
  * [title] ("Jams anteriores") is screen
  * chrome, drawn in every state.
  */
 sealed interface PastJamsUiModel : UiModel {
     val title: String
+    val pullRefresh: PullRefreshUiModel
 
     /** Nothing to show yet. Drawn as skeleton rows; [description] is what a screen reader says. */
-    data class Loading(override val title: String, val description: String) : PastJamsUiModel
+    data class Loading(
+        override val title: String,
+        val description: String,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
+    ) : PastJamsUiModel
 
     /** Nothing was ever fetched and the latest read failed: the error block with a retry button. */
-    data class Failed(override val title: String, val error: ListErrorUiModel) : PastJamsUiModel
+    data class Failed(
+        override val title: String,
+        val error: ListErrorUiModel,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
+    ) : PastJamsUiModel
 
     /** The jams were read and none is past. [staleness] is set when the latest refresh failed. */
     data class Empty(
         override val title: String,
         val empty: EmptyStateUiModel,
         val staleness: StalenessNoticeUiModel?,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : PastJamsUiModel
 
     /** The past jams, newest first. [staleness] is set exactly when the latest refresh failed. */
@@ -35,6 +47,7 @@ sealed interface PastJamsUiModel : UiModel {
         override val title: String,
         val rows: List<PastJamRowUiModel>,
         val staleness: StalenessNoticeUiModel?,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : PastJamsUiModel
 }
 

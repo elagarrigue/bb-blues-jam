@@ -580,3 +580,13 @@ second. A call over the limit fails with "There are too many scripts running sim
 this Google user account" (Google's wording). It is thrown outside `doGet`, so it does not arrive
 as a contract error; what an anonymous caller receives then (most likely an HTML page) is not
 verified. The client should treat any non-JSON body as a transport failure and keep its cache.
+
+**Jam-night polling** (`live-refresh-during-jam`, user approval L1, 6 October 2026). While Próxima
+jam is visible and "now" is between 30 min before a jam's start and 4 h after it (Buenos Aires),
+each phone reads the jams every 30 s, every 60 s after a failure, measured from when the previous
+answer arrived (so one phone never overlaps itself), with a random delay of up to 30 s when the window
+opens. For an admin each read is the guarded `readJams` POST; for everyone else the `jams` GET.
+Estimate for 40 phones and a 3 s call: about 4 simultaneous executions on average against the 30
+per user, and at most about 21,600 reads in one night if every screen stays on the whole window. A
+call refused over the limit is a failed refresh: the phone keeps its cache and waits 60 s. The
+interval is one constant (`LiveRefresh.INTERVAL`) if the estimate proves wrong.

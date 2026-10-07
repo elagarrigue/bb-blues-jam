@@ -17,10 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -31,6 +34,9 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
@@ -44,6 +50,7 @@ import com.bbbjam.core.ui.lineup.toLineupPanel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.ListErrorBlock
+import com.bbbjam.core.ui.state.RefreshableContent
 import com.bbbjam.core.ui.state.SkeletonList
 import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.strip.InstrumentStrip
@@ -67,6 +74,8 @@ import org.koin.compose.koinInject
  * [onSetKey], `admin-set-key`, then "Quitar de la lista", `admin-remove-song-from-setlist`), and a
  * row whose key change is still saving shows "Guardando…" under its title. Rows stay keyed by
  * position in the list: a hand-edited tab may repeat a song id, and a lazy list key must be unique.
+ * Every state can be pulled to refresh, and while the screen is resumed the presenter refreshes
+ * every 30 s inside a jam's live window (`live-refresh-during-jam`).
  * It renders [NextJamUiModel] and forwards events; the presenter decides.
  * [contentPadding] goes inside the list, so the background runs edge to edge.
  */
@@ -79,8 +88,17 @@ fun NextJamScreen(
     onSetKey: (jamDate: LocalDate, songId: SongId) -> Unit = { _, _ -> },
     presenter: NextJamPresenter = koinInject(),
 ) {
+    // RESUMED only while this tab is selected, the activity is in front and no destination sits
+    // above the tabs, so the live refresh stops in the background, with the screen off, on another
+    // tab or under the song detail (`live-refresh-during-jam`, Decision 1).
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val model = presenter.present(
-        NextJamPresenter.Params(onAddSong = onAddSong, onSetKey = onSetKey, onOpenSong = onOpenSong),
+        NextJamPresenter.Params(
+            isResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
+            onAddSong = onAddSong,
+            onSetKey = onSetKey,
+            onOpenSong = onOpenSong,
+        ),
     )
     NextJamContent(model = model, modifier = modifier, contentPadding = contentPadding)
 }
@@ -98,39 +116,44 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
     val background = modifier
         .fillMaxSize()
         .background(BluesJamTheme.colors.background)
-    when (model) {
-        is NextJamUiModel.Loading -> Box(modifier = background.padding(padding)) {
-            SkeletonList(description = model.description)
-        }
-
-        // At the top of the padded area, like the other messages, not vertically centred.
-        is NextJamUiModel.Failed -> Box(modifier = background.padding(padding)) {
-            ListErrorBlock(model.error)
-        }
-
-        is NextJamUiModel.NoUpcomingJam -> LazyColumn(
-            modifier = background,
-            contentPadding = padding,
-            verticalArrangement = Arrangement.spacedBy(spacing.md),
-        ) {
-            model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-            item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
-            model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
-        }
-
-        is NextJamUiModel.Jam -> LazyColumn(
-            modifier = background,
-            contentPadding = padding,
-            verticalArrangement = Arrangement.spacedBy(spacing.sm),
-        ) {
-            // The notice sits above the header: on the offline screen the cached data is the content.
-            model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-            item(key = HEADER_KEY) { Header(model.header) }
-            model.admin?.draftBadge?.let { badge ->
-                item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
+    // Every state can be pulled (`live-refresh-during-jam`); the states that are not a list scroll,
+    // so the gesture reaches the box.
+    val fill = Modifier.fillMaxSize()
+    RefreshableContent(model.pullRefresh, modifier = background) {
+        when (model) {
+            is NextJamUiModel.Loading -> Box(modifier = fill.verticalScroll(rememberScrollState()).padding(padding)) {
+                SkeletonList(description = model.description)
             }
-            setlistItems(model.setlist)
-            model.admin?.let { admin -> adminItems(admin) }
+
+            // At the top of the padded area, like the other messages, not vertically centred.
+            is NextJamUiModel.Failed -> Box(modifier = fill.verticalScroll(rememberScrollState()).padding(padding)) {
+                ListErrorBlock(model.error)
+            }
+
+            is NextJamUiModel.NoUpcomingJam -> LazyColumn(
+                modifier = fill,
+                contentPadding = padding,
+                verticalArrangement = Arrangement.spacedBy(spacing.md),
+            ) {
+                model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+                item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
+                model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
+            }
+
+            is NextJamUiModel.Jam -> LazyColumn(
+                modifier = fill,
+                contentPadding = padding,
+                verticalArrangement = Arrangement.spacedBy(spacing.sm),
+            ) {
+                // The notice sits above the header: on the offline screen the cached data is the content.
+                model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+                item(key = HEADER_KEY) { Header(model.header) }
+                model.admin?.draftBadge?.let { badge ->
+                    item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
+                }
+                setlistItems(model.setlist)
+                model.admin?.let { admin -> adminItems(admin) }
+            }
         }
     }
 }

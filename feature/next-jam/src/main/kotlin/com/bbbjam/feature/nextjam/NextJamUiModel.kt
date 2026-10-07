@@ -7,6 +7,7 @@ import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
+import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 
@@ -15,17 +16,26 @@ import com.bbbjam.core.ui.strip.InstrumentChipUiModel
  * can be filtered by instrument (`instrument-filter-chips`). Every non-happy path is its own state
  * (`list-states`): skeleton rows while nothing was read, an error block when nothing is cached and
  * the read failed, an empty block when there is nothing to list, and a staleness notice above
- * cached data whose latest refresh failed.
+ * cached data whose latest refresh failed. Every state can be pulled to refresh
+ * (`live-refresh-during-jam`): [pullRefresh] is the indicator and the pull's event.
  */
 sealed interface NextJamUiModel : UiModel {
+    val pullRefresh: PullRefreshUiModel
+
     /**
      * Nothing to show yet: no emission, or nothing was ever fetched and a read is running (or none
      * has failed yet). Drawn as skeleton rows; [description] is what a screen reader says for them.
      */
-    data class Loading(val description: String) : NextJamUiModel
+    data class Loading(
+        val description: String,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
+    ) : NextJamUiModel
 
     /** Nothing was ever fetched and the latest read failed: the error block with a retry button. */
-    data class Failed(val error: ListErrorUiModel) : NextJamUiModel
+    data class Failed(
+        val error: ListErrorUiModel,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
+    ) : NextJamUiModel
 
     /**
      * The jams were read and none is upcoming. [staleness] is set when the latest refresh failed.
@@ -36,6 +46,7 @@ sealed interface NextJamUiModel : UiModel {
         val empty: EmptyStateUiModel,
         val staleness: StalenessNoticeUiModel?,
         val adminHint: String? = null,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : NextJamUiModel
 
     /**
@@ -48,6 +59,7 @@ sealed interface NextJamUiModel : UiModel {
         val setlist: SetlistUiModel,
         val staleness: StalenessNoticeUiModel?,
         val admin: NextJamAdminUiModel? = null,
+        override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : NextJamUiModel
 }
 

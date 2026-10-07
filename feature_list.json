@@ -993,14 +993,23 @@
     "depends_on": [
       "list-states"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "JVM: the refresh window opens 30 min before the start and closes 4 h after, in Buenos Aires time",
       "JVM: no periodic refresh outside the window; pull to refresh triggers exactly one refresh",
       "Load estimate against Apps Script quotas recorded in the risks doc"
     ],
     "notes": "Requested by the user on 6 October 2026 while answering admin-set-key R1: 'Actualizar cada 30'' si el timestamp actual está entre media hora antes de que arranque el show y 4hs después. Además, agregar un pull to refresh'. Planner must check Apps Script quotas (about 40 phones x every 30 s x 4.5 h is about 20,000 requests per night) and battery.",
-    "evidence": []
+    "evidence": [
+      "Session 078 (6-7 Oct 2026), task 1: lifecycle-runtime-compose 2.9.3 reaches :feature:next-jam through androidx.compose.ui:ui 1.9.1 (api of :core:ui); LocalLifecycleOwner/currentStateAsState compile with no build change, no new dependency.",
+      "CI=true ./init.sh exit 0: konsist wired (17/17, unchanged), detekt wired, ktlint wired; 92 result files, 576 tests, 0 failures (538 before). New: PullRefreshDefaultsTest 4, LiveRefreshWindowTest 5, LiveRefreshLoopTest 9, NextJamLiveRefreshTest 13, PastJamsPullRefreshTest 3; DemoUpcomingJamRepositoryTest 8->11, DebugAdminSessionTest 6->7.",
+      "Failure demonstrations restored by SHA-1: loop keyed on snapshot -> 2 fail; no quiet masking -> 2 fail; no pull guard -> 1 fails; liveJams without past.first() -> 3 fail.",
+      "Refresh-vs-write race: NextJamLiveRefreshTest shows a refresh landing mid-write keeps the optimistic key, 'Guardando…' and 'Quitando…'; a refresh already holding an added song shows the row plus the pending row until the add ends (recorded in the risks doc).",
+      ":app:assembleRelease exit 0; release BuildConfig.DEMO_UPCOMING_JAM_LIVE=false; no demo string in any release dex.",
+      "Pixel 5 with bluesjam.demoUpcomingJamLive: lines every 32-34 s while visible; none after Home (08:58:43-08:59:48) or on Anteriores (09:00:29-09:01:34), resumed 3-4 s after return; on 6 Oct screen off also stopped them (then the secure lock screen ended that run).",
+      "Airplane: Failed ticks 60 s apart, recovered 13-20 s after airplane off; uiautomator dumps while offline show 'Sin conexión' / 'Mostrando lo guardado hace 1 minuto.' / 'Reintentar', never 'Actualizando…', incl. 1 s after a failed tick; notice gone after recovery.",
+      "Pull: one line per pull on Próxima jam (09:05:46) and Anteriores (09:06:03); indicator raised-surface disc, no amber. Flag removed (local.properties restored, SHA-1 match), reinstalled: real 2026-10-31 jam upcoming, no demo jams refresh and no further jams refresh line from launch 09:16:40 through 09:18:26. Settings unchanged, crash buffer empty. Actualizar custom action not checked on device (TalkBack off-limits)."
+    ]
   },
   {
     "id": "action-contract-registry",

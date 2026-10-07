@@ -31,6 +31,13 @@ val demoUpcomingJamDraft: Boolean =
 // is always false.
 val debugAdmin: Boolean = localProperties.getProperty("bluesjam.debugAdmin", "").trim() == "true"
 
+// Debug-only live demo jam (live-refresh-during-jam): bluesjam.demoUpcomingJamLive=true replaces the
+// upcoming jam, whatever the cache holds, with the demo jam dated today and starting 10 minutes after
+// the process started (Buenos Aires), so its live window is open and the 30 s refresh can be watched
+// in logcat ("demo jams refresh: …"). Works on its own. Absent means false; release is always false.
+val demoUpcomingJamLive: Boolean =
+    localProperties.getProperty("bluesjam.demoUpcomingJamLive", "").trim() == "true"
+
 android {
     namespace = "com.bbbjam"
 
@@ -50,11 +57,13 @@ android {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", demoUpcomingJam.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", demoUpcomingJamDraft.toString())
             buildConfigField("boolean", "DEBUG_ADMIN", debugAdmin.toString())
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM_LIVE", demoUpcomingJamLive.toString())
         }
         release {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", "false")
             buildConfigField("boolean", "DEBUG_ADMIN", "false")
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM_LIVE", "false")
             optimization {
                 enable = false
             }

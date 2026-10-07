@@ -36,20 +36,22 @@ import com.bbbjam.core.ui.lineup.toLineupPanel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.state.stalenessNotice
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 /**
  * Presents Próxima jam: the upcoming jam of [JamsRepository.observeJams], already cached, split in
- * Buenos Aires and title-resolved. Read-only; it never starts network work on its own (collecting
- * the flow may start the repository's own background refresh). The one exception is the musician's
- * Retry (`list-states`): it re-subscribes to the flow, which recovers from a failed local read, and
+ * Buenos Aires and title-resolved. Read-only; it starts network work only through the refreshes
+ * below (collecting the flow may also start the repository's own background refresh). The first is
+ * the musician's Retry (`list-states`): it re-subscribes to the flow, which recovers from a failed local read, and
  * calls [JamsRepository.refresh], a read; the outcome comes back through the snapshot's freshness.
  * The subscription counter is created once, so an earlier model's Retry handler still works.
  *
@@ -90,21 +92,33 @@ import kotlinx.coroutines.launch
  * the repository. While a key change of a row is sending, the row draws the latest pending key with
  * "Guardando…"; a failed change never overlays, so the row reverts to the cached key and a card says
  * why. Musicians never get an overlay.
+ *
+ * Live refresh (`live-refresh-during-jam`): besides Retry, the presenter refreshes on a pull (one
+ * read per pull, the indicator spinning until it returns) and, while [Params.isResumed] and "now" is
+ * in a jam's live window (30 min before its start to 4 h after, Buenos Aires), every 30 s (60 s after
+ * a failure). Periodic refreshes are quiet: they never show "Actualizando…" nor the skeleton. See
+ * [rememberNextJamRefreshes]. Every one is the read [JamsRepository.refresh]; a refresh landing while
+ * an admin write is sending leaves the write's overlay alone (it comes from the setlist entries, not
+ * from the snapshot), and the next refresh brings the written row.
  */
 class NextJamPresenter(
     private val jams: JamsRepository,
     private val calendar: JamCalendar,
     private val adminSession: AdminSession,
     private val setlist: SetlistRepository,
+    private val random: Random = Random.Default,
 ) : Presenter<NextJamUiModel, NextJamPresenter.Params> {
 
     /**
      * [onOpenSong] receives the jam's date and the song's position when a row's detail is opened;
      * [onAddSong] the jam's date when the admin taps "Agregar tema"; [onSetKey] the jam's date and the
      * song id when the admin taps "Cambiar tonalidad". [onOpenSong] stays last, so
-     * `Params { date, position -> … }` still names it.
+     * `Params { date, position -> … }` still names it. [isResumed] is true while the screen is
+     * visible (its lifecycle is at least `RESUMED`); only then does the live window refresh run.
+     * False by default, so a presenter nobody marks visible never polls.
      */
     data class Params(
+        val isResumed: Boolean = false,
         val onAddSong: (jamDate: LocalDate) -> Unit = {},
         val onSetKey: (jamDate: LocalDate, songId: SongId) -> Unit = { _, _ -> },
         val onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
@@ -163,19 +177,26 @@ class NextJamPresenter(
         }
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
+        val refreshes = rememberNextJamRefreshes(jams, calendar, random, params.isResumed, snapshot) { subscription++ }
         val today = remember(snapshot) { calendar.today() }
         val now = remember(snapshot) { calendar.now() }
         var expanded by rememberSaveable(stateSaver = ExpandedRows.Saver) { mutableStateOf(ExpandedRows.NONE) }
         val onToggle: (LocalDate, SongId) -> Unit = { date, songId -> expanded = expanded.toggle(date, songId) }
         var filter by rememberSaveable(stateSaver = InstrumentFilterSaver) { mutableStateOf(emptySet<Instrument>()) }
         val onFilterChange: (InstrumentFilterChange) -> Unit = { change -> filter = filter.updatedBy(change) }
-        val onRetry: () -> Unit = {
-            subscription++
-            scope.launch { jams.refresh() }
-        }
-        return snapshot?.toUiModel(today, expanded, onToggle, filter, onFilterChange, now, onRetry, onOpenSong, admin)
+        val model = snapshot?.let { refreshes.shown(it) }
+            ?.toUiModel(today, expanded, onToggle, filter, onFilterChange, now, refreshes.onRetry, onOpenSong, admin)
             ?: NextJamUiModel.Loading(NextJamCopy.LOADING)
+        return model.withPullRefresh(refreshes.pullRefresh)
     }
+}
+
+/** This model with [pullRefresh]; every state can be pulled. */
+private fun NextJamUiModel.withPullRefresh(pullRefresh: PullRefreshUiModel): NextJamUiModel = when (this) {
+    is NextJamUiModel.Loading -> copy(pullRefresh = pullRefresh)
+    is NextJamUiModel.Failed -> copy(pullRefresh = pullRefresh)
+    is NextJamUiModel.NoUpcomingJam -> copy(pullRefresh = pullRefresh)
+    is NextJamUiModel.Jam -> copy(pullRefresh = pullRefresh)
 }
 
 /** The selected instruments as their enum names: bundle-safe, so the filter survives rotation. */

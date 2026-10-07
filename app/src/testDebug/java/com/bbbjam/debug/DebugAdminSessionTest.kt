@@ -102,6 +102,20 @@ class DebugAdminSessionTest {
     }
 
     @Test
+    fun liveDemoFlagAloneOverridesOnlyTheJams() {
+        val koin = koinWithRealBindings()
+        val realAdmin = koin.get<AdminSession>()
+
+        koin.loadModules(
+            koin.debugOverrides(DebugFlags(demoUpcomingJamLive = true), log = {}),
+            allowOverride = true,
+        )
+
+        assertTrue(koin.get<JamsRepository>() is DemoUpcomingJamRepository)
+        assertSame(realAdmin, koin.get<AdminSession>())
+    }
+
+    @Test
     fun bothFlagsOverrideBothAndNoFlagOverridesNothing() {
         val koin = koinWithRealBindings()
         assertEquals(emptyList<Any>(), koin.debugOverrides(DebugFlags()))
