@@ -6,14 +6,16 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty-two of 41 slices accepted, the latest `live-refresh-during-jam` (7 October
-  2026). New backlog slice `offline-notice-visible`. Human check owed: the `Actualizar` action with
-  TalkBack.
+- Current state: thirty-three of 41 slices accepted, the latest `offline-notice-visible` (7 October
+  2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 7 October 2026 (session 078, `live-refresh-during-jam`, `passing`) —
+- Last verified at: 7 October 2026 (`offline-notice-visible`, independently accepted) —
+  `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
+  including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,
+  `live-refresh-during-jam`, `passing`) —
   `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
   `ktlint: wired`; 92 result files, 576 tests, 0 failures. Pixel 5: device steps 1–6 of the spec;
   see session 078. Before that, 6 October 2026 (session 077, `admin-set-key` Part B, `in_progress`) —
@@ -3538,6 +3540,37 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
     Recorded in the risks doc.
 - Next: independent validation of `live-refresh-during-jam`; the two admin slices still wait for the
   batched deploy.
+
+## Offline Notice Visibility — 7 October 2026
+
+- `offline-notice-visible` is `accepted` after independent validator acceptance. Both list screens own
+  their scroll state through the shared `rememberRevealingLazyListState`; a newly appearing notice
+  reveals itself only at rest. NextJam recognizes its keyed header after Compose shifts it to
+  index 1, while Anteriores keeps its title at index 0. Temporary runtime logs were removed.
+- Verification: `./gradlew ktlintFormat` succeeded; final `CI=true ./init.sh` exited 0 with build,
+  check, Android lint and 587 debug/JVM tests (11 notice tests, 17 Konsist rules), and all three
+  tools `wired`. Regression demonstrations removed the at-top condition (4/104 failures), removed
+  the appearance condition (2/104), and changed offset comparison to `> 0` (5/104). Source SHA-1
+  restored after each: `AD099CD5AC3CD6B9A1E99922B44601D2061CBACF`. The strict comparison corrects
+  the spec's demonstration typo: `>= 0` would still include resting offset 0.
+- Pixel 5: freshly installed diagnostic build, next notice appeared 14:55:10 at retained header
+  index 1/offset 0; UI dump then showed `Sin conexión` at y246 and header y636 without a corrective
+  swipe. Anteriores pull failed 14:56:15 at title index 0/offset 0, with notice y360. Recovery removed
+  the notices. Next recovery 14:59:53 kept song key `1`, offset 250; new failure 15:01:00 kept the
+  same key/offset and visible songs 02–05, with no snap. Animation was too quick to characterize;
+  the settled visible state is confirmed.
+- The archive has one row, which fits the normal viewport. A temporary 1080x800 viewport permitted
+  scrolling, but the direct appearance transition while reading that row was not independently
+  demonstrated. A tab-return trial passes through Loading and is not counted as preservation proof.
+  The spec's archive device step repeats top/recovery checks; the shared scrolled primitive rule is
+  covered by unit tests and the next-list runtime check.
+- Restored device: physical 1080x2340, no display override, airplane mode 0, WiFi on,
+  accessibility 0/null untouched. Crash buffer empty. Restored local.properties SHA-1
+  `818A707DB27F77443CE029728AD8BE21024478F4`; installed the normal flagless APK successfully.
+- Independent validator (7 October 2026): `accept`. Standard gate exit 0, all three tools wired;
+  inspected 11 notice tests and 17 Konsist tests with zero failures/errors, source/wiring, restored
+  hash and specific device evidence. Optional forced rerun did not complete and is not claimed.
+- Next: planner review for `admin-adjust-lineup`. Existing Codex infrastructure changes remain separate.
 
 ## Notes For The Next Session
 

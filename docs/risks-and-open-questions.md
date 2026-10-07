@@ -277,11 +277,11 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   - *TalkBack*: the pull gesture is not reachable with a screen reader; the list carries the custom
     action `Actualizar` (L3). Not checked on a device (enabling TalkBack is off-limits for agents);
     a human check is still owed.
-  - *Notice out of view* (seen on the Pixel 5, session 078): when a refresh fails while the list is
-    at its top, the staleness notice is inserted above the header and the lazy list stays anchored
-    on the header, so the notice starts just out of view until the user scrolls up. A `list-states`
-    behaviour, not introduced here, but polling makes a failure while the list is open more frequent;
-    a fix (scroll to the notice when it appears at the top) belongs to its own slice.
+  - *Notice out of view*: resolved by `offline-notice-visible` (7 October 2026). Pixel 5 checks
+    confirmed a newly appearing offline notice is visible without a corrective swipe on both tabs.
+    The shared helper recognizes the keyed header retained at index 1 after insertion; it preserves
+    a scrolled song's key and offset. Anteriores' scrolled failure transition was not independently
+    demonstrated with its single archive row; the shared primitive rule is covered on the JVM.
   - `PullToRefreshBox` is `@ExperimentalMaterial3Api` in material3 1.3.2; a BOM bump may change its
     API (it is used only in `:core:ui` `RefreshableContent`).
 - **Failed writes after optimistic update.** The mitigation for Apps Script latency is optimistic

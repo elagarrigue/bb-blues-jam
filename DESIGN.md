@@ -549,7 +549,9 @@ How they are drawn (`list-states`, 4 October 2026). Four shared components in `:
   detail reads `Actualizando…` (a polite live region) and the action is hidden. The notice is drawn
   **only when the latest refresh failed**; data older than 30 minutes with no failure draws none,
   because opening the screen already refreshes it. The age is computed when the data changes, not
-  ticked while the screen stays open.
+  ticked while the screen stays open. If the notice appears while the list is resting at the top,
+  the list scrolls so the notice is visible instead of being inserted above the visible area
+  (`offline-notice-visible`, 7 October 2026).
 - **Empty** — `EmptyStateBlock`: a concrete title and an invitation (`Todavía no hay fecha` for no
   upcoming jam; `Todavía no hay temas` for a published setlist with no song, with no filter bar).
   No illustration.

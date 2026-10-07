@@ -53,6 +53,7 @@ import com.bbbjam.core.ui.state.ListErrorBlock
 import com.bbbjam.core.ui.state.RefreshableContent
 import com.bbbjam.core.ui.state.SkeletonList
 import com.bbbjam.core.ui.state.StalenessNotice
+import com.bbbjam.core.ui.state.rememberRevealingLazyListState
 import com.bbbjam.core.ui.strip.InstrumentStrip
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.theme.BluesJamTheme
@@ -130,29 +131,37 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
                 ListErrorBlock(model.error)
             }
 
-            is NextJamUiModel.NoUpcomingJam -> LazyColumn(
-                modifier = fill,
-                contentPadding = padding,
-                verticalArrangement = Arrangement.spacedBy(spacing.md),
-            ) {
-                model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-                item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
-                model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
+            is NextJamUiModel.NoUpcomingJam -> {
+                val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = EMPTY_KEY)
+                LazyColumn(
+                    state = listState,
+                    modifier = fill,
+                    contentPadding = padding,
+                    verticalArrangement = Arrangement.spacedBy(spacing.md),
+                ) {
+                    model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+                    item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
+                    model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
+                }
             }
 
-            is NextJamUiModel.Jam -> LazyColumn(
-                modifier = fill,
-                contentPadding = padding,
-                verticalArrangement = Arrangement.spacedBy(spacing.sm),
-            ) {
-                // The notice sits above the header: on the offline screen the cached data is the content.
-                model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-                item(key = HEADER_KEY) { Header(model.header) }
-                model.admin?.draftBadge?.let { badge ->
-                    item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
+            is NextJamUiModel.Jam -> {
+                val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = HEADER_KEY)
+                LazyColumn(
+                    state = listState,
+                    modifier = fill,
+                    contentPadding = padding,
+                    verticalArrangement = Arrangement.spacedBy(spacing.sm),
+                ) {
+                    // The notice sits above the header: on the offline screen the cached data is the content.
+                    model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+                    item(key = HEADER_KEY) { Header(model.header) }
+                    model.admin?.draftBadge?.let { badge ->
+                        item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
+                    }
+                    setlistItems(model.setlist)
+                    model.admin?.let { admin -> adminItems(admin) }
                 }
-                setlistItems(model.setlist)
-                model.admin?.let { admin -> adminItems(admin) }
             }
         }
     }

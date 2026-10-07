@@ -293,6 +293,19 @@ Conventions, Debug demo jam) makes the window observable on a device.
   Retry does (re-subscribe, one `refresh()`), ignores a pull while its own is running, and only a
   pull spins the indicator. Content that is not a list scrolls (`verticalScroll`) so the gesture
   reaches the box.
+- Keeping the staleness notice in view is the seventh example (`offline-notice-visible`):
+  `com.bbbjam.core.ui.state` holds `shouldRevealNotice(staleness, previousStaleness,
+  firstVisibleItemIndex, firstVisibleItemScrollOffset, firstVisibleItemIsTopAnchor)`, a pure
+  function (true only on the notice's null → non-null edge while the list rests at index 0 or keeps
+  its keyed top anchor at offset 0; unit-tested with no Compose UI harness), and
+  `rememberRevealingLazyListState(staleness, topAnchorKey)`, a `@Composable` that builds one
+  `LazyListState` plus the `remember`ed previous notice and a `LaunchedEffect(staleness)` calling
+  `listState.animateScrollToItem(0)` when the function says so. `NextJamScreen` passes its keyed
+  header as `topAnchorKey` because Compose may preserve it at index 1 after inserting the notice at
+  index 0; `PastJamsScreen`'s title stays at index 0. Each calls the helper once per `LazyColumn`
+  (their only `LazyListState`, replacing the implicit default) and passes the result as
+  `LazyColumn(state = …)`; neither screen re-derives the rule. A user scrolled away from the top is
+  never pulled back, and the notice disappearing never scrolls.
 - The song detail is the fifth example (`song-detail-screen`): `com.bbbjam.core.ui.lineup` adds
   `InstrumentGroups(model)`, `InstrumentGroupsUiModel`/`InstrumentGroupUiModel` and the pure mapper
   `Lineup.toInstrumentGroups(extras)` (groups in first-appearance order, open before filled inside a

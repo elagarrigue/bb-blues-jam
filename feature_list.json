@@ -1026,13 +1026,19 @@
       "list-states",
       "live-refresh-during-jam"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "JVM or presenter-level test: notice appearing with the header as first visible item keeps the notice in view",
       "Device: airplane mode during the live window shows the notice without scrolling"
     ],
     "notes": "Found by the live-refresh-during-jam implementer and recommended by its validator (7 Oct 2026): during the jam, polling makes this frequent, and it is the moment the notice matters most.",
-    "evidence": []
+    "evidence": [
+      "Implementer 7 Oct 2026: ktlintFormat and CI=true ./init.sh exit 0; build/check, Android lint, 587 debug/JVM tests including 11 NoticeVisibilityTest and 17 Konsist rules; konsist/detekt/ktlint all wired.",
+      "Failure demonstrations: removing atTop failed 4/104 core UI tests; removing appeared failed 2/104; offset > 0 failed 5/104. Restored source SHA1 AD099CD5AC3CD6B9A1E99922B44601D2061CBACF after each mutation.",
+      "Pixel 5: next notice appeared at 14:55:10 with retained header index1 offset0; dump showed Sin conexión at y246 without corrective swipe. Past pull failed at14:56:15, title index0 offset0 and notice y360; recovery removes notice.",
+      "Pixel 5: next recovery14:59:53 retained song key1 offset250; new failure15:01:00 retained key1 offset250 and visible songs02–05, no snap. Optional direct scrolled archive transition not independently demonstrated (single row fits normal viewport); primitive shared rule covered by JVM tests.",
+      "Restored airplane0, WiFi on, physical1080x2340 without override, accessibility0/null untouched, local.properties SHA1 818A707DB27F77443CE029728AD8BE21024478F4 and flagless APK; crash buffer empty. Independent validator accepted on 7 Oct 2026: standard CI gate exit 0, all three wired; 11 notice tests and 17 Konsist tests inspected with zero failures/errors; screen wiring, restored hash and Pixel 5 evidence reviewed. Optional forced rerun did not complete and is not claimed."
+    ]
   },
   {
     "id": "action-contract-registry",

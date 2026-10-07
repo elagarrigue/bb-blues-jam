@@ -117,9 +117,11 @@ internal fun shouldRevealNotice(
     previousStaleness: StalenessNoticeUiModel?,
     firstVisibleItemIndex: Int,
     firstVisibleItemScrollOffset: Int,
+    firstVisibleItemIsTopAnchor: Boolean = false,
 ): Boolean {
     val appeared = staleness != null && previousStaleness == null
-    val atTop = firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset <= REST_THRESHOLD_PX
+    val atTop = (firstVisibleItemIndex == 0 || firstVisibleItemIsTopAnchor) &&
+        firstVisibleItemScrollOffset <= REST_THRESHOLD_PX
     return appeared && atTop
 }
 
@@ -130,33 +132,34 @@ private const val REST_THRESHOLD_PX = 0
 finding ("the list stays anchored on the header" — offset 0). A non-zero threshold would need a
 dp-to-px conversion with no design input; kept at 0 unless device testing shows a visible gap (see
 Risks). This function takes primitives, not `LazyListState`, so it is unit-testable with no Compose
-UI harness (T1).
+UI harness (T1). The Pixel 5 reproduced an index shift the original rule did not model: when the
+notice is inserted at index 0, Compose preserves the visible keyed header, which is now at index 1
+before the effect runs. The composable therefore supplies `firstVisibleItemIsTopAnchor`, computed
+from the first visible item's key. It is true only when that item is the screen's keyed header at
+offset 0, so a user reading a song remains undisturbed while a header anchored at the top still
+reveals the notice.
 
 **3. Wiring it in each screen**, inside `NextJamContent`'s `Jam` and `NoUpcomingJam` branches and
 inside `PastJamsContent`'s `PastJamsList` (`Empty` and `Jams` branches — the one `LazyColumn` there
 serves every state, so the effect lives around the whole list, gated on which branch is active):
 
 ```kotlin
-val listState = rememberLazyListState()
-var previousStaleness by remember { mutableStateOf<StalenessNoticeUiModel?>(null) }
-LaunchedEffect(staleness) {
-    if (shouldRevealNotice(staleness, previousStaleness, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)) {
-        listState.animateScrollToItem(0)
-    }
-    previousStaleness = staleness
-}
+val listState = rememberRevealingLazyListState(staleness, topAnchorKey = HEADER_KEY)
 ```
+
+`PastJamsScreen` calls the same helper without `topAnchorKey`: its persistent title remains index 0
+when the notice is inserted after it, so the ordinary index check covers its top-of-list state.
 
 `staleness` is the branch's nullable `StalenessNoticeUiModel` (`model.staleness` for `NextJamUiModel`,
 likewise for `PastJamsUiModel`). `LaunchedEffect(staleness)` re-runs only when the notice's identity
 changes (it is a `data class`, so a periodic refresh that leaves it unchanged — same title, detail,
 retryLabel — does not restart the effect; a change from `null` to non-null, or between different
 detail text such as the age advancing, does restart it, but `shouldRevealNotice` only returns true
-on the `null` → non-null edge). `animateScrollToItem(0)` scrolls to the notice's item (always key
-`"staleness"` at index 0 when present, confirmed by reading Decision 7 of `list-states` and both
-screens' current code: the notice is always the first item emitted in every branch that can carry
-one). Using `animateScrollToItem` (not `scrollToItem`) gives the user a visible cue that something
-moved, rather than a silent jump — consistent with `RefreshableContent`'s existing indicator
+on the `null` → non-null edge). `animateScrollToItem(0)` scrolls to the notice's item in Próxima jam
+(key `"staleness"`, index 0); Anteriores retains its title at index 0 and puts the notice just
+after it, already visible at the top. Using `animateScrollToItem` (not `scrollToItem`) gives the
+user a visible cue that something moved, rather than a silent jump — consistent with
+`RefreshableContent`'s existing indicator
 animation; no new design token needed (it is a built-in Compose scroll animation, not a visual
 style).
 
@@ -201,6 +204,9 @@ first item is the notice.
    resting top, the notice becomes visible without the user swiping. Repeating the finding's own
    steps (toggle airplane mode on/off a few times while watching the top of the list) should show
    the notice every time it appears, with no manual scroll needed.
+8. **Compose preserves the keyed header after insertion.** With the notice newly inserted at index
+   0, the header may remain first visible at index 1. If its key is the top anchor and its offset is
+   0, reveal the notice; index 1 without that key, or any nonzero offset, does not trigger a reveal.
 
 ## Expected File Changes
 
@@ -287,7 +293,7 @@ JVM (inside `./gradlew check`):
   `shouldRevealNotice` (always scroll on appearance) → the "appeared scrolled away" test fails; (2)
   drop the `appeared` check (scroll whenever non-null) → the "unchanged content" and "first emission"
   distinctions collapse, at least one existing test fails; (3) flip the threshold comparison
-  (`offset >= REST_THRESHOLD_PX`) → the offset-0 "at top" case starts failing.
+  (`offset > REST_THRESHOLD_PX`) → the offset-0 "at top" case starts failing.
 
 **Device (Pixel 5, outside the gate)**, debug build, never enable TalkBack or any accessibility
 service, never ask the user for Sheet data or the passphrase:
@@ -309,6 +315,22 @@ either way the end state (notice visible, no extra swipe needed) is the pass/fai
 animation itself.
 
 ## Evidence To Capture
+
+### Implementer findings (7 October 2026)
+
+- A fresh Pixel 5 install confirmed the key-aware correction: the appearance effect sees the
+  retained NextJam header at index 1, offset 0, and reveals the notice. The original index-0-only
+  check is insufficient. No viewport threshold widening was necessary.
+- The implemented helper is public, matching the sibling shared mappers, and encapsulates the
+  screen-owned `rememberLazyListState` and `LaunchedEffect` once. Both screens call it; presenters
+  remain unchanged. Its boolean top-anchor input keeps the decision JVM-testable.
+- Failure demonstration 3 uses `offset > REST_THRESHOLD_PX`: unlike `>=`, that mutation excludes
+  resting offset 0, and fails the reveal tests. All three demonstrations failed and restored the
+  same source hash; details and actual device outcomes are in PROGRESS.md and feature_list.json.
+- Required archive device checks (steps 1–3 repeated by step 5) passed. An optional direct
+  archive scrolled-appearance trial was not independently demonstrated with the single available
+  archive row; no claim of that device coverage is made. NextJam's scrolled-appearance check and
+  the shared primitive tests passed.
 
 Gate output (three `wired`, test counts, Konsist count unchanged); `NoticeVisibilityTest` count and
 each demonstration's failure message with SHA-1 restore proof; device screenshots/uiautomator dumps

@@ -29,6 +29,7 @@ import com.bbbjam.core.ui.state.ListErrorBlock
 import com.bbbjam.core.ui.state.RefreshableContent
 import com.bbbjam.core.ui.state.SkeletonList
 import com.bbbjam.core.ui.state.StalenessNotice
+import com.bbbjam.core.ui.state.rememberRevealingLazyListState
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -76,7 +77,11 @@ internal fun PastJamsContent(model: PastJamsUiModel, modifier: Modifier, content
 
 @Composable
 private fun PastJamsList(model: PastJamsUiModel, padding: PaddingValues) {
+    // null for Loading/Failed, which never carry a notice, so the reveal effect never triggers there.
+    val staleness = (model as? PastJamsUiModel.Empty)?.staleness ?: (model as? PastJamsUiModel.Jams)?.staleness
+    val listState = rememberRevealingLazyListState(staleness)
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
