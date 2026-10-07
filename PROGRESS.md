@@ -6,16 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: twenty-nine of 39 slices accepted, the latest `admin-add-song-to-setlist` (6 October
-  2026). `admin-remove-song-from-setlist` and `admin-set-key` are both `in_progress`: each Part A
-  (server half and `:core:data`) done and self-verified (sessions 074 and 075), in one `Post.js`
-  that is **not deployed**; remove-song's Part B (UI) and set-key's Part B (UI) also done and
-  self-verified (sessions 076 and 077). `live-refresh-during-jam` (needs no deploy) is `passing`
-  since session 078, awaiting validation; **three features were `in_progress` at once** during that
-  session (the two awaiting the deploy, by user-approved exception, plus this one).
-  Next: the user's **one** batched paste and **New version** (user decision B1 (a); README
-  "Redeploy for remove song and set key, in one paste"), then remove-song's live checks LR1–LR5 and
-  validation, then set-key's live checks and validation.
+- Current state: thirty of 40 slices accepted, the latest `admin-remove-song-from-setlist` (7 October
+  2026). `admin-set-key` and `live-refresh-during-jam` are `passing`, awaiting validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
