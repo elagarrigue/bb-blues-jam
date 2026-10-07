@@ -6,8 +6,8 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty of 40 slices accepted, the latest `admin-remove-song-from-setlist` (7 October
-  2026). `admin-set-key` and `live-refresh-during-jam` are `passing`, awaiting validation.
+- Current state: thirty-one of 40 slices accepted, the latest `admin-set-key` (7 October 2026).
+  `live-refresh-during-jam` is `passing`, awaiting validation.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
   git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
