@@ -1,13 +1,16 @@
 package com.bbbjam.core.data.setlist
 
+import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
+import com.bbbjam.core.model.MusicianName
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 /**
  * The setlist mutations of the upcoming jam (`admin-add-song-to-setlist`,
- * `admin-remove-song-from-setlist`, `admin-set-key`, D-13): plain repository
+ * `admin-remove-song-from-setlist`, `admin-set-key`, `admin-adjust-lineup`, D-13): plain repository
  * functions, usable with no UI, so the action registry and the phase 2 assistant can call them.
  * Every write goes through the admin POST path; Apps Script authorizes it, never the local flag.
  */
@@ -57,8 +60,31 @@ interface SetlistRepository {
     /** The key changes in progress or failed, in call order. In memory only: lost with the process. */
     fun observeKeyChanges(): Flow<List<KeyChange>>
 
+    /** Changes only open slot counts, bounded by the default lineup; the server authorizes it. */
+    suspend fun setSlotCount(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        count: Int,
+    ): SetSlotCountOutcome
+
+    /** Pending and failed lineup writes, sharing the mutation id counter. */
+    fun observeLineupChanges(): Flow<List<LineupChange>>
+
+    /** Assigns [musicianName] to one fixed, 1-based instrument slot; the server authorizes it. */
+    suspend fun assignSlot(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        ordinal: SlotPosition,
+        musicianName: MusicianName,
+    ): AssignSlotOutcome
+
+    /** Pending and failed assignments, in call order. */
+    fun observeAssignments(): Flow<List<Assignment>>
+
     /**
-     * Removes the failed add, removal or key change [id]; an entry still sending, or an unknown id, is
+     * Removes the failed add, removal, key, lineup change or assignment [id]; a sending entry or unknown id is
      * left alone.
      */
     fun dismiss(id: Long)

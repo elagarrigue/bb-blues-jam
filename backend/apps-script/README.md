@@ -28,7 +28,7 @@ guarded `readJams` reads a current or future `BORRADOR` jam's tab. Only `src/Pos
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`, and the setlist write path (`addSong_`, `createSetlistTab_`, `appendSetlistRow_`, `removeSong_`, `removeSetlistRow_`, which deletes a row and renumbers the later `posicion` cells, `setKey_` and `writeKeyCell_`, which writes one `tono` cell; both find their row by `id_tema` with the shared `findSongRow_`). The only file that opens `Config`. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`, `setSlotCount`, `assignSlot`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`, and the setlist write path (`addSong_`, `createSetlistTab_`, `appendSetlistRow_`, `removeSong_`, `removeSetlistRow_`, which deletes a row and renumbers the later `posicion` cells, `setKey_` and `writeKeyCell_`, which writes one `tono` cell; mutations find their row by `id_tema` with the shared `findSongRow_`). The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -82,10 +82,10 @@ Paste the new files and save. Then **verify the paste** (below) before deploying
 silently leave a file on its old content. Then **Deploy → Manage deployments → (the deployment) →
 Edit (pencil) → Version: New version → Deploy**. The URL stays the same. **New deployment** would
 create a second URL, and the app would keep calling the old version. After deploying, check that
-`?resource=config` replies `unknown_resource` with the message ending in `Known: catalog, jams`
+`?resource=config` replies `unknown_resource` after the pending deployment, with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey`
+`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot`
 (the action list of `src/Post.js` since `admin-set-key`; a list ending in `checkSetlistRemove`
 means the `admin-remove-song-from-setlist` version without set-key, one ending in
 `checkSetlistWrite` means the `admin-add-song-to-setlist` version, `Known: checkPassphrase,
@@ -245,7 +245,7 @@ are.
    `_prueba_lista` within one request), then set-key's (`checkSetlistWrite`, now also rewriting
    its marker's key, does the same). After the deploy, `curl -sL -d '{}' "$URL"` must end in
    `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong,
-   checkSetlistRemove, setKey`. No check removes a song from or changes a key in a real jam.
+   checkSetlistRemove, setKey, setSlotCount, assignSlot`. No check removes a song from or changes a key in a real jam.
 
 ### Temporary test jam for the draft check (user approval A3)
 
@@ -289,7 +289,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
@@ -392,3 +392,37 @@ holding the script id. Both files are git-ignored here and must never be committ
 not clasp-ready as it stands: clasp pushes the script files under its root directory, which here
 includes `test/` and `tools/`, so a `.claspignore` would be needed first. Deploying with clasp
 still needs the **Manage deployments → New version** rule to keep the URL.
+
+
+## Adjust-lineup deployment pending
+
+The current `src/Post.js` implements `setSlotCount` and extends `checkSetlistWrite`: the temporary
+marker loses guitar 2, loses harmonica, then regains harmonica; readback is verified and the tab
+cleaned up. Paste the complete source into `Post.gs`, save, and use **Manage deployments > Edit >
+New version > Deploy**, preserving the `/exec` URL. L1-L5 in `docs/specs/admin-adjust-lineup.md`
+remain required: Known includes `setSlotCount`, wrong-passphrase refusal, extended deploy check,
+validation-only probes, identical real-jam counts and SHA-256 before/after. Never call
+`setSlotCount` with a real song id. Use the existing private scratchpad for credentials; print only
+codes, counts and latencies. The local feature remains in_progress until live evidence exists.
+
+## Assign-musician endpoint (local until the app is complete)
+
+`assignSlot` is a guarded write under the shared script lock. The request is
+`{"action":"assignSlot","passphrase":"…","date":"2026-10-31","songId":"crossroads","instrument":"guitar","ordinal":1,"name":"Tincho"}`.
+Validation is deterministic and write-free through date, song id, instrument/ordinal, normalized
+name, editable jam, tab and headers, unique song row, active slot, and empty target. Names are
+trimmed and internal whitespace is collapsed; accepted names contain a letter or digit, are at
+most 40 UTF-16 units, and reject controls, `;`, parentheses, formula-leading `=`, `+`, `-`, `@`,
+and blank values. Error codes are `invalid_date`, `invalid_song`, `invalid_slot`, `invalid_name`,
+`unknown_jam`, `duplicate_date`, `jam_not_editable`, `missing_header`, `duplicate_header`,
+`song_not_in_setlist`, `duplicate_song`, `slot_not_in_lineup`, and `slot_taken`.
+
+`ordinal` is 1-based within the active columns for that instrument, in canonical instrument-column
+order, after excluding `-` columns. Thus guitar ordinal 1 selects `Guitarra 2` when `Guitarra 1`
+is absent. An occupied cell is never overwritten. Success writes only that one cell, with plain
+text formatting set first, and returns `{"schemaVersion":1,"ok":true,"column":0,"name":"Tincho"}`;
+`column` is the zero-based slot index in the canonical seven-slot order and `name` is the
+normalized spelling written. `checkSetlistWrite` exercises that same cell writer against its
+temporary `_prueba_lista` tab, checks normalized readback and cleans up, without touching a real
+jam. Deployment and live validation are deferred until app implementation is complete; do not
+send a real song id to this action during local verification.

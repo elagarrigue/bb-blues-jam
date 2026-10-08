@@ -5,14 +5,18 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and eight POST actions: `checkPassphrase`
+(`apps-script-jams-read-endpoint`), and ten locally implemented POST actions: `checkPassphrase`
 (`admin-passphrase-login`), the deploy check `checkWriteAccess` (`apps-script-write-auth`), the
 admin read `readJams`, the first setlist write `addSong` and its deploy check `checkSetlistWrite`
 (`admin-add-song-to-setlist`), `removeSong` with its deploy check `checkSetlistRemove`
 (`admin-remove-song-from-setlist`, Part A) and `setKey` (`admin-set-key`, Part A; its deploy proof
 is a step added to `checkSetlistWrite`). `removeSong`, `checkSetlistRemove` and `setKey` shipped in one
 batched `Post.gs` deploy (user decision B1 (a)), deployed by the user on 7 October 2026. Every POST action passes the
-passphrase guard in the router. The other admin mutations come with their own slices.
+passphrase guard in the router. `setSlotCount` (`admin-adjust-lineup`) and `assignSlot`
+(`admin-assign-musician`) are implemented locally. The user deferred the shared
+deployment and live checks until the app implementation is complete; the complete `Post.js` and
+`checkSetlistWrite` now include both `setSlotCount` and `assignSlot`. Neither local mutation is yet
+live-verified.
 
 ## Transport
 
@@ -239,7 +243,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey` (the list of the deployed
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -278,7 +282,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -448,6 +452,53 @@ written (D-08). The answer is `{"schemaVersion":1,"ok":true}`. Because the row i
 removal that renumbered the tab in between never misdirects the write. A published jam's new key
 is what the next GET returns.
 
+### `setSlotCount` (`admin-adjust-lineup`)
+
+Request: `{"action":"setSlotCount","passphrase":"?","date":"2026-10-31","songId":"crossroads","instrument":"guitar","count":1}`.
+A guarded write under the shared script lock. Before any write it validates, in order: real ISO
+calendar date (`invalid_date`), canonical song id (`invalid_song`), one of `guitar`, `bass`,
+`drums`, `vocals`, `harmonica`, `keyboards` (`invalid_instrument`), JSON integer count from zero
+to two for guitar or one for the rest (`invalid_count`), unique editable jam (`unknown_jam`,
+`duplicate_date`, `jam_not_editable`), tab and headers, and exactly one song row through
+`findSongRow_` (`song_not_in_setlist`, `duplicate_song`). A missing song tab is
+`song_not_in_setlist`; malformed headers use the existing `missing_header`/`duplicate_header`.
+
+`presentSlotFields_` resolves non-`-` columns in header-mapped slot order. `planSlotCount_`
+removes **last open column first**, or refuses `slot_filled` before writing if names would need
+removing; restore reopens **first absent column first**. Same count writes nothing. Only changed
+slot cells receive `setNumberFormat('@')` then `setValue('-')` or `setValue('')`; names, key,
+position, title, `Otros` and `Catalogo` are untouched. Restoring the first guitar can change a
+name's ordinal without moving its cell; future assignment/clear mutations must re-resolve ordinal
+on the server and check the resolved cell's expected state.
+
+Success rereads all seven cells, including concurrent names, and answers
+`{"schemaVersion":1,"ok":true,"slots":{"guitar1":null,"guitar2":"-","bass":null,"drums":null,"vocals":null,"harmonica":null,"keyboards":null}}`.
+Cells use trimmed display text: empty is `null`, absent is `"-"`, filled is a nonblank name.
+The extended `checkSetlistWrite` removes marker guitar 2, removes harmonica then restores it,
+using the same planner/writer and checking readback; it expects only guitar 2 absent before
+cleanup. It never changes a real jam. This extension awaits deployment/live evidence.
+
+### `assignSlot` (`admin-assign-musician`)
+
+Request: `{"action":"assignSlot","passphrase":"?","date":"2026-10-31","songId":"crossroads","instrument":"guitar","ordinal":1,"name":" Tincho "}`.
+The guarded write uses the shared lock and validates before writing in this order: calendar date
+(`invalid_date`), canonical song id (`invalid_song`), instrument and positive integer ordinal
+(`invalid_slot`), normalized musician name (`invalid_name`), unique editable jam, tab and headers,
+unique song row, active slot by U1 ordinal (`slot_not_in_lineup`), and empty target (`slot_taken`).
+Names are trimmed and whitespace runs collapse to one space; they must be at most 40 UTF-16 units,
+contain a letter or digit, contain no control characters, `;`, `(` or `)`, and must not start with
+`=`, `+`, `-` or `@`.
+
+The ordinal is the 1-based position among the requested instrument's non-`-` columns, in canonical
+header mapping order, not the drawn open-first order. Thus guitar ordinal 1 targets Guitarra 2 when
+Guitarra 1 is absent. An occupied cell is never overwritten. Success formats and writes exactly that
+one cell as plain text and answers
+`{"schemaVersion":1,"ok":true,"column":1,"name":"Tincho"}`, where `column` is the zero-based
+canonical seven-slot array index and `name` is the normalized spelling. Every rejection is
+write-free. It never opens `Catalogo`. The extended `checkSetlistWrite` assigns and reads back a
+marker in its disposable tab before deleting the tab; live verification is deferred until the app
+implementation is complete.
+
 ### Client write path (`AdminWriter`)
 
 Every admin mutation repository writes through the internal `AdminWriter(AppsScriptPostTransport,
@@ -590,3 +641,27 @@ Estimate for 40 phones and a 3 s call: about 4 simultaneous executions on averag
 per user, and at most about 21,600 reads in one night if every screen stays on the whole window. A
 call refused over the limit is a failed refresh: the phone keeps its cache and waits 60 s. The
 interval is one constant (`LiveRefresh.INTERVAL`) if the estimate proves wrong.
+
+
+Lineup change (`admin-adjust-lineup`): `setSlotCount(jamDate, songId, instrument, count)` returns
+`SetSlotCountOutcome.SlotCountSet` or `NotSet(reason)`; `observeLineupChanges()` exposes
+`LineupChange` entries (`Sending`/`Failed`) sharing all mutation ids and `dismiss`. It runs in
+`DataScope` with the same order/write mutexes, surviving caller cancellation. Out-of-range counts
+fail locally with `invalid_count`, without a POST. `AdminWriter.send` supplies the guarded request.
+A successful payload must contain exactly seven slot fields, each null, `-`, or a nonblank string;
+malformed success is `Unavailable`. First `SetlistDao.replaceSlots` transactionally mirrors the
+server's columns for exactly one cached (date, songId) while `AVAILABLE`, then the entry disappears.
+A cache SQLException waits for refresh; failure never changes Room. Only Sending entries overlay
+the admin's lineup (latest per instrument), before filters, counts, strip and panel; musicians
+never see the overlay. One `saveStatus` covers key and lineup writes together.
+
+Assignment (`admin-assign-musician`): `assignSlot(jamDate, songId, instrument, ordinal,
+musicianName)` returns `AssignSlotOutcome.Assigned` or `NotAssigned(reason)`; `observeAssignments()`
+exposes `Assignment` entries with `Sending`/`Failed`. The action receives the validated normalized
+name and 1-based `SlotPosition`; the server resolves U1 again under the lock. A valid success body
+must match `schemaVersion`, the cached canonical slot index and normalized name before
+`SetlistDao.assignOpenSlot` updates one still-open slot for the uniquely cached song. Pending
+assignment overlays the admin's matching slot before the strip, panel, filter and count projections;
+failure reverts and produces a dismissible named card. Suggestions read cached upcoming and past jams,
+including current `Otros` names, but those extras are never assignable slots. The user's deferred
+shared deployment means this is local behavior and has not been live-verified yet.

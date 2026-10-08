@@ -1,8 +1,11 @@
 package com.bbbjam.navigation
 
+import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.util.Locale
 
 /**
  * The app's navigation routes, as strings (`song-detail-screen`, R1). They are built and parsed only
@@ -64,6 +67,8 @@ internal object AppRoutes {
     fun parseAddSong(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 
     const val SONG_ID = "songId"
+    const val INSTRUMENT = "instrument"
+    const val ORDINAL = "ordinal"
 
     /**
      * The admin's key picker (`admin-set-key`), `setKey/{jamDate}/{songId}`: full screen in the outer
@@ -79,6 +84,30 @@ internal object AppRoutes {
     fun parseSetKey(jamDate: String?, songId: String?): SetKeyArgs? {
         val id = songId?.let { SongId.parseOrNull(it) } ?: return null
         return jamDate?.toIsoDateOrNull()?.let { SetKeyArgs(it, id) }
+    }
+
+    /** The fixed open slot assignment screen, named by date/song id/instrument ordinal. */
+    const val ASSIGN_SLOT = "assignSlot/{$JAM_DATE}/{$SONG_ID}/{$INSTRUMENT}/{$ORDINAL}"
+
+    fun assignSlot(jamDate: LocalDate, songId: SongId, instrument: Instrument, position: SlotPosition) =
+        "assignSlot/$jamDate/${songId.value}/${instrument.name.lowercase(Locale.ROOT)}/${position.value}"
+
+    fun parseAssignSlot(jamDate: String?, songId: String?, instrument: String?, ordinal: Int?): AssignSlotArgs? {
+        val date = jamDate?.toIsoDateOrNull()
+        val id = songId?.let(SongId::parseOrNull)
+        val type = instrument?.let { value ->
+            Instrument.entries.firstOrNull { it.name.lowercase(Locale.ROOT) == value }
+        }
+        val position = ordinal?.takeIf { it >= 1 }?.let(::SlotPosition)
+        return date?.let { parsedDate ->
+            id?.let { parsedId ->
+                type?.let { parsedInstrument ->
+                    position?.let { parsedPosition ->
+                        AssignSlotArgs(parsedDate, parsedId, parsedInstrument, parsedPosition)
+                    }
+                }
+            }
+        }
     }
 
     /** The past jam detail's date, or null when it is missing or not ISO. */
@@ -105,3 +134,10 @@ internal data class SongDetailArgs(val jamDate: LocalDate, val position: Int)
 
 /** A song of a jam, as the key picker route names it. */
 internal data class SetKeyArgs(val jamDate: LocalDate, val songId: SongId)
+
+internal data class AssignSlotArgs(
+    val jamDate: LocalDate,
+    val songId: SongId,
+    val instrument: Instrument,
+    val position: SlotPosition,
+)

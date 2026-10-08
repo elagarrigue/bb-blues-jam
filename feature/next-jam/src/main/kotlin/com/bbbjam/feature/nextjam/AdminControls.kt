@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -21,10 +22,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import com.bbbjam.core.ui.strip.fullName
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /*
@@ -151,6 +156,7 @@ internal fun AdminRowActions(model: SongRowAdminUiModel) {
     RowTextAction(model.setKey.label, AdminControlsDefaults.keyChange().action) {
         model.setKey.events(SetKeyActionUiModel.Event.Open)
     }
+    LineupEditor(model.lineup)
     RemovalControl(model.removal)
 }
 
@@ -159,7 +165,7 @@ internal fun AdminRowActions(model: SongRowAdminUiModel) {
  * `textMuted`, read politely when it appears. Drawn inside the row header, in both states.
  */
 @Composable
-internal fun KeyStatusLine(status: String) {
+internal fun SaveStatusLine(status: String) {
     Text(
         text = status,
         style = BluesJamTheme.typography.caption,
@@ -218,7 +224,7 @@ private fun RemovalControl(model: RemovalUiModel) {
 
 /** A 48dp underlined text action in [color], as the row's "Ver detalle del tema". */
 @Composable
-private fun RowTextAction(label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun RowTextAction(label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val spacing = BluesJamTheme.spacing
     Box(
         modifier = modifier

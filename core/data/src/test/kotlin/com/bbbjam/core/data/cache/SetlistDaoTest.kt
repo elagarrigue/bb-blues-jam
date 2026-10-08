@@ -154,6 +154,28 @@ class SetlistDaoTest {
     }
 
     /** The upcoming jam with four songs in a known order, each with a filled slot or an extra. */
+    @Test
+    fun `replaceSlots targets one song by id and refuses duplicate and unavailable setlists`() = runTest {
+        val rows = fourSongs()
+        jamsDao.replaceJams(rows, SyncStateEntity("jams", 1, 1, null))
+        val replacement = listOf(JamSlotEntity("ignored", 99, 1, "GUITAR", "New"))
+        assertTrue(dao.replaceSlots(UPCOMING, "thrill", replacement))
+        val after = jamsDao.observeJams().first().single { it.jam.date == UPCOMING }
+        assertEquals(listOf(JamSlotEntity(UPCOMING, 3, 1, "GUITAR", "New")), after.slots.filter { it.position == 3 })
+        assertEquals(rows.slots.filter { it.position != 3 }, after.slots.filter { it.position != 3 })
+        assertEquals(rows.extras, after.extras)
+        val invalid = rows.copy(
+            jams = rows.jams.map { if (it.date == LATER) it.copy(setlistState = "WITHHELD") else it },
+            songs = rows.songs + JamSongEntity(UPCOMING, 5, "thrill", "T", "A", "C"),
+        )
+        jamsDao.replaceJams(invalid, SyncStateEntity("jams", 1, 1, null))
+        val before = jamsDao.observeJams().first()
+        assertFalse(dao.replaceSlots(UPCOMING, "thrill", replacement))
+        assertFalse(dao.replaceSlots(UPCOMING, "missing", replacement))
+        assertFalse(dao.replaceSlots(LATER, "crossroads", replacement))
+        assertEquals(before, jamsDao.observeJams().first())
+    }
+
     private fun fourSongs(): JamRows {
         val available = JamEntity(UPCOMING, 1, "21:00", "Lugar", "DRAFT", "AVAILABLE", null, 0)
         val later = JamEntity(LATER, 2, "21:00", "Lugar", "PUBLISHED", "AVAILABLE", null, 0)

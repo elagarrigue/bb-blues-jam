@@ -14,16 +14,18 @@ import androidx.room.Transaction
  * the jams.
  */
 @Dao
-internal interface SetlistDao {
+internal interface SetlistDao :
+    SetlistSlotDao,
+    SetlistAssignmentDao {
     @Query("SELECT setlist_state FROM jam WHERE date = :date")
-    suspend fun setlistState(date: String): String?
+    override suspend fun setlistState(date: String): String?
 
     /** -1 when a song already holds the position. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSongIfAbsent(song: JamSongEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertSlotsIfAbsent(slots: List<JamSlotEntity>)
+    override suspend fun insertSlotsIfAbsent(slots: List<JamSlotEntity>)
 
     /**
      * Adds one song the server just appended, with its slots, in one transaction, and only while the
@@ -40,7 +42,7 @@ internal interface SetlistDao {
 
     /** The cached songs of [date] with the tab's title copies, in position order. */
     @Query("SELECT * FROM jam_song WHERE jam_date = :date ORDER BY position")
-    suspend fun songsOf(date: String): List<JamSongEntity>
+    override suspend fun songsOf(date: String): List<JamSongEntity>
 
     @Query("SELECT * FROM jam_slot WHERE jam_date = :date AND position >= :position")
     suspend fun slotsFrom(date: String, position: Int): List<JamSlotEntity>

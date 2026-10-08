@@ -41,6 +41,7 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.InstrumentFilterBar
 import com.bbbjam.core.ui.filter.instrumentFilterBar
@@ -87,6 +88,12 @@ fun NextJamScreen(
     onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
     onAddSong: (jamDate: LocalDate) -> Unit = {},
     onSetKey: (jamDate: LocalDate, songId: SongId) -> Unit = { _, _ -> },
+    onAssignSlot: (
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        position: SlotPosition,
+    ) -> Unit = { _, _, _, _ -> },
     presenter: NextJamPresenter = koinInject(),
 ) {
     // RESUMED only while this tab is selected, the activity is in front and no destination sits
@@ -98,6 +105,7 @@ fun NextJamScreen(
             isResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
             onAddSong = onAddSong,
             onSetKey = onSetKey,
+            onAssignSlot = onAssignSlot,
             onOpenSong = onOpenSong,
         ),
     )
@@ -289,7 +297,7 @@ private fun RowHeader(row: SongRowUiModel) {
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         TitleLine(row)
-        row.admin?.keyStatus?.let { status -> KeyStatusLine(status) }
+        row.admin?.saveStatus?.let { status -> SaveStatusLine(status) }
         if (!row.isExpanded) {
             InstrumentStrip(row.instruments)
         } else if (row.artist.isNotBlank()) {

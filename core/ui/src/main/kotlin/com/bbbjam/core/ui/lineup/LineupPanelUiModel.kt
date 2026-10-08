@@ -1,5 +1,7 @@
 package com.bbbjam.core.ui.lineup
 
+import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 
@@ -28,4 +30,11 @@ data class LineupLineUiModel(
     val detail: String,
     val contentDescription: String,
     val kind: InstrumentChipKind,
+    /** Present only for an open admin slot in Próxima jam. */
+    val actionLabel: String? = null,
+    val action: EventHandler<LineupLineEvent>? = null,
 ) : UiModel
+
+sealed interface LineupLineEvent : UiEvent {
+    data object Activate : LineupLineEvent
+}

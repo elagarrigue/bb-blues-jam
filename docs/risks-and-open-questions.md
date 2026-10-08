@@ -412,3 +412,17 @@ Stated so they can be challenged rather than silently relied upon.
 - **Server and client "today" can disagree** (admin-add-song validation, 6 October 2026): Apps
   Script decides whether a jam is past in the spreadsheet's time zone, the app in Buenos Aires
   (`JamCalendar`). They agree only while the Sheet's time zone is Buenos Aires; keep it so.
+
+
+- **Adjust-lineup risks** (`admin-adjust-lineup`, local implementation; live deployment pending):
+  JS resolves Sheet columns, Kotlin mirrors counts for display only; confirmed cache always comes
+  from the server's seven-cell answer. Guitar overlay ordering can differ briefly before confirm.
+  Restoring a first guitar changes a filled second guitar's ordinal: assign (implemented locally)
+  re-resolves current columns server-side and refuses unexpected cell state; clear must follow the
+  same rule. Pending admin-only
+  lineup counts can be unsaved during write latency, revert on failure, and are lost with the
+  process. Refresh races match other writes. `Otros` add/remove is split into
+  `admin-edit-extra-participants`; this slice never writes extras.
+  Pixel 5 local smoke also showed shared navigation limitations: the next-tab label wraps/clips
+  at font scale 2.0 and the system navigation bar overlaps the right edge in landscape. The inline
+  editor itself retains its controls and scrolls; these shared inset/tab issues remain open.

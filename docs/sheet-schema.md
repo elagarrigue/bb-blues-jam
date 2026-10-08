@@ -142,6 +142,26 @@ before any write) and writes **only that row's `tono` cell**, as plain text (`@`
 value), in the spelling the admin picked (`A#` and `Bb` are both kept as sent; `[A-G][#b]?m?`).
 No other cell is written and `Catalogo`, so `tono_default`, is never opened (D-08).
 
+`setSlotCount` (`admin-adjust-lineup`) also finds one row by `id_tema`. It only removes open
+slots, writing `-` to the last open column first; restoration writes an empty plain-text cell
+to the first `-` column first. A name is never written or moved; insufficient open slots are
+`slot_filled` before any write. Zero of any instrument is valid, never above the default.
+Restoring Guitarra 1 before filled Guitarra 2 changes the name's ordinal to second without moving
+its cell. Later ordinal-based assignment and clearing must resolve the current non-`-` columns
+server-side and refuse if the resolved cell is no longer in the expected state.
+The `_prueba_lista` deploy marker now ends with Guitarra 2 absent and all other slots open,
+after harmonica removal/restoration; its temporary tab is still cleaned up. Deployment is pending.
+
+`assignSlot` (`admin-assign-musician`) locates the same unique row by `id_tema`, resolves the
+1-based ordinal among non-`-` columns for that instrument in canonical header order (U1), checks the
+target is still empty, then writes the normalized musician name to that one slot cell as plain text.
+It never overwrites an occupied cell and never touches `Catalogo`. For example, if Guitarra 1 is
+`-` and Guitarra 2 is active, guitar ordinal 1 resolves to Guitarra 2. This ordinal is independent
+of the app's open-first display order. Rejections happen before any cell is written; success returns
+the canonical seven-slot array index and normalized name. The assignment step in
+`checkSetlistWrite` uses only the disposable marker tab. Deployment and live validation remain
+deferred until app implementation is complete.
+
 ### Slot columns
 
 All seven slot headers are **required in every jam tab**; a tab missing one is invalid. Their cells

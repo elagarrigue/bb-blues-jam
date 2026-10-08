@@ -431,6 +431,25 @@ through `AdminControlsDefaults`, **no amber**:
   clickable; a non-canonical key (`A#`) marks no cell. Amber is never on a selectable cell. A tap
   closes the picker at once. Gone state: `Este tema ya no está en la lista` / `Volvé a la próxima
   jam para ver la actual.`
+- **Assigning a musician** (`admin-assign-musician`): each open line in an expanded admin row adds
+  a 48dp `Anotar` action in the `slotOpen` role; filled lines, `Otros`, and musician rows stay
+  read-only. It opens a full-screen scrollable `Anotar músico` flow with a 48dp `Volver`, song
+  title, fixed `CUPO` instrument, `Nombre` field with Done IME, validation caption, and sections
+  `ESTA JAM` and `JAMS ANTERIORES`. Suggestion rows and submit are at least 48dp; no instrument
+  selector is drawn. Submit closes immediately; only the admin row shows `Guardando…` while the
+  server confirms. Failure reopens the slot and adds a dismissible card. Focus and button colors use
+  neutral tokens; amber remains reserved for open-slot affordance and key. Gone state:
+  `Ese cupo ya no está libre` / `Volvé a la próxima jam para ver la lista actual.`
+- **Adjusting a lineup** (`admin-adjust-lineup`): after `Cambiar tonalidad` and before removal,
+  `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
+  default instrument, full name in `body`/`text`, count (`2 cupos`, `1 cupo`, `No va en este tema`)
+  in `caption`/`textMuted`. Minus/plus are 48dp `surfaceRaised` squares, `shapes.md`, glyphs in
+  `songTitle`/`text`, `Role.Button`, with explicit instrument descriptions; disabled controls are
+  muted, not clickable, with disabled semantics. Removing a filled-only instrument is disabled
+  with `Tiene músico anotado. Liberá el cupo antes de sacarlo.` beneath it. `Listo` and the entry
+  action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
+  Sending counts update the strip, panel and filters at once for the admin only. One muted
+  `Guardando…` line covers key and lineup together; failure reverts and leaves a persistent card.
 - Text selection is non-amber app-wide (`BluesJamTheme` provides `text` handles and `text` at 40%).
 
 ## Core Screens

@@ -5,6 +5,7 @@
 // admin-remove-song-from-setlist: the write `removeSong` and the deploy check `checkSetlistRemove`,
 // against the same fake, which also deletes and inserts rows.
 // admin-set-key: the write `setKey` and the extended `checkSetlistWrite`, against the same fake.
+// admin-assign-musician: the write `assignSlot` and its temporary-tab deploy proof.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -856,4 +857,239 @@ test('checkSetlistWrite with a Sheet that drops the key write is internal_error 
   assert.ok(fake.log.some((op) => op[0] === 'setValue' && op[4] === 'F#m'), 'the key write was not attempted');
   assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
   assert.equal(svc.lock.releases, 1);
+});
+
+// ---- admin-adjust-lineup ----
+function setSlotCount(fake, fields = {}, svc) {
+  return call(fake, 'setSlotCount', Object.assign({ date: UPCOMING, songId: 'crossroads', instrument: 'guitar', count: 1 }, fields), svc);
+}
+
+const LINEUP_CASES = [
+  ['last open guitar removed', ['', ''], 1, ['', '-'], 7],
+  ['filled first guitar stays', ['Martin', ''], 1, ['Martin', '-'], 7],
+  ['filled second guitar stays', ['', 'Pedro'], 1, ['-', 'Pedro'], 6],
+  ['first absent guitar restored', ['-', '-'], 1, ['', '-'], 6],
+  ['second absent guitar restored', ['', '-'], 2, ['', ''], 7],
+  ['restore before second filled guitar', ['-', 'Pedro'], 2, ['', 'Pedro'], 6],
+];
+for (const [label, guitars, count, expected, column] of LINEUP_CASES) {
+  test('setSlotCount ' + label + ', only the changed cell as plain text', () => {
+    const slots = guitars.concat(['Bass name', '', '', '', '']);
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', slots, 'Guest: sax')] } });
+    const before = fake.tabs[UPCOMING].getDataRange().getDisplayValues();
+    const body = setSlotCount(fake, { count });
+    assert.equal(body.ok, true);
+    assert.deepStrictEqual([body.slots.guitar1, body.slots.guitar2], expected.map(x => x === '' ? null : x));
+    assert.deepStrictEqual(writes(fake.log), [
+      ['setNumberFormat', UPCOMING, 2, column, '@'],
+      ['setValue', UPCOMING, 2, column, expected[column - 6]],
+    ]);
+    const after = fake.tabs[UPCOMING].getDataRange().getDisplayValues();
+    before[1][column - 1] = after[1][column - 1];
+    assert.deepStrictEqual(after, before);
+    assert.ok(!fake.requested.includes('Catalogo'));
+  });
+}
+
+test('setSlotCount filled slots refused without any partial writes', () => {
+  for (const guitars of [['Martin', 'Pedro'], ['Martin', '']]) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', guitars.concat(['', '', '', '', '']))] } });
+    assertError(setSlotCount(fake, { count: 0 }), 'slot_filled');
+    assert.deepStrictEqual(writes(fake.log), []);
+  }
+});
+
+test('setSlotCount remove and restore every default instrument; same count is no-op', () => {
+  const instruments = { guitar: ['guitar1', 'guitar2'], bass: ['bass'], drums: ['drums'], vocals: ['vocals'], harmonica: ['harmonica'], keyboards: ['keyboards'] };
+  for (const [instrument, fields] of Object.entries(instruments)) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A')] } });
+    assert.equal(setSlotCount(fake, { instrument, count: fields.length }).ok, true);
+    assert.deepStrictEqual(writes(fake.log), []);
+    const removed = setSlotCount(fake, { instrument, count: 0 });
+    fields.forEach(field => assert.equal(removed.slots[field], '-'));
+    const restored = setSlotCount(fake, { instrument, count: fields.length });
+    fields.forEach(field => assert.equal(restored.slots[field], null));
+  }
+});
+
+test('setSlotCount validates in order and writes nothing on failures', () => {
+  const cases = [
+    [{ date: '2026-02-30', songId: 'BAD', instrument: 'kazoo', count: -1 }, 'invalid_date'],
+    [{ songId: 'BAD', instrument: 'kazoo', count: -1 }, 'invalid_song'],
+    ...[undefined, 'kazoo', 'Guitar', '__proto__', 7].map(instrument => [{ instrument, count: -1 }, 'invalid_instrument']),
+    ...[undefined, '1', null, true, -1, 3, 1.5, NaN, Infinity].map(count => [{ count, date: '1999-01-01' }, 'invalid_count']),
+    [{ instrument: 'bass', count: 2 }, 'invalid_count'],
+    [{ date: '1999-01-01' }, 'unknown_jam'],
+    [{ date: PAST }, 'jam_not_editable'],
+    [{ date: LATER }, 'jam_not_editable'],
+    [{}, 'duplicate_date', { jams: JAMS.concat([[UPCOMING, '22:00', 'Other', 'BORRADOR']]) }],
+    [{}, 'song_not_in_setlist', { tabs: { [UPCOMING]: null } }],
+    [{}, 'missing_header', { tabs: { [UPCOMING]: [TAB_HEADER.filter(h => h !== 'Bajo')] } }],
+    [{}, 'duplicate_header', { tabs: { [UPCOMING]: [TAB_HEADER.concat(['Bajo'])] } }],
+    [{}, 'song_not_in_setlist'],
+    [{ songId: 'the-thrill-is-gone' }, 'duplicate_song', { tabs: { [UPCOMING]: UPCOMING_TAB.concat([UPCOMING_TAB[1]]) } }],
+    [{ songId: 'the-thrill-is-gone', count: 0 }, 'slot_filled'],
+  ];
+  for (const [fields, code, options = {}] of cases) {
+    const fake = fakeSpreadsheet(options);
+    const svc = services();
+    assertError(setSlotCount(fake, fields, svc), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+    assert.ok(!fake.requested.includes('Catalogo'));
+    assert.equal(svc.lock.tries, svc.lock.releases);
+  }
+});
+
+test('setSlotCount uses mapped headers and id after removal renumber, GET mirrors published slots', () => {
+  const header = TAB_HEADER.slice().reverse();
+  const song = row('2', 'crossroads', 'Crossroads', 'Eric', 'A').reverse();
+  const earlier = row('1', 'red-house', 'Red House', 'Jimi', 'A').reverse();
+  const fake = fakeSpreadsheet({ jams: JAMS.map(r => r[0] === UPCOMING ? [UPCOMING, '21:00', 'Place', 'PUBLICADA'] : r), tabs: { [UPCOMING]: [header, earlier, song] } });
+  assert.equal(call(fake, 'removeSong', { date: UPCOMING, songId: 'red-house' }).ok, true);
+  fake.log.length = 0;
+  const result = setSlotCount(fake, { instrument: 'harmonica', count: 0 });
+  assert.equal(result.slots.harmonica, '-');
+  const get = handleGet({ resource: 'jams' }, fake.spreadsheet);
+  const jam = get.jams.find(j => j.date === UPCOMING);
+  assert.equal(jam.setlist[0].slots.harmonica, '-');
+  assert.equal(jam.setlist[0].songId, 'crossroads');
+  assert.equal(jam.setlist[0].position, '1');
+  assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', UPCOMING, 2, header.indexOf('Armónica') + 1, '@'], ['setValue', UPCOMING, 2, header.indexOf('Armónica') + 1, '-']]);
+});
+
+test('checkSetlistWrite exercises guitar removal and harmonica removal then restore', () => {
+  const fake = fakeSpreadsheet();
+  assert.equal(call(fake, 'checkSetlistWrite').ok, true);
+  const values = fake.log.filter(op => op[0] === 'setValue' && (op[3] === 7 || op[3] === 11));
+  assert.deepStrictEqual(values.map(op => [op[3], op[4]]), [[7, ''], [11, ''], [7, '-'], [11, '-'], [11, '']]);
+});
+
+test('checkSetlistWrite catches a dropped slot write and cleans up', () => {
+  const fake = fakeSpreadsheet({ lostValues: ['-'] });
+  assertError(call(fake, 'checkSetlistWrite'), 'internal_error');
+  assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+});
+
+test('setSlotCount rereads trimmed display cells including names assigned during the write', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A')] } });
+  const sheet = fake.tabs[UPCOMING];
+  const getRange = sheet.getRange;
+  sheet.getRange = function (...args) {
+    const range = getRange(...args);
+    const setValue = range.setValue;
+    range.setValue = function (value) {
+      setValue(value);
+      sheet.cells[1][7].value = '  Concurrent bass  ';
+    };
+    return range;
+  };
+  const result = setSlotCount(fake);
+  assert.equal(result.slots.bass, 'Concurrent bass');
+  assert.equal(result.slots.guitar2, '-');
+  assert.equal(writes(fake.log).length, 2);
+});
+
+// ---- admin-assign-musician ----
+function assignSlot(fake, fields = {}, svc) {
+  return call(fake, 'assignSlot', Object.assign({ date: UPCOMING, songId: 'crossroads', instrument: 'guitar', ordinal: 1, name: 'Tincho' }, fields), svc);
+}
+
+test('assignSlot resolves ordinal among active U1 columns and writes one normalized plain-text cell', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', ['-', '', '', '', '', '', ''])] } });
+  assert.deepStrictEqual(assignSlot(fake, { name: '  Zoë   Núñez  ' }), { schemaVersion: 1, ok: true, column: 1, name: 'Zoë Núñez' });
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 2, 7, '@'],
+    ['setValue', UPCOMING, 2, 7, 'Zoë Núñez'],
+  ]);
+  assert.equal(fake.tabs[UPCOMING].getDataRange().getDisplayValues()[1][6], 'Zoë Núñez');
+  assert.ok(!fake.requested.includes('Catalogo'));
+});
+
+test('assignSlot refuses occupied, missing active ordinal and invalid names without writes', () => {
+  const cases = [
+    [{ instrument: 'guitar', ordinal: 1 }, ['Martin', ''], 'slot_taken'],
+    [{ instrument: 'guitar', ordinal: 2 }, ['', '-'], 'slot_not_in_lineup'],
+    ...['', '   ', 'x'.repeat(41), 'no;pe', 'hola (che)', '=1+1', '+hola', '-hola', '@hola', '\u0001hola', 'Ana\tMaria', '---'].map(name => [{ name }, ['', ''], 'invalid_name']),
+  ];
+  for (const [fields, guitars, code] of cases) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', guitars.concat(['', '', '', '', '']))] } });
+    assertError(assignSlot(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+});
+
+test('assignSlot validates inputs in deterministic order before jam or tab access', () => {
+  const cases = [
+    [{ date: '2026-02-30', songId: 'BAD', instrument: 'kazoo', ordinal: 0, name: '' }, 'invalid_date'],
+    [{ songId: 'BAD', instrument: 'kazoo', ordinal: 0, name: '' }, 'invalid_song'],
+    [{ instrument: 'kazoo', ordinal: 0, name: '' }, 'invalid_slot'],
+    [{ instrument: 'guitar', ordinal: 0, name: '' }, 'invalid_slot'],
+    [{ instrument: 'guitar', ordinal: 3, name: '' }, 'invalid_slot'],
+    [{ date: '1999-01-01', name: '' }, 'invalid_name'],
+    [{ date: '1999-01-01' }, 'unknown_jam'],
+    [{ date: PAST }, 'jam_not_editable'],
+    [{}, 'duplicate_date', { jams: JAMS.concat([[UPCOMING, '22:00', 'Other', 'BORRADOR']]) }],
+    [{}, 'song_not_in_setlist', { tabs: { [UPCOMING]: null } }],
+    [{}, 'missing_header', { tabs: { [UPCOMING]: [TAB_HEADER.filter(h => h !== 'Bajo')] } }],
+    [{}, 'duplicate_header', { tabs: { [UPCOMING]: [TAB_HEADER.concat(['Bajo'])] } }],
+    [{ songId: 'missing-song' }, 'song_not_in_setlist'],
+    [{ songId: 'the-thrill-is-gone' }, 'duplicate_song', { tabs: { [UPCOMING]: UPCOMING_TAB.concat([UPCOMING_TAB[1]]) } }],
+  ];
+  for (const [fields, code, options = {}] of cases) {
+    const fake = fakeSpreadsheet(options);
+    const svc = services();
+    assertError(assignSlot(fake, fields, svc), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+    assert.ok(!fake.requested.includes('Catalogo'));
+    assert.equal(svc.lock.tries, svc.lock.releases);
+  }
+});
+
+test('assignSlot uses mapped headers and does not overwrite occupied cells', () => {
+  const header = TAB_HEADER.slice().reverse();
+  const song = row('2', 'crossroads', 'Crossroads', 'Eric', 'A', ['-', '', '', '', '', '', '']).reverse();
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [header, song] } });
+  assert.deepStrictEqual(assignSlot(fake, { ordinal: 1, name: 'Mora' }), { schemaVersion: 1, ok: true, column: 1, name: 'Mora' });
+  assert.equal(fake.tabs[UPCOMING].getDataRange().getDisplayValues()[1][header.indexOf('Guitarra 2')], 'Mora');
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 2, header.indexOf('Guitarra 2') + 1, '@'],
+    ['setValue', UPCOMING, 2, header.indexOf('Guitarra 2') + 1, 'Mora'],
+  ]);
+});
+
+test('assignSlot is an authenticated locked write and checkSetlistWrite proves assignment on its temporary tab', () => {
+  const fake = fakeSpreadsheet();
+  const svc = services();
+  const result = call(fake, 'checkSetlistWrite', {}, svc);
+  assert.deepStrictEqual(result, { schemaVersion: 1, ok: true });
+  assert.ok(fake.log.some(op => op[0] === 'setValue' && op[1] === SETLIST_CHECK_TAB && op[4] === 'Prueba Musico'));
+  assert.ok(fake.log.every(op => op[1] === SETLIST_CHECK_TAB), 'a real tab was touched');
+  assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+  assert.equal(ACTIONS.assignSlot.write, true);
+
+  const denied = fakeSpreadsheet();
+  assertError(handlePost({ action: 'assignSlot', date: UPCOMING, songId: 'crossroads', instrument: 'guitar', ordinal: 1, name: 'Tincho' }, denied.spreadsheet, services()), 'invalid_passphrase');
+  assert.deepStrictEqual(writes(denied.log), []);
+  const busy = services();
+  busy.lock.tryLock = () => false;
+  assertError(assignSlot(denied, {}, busy), 'busy');
+  assert.deepStrictEqual(writes(denied.log), []);
+});
+
+test('checkSetlistWrite detects a dropped assignment and still cleans up its temporary tab', () => {
+  const fake = fakeSpreadsheet({ lostValues: ['Prueba Musico'] });
+  assertError(call(fake, 'checkSetlistWrite'), 'internal_error');
+  assert.ok(fake.log.some(op => op[0] === 'setValue' && op[1] === SETLIST_CHECK_TAB && op[4] === 'Prueba Musico'));
+  assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+});
+
+test('setSlotCount needs passphrase and write lock; neither refusal writes', () => {
+  const fake = fakeSpreadsheet();
+  assertError(handlePost({ action: 'setSlotCount', date: UPCOMING, songId: 'crossroads', instrument: 'guitar', count: 1 }, fake.spreadsheet, services()), 'invalid_passphrase');
+  assert.deepStrictEqual(fake.requested, ['Config']);
+  const svc = services();
+  svc.lock.tryLock = () => false;
+  assertError(setSlotCount(fake, {}, svc), 'busy');
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.equal(ACTIONS.setSlotCount.write, true);
 });

@@ -1,8 +1,10 @@
 package com.bbbjam.core.ui.lineup
 
 import com.bbbjam.core.model.ExtraParticipant
+import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripCopy
 
@@ -13,11 +15,23 @@ import com.bbbjam.core.ui.strip.InstrumentStripCopy
  *
  * Pure: presenters call it, so every feature that draws an expanded lineup maps it identically.
  */
-fun Lineup.toLineupPanel(extras: List<ExtraParticipant>): LineupPanelUiModel {
-    val (open, filled) = slots.partition { it.isOpen }
+fun Lineup.toLineupPanel(
+    extras: List<ExtraParticipant>,
+    onAssign: ((Instrument, SlotPosition) -> Unit)? = null,
+): LineupPanelUiModel {
+    val indexed = slots.mapIndexed { index, slot -> index to slot }
+    val (open, filled) = indexed.partition { (_, slot) -> slot.isOpen }
     return LineupPanelUiModel(
-        openSlots = open.map { it.toLine() },
-        filledSlots = filled.map { it.toLine() },
+        openSlots = open.map { (index, slot) ->
+            val position = positionOf(index)
+            slot.toLine(
+                onAssign?.takeIf { position != null }?.let { handler ->
+                    { handler(slot.instrument, requireNotNull(position)) }
+                },
+                actionKey = position?.let { "${slot.instrument.name}:${it.value}" },
+            )
+        },
+        filledSlots = filled.map { (_, slot) -> slot.toLine() },
         extras = extras.map { it.toLine() },
         noOpenSlotsNote = noOpenSlotsNote(hasOpenSlot = open.isNotEmpty()),
         hint = openSlotsHint(hasOpenSlot = open.isNotEmpty()),
@@ -30,7 +44,7 @@ internal fun noOpenSlotsNote(hasOpenSlot: Boolean): String? = if (hasOpenSlot) n
 /** The hint drawn when at least one slot is open, or null. Shared with the instrument groups. */
 internal fun openSlotsHint(hasOpenSlot: Boolean): String? = if (hasOpenSlot) LineupPanelCopy.HINT else null
 
-internal fun Slot.toLine(): LineupLineUiModel {
+internal fun Slot.toLine(onAssign: (() -> Unit)? = null, actionKey: String? = null): LineupLineUiModel {
     val name = musicianName
     return if (name == null) {
         LineupLineUiModel(
@@ -38,6 +52,14 @@ internal fun Slot.toLine(): LineupLineUiModel {
             detail = LineupPanelCopy.OPEN_DETAIL,
             contentDescription = InstrumentStripCopy.openDescription(instrument),
             kind = InstrumentChipKind.OPEN_SLOT,
+            actionLabel = if (onAssign == null) null else LineupPanelCopy.ASSIGN,
+            action = onAssign?.let { callback ->
+                com.bbbjam.core.ui.presenter.EventHandler(key = "assign:${actionKey ?: instrument.name}") { event ->
+                    when (event) {
+                        LineupLineEvent.Activate -> callback()
+                    }
+                }
+            },
         )
     } else {
         LineupLineUiModel(

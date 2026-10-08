@@ -37,3 +37,16 @@ internal fun keyFailureMessage(reason: WriteOutcome): String = when {
     reason is WriteOutcome.Rejected && reason.code == "duplicate_song" -> NextJamCopy.DUPLICATE_SONG
     else -> failureMessage(reason)
 }
+
+internal fun lineupFailureMessage(reason: WriteOutcome): String = when {
+    reason is WriteOutcome.Rejected && reason.code == "slot_filled" -> NextJamCopy.SLOT_FILLED
+    else -> keyFailureMessage(reason)
+}
+
+internal fun assignmentFailureMessage(reason: WriteOutcome): String = when {
+    reason is WriteOutcome.Rejected && reason.code == "invalid_name" -> NextJamCopy.INVALID_ASSIGNMENT_NAME
+    reason is WriteOutcome.Rejected && reason.code == "slot_taken" -> NextJamCopy.SLOT_TAKEN
+    reason is WriteOutcome.Rejected && reason.code == "slot_not_in_lineup" -> NextJamCopy.JAM_CHANGED
+    reason is WriteOutcome.Rejected && reason.code == "song_not_in_setlist" -> NextJamCopy.JAM_CHANGED
+    else -> failureMessage(reason)
+}

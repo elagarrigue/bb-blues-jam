@@ -912,14 +912,38 @@
       "admin-add-song-to-setlist",
       "instrument-strip-component"
     ],
-    "status": "not_started",
+    "status": "blocked",
     "verification": [
       "A lineup change persists to the Sheet",
       "A lineup with zero slots of an instrument is valid and renders correctly",
       "Removing a slot that holds a musician is handled deliberately, not silently"
     ],
-    "evidence": [],
+    "evidence": [
+      "7 Oct 2026: Parts A+B locally implemented. ktlintFormat and final CI=true ./init.sh exit 0 after mutation restores; all three wired, Konsist 17/17, 95 result files, 602 debug/JVM tests, zero failures/errors. Orchestrator reran Node: 146/146.",
+      "Failure demos a/b failed corresponding Node column-order and occupied-removal tests; Post.js restored SHA1 4129D6ACE9D8BFD9431C078BE1C339A7860A0E6B. Demos c/d gate failed 2/186 data and 1/138 next-jam tests; byte restore and sha1sum -c passed for SetlistSlotDao C60906843EAA7022DA7BD58460ADAD6370FC4BC4 and overlay 8ABFD328D771958142CD3E98620AE6B308D69D26, then full gate green.",
+      "Pixel 5: occupied-guitar remove disabled/add enabled with explanation; described controls 48dp; guitar-add and harmonica-remove AccessRefused reverted counts and showed correct dismissible formation failure cards. Font 2.0 editor wraps and scrolls; rotation retains editor; normal APK musician expanded row has only detail action. Optimistic frame too brief to capture; delayed Molecule coverage.",
+      "Original local.properties byte-restored; normal APK reinstalled; font1.0, rotation1/0, airplane0, physical1080x2340, accessibility null/0/0 unchanged, crash buffer empty. Residual shared tab font2 clipping and landscape navigation overlap recorded. No real jam changed.",
+      "Pending human deployment: replace existing Post.gs with complete backend/apps-script/src/Post.js, save and deploy New version of existing deployment. Required live L1-L5 and independent validation have NOT run. On 7 Oct 2026 the user deferred deployment and live checks until the app implementation is complete; resume after credential rotation and updating local.properties. See PROGRESS.md handoff."
+    ],
     "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies. From sheet-schema-definition validation: under U1 = B, restoring a removed guitar slot into Guitarra 1 while Guitarra 2 holds a name shifts that musician from the 1st to the 2nd guitar slot; decide the write behaviour explicitly."
+  },
+  {
+    "id": "admin-edit-extra-participants",
+    "area": "feature-next-jam",
+    "title": "Add and remove extra participants",
+    "user_visible_behavior": "The admin adds or removes a named extra participant with a free-text instrument under Otros, without changing the song's lineup or open slots.",
+    "depends_on": [
+      "admin-adjust-lineup"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Adding and removing an extra participant persist to the Sheet's Otros cell",
+      "Both mutations are public repository functions and are authorized and validated server-side",
+      "Extra participants never create open slots or affect instrument filter counts",
+      "A failed write reverts the optimistic change and shows a dismissible failure"
+    ],
+    "evidence": [],
+    "notes": "Split from admin-adjust-lineup X1 to keep one user flow per slice. D-13 and D-18: add and remove Otros are separate mutations included in the action contract. Planner must specify parsing, limits and concurrent-edit behavior before implementation."
   },
   {
     "id": "admin-assign-musician",
@@ -930,14 +954,19 @@
       "admin-add-song-to-setlist",
       "song-row-expansion"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The assignment persists to the Sheet",
       "The instrument is fixed by the slot and is not selectable",
       "Suggestions come from prior jams"
     ],
-    "evidence": [],
-    "notes": "D-05: only the admin assigns. Where suggestions come from depends on the Sheet schema, recorded as an open question. Two musicians sharing a name are not disambiguated, by design."
+    "evidence": [
+      "8 Oct 2026 local implementation: server assignSlot uses the active U1 ordinal, validates and normalizes the name, and writes one plain-text slot cell; checkSetlistWrite verifies assign/readback/cleanup on its temporary tab. No live call or deployment was performed.",
+      "Local Android verification: CI=true ./init.sh exit 0; 87 JVM test suites, 555 tests, zero failures/errors; konsist, detekt and ktlint all wired. Focused :core:data:test 190/190, :feature:next-jam:test 148 tests, and Node suite 152/152 also passed; ktlintFormat succeeded.",
+      "Backend contract, domain, schema, and feature spec docs updated. Deployment and live validation are intentionally deferred until app implementation is complete; no live credential was used for this feature.",
+      "Independent validator (8 Oct 2026): accept. Reran CI=true ./init.sh (exit 0; three tools wired), Node suite 152/152 and git diff --check (exit 0); reviewed server auth/U1/single-cell write, cache confirmation, Sending overlay, fixed-slot UI, suggestions, routes, architecture, docs and security. No live checks were run per the spec. Commit deferred because shared implementation files also contain the unaccepted admin-adjust-lineup feature and existing Codex infrastructure edits."
+    ],
+    "notes": "D-05: only the admin assigns. Suggestions use names from the current and past jam tabs already present in JamsSnapshot; there is no musicians list. Two musicians sharing a name are not disambiguated, by design. Apps Script deployment/live checks are deferred until app implementation is complete."
   },
   {
     "id": "admin-clear-slot",
@@ -1049,6 +1078,7 @@
       "admin-remove-song-from-setlist",
       "admin-set-key",
       "admin-adjust-lineup",
+      "admin-edit-extra-participants",
       "admin-clear-slot",
       "admin-reorder-songs",
       "admin-publish-setlist"

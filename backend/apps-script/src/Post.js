@@ -23,6 +23,11 @@
  * (findSongRow_, shared with removeSong) and never opens Catalogo (D-08). Its deploy proof is one
  * more step in `checkSetlistWrite`: the marker row's key is changed with the same finder and cell
  * writer and read back.
+ * admin-adjust-lineup adds `setSlotCount`: only empty slots can be removed (`-`), and removed
+ * columns reopen in place. Names never move. Invalid instruments/counts and filled slots are
+ * rejected before writing. The deploy check removes guitar 2 and removes/restores harmonica.
+ * admin-assign-musician adds `assignSlot`: it resolves an instrument ordinal among active U1
+ * columns and writes one normalized name to one empty slot cell.
  *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
  * SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -68,6 +73,12 @@ var CHECK_KEY_ = 'F#m';
 /** Sheets' plain-text number format: a value such as 7/4 or 007 stays the text it was sent as. */
 var PLAIN_TEXT_FORMAT = '@';
 
+/** Default slot fields in Sheet column order (D-18). */
+var SLOT_COLUMNS_ = {
+  guitar: ['guitar1', 'guitar2'], bass: ['bass'], drums: ['drums'],
+  vocals: ['vocals'], harmonica: ['harmonica'], keyboards: ['keyboards'],
+};
+
 /**
  * The only POST actions. An action not listed here is `unknown_action`. Every one of them passes
  * the passphrase guard first; `write: true` also runs it under the script lock.
@@ -81,6 +92,8 @@ var ACTIONS = {
   removeSong: { write: true, run: removeSong_ },
   checkSetlistRemove: { write: true, run: checkSetlistRemove_ },
   setKey: { write: true, run: setKey_ },
+  setSlotCount: { write: true, run: setSlotCount_ },
+  assignSlot: { write: true, run: assignSlot_ },
 };
 
 /**
@@ -319,7 +332,7 @@ function addSong_(request, spreadsheet, services) {
 }
 
 /**
- * A self-cleaning deploy check for addSong's and setKey's write paths: creates the tab
+ * A self-cleaning deploy check for addSong, setKey, setSlotCount and assignSlot write paths: creates the tab
  * SETLIST_CHECK_TAB (deleting a leftover first) with the jam tab header, appends a marker row with
  * the same function as addSong, changes its key to CHECK_KEY_ with setKey's finder and cell writer,
  * reads it back with buildSetlist and deletes the tab. The marker title `7/4` proves the plain-text
@@ -346,25 +359,42 @@ function checkSetlistWrite_(request, spreadsheet, services) {
     const written = sheet.getDataRange().getDisplayValues();
     const columns = mapColumns(SETLIST_CHECK_TAB, setlistSpecs_(), written[0]);
     writeKeyCell_(sheet, findSongRow_(sheet, columns, written, marker.songId), columns, CHECK_KEY_);
+    const markerRow = findSongRow_(sheet, columns, written, marker.songId);
+    [['guitar', 1], ['harmonica', 0], ['harmonica', 1]].forEach(function (step) {
+      const cells = readSlotCells_(sheet, markerRow, columns);
+      writeSlotCells_(sheet, markerRow, columns, planSlotCount_(cells, SLOT_COLUMNS_[step[0]], step[1]));
+      const expected = Object.assign({}, cells);
+      Object.assign(expected, planSlotCount_(cells, SLOT_COLUMNS_[step[0]], step[1]));
+      Object.keys(expected).forEach(function (field) { expected[field] = textCell(expected[field]); });
+      const actual = readSlotCells_(sheet, markerRow, columns);
+      if (!Object.keys(expected).every(function (field) { return expected[field] === actual[field]; })) {
+        throw new Error('The setlist slot check read back different cells');
+      }
+    });
+    assignSlotToRow_(sheet, markerRow, columns, 'guitar', 1, normalizeMusicianName_(' Prueba   Musico '));
     const range = sheet.getDataRange();
     rows = buildSetlist(range.getDisplayValues(), range.getValues(), SETLIST_CHECK_TAB);
   } finally {
     spreadsheet.deleteSheet(sheet);
   }
-  if (!isMarkerRow_(rows, Object.assign({}, marker, { key: CHECK_KEY_ }))) {
+  const expectedSlots = {};
+  SLOT_FIELDS.forEach(function (spec) {
+    expectedSlots[spec.field] = spec.field === 'guitar1' ? 'Prueba Musico' : (spec.field === 'guitar2' ? '-' : null);
+  });
+  if (!isMarkerRow_(rows, Object.assign({}, marker, { key: CHECK_KEY_ }), expectedSlots)) {
     throw new Error('The setlist write check read back a different row');
   }
   return { ok: true };
 }
 
-/** True when `rows` is exactly the marker, read back with every slot open and no Otros. */
-function isMarkerRow_(rows, marker) {
+/** True when `rows` is exactly the marker, with the expected slots and no Otros. */
+function isMarkerRow_(rows, marker, expectedSlots) {
   if (rows.length !== 1) {
     return false;
   }
   const row = rows[0];
   const slotsOpen = Object.keys(row.slots).every(function (field) {
-    return row.slots[field] === null;
+    return row.slots[field] === expectedSlots[field];
   });
   return row.position === String(marker.position) && row.songId === marker.songId && row.title === marker.title &&
     row.artist === marker.artist && row.key === marker.key && slotsOpen && row.extraParticipants === null;
@@ -577,6 +607,136 @@ function writeKeyCell_(sheet, row, columns, key) {
   const cell = sheet.getRange(row, columns.key + 1);
   cell.setNumberFormat(PLAIN_TEXT_FORMAT);
   cell.setValue(key);
+}
+
+/** Adjusts only open slots, found by song id; validates every input before writing. */
+function setSlotCount_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug');
+  }
+  const instrument = request.instrument;
+  if (typeof instrument !== 'string' || !Object.prototype.hasOwnProperty.call(SLOT_COLUMNS_, instrument)) {
+    throw new ContractError('invalid_instrument', 'instrument must be a default instrument');
+  }
+  const fields = SLOT_COLUMNS_[instrument];
+  const count = request.count;
+  if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > fields.length) {
+    throw new ContractError('invalid_count', 'count must be an integer within the default lineup');
+  }
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) { throw notInSetlist_(songId, date); }
+  const display = sheet.getDataRange().getDisplayValues();
+  const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
+  const row = findSongRow_(sheet, columns, display, songId);
+  const changes = planSlotCount_(readSlotCells_(sheet, row, columns), fields, count);
+  writeSlotCells_(sheet, row, columns, changes);
+  return { ok: true, slots: readSlotCells_(sheet, row, columns) };
+}
+
+/** Present column identities, in column order; shared with later assignment mutations. */
+function presentSlotFields_(cells, fields) {
+  return fields.filter(function (field) { return textCell(cells[field]) !== '-'; });
+}
+
+/** Pure plan: remove the last open columns, restore the first absent ones; never move a name. */
+function planSlotCount_(cells, fields, count) {
+  const present = presentSlotFields_(cells, fields);
+  const changes = {};
+  if (count < present.length) {
+    const open = present.filter(function (field) { return textCell(cells[field]) === null; }).reverse();
+    const needed = present.length - count;
+    if (open.length < needed) {
+      throw new ContractError('slot_filled', 'A slot has a musician; clear it before removing it');
+    }
+    open.slice(0, needed).forEach(function (field) { changes[field] = '-'; });
+  } else if (count > present.length) {
+    fields.filter(function (field) { return textCell(cells[field]) === '-'; })
+      .slice(0, count - present.length).forEach(function (field) { changes[field] = ''; });
+  }
+  return changes;
+}
+
+/** Write only planned cells, plain text first. */
+function writeSlotCells_(sheet, row, columns, changes) {
+  Object.keys(changes).forEach(function (field) {
+    const cell = sheet.getRange(row, columns[field] + 1);
+    cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+    cell.setValue(changes[field]);
+  });
+}
+
+/** Same trimmed display text / empty-to-null rule as the read path. */
+function readSlotCells_(sheet, row, columns) {
+  const display = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  const cells = {};
+  SLOT_FIELDS.forEach(function (spec) { cells[spec.field] = textCell(display[columns[spec.field]]); });
+  return cells;
+}
+
+/** Assigns a normalized name to a 1-based ordinal among active columns, never replacing a value. */
+function assignSlotToRow_(sheet, row, columns, instrument, ordinal, name) {
+  const fields = SLOT_COLUMNS_[instrument];
+  const cells = readSlotCells_(sheet, row, columns);
+  const active = presentSlotFields_(cells, fields);
+  if (ordinal > active.length) {
+    throw new ContractError('slot_not_in_lineup', 'The requested slot is not in this lineup');
+  }
+  const field = active[ordinal - 1];
+  if (cells[field] !== null) {
+    throw new ContractError('slot_taken', 'The requested slot already has a musician');
+  }
+  const cell = sheet.getRange(row, columns[field] + 1);
+  cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cell.setValue(name);
+  return { field: field };
+}
+
+/** Validates and normalizes a musician display name without changing existing read parsing. */
+function normalizeMusicianName_(value) {
+  if (typeof value !== 'string' || /[\u0000-\u001f\u007f-\u009f]/.test(value)) {
+    throw new ContractError('invalid_name', 'name must be text');
+  }
+  const name = value.trim().replace(/\s+/g, ' ');
+  if (name.length === 0 || name.length > 40 || /[;()]/.test(name) ||
+      /^[=+\-@]/.test(name) || !/[\p{L}\p{N}]/u.test(name)) {
+    throw new ContractError('invalid_name', 'name must be a plain musician name of at most 40 characters');
+  }
+  return name;
+}
+
+/** Assigns one musician to an active slot in the upcoming jam. All rejection checks precede writes. */
+function assignSlot_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug');
+  }
+  const instrument = request.instrument;
+  if (typeof instrument !== 'string' || !Object.prototype.hasOwnProperty.call(SLOT_COLUMNS_, instrument)) {
+    throw new ContractError('invalid_slot', 'instrument must identify a default instrument');
+  }
+  const ordinal = request.ordinal;
+  if (typeof ordinal !== 'number' || !Number.isInteger(ordinal) || ordinal < 1 || ordinal > SLOT_COLUMNS_[instrument].length) {
+    throw new ContractError('invalid_slot', 'ordinal must identify a default lineup slot');
+  }
+  const name = normalizeMusicianName_(request.name);
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) { throw notInSetlist_(songId, date); }
+  const display = sheet.getDataRange().getDisplayValues();
+  const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
+  const row = findSongRow_(sheet, columns, display, songId);
+  const assigned = assignSlotToRow_(sheet, row, columns, instrument, ordinal, name);
+  return { ok: true, column: SLOT_FIELDS.findIndex(function (spec) { return spec.field === assigned.field; }), name: name };
 }
 
 /** Today in the spreadsheet's time zone, as YYYY-MM-DD: the zone the admin's dates are typed in. */

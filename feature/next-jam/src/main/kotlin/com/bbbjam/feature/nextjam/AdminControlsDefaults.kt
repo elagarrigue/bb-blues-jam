@@ -51,6 +51,18 @@ internal object AdminControlsDefaults {
 
     data class KeyChangeStyle(val action: Color, val status: Color)
 
+    data class LineupEditorStyle(
+        val action: Color,
+        val heading: Color,
+        val line: Color,
+        val instrument: Color,
+        val count: Color,
+        val buttonFill: Color,
+        val buttonGlyph: Color,
+        val disabledGlyph: Color,
+        val blockedNote: Color,
+    )
+
     /**
      * Setting a key (`admin-set-key`): "Cambiar tonalidad" in `text`, a quiet text action like "Ver
      * detalle del tema", and the "Guardando…" line under the title in `textMuted`. Never amber: the
@@ -58,6 +70,19 @@ internal object AdminControlsDefaults {
      */
     fun keyChange(colors: BluesJamColors = BluesJamColors): KeyChangeStyle =
         KeyChangeStyle(action = colors.text, status = colors.textMuted)
+
+    /** Lineup counts and controls stay neutral; changing a count never uses the open-slot amber. */
+    fun lineupEditor(colors: BluesJamColors = BluesJamColors): LineupEditorStyle = LineupEditorStyle(
+        action = colors.text,
+        heading = colors.textMuted,
+        line = colors.surface,
+        instrument = colors.text,
+        count = colors.textMuted,
+        buttonFill = colors.surfaceRaised,
+        buttonGlyph = colors.text,
+        disabledGlyph = colors.textMuted,
+        blockedNote = colors.textMuted,
+    )
 
     /** The draft badge (`badge-draft`: `textMuted` on `surfaceRaised`) and its note (`textMuted`). */
     fun draft(colors: BluesJamColors = BluesJamColors): DraftStyle =

@@ -13,6 +13,7 @@ internal object LineupPanelCopy {
 
     /** The detail of an open line: "Guitarra  LIBRE". */
     const val OPEN_DETAIL = "LIBRE"
+    const val ASSIGN = "Anotar"
 
     const val NO_OPEN_SLOTS = "No quedan cupos libres."
 

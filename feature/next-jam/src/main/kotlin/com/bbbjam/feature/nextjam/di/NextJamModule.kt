@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam.di
 
 import com.bbbjam.feature.nextjam.AddSongPresenter
+import com.bbbjam.feature.nextjam.AssignMusicianPresenter
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.SetKeyPresenter
 import org.koin.dsl.module
@@ -12,5 +13,6 @@ import org.koin.dsl.module
 val nextJamModule = module {
     factory { NextJamPresenter(get(), get(), get(), get()) }
     factory { AddSongPresenter(get(), get(), get()) }
+    factory { AssignMusicianPresenter(get(), get(), get()) }
     factory { SetKeyPresenter(get(), get(), get()) }
 }

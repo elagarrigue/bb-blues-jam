@@ -18,6 +18,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.TabBar
 import com.bbbjam.core.ui.theme.BluesJamTheme
@@ -45,6 +47,7 @@ internal fun TabsShell(
     onOpenAdminLogin: () -> Unit,
     onOpenAddSong: (jamDate: LocalDate) -> Unit,
     onOpenSetKey: (jamDate: LocalDate, songId: SongId) -> Unit,
+    onOpenAssignSlot: (jamDate: LocalDate, songId: SongId, instrument: Instrument, position: SlotPosition) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inner = rememberNavController()
@@ -66,7 +69,12 @@ internal fun TabsShell(
             popExitTransition = { fadeOut(tween(AppMotion.TAB_FADE_MS)) },
         ) {
             composable(AppRoutes.NEXT_JAM) {
-                NextJamScreen(onOpenSong = onOpenSong, onAddSong = onOpenAddSong, onSetKey = onOpenSetKey)
+                NextJamScreen(
+                    onOpenSong = onOpenSong,
+                    onAddSong = onOpenAddSong,
+                    onSetKey = onOpenSetKey,
+                    onAssignSlot = onOpenAssignSlot,
+                )
             }
             composable(AppRoutes.PAST_JAMS) { PastJamsScreen(onOpenJam = onOpenPastJam) }
             composable(AppRoutes.INFO) { InfoScreen(onOpenAdminLogin = onOpenAdminLogin) }

@@ -1,7 +1,6 @@
 package com.bbbjam.feature.nextjam
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,7 +17,9 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.KeyChange
+import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
@@ -27,6 +28,7 @@ import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.InstrumentFilterChange
 import com.bbbjam.core.ui.filter.instrumentFilterBar
@@ -121,6 +123,12 @@ class NextJamPresenter(
         val isResumed: Boolean = false,
         val onAddSong: (jamDate: LocalDate) -> Unit = {},
         val onSetKey: (jamDate: LocalDate, songId: SongId) -> Unit = { _, _ -> },
+        val onAssignSlot: (
+            jamDate: LocalDate,
+            songId: SongId,
+            instrument: Instrument,
+            position: SlotPosition,
+        ) -> Unit = { _, _, _, _ -> },
         val onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
     )
 
@@ -130,39 +138,19 @@ class NextJamPresenter(
         val onOpenSong: (LocalDate, Int) -> Unit = { date, position -> currentOnOpenSong(date, position) }
         val currentOnAddSong by rememberUpdatedState(params.onAddSong)
         val currentOnSetKey by rememberUpdatedState(params.onSetKey)
+        val currentOnAssignSlot by rememberUpdatedState(params.onAssignSlot)
         val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
         val adds by remember { setlist.observeAdds() }.collectAsState(initial = emptyList())
         val removes by remember { setlist.observeRemoves() }.collectAsState(initial = emptyList())
         val keyChanges by remember { setlist.observeKeyChanges() }.collectAsState(initial = emptyList())
+        val assignments by remember { setlist.observeAssignments() }.collectAsState(initial = emptyList())
+        var subscription by remember { mutableIntStateOf(0) }
+        val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
+        val lineupControls = rememberLineupControls(setlist, snapshot, isAdmin)
         var confirming by rememberSaveable { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
-        // Read only by the effect, never by the composition, so writing it recomposes nothing.
-        var adminRefreshed by rememberSaveable { mutableStateOf(false) }
-        LaunchedEffect(Unit) {
-            // The flag's real values only (not the composition's initial false), so coming back to
-            // the tab with admin on does not count as a new login.
-            adminSession.observeIsAdmin().collect { flag ->
-                if (!flag) {
-                    adminRefreshed = false
-                } else if (!adminRefreshed) {
-                    adminRefreshed = true
-                    jams.refresh()
-                }
-            }
-        }
-        val onRemoval: (LocalDate, SongId, RemovalUiModel.Event) -> Unit = { date, songId, event ->
-            val key = removalKey(date, songId)
-            when (event) {
-                RemovalUiModel.Event.RequestRemove -> confirming = key
-
-                RemovalUiModel.Event.Cancel -> if (confirming == key) confirming = null
-
-                RemovalUiModel.Event.Confirm -> if (confirming == key) {
-                    confirming = null
-                    scope.launch(start = CoroutineStart.UNDISPATCHED) { setlist.removeSong(date, songId) }
-                }
-            }
-        }
+        rememberAdminRefresh(adminSession, jams)
+        val onRemoval = removalHandler(setlist, scope, { confirming == it }) { confirming = it }
         val admin = if (isAdmin) {
             AdminState(
                 adds,
@@ -170,13 +158,20 @@ class NextJamPresenter(
                 onDismiss = { id -> setlist.dismiss(id) },
                 removal = RemovalState(removes, confirming, onRemoval),
                 keyChanges = keyChanges,
+                assignments = assignments,
+                lineupChanges = lineupControls.lineupChanges,
+                lineupEditing = lineupControls.lineupEditing,
+                reservations = lineupControls.reservations,
+                onLineupEditor = lineupControls.onLineupEditor,
+                onLineupCount = lineupControls.onLineupCount,
                 onSetKey = { date, songId -> currentOnSetKey(date, songId) },
+                onAssignSlot = { date, songId, instrument, position ->
+                    currentOnAssignSlot(date, songId, instrument, position)
+                },
             )
         } else {
             null
         }
-        var subscription by remember { mutableIntStateOf(0) }
-        val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val refreshes = rememberNextJamRefreshes(jams, calendar, random, params.isResumed, snapshot) { subscription++ }
         val today = remember(snapshot) { calendar.today() }
         val now = remember(snapshot) { calendar.now() }
@@ -311,7 +306,14 @@ internal class AdminState(
     val onDismiss: (Long) -> Unit,
     val removal: RemovalState = RemovalState(),
     val keyChanges: List<KeyChange> = emptyList(),
+    val assignments: List<Assignment> = emptyList(),
     val onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> },
+    val lineupChanges: List<LineupChange> = emptyList(),
+    val lineupEditing: String? = null,
+    val reservations: LineupReservations = LineupReservations(),
+    val onLineupEditor: (LocalDate, SongId, LineupEditorUiModel.Event) -> Unit = { _, _, _ -> },
+    val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit = { _, _, _, _ -> },
+    val onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit = { _, _, _, _ -> },
 )
 
 /**
@@ -369,7 +371,23 @@ private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
             Triple(change.id, NextJamCopy.keyFailed(change.title), keyFailureMessage(it.reason))
         }
     }
-    return (failedAdds + failedRemoves + failedKeys).sortedBy { it.first }.map { (id, title, message) ->
+    val failedLineups = lineupChanges.filter { it.jamDate == date }.mapNotNull { change ->
+        (change.state as? LineupChange.State.Failed)?.let {
+            Triple(change.id, NextJamCopy.lineupFailed(change.title), lineupFailureMessage(it.reason))
+        }
+    }
+    val failedAssignments = assignments.filter { it.jamDate == date }.mapNotNull { assignment ->
+        (assignment.state as? Assignment.State.Failed)?.let {
+            Triple(
+                assignment.id,
+                NextJamCopy.assignmentFailed(assignment.musicianName.value, assignment.title),
+                assignmentFailureMessage(it.reason),
+            )
+        }
+    }
+    return (failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments).sortedBy {
+        it.first
+    }.map { (id, title, message) ->
         AddFailureUiModel(
             id = id,
             title = title,
@@ -398,8 +416,22 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
             },
         )
     } else {
+        val shownSongs = songs.map { song ->
+            val admin = state.admin?.state
+            if (admin == null) {
+                song
+            } else {
+                song.copy(
+                    lineup = admin.reservations.overlay(
+                        date,
+                        song.songId,
+                        admin.lineupChanges.pendingLineup(date, song.songId, song.lineup),
+                    ).overlayAssignments(date, song.songId, admin.assignments),
+                )
+            }
+        }
         SetlistUiModel.Songs(
-            rows = songs
+            rows = shownSongs
                 .filter { it.lineup.matchesInstrumentFilter(state.filter) }
                 .map { song ->
                     song.toRow(
@@ -409,7 +441,7 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
                     ).let { row -> state.admin?.decorate(row, song) ?: row }
                 },
             droppedRowsNote = if (droppedRows == 0) null else NextJamCopy.droppedRows(droppedRows),
-            filterBar = instrumentFilterBar(songs.map { it.lineup }, state.filter, state.onFilterChange),
+            filterBar = instrumentFilterBar(shownSongs.map { it.lineup }, state.filter, state.onFilterChange),
         )
     }
 
@@ -437,12 +469,28 @@ private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong): SongRowUiMode
     val admin = SongRowAdminUiModel(
         setKey = setKey,
         removal = removalModel(song),
-        keyStatus = if (pending == null) null else NextJamCopy.SAVING,
+        lineup = state.lineupEditor(jam.date, song),
+        saveStatus = if (
+            pending != null || state.isSavingLineup(jam.date, song.songId) ||
+            state.isSavingAssignment(jam.date, song.songId)
+        ) {
+            NextJamCopy.SAVING
+        } else {
+            null
+        },
     )
+    val lineup = song.lineup.toLineupPanel(song.extraParticipants) { instrument, position ->
+        state.onAssignSlot(jam.date, song.songId, instrument, position)
+    }
     return if (pending == null) {
-        row.copy(admin = admin)
+        row.copy(lineup = lineup, admin = admin)
     } else {
-        row.copy(key = pending.value, keyDescription = NextJamCopy.keyDescription(pending.value), admin = admin)
+        row.copy(
+            key = pending.value,
+            keyDescription = NextJamCopy.keyDescription(pending.value),
+            lineup = lineup,
+            admin = admin,
+        )
     }
 }
 

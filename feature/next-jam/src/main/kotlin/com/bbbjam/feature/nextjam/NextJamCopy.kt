@@ -90,6 +90,21 @@ internal object NextJamCopy {
      * Setting a key, approved on 6 October 2026 (`docs/specs/admin-set-key.md`, V1, O1 and C2). The
      * row shows the new key at once with [SAVING] under the title until the server answers.
      */
+    const val CHANGE_LINEUP = "Cambiar formación"
+    const val LINEUP_HEADING = "FORMACIÓN"
+    const val LINEUP_DONE = "Listo"
+    const val LINEUP_BLOCKED = "Tiene músico anotado. Liberá el cupo antes de sacarlo."
+    const val SLOT_FILLED = "Ese cupo tiene un músico anotado. Liberalo antes de sacarlo."
+    fun lineupCount(count: Int): String = when (count) {
+        0 -> "No va en este tema"
+        1 -> "1 cupo"
+        else -> "$count cupos"
+    }
+    fun lineupFailed(title: String): String = "No se pudo cambiar la formación de «$title»"
+    fun assignmentFailed(name: String, title: String): String = "No se pudo anotar a «$name» en «$title»"
+    const val SLOT_TAKEN = "Ese cupo ya está ocupado. Actualizá la lista e intentá de nuevo."
+    const val INVALID_ASSIGNMENT_NAME = "La planilla no aceptó ese nombre."
+
     const val SET_KEY = "Cambiar tonalidad"
     const val SAVING = "Guardando…"
 

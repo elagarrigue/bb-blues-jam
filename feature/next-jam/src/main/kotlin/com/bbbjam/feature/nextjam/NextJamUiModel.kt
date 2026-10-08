@@ -184,13 +184,14 @@ data class SongRowUiModel(
  * The admin's part of one row (D-15). [setKey] ("Cambiar tonalidad", `admin-set-key`) and [removal]
  * (the remove action, its inline confirmation, or the status while the removal is sent,
  * `admin-remove-song-from-setlist`, U1) are drawn only while the row is expanded, in that order: the
- * removal stays last. [keyStatus] is "Guardando…" while the row's key is a pending change drawn
+ * removal stays last. [saveStatus] is "Guardando…" while the row's key is a pending change drawn
  * ahead of the server (O1), else null; it is drawn under the title line in both states.
  */
 data class SongRowAdminUiModel(
     val setKey: SetKeyActionUiModel,
     val removal: RemovalUiModel,
-    val keyStatus: String? = null,
+    val lineup: LineupEditorUiModel = LineupEditorUiModel.Idle("Cambiar formación", EventHandler {}),
+    val saveStatus: String? = null,
 ) : UiModel
 
 /** "Cambiar tonalidad": opens the key picker for this row's song. Navigation only. */
@@ -235,4 +236,35 @@ sealed interface RemovalUiModel : UiModel {
 
     /** "Quitando…" while the removal is sent; no control. */
     data class Removing(val status: String) : RemovalUiModel
+}
+
+/** Inline lineup editor, one open row at a time. */
+sealed interface LineupEditorUiModel : UiModel {
+    sealed interface Event : UiEvent {
+        data object Open : Event
+        data object Done : Event
+    }
+    data class Idle(val label: String, val events: EventHandler<Event>) : LineupEditorUiModel
+    data class Editing(
+        val heading: String,
+        val lines: List<LineupEditorLineUiModel>,
+        val doneLabel: String,
+        val events: EventHandler<Event>,
+    ) : LineupEditorUiModel
+}
+
+data class LineupEditorLineUiModel(
+    val instrument: com.bbbjam.core.model.Instrument,
+    val countLabel: String,
+    val removeDescription: String,
+    val addDescription: String,
+    val canRemove: Boolean,
+    val canAdd: Boolean,
+    val blockedNote: String?,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Remove : Event
+        data object Add : Event
+    }
 }

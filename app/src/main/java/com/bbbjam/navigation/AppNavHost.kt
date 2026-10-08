@@ -25,6 +25,7 @@ import androidx.navigation.navArgument
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.AdminLoginScreen
 import com.bbbjam.feature.nextjam.AddSongScreen
+import com.bbbjam.feature.nextjam.AssignMusicianScreen
 import com.bbbjam.feature.nextjam.SetKeyScreen
 import com.bbbjam.feature.pastjams.PastJamDetailScreen
 import com.bbbjam.feature.songdetail.SongDetailScreen
@@ -68,6 +69,9 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
                 onOpenSetKey = { date, songId ->
                     nav.navigate(AppRoutes.setKey(date, songId)) { launchSingleTop = true }
                 },
+                onOpenAssignSlot = { date, songId, instrument, position ->
+                    nav.navigate(AppRoutes.assignSlot(date, songId, instrument, position)) { launchSingleTop = true }
+                },
             )
         }
         songDetail(nav)
@@ -75,6 +79,46 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
         adminLogin(nav)
         addSong(nav)
         setKey(nav)
+        assignSlot(nav)
+    }
+}
+
+/** The fixed-slot musician assignment flow, beside the existing full-screen admin pickers. */
+private fun NavGraphBuilder.assignSlot(nav: NavHostController) {
+    composable(
+        AppRoutes.ASSIGN_SLOT,
+        arguments = listOf(
+            navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType },
+            navArgument(AppRoutes.SONG_ID) { type = NavType.StringType },
+            navArgument(AppRoutes.INSTRUMENT) { type = NavType.StringType },
+            navArgument(AppRoutes.ORDINAL) { type = NavType.IntType },
+        ),
+        enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
+    ) { entry ->
+        val args = AppRoutes.parseAssignSlot(
+            entry.arguments?.getString(AppRoutes.JAM_DATE),
+            entry.arguments?.getString(AppRoutes.SONG_ID),
+            entry.arguments?.getString(AppRoutes.INSTRUMENT),
+            entry.arguments?.getInt(AppRoutes.ORDINAL),
+        )
+        if (args == null) {
+            LaunchedEffect(Unit) { nav.popBackStack() }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+                AssignMusicianScreen(
+                    jamDate = args.jamDate,
+                    songId = args.songId,
+                    instrument = args.instrument,
+                    ordinal = args.position,
+                    onBack = {
+                        if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
+                    },
+                    onDone = { nav.popBackStack(AppRoutes.ASSIGN_SLOT, inclusive = true) },
+                    contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                )
+            }
+        }
     }
 }
 

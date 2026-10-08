@@ -1,5 +1,7 @@
 package com.bbbjam.navigation
 
+import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
@@ -134,5 +136,25 @@ class AppRoutesTest {
         )
         val routes = listOf(AppRoutes.SONG_DETAIL, AppRoutes.PAST_JAM_DETAIL, AppRoutes.ADD_SONG, AppRoutes.SET_KEY)
         assertEquals(routes.size, routes.toSet().size)
+    }
+
+    @Test
+    fun `assignment route fixes instrument and ordinal and rejects malformed arguments`() {
+        val date = LocalDate.of(2026, 10, 31)
+        val id = SongId("crossroads")
+        val position = SlotPosition(2)
+        assertEquals(
+            "assignSlot/2026-10-31/crossroads/guitar/2",
+            AppRoutes.assignSlot(date, id, Instrument.GUITAR, position),
+        )
+        assertEquals(
+            AssignSlotArgs(date, id, Instrument.GUITAR, position),
+            AppRoutes.parseAssignSlot("2026-10-31", "crossroads", "guitar", 2),
+        )
+        assertNull(AppRoutes.parseAssignSlot(null, "crossroads", "guitar", 2))
+        assertNull(AppRoutes.parseAssignSlot("2026-02-30", "crossroads", "guitar", 2))
+        assertNull(AppRoutes.parseAssignSlot("2026-10-31", "Crossroads", "guitar", 2))
+        assertNull(AppRoutes.parseAssignSlot("2026-10-31", "crossroads", "saxophone", 2))
+        assertNull(AppRoutes.parseAssignSlot("2026-10-31", "crossroads", "guitar", 0))
     }
 }

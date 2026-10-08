@@ -3,13 +3,20 @@ package com.bbbjam.feature.nextjam
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.setlist.AddSongOutcome
+import com.bbbjam.core.data.setlist.AssignSlotOutcome
+import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.KeyChange
+import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
+import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
+import com.bbbjam.core.model.MusicianName
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +49,16 @@ class FakeSetlistRepository : SetlistRepository {
     val removeCalls = mutableListOf<Pair<LocalDate, SongId>>()
     val keyChanges = MutableStateFlow<List<KeyChange>>(emptyList())
     val keyCalls = mutableListOf<AddCall>()
+    val lineupChanges = MutableStateFlow<List<LineupChange>>(emptyList())
+    val assignments = MutableStateFlow<List<Assignment>>(emptyList())
+    data class AssignmentCall(
+        val date: LocalDate,
+        val id: SongId,
+        val instrument: Instrument,
+        val ordinal: SlotPosition,
+        val name: MusicianName,
+    )
+    val assignmentCalls = mutableListOf<AssignmentCall>()
 
     override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         addCalls += AddCall(jamDate, songId, key)
@@ -63,6 +80,36 @@ class FakeSetlistRepository : SetlistRepository {
     }
 
     override fun observeKeyChanges(): Flow<List<KeyChange>> = keyChanges
+
+    data class LineupCall(val date: LocalDate, val id: SongId, val instrument: Instrument, val count: Int)
+    val lineupCalls = mutableListOf<LineupCall>()
+    var lineupHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
+    override suspend fun setSlotCount(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        count: Int,
+    ): SetSlotCountOutcome {
+        lineupCalls += LineupCall(jamDate, songId, instrument, count)
+        lineupHold?.await()
+        return SetSlotCountOutcome.SlotCountSet
+    }
+
+    override fun observeLineupChanges(): Flow<List<LineupChange>> = lineupChanges
+
+    override suspend fun assignSlot(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        ordinal: SlotPosition,
+        musicianName: MusicianName,
+    ): AssignSlotOutcome {
+        assignmentCalls += AssignmentCall(jamDate, songId, instrument, ordinal, musicianName)
+        return AssignSlotOutcome.Assigned
+    }
+
+    override fun observeAssignments(): Flow<List<Assignment>> = assignments
 
     override fun dismiss(id: Long) {
         dismissed += id

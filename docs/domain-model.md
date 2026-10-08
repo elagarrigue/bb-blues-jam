@@ -164,6 +164,28 @@ after the server confirms. "Immediately visible" means the next read: the admin'
 the new key at once (optimistic, user decision O1, reverting on failure), and musicians see it on
 their next refresh (faster refresh is `live-refresh-during-jam`).
 
+### Adjusting a lineup
+
+`SetlistRepository.setSlotCount` changes an upcoming JamSong's instrument count from zero to the
+default, in draft or published state. Removal drops open slots last-first; restoration reopens
+absent columns first-first. Filled slots are never removed (`slot_filled`); the admin must clear
+one first once that mutation exists. Names stay in their Sheet columns, even when restoration
+changes their guitar ordinal. Extras are independent and unchanged. The server's seven cells
+replace the confirmed local lineup after success. Sending changes temporarily overlay the admin's
+strip, panel, filter and counts; failure reverts and leaves a card. Musicians keep the confirmed
+lineup. A song with every slot removed remains a valid song with no open slots.
+
+### Assigning a musician
+
+`SetlistRepository.assignSlot(date, songId, instrument, ordinal, musicianName)` fills one fixed,
+open slot on the upcoming jam. `SlotPosition` is the 1-based ordinal among that instrument's
+current lineup columns, before open/filled display partitioning; `MusicianName.parseOrNull` trims
+and collapses whitespace and validates a plain name of at most 40 UTF-16 units. Apps Script
+re-resolves that ordinal against active U1 columns and refuses occupied cells. Room changes only
+after the server confirms; a Sending entry overlays the admin's lineup until confirmation, and a
+failure reverts it. Suggestions use cached names from the current and past jams; `Otros` names are
+included in suggestions but never become slots. No `Musician` entity is introduced.
+
 ### The same song in a later jam
 
 Adding a Song already played in a past jam creates a new JamSong with a fresh lineup and its own

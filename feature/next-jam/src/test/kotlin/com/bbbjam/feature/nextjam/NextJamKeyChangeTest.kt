@@ -80,7 +80,7 @@ class NextJamKeyChangeTest {
         assertEquals("Cambiar tonalidad", setKey.label)
         setKey.events(SetKeyActionUiModel.Event.Open)
         assertEquals(listOf(jamDate to SongId("hoochie")), opened)
-        assertNull(checkNotNull(model.row("Crossroads").admin).keyStatus)
+        assertNull(checkNotNull(model.row("Crossroads").admin).saveStatus)
     }
 
     @Test
@@ -108,7 +108,7 @@ class NextJamKeyChangeTest {
             val sending = model.row("Crossroads")
             assertEquals("Bb", sending.key)
             assertEquals("Tonalidad Bb", sending.keyDescription)
-            assertEquals("Guardando…", checkNotNull(sending.admin).keyStatus)
+            assertEquals("Guardando…", checkNotNull(sending.admin).saveStatus)
             // Only that row is overlaid.
             assertEquals("E", model.row("Hoochie Coochie Man").key)
             assertEquals(emptyList<AddFailureUiModel>(), model.failures())
@@ -118,7 +118,7 @@ class NextJamKeyChangeTest {
             val reverted = model.row("Crossroads")
             assertEquals("A", reverted.key)
             assertEquals("Tonalidad A", reverted.keyDescription)
-            assertNull(checkNotNull(reverted.admin).keyStatus)
+            assertNull(checkNotNull(reverted.admin).saveStatus)
             val card = model.failures().single()
             assertEquals("No se pudo cambiar la tonalidad de «Crossroads»", card.title)
             assertEquals(
@@ -145,7 +145,7 @@ class NextJamKeyChangeTest {
             setlist.keyChanges.value = emptyList()
             val row = awaitItem().row("Crossroads")
             assertEquals("Bb", row.key)
-            assertNull(checkNotNull(row.admin).keyStatus)
+            assertNull(checkNotNull(row.admin).saveStatus)
             cancelAndIgnoreRemainingEvents()
         }
     }

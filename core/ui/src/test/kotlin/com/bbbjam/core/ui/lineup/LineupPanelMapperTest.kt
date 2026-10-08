@@ -4,6 +4,7 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -80,6 +81,23 @@ class LineupPanelMapperTest {
             listOf(filled("Guitarra", "Tincho", "Guitarra: Tincho"), filled("Batería", "Pato", "Batería: Pato")),
             panel.filledSlots,
         )
+    }
+
+    @Test
+    fun `admin open action carries lineup ordinal before open-first presentation`() {
+        val calls = mutableListOf<Pair<Instrument, SlotPosition>>()
+        val panel = Lineup(
+            listOf(Slot(Instrument.GUITAR), Slot(Instrument.GUITAR), Slot(Instrument.BASS, "Tincho")),
+        ).toLineupPanel(emptyList()) { instrument, position -> calls += instrument to position }
+
+        assertEquals("Anotar", panel.openSlots.first().actionLabel)
+        panel.openSlots.first().action?.invoke(LineupLineEvent.Activate)
+        panel.openSlots.last().action?.invoke(LineupLineEvent.Activate)
+        assertEquals(
+            listOf(Instrument.GUITAR to SlotPosition(1), Instrument.GUITAR to SlotPosition(2)),
+            calls,
+        )
+        assertEquals(null, panel.filledSlots.single().action)
     }
 
     @Test

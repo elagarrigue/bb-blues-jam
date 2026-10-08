@@ -8,7 +8,7 @@
 - `status`: `not_started` at planning time (7 October 2026)
 - `source`: `feature_list.json`. Notes: D-06, D-18, U1 = B (slot identity by ordinal among non-`-`
   columns). The notes also ask for the extra-participant (`Otros`) mutations "here or in a split
-  slice": this spec **splits them out** (question X1).
+  slice": this spec **splits them out** (planning default X1).
 
 ## Readiness
 
@@ -25,7 +25,12 @@ assign-musician, reorder and publish. Within the batch, implement server halves 
 its own step after the previous slice's; `isMarkerRow_` must compare against an expected-slots
 argument (this slice introduces it, see A1), so later steps only change the expectation.
 
-Size: one feature in two parts (A: server and `:core:data`; B: UI), each about one session. No new
+Implement both parts before requesting the batched deploy: local server/data work and UI verification
+are independent of the deployment. Pending live evidence keeps this feature `in_progress`; never
+report `passing` or accepted while L1–L5 have not run. A human deployment is the final external
+blocker after all local work is concrete and reviewable.
+
+Size: one mutation and one inline flow in two implementation parts. No new
 screen, no route, no Room schema change.
 
 ## Goal
@@ -40,7 +45,7 @@ failure the row reverts and a card says why.
 - **Restore** writes an empty cell back into a `-` column: an open slot. Never beyond the default
   (D-18); nothing is ever added.
 - **A slot holding a musician is never removed.** The server refuses with `slot_filled`, and the
-  editor disables `−` when every slot of that instrument is filled, saying why (question F1).
+  editor disables `−` when every slot of that instrument is filled, saying why (planning default F1).
 - **No name ever moves.** Removal picks an open column; restore reopens a `-` column in place.
 
 The mutation is `SetlistRepository.setSlotCount(jamDate, songId, instrument, count)` in
@@ -117,6 +122,10 @@ and design rules, the architecture skill (Where Each Piece Goes, Dependency Rule
 `InstrumentStripCopy.name`, `DemoUpcomingJam` (filled and `-` cells). Not inspected: the
 `AdminControls.kt` composables, `LineupPanel.kt` drawing code, Node test helpers in detail.
 
+Planning refresh (7 October 2026) also inspected `AdminControls.kt`, `LineupPanel.kt`, current
+`Lineup.kt`, `SetlistDao`, `SetlistRepository`, `DefaultSetlistRepository`, the row/filter mapping
+in `NextJamPresenter`, and the deploy marker check. Node test helpers still need implementer review.
+
 Findings:
 
 - `jam_slot` stores `column_index` and a `-` column has **no row**; restoring is an insert, removing
@@ -127,6 +136,15 @@ Findings:
 - Instrument full names are `internal` in `:core:ui` (`InstrumentStripCopy.name`).
 - `isMarkerRow_` asserts every slot open, so extending the check needs an expected-slots argument.
 - The demo jam has filled, open and `-` cells (`dust-my-broom`, `crossroads`), enough for the device check.
+
+## Module Boundaries And Expected Changes
+
+`core/model` stays pure Kotlin with no dependencies; `core/data` depends on `core/model`;
+`core/ui` depends on `core/model`; `feature/next-jam` uses `core:*` only. No module, Gradle
+dependency or navigation change. Expected changes are the named model/DAO/repository/UI files
+below, their focused tests, `backend/apps-script/test/` coverage, and the durable docs listed below.
+No `ARCHITECTURE.md` or `CONSTRAINTS.md` is needed: canonical rules remain in the architecture
+skill and existing discovery docs. `AGENTS.md` needs no change.
 
 ## Technical Approach — Part A: server and `:core:data`
 
@@ -204,13 +222,18 @@ Findings:
   events)`. `canRemove` = count > 0 and `withSlotCount(count − 1) != null`; `canAdd` = count <
   default; both computed on the overlaid lineup. A tap calls `setSlotCount(…, count ± 1)` launched
   undispatched in the presenter's scope; handlers keyed by `(date, songId, instrument, step)`.
+  A retained handler must read the current overlaid count and bounds at invocation (stable state or
+  `rememberUpdatedState`), never a stale captured count: equal keyed handlers may be retained by
+  Compose. Reserve the target synchronously in presenter state when handling a tap, so two taps before
+  recomposition queue distinct target counts; reconcile reservations with repository entries and
+  reset on failure. Test that retained-handler path.
 - Row actions, in order: `Ver detalle del tema`, `Cambiar tonalidad`, `Cambiar formación` (or its
   editor in place), `Quitar de la lista` (last).
 - Failures: `NextJamAdminUiModel.failures` merges lineup changes by id; title
   `NextJamCopy.lineupFailed(title)`; `lineupFailureMessage`: `slot_filled` → `SLOT_FILLED`,
   `song_not_in_setlist` → `JAM_CHANGED`, `duplicate_song` → `DUPLICATE_SONG`, else `failureMessage`.
 
-### Copy (Rioplatense, *vos*; to approve, question C1)
+### Copy (Rioplatense, *vos*; planning default C1)
 
 | Key | Text |
 |---|---|
@@ -261,7 +284,10 @@ strip and panel already draw it (open slots, inside `:core:ui`). Konsist allowli
    `planSlotCount_` removes the first open column instead of the last; (b) it removes a filled slot
    instead of throwing; (c) `replaceSlots` drops `song_id` from its lookup; (d, Part B) the overlay
    also applies `Failed` changes.
-5. `CI=true ./init.sh`. **Stop for the batched deploy** (user pastes `Post.js`, **New version**).
+5. `CI=true ./init.sh` for Part A; continue directly with Part B (step 7), its gate (step 8)
+   and device checks (step 9). Do not stop for deployment before this local work is complete.
+   Then prepare the complete `Post.js` deployment artifact and SHA-1 for human deployment
+   (paste into `Post.gs`, **New version**) and run step 6 after it is deployed.
 6. **Live checks** (scratchpad script, `json.dumps` bodies, prints only codes, counts and
    latencies; never the URL, passphrase or names; **never `setSlotCount` with a real song id**):
    L1 `{}` → `Known:` includes `setSlotCount`; L2 wrong passphrase → `invalid_passphrase`; L3
@@ -318,15 +344,20 @@ passphrase or name appeared in any output.
 - [ ] `setSlotCount` is a public `SetlistRepository` function (D-13); Room changes only after `ok`,
   from the answer, for exactly one (date, songId).
 - [ ] The overlay comes only from `Sending` entries; failure reverts and shows a card; musician
-  models unchanged; no amber added; copy as approved.
+  models unchanged; no amber added; copy as specified.
 - [ ] Three `wired`, Node green, live checks touched no real jam, no secret in any output.
 
-## Open Questions (recommendations in bold)
+## Planning Defaults And External Blocker
+
+The user authorized continued autonomous work. X1/F1/U1/C1 below are implementation defaults,
+not reported user decisions; none reverses D-01–D-20. No product question blocks implementation.
+The only expected external blocker is human deployment for live checks after local completion.
 
 - **X1, `Otros` mutations.** **Split into a new slice `admin-edit-extra-participants`** (add and
   remove one `Nombre (instrumento)` entry, server action(s) on the `Otros` cell, same pattern),
   depending on this one. Planning it here would double the slice (a second write, a text-entry form,
-  parsing rules on the server). The orchestrator or user must add the entry to `feature_list.json`.
+  parsing rules on the server). The orchestrator adds this entry to `feature_list.json` and adds it to the dependencies of
+  `action-contract-registry` before this feature is handed to the implementer.
 - **F1, a slot that holds a musician.** **Refuse** (`slot_filled`, `−` disabled with the note):
   safest against a concurrent assign, and once `admin-clear-slot` lands the admin clears first.
   Alternative: inline confirmation that clears the name, as remove-song does, at the cost of a

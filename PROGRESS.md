@@ -6,13 +6,18 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty-three of 41 slices accepted, the latest `offline-notice-visible` (7 October
+- Current state: thirty-four of 42 slices accepted, the latest `admin-assign-musician` (8 October
   2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
-- Current blocker: none. The script is deployed (user, 1 October 2026); its `/exec` URL is in the
-  git-ignored `local.properties`. The seed was imported into the real Sheet and reviewed by hand by
+- Current blocker: manual Apps Script deployment for `admin-adjust-lineup`, followed by live
+  checks L1-L5. Parts A+B and local/device verification are complete; the deployed server has not
+  been updated in this session. Its `/exec` URL is in git-ignored `local.properties`.
+  The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 7 October 2026 (`offline-notice-visible`, independently accepted) —
+- Last verified at: 8 October 2026 (`admin-assign-musician`, local verification only) —
+  `CI=true ./init.sh` exit 0, all three tools `wired`; 87 JVM test suites, 555 tests,
+  zero failures/errors; Node 152/152. Apps Script deployment/live checks deferred.
+  Before that, 7 October 2026 (`offline-notice-visible`, independently accepted) —
   `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
   including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,
   `live-refresh-during-jam`, `passing`) —
@@ -3541,6 +3546,22 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Next: independent validation of `live-refresh-during-jam`; the two admin slices still wait for the
   batched deploy.
 
+## Codex Infrastructure Setup — 7 October 2026
+
+- Shared the seven existing `.claude/skills` packages through the local `.agents/skills` Windows
+  junction. No skill copies or separate workflow definitions were introduced.
+- Added `scripts/setup-codex.ps1` to recreate and verify the checkout-local junction; two consecutive
+  runs succeeded and listed all seven skills. Luna independently verified the seven manifests and
+  ignored junction; a full hash comparison verified all 22 linked files, including references and
+  `agents/openai.yaml` metadata. Windows symlink creation was refused for lack of
+  administrator privilege, including after an approved retry, so the setup uses a junction.
+- Documented skill invocation and the reuse of `.claude/agents/<role>.md` instructions by Codex
+  subagents in `AGENTS.md`. There are no Claude command files to link.
+- Verification: `CI=true ./init.sh` exited 0 with `konsist`, `detekt`, and `ktlint` all `wired`;
+  `git diff --check` exited 0. Existing application and feature-list changes belong to prior work.
+- Feature statuses were not changed: this session only configures the development infrastructure.
+  Restart Codex if its skill selector does not show the newly linked packages.
+
 ## Offline Notice Visibility — 7 October 2026
 
 - `offline-notice-visible` is `accepted` after independent validator acceptance. Both list screens own
@@ -3572,6 +3593,94 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
   hash and specific device evidence. Optional forced rerun did not complete and is not claimed.
 - Next: planner review for `admin-adjust-lineup`. Existing Codex infrastructure changes remain separate.
 
+## Adjust Lineup: Local Implementation Complete — 7 October 2026
+
+- `admin-adjust-lineup` is `blocked` by the user's decision to defer Apps Script deployment and
+  live checks until the app implementation is complete. Parts A+B are implemented and locally
+  verified; L1-L5 and independent acceptance remain pending. No commit or acceptance was created.
+- Backend `setSlotCount` removes open columns last-first, restores absent columns first-first,
+  refuses occupied removal, validates/authenticates server-side and writes only changed plain-text
+  slot cells. The extended `checkSetlistWrite` verifies removal/restoration on its temporary tab.
+  Model/data mirror the confirmed seven-cell answer through a transaction for one cached song.
+- Admin rows have an inline formation editor, bounded +/- controls, an optimistic lineup before
+  strip/panel/filter mapping, unified saving status and persistent dismissible failures. Retained
+  event handlers reserve the latest target counts, including taps before recomposition. Musician
+  models remain unchanged. Added the separate `admin-edit-extra-participants` backlog slice and
+  its registry dependency; total backlog is now 42 slices, with 33 accepted.
+- Verification actually executed: `./gradlew ktlintFormat`; final `CI=true ./init.sh` exit 0 after
+  mutation restores, build/check, Android lint, Konsist 17/17, detekt and ktlint all wired. XML count:
+  95 debug/JVM result files, 602 tests, zero failures/errors (587 previously). New coverage includes
+  model count operations, exact-song DAO replacement, confirmation/failure/order/cancellation and
+  Molecule lineup/filter/failure/retained-handler behavior. `node --test backend/apps-script/test/*.test.js`
+  rerun by the orchestrator: 146 passed, zero failed. `git diff --check` passed.
+- Early gate failures were repaired without rule suppression: function/class size, presenter
+  complexity and declaration name; also corrected a model test fixture that incorrectly expected
+  three guitars. Repaired shell-induced text encoding before the green gate; existing copy is
+  preserved except the specified new lineup strings.
+- Failure demonstrations (a,b) from backend implementer: reversed open-column removal and removal
+  of occupied cells each failed the corresponding Node tests, then restored Post.js SHA-1
+  `4129D6ACE9D8BFD9431C078BE1C339A7860A0E6B`.
+  Demonstrations (c,d) ran together through the standard gate: two of 186 data tests failed when
+  the cache lookup used the first song, and one of 138 next-jam tests failed when Failed changes
+  overlaid. Actual failing tests were `replaceSlots targets one song by id and refuses duplicate
+  and unavailable setlists`, `setSlotCount mirrors all seven confirmed columns before clearing the
+  sending entry`, and `Sending overlays strip panel filter and counts and Failed reverts`.
+  Byte restores plus `sha1sum -c` passed: SetlistSlotDao `C60906843EAA7022DA7BD58460ADAD6370FC4BC4`,
+  LineupChangeOverlay `8ABFD328D771958142CD3E98620AE6B308D69D26`, and Post.js hash above.
+- Pixel 5, debug demo/admin flags: Dust My Broom editor showed guitar 1 occupied and guitar 2
+  absent, count 1, add enabled, remove disabled, and the specified occupied-slot explanation.
+  Described buttons measured 132x132px (48dp). Adding guitar reverted to count 1 and produced
+  the formation failure card. On the all-open The Thrill Is Gone, removing harmonica reverted to
+  count 1 and produced the correct title, access-refused explanation and Cerrar action; dismissal
+  removed the card. AccessRefused returns immediately, so the optimistic frame was not captured;
+  delayed Molecule tests cover that frame. No request with a real song id was made.
+- Font scale 2.0: instrument and count wrap in a column with both trailing controls retained;
+  editor remains scrollable. Rotation preserved the editor. Residual shared navigation findings:
+  the next-tab label wraps/clips at font scale 2.0, and the system navigation bar overlaps the
+  right edge in landscape. Neither prevented operating the editor; recorded in risks.
+- After restoring the original properties and reinstalling the normal APK, logging out of the
+  debug admin session produced an expanded musician row with one detail action and zero admin
+  controls. Relaunched the original debug configuration afterward. Device readback: font 1.0,
+  accelerometer rotation 1, user rotation 0, airplane 0, physical 1080x2340 with no override,
+  accessibility services null/enabled 0/touch exploration 0 unchanged; crash buffer empty.
+  `local.properties` restored byte-for-byte from the private backup. No URL or passphrase was
+  printed. No app DataStore directory exists after the smoke (no stored credential). Temporary
+  dumps/screenshots remain outside the repository; they contain demo fixtures.
+- Resume the deferred live path after the app implementation is complete: rotate the exposed admin
+  credential, update `local.properties`, deploy the complete `Post.js` as a new version, run L1-L5
+  without changing a real jam, then independent validation and acceptance. Do not print credentials.
+- Deployment is manual per backend README; clasp/OAuth/script-id automation is not configured.
+  Existing Codex infrastructure changes in .gitignore, AGENTS.md, scripts and its progress section
+  remain untouched and separate from the feature.
+
+## Assign Musician: Local Implementation Complete — 8 October 2026
+
+- `admin-assign-musician` is `accepted`: local implementation and self-verification completed, and
+  the independent validator returned `accept`. Apps Script deployment and live checks are
+  intentionally deferred until app implementation is complete, per the user's instruction. No live
+  request ran.
+- Added `MusicianName` normalization/validation and 1-based `SlotPosition` identity in `:core:model`.
+  `SetlistRepository.assignSlot` is public and ordered with the existing setlist mutations; the
+  Room mirror updates only the exact cached date/song/instrument/ordinal after a matching server
+  confirmation. Failures leave the cache unchanged.
+- Apps Script `assignSlot` authorizes and validates the request, resolves the active U1 column, and
+  writes only its single plain-text slot cell. The disposable `checkSetlistWrite` also exercises
+  assignment/readback/cleanup. Current and past jam suggestions use the existing cache; the admin
+  gets a fixed-slot full-screen entry flow and a Sending-only optimistic overlay.
+- Verification: `ktlintFormat` succeeded; `CI=true ./init.sh` exited 0, with 87 JVM test suites,
+  555 tests, zero failures/errors, and `konsist`, `detekt`, `ktlint` all wired. Focused results:
+  `:core:data:test` 190/190, `:feature:next-jam:test` 148 tests, Node 152/152. No device is required
+  by this spec. Independent validator returned `accept` on 8 October 2026 after rerunning the gate,
+  Node suite and diff check; it confirmed the deferred live checks do not block acceptance under
+  this spec.
+- The user directed committing the local work in parts. The shared slot-mutation code is committed
+  as a source checkpoint separate from Codex infrastructure; this does not change
+  `admin-adjust-lineup`'s `blocked` status or imply deployment/live validation. `admin-assign-musician`
+  remains accepted under its current local-verification spec.
+- Deployment-sensitive evidence remains pending: after the app implementation is complete, rotate
+  the exposed admin credential, update `local.properties`, deploy the combined Apps Script changes,
+  and perform the documented live checks without changing a real jam.
+
 ## Notes For The Next Session
 
 - The Sheet schema is settled (`docs/sheet-schema.md`) and the seed is imported (user's report).
@@ -3584,4 +3693,3 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Capture course evidence as it appears rather than reconstructing it later: the Konsist output, the
   feature-module diff when the assistant lands, and a timed recording of the manual flow before the
   app replaces it.
-

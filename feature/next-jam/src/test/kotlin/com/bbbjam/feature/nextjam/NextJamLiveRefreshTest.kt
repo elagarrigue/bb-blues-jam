@@ -327,7 +327,7 @@ class NextJamLiveRefreshTest {
         runCurrent()
 
         assertEquals("Bb", screen.model.row("Crossroads").key)
-        assertEquals("Guardando…", checkNotNull(screen.model.row("Crossroads").admin).keyStatus)
+        assertEquals("Guardando…", checkNotNull(screen.model.row("Crossroads").admin).saveStatus)
         assertEquals(
             RemovalUiModel.Removing("Quitando…"),
             checkNotNull(screen.model.row("Hoochie Coochie Man").admin).removal,
@@ -340,7 +340,7 @@ class NextJamLiveRefreshTest {
         repository.snapshots.emit(snapshot(jam(songs = written)))
         runCurrent()
         assertEquals("Bb", screen.model.row("Crossroads").key)
-        assertNull(checkNotNull(screen.model.row("Crossroads").admin).keyStatus)
+        assertNull(checkNotNull(screen.model.row("Crossroads").admin).saveStatus)
         assertEquals(1, ((screen.model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows.size)
     }
 

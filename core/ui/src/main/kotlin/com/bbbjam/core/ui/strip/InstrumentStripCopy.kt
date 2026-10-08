@@ -50,3 +50,6 @@ internal object InstrumentStripCopy {
         Instrument.KEYBOARDS -> "Teclados"
     }
 }
+
+/** The shared Spanish instrument name. */
+fun Instrument.fullName(): String = InstrumentStripCopy.name(this)
