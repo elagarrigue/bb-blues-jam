@@ -18,9 +18,11 @@ import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.cache.toDomain
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.io.File
 import java.time.LocalDate
@@ -54,6 +56,77 @@ class DefaultSetlistRepositoryTest {
     private val jamsDao = database.jamsDao()
     private val catalogDao = database.catalogDao()
     private val post = FakePost()
+
+    @Test
+    fun `clearSlot writes expected identity and updates Room only after confirmed slot payload`() = runTest {
+        val repository = seeded()
+        database.setlistDao().assignOpenSlot(DATE.toString(), "red-house", 1, 0, "Ana")
+        post.answers +=
+            body(
+                """{
+                    "schemaVersion": 1,
+                    "ok": true,
+                    "column": 0,
+                    "slots": {
+                        "guitar1": null, "guitar2": null, "bass": null, "drums": null,
+                        "vocals": null, "harmonica": null, "keyboards": null
+                    }
+                }""",
+            )
+
+        assertEquals(
+            ClearSlotOutcome.Cleared,
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana"),
+        )
+
+        assertTrue(cachedSongs().single().lineup.slots.first().isOpen)
+        val request = Json.parseToJsonElement(post.bodies.single()).jsonObject
+        assertEquals("clearSlot", request.getValue("action").jsonPrimitive.content)
+        assertEquals("Ana", request.getValue("expectedName").jsonPrimitive.content)
+        assertEquals(emptyList<SlotClear>(), repository.observeSlotClears().first())
+    }
+
+    @Test
+    fun `clearSlot rejects stale local target without posting and restores failure without Room mutation`() = runTest {
+        val repository = seeded()
+        assertEquals(
+            ClearSlotOutcome.NotCleared(WriteOutcome.Rejected("slot_empty")),
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana"),
+        )
+        assertTrue(post.bodies.isEmpty())
+        assertEquals(
+            SlotClear.State.Failed(WriteOutcome.Rejected("slot_empty")),
+            repository.observeSlotClears().first().single().state,
+        )
+
+        database.setlistDao().assignOpenSlot(DATE.toString(), "red-house", 1, 0, "Otra")
+        assertEquals(
+            ClearSlotOutcome.NotCleared(WriteOutcome.Rejected("slot_changed")),
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana"),
+        )
+        assertTrue(post.bodies.isEmpty())
+        assertEquals("Otra", cachedSongs().single().lineup.slots.first().musicianName)
+    }
+
+    @Test
+    fun `clearSlot failure and malformed success preserve the confirmed Room line`() = runTest {
+        val repository = seeded()
+        database.setlistDao().assignOpenSlot(DATE.toString(), "red-house", 1, 0, "Ana")
+        val before = jamsDao.observeJams().first()
+        post.answers += body(error("slot_changed"))
+        assertEquals(
+            ClearSlotOutcome.NotCleared(WriteOutcome.Rejected("slot_changed")),
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana"),
+        )
+        assertEquals(before, jamsDao.observeJams().first())
+
+        post.answers += body("""{"schemaVersion":1,"ok":true,"column":0,"slots":{"guitar1":null}}""")
+        assertEquals(
+            ClearSlotOutcome.NotCleared(WriteOutcome.Unavailable),
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana"),
+        )
+        assertEquals(before, jamsDao.observeJams().first())
+    }
 
     @After
     fun tearDown() {

@@ -23,6 +23,7 @@ import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SlotClear
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
@@ -144,6 +145,7 @@ class NextJamPresenter(
         val removes by remember { setlist.observeRemoves() }.collectAsState(initial = emptyList())
         val keyChanges by remember { setlist.observeKeyChanges() }.collectAsState(initial = emptyList())
         val assignments by remember { setlist.observeAssignments() }.collectAsState(initial = emptyList())
+        val slotClears by remember { setlist.observeSlotClears() }.collectAsState(initial = emptyList())
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val lineupControls = rememberLineupControls(setlist, snapshot, isAdmin)
@@ -159,6 +161,7 @@ class NextJamPresenter(
                 removal = RemovalState(removes, confirming, onRemoval),
                 keyChanges = keyChanges,
                 assignments = assignments,
+                slotClears = slotClears,
                 lineupChanges = lineupControls.lineupChanges,
                 lineupEditing = lineupControls.lineupEditing,
                 reservations = lineupControls.reservations,
@@ -167,6 +170,11 @@ class NextJamPresenter(
                 onSetKey = { date, songId -> currentOnSetKey(date, songId) },
                 onAssignSlot = { date, songId, instrument, position ->
                     currentOnAssignSlot(date, songId, instrument, position)
+                },
+                onClearSlot = { date, songId, instrument, position, name ->
+                    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                        setlist.clearSlot(date, songId, instrument, position, name)
+                    }
                 },
             )
         } else {
@@ -307,6 +315,7 @@ internal class AdminState(
     val removal: RemovalState = RemovalState(),
     val keyChanges: List<KeyChange> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
+    val slotClears: List<SlotClear> = emptyList(),
     val onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> },
     val lineupChanges: List<LineupChange> = emptyList(),
     val lineupEditing: String? = null,
@@ -314,6 +323,7 @@ internal class AdminState(
     val onLineupEditor: (LocalDate, SongId, LineupEditorUiModel.Event) -> Unit = { _, _, _ -> },
     val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit = { _, _, _, _ -> },
     val onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit = { _, _, _, _ -> },
+    val onClearSlot: (LocalDate, SongId, Instrument, SlotPosition, String) -> Unit = { _, _, _, _, _ -> },
 )
 
 /**
@@ -385,7 +395,12 @@ private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
             )
         }
     }
-    return (failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments).sortedBy {
+    val failedSlotClears = slotClears.filter { it.jamDate == date }.mapNotNull { clear ->
+        (clear.state as? SlotClear.State.Failed)?.let {
+            Triple(clear.id, NextJamCopy.CLEAR_FAILED, slotClearFailureMessage(it.reason))
+        }
+    }
+    return (failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments + failedSlotClears).sortedBy {
         it.first
     }.map { (id, title, message) ->
         AddFailureUiModel(
@@ -426,7 +441,8 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
                         date,
                         song.songId,
                         admin.lineupChanges.pendingLineup(date, song.songId, song.lineup),
-                    ).overlayAssignments(date, song.songId, admin.assignments),
+                    ).overlayAssignments(date, song.songId, admin.assignments)
+                        .overlaySlotClears(date, song.songId, admin.slotClears),
                 )
             }
         }
@@ -470,18 +486,36 @@ private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong): SongRowUiMode
         setKey = setKey,
         removal = removalModel(song),
         lineup = state.lineupEditor(jam.date, song),
-        saveStatus = if (
-            pending != null || state.isSavingLineup(jam.date, song.songId) ||
-            state.isSavingAssignment(jam.date, song.songId)
+        saveStatus = if (listOf(
+                pending != null,
+                state.isSavingLineup(jam.date, song.songId),
+                state.isSavingAssignment(jam.date, song.songId),
+                state.slotClears.any {
+                    it.jamDate == jam.date && it.songId == song.songId && it.state == SlotClear.State.Sending
+                },
+            ).any { it }
         ) {
             NextJamCopy.SAVING
         } else {
             null
         },
     )
-    val lineup = song.lineup.toLineupPanel(song.extraParticipants) { instrument, position ->
-        state.onAssignSlot(jam.date, song.songId, instrument, position)
-    }
+    val lineup = song.lineup.toLineupPanel(
+        extras = song.extraParticipants,
+        onAssign = { instrument, position -> state.onAssignSlot(jam.date, song.songId, instrument, position) },
+        onClear = { instrument, position, name ->
+            state.onClearSlot(jam.date, song.songId, instrument, position, name)
+        },
+        canAssign = { instrument, position ->
+            !state.slotClears.isClearing(jam.date, song.songId, instrument, position.value)
+        },
+        canClear = { instrument, position ->
+            !state.slotClears.isClearing(jam.date, song.songId, instrument, position.value)
+        },
+        isClearing = { instrument, position ->
+            state.slotClears.isClearing(jam.date, song.songId, instrument, position.value)
+        },
+    )
     return if (pending == null) {
         row.copy(lineup = lineup, admin = admin)
     } else {

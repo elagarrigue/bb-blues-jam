@@ -67,8 +67,9 @@ const PAST_TAB = [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric Clapton
  * trailing blank row in `rows` is a spare row. `brokenDelete` simulates a deleteRow that does nothing.
  * `lostValues` lists values whose setValue is logged but not stored (a write Sheets dropped).
  */
-function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []) {
+function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = [], lostValueAt = -1, lostCells = []) {
   const cells = rows.map((r) => r.map((value) => ({ value, format: '' })));
+  let valueWriteCount = 0;
   const cell = (r, c) => {
     while (cells.length < r) {
       cells.push([]);
@@ -135,7 +136,9 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []
         },
         setValue(value) {
           log.push(['setValue', name, r, c, value]);
-          if (lostValues.includes(value)) {
+          valueWriteCount++;
+          if (lostValues.includes(value) || valueWriteCount === lostValueAt ||
+              lostCells.some(target => target.sheet === name && target.row === r && target.column === c && target.value === value)) {
             return;
           }
           const target = cell(r, c);
@@ -160,7 +163,7 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []
 }
 
 /** A spreadsheet of grid tabs; `requested` lists every getSheetByName, `log` every write. */
-function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlways = false, brokenDelete = false, lostValues = [] } = {}) {
+function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlways = false, brokenDelete = false, lostValues = [], lostValueAt = -1, lostCells = [] } = {}) {
   const log = [];
   const requested = [];
   const all = {
@@ -187,7 +190,7 @@ function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlw
     insertSheet(name) {
       log.push(['insertSheet', name]);
       assert.ok(!(name in all), `insertSheet: ${name} already exists`);
-      all[name] = gridSheet(name, [], log, convertAlways, brokenDelete, lostValues);
+    all[name] = gridSheet(name, [], log, convertAlways, brokenDelete, lostValues, lostValueAt, lostCells);
       return all[name];
     },
     deleteSheet(sheet) {
@@ -1081,6 +1084,88 @@ test('checkSetlistWrite detects a dropped assignment and still cleans up its tem
   assertError(call(fake, 'checkSetlistWrite'), 'internal_error');
   assert.ok(fake.log.some(op => op[0] === 'setValue' && op[1] === SETLIST_CHECK_TAB && op[4] === 'Prueba Musico'));
   assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+});
+
+// ---- admin-clear-slot ----
+function clearSlot(fake, fields = {}, svc) {
+  return call(fake, 'clearSlot', Object.assign({ date: UPCOMING, songId: 'crossroads', instrument: 'guitar', ordinal: 1, expectedName: 'Tincho' }, fields), svc);
+}
+
+test('clearSlot compare-and-clears only its occupied U1 cell and returns canonical slots', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', ['Tincho', 'Mora', '', '', '', '', ''])] } });
+  const result = clearSlot(fake);
+  assert.equal(result.ok, true);
+  assert.equal(result.column, 0);
+  assert.equal(result.slots.guitar1, null);
+  assert.equal(result.slots.guitar2, 'Mora');
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 2, 6, '@'],
+    ['setValue', UPCOMING, 2, 6, ''],
+  ]);
+});
+
+test('clearSlot respects active ordinal after removed guitar column and reordered headers', () => {
+  const header = TAB_HEADER.slice().reverse();
+  const song = row('2', 'crossroads', 'Crossroads', 'Eric', 'A', ['-', 'Mora', '', '', '', '', '']).reverse();
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [header, song] } });
+  const result = clearSlot(fake, { expectedName: 'Mora' });
+  assert.equal(result.column, 1);
+  assert.equal(fake.tabs[UPCOMING].getDataRange().getDisplayValues()[1][header.indexOf('Guitarra 2')], '');
+  assert.deepStrictEqual(writes(fake.log).map(op => op.slice(0, 5)), [
+    ['setNumberFormat', UPCOMING, 2, header.indexOf('Guitarra 2') + 1, '@'],
+    ['setValue', UPCOMING, 2, header.indexOf('Guitarra 2') + 1, ''],
+  ]);
+});
+
+test('clearSlot leaves empty, changed, absent, malformed, and invalid targets untouched', () => {
+  const cases = [
+    [{}, ['', ''], 'slot_empty'],
+    [{}, ['Otra', ''], 'slot_changed'],
+    [{ ordinal: 2 }, ['-', ''], 'slot_not_in_lineup'],
+    [{ expectedName: '' }, ['Tincho', ''], 'invalid_name'],
+    [{ expectedName: '\u0001' }, ['Tincho', ''], 'invalid_name'],
+  ];
+  for (const [fields, guitars, code] of cases) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', guitars.concat(['', '', '', '', '']))] } });
+    assertError(clearSlot(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+});
+
+test('clearSlot validates inputs before accessing jam tabs and is authenticated under lock', () => {
+  const cases = [
+    [{ date: '2026-02-30', songId: 'BAD', instrument: 'kazoo', ordinal: 0, expectedName: '' }, 'invalid_date'],
+    [{ songId: 'BAD', instrument: 'kazoo', ordinal: 0, expectedName: '' }, 'invalid_song'],
+    [{ instrument: 'kazoo', ordinal: 0 }, 'invalid_slot'],
+    [{ ordinal: 0 }, 'invalid_slot'],
+    [{ date: '1999-01-01' }, 'unknown_jam'],
+    [{ date: PAST }, 'jam_not_editable'],
+  ];
+  for (const [fields, code] of cases) {
+    const fake = fakeSpreadsheet();
+    assertError(clearSlot(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+  const denied = fakeSpreadsheet();
+  assertError(handlePost({ action: 'clearSlot' }, denied.spreadsheet, services()), 'invalid_passphrase');
+  assert.deepStrictEqual(writes(denied.log), []);
+  const busy = services();
+  busy.lock.tryLock = () => false;
+  const fake = fakeSpreadsheet();
+  assertError(clearSlot(fake, {}, busy), 'busy');
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.equal(ACTIONS.clearSlot.write, true);
+});
+
+test('checkSetlistWrite proves clearSlot and always deletes the temporary tab', () => {
+  const fake = fakeSpreadsheet();
+  assert.deepStrictEqual(call(fake, 'checkSetlistWrite'), { schemaVersion: 1, ok: true });
+  assert.ok(fake.log.some(op => op[0] === 'setValue' && op[1] === SETLIST_CHECK_TAB && op[4] === ''));
+  assert.ok(fake.log.every(op => op[1] === SETLIST_CHECK_TAB));
+  assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
+  const failed = fakeSpreadsheet({ lostCells: [{ sheet: SETLIST_CHECK_TAB, row: 2, column: 6, value: '' }] });
+  assertError(call(failed, 'checkSetlistWrite'), 'internal_error');
+  assert.ok(!(SETLIST_CHECK_TAB in failed.tabs));
 });
 
 test('setSlotCount needs passphrase and write lock; neither refusal writes', () => {

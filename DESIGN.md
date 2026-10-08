@@ -440,6 +440,13 @@ through `AdminControlsDefaults`, **no amber**:
   server confirms. Failure reopens the slot and adds a dismissible card. Focus and button colors use
   neutral tokens; amber remains reserved for open-slot affordance and key. Gone state:
   `Ese cupo ya no está libre` / `Volvé a la próxima jam para ver la lista actual.`
+- **Clearing a filled slot** (`admin-clear-slot`): each filled line in an expanded admin row adds a
+  48dp `Liberar` action with an accessible instrument, musician and action description; musicians
+  see no control. While sending, the admin projection moves that exact original ordinal into the
+  open section as `Quitando…` and suppresses actions on that slot. A failure restores the confirmed
+  musician and adds a dismissible `No se pudo liberar el cupo` card; stale targets say `Ese cupo ya
+  no está ocupado` and offer `Volvé a la próxima jam para ver la lista actual.`. The immediate action
+  uses the established neutral admin/action treatment, not amber.
 - **Adjusting a lineup** (`admin-adjust-lineup`): after `Cambiar tonalidad` and before removal,
   `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
   default instrument, full name in `body`/`text`, count (`2 cupos`, `1 cupo`, `No va en este tema`)

@@ -94,6 +94,7 @@ var ACTIONS = {
   setKey: { write: true, run: setKey_ },
   setSlotCount: { write: true, run: setSlotCount_ },
   assignSlot: { write: true, run: assignSlot_ },
+  clearSlot: { write: true, run: clearSlot_ },
 };
 
 /**
@@ -372,6 +373,11 @@ function checkSetlistWrite_(request, spreadsheet, services) {
       }
     });
     assignSlotToRow_(sheet, markerRow, columns, 'guitar', 1, normalizeMusicianName_(' Prueba   Musico '));
+    try {
+      clearSlotFromRow_(sheet, markerRow, columns, 'guitar', 1, 'Prueba Musico');
+    } catch (ignored) {
+      throw new Error('The setlist clear check could not clear its marker slot');
+    }
     const range = sheet.getDataRange();
     rows = buildSetlist(range.getDisplayValues(), range.getValues(), SETLIST_CHECK_TAB);
   } finally {
@@ -379,7 +385,7 @@ function checkSetlistWrite_(request, spreadsheet, services) {
   }
   const expectedSlots = {};
   SLOT_FIELDS.forEach(function (spec) {
-    expectedSlots[spec.field] = spec.field === 'guitar1' ? 'Prueba Musico' : (spec.field === 'guitar2' ? '-' : null);
+    expectedSlots[spec.field] = spec.field === 'guitar2' ? '-' : null;
   });
   if (!isMarkerRow_(rows, Object.assign({}, marker, { key: CHECK_KEY_ }), expectedSlots)) {
     throw new Error('The setlist write check read back a different row');
@@ -737,6 +743,59 @@ function assignSlot_(request, spreadsheet, services) {
   const row = findSongRow_(sheet, columns, display, songId);
   const assigned = assignSlotToRow_(sheet, row, columns, instrument, ordinal, name);
   return { ok: true, column: SLOT_FIELDS.findIndex(function (spec) { return spec.field === assigned.field; }), name: name };
+}
+
+/** Clears one occupied active slot only when it still contains the caller's expected cached name. */
+function clearSlot_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug');
+  }
+  const instrument = request.instrument;
+  if (typeof instrument !== 'string' || !Object.prototype.hasOwnProperty.call(SLOT_COLUMNS_, instrument)) {
+    throw new ContractError('invalid_slot', 'instrument must identify a default instrument');
+  }
+  const ordinal = request.ordinal;
+  if (typeof ordinal !== 'number' || !Number.isInteger(ordinal) || ordinal < 1 || ordinal > SLOT_COLUMNS_[instrument].length) {
+    throw new ContractError('invalid_slot', 'ordinal must identify a default lineup slot');
+  }
+  const expectedName = request.expectedName;
+  if (typeof expectedName !== 'string' || expectedName.trim().length === 0 || /[\u0000-\u001f\u007f-\u009f]/.test(expectedName)) {
+    throw new ContractError('invalid_name', 'expectedName must be non-blank text');
+  }
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) { throw notInSetlist_(songId, date); }
+  const display = sheet.getDataRange().getDisplayValues();
+  const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
+  const row = findSongRow_(sheet, columns, display, songId);
+  const cleared = clearSlotFromRow_(sheet, row, columns, instrument, ordinal, expectedName);
+  return { ok: true, column: SLOT_FIELDS.findIndex(function (spec) { return spec.field === cleared.field; }), slots: readSlotCells_(sheet, row, columns) };
+}
+
+/** Compare-and-clear by active U1 ordinal. Rejections never write to the Sheet. */
+function clearSlotFromRow_(sheet, row, columns, instrument, ordinal, expectedName) {
+  const fields = SLOT_COLUMNS_[instrument];
+  const cells = readSlotCells_(sheet, row, columns);
+  const active = presentSlotFields_(cells, fields);
+  if (ordinal > active.length) {
+    throw new ContractError('slot_not_in_lineup', 'The requested slot is not in this lineup');
+  }
+  const field = active[ordinal - 1];
+  if (cells[field] === null) {
+    throw new ContractError('slot_empty', 'The requested slot is already open');
+  }
+  if (cells[field] !== expectedName.trim()) {
+    throw new ContractError('slot_changed', 'The requested slot has a different musician');
+  }
+  const cell = sheet.getRange(row, columns[field] + 1);
+  cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cell.setValue('');
+  return { field: field };
 }
 
 /** Today in the spreadsheet's time zone, as YYYY-MM-DD: the zone the admin's dates are typed in. */

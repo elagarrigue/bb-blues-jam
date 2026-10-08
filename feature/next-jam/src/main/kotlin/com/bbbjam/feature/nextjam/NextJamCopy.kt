@@ -102,6 +102,9 @@ internal object NextJamCopy {
     }
     fun lineupFailed(title: String): String = "No se pudo cambiar la formación de «$title»"
     fun assignmentFailed(name: String, title: String): String = "No se pudo anotar a «$name» en «$title»"
+    const val CLEAR_FAILED = "No se pudo liberar el cupo"
+    const val CLEARING = "Quitando…"
+    const val CLEAR_STALE = "Ese cupo ya no está ocupado. Volvé a la próxima jam para ver la lista actual."
     const val SLOT_TAKEN = "Ese cupo ya está ocupado. Actualizá la lista e intentá de nuevo."
     const val INVALID_ASSIGNMENT_NAME = "La planilla no aceptó ese nombre."
 

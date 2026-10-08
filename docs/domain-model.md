@@ -186,6 +186,16 @@ after the server confirms; a Sending entry overlays the admin's lineup until con
 failure reverts it. Suggestions use cached names from the current and past jams; `Otros` names are
 included in suggestions but never become slots. No `Musician` entity is introduced.
 
+### Clearing a filled slot
+
+`SetlistRepository.clearSlot(date, songId, instrument, ordinal, expectedName)` frees one filled slot
+on the upcoming jam. The ordinal is the 1-based position in the instrument's original active
+lineup, before open-first display ordering. The server compares the current cell with the expected
+cached name and refuses an empty or changed target without writing. During Sending, only the admin
+projection shows the slot as open; Room changes only after a valid server response and failed writes
+restore the confirmed name. `Otros` is never a slot and musicians remain read-only. The expected name
+is compared as legacy display text, without applying rules intended for newly assigned names.
+
 ### The same song in a later jam
 
 Adding a Song already played in a past jam creates a new JamSong with a fresh lineup and its own

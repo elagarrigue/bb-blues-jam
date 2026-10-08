@@ -101,6 +101,26 @@ class LineupPanelMapperTest {
     }
 
     @Test
+    fun `admin clear action carries filled slot original ordinal and expected name`() {
+        val calls = mutableListOf<Triple<Instrument, SlotPosition, String>>()
+        val panel = Lineup(
+            listOf(Slot(Instrument.GUITAR), Slot(Instrument.GUITAR, "Ana")),
+        ).toLineupPanel(emptyList(), onClear = { instrument, position, name ->
+            calls +=
+                Triple(instrument, position, name)
+        })
+
+        assertEquals("Liberar", panel.filledSlots.single().actionLabel)
+        assertEquals("Guitarra: Ana. Liberar", panel.filledSlots.single().contentDescription)
+        panel.filledSlots.single().action?.invoke(LineupLineEvent.Activate)
+        assertEquals(listOf(Triple(Instrument.GUITAR, SlotPosition(2), "Ana")), calls)
+        assertEquals(
+            null,
+            Lineup(listOf(Slot(Instrument.GUITAR, "Ana"))).toLineupPanel(emptyList()).filledSlots.single().action,
+        )
+    }
+
+    @Test
     fun `an all-open lineup lists every slot as open with the hint and no note`() {
         assertEquals(
             LineupPanelUiModel(

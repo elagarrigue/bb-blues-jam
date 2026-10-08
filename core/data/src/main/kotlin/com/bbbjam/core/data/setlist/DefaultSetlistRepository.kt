@@ -10,11 +10,9 @@ import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
-import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
@@ -33,12 +31,12 @@ internal class DefaultSetlistRepository(
     private val setlistDao: SetlistDao,
     private val catalogDao: CatalogDao,
     private val scope: DataScope,
-) : SetlistRepository {
+    private val queue: SetlistMutationQueue = SetlistMutationQueue(),
+    private val slotClears: SetlistSlotClears = SetlistSlotClears(writer, setlistDao, catalogDao, scope, queue),
+) : SetlistRepository,
+    SetlistSlotClearRepository by slotClears {
 
-    private val ids = AtomicLong(0)
-    private val order = Mutex()
-    private val writes = Mutex()
-    private val additions = SetlistSongAdds(writer, setlistDao, catalogDao, scope, ids, order, writes)
+    private val additions = SetlistSongAdds(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes)
     private val removals = SetlistRemovals(writer, setlistDao, catalogDao)
     private val keyChanges = SetlistKeyChanges(writer, setlistDao, catalogDao)
     private val lineupChanges = SetlistLineupChanges(writer, setlistDao, catalogDao)
@@ -60,6 +58,7 @@ internal class DefaultSetlistRepository(
         keyChanges.dismiss(id)
         lineupChanges.dismiss(id)
         assignments.dismiss(id)
+        slotClears.dismiss(id)
     }
 
     /**
@@ -68,9 +67,9 @@ internal class DefaultSetlistRepository(
      */
     override suspend fun removeSong(jamDate: LocalDate, songId: SongId): RemoveSongOutcome =
         scope.async(start = CoroutineStart.UNDISPATCHED) {
-            order.withLock {
-                val entry = removals.start(ids.incrementAndGet(), jamDate, songId)
-                scope.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { removals.send(entry) } }
+            queue.order.withLock {
+                val entry = removals.start(queue.ids.incrementAndGet(), jamDate, songId)
+                scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { removals.send(entry) } }
             }.await()
         }.await()
 
@@ -82,9 +81,9 @@ internal class DefaultSetlistRepository(
      */
     override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome =
         scope.async(start = CoroutineStart.UNDISPATCHED) {
-            order.withLock {
-                val entry = keyChanges.start(ids.incrementAndGet(), jamDate, songId, key)
-                scope.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { keyChanges.send(entry) } }
+            queue.order.withLock {
+                val entry = keyChanges.start(queue.ids.incrementAndGet(), jamDate, songId, key)
+                scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { keyChanges.send(entry) } }
             }.await()
         }.await()
 
@@ -96,9 +95,9 @@ internal class DefaultSetlistRepository(
         instrument: Instrument,
         count: Int,
     ): SetSlotCountOutcome = scope.async(start = CoroutineStart.UNDISPATCHED) {
-        order.withLock {
-            val entry = lineupChanges.start(ids.incrementAndGet(), jamDate, songId, instrument, count)
-            scope.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { lineupChanges.send(entry) } }
+        queue.order.withLock {
+            val entry = lineupChanges.start(queue.ids.incrementAndGet(), jamDate, songId, instrument, count)
+            scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { lineupChanges.send(entry) } }
         }.await()
     }.await()
 
@@ -111,9 +110,9 @@ internal class DefaultSetlistRepository(
         ordinal: SlotPosition,
         musicianName: MusicianName,
     ): AssignSlotOutcome = scope.async(start = CoroutineStart.UNDISPATCHED) {
-        order.withLock {
+        queue.order.withLock {
             val (entry, target, localError) = assignments.start(
-                ids.incrementAndGet(),
+                queue.ids.incrementAndGet(),
                 jamDate,
                 songId,
                 instrument,
@@ -121,7 +120,7 @@ internal class DefaultSetlistRepository(
                 musicianName,
             )
             scope.async(start = CoroutineStart.UNDISPATCHED) {
-                writes.withLock { assignments.send(entry, target, localError) }
+                queue.writes.withLock { assignments.send(entry, target, localError) }
             }
         }.await()
     }.await()

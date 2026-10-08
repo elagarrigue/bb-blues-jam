@@ -33,6 +33,7 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
@@ -129,7 +130,14 @@ internal fun Line(line: LineupLineUiModel, showInstrument: Boolean = true) {
                 onClick = { action(LineupLineEvent.Activate) },
                 modifier = Modifier.heightIn(min = LocalMinimumInteractiveComponentSize.current),
             ) {
-                Text(text = label, color = BluesJamTheme.colors.slotOpen)
+                Text(
+                    text = label,
+                    color = if (line.kind == InstrumentChipKind.OPEN_SLOT) {
+                        BluesJamTheme.colors.slotOpen
+                    } else {
+                        BluesJamTheme.colors.text
+                    },
+                )
             }
         }
     }

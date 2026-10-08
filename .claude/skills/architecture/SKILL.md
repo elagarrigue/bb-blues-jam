@@ -739,3 +739,14 @@ jam panel supplies actions only in admin mode. `AssignMusicianPresenter` owns fo
 suggestions from cached upcoming/past jams; `AssignMusicianScreen` is a full-screen flow in the
 existing feature. `AppRoutes.ASSIGN_SLOT` carries ISO date, `SongId`, instrument and positive
 ordinal in the outer host. No new module or Koin binding is introduced.
+
+As built locally by `admin-clear-slot` (deployment/live checks deferred):
+`SetlistRepository.clearSlot` is a public compare-and-clear mutation exposed through
+`SetlistSlotClearRepository`, with `ClearSlotOutcome` and `SlotClear` (`Sending`/`Failed`). It shares
+the repository's mutation ids, FIFO order/write barriers and `DataScope`. The client captures the
+expected cached display name as text so legacy names do not pass through new-assignment validation;
+the server re-resolves U1 and compare-checks that exact cell. A valid seven-field response is mirrored
+transactionally to the unique cached song. Sending clears overlay only the admin lineup before
+strip/panel/filter/count mapping; failures leave Room unchanged and produce dismissible cards.
+`LineupPanelUiModel`'s filled-line action stays absent by default and is supplied only on PrÃ³xima jam
+for eligible admin slots; ordinal metadata follows the source lineup through the stable partition.

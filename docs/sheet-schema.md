@@ -162,6 +162,14 @@ the canonical seven-slot array index and normalized name. The assignment step in
 `checkSetlistWrite` uses only the disposable marker tab. Deployment and live validation remain
 deferred until app implementation is complete.
 
+`clearSlot` (`admin-clear-slot`) resolves the same 1-based active-column ordinal with U1 and
+compare-and-clears only when the trimmed display text equals the expected cached musician name.
+`slot_empty` and `slot_changed` reject a stale target without writing. Success clears exactly the
+resolved cell to an empty open slot; it does not shift other musicians or change `Otros`. The
+expected name uses existing display text as-is and is not checked against new-assignment rules.
+`checkSetlistWrite` assigns then clears its disposable marker and verifies the cleared cell before
+its `finally` cleanup. Deployment and live checks are deferred until app implementation is complete.
+
 ### Slot columns
 
 All seven slot headers are **required in every jam tab**; a tab missing one is invalid. Their cells

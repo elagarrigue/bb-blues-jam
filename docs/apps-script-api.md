@@ -5,18 +5,18 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and ten locally implemented POST actions: `checkPassphrase`
+(`apps-script-jams-read-endpoint`), and eleven locally implemented POST actions: `checkPassphrase`
 (`admin-passphrase-login`), the deploy check `checkWriteAccess` (`apps-script-write-auth`), the
 admin read `readJams`, the first setlist write `addSong` and its deploy check `checkSetlistWrite`
 (`admin-add-song-to-setlist`), `removeSong` with its deploy check `checkSetlistRemove`
 (`admin-remove-song-from-setlist`, Part A) and `setKey` (`admin-set-key`, Part A; its deploy proof
 is a step added to `checkSetlistWrite`). `removeSong`, `checkSetlistRemove` and `setKey` shipped in one
 batched `Post.gs` deploy (user decision B1 (a)), deployed by the user on 7 October 2026. Every POST action passes the
-passphrase guard in the router. `setSlotCount` (`admin-adjust-lineup`) and `assignSlot`
-(`admin-assign-musician`) are implemented locally. The user deferred the shared
-deployment and live checks until the app implementation is complete; the complete `Post.js` and
-`checkSetlistWrite` now include both `setSlotCount` and `assignSlot`. Neither local mutation is yet
-live-verified.
+passphrase guard in the router. `setSlotCount` (`admin-adjust-lineup`), `assignSlot`
+(`admin-assign-musician`) and `clearSlot` (`admin-clear-slot`) are implemented locally. The user
+deferred the shared deployment and live checks until the app implementation is complete; the
+complete `Post.js` and `checkSetlistWrite` now include all three actions. These local mutations are
+not live-verified.
 
 ## Transport
 
@@ -243,7 +243,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -282,7 +282,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -498,6 +498,20 @@ canonical seven-slot array index and `name` is the normalized spelling. Every re
 write-free. It never opens `Catalogo`. The extended `checkSetlistWrite` assigns and reads back a
 marker in its disposable tab before deleting the tab; live verification is deferred until the app
 implementation is complete.
+
+### `clearSlot` (`admin-clear-slot`)
+
+Request: `{"action":"clearSlot","passphrase":"?","date":"2026-10-31","songId":"crossroads","instrument":"guitar","ordinal":1,"expectedName":"Tincho"}`.
+The guarded write uses the shared lock and validates the calendar date, canonical song id,
+instrument, positive default-lineup ordinal and nonblank expected name before checking the unique
+editable jam, tab, headers and song row. It resolves the 1-based ordinal among active non-`-`
+columns with U1. An empty target returns `slot_empty`; a cell whose trimmed display text differs
+from `expectedName` returns `slot_changed`. Both rejections are write-free. Success clears exactly
+that cell as plain text, rereads all seven slot fields and returns `{schemaVersion, ok, column,
+slots}`. Existing Sheet names are compared as-is and do not pass through the new-assignment name
+validator. The extended `checkSetlistWrite` assigns and clears a disposable marker musician, checks
+the open-slot readback and removes the temporary tab in `finally`. Deployment/live validation is
+deferred until app implementation is complete.
 
 ### Client write path (`AdminWriter`)
 

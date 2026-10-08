@@ -5,6 +5,7 @@ import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.AssignSlotOutcome
 import com.bbbjam.core.data.setlist.Assignment
+import com.bbbjam.core.data.setlist.ClearSlotOutcome
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
@@ -13,6 +14,7 @@ import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SlotClear
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.MusicianName
@@ -51,6 +53,7 @@ class FakeSetlistRepository : SetlistRepository {
     val keyCalls = mutableListOf<AddCall>()
     val lineupChanges = MutableStateFlow<List<LineupChange>>(emptyList())
     val assignments = MutableStateFlow<List<Assignment>>(emptyList())
+    val slotClears = MutableStateFlow<List<SlotClear>>(emptyList())
     data class AssignmentCall(
         val date: LocalDate,
         val id: SongId,
@@ -110,6 +113,16 @@ class FakeSetlistRepository : SetlistRepository {
     }
 
     override fun observeAssignments(): Flow<List<Assignment>> = assignments
+
+    override suspend fun clearSlot(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        ordinal: SlotPosition,
+        expectedName: String,
+    ): ClearSlotOutcome = ClearSlotOutcome.Cleared
+
+    override fun observeSlotClears(): Flow<List<SlotClear>> = slotClears
 
     override fun dismiss(id: Long) {
         dismissed += id

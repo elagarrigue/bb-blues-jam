@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
  * functions, usable with no UI, so the action registry and the phase 2 assistant can call them.
  * Every write goes through the admin POST path; Apps Script authorizes it, never the local flag.
  */
-interface SetlistRepository {
+interface SetlistRepository : SetlistSlotClearRepository {
     /**
      * Appends the catalog song [songId] to the setlist of [jamDate] in [key] (the admin's choice,
      * D-08) with the default open lineup (D-18). Publishes a [SetlistAdd.State.Sending] entry while

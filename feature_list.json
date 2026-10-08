@@ -976,12 +976,17 @@
     "depends_on": [
       "admin-assign-musician"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The slot returns to open locally and in the Sheet",
       "The instrument strip and any active filter update accordingly"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-08: CI=true ./init.sh exit 0; 100 JVM test-result suites, 629 tests, zero failures/errors; konsist, detekt and ktlint all wired.",
+      "2026-10-08: node --test backend/apps-script/test/*.test.js — 157/157 pass, including guarded clearSlot, compare-and-clear no-write rejections, U1/reordered headers, exact one-cell write, and disposable-tab cleanup on an injected clear failure.",
+      "2026-10-08 validator repair: filled-slot Liberar uses BluesJamTheme.colors.text while open-slot Anotar keeps slotOpen; ktlintFormat and CI=true ./init.sh both exit 0; all verification tools wired. git diff --check passed. No device or deployment/live request was run; deployment and L1-L5 remain deferred until app implementation is complete.",
+      "Independent validator (2026-10-08): accept. Reran CI=true ./init.sh (exit 0; konsist/detekt/ktlint wired) and git diff --check; verified Anotar remains amber and Liberar uses neutral text styling. Live checks deferred per user instruction."
+    ],
     "notes": "D-13. Completes the assign/clear pair; there is no reserved intermediate state."
   },
   {

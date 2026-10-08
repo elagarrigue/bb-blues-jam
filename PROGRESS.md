@@ -6,17 +6,14 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty-four of 42 slices accepted, the latest `admin-assign-musician` (8 October
-  2026). Human check owed: the `Actualizar` action with TalkBack.
+- Current state: thirty-five of 42 slices accepted; `admin-clear-slot` is latest accepted (8 October 2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Current blocker: manual Apps Script deployment for `admin-adjust-lineup`, followed by live
   checks L1-L5. Parts A+B and local/device verification are complete; the deployed server has not
   been updated in this session. Its `/exec` URL is in git-ignored `local.properties`.
   The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 8 October 2026 (`admin-assign-musician`, local verification only) —
-  `CI=true ./init.sh` exit 0, all three tools `wired`; 87 JVM test suites, 555 tests,
-  zero failures/errors; Node 152/152. Apps Script deployment/live checks deferred.
+- Last verified at: 8 October 2026 (`admin-clear-slot`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 100 JVM test-result suites, 629 tests, zero failures/errors; Node 157/157. Independent validator accepted after rerunning the gate and reviewing the neutral `Liberar` styling. No device or live Apps Script request; deployment/live checks remain deferred until app implementation is complete.
   Before that, 7 October 2026 (`offline-notice-visible`, independently accepted) —
   `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
   including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,
@@ -3693,3 +3690,9 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Capture course evidence as it appears rather than reconstructing it later: the Konsist output, the
   feature-module diff when the assistant lands, and a timed recording of the manual flow before the
   app replaces it.
+
+## 8 October 2026 — admin-clear-slot
+
+- Implemented the guarded Apps Script `clearSlot` action with compare-and-clear against the expected cached display text, U1 ordinal resolution, one-cell writes, canonical readback and temporary check cleanup. Added the repository mutation, shared id/order/write queue state, confirmed seven-slot Room mirror, admin-only Sending overlay, 48dp `Liberar` action and dismissible stale/failure card. Updated API, domain, Sheet, design and architecture docs.
+- `CI=true ./init.sh`: exit 0; 100 JVM test-result suites, 629 tests, zero failures/errors; `konsist`, `detekt`, and `ktlint` all `wired`. `node --test backend/apps-script/test/*.test.js`: 157/157. `git diff --check`: passed. Validator repair keeps open-slot `Anotar` amber and uses `BluesJamTheme.colors.text` for filled-slot `Liberar`; reran `ktlintFormat`, `CI=true ./init.sh` (exit 0), and `git diff --check` after repair. No device verification or deployment/live requests were run.
+- `admin-clear-slot` is `accepted` after independent validation. The combined deployment and live-check sequence remains deferred until app implementation is complete. Next: select the next dependency-ready feature.

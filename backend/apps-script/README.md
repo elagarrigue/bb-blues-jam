@@ -85,7 +85,7 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` after the pending deployment, with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot`
+`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot`
 (the action list of `src/Post.js` since `admin-set-key`; a list ending in `checkSetlistRemove`
 means the `admin-remove-song-from-setlist` version without set-key, one ending in
 `checkSetlistWrite` means the `admin-add-song-to-setlist` version, `Known: checkPassphrase,
@@ -245,7 +245,7 @@ are.
    `_prueba_lista` within one request), then set-key's (`checkSetlistWrite`, now also rewriting
    its marker's key, does the same). After the deploy, `curl -sL -d '{}' "$URL"` must end in
    `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong,
-   checkSetlistRemove, setKey, setSlotCount, assignSlot`. No check removes a song from or changes a key in a real jam.
+   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot`. No check removes a song from or changes a key in a real jam.
 
 ### Temporary test jam for the draft check (user approval A3)
 
@@ -289,7 +289,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
@@ -426,3 +426,14 @@ normalized spelling written. `checkSetlistWrite` exercises that same cell writer
 temporary `_prueba_lista` tab, checks normalized readback and cleans up, without touching a real
 jam. Deployment and live validation are deferred until app implementation is complete; do not
 send a real song id to this action during local verification.
+
+## Clear-slot endpoint (local until the app is complete)
+
+`clearSlot` is a guarded, locked write. It re-resolves the requested 1-based active instrument
+ordinal using U1 and compares the trimmed current cell text with `expectedName`. An already empty
+cell returns `slot_empty`; a changed musician returns `slot_changed`; neither writes. Success clears
+one cell and returns the canonical seven slot fields. Existing legacy names are compared as-is,
+without new-assignment validation. `checkSetlistWrite` now assigns then clears the disposable marker
+musician and checks the open readback; `finally` deletes `_prueba_lista` even if that check fails.
+No real jam is touched. Deployment and live validation are deferred until app implementation is
+complete; do not call this action with a real song id during local verification.

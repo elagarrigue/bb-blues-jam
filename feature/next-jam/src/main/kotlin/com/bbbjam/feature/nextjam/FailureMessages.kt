@@ -50,3 +50,14 @@ internal fun assignmentFailureMessage(reason: WriteOutcome): String = when {
     reason is WriteOutcome.Rejected && reason.code == "song_not_in_setlist" -> NextJamCopy.JAM_CHANGED
     else -> failureMessage(reason)
 }
+
+internal fun slotClearFailureMessage(reason: WriteOutcome): String = when {
+    reason is WriteOutcome.Rejected && reason.code in setOf("slot_empty", "slot_changed") -> NextJamCopy.CLEAR_STALE
+
+    reason is WriteOutcome.Rejected && reason.code in setOf(
+        "slot_not_in_lineup",
+        "song_not_in_setlist",
+    ) -> NextJamCopy.JAM_CHANGED
+
+    else -> failureMessage(reason)
+}
