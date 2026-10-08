@@ -711,3 +711,31 @@ Then include the module in `settings.gradle.kts` and add its Koin module to `sta
 - Deeplink scheme: still open, **deferred to `action-contract-registry`** (D1, 5 October 2026). No
   destination declares `deepLinks`, no manifest intent filter; D-13 is met by repository functions
   in the action registry.
+
+
+As built locally by `admin-adjust-lineup` (live deployment pending): `Lineup.defaultCount`, `count`
+and `withSlotCount` mirror last-open-first removal and canonical restoration, never remove filled
+slots or exceed defaults. `SetlistRepository.setSlotCount`/`observeLineupChanges` use public
+`SetSlotCountOutcome` and `LineupChange` (`Sending`/`Failed`); `SetlistLineupChanges` is built by
+`DefaultSetlistRepository`, sharing its ids/order/writes/scope, no Koin binding. Confirmed seven
+slot fields replace only one available cached song's slots through `SetlistDao.replaceSlots`,
+before clearing the entry. `LineupChangeOverlay` applies latest Sending per instrument before
+admin filtering/counts/strip/panel; Failed is the revert. Row actions: detail, key, lineup editor,
+removal last. `SongRowAdminUiModel.saveStatus` unifies key and lineup saving. Editor owns one
+saveable row key; retained handlers read latest counts and synchronously reserve targets so two
+pre-recomposition taps queue distinct counts. `Instrument.fullName` exports the shared name copy.
+Server `setSlotCount` is router-guarded, reuses `findSongRow_`, and writes only changed plain-text
+slot cells; future ordinal mutations reuse `presentSlotFields_` and refuse unexpected cell state.
+
+As built locally by `admin-assign-musician` (deployment/live checks deferred): `SlotPosition` is a
+1-based instrument ordinal in original lineup order and `MusicianName.parseOrNull` is the write-time
+normalizer/validator. `SetlistRepository.assignSlot` and `observeAssignments` use public
+`Assignment`/`AssignSlotOutcome` types and share `DefaultSetlistRepository`'s write ordering, ids and
+`DataScope`; a confirmed `{schemaVersion,column,name}` response is required before its guarded
+single-slot DAO update. Sending assignments overlay only the admin's matching open slot before
+filter/count/strip/panel derivation; failed assignments revert and become dismissible cards.
+`LineupPanelUiModel` keeps optional slot action metadata absent by default, and the expanded Próxima
+jam panel supplies actions only in admin mode. `AssignMusicianPresenter` owns form validation and
+suggestions from cached upcoming/past jams; `AssignMusicianScreen` is a full-screen flow in the
+existing feature. `AppRoutes.ASSIGN_SLOT` carries ISO date, `SongId`, instrument and positive
+ordinal in the outer host. No new module or Koin binding is introduced.

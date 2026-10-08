@@ -26,3 +26,6 @@ docs/design/**/node_modules/
 
 # Kotlin daemon sessions and error logs (root and included builds)
 .kotlin/
+
+# Local Codex junction; recreate with scripts/setup-codex.ps1.
+/.agents/skills

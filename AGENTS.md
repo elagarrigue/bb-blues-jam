@@ -7,6 +7,25 @@ an open slot for their instrument.
 Code, commits, and technical documentation are in English. User-facing interface copy is in
 Rioplatense Spanish using *vos*, never *tú* (D-12).
 
+## Shared Claude and Codex Infrastructure
+
+`.claude/skills/` is the source of truth for project skills. Codex discovers the same packages
+through `.agents/skills`, a directory link. On Windows, run `./scripts/setup-codex.ps1` after
+cloning to create an unprivileged junction; rerunning it verifies the existing target. The local
+junction is git-ignored because its target is specific to the checkout. On systems supporting
+relative symlinks, create `.agents/skills -> ../.claude/skills` instead.
+
+Invoke workflows in Codex with `$feature-flow`, `$feature-spec`, `$feature-implementer`,
+`$feature-validator`, or another skill name. If the skills do not appear, restart the Codex
+session. There is currently no `.claude/commands/` directory; workflows live in skills, and shell
+commands are listed below.
+
+For a Codex feature-flow run, read `.claude/agents/<role>.md` and include its instructions when
+launching the corresponding subagent with Codex's delegation tool. These Markdown files are shared
+role instructions, not automatically registered Codex agents. Use Codex's available tool equivalents
+for Claude's `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, and `Skill` names. Preserve the sequential
+planner, implementer, and independent validator workflow.
+
 ## Non-Negotiable Rules
 
 These come from decisions already made. Each has its reasoning in the bitácora; do not reverse one
