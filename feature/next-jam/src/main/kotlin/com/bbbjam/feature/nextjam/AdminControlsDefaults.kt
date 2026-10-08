@@ -5,9 +5,8 @@ import com.bbbjam.core.ui.theme.BluesJamColors
 
 /**
  * The admin controls' colours on Próxima jam (`admin-add-song-to-setlist`, V1), apart from the
- * composables so a JVM test can check them. **No amber**: this module may read only `key`
- * (`AMBER_ROLE_ALLOWLIST`), and "Agregar tema" is a quiet control added after the list, not the
- * screen's primary action. The draft badge uses the `badge-draft` tokens, as [DraftSetlistDefaults].
+ * composables so a JVM test can check them. Publication uses its approved amber roles; all other
+ * admin controls stay neutral.
  */
 internal object AdminControlsDefaults {
     data class Fill(val container: Color, val content: Color)
@@ -15,6 +14,20 @@ internal object AdminControlsDefaults {
     data class FailureStyle(val container: Color, val title: Color, val message: Color, val action: Color)
 
     data class DraftStyle(val badgeFill: Color, val badgeText: Color, val note: Color)
+
+    data class StatusStyle(
+        val draftFill: Color,
+        val draftText: Color,
+        val publishedFill: Color,
+        val publishedText: Color,
+        val note: Color,
+        val publishFill: Color,
+        val publishText: Color,
+        val failureTitle: Color,
+        val failureMessage: Color,
+        val failureAction: Color,
+        val failureContainer: Color,
+    )
 
     /** "Agregar tema": `surfaceRaised` with `text`. */
     fun addButton(colors: BluesJamColors = BluesJamColors): Fill = Fill(colors.surfaceRaised, colors.text)
@@ -93,4 +106,19 @@ internal object AdminControlsDefaults {
     /** The draft badge (`badge-draft`: `textMuted` on `surfaceRaised`) and its note (`textMuted`). */
     fun draft(colors: BluesJamColors = BluesJamColors): DraftStyle =
         DraftStyle(badgeFill = colors.surfaceRaised, badgeText = colors.textMuted, note = colors.textMuted)
+
+    /** Status badge and publish action use only the dedicated publication amber roles. */
+    fun status(colors: BluesJamColors = BluesJamColors): StatusStyle = StatusStyle(
+        draftFill = colors.surfaceRaised,
+        draftText = colors.textMuted,
+        publishedFill = colors.published,
+        publishedText = colors.onPublished,
+        note = colors.textMuted,
+        publishFill = colors.primaryAction,
+        publishText = colors.onPrimaryAction,
+        failureTitle = colors.error,
+        failureMessage = colors.textMuted,
+        failureAction = colors.text,
+        failureContainer = colors.surface,
+    )
 }

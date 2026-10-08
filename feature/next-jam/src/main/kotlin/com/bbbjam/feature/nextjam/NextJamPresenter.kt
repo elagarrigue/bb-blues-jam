@@ -21,6 +21,7 @@ import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
+import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SlotClear
@@ -144,6 +145,7 @@ class NextJamPresenter(
         val keyChanges by remember { setlist.observeKeyChanges() }.collectAsState(initial = emptyList())
         val assignments by remember { setlist.observeAssignments() }.collectAsState(initial = emptyList())
         val slotClears by remember { setlist.observeSlotClears() }.collectAsState(initial = emptyList())
+        val publishes by remember { setlist.observePublishes() }.collectAsState(initial = emptyList())
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val moveControls = rememberMoveControls(setlist, snapshot)
@@ -159,6 +161,7 @@ class NextJamPresenter(
             assignments = assignments,
             slotClears = slotClears,
             moves = moveControls.moves,
+            publishes = publishes,
             lineup = lineupControls,
             onMove = moveControls.onMove,
             onAddSong = { date -> currentOnAddSong(date) },
@@ -313,6 +316,12 @@ internal class AdminState(
     val onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit = { _, _, _, _ -> },
     val onClearSlot: (LocalDate, SongId, Instrument, SlotPosition, String) -> Unit = { _, _, _, _, _ -> },
     val onMove: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
+    val publishes: List<SetlistPublish> = emptyList(),
+    val publishConfirming: String? = null,
+    val onRequestPublish: (LocalDate) -> Unit = {},
+    val onCancelPublish: (LocalDate) -> Unit = {},
+    val onConfirmPublish: (LocalDate) -> Unit = {},
+    val onRetryPublish: (LocalDate, Long) -> Unit = { _, _ -> },
 )
 
 /**
@@ -337,8 +346,12 @@ private fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
     val mine = adds.filter { it.jamDate == jam.date }
     val isDraft = jam.status == JamStatus.DRAFT
     return NextJamAdminUiModel(
-        draftBadge = if (isDraft) NextJamCopy.DRAFT_BADGE else null,
-        draftNote = if (isDraft) NextJamCopy.DRAFT_NOTE else null,
+        status = AdminStatusUiModel(
+            badge = if (isDraft) NextJamCopy.DRAFT_BADGE else NextJamCopy.PUBLISHED_BADGE,
+            isPublished = !isDraft,
+            note = if (isDraft) NextJamCopy.DRAFT_NOTE else NextJamCopy.PUBLISHED_NOTE,
+            publish = if (isDraft) publishUiModel(jam) else null,
+        ),
         pending = mine.filter { it.state == SetlistAdd.State.Sending }
             .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },
         failures = failures(jam.date),

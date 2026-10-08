@@ -9,11 +9,13 @@ import com.bbbjam.core.data.setlist.ClearSlotOutcome
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.MoveSongOutcome
+import com.bbbjam.core.data.setlist.PublishOutcome
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
+import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SlotClear
@@ -57,6 +59,10 @@ class FakeSetlistRepository : SetlistRepository {
     val assignments = MutableStateFlow<List<Assignment>>(emptyList())
     val slotClears = MutableStateFlow<List<SlotClear>>(emptyList())
     val moves = MutableStateFlow<List<SetlistMove>>(emptyList())
+    val publishes = MutableStateFlow<List<SetlistPublish>>(emptyList())
+    val publishCalls = mutableListOf<LocalDate>()
+    val publishResults = ArrayDeque<PublishOutcome>()
+    var publishHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     val moveCalls = mutableListOf<Triple<LocalDate, SongId, Int>>()
     var moveHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     data class AssignmentCall(
@@ -136,6 +142,21 @@ class FakeSetlistRepository : SetlistRepository {
     }
 
     override fun observeMoves(): Flow<List<SetlistMove>> = moves
+
+    override suspend fun publishSetlist(jamDate: LocalDate): PublishOutcome {
+        publishCalls += jamDate
+        publishes.value = publishes.value + SetlistPublish(900, jamDate, SetlistPublish.State.Sending)
+        publishHold?.await()
+        publishes.value = publishes.value.filterNot { it.id == 900L }
+        return publishResults.removeFirstOrNull() ?: PublishOutcome.Published(alreadyPublished = false)
+    }
+
+    override fun observePublishes(): Flow<List<SetlistPublish>> = publishes
+
+    override fun dismissPublish(id: Long) {
+        dismissed += id
+        publishes.value = publishes.value.filterNot { it.id == id && it.state is SetlistPublish.State.Failed }
+    }
 
     override fun dismiss(id: Long) {
         dismissed += id

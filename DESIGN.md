@@ -653,3 +653,7 @@ instrument strip can grow.
   the current answer; confirm it stays legible.
 - Drag-to-reorder versus explicit move actions, given that 48dp targets and dragging conflict on a
   dense list used one-handed.
+
+### Publishing (`admin-publish-setlist`, as built locally)
+
+The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta lista.` for a draft; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Desde la app no se puede volver a borrador.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando�`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.

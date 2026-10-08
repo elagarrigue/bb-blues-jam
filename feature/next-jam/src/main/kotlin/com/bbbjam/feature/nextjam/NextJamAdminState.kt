@@ -13,6 +13,7 @@ import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
+import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SlotClear
@@ -35,6 +36,7 @@ internal fun rememberNextJamAdminState(
     assignments: List<Assignment>,
     slotClears: List<SlotClear>,
     moves: List<SetlistMove>,
+    publishes: List<SetlistPublish>,
     lineup: LineupControls,
     onMove: (LocalDate, SongId, Int) -> Unit,
     onAddSong: (LocalDate) -> Unit,
@@ -43,6 +45,8 @@ internal fun rememberNextJamAdminState(
 ): AdminState? {
     rememberAdminRefresh(adminSession, jams)
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
+    var publishConfirming by rememberSaveable { mutableStateOf<String?>(null) }
+    var publishConfirmConsumed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val onRemoval = removalHandler(setlist, scope, { confirming == it }) { confirming = it }
     if (!isAdmin) return null
@@ -68,5 +72,31 @@ internal fun rememberNextJamAdminState(
             }
         },
         onMove = onMove,
+        publishes = publishes,
+        publishConfirming = publishConfirming,
+        onRequestPublish = { date ->
+            publishConfirming = date.toString()
+            publishConfirmConsumed = false
+        },
+        onCancelPublish = { date ->
+            if (publishConfirming == date.toString()) {
+                publishConfirming = null
+                publishConfirmConsumed = false
+            }
+        },
+        onConfirmPublish = { date ->
+            if (publishConfirming == date.toString() && !publishConfirmConsumed) {
+                publishConfirmConsumed = true
+                scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    setlist.publishSetlist(date)
+                    if (publishConfirming == date.toString()) publishConfirming = null
+                    publishConfirmConsumed = false
+                }
+            }
+        },
+        onRetryPublish = { date, id ->
+            setlist.dismiss(id)
+            scope.launch(start = CoroutineStart.UNDISPATCHED) { setlist.publishSetlist(date) }
+        },
     )
 }

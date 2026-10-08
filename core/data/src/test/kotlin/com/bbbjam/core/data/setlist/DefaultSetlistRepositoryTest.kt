@@ -698,6 +698,7 @@ class DefaultSetlistRepositoryTest {
     private suspend fun TestScope.seeded(
         passphrase: String? = TEST_VALUE,
         setlistDao: SetlistDao = database.setlistDao(),
+        failureLog: WriteFailureLog = WriteFailureLog { },
     ): DefaultSetlistRepository {
         catalogDao.replaceCatalog(
             listOf(
@@ -721,6 +722,7 @@ class DefaultSetlistRepositoryTest {
             setlistDao,
             catalogDao,
             DataScope(backgroundScope),
+            failureLog = failureLog,
         )
     }
 

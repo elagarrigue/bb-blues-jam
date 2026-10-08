@@ -232,3 +232,7 @@ deliberate choice.
   distinct from the DRAFT "list is being assembled" message.
 - **Offline.** The app shows the last cached data with a staleness indicator rather than an error.
   Mutations while offline are an open question, recorded in `risks-and-open-questions.md`.
+
+### Publishing a setlist
+
+`SetlistRepository.publishSetlist(date)` is the public D-13 mutation that moves the upcoming jam from `DRAFT` to `PUBLISHED`. Apps Script validates that the jam is upcoming and its available tab contains at least one song, then writes and reads back only the Jams status cell. `Published` is returned only after server confirmation; no optimistic status exists. The confirmed Room mirror updates only a cached `DRAFT` jam whose setlist is `AVAILABLE`, so an offline or withheld cache remains safe until refresh. Publishing is idempotent, and there is no unpublish operation in the MVP.

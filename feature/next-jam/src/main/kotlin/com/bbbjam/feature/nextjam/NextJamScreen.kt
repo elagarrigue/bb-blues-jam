@@ -187,7 +187,7 @@ internal const val FILTER_KEY = "filter"
 internal const val STALENESS_KEY = "staleness"
 internal const val EMPTY_KEY = "empty"
 internal const val DRAFT_KEY = "draft"
-internal const val ADMIN_DRAFT_KEY = "admin-draft"
+internal const val ADMIN_STATUS_KEY = "admin-status"
 internal const val ADMIN_HINT_KEY = "admin-hint"
 
 @Composable

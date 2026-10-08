@@ -10,13 +10,15 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * The setlist mutations of the upcoming jam (`admin-add-song-to-setlist`,
- * `admin-remove-song-from-setlist`, `admin-set-key`, `admin-adjust-lineup`, D-13): plain repository
- * functions, usable with no UI, so the action registry and the phase 2 assistant can call them.
+ * `admin-remove-song-from-setlist`, `admin-set-key`, `admin-adjust-lineup`,
+ * `admin-publish-setlist`, D-13): plain repository functions, usable with no UI, so the action
+ * registry and the phase 2 assistant can call them.
  * Every write goes through the admin POST path; Apps Script authorizes it, never the local flag.
  */
 interface SetlistRepository :
     SetlistSlotClearRepository,
-    SetlistMoveRepository {
+    SetlistMoveRepository,
+    SetlistPublishRepository {
     /**
      * Appends the catalog song [songId] to the setlist of [jamDate] in [key] (the admin's choice,
      * D-08) with the default open lineup (D-18). Publishes a [SetlistAdd.State.Sending] entry while

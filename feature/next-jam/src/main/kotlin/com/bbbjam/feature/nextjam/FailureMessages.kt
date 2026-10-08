@@ -68,3 +68,18 @@ internal fun moveFailureMessage(reason: WriteOutcome): String = when {
     reason is WriteOutcome.Rejected && reason.code == "unordered_setlist" -> NextJamCopy.UNORDERED_SETLIST
     else -> failureMessage(reason)
 }
+
+/** Publication warns that a timeout can follow a successful server write, so retry remains safe. */
+internal fun publishFailureMessage(reason: WriteOutcome): String = when (reason) {
+    WriteOutcome.Offline -> NextJamCopy.PUBLISH_OFFLINE
+
+    is WriteOutcome.Rejected -> if (reason.code ==
+        "empty_setlist"
+    ) {
+        NextJamCopy.EMPTY_PUBLISH
+    } else {
+        failureMessage(reason)
+    }
+
+    else -> failureMessage(reason)
+}

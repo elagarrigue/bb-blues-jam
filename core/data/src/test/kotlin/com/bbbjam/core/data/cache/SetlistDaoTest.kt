@@ -48,6 +48,26 @@ class SetlistDaoTest {
         }
 
     @Test
+    fun `markPublished changes only an available cached draft`() = runTest {
+        val draft = JamEntity(UPCOMING, 1, "21:00", "Lugar", "DRAFT", "AVAILABLE", null, 0)
+        val withheld = JamEntity(LATER, 2, "21:00", "Lugar", "DRAFT", "WITHHELD", null, 0)
+        val published = JamEntity("2026-12-19", 3, "21:00", "Lugar", "PUBLISHED", "AVAILABLE", null, 0)
+        jamsDao.replaceJams(
+            JamRows(listOf(draft, withheld, published), emptyList(), emptyList(), emptyList()),
+            SyncStateEntity("jams", 1, 1, null),
+        )
+
+        assertEquals(1, dao.markPublished(UPCOMING))
+        assertEquals(0, dao.markPublished(LATER))
+        assertEquals(0, dao.markPublished("2026-12-19"))
+        assertEquals(0, dao.markPublished("1999-01-01"))
+        assertEquals(
+            listOf("PUBLISHED", "DRAFT", "PUBLISHED"),
+            jamsDao.observeJams().first().sortedBy { it.jam.sheetOrder }.map { it.jam.status },
+        )
+    }
+
+    @Test
     fun `removeSetlistSong deletes the song with its slots and extras and moves later songs up with their own`() =
         runTest {
             jamsDao.replaceJams(fourSongs(), SyncStateEntity("jams", 1, 1, null))

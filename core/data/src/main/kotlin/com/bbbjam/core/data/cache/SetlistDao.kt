@@ -9,7 +9,8 @@ import androidx.room.Transaction
 
 /**
  * The setlist mutations' writes to the jam tables (`admin-add-song-to-setlist`,
- * `admin-remove-song-from-setlist`). Separate from [JamsDao], which replaces the jams from a read:
+ * `admin-remove-song-from-setlist`, `admin-publish-setlist`). Separate from [JamsDao], which
+ * replaces the jams from a read:
  * these mirror one change the server confirmed, a song added or a song removed, and never replace
  * the jams.
  */
@@ -19,6 +20,12 @@ internal interface SetlistDao :
     SetlistAssignmentDao {
     @Query("SELECT setlist_state FROM jam WHERE date = :date")
     override suspend fun setlistState(date: String): String?
+
+    /** Publish only an available cached draft after the server confirmed publication. */
+    @Query(
+        "UPDATE jam SET status = 'PUBLISHED' WHERE date = :date AND status = 'DRAFT' AND setlist_state = 'AVAILABLE'",
+    )
+    suspend fun markPublished(date: String): Int
 
     /** -1 when a song already holds the position. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)

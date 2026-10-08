@@ -1020,13 +1020,17 @@
       "admin-add-song-to-setlist",
       "unpublished-setlist-state"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The status persists to the Sheet and musicians see the setlist",
       "A failed publish is unmissable and does not report success",
       "The write failure is logged locally"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-08: user confirmed E1 (reject empty/tab-less drafts with empty_setlist and hide the action) and C1 (approve proposed copy and placement). Spec records U1 no-unpublish and B2 shared deployment after app implementation. Implementation underway; no deployment/live work.",
+      "2026-10-08 implementer: backend publishSetlist/checkPublish, confirmed-only Room mutation, admin confirmation/status/failure UI, safe failure logging, and API/domain/design docs implemented. `ktlintFormat` and `CI=true ./init.sh` exited 0; build/check completed, all three verification tools wired, 104 JVM result suites with 649 tests and 0 failures/errors. `node --test backend/apps-script/test/*.test.js` passed 165/165; `git diff --check` passed. No device/live verification or deployment; shared deployment and live checks remain deferred under B2.",
+      "Independent validator (2026-10-08): accept. Reran CI=true ./init.sh (exit 0, all tools wired), Node 165/165, and git diff --check. Confirmed E1/C1/U1/B2 decisions, guarded empty-setlist refusal, read-back before cache publication, failure logging/status and musician read behavior. No deployment, live request, credentials, or local.properties access."
+    ],
     "notes": "D-13, and the highest-stakes mutation in the product. A silently failed publish means the admin believes the list is live while musicians read something stale: the worst outcome this app can produce. Optimistic state is not acceptable here without explicit confirmation."
   },
   {

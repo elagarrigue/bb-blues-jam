@@ -18,6 +18,7 @@ import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
 import com.bbbjam.core.data.setlist.DefaultSetlistRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.WriteFailureLog
 import java.time.Clock
 import org.koin.dsl.module
 
@@ -48,6 +49,7 @@ val dataModule = module {
     single { AdminCredentialStore(AdminCredentialStore.dataStore(get())) }
     single<AdminSession> { DefaultAdminSession(get(), get()) }
     single { AdminWriter(get(), get()) }
+    single<WriteFailureLog> { WriteFailureLog { line -> Log.w(LOG_TAG, line) } }
     single { get<BluesJamDatabase>().setlistDao() }
-    single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get()) }
+    single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), failureLog = get()) }
 }

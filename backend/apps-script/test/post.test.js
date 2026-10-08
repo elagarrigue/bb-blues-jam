@@ -190,7 +190,7 @@ const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
 test('the action table: checkPassphrase and readJams read, every other action writes', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'moveSong', 'checkSetlistMove']);
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
@@ -201,6 +201,8 @@ test('the action table: checkPassphrase and readJams read, every other action wr
   assert.equal(ACTIONS.setKey.write, true);
   assert.equal(ACTIONS.moveSong.write, true);
   assert.equal(ACTIONS.checkSetlistMove.write, true);
+  assert.equal(ACTIONS.publishSetlist.write, true);
+  assert.equal(ACTIONS.checkPublish.write, true);
   for (const name of ACTION_NAMES) {
     assert.deepStrictEqual(Object.keys(ACTIONS[name]).sort(), ['run', 'write']);
     assert.equal(typeof ACTIONS[name].run, 'function');
@@ -485,7 +487,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -512,7 +514,7 @@ test('no response, message, cache key or cache value contains the stored or the 
             assert.ok(!text.includes('zz-submitted-marker') && !text.includes('definitely-wrong'), `submitted passphrase leaked: ${text}`);
           }
           // The tabs the actions are documented to open (docs/apps-script-api.md); never any other.
-          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, 'Jams', 'Catalogo'];
+          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, PUBLISH_CHECK_TAB, 'Jams', 'Catalogo'];
           assert.ok(fake.requested.every((name) => allowed.includes(name)), `requested ${fake.requested}`);
           for (const [key, value] of services.cache.store) {
             assert.match(key, /^auth_failures_\d+$/);
@@ -590,7 +592,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove'));
+    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish'));
   });
   withAppsScript({
     getActiveSpreadsheet() {

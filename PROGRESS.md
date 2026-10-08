@@ -6,14 +6,14 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty-six of 42 slices accepted; `admin-reorder-songs` is latest accepted (8 October 2026). Human check owed: the `Actualizar` action with TalkBack.
+- Current state: thirty-seven of 42 slices accepted; `admin-publish-setlist` is latest accepted (8 October 2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Manual Apps Script deployment for `admin-adjust-lineup`, followed by live checks L1-L5, is
   deferred until app implementation is complete. Parts A+B and local/device verification are complete; the deployed server has not
   been updated in this session. Its `/exec` URL is in git-ignored `local.properties`.
   The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 8 October 2026 (`admin-clear-slot`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 100 JVM test-result suites, 629 tests, zero failures/errors; Node 157/157. Independent validator accepted after rerunning the gate and reviewing the neutral `Liberar` styling. No device or live Apps Script request; deployment/live checks remain deferred until app implementation is complete.
+- Last verified at: 8 October 2026 (`admin-publish-setlist`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 104 JVM test-result suites, 649 tests, zero failures/errors; Node 165/165. Independent validator accepted after rerunning the gate and reviewing E1/C1 behavior and server-confirmed publication. No device or live Apps Script request; shared deployment/live checks remain deferred until app implementation is complete.
   Before that, 7 October 2026 (`offline-notice-visible`, independently accepted) —
   `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
   including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,
@@ -3702,3 +3702,14 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - User decisions: visible `Subir`/`Bajar` buttons (M1), optimistic movement with rollback and a failure notice (O2), and one shared deployment for reorder, publish, adjust-lineup and assign after app implementation completes (B2). The local implementation adds guarded Apps Script `moveSong` and self-cleaning `checkSetlistMove`; batched position writes preserve unique positions at every write. `:core:data` serializes and mirrors the absolute move into Room with song slots/extras, and `:feature:next-jam` shows the optimistic admin order, rollback card, disabled edge actions and row anchoring.
 - Verification: `ktlintFormat` exited 0; `CI=true ./init.sh` exited 0, with `konsist`, `detekt`, and `ktlint` all wired. Focused results: `:core:data:test` 198 tests/0 failures; `:feature:next-jam:test` 157 tests/0 failures. `node --test backend/apps-script/test/*.test.js` passed 162/162; `git diff --check` passed. No device verification, deployment or live Apps Script requests were run.
 - Independent validator accepted after two documentation fixes: both executable README `unknown_action` examples include all current actions, and risks-and-open-questions records park-path partial writes, optimistic-order/refresh races and pending live-latency measurement. `CI=true ./init.sh` and Node 162/162 passed; `git diff --check` passed after the docs-only repair. No device verification, deployment or live Apps Script request was run.
+
+## 8 October 2026 — admin-publish-setlist planning
+
+- Updated `docs/specs/admin-publish-setlist.md` to use the user's shared post-app deployment (B2) and keep deployment/live checks deferred. The user selected E1 (reject empty/tab-less drafts with `empty_setlist` and hide the action) and approved C1's copy and placement. U1 (no unpublish) is resolved in the domain model; implementation is in progress.
+
+## 2026-10-08 — admin-publish-setlist implementation
+
+- Implemented guarded Apps Script publish/read-back and temporary check action; cache status changes only after server confirmation. Added explicit admin confirmation, non-optimistic Sending state, persistent failure/retry status, and safe local write-failure logging.
+- Updated API, domain, Sheet, access, design, architecture, and Apps Script README documentation. User-approved B2 remains in effect: shared deployment/live checks and latency measurement are deferred; no credentials or live endpoint were used.
+- Verification passed: `ktlintFormat`; `CI=true ./init.sh` exit 0, build/check complete, `konsist`, `detekt` and `ktlint` all wired; 104 JVM result suites, 649 tests, zero failures/errors; Node Apps Script suite 165/165; `git diff --check`. No device or live Apps Script verification; shared deployment/live checks remain deferred under B2.
+- Independent validator accepted after rerunning the gate, Node 165/165 and `git diff --check`; it verified E1/C1/U1/B2, server refusal/read-back, confirmed-only cache update, failure handling and musician visibility. No deployment or live requests were run.

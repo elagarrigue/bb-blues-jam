@@ -32,12 +32,22 @@ internal class DefaultSetlistRepository(
     private val catalogDao: CatalogDao,
     private val scope: DataScope,
     private val queue: SetlistMutationQueue = SetlistMutationQueue(),
+    failureLog: WriteFailureLog = WriteFailureLog { },
     private val slotClears: SetlistSlotClears = SetlistSlotClears(writer, setlistDao, catalogDao, scope, queue),
     private val moves: SetlistMoves =
         SetlistMoves(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
 ) : SetlistRepository,
     SetlistSlotClearRepository by slotClears,
-    SetlistMoveRepository by moves {
+    SetlistMoveRepository by moves,
+    SetlistPublishRepository by SetlistPublishes(
+        writer,
+        setlistDao,
+        scope,
+        queue.ids,
+        queue.order,
+        queue.writes,
+        failureLog,
+    ) {
 
     private val additions = SetlistSongAdds(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes)
     private val removals = SetlistRemovals(writer, setlistDao, catalogDao)
@@ -63,6 +73,7 @@ internal class DefaultSetlistRepository(
         assignments.dismiss(id)
         slotClears.dismiss(id)
         moves.dismiss(id)
+        dismissPublish(id)
     }
 
     /**

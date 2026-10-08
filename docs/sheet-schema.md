@@ -400,3 +400,7 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
   admin surface shows them yet. Only a broken response (not JSON, `schemaVersion` other than 1, an
   `error`, a missing key or a wrong type) fails the whole read, and then the cache is left as it
   was; a valid response replaces the cached jams whole.
+
+### Publishing a setlist
+
+`admin-publish-setlist` changes only `Jams.estado` from `BORRADOR` to `PUBLICADA`. Apps Script resolves one upcoming jam row, refuses a missing setlist tab or one with no valid song rows, writes the status cell as plain text, flushes, and confirms the displayed value. It creates no Jams row and does not write the jam's song tab or `Catalogo`. A repeated request for an already-published upcoming jam is idempotent and performs no write. Its self-check writes only to the temporary `_prueba_publicar` tab and deletes it in `finally`.

@@ -30,6 +30,8 @@
  * columns and writes one normalized name to one empty slot cell.
  * admin-reorder-songs adds `moveSong` and `checkSetlistMove`; positions are rewritten in safe
  * batches without moving Sheet rows or ever exposing duplicate positions.
+ * admin-publish-setlist adds `publishSetlist` and `checkPublish`; publication writes and reads back
+ * only the `estado` cell of the upcoming jam's Jams row.
  *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
  * SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -60,6 +62,9 @@ var WRITE_CHECK_TAB = '_prueba_escritura';
 
 /** The transient jam tab checkSetlistWrite creates and deletes within one request. Never served. */
 var SETLIST_CHECK_TAB = '_prueba_lista';
+
+/** The transient Jams tab checkPublish creates and deletes within one request. Never served. */
+var PUBLISH_CHECK_TAB = '_prueba_publicar';
 
 /** The status of a jam whose setlist only the admin reads. */
 var DRAFT_STATUS = 'BORRADOR';
@@ -99,6 +104,8 @@ var ACTIONS = {
   clearSlot: { write: true, run: clearSlot_ },
   moveSong: { write: true, run: moveSong_ },
   checkSetlistMove: { write: true, run: checkSetlistMove_ },
+  publishSetlist: { write: true, run: publishSetlist_ },
+  checkPublish: { write: true, run: checkPublish_ },
 };
 
 /**
@@ -108,7 +115,12 @@ var ACTIONS = {
 function doPost(e) {
   let body;
   try {
-    const services = { cache: CacheService.getScriptCache(), lock: LockService.getScriptLock(), now: Date.now() };
+    const services = {
+      cache: CacheService.getScriptCache(),
+      lock: LockService.getScriptLock(),
+      now: Date.now(),
+      flush: function () { SpreadsheetApp.flush(); },
+    };
     body = handlePost(parsePostBody_(e), SpreadsheetApp.getActiveSpreadsheet(), services);
   } catch (err) {
     body = postErrorBody_('internal_error', postErrorMessage_(err));
@@ -628,6 +640,85 @@ function checkSetlistMove_(request, spreadsheet, services) {
     return row.songId === expected[index] && row.position === String(index + 1);
   })) throw new Error('The setlist move check read back a different order');
   return { ok: true };
+}
+
+/** Publishes the upcoming setlist by changing and reading back only the Jams `estado` cell. */
+function publishSetlist_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, sheet.getDataRange().getDisplayValues()[0] || []);
+  const jam = findJamRow_(sheet, columns, date, spreadsheet);
+  if (jam.status === PUBLISHED_STATUS) return { ok: true, alreadyPublished: true };
+
+  const tab = spreadsheet.getSheetByName(date);
+  if (!tab) throw new ContractError('empty_setlist', 'The jam has no setlist tab');
+  const range = tab.getDataRange();
+  const rows = buildSetlist(range.getDisplayValues(), range.getValues(), date);
+  if (rows.length === 0) throw new ContractError('empty_setlist', 'The jam has no songs');
+  writeJamStatus_(sheet, jam.row, columns, services);
+  return { ok: true, alreadyPublished: false };
+}
+
+/** Self-cleaning proof that a draft Jams row can be published and read back. */
+function checkPublish_(request, spreadsheet, services) {
+  const leftover = spreadsheet.getSheetByName(PUBLISH_CHECK_TAB);
+  if (leftover) spreadsheet.deleteSheet(leftover);
+  const sheet = spreadsheet.insertSheet(PUBLISH_CHECK_TAB);
+  sheet.getRange(1, 1, 3, 4).setValues([
+    ['fecha', 'hora', 'lugar', 'estado'],
+    ['2099-01-01', '21:00', 'Prueba', DRAFT_STATUS],
+    ['2099-01-02', '21:00', 'Prueba', DRAFT_STATUS],
+  ]);
+  const columns = mapColumns(PUBLISH_CHECK_TAB, JAMS_FIELDS, ['fecha', 'hora', 'lugar', 'estado']);
+  let published;
+  try {
+    const jam = findJamRow_(sheet, columns, '2099-01-01', spreadsheet);
+    writeJamStatus_(sheet, jam.row, columns, services);
+    const range = sheet.getDataRange();
+    const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+      return Utilities.formatDate(value, spreadsheet.getSpreadsheetTimeZone(), pattern);
+    }).jams;
+    published = jams;
+  } finally {
+    spreadsheet.deleteSheet(sheet);
+  }
+  if (!published || published.length !== 2 || published[0].status !== PUBLISHED_STATUS || published[1].status !== DRAFT_STATUS) {
+    throw new Error('The publish check read back a different status');
+  }
+  return { ok: true };
+}
+
+/** Finds the unique Jams row by normalized date without relying on a blank-row-skipping row index. */
+function findJamRow_(sheet, columns, date, spreadsheet) {
+  const range = sheet.getDataRange();
+  const display = range.getDisplayValues();
+  const raw = range.getValues();
+  const formatDate = function (value, pattern) {
+    return Utilities.formatDate(value, spreadsheet.getSpreadsheetTimeZone(), pattern);
+  };
+  const matches = [];
+  for (let index = 1; index < display.length; index++) {
+    const row = display[index] || [];
+    if (isoDateCell((raw[index] || [])[columns.date], row[columns.date], formatDate) === date) {
+      matches.push({ row: index + 1, status: textCell(row[columns.status]) });
+    }
+  }
+  if (matches.length === 0) throw new ContractError('unknown_jam', 'Jams has no row with the fecha ' + date);
+  if (matches.length > 1) throw new ContractError('duplicate_date', 'Jams has the fecha ' + date + ' on more than one row');
+  return matches[0];
+}
+
+/** Writes the one `estado` cell as text, flushes, and refuses success unless its value reads back. */
+function writeJamStatus_(sheet, row, columns, services) {
+  const cell = sheet.getRange(row, columns.status + 1);
+  cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cell.setValue(PUBLISHED_STATUS);
+  services.flush();
+  if (cell.getDisplayValues()[0][0] !== PUBLISHED_STATUS) throw new Error('The published status did not read back');
 }
 
 /**
@@ -1161,6 +1252,7 @@ function notSet_() {
 if (typeof module !== 'undefined') {
   module.exports = {
     ACTIONS,
+    PUBLISH_CHECK_TAB,
     SETLIST_CHECK_TAB,
     WRITE_CHECK_TAB,
     doPost,

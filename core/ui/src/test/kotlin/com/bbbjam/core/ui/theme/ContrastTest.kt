@@ -38,6 +38,9 @@ class ContrastTest {
         assertContrast(colors.onPrimaryAction, colors.primaryAction, expected = 9.52)
 
     @Test
+    fun `content on the published badge`() = assertContrast(colors.onPublished, colors.published, expected = 9.52)
+
+    @Test
     fun `text on the background`() = assertContrast(colors.text, colors.background, expected = 14.41)
 
     /**

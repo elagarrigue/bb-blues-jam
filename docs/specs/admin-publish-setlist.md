@@ -5,26 +5,29 @@
 - `id`: admin-publish-setlist
 - `area`: feature-next-jam
 - `depends_on`: admin-add-song-to-setlist (`accepted`), unpublished-setlist-state (`accepted`)
-- `status`: `not_started` at planning time (7 October 2026)
-- `source`: `feature_list.json`. Notes: D-13, "the highest-stakes mutation in the product… Optimistic
-  state is not acceptable here without explicit confirmation."
+- `status`: `not_started` at planning time (8 October 2026)
+- `source`: `feature_list.json`. Notes: D-13, the highest-stakes mutation in the product; publish
+  state changes only after explicit confirmation from the server. User decisions E1 and C1 are
+  recorded below. U1 is resolved by `docs/domain-model.md` (no unpublish in the MVP). The user
+  selected one shared deployment after app implementation completes for reorder, publish,
+  adjust-lineup and assign.
 
 ## Readiness
 
-Dependencies are accepted. The server half ships in **the second batched `Post.js` deploy**
-(proposed by the `admin-reorder-songs` planner) with reorder, lineup and assign. Part A adds only
-new functions, two `ACTIONS` entries, the header comment, the README marker and `module.exports`
-names, so it merges with the others on those shared lines only. Follow the batch order the
-orchestrator settles; this slice's Part A has no dependency on the other three. Part B waits for the
-deploy and its live checks (the write-auth/add-song exception: several features `in_progress`
-until the deploy). If the batch is refused, deploy this slice on its own (B1 below).
+Implementation-ready. U1 is settled: no unpublish in the MVP. E1 and C1 are resolved below. The
+user selected one shared deployment for the server halves of reorder, publish, adjust-lineup and
+assign after app implementation is complete. Complete
+and verify this feature locally without deployment or live requests; include its server changes in
+that one later deployment and run live checks with the batch. No per-feature fallback deployment.
 
-Size: one feature in two parts (A: server and `:core:data`; B: UI), about one session each.
+Size: one feature in two local implementation parts (A: server and `:core:data`; B: UI), about one
+session each.
 
 ## Goal
 
 On Próxima jam, in admin mode, a draft jam with at least one song shows under its `BORRADOR` badge an
-amber **Publicar lista** button. Tapping it shows an inline confirmation; **Publicar** sends
+amber **Publicar lista** button. Tapping it shows an inline
+confirmation; **Publicar** sends
 `publishSetlist`. While sending, `Publicando…` replaces the controls and the badge stays `BORRADOR`.
 **Only when Apps Script confirms** (it wrote `PUBLICADA` and read it back) does the cache flip the jam
 to `PUBLISHED`, the badge become the amber `PUBLICADA` and the note `Los músicos ya ven esta lista.`
@@ -39,7 +42,8 @@ The mutation is `SetlistRepository.publishSetlist(jamDate)` in `:core:data` (D-1
 - **Unpublishing** (U1). `docs/domain-model.md` already says "no unpublish in the MVP".
 - Creating, editing or deleting a `Jams` row or its `fecha`, `hora`, `lugar`. Publishing writes one
   `estado` cell, `BORRADOR` → `PUBLICADA`, never anything else.
-- Publishing an empty or tab-less list (E1), a past jam, or any jam but the upcoming one.
+- Publishing an empty or tab-less list, a past jam, or any jam but the upcoming one (E1: an empty
+  draft cannot be published; the action is hidden and the server returns `empty_setlist`).
 - Notifying musicians (out of MVP scope). The design export's "WhatsApp alerts" tip is not built.
 - Faster musician refresh (already `live-refresh-during-jam`), offline queueing, deeplinks and the
   registry (`action-contract-registry`).
@@ -82,9 +86,9 @@ it is live, so musicians never read a list I only think I published.
    with no URL, passphrase or song data.
 5. **Server validates before writing**, in this order, each writing nothing: `invalid_date`;
    `unknown_jam` / `duplicate_date` / `jam_not_editable` (`requireEditableJam_`, unchanged); then an
-   already `PUBLICADA` jam answers `{ok:true, alreadyPublished:true}` with no write; then no tab →
-   `empty_setlist`; `missing_header` / `duplicate_header`; `buildSetlist` returns no row →
-   `empty_setlist`.
+   already `PUBLICADA` jam answers `{ok:true, alreadyPublished:true}` with no write; then
+   `missing_header` / `duplicate_header`; then no tab or a setlist with no songs returns
+   `empty_setlist` before any write.
 6. **Idempotent retry.** A timeout after the server wrote (`Offline` on the device) is followed by
    `Reintentar`: the server answers `alreadyPublished:true`, the client treats it as `Published`.
    Two devices publishing at once: the lock serializes them, the second gets `alreadyPublished`.
@@ -92,7 +96,8 @@ it is live, so musicians never read a list I only think I published.
    issued before it reaches the Sheet first.
 8. **Published jam.** The admin sees the amber `PUBLICADA` badge and note, no publish action. A
    failed publish entry for a jam the cache now shows as published is not drawn.
-9. **Empty draft.** A draft with no song shows the badge and note but no `Publicar lista`.
+9. **Empty draft.** A draft with no songs shows the badge and note but no `Publicar lista`; the server
+   rejects no-tab/no-song requests as `empty_setlist` without writing.
 
 ## Repository Research
 
@@ -117,8 +122,8 @@ Findings:
   `status` only while `setlist_state = 'AVAILABLE'`, or the next read of the cache crashes.
 - `requireEditableJam_` accepts `BORRADOR` and `PUBLICADA` and uses `buildJams`, which skips blank
   rows, so it cannot give the sheet row. A separate finder is needed.
-- A `PUBLICADA` jam with no tab is served with `missing_tab` → musicians see "unavailable". Hence
-  `empty_setlist` server-side (E1).
+- A `PUBLICADA` jam with no tab is served with `missing_tab` → musicians see "unavailable". The user
+  chose to prevent this state from being created through the app by refusing empty/tab-less drafts.
 - The admin status block today is `AdminDraftBanner`, drawn only when `admin.draftBadge` is set (a
   draft); a published jam shows no badge to the admin.
 - `:feature:next-jam` may read only amber `key` (Konsist). `BluesJamColors` already has
@@ -144,7 +149,8 @@ Findings:
   `writeJamStatus_` for `2099-01-01`, read back with `buildJams(…, noTab, formatDate)`, delete the
   tab in `finally`, and require exactly `PUBLICADA` then `BORRADOR`. No route serves that tab (the GET
   reads `Jams` and tabs named by a `PUBLICADA` row's ISO date).
-- New code `empty_setlist`. Update the header comment, README marker, `Known:` list.
+- Add `empty_setlist` for no tab/no songs and update the header comment, README marker and `Known:`
+  list (E1: refusal).
 
 ### `:core:data`
 
@@ -193,7 +199,7 @@ Findings:
   `onPublished` on `published` (`onPrimaryAction` on `primaryAction` exists for `:feature:info`).
 - `:app`: no change. No route.
 
-### Copy (C1, Rioplatense, vos)
+### Approved Copy and Placement (C1, 8 October 2026; Rioplatense, vos)
 
 - Button `Publicar lista`; prompt `¿Publicar la lista?`; details `Los músicos van a ver los 12 temas
   cuando abran o actualicen la app.` (`el tema` for 1) and `Desde la app no se puede volver a
@@ -220,8 +226,8 @@ Findings:
 
 - `docs/apps-script-api.md`: `publishSetlist`, `checkPublish`, `empty_setlist`, idempotence, client
   mapping, `Known:` list. `docs/sheet-schema.md`: the one write to `Jams` (`estado` only).
-- `docs/domain-model.md`: the publish transition as built (confirmed, idempotent, non-empty, no
-  unpublish). `docs/user-and-access-model.md`: musicians see it on their next refresh.
+- `docs/domain-model.md`: the publish transition as built (confirmed, idempotent, rejects empty
+  drafts, no unpublish). `docs/user-and-access-model.md`: musicians see it on their next refresh.
 - `docs/risks-and-open-questions.md`: the "silent failed publish" row gets its mitigation; risks below.
 - `.claude/skills/architecture/SKILL.md`: `publishSetlist`, `SetlistPublish`, `markPublished`,
   `WriteFailureLog`, the allowlist change. `DESIGN.md`: "Publishing, as built" under Admin controls,
@@ -241,43 +247,45 @@ Findings:
 3. Failure demonstrations (mutate, see the named test fail, restore, `sha1sum -c`): (a) write before
    the `empty_setlist` check; (b) `markPublished` without the `setlist_state` condition (the
    `WITHHELD` test crashes); (c) the repository flips Room on `Offline`.
-4. `CI=true ./init.sh`. **Stop for the batched deploy** (user pastes `Post.js`, New version).
-5. Live checks (scratchpad script; URL and passphrase from `local.properties`, never printed; body by
-   `json.dumps`; print only codes, counts, latencies). **Never call `publishSetlist` with a date that
-   is today or later.** LP1 `{}` → `Known:` lists `publishSetlist, checkPublish`. LP2 one
-   wrong-passphrase `publishSetlist` → `invalid_passphrase`. LP3 `checkPublish` → `ok`, latency.
-   LP4 probes with the passphrase: bad date → `invalid_date`; `1999-01-01` → `unknown_jam`; the
-   latest past jam date from the GET → `jam_not_editable`. LP5 `readJams` before LP3 and after LP4:
-   every jam's `status` and song count identical.
-6. Part B + Molecule tests: musician model unchanged; draft → `Idle`; confirm/cancel/double tap;
+4. `CI=true ./init.sh` (three tools `wired`) for the server/data portion, then continue with Part B.
+   Do not deploy or contact Apps Script during app implementation; do not read credentials.
+5. Part B + Molecule tests: musician model unchanged; draft → `Idle`; confirm/cancel/double tap;
    `Sending` → `Publishing` with badge `BORRADOR`; `Failed` card, `Retry`, `Dismiss`; published →
-   amber badge, no action; empty draft → no action; failed entry hidden once published.
-7. Failure demonstration (d): the presenter shows `PUBLICADA` while `Sending` → the no-optimism test
+   amber badge, no action; empty draft has no action; failed entry hidden once published.
+6. Failure demonstration (d): the presenter shows `PUBLICADA` while `Sending` → the no-optimism test
    fails. Restore and check SHA-1. Then the Konsist allowlist: show a `published` read failing the
    rule before the entry is added.
-8. `CI=true ./init.sh`.
-9. Device (Pixel 5, `bluesjam.demoUpcomingJam`, `bluesjam.demoUpcomingJamDraft`,
+7. `CI=true ./init.sh`.
+8. Device (Pixel 5, `bluesjam.demoUpcomingJam`, `bluesjam.demoUpcomingJamDraft`,
    `bluesjam.debugAdmin`; **never TalkBack or accessibility settings**): badge, amber `Publicar
    lista`, confirmation, rotation, `Cancelar`; `Publicar` → `Publicando…` → `AccessRefused` card in
    the status block, badge still `BORRADOR`; `adb logcat -s BluesJam` shows the one line;
    `Reintentar` fails again; `Cerrar`. Flag off: `En preparación`. Screenshots, `uiautomator dump`.
    Restore flags.
+9. After app implementation is complete, include the combined server source for this feature in the
+    user's one shared deployment with reorder, adjust-lineup and assign. Then run its deferred live
+    checks as part of that batch (never publish a real jam, and never call `publishSetlist` with a
+    date that is today or later): `{}` lists `publishSetlist, checkPublish`; one wrong-passphrase
+    request returns `invalid_passphrase`; `checkPublish` returns `ok`; invalid date, unknown jam and
+    latest past jam are refused; before/after `readJams` status and song counts match. Use the
+    scratchpad runner without printing URL/passphrase. No per-feature deployment.
 
 ## Verification Plan
 
 - Node green; `CI=true ./init.sh` exit 0 with `konsist: wired` (17/17), `detekt: wired`,
   `ktlint: wired`.
-- "Persists to the Sheet and musicians see the setlist": Node success + GET-after test; LP3 on real
-  Sheets; JVM musician view after the mirror shows the songs.
+- "Persists to the Sheet and musicians see the setlist": Node success + GET-after test; JVM
+  musician view after the mirror shows the songs. Real-sheet checks are deferred to the shared
+  four-feature deployment batch.
 - "A failed publish is unmissable and does not report success": JVM presenter tests, (c), (d), device.
 - "The write failure is logged locally": JVM log capture plus the device logcat line.
 - The real success path on a device needs a stored passphrase and a real draft; not run by agents.
 
 ## Evidence To Capture
 
-Node and gate counts; (a)–(d) and the allowlist demonstration with SHA-1 restores; LP1–LP5 codes and
-latency, deployed `Post.gs` SHA-1; screenshots, dump, logcat line; a statement that no URL,
-passphrase or name appeared.
+Node and gate counts; (a)–(d) and the allowlist demonstration with SHA-1 restores; screenshots,
+dump, logcat line; a statement that no URL, passphrase or name appeared. After the app-wide batch,
+record the shared deployed `Post.gs` SHA-1 and this feature's deferred live-check evidence.
 
 ## Risks
 
@@ -297,17 +305,22 @@ passphrase or name appeared.
       `DRAFT`+`AVAILABLE`; nothing optimistic anywhere.
 - [ ] Failure card in the status block, persistent, assertive; one log line with no secret.
 - [ ] Amber only on the publish buttons, the published badge and keys; allowlist change reviewed.
-- [ ] Musician models unchanged; no feature imports another; three `wired`; LP5 shows no real jam
-      changed; no secret in repo or output.
+- [ ] Musician models unchanged; no feature imports another; three `wired`; no deployment/live
+      check occurred during app implementation; no secret in repo or output. Deferred live-check
+      evidence is recorded with the shared deployment after app implementation completes.
 
-## Open Questions (ask before implementing)
+## User Decisions (8 October 2026)
 
-- **U1: unpublish (recommended: out of scope).** The domain model already rules it out for the MVP.
-  The confirmation says so. Escape hatch: change `estado` in the Sheet by hand.
-- **E1: empty list (recommended: refuse).** The server refuses `empty_setlist` (no tab or no row) and
-  the button is hidden for an empty draft, because a published empty or tab-less jam reads to
-  musicians as "no songs" or "unavailable". Alternative: allow it, as a placeholder.
-- **C1: copy and placement (recommended: as specified).** Amber `Publicar lista` under the badge,
-  inline confirmation, failure card in the status block with `Reintentar`.
-- **B1: deploy (recommended: join the second batch).** Alternative: its own deploy if the batch is
-  refused or delayed.
+- **U1: resolved by durable product documentation.** `docs/domain-model.md` says there is no
+  unpublish in the MVP. Keep unpublish out of scope; no confirmation needed.
+- **E1: refuse empty lists.** The user chose to reject drafts with no songs or no tab using
+  `empty_setlist`, and hide the publish action for such a draft. The app must ask the admin to add at
+  least one song first.
+- **C1: approved as specified.** The user approved the Rioplatense copy and placement:
+  amber `Publicar lista` beneath the `BORRADOR` badge; inline confirmation with song count and the
+  irreversible-action note; persistent failure card in the status block beneath the header with
+  `Reintentar` and `Cerrar`. See **Approved Copy and Placement** for exact strings.
+- **B1: superseded/resolved.** The user explicitly chose one shared deployment after app
+  implementation is complete for `admin-reorder-songs`, `admin-publish-setlist`,
+  `admin-adjust-lineup` and `admin-assign-musician`. Deployment and live checks are deferred until
+  then; do not substitute a per-feature or partial deployment.

@@ -383,7 +383,7 @@ Stated so they can be challenged rather than silently relied upon.
 | Apps Script write latency | Sluggish admin experience | Optimistic presenter state with later confirmation |
 | Songsterr has no official API | Tab links break | Optional per song; the app works with no tabs at all (D-10) |
 | MusicBrainz 1 req/s | Blocked rendering if misused | Enrichment runs in background on song add and is cached in Room; never during list rendering (D-09) |
-| A silent failed publish | Musicians read a setlist the admin thinks they changed — the worst product outcome | Publish failure must be unmissable; log write failures locally |
+| A silent failed publish | Musicians read a setlist the admin thinks they changed — the worst product outcome | Require an inline irreversible confirmation, keep the BORRADOR badge until Apps Script writes and reads back PUBLICADA, show a persistent assertive failure card, and log one safe local line. Offline may follow a completed server write, so retry must be idempotent; real write latency awaits the deferred shared deployment. |
 | Generated design output contradicts decided product facts | Screens get built to the wrong model — the Stitch export merged harmonica and keyboards into one slot, breaking D-06 | Review generated output against the decisions before using it; divergences logged in `design/README.md` |
 | Multi-module setup consumes early weeks | Less time for product | The build skeleton is the first vertical slice, so the cost lands early and visibly |
 

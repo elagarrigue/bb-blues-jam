@@ -37,8 +37,12 @@ private fun NextJamRemovalPreview() {
         setlist = SetlistUiModel.Songs(rows = rows, droppedRowsNote = null, filterBar = null),
         staleness = null,
         admin = NextJamAdminUiModel(
-            draftBadge = null,
-            draftNote = null,
+            status = AdminStatusUiModel(
+                badge = NextJamCopy.DRAFT_BADGE,
+                isPublished = false,
+                note = NextJamCopy.DRAFT_NOTE,
+                publish = null,
+            ),
             pending = emptyList(),
             failures = listOf(
                 AddFailureUiModel(

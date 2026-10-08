@@ -12,7 +12,7 @@ const assert = require('node:assert/strict');
 const { loadScript } = require('./helpers/load.js');
 const { Utilities, BUENOS_AIRES } = require('./helpers/format.js');
 
-const { handlePost, handleGet, ACTIONS, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
+const { handlePost, handleGet, ACTIONS, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
 
 // The actions read today's date and typed cells with Apps Script's Utilities global.
 globalThis.Utilities = Utilities;
@@ -221,7 +221,12 @@ function fakeLock() {
 
 function services(now = NOW) {
   const store = new Map();
-  return { cache: { get: (k) => store.get(k) || null, put: (k, v) => store.set(k, v) }, lock: fakeLock(), now };
+  return {
+    cache: { get: (k) => store.get(k) || null, put: (k, v) => store.set(k, v) },
+    lock: fakeLock(),
+    now,
+    flush() {},
+  };
 }
 
 function call(fake, action, fields = {}, svc = services()) {
@@ -246,6 +251,64 @@ function readTab(fake, name) {
   const range = fake.tabs[name].getDataRange();
   return buildSetlist(range.getDisplayValues(), range.getValues(), name);
 }
+
+// ---- admin-publish-setlist ----
+test('publishSetlist writes only the upcoming Jams status cell and confirms its read-back', () => {
+  const fake = fakeSpreadsheet();
+  const result = call(fake, 'publishSetlist', { date: UPCOMING });
+  assert.deepStrictEqual(result, { schemaVersion: 1, ok: true, alreadyPublished: false });
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', 'Jams', 4, 4, '@'],
+    ['setValue', 'Jams', 4, 4, 'PUBLICADA'],
+  ]);
+  const jam = handleGet({ resource: 'jams' }, fake.spreadsheet).jams.find((item) => item.date === UPCOMING);
+  assert.equal(jam.status, 'PUBLICADA');
+  assert.deepStrictEqual(jam.setlist.map((item) => item.songId), ['the-thrill-is-gone', 'sweet-home-chicago', 'red-house']);
+});
+
+test('publishSetlist refuses bad, non-upcoming, tab-less, and empty drafts before any write', () => {
+  const cases = [
+    [{ date: '2026-02-30' }, 'invalid_date'],
+    [{ date: PAST }, 'jam_not_editable'],
+    [{ date: '1999-01-01' }, 'unknown_jam'],
+    [{ date: UPCOMING }, 'empty_setlist', { tabs: { [UPCOMING]: null } }],
+    [{ date: UPCOMING }, 'empty_setlist', { tabs: { [UPCOMING]: [TAB_HEADER] } }],
+  ];
+  for (const [fields, code, options = {}] of cases) {
+    const fake = fakeSpreadsheet(options);
+    assertError(call(fake, 'publishSetlist', fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+  const missingJamsHeader = fakeSpreadsheet({ jams: [['fecha', 'hora', 'lugar'], [UPCOMING, '21:00', 'Lugar']] });
+  assertError(call(missingJamsHeader, 'publishSetlist', { date: UPCOMING }), 'missing_header');
+  assert.deepStrictEqual(writes(missingJamsHeader.log), []);
+});
+
+test('publishSetlist retries idempotently and checkPublish cleans up and verifies its marker rows', () => {
+  const publishedJams = JAMS.map((jam) => jam.slice());
+  publishedJams[3][3] = 'PUBLICADA';
+  const retry = fakeSpreadsheet({ jams: publishedJams });
+  assert.deepStrictEqual(call(retry, 'publishSetlist', { date: UPCOMING }), {
+    schemaVersion: 1,
+    ok: true,
+    alreadyPublished: true,
+  });
+  assert.deepStrictEqual(writes(retry.log), []);
+
+  const fake = fakeSpreadsheet();
+  const svc = services();
+  let flushes = 0;
+  svc.flush = () => { flushes++; };
+  assert.deepStrictEqual(call(fake, 'checkPublish', {}, svc), { schemaVersion: 1, ok: true });
+  assert.equal(flushes, 1);
+  assert.ok(fake.log.some((op) => op[0] === 'setValue' && op[1] === PUBLISH_CHECK_TAB && op[4] === 'PUBLICADA'));
+  assert.ok(fake.log.every((op) => !WRITE_OPS.includes(op[0]) || op[1] === PUBLISH_CHECK_TAB));
+  assert.equal(fake.tabs[PUBLISH_CHECK_TAB], undefined);
+
+  const dropped = fakeSpreadsheet({ lostCells: [{ sheet: PUBLISH_CHECK_TAB, row: 2, column: 4, value: 'PUBLICADA' }] });
+  assertError(call(dropped, 'checkPublish'), 'internal_error');
+  assert.equal(dropped.tabs[PUBLISH_CHECK_TAB], undefined);
+});
 
 // ---- readJams ----
 

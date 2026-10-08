@@ -368,7 +368,7 @@ class ModuleIsolationTest {
          * every amber use is a reviewed decision. A module not listed may read none.
          */
         val AMBER_ROLE_ALLOWLIST: Map<String, Set<String>> = mapOf(
-            "feature/next-jam" to setOf("key"),
+            "feature/next-jam" to setOf("key", "primaryAction", "onPrimaryAction", "published", "onPublished"),
             "feature/song-detail" to setOf("key"),
             // past-jam-detail: the key of each song as played that night (K3).
             "feature/past-jams" to setOf("key"),

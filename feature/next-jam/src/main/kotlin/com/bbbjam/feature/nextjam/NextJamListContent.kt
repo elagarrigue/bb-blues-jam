@@ -60,9 +60,7 @@ internal fun JamContent(model: NextJamUiModel.Jam, fill: Modifier, padding: Padd
     ) {
         model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
         item(key = HEADER_KEY) { Header(model.header) }
-        model.admin?.draftBadge?.let { badge ->
-            item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
-        }
+        model.admin?.let { admin -> item(key = ADMIN_STATUS_KEY) { AdminStatusBlock(admin.status) } }
         setlistItems(model.setlist) { rowKey, action ->
             if (action.enabled) {
                 val rowIndex = rowKeys.indexOf(rowKey)

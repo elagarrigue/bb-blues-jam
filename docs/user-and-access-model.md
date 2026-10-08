@@ -144,3 +144,7 @@ transfer and no per-record access rules.
 - Removing from a published list is allowed; the confirmation says musicians stop seeing the song.
   It reaches musician devices on their next refresh (cache-first, stale after 30 minutes), not
   instantly. Musicians never see the admin's row part (`SongRowUiModel.admin` is null for them).
+
+## Publish the setlist
+
+The admin flag only draws `Publicar lista`; Apps Script's passphrase guard authorizes `publishSetlist`. The admin must confirm the irreversible transition. While sending, the app keeps the cached `BORRADOR` badge; it shows `PUBLICADA` only after the server writes and reads back that status. A timeout can follow a completed server write, so retry is safe and the server answers `alreadyPublished`. Empty and tab-less drafts are refused server-side and have no publish action in the app. Musicians see the published setlist on their next refresh. Deployment and live checks remain deferred to the shared app-complete deployment batch.

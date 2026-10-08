@@ -65,18 +65,53 @@ sealed interface NextJamUiModel : UiModel {
 
 /**
  * The admin's layer on Próxima jam (D-15: a state of the same screen). Everything here is drawn
- * after what a musician sees, so nothing above it moves (DESIGN.md "Admin controls"): the draft
- * badge and note under the header, then, after the rows, the [pending] adds, the [failures] and
- * the [addSong] button. [draftBadge] and [draftNote] are set only for a draft jam; [addSong] only
- * when the setlist is readable (empty included). The filter never hides pending rows or failures.
+ * after what a musician sees, so nothing above it moves (DESIGN.md "Admin controls"): publication
+ * status under the header, then pending/failed row mutations and [addSong] after the rows. The
+ * filter never hides pending rows or failures.
  */
 data class NextJamAdminUiModel(
-    val draftBadge: String?,
-    val draftNote: String?,
+    val status: AdminStatusUiModel,
     val pending: List<PendingRowUiModel>,
     val failures: List<AddFailureUiModel>,
     val addSong: AddSongActionUiModel?,
 ) : UiModel
+
+data class AdminStatusUiModel(
+    val badge: String,
+    val isPublished: Boolean,
+    val note: String,
+    val publish: PublishUiModel?,
+) : UiModel
+
+sealed interface PublishUiModel : UiModel {
+    data class Idle(val label: String, val events: EventHandler<Event>) : PublishUiModel
+    data class Confirming(
+        val prompt: String,
+        val details: String,
+        val irreversibleNote: String,
+        val confirmLabel: String,
+        val cancelLabel: String,
+        val events: EventHandler<Event>,
+    ) : PublishUiModel
+    data class Publishing(val status: String) : PublishUiModel
+    data class Failed(
+        val id: Long,
+        val title: String,
+        val message: String,
+        val consequence: String,
+        val retryLabel: String,
+        val dismissLabel: String,
+        val events: EventHandler<Event>,
+    ) : PublishUiModel
+
+    sealed interface Event : UiEvent {
+        data object Request : Event
+        data object Confirm : Event
+        data object Cancel : Event
+        data object Retry : Event
+        data object Dismiss : Event
+    }
+}
 
 /** An add in flight: [title] and [status] ("Agregando…"), at the end of the list. */
 data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
