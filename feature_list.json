@@ -997,14 +997,19 @@
     "depends_on": [
       "admin-add-song-to-setlist"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The new order persists to the Sheet",
       "Positions stay contiguous with no gaps or duplicates",
       "The reorder affordance meets the 48dp touch target minimum"
     ],
-    "evidence": [],
-    "notes": "D-13. Drag-to-reorder versus explicit move actions is an open design question: dragging conflicts with 48dp targets on a dense one-handed list. From admin-add-song validation (6 Oct 2026): appendSetlistRow_ makes 26 separate cell calls (likely part of the 4-7 s write latency) — batch range writes where this slice touches rows."
+    "evidence": [
+      "2026-10-08: user decisions recorded in docs/specs/admin-reorder-songs.md: M1 visible Subir/Bajar buttons, O2 optimistic move with rollback and failure notice, B2 one shared deployment after app implementation is complete for reorder/publish/adjust-lineup/assign.",
+      "2026-10-08: implemented guarded moveSong/checkSetlistMove, duplicate-safe batched positions, Room mirror and optimistic admin reorder with rollback cards and row anchoring. Verified: CI=true ./init.sh exit 0 with konsist/detekt/ktlint wired; :core:data:test 198 tests, :feature:next-jam:test 157 tests, Node suite 162/162, ktlintFormat and git diff --check passed. Device and deployment/live verification were not run; shared deployment remains deferred until app implementation completes.",
+      "2026-10-08: validator requested documentation-only revision. README Known action lists (including both executable unknown_action examples) now match the current 13 ACTIONS names; risks-and-open-questions now records park-path partial-write state, optimistic-order/refresh and competing-admin risks, and that live latency measurement awaits the deferred shared deployment. No live measurements or deployment were made.",
+      "Independent validator (2026-10-08): accept after README and risk-document repairs. The validator reran CI=true ./init.sh and Node 162/162 before the docs-only revision, then verified the corrections and git diff --check after repair. No deployment or live request was made."
+    ],
+    "notes": "D-13. M1 selected explicit 48dp Subir/Bajar actions; O2 selected optimistic movement with rollback and a failure notice. Under B2, grouped deployment/live validation remains deferred until app implementation is complete. appendSetlistRow_ batching is included in this slice."
   },
   {
     "id": "admin-publish-setlist",

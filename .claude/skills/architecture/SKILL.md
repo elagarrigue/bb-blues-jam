@@ -750,3 +750,11 @@ transactionally to the unique cached song. Sending clears overlay only the admin
 strip/panel/filter/count mapping; failures leave Room unchanged and produce dismissible cards.
 `LineupPanelUiModel`'s filled-line action stays absent by default and is supplied only on PrÃ³xima jam
 for eligible admin slots; ordinal metadata follows the source lineup through the stable partition.
+
+As built locally by `admin-reorder-songs` (deployment/live checks deferred): `SetlistRepository.moveSong`
+uses public `SetlistMove`/`MoveSongOutcome` types and the same mutation id, order and write queues.
+`SetlistDao.moveSetlistSong` rekeys only changed songs and their child slots/extras in one
+transaction after confirmation. Sending entries overlay the admin order by id and call order; failed
+entries never overlay. Song rows use stable song ids (position fallback for duplicate ids), retain the
+pre-overlay position for detail navigation, and anchor the moved row in the viewport. Move actions
+are explicit 48dp `Subir`/`Bajar` buttons and remain absent for musicians.

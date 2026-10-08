@@ -130,7 +130,9 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []
           values.forEach((line, i) => {
             assert.equal(line.length, numCols);
             line.forEach((value, j) => {
-              cell(r + i, c + j).value = value;
+              const target = cell(r + i, c + j);
+              const converts = convertAlways || target.format !== '@';
+              target.value = converts && /^\d+\/\d+$/.test(String(value)) ? new Date(0) : value;
             });
           });
         },
@@ -325,13 +327,11 @@ test('addSong appends the catalog song at max + 1 with the request key, seven op
   assert.ok(tab.cells[4].every((x) => x.format === '@'), 'every mapped cell is plain text');
   // Each cell's format is set before its value, and nothing outside row 5 is written.
   const ops = writes(fake.log);
-  assert.equal(ops.length, 26);
-  for (let i = 0; i < ops.length; i += 2) {
-    assert.equal(ops[i][0], 'setNumberFormat');
-    assert.equal(ops[i + 1][0], 'setValue');
-    assert.deepStrictEqual(ops[i].slice(1, 4), ops[i + 1].slice(1, 4));
-    assert.equal(ops[i][2], 5);
-  }
+  assert.equal(ops.length, 2, 'one contiguous mapped-column run is batched');
+  assert.deepStrictEqual(ops, [
+    ['setNumberFormat', UPCOMING, 5, 1, '@'],
+    ['setValues', UPCOMING, 5, 1, [['4', 'crossroads', 'Crossroads', 'Eric Clapton', 'E', '', '', '', '', '', '', '', '']]],
+  ]);
   // The read path returns the new row; the key is the request's, never tono_default (D-08).
   const read = readTab(fake, UPCOMING);
   assert.deepStrictEqual(read[3], {
@@ -502,8 +502,16 @@ function removeSong(fake, fields, svc) {
   return call(fake, 'removeSong', Object.assign({ date: UPCOMING, songId: HOOCHIE }, fields), svc);
 }
 
+function moveSong(fake, fields, svc) {
+  return call(fake, 'moveSong', Object.assign({ date: UPCOMING, songId: HOOCHIE, toPosition: 1 }, fields), svc);
+}
+
 function setValuesOps(log) {
   return log.filter((op) => op[0] === 'setValues');
+}
+
+function orderedRows(fake, name = UPCOMING) {
+  return readTab(fake, name).slice().sort((left, right) => Number(left.position) - Number(right.position));
 }
 
 /** Scenario 1's tab: positions 1..4 in an arbitrary tab order, each song with its own lineup. */
@@ -514,6 +522,97 @@ const FOUR_SONGS = [
   row('4', PRIDE, 'Pride and Joy', 'Stevie Ray Vaughan', 'E', ['', '', '', 'Dani', '', '', ''], 'Eva (Saxo)'),
   row('2', HOOCHIE, 'Hoochie Coochie Man', 'Muddy Waters', 'A', ['Fede', '', '', '', 'Gabi', '', ''], 'Hugo (Trompeta)'),
 ];
+
+test('moveSong writes one contiguous block, changes positions only, and keeps the result contiguous', () => {
+  const contiguous = [TAB_HEADER,
+    row('1', 'crossroads', 'Crossroads', 'Eric Clapton', 'A'),
+    row('2', HOOCHIE, 'Hoochie Coochie Man', 'Muddy Waters', 'A'),
+    row('3', 'the-thrill-is-gone', 'The Thrill Is Gone', 'B.B. King', 'Bm'),
+    row('4', PRIDE, 'Pride and Joy', 'Stevie Ray Vaughan', 'E')];
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: contiguous } });
+  const before = readTab(fake, UPCOMING);
+  assert.deepStrictEqual(moveSong(fake, { songId: 'the-thrill-is-gone', toPosition: 1 }),
+    { schemaVersion: 1, ok: true, position: 1 });
+  assert.deepStrictEqual(orderedRows(fake).map((item) => [item.songId, item.position]), [
+    ['the-thrill-is-gone', '1'], ['crossroads', '2'], [HOOCHIE, '3'], [PRIDE, '4'],
+  ]);
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 2, 1, '@'],
+    ['setValues', UPCOMING, 2, 1, [['2'], ['3'], ['1']]],
+  ]);
+  const after = readTab(fake, UPCOMING);
+  after.forEach((item) => {
+    const old = before.find((rowBefore) => rowBefore.songId === item.songId);
+    assert.deepStrictEqual(Object.assign({}, item, { position: old.position }), old, 'only position changed');
+  });
+});
+
+test('moveSong down, clamps, no-ops, and closes gaps', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: FOUR_SONGS } });
+  assert.equal(moveSong(fake, { songId: 'crossroads', toPosition: 3 }).position, 3);
+  assert.deepStrictEqual(orderedRows(fake).map((item) => [item.songId, item.position]), [
+    [HOOCHIE, '1'], ['the-thrill-is-gone', '2'], ['crossroads', '3'], [PRIDE, '4'],
+  ]);
+  assert.equal(moveSong(fake, { songId: HOOCHIE, toPosition: 99 }).position, 4);
+  const writesBefore = writes(fake.log).length;
+  assert.equal(moveSong(fake, { songId: HOOCHIE, toPosition: 4 }).position, 4);
+  assert.equal(writes(fake.log).length, writesBefore, 'same-position move writes nothing');
+
+  const gap = fakeSpreadsheet({ tabs: { [UPCOMING]: [
+    TAB_HEADER, row('1', 'a-uno', 'Uno', 'X', 'A'), row('2', 'a-dos', 'Dos', 'X', 'A'),
+    row('4', 'a-cuatro', 'Cuatro', 'X', 'A'), row('5', 'a-cinco', 'Cinco', 'X', 'A'),
+  ] } });
+  assert.equal(moveSong(gap, { songId: 'a-dos', toPosition: 2 }).position, 2);
+  assert.deepStrictEqual(orderedRows(gap).map((item) => item.position), ['1', '2', '3', '4']);
+});
+
+test('moveSong park path never duplicates any whole position after an individual write', () => {
+  const shuffled = [TAB_HEADER,
+    row('4', 'a-cuatro', 'Cuatro', 'X', 'A'), row('2', 'a-dos', 'Dos', 'X', 'A'),
+    row('5', 'a-cinco', 'Cinco', 'X', 'A'), row('1', 'a-uno', 'Uno', 'X', 'A'),
+    row('3', 'a-tres', 'Tres', 'X', 'A')];
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: shuffled } });
+  assert.equal(moveSong(fake, { songId: 'a-dos', toPosition: 1 }).position, 1);
+  let positions = shuffled.slice(1).map((item) => Number(item[0]));
+  for (const operation of writes(fake.log).filter((item) => item[0] === 'setValues' && item[3] === 1)) {
+    const start = operation[2] - 2;
+    operation[4].forEach((line, index) => { positions[start + index] = Number(line[0]); });
+    assert.equal(new Set(positions).size, positions.length, `duplicate positions after ${JSON.stringify(operation)}`);
+  }
+  assert.deepStrictEqual(orderedRows(fake).map((item) => [item.songId, item.position]), [
+    ['a-dos', '1'], ['a-uno', '2'], ['a-tres', '3'], ['a-cuatro', '4'], ['a-cinco', '5'],
+  ]);
+});
+
+test('moveSong validates date, id, JSON integer, jam, headers, row and ordering before any write', () => {
+  const cases = [
+    [{ date: '31/10/2026' }, 'invalid_date'],
+    [{ songId: 'Crossroads' }, 'invalid_song'],
+    [{ toPosition: '2' }, 'invalid_position'],
+    [{ toPosition: 1.5 }, 'invalid_position'],
+    [{ toPosition: 0 }, 'invalid_position'],
+    [{ date: '1999-01-01' }, 'unknown_jam'],
+    [{ date: PAST }, 'jam_not_editable'],
+    [{ songId: 'zz-no-existe' }, 'song_not_in_setlist'],
+    [{ songId: 'the-thrill-is-gone' }, 'duplicate_song', { tabs: { [UPCOMING]: FOUR_SONGS.concat([row('5', ' the-thrill-is-gone', 'Otra vez', 'B.B.', 'C')]) } }],
+    [{ songId: 'sweet-home-chicago' }, 'unordered_setlist'],
+  ];
+  for (const [fields, code, options = {}] of cases) {
+    const fake = fakeSpreadsheet(options);
+    assertError(moveSong(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], `${code} wrote`);
+    assert.ok(!fake.requested.includes('Catalogo'), `${code} opened catalog`);
+  }
+});
+
+test('checkSetlistMove exercises contiguous and park paths, then removes its temporary tab', () => {
+  const fake = fakeSpreadsheet();
+  const before = Object.keys(fake.tabs).sort();
+  assert.deepStrictEqual(call(fake, 'checkSetlistMove'), { schemaVersion: 1, ok: true });
+  assert.ok(fake.log.every((operation) => operation[1] === SETLIST_CHECK_TAB));
+  assert.deepStrictEqual(Object.keys(fake.tabs).sort(), before);
+  assert.deepStrictEqual(fake.log.at(-1), ['deleteSheet', SETLIST_CHECK_TAB]);
+});
 
 test('removeSong deletes the row found by id_tema and renumbers the later positions 1..n, as plain text', () => {
   const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: FOUR_SONGS } });
@@ -845,10 +944,9 @@ test('checkSetlistWrite changes the marker key with the setKey finder and cell w
   const keyOps = fake.log.filter((op) => op[2] === 2 && op[3] === 5);
   assert.deepStrictEqual(keyOps, [
     ['setNumberFormat', SETLIST_CHECK_TAB, 2, 5, '@'],
-    ['setValue', SETLIST_CHECK_TAB, 2, 5, 'Bbm'],
-    ['setNumberFormat', SETLIST_CHECK_TAB, 2, 5, '@'],
     ['setValue', SETLIST_CHECK_TAB, 2, 5, 'F#m'],
   ]);
+  assert.ok(fake.log.some((op) => op[0] === 'setValues' && op[1] === SETLIST_CHECK_TAB && op[2] === 2 && op[3] === 1 && op[4][0][4] === 'Bbm'));
   assert.ok(fake.log.every((op) => op[1] === SETLIST_CHECK_TAB), 'another tab was touched');
   assert.ok(!(SETLIST_CHECK_TAB in fake.tabs));
 });
@@ -964,7 +1062,7 @@ test('checkSetlistWrite exercises guitar removal and harmonica removal then rest
   const fake = fakeSpreadsheet();
   assert.equal(call(fake, 'checkSetlistWrite').ok, true);
   const values = fake.log.filter(op => op[0] === 'setValue' && (op[3] === 7 || op[3] === 11));
-  assert.deepStrictEqual(values.map(op => [op[3], op[4]]), [[7, ''], [11, ''], [7, '-'], [11, '-'], [11, '']]);
+  assert.deepStrictEqual(values.map(op => [op[3], op[4]]), [[7, '-'], [11, '-'], [11, '']]);
 });
 
 test('checkSetlistWrite catches a dropped slot write and cleans up', () => {

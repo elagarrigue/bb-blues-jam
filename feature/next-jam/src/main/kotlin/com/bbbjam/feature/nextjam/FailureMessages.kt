@@ -61,3 +61,10 @@ internal fun slotClearFailureMessage(reason: WriteOutcome): String = when {
 
     else -> failureMessage(reason)
 }
+
+internal fun moveFailureMessage(reason: WriteOutcome): String = when {
+    reason is WriteOutcome.Rejected && reason.code == "song_not_in_setlist" -> NextJamCopy.JAM_CHANGED
+    reason is WriteOutcome.Rejected && reason.code == "duplicate_song" -> NextJamCopy.DUPLICATE_SONG
+    reason is WriteOutcome.Rejected && reason.code == "unordered_setlist" -> NextJamCopy.UNORDERED_SETLIST
+    else -> failureMessage(reason)
+}

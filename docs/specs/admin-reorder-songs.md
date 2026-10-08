@@ -7,23 +7,30 @@
 - `depends_on`: admin-add-song-to-setlist (`accepted`). Also builds on the accepted
   `admin-remove-song-from-setlist`, `admin-set-key`, `apps-script-write-auth` and
   `live-refresh-during-jam`.
-- `status`: `not_started` at planning time (7 October 2026)
-- `source`: `feature_list.json`. Notes: D-13; drag versus explicit move actions is an open design
-  question (`DESIGN.md` Open Design Questions); `appendSetlistRow_` makes 26 separate cell calls, so
-  batch range writes where this slice touches rows.
+- `status`: `not_started` at planning time (8 October 2026)
+- `source`: `feature_list.json`, with user decisions recorded here (8 October 2026): M1 = visible
+  `Subir`/`Bajar` buttons; O2 = move optimistically and revert with a failure notice; B2 = one
+  shared deployment for reorder, publish, adjust-lineup and assign after app implementation is
+  complete. D-13; `appendSetlistRow_` makes 26 separate cell calls, so batch range writes where
+  this slice touches rows.
 
 ## Readiness
 
-Ready once the user answers **M1**, **O2** and **B2** (User Approvals). The spec is written for the
-recommended options.
+Ready for implementation. The user selected M1 (visible `Subir` and `Bajar` buttons), O2
+(optimistic row movement with rollback and a failure notice), and B2 (one shared deployment after
+app implementation is complete).
 
 **Server action name: `moveSong`**, which moves one song to a new position. It comes with the
 self-cleaning deploy check `checkSetlistMove`.
 
-Under B2 (a), the `Post.js` changes ship in a **second batched deploy**. Part A of this slice is
-first in that batch. Part B, the UI, comes after the deploy and its live checks. Size: one feature
-in two parts (A: `Post.js`, Node and `:core:data`; B: `:feature:next-jam`), about one session each.
-No split is needed: there is no new screen, no schema change and no new read path.
+The server and app portions are both implemented and validated locally before any deployment.
+Deployment and live checks are explicitly deferred by the user until app implementation is
+complete. At that point, include this feature's server change in one shared deployment with
+`admin-publish-setlist`, `admin-adjust-lineup` and `admin-assign-musician`; run the batch's live
+checks together then. Do not make a per-feature deployment or live request during this feature.
+Size: one feature in two local implementation parts (A: `Post.js`, Node and `:core:data`; B:
+`:feature:next-jam`), about one session each. No split is needed: there is no new screen, no schema
+change and no new read path.
 
 ## Goal
 
@@ -48,7 +55,7 @@ Crossroads first", and a repeated or replayed call has the same result.
 
 ## Non-Goals
 
-- No drag handle, no swipe, no long-press drag (M1).
+- No drag handle, no swipe, no long-press drag (M1 selected visible buttons).
 - No "move to position…" picker, and no multi-song or bulk reordering.
 - No sorting by key or title.
 - No reorder of a past jam (D-04). No offline queue (blocked, as add-song decided).
@@ -366,10 +373,14 @@ keys. Rows animate to their new place.
    - (a) `moveSong_` writes before the `unordered_setlist` check.
    - (b) The park path writes in plain ascending row order. The invariant test fails.
    - (c) The repository mirrors Room on `Rejected`.
-4. Run `CI=true ./init.sh` (three `wired`). **Stop for the batched deploy** (B2).
-5. **Live checks.** The script lives in the scratchpad. The URL and the passphrase come from
-   `local.properties` and are never printed. The body is built with `json.dumps`. Print only codes,
-   counts, latencies and hash prefixes.
+4. Run `CI=true ./init.sh` (three `wired`) for the server/data portion, then continue with Part B.
+5. **No deployment or live checks in this feature run.** The user explicitly deferred them until
+   app implementation is complete. Keep the server action and check local; do not read credentials
+   or contact Apps Script. When the four-feature app batch is complete, the orchestrator coordinates
+   one shared deployment and its live checks for reorder, publish, adjust-lineup and assign.
+6. **Live-check contract for that later batch.** The script lives in the scratchpad. The URL and
+   passphrase come from `local.properties` and are never printed. The body is built with `json.dumps`.
+   Print only codes, counts, latencies and hash prefixes.
    - LM1: `{}` gives a `Known:` list that includes `moveSong` and `checkSetlistMove`.
    - LM2: **one** `moveSong` call with a wrong passphrase gives `invalid_passphrase`. It is the only
      wrong-passphrase call of this slice.
@@ -386,7 +397,7 @@ keys. Rows animate to their new place.
      ids; they must be identical.
 
    **Never call `moveSong` on a real jam's tab.**
-6. **Part B.** Molecule tests:
+7. **Part B.** Molecule tests:
    - the musician model is unchanged apart from `rowKey`;
    - `Sending` reorders the rows and labels and adds `Guardando…`;
    - `Failed` reverts and adds a card;
@@ -399,7 +410,7 @@ keys. Rows animate to their new place.
 
    Failure demonstration (d): the overlay also applies `Failed` entries, so the revert test fails.
    Then run the gate.
-7. **Device check.** Pixel 5, with `bluesjam.demoUpcomingJam` and `bluesjam.debugAdmin` in
+8. **Device check.** Pixel 5, with `bluesjam.demoUpcomingJam` and `bluesjam.debugAdmin` in
    `local.properties`. **Never TalkBack or accessibility settings.**
    1. Expand row 3. The block reads `Posición 3 de N`.
    2. Tap `Subir`. The row animates to 2 with `Guardando…` and stays under the thumb.
@@ -417,8 +428,8 @@ keys. Rows animate to their new place.
 
 - Node is green. `CI=true ./init.sh` exits 0 with `konsist: wired` (17/17), `detekt: wired` and
   `ktlint: wired`.
-- **"Persists to the Sheet":** Node scenarios 1–3, read back with `buildSetlist`, plus the live
-  LM4 on real Sheets.
+- **"Persists to the Sheet":** Node scenarios 1–3 and read back with `buildSetlist`. Live LM4 on
+  the real Sheet is explicitly deferred to the four-feature batch.
 - **"Contiguous, no gaps or duplicates":** Node scenarios 1–5, the after-every-call invariant, and
   the DAO renumber test.
 - **"48dp":** the code uses `heightIn(min = LocalMinimumInteractiveComponentSize)`; the device dump
@@ -429,8 +440,8 @@ keys. Rows animate to their new place.
 
 - Node and gate counts.
 - Failure demonstrations (a)–(d), each with its SHA-1 restore.
-- The deployed `Post.gs` SHA-1.
-- LM1–LM5 codes, latencies and hash equality.
+- The later shared deployment's `Post.gs` SHA-1 and LM1–LM5 codes, latencies and hash equality
+  (pending by explicit user deferral; do not fetch or report them in this feature run).
 - The device screenshots and the dump.
 - A statement that no URL, passphrase or name appeared in any output.
 
@@ -461,38 +472,22 @@ keys. Rows animate to their new place.
       `rowKey`.
 - [ ] Visible 48dp `Subir`/`Bajar`, with no hidden gesture; the edges are disabled, not removed. No
       amber. The copy is as approved.
-- [ ] Three `wired`. Live checks are recorded, no real jam changed (LM5 hashes), and no secret
-      appears anywhere.
+- [ ] Three `wired`. No deployment or live request occurred during app implementation; the grouped
+      live checks remain a documented follow-up. No secret appears anywhere.
 
-## User Approvals
+## User Decisions (8 October 2026)
 
-Ask before implementing. Each question has a recommendation.
+The user explicitly selected the following options; no further approval is needed for these
+behaviors or the deployment grouping:
 
-- **M1: interaction (recommended: a).**
-  - (a) `Subir` and `Bajar` in the expanded panel, with `Posición x de n`, as specified. They are
-    visible and labelled, at least 48dp, and work with a screen reader as-is. They use one hand and
-    do not conflict with scrolling or the row's expand tap.
-  - (b) A visible drag handle on each collapsed row, as in the design prompt. It is not a hidden
-    gesture, but it takes 48dp of width from a dense row, competes with scroll and the expand tap in
-    low light, and needs custom accessibility actions (`Subir`/`Bajar`) for TalkBack and switch
-    users anyway. It also needs a drag-reorder library or a hand-rolled one: a new dependency or a
-    lot of gesture code.
-  - (c) A `Mover…` picker screen listing positions. That is one write per long move, but an extra
-    screen and two taps for the common one-step swap.
-
-  Long moves under (a) cost one tap per place. With O2 each tap is instant and the writes queue.
-- **O2: optimistic (recommended).** Set-key is optimistic and remove is confirmed. A move is not
-  destructive, is repeated in sequence, and is reversible by moving back. Confirmed display would
-  make three `Subir` taps take about 15 s, with the row not moving. A failure reverts and shows a
-  card.
-- **B2: second batched `Post.js` deploy (recommended: a).**
-  - (a) One paste and one **New version** covering the server halves of `admin-reorder-songs`,
-    `admin-publish-setlist`, `admin-adjust-lineup` and `admin-assign-musician`. Each Part A is
-    committed on top of the previous one in this order: **reorder first, then publish, then
-    adjust-lineup, then assign**. Each keeps the earlier slices' Node tests green.
-  - The previous exception applies again: these features may be `in_progress` together until the
-    deploy. After it come each slice's live checks in the same order, then each Part B and
-    validation one at a time (they all edit `NextJamPresenter` and `AdminControls`).
-    `admin-clear-slot` is not in the batch.
-  - If one slice's Part A stalls on an open question, deploy the others in order rather than wait.
-  - (b) One deploy per slice: four pastes.
+- **M1:** visible `Subir` and `Bajar` buttons in the expanded panel, with `Posición x de n`;
+  each action is at least 48dp.
+- **O2:** move the row immediately; if the write fails, restore its confirmed position and show a
+  dismissible failure notice.
+- **B2:** after app implementation is complete, use one paste and one **New version** for the
+  server halves of `admin-reorder-songs`, `admin-publish-setlist`, `admin-adjust-lineup` and
+  `admin-assign-musician`. The local server portions are implemented in this order: reorder, publish,
+  adjust-lineup, assign, with the existing Node tests kept green at every step. Implement and
+  validate all app portions locally before that single deployment; run the grouped live checks after
+  it. `admin-clear-slot` is not in the batch. Do not deploy a partial batch to work around a feature
+  blocker.

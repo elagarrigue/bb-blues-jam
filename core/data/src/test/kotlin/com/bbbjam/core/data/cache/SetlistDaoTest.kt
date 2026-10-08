@@ -96,6 +96,75 @@ class SetlistDaoTest {
         }
 
     @Test
+    fun `moveSetlistSong moves the song and its slots and extras in either direction with clamping`() = runTest {
+        jamsDao.replaceJams(fourSongs(), SyncStateEntity("jams", 1, 1, null))
+
+        assertTrue(dao.moveSetlistSong(UPCOMING, "thrill", 1))
+        var jam = jamsDao.observeJams().first().single { it.jam.date == UPCOMING }
+        assertEquals(
+            listOf("thrill", "crossroads", "hoochie", "pride"),
+            jam.songs.sortedBy {
+                it.position
+            }.map { it.songId },
+        )
+        assertEquals(listOf("Bm", "A", "A", "E"), jam.songs.sortedBy { it.position }.map { it.key })
+        assertEquals(
+            setOf(Triple(1, 1, "Caro"), Triple(2, 0, "Ana"), Triple(3, 0, "Fede"), Triple(4, 3, "Dani")),
+            jam.slots.filter {
+                it.musicianName != null
+            }.map { Triple(it.position, it.columnIndex, it.musicianName) }.toSet(),
+        )
+        assertEquals(
+            listOf(3 to "Hugo", 4 to "Eva"),
+            jam.extras.sortedBy {
+                it.position
+            }.map { it.position to it.name },
+        )
+
+        assertTrue(dao.moveSetlistSong(UPCOMING, "thrill", 99))
+        jam = jamsDao.observeJams().first().single { it.jam.date == UPCOMING }
+        assertEquals(
+            listOf("crossroads", "hoochie", "pride", "thrill"),
+            jam.songs.sortedBy {
+                it.position
+            }.map { it.songId },
+        )
+        assertEquals(28, jam.slots.size)
+        assertEquals(
+            listOf(2 to "Hugo", 3 to "Eva"),
+            jam.extras.sortedBy {
+                it.position
+            }.map { it.position to it.name },
+        )
+    }
+
+    @Test
+    fun `moveSetlistSong no-op succeeds and invalid targets or ids do not change rows`() = runTest {
+        val rows = fourSongs().let {
+            it.copy(jams = it.jams.map { jam -> if (jam.date == LATER) jam.copy(setlistState = "WITHHELD") else jam })
+        }
+        jamsDao.replaceJams(rows, SyncStateEntity("jams", 1, 1, null))
+        val before = jamsDao.observeJams().first()
+
+        assertTrue(dao.moveSetlistSong(UPCOMING, "crossroads", 1))
+        assertFalse(dao.moveSetlistSong(UPCOMING, "missing", 2))
+        assertFalse(dao.moveSetlistSong(LATER, "crossroads", 2))
+        assertFalse(dao.moveSetlistSong("2026-12-19", "crossroads", 2))
+
+        assertEquals(before, jamsDao.observeJams().first())
+    }
+
+    @Test
+    fun `moveSetlistSong changes nothing for duplicate cached ids`() = runTest {
+        val rows = fourSongs().let { it.copy(songs = it.songs + JamSongEntity(UPCOMING, 5, "thrill", "T", "A", "C")) }
+        jamsDao.replaceJams(rows, SyncStateEntity("jams", 1, 1, null))
+        val before = jamsDao.observeJams().first()
+
+        assertFalse(dao.moveSetlistSong(UPCOMING, "thrill", 1))
+        assertEquals(before, jamsDao.observeJams().first())
+    }
+
+    @Test
     fun `removing the last song leaves an available empty setlist`() = runTest {
         val available = JamEntity(UPCOMING, 1, "21:00", "Lugar", "DRAFT", "AVAILABLE", null, 0)
         jamsDao.replaceJams(

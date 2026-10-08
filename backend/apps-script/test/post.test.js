@@ -190,7 +190,7 @@ const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
 test('the action table: checkPassphrase and readJams read, every other action writes', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot']);
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'moveSong', 'checkSetlistMove']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
@@ -199,6 +199,8 @@ test('the action table: checkPassphrase and readJams read, every other action wr
   assert.equal(ACTIONS.removeSong.write, true);
   assert.equal(ACTIONS.checkSetlistRemove.write, true);
   assert.equal(ACTIONS.setKey.write, true);
+  assert.equal(ACTIONS.moveSong.write, true);
+  assert.equal(ACTIONS.checkSetlistMove.write, true);
   for (const name of ACTION_NAMES) {
     assert.deepStrictEqual(Object.keys(ACTIONS[name]).sort(), ['run', 'write']);
     assert.equal(typeof ACTIONS[name].run, 'function');
@@ -483,7 +485,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -588,7 +590,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot'));
+    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove'));
   });
   withAppsScript({
     getActiveSpreadsheet() {

@@ -5,18 +5,12 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and eleven locally implemented POST actions: `checkPassphrase`
-(`admin-passphrase-login`), the deploy check `checkWriteAccess` (`apps-script-write-auth`), the
-admin read `readJams`, the first setlist write `addSong` and its deploy check `checkSetlistWrite`
-(`admin-add-song-to-setlist`), `removeSong` with its deploy check `checkSetlistRemove`
-(`admin-remove-song-from-setlist`, Part A) and `setKey` (`admin-set-key`, Part A; its deploy proof
-is a step added to `checkSetlistWrite`). `removeSong`, `checkSetlistRemove` and `setKey` shipped in one
-batched `Post.gs` deploy (user decision B1 (a)), deployed by the user on 7 October 2026. Every POST action passes the
-passphrase guard in the router. `setSlotCount` (`admin-adjust-lineup`), `assignSlot`
-(`admin-assign-musician`) and `clearSlot` (`admin-clear-slot`) are implemented locally. The user
-deferred the shared deployment and live checks until the app implementation is complete; the
-complete `Post.js` and `checkSetlistWrite` now include all three actions. These local mutations are
-not live-verified.
+(`apps-script-jams-read-endpoint`), and thirteen POST actions in local source: `checkPassphrase`,
+`checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong` and `checkSetlistMove`. Every POST
+action passes the passphrase guard in the router. Earlier actions have the deployment history below;
+the latest local mutations are not live-verified. The user deferred one shared deployment and live
+checks until app implementation is complete.
 
 ## Transport
 
@@ -243,7 +237,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -282,7 +276,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -513,6 +507,19 @@ validator. The extended `checkSetlistWrite` assigns and clears a disposable mark
 the open-slot readback and removes the temporary tab in `finally`. Deployment/live validation is
 deferred until app implementation is complete.
 
+### `moveSong` and `checkSetlistMove` (`admin-reorder-songs`)
+
+`moveSong` takes `{date, songId, toPosition}` and returns the moved song's actual 1-based position.
+It validates the positive integer target before opening the jam, then verifies an editable jam,
+required headers and a unique song row by `id_tema`. It rejects a malformed moved position or any
+duplicate whole position as `unordered_setlist`. The final ordered valid rows are numbered 1..n;
+contiguous changed rows are batched into one range write. When sheet row order differs from position
+order, the moved row is parked at max+1, decreased positions are written low to high, increased
+positions high to low, and the moved row is committed last. This avoids duplicate positions after
+each write. The action never opens `Catalogo` and never moves Sheet rows. `checkSetlistMove` applies
+the algorithm to a disposable `_prueba_lista` tab, verifies the resulting `buildSetlist` order, and
+removes the marker in `finally`. Live verification is deferred until app implementation is done.
+
 ### Client write path (`AdminWriter`)
 
 Every admin mutation repository writes through the internal `AdminWriter(AppsScriptPostTransport,
@@ -619,7 +626,15 @@ the request and the cache mirror:
 A `Sending` entry's `key` is the only source of an optimistic key (user decision O1, drawn by
 Part B).
 
-`addSong`, `removeSong` and `setKey` are plain repository functions, usable with no UI (D-13);
+Reorder (`admin-reorder-songs`): `moveSong(jamDate, songId, toPosition): MoveSongOutcome`,
+`observeMoves(): Flow<List<SetlistMove>>`, with `Moved`/`NotMoved(reason)` and entries in
+`Sending`/`Failed(reason)` state. It shares the repository's mutation ids and FIFO write barriers.
+On a valid confirmed response, the Room mirror rekeys changed songs and their slots/extras in one
+transaction before removing the entry. The admin presenter overlays Sending moves in call order and
+renumbers displayed rows; failed entries leave cached order in place and create dismissible cards.
+Musicians never receive the overlay. A move target is absolute, so a replay has the same result.
+
+`addSong`, `removeSong`, `setKey` and `moveSong` are plain repository functions, usable with no UI (D-13);
 `action-contract-registry` registers them later.
 
 ## Quotas

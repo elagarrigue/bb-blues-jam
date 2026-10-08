@@ -3,6 +3,7 @@ package com.bbbjam.feature.nextjam
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +24,11 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -139,48 +144,24 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
                 ListErrorBlock(model.error)
             }
 
-            is NextJamUiModel.NoUpcomingJam -> {
-                val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = EMPTY_KEY)
-                LazyColumn(
-                    state = listState,
-                    modifier = fill,
-                    contentPadding = padding,
-                    verticalArrangement = Arrangement.spacedBy(spacing.md),
-                ) {
-                    model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-                    item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
-                    model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
-                }
-            }
+            is NextJamUiModel.NoUpcomingJam -> NoUpcomingJamContent(model, fill, padding)
 
-            is NextJamUiModel.Jam -> {
-                val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = HEADER_KEY)
-                LazyColumn(
-                    state = listState,
-                    modifier = fill,
-                    contentPadding = padding,
-                    verticalArrangement = Arrangement.spacedBy(spacing.sm),
-                ) {
-                    // The notice sits above the header: on the offline screen the cached data is the content.
-                    model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-                    item(key = HEADER_KEY) { Header(model.header) }
-                    model.admin?.draftBadge?.let { badge ->
-                        item(key = ADMIN_DRAFT_KEY) { AdminDraftBanner(badge, model.admin.draftNote) }
-                    }
-                    setlistItems(model.setlist)
-                    model.admin?.let { admin -> adminItems(admin) }
-                }
-            }
+            is NextJamUiModel.Jam -> JamContent(model, fill, padding)
         }
     }
 }
 
 /** The setlist's items: the filter bar, rows and note, or the one block that replaces them. */
-private fun LazyListScope.setlistItems(setlist: SetlistUiModel) {
+internal fun LazyListScope.setlistItems(
+    setlist: SetlistUiModel,
+    onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
+) {
     when (setlist) {
         is SetlistUiModel.Songs -> {
             setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
-            items(setlist.rows, key = { it.position }) { row -> SongRow(row) }
+            items(setlist.rows, key = { it.rowKey }) { row ->
+                SongRow(row, onMoveAction, Modifier.animateItem())
+            }
             setlist.droppedRowsNote?.let { note ->
                 item(key = NOTE_KEY) {
                     Text(
@@ -200,17 +181,17 @@ private fun LazyListScope.setlistItems(setlist: SetlistUiModel) {
     }
 }
 
-private const val HEADER_KEY = "header"
-private const val NOTE_KEY = "note"
-private const val FILTER_KEY = "filter"
-private const val STALENESS_KEY = "staleness"
-private const val EMPTY_KEY = "empty"
-private const val DRAFT_KEY = "draft"
-private const val ADMIN_DRAFT_KEY = "admin-draft"
-private const val ADMIN_HINT_KEY = "admin-hint"
+internal const val HEADER_KEY = "header"
+internal const val NOTE_KEY = "note"
+internal const val FILTER_KEY = "filter"
+internal const val STALENESS_KEY = "staleness"
+internal const val EMPTY_KEY = "empty"
+internal const val DRAFT_KEY = "draft"
+internal const val ADMIN_DRAFT_KEY = "admin-draft"
+internal const val ADMIN_HINT_KEY = "admin-hint"
 
 @Composable
-private fun Header(header: JamHeaderUiModel) {
+internal fun Header(header: JamHeaderUiModel) {
     Column {
         Text(text = header.date, style = BluesJamTheme.typography.h1, color = BluesJamTheme.colors.text)
         Text(text = header.venue, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
@@ -235,13 +216,17 @@ private fun Message(text: String) {
  * it do not move, the rows below slide.
  */
 @Composable
-private fun SongRow(row: SongRowUiModel) {
+private fun SongRow(
+    row: SongRowUiModel,
+    onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
+    modifier: Modifier = Modifier,
+) {
     val spacing = BluesJamTheme.spacing
     Surface(
         color = BluesJamTheme.colors.surface,
         contentColor = BluesJamTheme.colors.text,
         shape = BluesJamTheme.shapes.md,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.animateContentSize()) {
             RowHeader(row)
@@ -251,7 +236,7 @@ private fun SongRow(row: SongRowUiModel) {
                     modifier = Modifier.padding(start = spacing.md, end = spacing.md),
                 )
                 OpenDetailAction(row)
-                row.admin?.let { admin -> AdminRowActions(admin) }
+                row.admin?.let { admin -> AdminRowActions(admin, row.rowKey, onMoveAction) }
             }
         }
     }

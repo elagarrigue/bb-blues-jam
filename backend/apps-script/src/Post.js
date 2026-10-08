@@ -28,6 +28,8 @@
  * rejected before writing. The deploy check removes guitar 2 and removes/restores harmonica.
  * admin-assign-musician adds `assignSlot`: it resolves an instrument ordinal among active U1
  * columns and writes one normalized name to one empty slot cell.
+ * admin-reorder-songs adds `moveSong` and `checkSetlistMove`; positions are rewritten in safe
+ * batches without moving Sheet rows or ever exposing duplicate positions.
  *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
  * SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -95,6 +97,8 @@ var ACTIONS = {
   setSlotCount: { write: true, run: setSlotCount_ },
   assignSlot: { write: true, run: assignSlot_ },
   clearSlot: { write: true, run: clearSlot_ },
+  moveSong: { write: true, run: moveSong_ },
+  checkSetlistMove: { write: true, run: checkSetlistMove_ },
 };
 
 /**
@@ -478,6 +482,152 @@ function removeSetlistRow_(sheet, songId) {
     cells.setValues(run.values);
   });
   return removed;
+}
+
+/**
+ * Moves one row by id to an absolute 1-based position. All data rows must have unique whole
+ * positions before any write; otherwise the move would guess which rows the read intentionally
+ * dropped. A contiguous changed block is written atomically. For scattered rows, park the moved
+ * row above the current maximum, then fill vacancies from the nearest safe direction: targets that
+ * decrease in ascending order, then targets that increase in descending order, then the moved row.
+ * Thus each individual write preserves unique whole positions.
+ */
+function moveSetlistRow_(sheet, songId, toPosition) {
+  const range = sheet.getDataRange();
+  const display = range.getDisplayValues();
+  const raw = range.getValues();
+  const columns = mapColumns(sheet.getName(), setlistSpecs_(), display.length > 0 ? display[0] : []);
+  const movedRow = findSongRow_(sheet, columns, display, songId);
+  const movedIndex = movedRow - 2;
+  const rows = [];
+  const seen = new Set();
+  for (let r = 1; r < raw.length; r++) {
+    const position = wholePosition_((raw[r] || [])[columns.position]);
+    if (position === null) {
+      if (r + 1 === movedRow) {
+        throw new ContractError('unordered_setlist', 'the moved song must have a whole position');
+      }
+      continue;
+    }
+    if (seen.has(position)) {
+      throw new ContractError('unordered_setlist', 'setlist positions must be whole and unique before moving a song');
+    }
+    seen.add(position);
+    rows.push({ row: r + 1, position: position, songId: textCell((display[r] || [])[columns.songId]) });
+  }
+  const ordered = rows.slice().sort(function (a, b) { return a.position - b.position; });
+  const moved = ordered.find(function (item) { return item.row === movedRow; });
+  const from = ordered.indexOf(moved);
+  ordered.splice(from, 1);
+  const targetIndex = Math.min(toPosition, ordered.length + 1) - 1;
+  ordered.splice(targetIndex, 0, moved);
+  const changed = ordered.map(function (item, index) {
+    return { row: item.row, oldPosition: item.position, target: index + 1, moved: item === moved };
+  }).filter(function (item) { return item.oldPosition !== item.target; });
+  if (changed.length === 0) {
+    return moved.position;
+  }
+  const minRow = Math.min.apply(null, changed.map(function (item) { return item.row; }));
+  const maxRow = Math.max.apply(null, changed.map(function (item) { return item.row; }));
+  if (maxRow - minRow + 1 === changed.length) {
+    writePositionRun_(sheet, columns.position, minRow, changed.sort(function (a, b) { return a.row - b.row; }));
+    return targetIndex + 1;
+  }
+
+  const maxPosition = Math.max.apply(null, rows.map(function (item) { return item.position; }));
+  writePositionValues_(sheet, columns.position, [{ row: moved.row, target: maxPosition + 1 }]);
+  const decreasing = changed.filter(function (item) { return !item.moved && item.target < item.oldPosition; })
+    .sort(function (a, b) { return a.target - b.target; });
+  const increasing = changed.filter(function (item) { return !item.moved && item.target > item.oldPosition; })
+    .sort(function (a, b) { return b.target - a.target; });
+  writePositionRuns_(sheet, columns.position, decreasing);
+  writePositionRuns_(sheet, columns.position, increasing);
+  writePositionValues_(sheet, columns.position, [{ row: moved.row, target: targetIndex + 1 }]);
+  return targetIndex + 1;
+}
+
+/** Writes a sorted sequence of rows in maximal sheet-row runs, allowing either row direction. */
+function writePositionRuns_(sheet, positionColumn, ordered) {
+  let run = [];
+  let direction = 0;
+  function flush() {
+    if (run.length > 0) {
+      writePositionRun_(sheet, positionColumn, Math.min.apply(null, run.map(function (item) { return item.row; })), run);
+      run = [];
+      direction = 0;
+    }
+  }
+  ordered.forEach(function (item) {
+    if (run.length > 0) {
+      const delta = item.row - run[run.length - 1].row;
+      if (Math.abs(delta) !== 1 || (direction !== 0 && delta !== direction)) {
+        flush();
+      } else {
+        direction = delta;
+      }
+    }
+    run.push(item);
+  });
+  flush();
+}
+
+function writePositionRun_(sheet, positionColumn, firstRow, ordered) {
+  const sorted = ordered.slice().sort(function (a, b) { return a.row - b.row; });
+  writePositionValues_(sheet, positionColumn, sorted);
+}
+
+function writePositionValues_(sheet, positionColumn, values) {
+  if (values.length === 0) return;
+  const sorted = values.slice().sort(function (a, b) { return a.row - b.row; });
+  const firstRow = sorted[0].row;
+  const cells = sheet.getRange(firstRow, positionColumn + 1, sorted.length, 1);
+  cells.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cells.setValues(sorted.map(function (item) { return [String(item.target)]; }));
+}
+
+function moveSong_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug such as sweet-little-angel');
+  }
+  const toPosition = request.toPosition;
+  if (typeof toPosition !== 'number' || !Number.isInteger(toPosition) || toPosition < 1) {
+    throw new ContractError('invalid_position', 'toPosition must be a JSON integer of at least 1');
+  }
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) throw notInSetlist_(songId, date);
+  return { ok: true, position: moveSetlistRow_(sheet, songId, toPosition) };
+}
+
+/** Self-cleaning check of contiguous and park-path moves; never reads or writes a real jam tab. */
+function checkSetlistMove_(request, spreadsheet, services) {
+  const leftover = spreadsheet.getSheetByName(SETLIST_CHECK_TAB);
+  if (leftover) spreadsheet.deleteSheet(leftover);
+  const sheet = createSetlistTab_(spreadsheet, SETLIST_CHECK_TAB);
+  const markerIds = ['uno', 'dos', 'tres', 'cuatro'].map(function (name) { return 'zz-prueba-' + name; });
+  let rows;
+  try {
+    markerIds.forEach(function (songId, index) {
+      appendSetlistRow_(sheet, { position: index + 1, songId: songId, title: songId, artist: 'Prueba', key: 'A' });
+    });
+    moveSetlistRow_(sheet, markerIds[3], 1);
+    moveSetlistRow_(sheet, markerIds[1], 1);
+    const range = sheet.getDataRange();
+    rows = buildSetlist(range.getDisplayValues(), range.getValues(), SETLIST_CHECK_TAB);
+  } finally {
+    spreadsheet.deleteSheet(sheet);
+  }
+  const expected = [markerIds[1], markerIds[3], markerIds[0], markerIds[2]];
+  rows.sort(function (a, b) { return Number(a.position) - Number(b.position); });
+  if (rows.length !== expected.length || !rows.every(function (row, index) {
+    return row.songId === expected[index] && row.position === String(index + 1);
+  })) throw new Error('The setlist move check read back a different order');
+  return { ok: true };
 }
 
 /**
@@ -916,15 +1066,28 @@ function appendSetlistRow_(sheet, song) {
   const columns = mapColumns(sheet.getName(), specs, header);
   const values = { position: String(song.position), songId: song.songId, title: song.title, artist: song.artist, key: song.key };
   const row = sheet.getLastRow() + 1;
+  const cells = [];
   specs.forEach(function (spec) {
     const col = columns[spec.field];
     if (col === undefined) {
       return;
     }
-    const cell = sheet.getRange(row, col + 1);
-    cell.setNumberFormat(PLAIN_TEXT_FORMAT);
-    cell.setValue(Object.prototype.hasOwnProperty.call(values, spec.field) ? values[spec.field] : '');
+    cells.push({ column: col + 1, value: Object.prototype.hasOwnProperty.call(values, spec.field) ? values[spec.field] : '' });
   });
+  cells.sort(function (a, b) { return a.column - b.column; });
+  let run = [];
+  function flush() {
+    if (run.length === 0) return;
+    const range = sheet.getRange(row, run[0].column, 1, run.length);
+    range.setNumberFormat(PLAIN_TEXT_FORMAT);
+    range.setValues([run.map(function (cell) { return cell.value; })]);
+    run = [];
+  }
+  cells.forEach(function (cell) {
+    if (run.length > 0 && cell.column !== run[run.length - 1].column + 1) flush();
+    run.push(cell);
+  });
+  flush();
 }
 
 function adminSetlistError_(code, message) {

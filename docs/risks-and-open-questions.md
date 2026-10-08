@@ -426,3 +426,16 @@ Stated so they can be challenged rather than silently relied upon.
   Pixel 5 local smoke also showed shared navigation limitations: the next-tab label wraps/clips
   at font scale 2.0 and the system navigation bar overlaps the right edge in landscape. The inline
   editor itself retains its controls and scrolls; these shared inset/tab issues remain open.
+
+- **Reorder risks** (`admin-reorder-songs`, local implementation; shared deployment/live checks
+  deferred): the scattered-row park path uses multiple writes, not a Sheet transaction. If a write
+  fails partway through, the tab can temporarily retain a gap or the moved row at `max + 1`; each
+  completed batch still preserves the no-duplicate-position invariant. A later successful move
+  closes gaps, but no automatic repair runs. A live latency measurement for the complete move and
+  park path awaits the deferred shared deployment; no write latency has been measured for this
+  action. During an optimistic move, a refresh can update the confirmed cache before the write
+  answer; the admin reapplies the Sending move by song id and absolute target, then Room mirrors the
+  confirmed result before the overlay is removed. A competing admin mutation can briefly be masked
+  by that local overlay until its answer or failure arrives. The row-anchor behavior and these
+  refresh/concurrency transitions still need device smoke after deployment; no live or device
+  validation was run for this slice.

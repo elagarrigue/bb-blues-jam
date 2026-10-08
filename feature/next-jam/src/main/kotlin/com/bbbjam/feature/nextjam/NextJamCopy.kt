@@ -110,6 +110,9 @@ internal object NextJamCopy {
 
     const val SET_KEY = "Cambiar tonalidad"
     const val SAVING = "Guardando…"
+    const val MOVE_UP = "Subir"
+    const val MOVE_DOWN = "Bajar"
+    const val UNORDERED_SETLIST = "Las posiciones de la planilla están desordenadas. Corregilas ahí y probá de nuevo."
 
     /** A failed key change's card title: `No se pudo cambiar la tonalidad de «Crossroads»`. */
     fun keyFailed(title: String): String = "No se pudo cambiar la tonalidad de «$title»"

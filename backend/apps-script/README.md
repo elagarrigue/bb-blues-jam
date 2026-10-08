@@ -5,14 +5,13 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`, and eight POST
-actions: `checkPassphrase` (`admin-passphrase-login`), the self-cleaning deploy check
-`checkWriteAccess` (`apps-script-write-auth`), the admin read `readJams`, the setlist write
-`addSong` and its self-cleaning deploy check `checkSetlistWrite` (`admin-add-song-to-setlist`),
-the setlist write `removeSong` with its self-cleaning deploy check `checkSetlistRemove`
-(`admin-remove-song-from-setlist`), and the setlist write `setKey` (`admin-set-key`, proved on
-deploy by an extra step in `checkSetlistWrite`). `removeSong`, `checkSetlistRemove` and `setKey`
-are in `src/Post.js` but not deployed until the batched paste below.
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`. The current
+`src/Post.js` source contains thirteen POST actions: `checkPassphrase`, `checkWriteAccess`,
+`readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`,
+`setSlotCount`, `assignSlot`, `clearSlot`, `moveSong` and `checkSetlistMove`. The deployed version
+predates the latest local setlist mutations. The user deferred one shared deployment and live checks
+until app implementation is complete; do not run per-feature deployment or live requests.
+
 Every POST action passes one passphrase guard in the router, with a rate limit of 10 failed
 guesses per 10 minutes; write actions run under the script lock. The GET reads never open the
 `Config` tab, and never read the tab of a jam whose `estado` is not exactly `PUBLICADA`; only the
@@ -28,7 +27,7 @@ guarded `readJams` reads a current or future `BORRADOR` jam's tab. Only `src/Pos
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`, `setSlotCount`, `assignSlot`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, `readPassphrase_` and `passphraseMatches_`, and the setlist write path (`addSong_`, `createSetlistTab_`, `appendSetlistRow_`, `removeSong_`, `removeSetlistRow_`, which deletes a row and renumbers the later `posicion` cells, `setKey_` and `writeKeyCell_`, which writes one `tono` cell; mutations find their row by `id_tema` with the shared `findSongRow_`). The only file that opens `Config`. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, and the setlist write path including batched `moveSong_` and `checkSetlistMove_`; mutations find rows by `id_tema` with `findSongRow_`. The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -85,8 +84,9 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` after the pending deployment, with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot`
-(the action list of `src/Post.js` since `admin-set-key`; a list ending in `checkSetlistRemove`
+`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove`
+(the action list in the current `ACTIONS` table in `src/Post.js`; a list ending in `clearSlot`
+is missing the reorder actions, while a list ending in `checkSetlistRemove`
 means the `admin-remove-song-from-setlist` version without set-key, one ending in
 `checkSetlistWrite` means the `admin-add-song-to-setlist` version, `Known: checkPassphrase,
 checkWriteAccess` the `apps-script-write-auth` one, `Known: checkPassphrase` alone the one before
@@ -245,7 +245,7 @@ are.
    `_prueba_lista` within one request), then set-key's (`checkSetlistWrite`, now also rewriting
    its marker's key, does the same). After the deploy, `curl -sL -d '{}' "$URL"` must end in
    `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong,
-   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot`. No check removes a song from or changes a key in a real jam.
+   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove`. No check removes a song from or changes a key in a real jam.
 
 ### Temporary test jam for the draft check (user approval A3)
 
@@ -289,7 +289,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```

@@ -154,6 +154,7 @@ class NextJamPresenterTest {
         chips: List<InstrumentChipUiModel> = defaultChips,
         panel: LineupPanelUiModel = defaultPanel,
     ) = SongRowUiModel(
+        rowKey = seedSongs.firstOrNull { it.title == title }?.songId?.value ?: "p${positionLabel.toInt()}",
         position = positionLabel.toInt(),
         positionLabel = positionLabel,
         title = title,

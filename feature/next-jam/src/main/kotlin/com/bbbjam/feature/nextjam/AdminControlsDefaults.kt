@@ -51,6 +51,8 @@ internal object AdminControlsDefaults {
 
     data class KeyChangeStyle(val action: Color, val status: Color)
 
+    data class MoveStyle(val position: Color, val action: Color, val disabled: Color)
+
     data class LineupEditorStyle(
         val action: Color,
         val heading: Color,
@@ -70,6 +72,10 @@ internal object AdminControlsDefaults {
      */
     fun keyChange(colors: BluesJamColors = BluesJamColors): KeyChangeStyle =
         KeyChangeStyle(action = colors.text, status = colors.textMuted)
+
+    /** Reordering uses neutral text actions; neither enabled nor disabled states use amber. */
+    fun move(colors: BluesJamColors = BluesJamColors): MoveStyle =
+        MoveStyle(position = colors.textMuted, action = colors.text, disabled = colors.textMuted)
 
     /** Lineup counts and controls stay neutral; changing a count never uses the open-slot amber. */
     fun lineupEditor(colors: BluesJamColors = BluesJamColors): LineupEditorStyle = LineupEditorStyle(

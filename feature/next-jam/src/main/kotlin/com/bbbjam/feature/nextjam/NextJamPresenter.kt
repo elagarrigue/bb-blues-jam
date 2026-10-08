@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
@@ -21,6 +20,7 @@ import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.SetlistMove
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SlotClear
@@ -47,8 +47,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.random.Random
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.launch
 
 /**
  * Presents Próxima jam: the upcoming jam of [JamsRepository.observeJams], already cached, split in
@@ -148,38 +146,27 @@ class NextJamPresenter(
         val slotClears by remember { setlist.observeSlotClears() }.collectAsState(initial = emptyList())
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
+        val moveControls = rememberMoveControls(setlist, snapshot)
         val lineupControls = rememberLineupControls(setlist, snapshot, isAdmin)
-        var confirming by rememberSaveable { mutableStateOf<String?>(null) }
-        val scope = rememberCoroutineScope()
-        rememberAdminRefresh(adminSession, jams)
-        val onRemoval = removalHandler(setlist, scope, { confirming == it }) { confirming = it }
-        val admin = if (isAdmin) {
-            AdminState(
-                adds,
-                onAddSong = { date -> currentOnAddSong(date) },
-                onDismiss = { id -> setlist.dismiss(id) },
-                removal = RemovalState(removes, confirming, onRemoval),
-                keyChanges = keyChanges,
-                assignments = assignments,
-                slotClears = slotClears,
-                lineupChanges = lineupControls.lineupChanges,
-                lineupEditing = lineupControls.lineupEditing,
-                reservations = lineupControls.reservations,
-                onLineupEditor = lineupControls.onLineupEditor,
-                onLineupCount = lineupControls.onLineupCount,
-                onSetKey = { date, songId -> currentOnSetKey(date, songId) },
-                onAssignSlot = { date, songId, instrument, position ->
-                    currentOnAssignSlot(date, songId, instrument, position)
-                },
-                onClearSlot = { date, songId, instrument, position, name ->
-                    scope.launch(start = CoroutineStart.UNDISPATCHED) {
-                        setlist.clearSlot(date, songId, instrument, position, name)
-                    }
-                },
-            )
-        } else {
-            null
-        }
+        val admin = rememberNextJamAdminState(
+            adminSession = adminSession,
+            jams = jams,
+            setlist = setlist,
+            isAdmin = isAdmin,
+            adds = adds,
+            removes = removes,
+            keyChanges = keyChanges,
+            assignments = assignments,
+            slotClears = slotClears,
+            moves = moveControls.moves,
+            lineup = lineupControls,
+            onMove = moveControls.onMove,
+            onAddSong = { date -> currentOnAddSong(date) },
+            onSetKey = { date, songId -> currentOnSetKey(date, songId) },
+            onAssignSlot = { date, songId, instrument, position ->
+                currentOnAssignSlot(date, songId, instrument, position)
+            },
+        )
         val refreshes = rememberNextJamRefreshes(jams, calendar, random, params.isResumed, snapshot) { subscription++ }
         val today = remember(snapshot) { calendar.today() }
         val now = remember(snapshot) { calendar.now() }
@@ -298,7 +285,7 @@ private class RowState(
 }
 
 /** The admin's row state for one jam: the admin state and the jam (its date and whether it is published). */
-private class RowAdmin(val state: AdminState, val jam: DomainJam) {
+internal class RowAdmin(val state: AdminState, val jam: DomainJam) {
     val removal: RemovalState
         get() = state.removal
 }
@@ -316,6 +303,7 @@ internal class AdminState(
     val keyChanges: List<KeyChange> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
     val slotClears: List<SlotClear> = emptyList(),
+    val moves: List<SetlistMove> = emptyList(),
     val onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> },
     val lineupChanges: List<LineupChange> = emptyList(),
     val lineupEditing: String? = null,
@@ -324,6 +312,7 @@ internal class AdminState(
     val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit = { _, _, _, _ -> },
     val onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit = { _, _, _, _ -> },
     val onClearSlot: (LocalDate, SongId, Instrument, SlotPosition, String) -> Unit = { _, _, _, _, _ -> },
+    val onMove: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
 )
 
 /**
@@ -400,9 +389,14 @@ private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
             Triple(clear.id, NextJamCopy.CLEAR_FAILED, slotClearFailureMessage(it.reason))
         }
     }
-    return (failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments + failedSlotClears).sortedBy {
-        it.first
-    }.map { (id, title, message) ->
+    val failedMoves = moves.filter { it.jamDate == date }.mapNotNull { move ->
+        (move.state as? SetlistMove.State.Failed)?.let {
+            Triple(move.id, MoveCopy.failed(move.title), moveFailureMessage(it.reason))
+        }
+    }
+    val allFailures =
+        failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments + failedSlotClears + failedMoves
+    return allFailures.sortedBy { it.first }.map { (id, title, message) ->
         AddFailureUiModel(
             id = id,
             title = title,
@@ -431,7 +425,7 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
             },
         )
     } else {
-        val shownSongs = songs.map { song ->
+        val overlaidSongs = songs.map { song ->
             val admin = state.admin?.state
             if (admin == null) {
                 song
@@ -446,18 +440,26 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
                 )
             }
         }
+        val shownEntries = state.admin?.state?.moves?.displayEntries(date, overlaidSongs)
+            ?: overlaidSongs.map { DisplayedJamSong(it, it.position) }
+        val idCounts = shownEntries.groupingBy { it.song.songId }.eachCount()
         SetlistUiModel.Songs(
-            rows = shownSongs
-                .filter { it.lineup.matchesInstrumentFilter(state.filter) }
-                .map { song ->
+            rows = shownEntries
+                .filter { it.song.lineup.matchesInstrumentFilter(state.filter) }
+                .map { entry ->
+                    val song = entry.song
+                    val displayedPosition = song.position
+                    val rowKey = if (idCounts[song.songId] == 1) song.songId.value else "p$displayedPosition"
                     song.toRow(
+                        position = displayedPosition,
+                        rowKey = rowKey,
                         isExpanded = state.expanded.isExpanded(date, song.songId),
                         toggle = { state.onToggle(date, song.songId) },
-                        openDetail = { state.onOpenSong(date, song.position) },
-                    ).let { row -> state.admin?.decorate(row, song) ?: row }
+                        openDetail = { state.onOpenSong(date, entry.cachedPosition) },
+                    ).let { row -> state.admin?.decorate(row, song, shownEntries.size) ?: row }
                 },
             droppedRowsNote = if (droppedRows == 0) null else NextJamCopy.droppedRows(droppedRows),
-            filterBar = instrumentFilterBar(shownSongs.map { it.lineup }, state.filter, state.onFilterChange),
+            filterBar = instrumentFilterBar(shownEntries.map { it.song.lineup }, state.filter, state.onFilterChange),
         )
     }
 
@@ -476,18 +478,23 @@ private const val POSITION_DIGITS = 2
  * "Guardando…" (O1; a failed change never overlays, which is the revert), and the admin's part.
  * "Cambiar tonalidad" is keyed by (date, songId), as the removal's handlers.
  */
-private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong): SongRowUiModel {
+private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): SongRowUiModel {
     val pending = state.keyChanges.pendingKey(jam.date, song.songId)
     val setKey = SetKeyActionUiModel(
         NextJamCopy.SET_KEY,
         EventHandler(key = "${removalKey(jam.date, song.songId)}|setKey") { state.onSetKey(jam.date, song.songId) },
     )
+    val removal = removalModel(song)
+    val sendingMove = isMoveSending(song)
+    val move = moveModel(row, song, total, removal)
     val admin = SongRowAdminUiModel(
         setKey = setKey,
-        removal = removalModel(song),
+        removal = removal,
+        move = move,
         lineup = state.lineupEditor(jam.date, song),
         saveStatus = if (listOf(
                 pending != null,
+                sendingMove,
                 state.isSavingLineup(jam.date, song.songId),
                 state.isSavingAssignment(jam.date, song.songId),
                 state.slotClears.any {
@@ -565,9 +572,16 @@ private fun RowAdmin.removalDetails(song: JamSong): List<String> {
     )
 }
 
-private fun JamSong.toRow(isExpanded: Boolean, toggle: () -> Unit, openDetail: () -> Unit) = SongRowUiModel(
+private fun JamSong.toRow(
+    position: Int,
+    rowKey: String,
+    isExpanded: Boolean,
+    toggle: () -> Unit,
+    openDetail: () -> Unit,
+) = SongRowUiModel(
     position = position,
     positionLabel = position.toString().padStart(POSITION_DIGITS, '0'),
+    rowKey = rowKey,
     title = title,
     key = key.value,
     keyDescription = NextJamCopy.keyDescription(key.value),

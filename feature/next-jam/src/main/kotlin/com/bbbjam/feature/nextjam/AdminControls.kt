@@ -152,11 +152,16 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
  * the removal, which stays last. A later row action goes before the removal.
  */
 @Composable
-internal fun AdminRowActions(model: SongRowAdminUiModel) {
+internal fun AdminRowActions(
+    model: SongRowAdminUiModel,
+    rowKey: String,
+    onMoveAction: (String, MoveActionUiModel) -> Unit,
+) {
     RowTextAction(model.setKey.label, AdminControlsDefaults.keyChange().action) {
         model.setKey.events(SetKeyActionUiModel.Event.Open)
     }
     LineupEditor(model.lineup)
+    model.move?.let { move -> MoveControl(move, rowKey, onMoveAction) }
     RemovalControl(model.removal)
 }
 

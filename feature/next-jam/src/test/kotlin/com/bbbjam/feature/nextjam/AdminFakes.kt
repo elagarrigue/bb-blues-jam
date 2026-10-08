@@ -8,10 +8,12 @@ import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.ClearSlotOutcome
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
+import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.SetlistMove
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SlotClear
@@ -54,6 +56,9 @@ class FakeSetlistRepository : SetlistRepository {
     val lineupChanges = MutableStateFlow<List<LineupChange>>(emptyList())
     val assignments = MutableStateFlow<List<Assignment>>(emptyList())
     val slotClears = MutableStateFlow<List<SlotClear>>(emptyList())
+    val moves = MutableStateFlow<List<SetlistMove>>(emptyList())
+    val moveCalls = mutableListOf<Triple<LocalDate, SongId, Int>>()
+    var moveHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     data class AssignmentCall(
         val date: LocalDate,
         val id: SongId,
@@ -123,6 +128,14 @@ class FakeSetlistRepository : SetlistRepository {
     ): ClearSlotOutcome = ClearSlotOutcome.Cleared
 
     override fun observeSlotClears(): Flow<List<SlotClear>> = slotClears
+
+    override suspend fun moveSong(jamDate: LocalDate, songId: SongId, toPosition: Int): MoveSongOutcome {
+        moveCalls += Triple(jamDate, songId, toPosition)
+        moveHold?.await()
+        return MoveSongOutcome.Moved
+    }
+
+    override fun observeMoves(): Flow<List<SetlistMove>> = moves
 
     override fun dismiss(id: Long) {
         dismissed += id

@@ -158,6 +158,7 @@ data class DraftSetlistUiModel(val label: String, val title: String, val message
 data class SongRowUiModel(
     val position: Int,
     val positionLabel: String,
+    val rowKey: String = "p$position",
     val title: String,
     val key: String,
     val keyDescription: String,
@@ -190,9 +191,25 @@ data class SongRowUiModel(
 data class SongRowAdminUiModel(
     val setKey: SetKeyActionUiModel,
     val removal: RemovalUiModel,
+    val move: MoveUiModel? = null,
     val lineup: LineupEditorUiModel = LineupEditorUiModel.Idle("Cambiar formación", EventHandler {}),
     val saveStatus: String? = null,
 ) : UiModel
+
+/** The move block in an expanded admin row. Position counts the full setlist, not filtered rows. */
+data class MoveUiModel(val positionLine: String, val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel
+
+/** One visible one-place reorder action. Disabled actions remain drawn to keep the layout stable. */
+data class MoveActionUiModel(
+    val label: String,
+    val clickLabel: String,
+    val enabled: Boolean,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Move : Event
+    }
+}
 
 /** "Cambiar tonalidad": opens the key picker for this row's song. Navigation only. */
 data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {

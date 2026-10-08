@@ -145,6 +145,14 @@ lineups where the default does not fit, assigns musicians to slots, reorders, an
 one of these operations exists as a repository function or deeplink from phase 1, because the phase
 2 assistant must be able to perform each of them (D-13).
 
+### Reordering the setlist
+
+`SetlistRepository.moveSong(jamDate, songId, toPosition)` changes the absolute 1-based position of
+one song in the upcoming jam. A confirmed Room mirror moves its slots and extras with the song in a
+single transaction. The admin sees a Sending-only optimistic order and a failure card on rejection;
+musicians continue to read the confirmed cache until refresh. Sheet rows are identified by song id,
+and their positions are written in safe batches without duplicate positions.
+
 ### Finding a place to play
 
 A musician opens the app, taps their instrument's filter chip, and sees only the songs with an open

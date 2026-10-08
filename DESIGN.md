@@ -457,6 +457,12 @@ through `AdminControlsDefaults`, **no amber**:
   action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
   Sending counts update the strip, panel and filters at once for the admin only. One muted
   `Guardando…` line covers key and lineup together; failure reverts and leaves a persistent card.
+- **Reordering songs** (`admin-reorder-songs`): each expanded admin row ends with the move block,
+  after detail, key, slot and lineup controls and before removal. It shows `Posición x de n` and
+  adjacent 48dp `Subir`/`Bajar` actions; the edge action is disabled with muted text and semantics.
+  The admin row moves optimistically with a polite `Guardando…` status and remains under the
+  thumb. Failure restores the confirmed position and adds a dismissible card. Musicians see the
+  confirmed order only. Colors use neutral admin action tokens, not amber.
 - Text selection is non-amber app-wide (`BluesJamTheme` provides `text` handles and `text` at 40%).
 
 ## Core Screens

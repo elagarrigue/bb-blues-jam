@@ -170,6 +170,13 @@ expected name uses existing display text as-is and is not checked against new-as
 `checkSetlistWrite` assigns then clears its disposable marker and verifies the cleared cell before
 its `finally` cleanup. Deployment and live checks are deferred until app implementation is complete.
 
+`moveSong` (`admin-reorder-songs`) changes only `posicion`, never physical Sheet row order. It finds
+the unique song by `id_tema`, rejects duplicate whole positions and a malformed moved position, and
+renumbers valid rows contiguously. A contiguous write uses one position range; scattered sheet rows
+use a temporary `max + 1` position and safe ascending/descending batches so no write creates a
+duplicate whole position. The self-cleaning `checkSetlistMove` verifies the sorted readback.
+Deployment and live validation remain deferred until app implementation is complete.
+
 ### Slot columns
 
 All seven slot headers are **required in every jam tab**; a tab missing one is invalid. Their cells

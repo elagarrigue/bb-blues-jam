@@ -40,24 +40,6 @@ internal interface SetlistDao :
         return inserted
     }
 
-    /** The cached songs of [date] with the tab's title copies, in position order. */
-    @Query("SELECT * FROM jam_song WHERE jam_date = :date ORDER BY position")
-    override suspend fun songsOf(date: String): List<JamSongEntity>
-
-    @Query("SELECT * FROM jam_slot WHERE jam_date = :date AND position >= :position")
-    suspend fun slotsFrom(date: String, position: Int): List<JamSlotEntity>
-
-    @Query("SELECT * FROM jam_extra WHERE jam_date = :date AND position >= :position")
-    suspend fun extrasFrom(date: String, position: Int): List<JamExtraEntity>
-
-    /** Deletes the given rows explicitly, children first, so nothing depends on the cascade. */
-    @Delete
-    suspend fun deleteRows(slots: List<JamSlotEntity>, extras: List<JamExtraEntity>, songs: List<JamSongEntity>)
-
-    /** Inserts the given rows, parents first. */
-    @Insert
-    suspend fun insertRows(songs: List<JamSongEntity>, slots: List<JamSlotEntity>, extras: List<JamExtraEntity>)
-
     /**
      * Mirrors one removal the server confirmed (`removeSong`), in one transaction: the song [songId]
      * of [date] is deleted with its slots and extras, and every song after it moves up one position
