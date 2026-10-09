@@ -6,14 +6,14 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: thirty-seven of 42 slices accepted; `admin-publish-setlist` is latest accepted (8 October 2026). Human check owed: the `Actualizar` action with TalkBack.
+- Current state: 38 of 42 slices accepted; `admin-adjust-lineup` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
-- Manual Apps Script deployment for `admin-adjust-lineup`, followed by live checks L1-L5, is
-  deferred until app implementation is complete. Parts A+B and local/device verification are complete; the deployed server has not
-  been updated in this session. Its `/exec` URL is in git-ignored `local.properties`.
+- Shared Apps Script deployment for reorder, publish, adjust-lineup, assign, and clear-slot was completed by the user. Initial POST exposed a missing `SCHEMA_VERSION` global; the user corrected `Code.gs` and deployed current `Post.js`. L1 now confirms all batch actions. Full read-only L1-L5 checks passed on 9 October 2026; details below. No real jam was modified or published.
   The seed was imported into the real Sheet and reviewed by hand by
   the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Last verified at: 8 October 2026 (`admin-publish-setlist`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 104 JVM test-result suites, 649 tests, zero failures/errors; Node 165/165. Independent validator accepted after rerunning the gate and reviewing E1/C1 behavior and server-confirmed publication. No device or live Apps Script request; shared deployment/live checks remain deferred until app implementation is complete.
+- Shared live batch, 9 October 2026: L1 all expected actions present; L2/L3/L4 checks passed for lineup, reorder and publish; L5 readJams identical before/after (2 jams, 26 songs; aggregate SHA-256 `42CFABE0DE3C8D71`). Temporary-tab self-checks `checkSetlistMove`, `checkSetlistWrite`, `checkSetlistRemove`, and `checkPublish` all returned `ok`; no real jam was modified or published. Local `src/Post.js` SHA-1 `721F7CCF1481F964FEAAF6A772E16B350CFF724C`; remote source hash was not independently observable. `admin-adjust-lineup` is accepted after independent validation.
+- Latest verification, 9 October 2026: independent validator accepted `admin-adjust-lineup`; `CI=true ./init.sh` exited 0 with `konsist`, `detekt`, and `ktlint` all wired.
+- Previous full local verification at: 8 October 2026 (`admin-publish-setlist`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 104 JVM test-result suites, 649 tests, zero failures/errors; Node 165/165. Independent validator accepted after rerunning the gate and reviewing E1/C1 behavior and server-confirmed publication. This acceptance preceded the user-reported shared deployment; the subsequent live probe is recorded above.
   Before that, 7 October 2026 (`offline-notice-visible`, independently accepted) —
   `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
   including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,

@@ -16,18 +16,20 @@
 
 ## Readiness
 
-Ready for implementation. The user selected M1 (visible `Subir` and `Bajar` buttons), O2
-(optimistic row movement with rollback and a failure notice), and B2 (one shared deployment after
-app implementation is complete).
+Historical readiness (8 October 2026): ready for implementation. The user selected M1 (visible
+`Subir` and `Bajar` buttons), O2 (optimistic row movement with rollback and a failure notice), and
+B2 (one shared deployment after app implementation is complete). The shared deployment and live
+checks completed on 9 October 2026 (see evidence below).
 
 **Server action name: `moveSong`**, which moves one song to a new position. It comes with the
 self-cleaning deploy check `checkSetlistMove`.
 
-The server and app portions are both implemented and validated locally before any deployment.
-Deployment and live checks are explicitly deferred by the user until app implementation is
-complete. At that point, include this feature's server change in one shared deployment with
-`admin-publish-setlist`, `admin-adjust-lineup` and `admin-assign-musician`; run the batch's live
-checks together then. Do not make a per-feature deployment or live request during this feature.
+The server and app portions were implemented and validated locally before deployment. The user's
+implementation-time instruction was to defer deployment and live checks until app implementation
+was complete. The completed shared deployment included this feature's server change with
+`admin-publish-setlist`, `admin-adjust-lineup` and `admin-assign-musician`; their live checks were
+run together on 9 October. The no-per-feature-deployment instruction applied to implementation
+work before that shared deployment.
 Size: one feature in two local implementation parts (A: `Post.js`, Node and `:core:data`; B:
 `:feature:next-jam`), about one session each. No split is needed: there is no new screen, no schema
 change and no new read path.
@@ -374,10 +376,10 @@ keys. Rows animate to their new place.
    - (b) The park path writes in plain ascending row order. The invariant test fails.
    - (c) The repository mirrors Room on `Rejected`.
 4. Run `CI=true ./init.sh` (three `wired`) for the server/data portion, then continue with Part B.
-5. **No deployment or live checks in this feature run.** The user explicitly deferred them until
-   app implementation is complete. Keep the server action and check local; do not read credentials
-   or contact Apps Script. When the four-feature app batch is complete, the orchestrator coordinates
-   one shared deployment and its live checks for reorder, publish, adjust-lineup and assign.
+5. **Historical implementation constraint (8 October 2026): no deployment or live checks in that
+   feature run.** The user deferred them until app implementation was complete. The shared deployment
+   and live checks for reorder, publish, adjust-lineup and assign have since completed; evidence is
+   recorded above.
 6. **Live-check contract for that later batch.** The script lives in the scratchpad. The URL and
    passphrase come from `local.properties` and are never printed. The body is built with `json.dumps`.
    Print only codes, counts, latencies and hash prefixes.
@@ -429,7 +431,8 @@ keys. Rows animate to their new place.
 - Node is green. `CI=true ./init.sh` exits 0 with `konsist: wired` (17/17), `detekt: wired` and
   `ktlint: wired`.
 - **"Persists to the Sheet":** Node scenarios 1–3 and read back with `buildSetlist`. Live LM4 on
-  the real Sheet is explicitly deferred to the four-feature batch.
+  the real Sheet was deferred to the four-feature batch at implementation time; its live result is
+  recorded above.
 - **"Contiguous, no gaps or duplicates":** Node scenarios 1–5, the after-every-call invariant, and
   the DAO renumber test.
 - **"48dp":** the code uses `heightIn(min = LocalMinimumInteractiveComponentSize)`; the device dump
@@ -441,7 +444,8 @@ keys. Rows animate to their new place.
 - Node and gate counts.
 - Failure demonstrations (a)–(d), each with its SHA-1 restore.
 - The later shared deployment's `Post.gs` SHA-1 and LM1–LM5 codes, latencies and hash equality
-  (pending by explicit user deferral; do not fetch or report them in this feature run).
+  (requested by the implementation-time plan; results are recorded above, while the remote source
+  hash was not independently observable).
 - The device screenshots and the dump.
 - A statement that no URL, passphrase or name appeared in any output.
 
@@ -473,7 +477,7 @@ keys. Rows animate to their new place.
 - [ ] Visible 48dp `Subir`/`Bajar`, with no hidden gesture; the edges are disabled, not removed. No
       amber. The copy is as approved.
 - [ ] Three `wired`. No deployment or live request occurred during app implementation; the grouped
-      live checks remain a documented follow-up. No secret appears anywhere.
+      live checks passed on 9 October 2026 (see post-deployment evidence). No secret appears anywhere.
 
 ## User Decisions (8 October 2026)
 
@@ -491,3 +495,12 @@ behaviors or the deployment grouping:
   validate all app portions locally before that single deployment; run the grouped live checks after
   it. `admin-clear-slot` is not in the batch. Do not deploy a partial batch to work around a feature
   blocker.
+
+## Post-deployment verification (9 October 2026)
+
+L1 listed `moveSong` and `checkSetlistMove`; LM2 returned `invalid_passphrase`. LM3 returned the
+expected codes for invalid date/song, positions zero and string, unknown jam, a past jam, and a
+missing song in the upcoming setlist. LM4 self-checks passed: `checkSetlistMove` 10.522 s,
+`checkSetlistWrite` 6.378 s, and `checkSetlistRemove` 6.882 s. LM5 `readJams` remained unchanged
+(two jams, 26 songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was reordered. The
+user deployed the source; the remote file hash was not independently observable.

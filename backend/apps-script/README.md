@@ -8,9 +8,16 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`. The current
 `src/Post.js` source contains fifteen POST actions: `checkPassphrase`, `checkWriteAccess`,
 `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`,
-`setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist` and `checkPublish`. The deployed version
-predates the latest local setlist mutations. The user deferred one shared deployment and live checks
-until app implementation is complete; do not run per-feature deployment or live requests.
+`setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist` and
+`checkPublish`. The user reported deploying the shared app-complete source on 9 October 2026. The
+live router lists all fifteen actions and shared L1–L5 checks passed without changing a real jam.
+The local `src/Post.js` SHA-1 is
+`721F7CCF1481F964FEAAF6A772E16B350CFF724C`; the deployed source hash is not exposed by the API.
+
+The deployment instructions and feature sections below preserve their implementation-time context
+where they say deployment is pending. Those statements describe the state before 9 October 2026 and
+are superseded by the completed shared deployment and live evidence recorded here and in the
+affected feature specs.
 
 Every POST action passes one passphrase guard in the router, with a rate limit of 10 failed
 guesses per 10 minutes; write actions run under the script lock. The GET reads never open the
@@ -394,18 +401,18 @@ includes `test/` and `tools/`, so a `.claspignore` would be needed first. Deploy
 still needs the **Manage deployments → New version** rule to keep the URL.
 
 
-## Adjust-lineup deployment pending
+## Adjust-lineup endpoint (deployed and live-verified 9 October 2026)
 
 The current `src/Post.js` implements `setSlotCount` and extends `checkSetlistWrite`: the temporary
 marker loses guitar 2, loses harmonica, then regains harmonica; readback is verified and the tab
-cleaned up. Paste the complete source into `Post.gs`, save, and use **Manage deployments > Edit >
-New version > Deploy**, preserving the `/exec` URL. L1-L5 in `docs/specs/admin-adjust-lineup.md`
-remain required: Known includes `setSlotCount`, wrong-passphrase refusal, extended deploy check,
-validation-only probes, identical real-jam counts and SHA-256 before/after. Never call
-`setSlotCount` with a real song id. Use the existing private scratchpad for credentials; print only
-codes, counts and latencies. The local feature remains in_progress until live evidence exists.
+cleaned up. The user deployed the shared source as a new version, preserving the `/exec` URL. L1–L5
+passed on 9 October 2026: the router listed the expected actions, the wrong-passphrase probe was
+refused, `checkSetlistWrite` returned `ok` in 6.378 s, all validation-only probes returned their
+expected codes, and before/after `readJams` matched (two jams, 26 songs; aggregate SHA-256 prefix
+`42CFABE0DE3C8D71`). No real jam was changed. The local source SHA-1 is
+`721F7CCF1481F964FEAAF6A772E16B350CFF724C`; the remote source hash was not independently observable.
 
-## Assign-musician endpoint (local until the app is complete)
+## Assign-musician endpoint (deployed and live-verified 9 October 2026)
 
 `assignSlot` is a guarded write under the shared script lock. The request is
 `{"action":"assignSlot","passphrase":"…","date":"2026-10-31","songId":"crossroads","instrument":"guitar","ordinal":1,"name":"Tincho"}`.
@@ -424,10 +431,12 @@ text formatting set first, and returns `{"schemaVersion":1,"ok":true,"column":0,
 `column` is the zero-based slot index in the canonical seven-slot order and `name` is the
 normalized spelling written. `checkSetlistWrite` exercises that same cell writer against its
 temporary `_prueba_lista` tab, checks normalized readback and cleans up, without touching a real
-jam. Deployment and live validation are deferred until app implementation is complete; do not
-send a real song id to this action during local verification.
+jam. The shared deployment was completed on 9 October. `checkSetlistWrite` returned `ok` in 6.378 s,
+exercising assignment/readback/cleanup on a disposable tab; `readJams` was unchanged (two jams, 26
+songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was assigned. The remote source hash
+was not independently observable.
 
-## Clear-slot endpoint (local until the app is complete)
+## Clear-slot endpoint (deployed and live-verified 9 October 2026)
 
 `clearSlot` is a guarded, locked write. It re-resolves the requested 1-based active instrument
 ordinal using U1 and compares the trimmed current cell text with `expectedName`. An already empty
@@ -435,9 +444,11 @@ cell returns `slot_empty`; a changed musician returns `slot_changed`; neither wr
 one cell and returns the canonical seven slot fields. Existing legacy names are compared as-is,
 without new-assignment validation. `checkSetlistWrite` now assigns then clears the disposable marker
 musician and checks the open readback; `finally` deletes `_prueba_lista` even if that check fails.
-No real jam is touched. Deployment and live validation are deferred until app implementation is
-complete; do not call this action with a real song id during local verification.
+No real jam was touched. The shared `checkSetlistWrite` returned `ok` in 6.378 s and exercised
+assignment and clear on its disposable marker tab with cleanup. `readJams` was unchanged (two jams,
+26 songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No direct `clearSlot` request targeted a real
+jam.
 
-## `admin-publish-setlist` (local source; deployment deferred)
+## `admin-publish-setlist` (deployed and live-verified 9 October 2026)
 
-`publishSetlist` and `checkPublish` are the final two entries in the current `ACTIONS` table. The publish action accepts only the upcoming jam, refuses empty or tab-less drafts as `empty_setlist`, writes only the matching Jams row's `estado`, flushes, and reads the value back before returning success. Retrying an already-published upcoming jam returns `alreadyPublished: true` without writing. `checkPublish` uses only `_prueba_publicar` and deletes it even after a failed read-back. The shared deployment and all live checks are deferred until app implementation is complete; no live latency measurement has been made for this feature.
+`publishSetlist` and `checkPublish` are the final two entries in the current `ACTIONS` table. The publish action accepts only the upcoming jam, refuses empty or tab-less drafts as `empty_setlist`, writes only the matching Jams row's `estado`, flushes, and reads the value back before returning success. Retrying an already-published upcoming jam returns `alreadyPublished: true` without writing. `checkPublish` uses only `_prueba_publicar` and deletes it even after a failed read-back. The shared deployment was completed on 9 October. `checkPublish` returned `ok` in 5.729 s; invalid date, unknown jam, and a past jam were refused as expected. Before/after `readJams` matched (two jams, 26 songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was published. The remote source hash was not independently observable; no live latency was measured for the publish mutation itself.

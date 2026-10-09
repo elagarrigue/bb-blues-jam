@@ -14,11 +14,12 @@
 
 ## Readiness
 
-Implementation-ready. U1 is settled: no unpublish in the MVP. E1 and C1 are resolved below. The
-user selected one shared deployment for the server halves of reorder, publish, adjust-lineup and
-assign after app implementation is complete. Complete
-and verify this feature locally without deployment or live requests; include its server changes in
-that one later deployment and run live checks with the batch. No per-feature fallback deployment.
+Historical readiness (8 October 2026): implementation-ready. U1 is settled: no unpublish in the
+MVP. E1 and C1 are resolved below. The user selected one shared deployment for the server halves
+of reorder, publish, adjust-lineup and assign after app implementation was complete. That shared
+deployment and the batch live checks completed on 9 October 2026 (see evidence below).
+Deployment-deferral instructions in the implementation plan and checklist below describe the
+pre-deployment workflow, not the current state.
 
 Size: one feature in two local implementation parts (A: server and `:core:data`; B: UI), about one
 session each.
@@ -262,8 +263,9 @@ Findings:
    the status block, badge still `BORRADOR`; `adb logcat -s BluesJam` shows the one line;
    `Reintentar` fails again; `Cerrar`. Flag off: `En preparación`. Screenshots, `uiautomator dump`.
    Restore flags.
-9. After app implementation is complete, include the combined server source for this feature in the
-    user's one shared deployment with reorder, adjust-lineup and assign. Then run its deferred live
+9. Historical implementation sequence: after app implementation was complete, include the
+    combined server source for this feature in the user's one shared deployment with reorder,
+    adjust-lineup and assign. The planned deferred live checks were then run with the batch (see above).
     checks as part of that batch (never publish a real jam, and never call `publishSetlist` with a
     date that is today or later): `{}` lists `publishSetlist, checkPublish`; one wrong-passphrase
     request returns `invalid_passphrase`; `checkPublish` returns `ok`; invalid date, unknown jam and
@@ -275,8 +277,8 @@ Findings:
 - Node green; `CI=true ./init.sh` exit 0 with `konsist: wired` (17/17), `detekt: wired`,
   `ktlint: wired`.
 - "Persists to the Sheet and musicians see the setlist": Node success + GET-after test; JVM
-  musician view after the mirror shows the songs. Real-sheet checks are deferred to the shared
-  four-feature deployment batch.
+  musician view after the mirror shows the songs. Real-sheet checks were deferred to, and completed
+  in, the shared four-feature deployment batch (see above).
 - "A failed publish is unmissable and does not report success": JVM presenter tests, (c), (d), device.
 - "The write failure is logged locally": JVM log capture plus the device logcat line.
 - The real success path on a device needs a stored passphrase and a real draft; not run by agents.
@@ -285,7 +287,8 @@ Findings:
 
 Node and gate counts; (a)–(d) and the allowlist demonstration with SHA-1 restores; screenshots,
 dump, logcat line; a statement that no URL, passphrase or name appeared. After the app-wide batch,
-record the shared deployed `Post.gs` SHA-1 and this feature's deferred live-check evidence.
+record the shared deployment and live-check evidence (see the addendum); the remote source hash
+  is not exposed by the API.
 
 ## Risks
 
@@ -306,8 +309,8 @@ record the shared deployed `Post.gs` SHA-1 and this feature's deferred live-chec
 - [ ] Failure card in the status block, persistent, assertive; one log line with no secret.
 - [ ] Amber only on the publish buttons, the published badge and keys; allowlist change reviewed.
 - [ ] Musician models unchanged; no feature imports another; three `wired`; no deployment/live
-      check occurred during app implementation; no secret in repo or output. Deferred live-check
-      evidence is recorded with the shared deployment after app implementation completes.
+      check occurred during app implementation; no secret in repo or output. The subsequent live
+      evidence is recorded above.
 
 ## User Decisions (8 October 2026)
 
@@ -320,7 +323,15 @@ record the shared deployed `Post.gs` SHA-1 and this feature's deferred live-chec
   amber `Publicar lista` beneath the `BORRADOR` badge; inline confirmation with song count and the
   irreversible-action note; persistent failure card in the status block beneath the header with
   `Reintentar` and `Cerrar`. See **Approved Copy and Placement** for exact strings.
-- **B1: superseded/resolved.** The user explicitly chose one shared deployment after app
-  implementation is complete for `admin-reorder-songs`, `admin-publish-setlist`,
-  `admin-adjust-lineup` and `admin-assign-musician`. Deployment and live checks are deferred until
-  then; do not substitute a per-feature or partial deployment.
+- **B1: superseded/resolved (8 October 2026; completed 9 October).** The user explicitly chose one shared deployment after app
+  implementation was complete for `admin-reorder-songs`, `admin-publish-setlist`,
+  `admin-adjust-lineup` and `admin-assign-musician`. The deployment and live checks are complete;
+  the original instruction prohibited a per-feature or partial deployment.
+
+## Post-deployment verification (9 October 2026)
+
+L1 listed `publishSetlist` and `checkPublish`; the wrong-passphrase probe returned
+`invalid_passphrase`. `checkPublish` returned `ok` in 5.729 s. Invalid date, unknown jam, and the
+latest past jam were refused with the expected codes. Before/after `readJams` matched (two jams,
+26 songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was published. The user deployed
+the source; the remote file hash was not independently observable.

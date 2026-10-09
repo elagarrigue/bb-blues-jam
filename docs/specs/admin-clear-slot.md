@@ -1,5 +1,13 @@
 # Feature Implementation Spec: Clear a filled slot
 
+## Current deployment state (9 October 2026)
+
+The shared `Post.js` deployment included `clearSlot`. `checkSetlistWrite` returned `ok` in 6.378 s
+and exercised assignment and clear on its disposable marker tab with cleanup. Before/after
+`readJams` matched (two jams, 26 songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No direct
+`clearSlot` request targeted a real jam. The remote source hash was not independently observable.
+The historical implementation-time deployment deferral below was resolved by this shared deploy.
+
 ## Source Feature
 
 - `id`: `admin-clear-slot`
@@ -82,7 +90,7 @@ Then no clear affordance or optimistic state is exposed.
 - Slot identity is `(date, songId, instrument, SlotPosition)`; guitars resolve ordinal among the active non-`-` columns. Open-first rendering is a stable partition and must not define request identity.
 - `:core:data` mutations publish Sending/Failed entries, share repository-wide call order and survive caller cancellation. Room changes only after a valid server success payload.
 - Existing mutation composables use presenters for decisions, `BluesJamTheme` tokens, and admin-only UI metadata.
-- Current local Apps Script deployment does not include the current `Post.js` clear action (not implemented); local assignment/lineup edits are also pending the user's deferred deployment/live-check phase.
+- Historical implementation-time gap (8 October 2026): the deployment did not include the then-unimplemented `clearSlot` action; assignment/lineup edits were also awaiting the user's shared deployment and live-check phase, completed on 9 October.
 - Verification available: `node --test backend/apps-script/test/*.test.js` and `CI=true ./init.sh`; no Compose UI test harness. A device run is optional and must use demo data only.
 
 ## Technical Approach
@@ -117,7 +125,7 @@ No new module or Gradle dependency. No navigation route is needed: clearing is a
 
 ## Durable Documentation
 
-- `docs/apps-script-api.md`: update local POST action count/list, request, auth/lock, errors, success payload, and temporary check; state deployment/live verification is deferred.
+- `docs/apps-script-api.md`: update the POST action count/list, request, auth/lock, errors, success payload, and temporary check. At spec time, deployment/live verification was deferred.
 - `docs/sheet-schema.md`: specify exact compare-and-clear semantics and that clearing leaves an empty open slot without changing the lineup.
 - `docs/domain-model.md`: record the filled-to-open transition and stale-target outcomes.
 - `DESIGN.md`: document filled-line clear affordance, minimum target, pending/revert states and copy.
@@ -132,7 +140,7 @@ No new module or Gradle dependency. No navigation route is needed: clearing is a
 3. Add the shared filled-line action metadata with absent-by-default behavior; verify original ordinal survives the open-first presentation partition and all existing callers remain read-only.
 4. Add clear Sending overlay before admin strip/panel/filter/count derivation; expose `Liberar` in Próxima jam only for eligible filled lines, prevent repeated in-flight clears, show dismissible failure cards, and test admin/musician parity plus optimistic-revert behavior.
 5. Update the durable docs above and record truthful local evidence. Do not change this feature's status in the planning task.
-6. Run `node --test backend/apps-script/test/*.test.js` and `CI=true ./init.sh`; require all three tools wired. Deployment and live validation are deferred until app implementation is complete and must not be represented as run.
+6. Historical implementation step: run `node --test backend/apps-script/test/*.test.js` and `CI=true ./init.sh`; require all three tools wired. Deployment and live validation were deferred until app implementation was complete; their results are now recorded above.
 
 ## Verification And Evidence
 
@@ -140,12 +148,12 @@ No new module or Gradle dependency. No navigation route is needed: clearing is a
 - Model/DAO/repository tests prove slot ordinal identity, unique filled target, a transaction updates only that song's seven slot values after server confirmation, no optimistic Room write, local/surface outcome mapping, shared write order, caller cancellation semantics and duplicate suppression.
 - Presenter/panel/overlay tests prove `Liberar` is absent by default and for musicians, appears only for a filled actionable slot in admin mode, uses original lineup ordinal, only Sending clears overlay as open, and strip/filter/count agree; failure restores the name and yields one dismissible card.
 - Run Node suite and standard gate; record actual counts, exit status and `konsist`/`detekt`/`ktlint` wired output. A local test does not establish deployment correctness.
-- No live request or `local.properties` access is part of this feature implementation. Once app implementation is complete, coordinate deployment of the combined current `Post.js` and shared L1-L5 validation per the user's deferred instruction; until then report deployment/live status as deferred, not passed.
+- Historical implementation-time instruction: no live request or `local.properties` access was part of the local feature work. The combined `Post.js` deployment and shared L1-L5 validation completed on 9 October, as recorded above.
 - Device verification is optional; if done, use demo data, restore original settings/config, and do not change accessibility settings.
 
 ## Risks And Unresolved Blockers
 
-- Combined Apps Script changes for lineup adjustment, assignment, and clearing remain un-deployed until the user says the app implementation is complete; all three depend on one deployment and the shared live verification sequence.
+- Historical planning blocker (8 October 2026): combined Apps Script changes for lineup adjustment, assignment, and clearing awaited app completion, one shared deployment, and live verification. That deployment and verification completed on 9 October (see current deployment state above).
 - Compare-and-clear sends the cached musician text to guard against stale clears. Existing read parsing is permissive, so server validation must compare normalized display text without imposing `MusicianName` creation restrictions on legacy names.
 - A refresh can arrive during a clear. The clear overlay must be scoped to the admin projection and latest Sending entry; completion must trust the validated server slot fields, while failure reveals the latest confirmed Room state on next refresh.
 - No product ambiguity blocks planning. The design uses an immediate inline clear action without confirmation because the mutation can be reversed by assigning the slot again; report any changed product decision before implementation.
@@ -157,5 +165,12 @@ No new module or Gradle dependency. No navigation route is needed: clearing is a
 - [ ] Pending clear affects admin-only projection; failure leaves Room unchanged and restores the musician line; musicians see no control/overlay.
 - [ ] Identity uses `SlotPosition` in original instrument order despite presentation partitioning; no `Otros` mutation.
 - [ ] 48dp action, established theme tokens, accessible action wording and Rioplatense copy are respected.
-- [ ] Focused tests and standard gate ran; three tools are wired; evidence says deployment/live checks are deferred.
+- [ ] Focused tests and standard gate ran; three tools are wired; dated implementation evidence and subsequent deployment/live results are recorded accurately.
 - [ ] Durable docs are updated; no module/dependency, navigation, or unrelated feature scope was added.
+
+## Post-deployment verification (9 October 2026)
+
+L1 listed `clearSlot`. `checkSetlistWrite` returned `ok` in 6.378 s and exercises assignment,
+clear, readback, and cleanup on a disposable tab. Before/after `readJams` matched (two jams, 26
+songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam slot was cleared. The user deployed
+the source; the remote file hash was not independently observable.

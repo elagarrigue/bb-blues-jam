@@ -9,12 +9,16 @@
 
 ## Readiness and Current State
 
-The local implementation is now in progress. The user has deferred Apps Script deployment and live validation until app implementation is complete. `admin-adjust-lineup` and this feature's local server/client changes are implemented locally; deployment-sensitive acceptance and independent validation remain pending. Keep all checks local until the user resumes the shared deployment/live-check phase.
+Historical implementation-time state (8 October 2026): the local implementation was underway and
+the user had deferred the shared deployment/live validation until app implementation was complete.
+That shared deployment and live validation completed on 9 October 2026 (see evidence below and in
+`feature_list.json`); this feature was independently accepted. Deferral instructions in the plan
+below describe the implementation-time workflow and are not the current deployment state.
 
 Current shared implementation to reuse:
 
 - `:core:model` now has validated `SlotPosition` and `MusicianName` types and resolves ordinals against the original lineup order.
-- Apps Script `Post.js` locally implements guarded/locked `setSlotCount` and `assignSlot`, sharing `findSongRow_`, canonical slot headers, `presentSlotFields_` and `checkSetlistWrite`. The latter tests both writes on a disposable tab. Neither change is deployed/live-verified yet.
+- Apps Script `Post.js` implements guarded/locked `setSlotCount` and `assignSlot`, sharing `findSongRow_`, canonical slot headers, `presentSlotFields_` and `checkSetlistWrite`. The latter tests both writes on a disposable tab. The 9 October live check passed; the remote file hash was not independently observable.
 - `:core:data` composes `SetlistAssignments` inside the existing `DefaultSetlistRepository`; its mutations share repository IDs, ordering, writer and scope.
 - `:core:ui` `LineupPanelUiModel` has optional action metadata, absent by default. `Lineup.toLineupPanel(extras)` retains the open-first display order while action identity comes from original lineup order.
 - `:feature:next-jam` overlays only Sending assignments before filters/counts/strip/panel derivation and uses its dismissible failure cards. The dedicated presenter reads suggestions only from cached jams.
@@ -56,7 +60,7 @@ Server validation order must be deterministic and write-free until all checks pa
 
 Use existing modules and allowed dependency direction only; no new module or Gradle dependency.
 
-- `backend/apps-script/src/Post.js`, `backend/apps-script/test/setlist.test.js` (or focused slot test), and `README.md`: add `assignSlot` action, name/U1 validation, single-cell write and extend `checkSetlistWrite` to exercise assignment on its temporary tab. Reuse the current writer/auth/lock and row/header helpers. Server changes remain local pending the user's deferred shared deployment.
+- `backend/apps-script/src/Post.js`, `backend/apps-script/test/setlist.test.js` (or focused slot test), and `README.md`: add `assignSlot` action, name/U1 validation, single-cell write and extend `checkSetlistWrite` to exercise assignment on its temporary tab. Reuse the current writer/auth/lock and row/header helpers. At spec time, server changes remained local pending the user's shared deployment.
 - `:core:model`: add `SlotPosition` and validated `MusicianName` plus JVM tests; add only the lineup-to-slot ordinal mapping needed by assignment. Existing `Lineup.withSlotCount` remains the adjust-lineup implementation.
 - `:core:data`: add assignment DAO/cache operation, public outcome and pending entry types, repository contract and `DefaultSetlistRepository` implementation. Reuse existing repository ids, scope, writer ordering, cache transaction patterns and composition; do not create a Koin binding solely for the helper.
 - `:core:ui`: extend `LineupLineUiModel` and `toLineupPanel` with optional slot identity/status/action decoration, defaulting to current read-only behavior. Update mapper/composable tests. Existing musician rendering must remain unchanged.
@@ -85,18 +89,18 @@ Use Rioplatense Spanish with vos. Copy includes `Anotar`, `Anotar músico`, `CUP
 4. Add shared panel slot identity/actions and admin-only assignment overlay, failure UI, suggestions and screen; test mapper, filter/count consistency, Sending-only overlay and musician invariance.
 5. Add route parsing and navigation wiring with route tests.
 6. Update durable docs and evidence. Run `node --test backend/apps-script/test/*.test.js` and `CI=true ./init.sh`; record actual results. Do not deploy or perform live checks yet.
-7. Once all app implementation work is complete, coordinate the already-deferred shared Apps Script deployment and live validation across affected features, then run independent validation. Until then, retain blocked/pending statuses and explicit evidence.
+7. Historical implementation sequence: once app work was complete, coordinate the shared Apps Script deployment and live validation across affected features, then run independent validation. The batch checks are now recorded below; retain their dated evidence.
 
 ## Verification and Evidence
 
 Local verification: successful Node suite and `CI=true ./init.sh` with `konsist`, `detekt` and `ktlint` all `wired`. Add focused tests for name rules; U1 and inactive/missing slot cases; exactly one-cell writes and no writes on every rejection; cache changes only after server `Done`; transaction targeting by date/song/slot; caller cancellation and shared write ordering; Sending overlay/latest entry, Failed revert, filter/count consistency, screen Gone/validation/single-submit/suggestion sorting and matching, musician invariance, and route parsing.
 
-Capture actual Node and gate counts/results, any failure demonstrations with verified restores, and explicit statement that deployment/live checks are deferred and not run. Do not include passphrases, deployment URLs or musician names in logs/evidence. No device run is required for local completion; if later used, use only demo data and do not alter accessibility settings.
+At implementation time, capture actual Node and gate counts/results, failure demonstrations with verified restores, and state that deployment/live checks are not run yet. Do not include passphrases, deployment URLs or musician names in logs/evidence. No device run is required for local completion; if later used, use only demo data and do not alter accessibility settings.
 
 ## Risks and Unresolved Blockers
 
-- The shared Apps Script deploy and live checks are intentionally deferred until app implementation is complete; deployment-sensitive acceptance remains unverified meanwhile.
-- `admin-adjust-lineup` is locally implemented but blocked before live validation/independent acceptance. Its current server changes establish shared helpers/patterns; assignment must build on current HEAD without assuming those changes are deployed.
+- Historical implementation-time status (8 October 2026): the shared Apps Script deploy and live checks awaited app completion, and deployment-sensitive acceptance remained unverified. The batch completed 9 October (see evidence above).
+- Historical implementation-time status (8 October 2026): `admin-adjust-lineup` was locally implemented and awaiting live validation/independent acceptance. Its server changes established shared helpers/patterns used by assignment.
 - Assignment and lineup adjustment both touch slot columns. Keep the U1 resolver and per-cell writes consistent with `setSlotCount` and existing header mapping; batch only if an existing server helper supports it and tests prove the same validation/write semantics. Assignment itself must change exactly one slot cell.
 - `SetlistRepository` is already large; if detekt trips, split by concern through an explicit architecture review rather than suppressing the rule.
 - Suggestions are display names; a past spelling may be inaccurate and equal names remain ambiguous by product decision.
@@ -108,7 +112,7 @@ Capture actual Node and gate counts/results, any failure demonstrations with ver
 - [ ] Slot ordinal is derived before presentation partitioning; no instrument selector; musician output is unchanged.
 - [ ] Suggestions use cached current/past jams only and follow dedupe/order/filter limits.
 - [ ] Theme tokens and amber roles are respected; copy uses vos.
-- [ ] Focused tests and standard gate actually ran; all three tools wired; evidence accurately says deployment/live validation remain deferred.
+- [ ] Focused tests and standard gate actually ran; all three tools wired; dated implementation evidence and subsequent live validation are recorded accurately.
 - [ ] Relevant durable docs are updated; no unrelated feature scope or new module/dependency.
 
 ## Implementation File Map
@@ -134,3 +138,10 @@ Reuse the current Koin wiring and existing public repository boundary. Add no fe
 - UI mapper tests preserve existing musician models and panel ordering while exposing slot identities only on actionable admin lines. Overlay tests cover newest Sending entry per slot, Failed revert, and agreement among strip, panel, filter and counts.
 - Presenter/screen tests cover Gone states, fixed slot label, invalid/blank input, one submit only, current and past suggestion content, recency/dedupe/accent-insensitive word-prefix matching, limits and tap-to-submit behavior.
 - Route tests accept a valid ISO date, parsed `SongId`, known `Instrument` and in-range ordinal; malformed/out-of-range arguments do not navigate.
+
+## Post-deployment verification (9 October 2026)
+
+L1 listed `assignSlot`. `checkSetlistWrite` returned `ok` in 6.378 s and exercises assignment
+write/readback/cleanup on a disposable tab. Before/after `readJams` matched (two jams, 26 songs;
+aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was assigned. The user deployed the source;
+the remote file hash was not independently observable.

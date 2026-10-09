@@ -414,7 +414,7 @@ Stated so they can be challenged rather than silently relied upon.
   (`JamCalendar`). They agree only while the Sheet's time zone is Buenos Aires; keep it so.
 
 
-- **Adjust-lineup risks** (`admin-adjust-lineup`, local implementation; live deployment pending):
+- **Adjust-lineup risks** (`admin-adjust-lineup`, live verification completed 9 October 2026):
   JS resolves Sheet columns, Kotlin mirrors counts for display only; confirmed cache always comes
   from the server's seven-cell answer. Guitar overlay ordering can differ briefly before confirm.
   Restoring a first guitar changes a filled second guitar's ordinal: assign (implemented locally)
@@ -426,9 +426,14 @@ Stated so they can be challenged rather than silently relied upon.
   Pixel 5 local smoke also showed shared navigation limitations: the next-tab label wraps/clips
   at font scale 2.0 and the system navigation bar overlaps the right edge in landscape. The inline
   editor itself retains its controls and scrolls; these shared inset/tab issues remain open.
+  The shared L1–L5 checks passed on 9 October: `checkSetlistWrite` completed in 6.378 s, all
+  validation probes returned their expected refusal codes, and before/after `readJams` matched
+  (two jams, 26 songs; aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was changed. The
+  local source SHA-1 was `721F7CCF1481F964FEAAF6A772E16B350CFF724C`; the remote source hash was not
+  independently observable. Remaining device smoke concerns above are still open.
 
-- **Reorder risks** (`admin-reorder-songs`, local implementation; shared deployment/live checks
-  deferred): the scattered-row park path uses multiple writes, not a Sheet transaction. If a write
+- **Reorder risks** (`admin-reorder-songs`, shared live checks completed 9 October 2026): the
+  scattered-row park path uses multiple writes, not a Sheet transaction. If a write
   fails partway through, the tab can temporarily retain a gap or the moved row at `max + 1`; each
   completed batch still preserves the no-duplicate-position invariant. A later successful move
   closes gaps, but no automatic repair runs. A live latency measurement for the complete move and
@@ -436,6 +441,9 @@ Stated so they can be challenged rather than silently relied upon.
   action. During an optimistic move, a refresh can update the confirmed cache before the write
   answer; the admin reapplies the Sending move by song id and absolute target, then Room mirrors the
   confirmed result before the overlay is removed. A competing admin mutation can briefly be masked
-  by that local overlay until its answer or failure arrives. The row-anchor behavior and these
-  refresh/concurrency transitions still need device smoke after deployment; no live or device
-  validation was run for this slice.
+  by that local overlay until its answer or failure arrives. Live checks passed: self-checks
+  `checkSetlistMove` (10.522 s), `checkSetlistWrite` (6.378 s), and `checkSetlistRemove` (6.882 s);
+  invalid requests were refused as expected and before/after reads matched (two jams, 26 songs;
+  aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was changed. A live latency measurement
+  for the complete move and park path has not been made, and row-anchor/refresh behavior still need
+  device smoke.

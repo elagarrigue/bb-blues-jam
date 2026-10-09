@@ -19,16 +19,16 @@ with `isMarkerRow_`), `AdminWriter.send`/`WriteOutcome`, `DefaultSetlistReposito
 and the admin layer of `NextJamPresenter` (`AdminState`, `RowAdmin.decorate`, `pendingKey`,
 `FailureMessages.kt`, `SongRowAdminUiModel`).
 
-**Batched deploy.** Part A joins the second batched `Post.js` deploy proposed for adjust-lineup,
+**Planning-time deployment plan (7 October; completed 9 October 2026).** Part A joined the batched
+`Post.js` deploy proposed for adjust-lineup,
 assign-musician, reorder and publish. Within the batch, implement server halves in
 `feature_list.json` order (this slice first). Each slice that extends `checkSetlistWrite_` appends
 its own step after the previous slice's; `isMarkerRow_` must compare against an expected-slots
 argument (this slice introduces it, see A1), so later steps only change the expectation.
 
 Implement both parts before requesting the batched deploy: local server/data work and UI verification
-are independent of the deployment. Pending live evidence keeps this feature `in_progress`; never
-report `passing` or accepted while L1–L5 have not run. A human deployment is the final external
-blocker after all local work is concrete and reviewable.
+are independent of the deployment. At planning time, pending live evidence kept this feature
+`in_progress`; the planning rule prohibited reporting `passing` or accepted until L1-L5 ran. A human deployment was the final external blocker after local completion; that blocker was resolved on 9 October.
 
 Size: one mutation and one inline flow in two implementation parts. No new
 screen, no route, no Room schema change.
@@ -347,11 +347,12 @@ passphrase or name appeared in any output.
   models unchanged; no amber added; copy as specified.
 - [ ] Three `wired`, Node green, live checks touched no real jam, no secret in any output.
 
-## Planning Defaults And External Blocker
+## Planning Defaults And External Blocker (7 October 2026)
 
 The user authorized continued autonomous work. X1/F1/U1/C1 below are implementation defaults,
 not reported user decisions; none reverses D-01–D-20. No product question blocks implementation.
-The only expected external blocker is human deployment for live checks after local completion.
+At planning time, the only expected external blocker was human deployment for live checks after
+local completion. That deployment and live verification have since completed (see below).
 
 - **X1, `Otros` mutations.** **Split into a new slice `admin-edit-extra-participants`** (add and
   remove one `Nombre (instrumento)` entry, server action(s) on the `Otros` cell, same pattern),
@@ -368,3 +369,15 @@ The only expected external blocker is human deployment for live checks after loc
 
 Decided without a question, by precedent: optimistic display (set-key O1), extending
 `checkSetlistWrite` (set-key L1 (a)), row found by `id_tema` (remove-song R1), offline blocked.
+
+## Post-deployment verification (9 October 2026)
+
+L1 returned the JSON `unknown_action` envelope and listed all expected shared-batch actions. L2
+returned `invalid_passphrase`; L3 `checkSetlistWrite` returned `ok` in 6.378 s. L4 returned the
+expected refusal codes for invalid date/song/instrument, guitar 3, bass 2, negative and string
+counts, an unknown jam, a past jam, and a song absent from the upcoming setlist. L5 `readJams`
+matched before and after: two jams, 26 songs, identical aggregate SHA-256 prefix
+`42CFABE0DE3C8D71`. No real jam was modified. The user deployed the source; the remote file hash was
+not independently observable. The local source SHA-1 was
+`721F7CCF1481F964FEAAF6A772E16B350CFF724C`. The feature is `passing`, pending independent
+validation; no real jam was changed.

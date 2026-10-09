@@ -912,7 +912,7 @@
       "admin-add-song-to-setlist",
       "instrument-strip-component"
     ],
-    "status": "blocked",
+    "status": "accepted",
     "verification": [
       "A lineup change persists to the Sheet",
       "A lineup with zero slots of an instrument is valid and renders correctly",
@@ -923,7 +923,9 @@
       "Failure demos a/b failed corresponding Node column-order and occupied-removal tests; Post.js restored SHA1 4129D6ACE9D8BFD9431C078BE1C339A7860A0E6B. Demos c/d gate failed 2/186 data and 1/138 next-jam tests; byte restore and sha1sum -c passed for SetlistSlotDao C60906843EAA7022DA7BD58460ADAD6370FC4BC4 and overlay 8ABFD328D771958142CD3E98620AE6B308D69D26, then full gate green.",
       "Pixel 5: occupied-guitar remove disabled/add enabled with explanation; described controls 48dp; guitar-add and harmonica-remove AccessRefused reverted counts and showed correct dismissible formation failure cards. Font 2.0 editor wraps and scrolls; rotation retains editor; normal APK musician expanded row has only detail action. Optimistic frame too brief to capture; delayed Molecule coverage.",
       "Original local.properties byte-restored; normal APK reinstalled; font1.0, rotation1/0, airplane0, physical1080x2340, accessibility null/0/0 unchanged, crash buffer empty. Residual shared tab font2 clipping and landscape navigation overlap recorded. No real jam changed.",
-      "Pending human deployment: replace existing Post.gs with complete backend/apps-script/src/Post.js, save and deploy New version of existing deployment. Required live L1-L5 and independent validation have NOT run. On 7 Oct 2026 the user deferred deployment and live checks until the app implementation is complete; resume after credential rotation and updating local.properties. See PROGRESS.md handoff."
+      "Local implementation/device evidence was recorded 7 Oct; its deployment deferral was resolved by the 9 Oct shared L1-L5 run above.",
+      "9 Oct 2026 shared live verification: L1 all required batch actions present; L2 one wrong passphrase returned invalid_passphrase; L3 checkSetlistWrite ok in 6.378 s; L4 invalid_date, invalid_song, invalid_instrument, all four invalid_count cases, unknown_jam, jam_not_editable, and song_not_in_setlist matched; L5 readJams unchanged (2 jams, 26 songs, aggregate SHA-256 42CFABE0DE3C8D71 before/after). No real jam was changed.",
+      "Independent validator (9 Oct 2026): accept. `CI=true ./init.sh` exit 0; konsist, detekt, and ktlint all wired. Validator independently inspected the selected spec, implementation diff, live L1-L5 evidence, architecture, and reconciled deployment documentation. Remote source hash remains unobservable."
     ],
     "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies. From sheet-schema-definition validation: under U1 = B, restoring a removed guitar slot into Guitarra 1 while Guitarra 2 holds a name shifts that musician from the 1st to the 2nd guitar slot; decide the write behaviour explicitly."
   },
@@ -964,9 +966,10 @@
       "8 Oct 2026 local implementation: server assignSlot uses the active U1 ordinal, validates and normalizes the name, and writes one plain-text slot cell; checkSetlistWrite verifies assign/readback/cleanup on its temporary tab. No live call or deployment was performed.",
       "Local Android verification: CI=true ./init.sh exit 0; 87 JVM test suites, 555 tests, zero failures/errors; konsist, detekt and ktlint all wired. Focused :core:data:test 190/190, :feature:next-jam:test 148 tests, and Node suite 152/152 also passed; ktlintFormat succeeded.",
       "Backend contract, domain, schema, and feature spec docs updated. Deployment and live validation are intentionally deferred until app implementation is complete; no live credential was used for this feature.",
-      "Independent validator (8 Oct 2026): accept. Reran CI=true ./init.sh (exit 0; three tools wired), Node suite 152/152 and git diff --check (exit 0); reviewed server auth/U1/single-cell write, cache confirmation, Sending overlay, fixed-slot UI, suggestions, routes, architecture, docs and security. No live checks were run per the spec. Commit deferred because shared implementation files also contain the unaccepted admin-adjust-lineup feature and existing Codex infrastructure edits."
+      "Independent validator (8 Oct 2026): accept. Reran CI=true ./init.sh (exit 0; three tools wired), Node suite 152/152 and git diff --check (exit 0); reviewed server auth/U1/single-cell write, cache confirmation, Sending overlay, fixed-slot UI, suggestions, routes, architecture, docs and security. No live checks were run per the spec. Commit deferred because shared implementation files also contain the unaccepted admin-adjust-lineup feature and existing Codex infrastructure edits.",
+      "9 Oct 2026 shared live verification: L1 assignSlot present; checkSetlistWrite ok in 6.378 s exercises assignment on its temporary tab and cleanup; readJams stayed unchanged (2 jams, 26 songs, aggregate SHA-256 42CFABE0DE3C8D71). No assignSlot call targeted a real jam."
     ],
-    "notes": "D-05: only the admin assigns. Suggestions use names from the current and past jam tabs already present in JamsSnapshot; there is no musicians list. Two musicians sharing a name are not disambiguated, by design. Apps Script deployment/live checks are deferred until app implementation is complete."
+    "notes": "D-05: only the admin assigns. Suggestions use names from the current and past jam tabs already present in JamsSnapshot; there is no musicians list. Two musicians sharing a name are not disambiguated, by design. Apps Script deployment/live checks completed in the shared batch on 9 October 2026."
   },
   {
     "id": "admin-clear-slot",
@@ -985,7 +988,8 @@
       "2026-10-08: CI=true ./init.sh exit 0; 100 JVM test-result suites, 629 tests, zero failures/errors; konsist, detekt and ktlint all wired.",
       "2026-10-08: node --test backend/apps-script/test/*.test.js — 157/157 pass, including guarded clearSlot, compare-and-clear no-write rejections, U1/reordered headers, exact one-cell write, and disposable-tab cleanup on an injected clear failure.",
       "2026-10-08 validator repair: filled-slot Liberar uses BluesJamTheme.colors.text while open-slot Anotar keeps slotOpen; ktlintFormat and CI=true ./init.sh both exit 0; all verification tools wired. git diff --check passed. No device or deployment/live request was run; deployment and L1-L5 remain deferred until app implementation is complete.",
-      "Independent validator (2026-10-08): accept. Reran CI=true ./init.sh (exit 0; konsist/detekt/ktlint wired) and git diff --check; verified Anotar remains amber and Liberar uses neutral text styling. Live checks deferred per user instruction."
+      "Independent validator (2026-10-08): accept. Reran CI=true ./init.sh (exit 0; konsist/detekt/ktlint wired) and git diff --check; verified Anotar remains amber and Liberar uses neutral text styling. Live checks deferred per user instruction.",
+      "9 Oct 2026 shared live verification: L1 clearSlot present; checkSetlistWrite ok in 6.378 s exercises assignment and clear on its temporary tab with cleanup; readJams stayed unchanged (2 jams, 26 songs, aggregate SHA-256 42CFABE0DE3C8D71). No clearSlot call targeted a real jam."
     ],
     "notes": "D-13. Completes the assign/clear pair; there is no reserved intermediate state."
   },
@@ -1007,9 +1011,10 @@
       "2026-10-08: user decisions recorded in docs/specs/admin-reorder-songs.md: M1 visible Subir/Bajar buttons, O2 optimistic move with rollback and failure notice, B2 one shared deployment after app implementation is complete for reorder/publish/adjust-lineup/assign.",
       "2026-10-08: implemented guarded moveSong/checkSetlistMove, duplicate-safe batched positions, Room mirror and optimistic admin reorder with rollback cards and row anchoring. Verified: CI=true ./init.sh exit 0 with konsist/detekt/ktlint wired; :core:data:test 198 tests, :feature:next-jam:test 157 tests, Node suite 162/162, ktlintFormat and git diff --check passed. Device and deployment/live verification were not run; shared deployment remains deferred until app implementation completes.",
       "2026-10-08: validator requested documentation-only revision. README Known action lists (including both executable unknown_action examples) now match the current 13 ACTIONS names; risks-and-open-questions now records park-path partial-write state, optimistic-order/refresh and competing-admin risks, and that live latency measurement awaits the deferred shared deployment. No live measurements or deployment were made.",
-      "Independent validator (2026-10-08): accept after README and risk-document repairs. The validator reran CI=true ./init.sh and Node 162/162 before the docs-only revision, then verified the corrections and git diff --check after repair. No deployment or live request was made."
+      "Independent validator (2026-10-08): accept after README and risk-document repairs. The validator reran CI=true ./init.sh and Node 162/162 before the docs-only revision, then verified the corrections and git diff --check after repair. No deployment or live request was made.",
+      "9 Oct 2026 shared live verification: L1 moveSong/checkSetlistMove present; LM2 wrong passphrase returned invalid_passphrase; LM3 invalid_date, invalid_song, invalid_position (0 and string), unknown_jam, jam_not_editable, and song_not_in_setlist matched; LM4 checkSetlistMove 10.522 s, checkSetlistWrite 6.378 s, checkSetlistRemove 6.882 s all ok; LM5 aggregate readJams SHA-256 and counts unchanged (2 jams, 26 songs). No real jam was changed."
     ],
-    "notes": "D-13. M1 selected explicit 48dp Subir/Bajar actions; O2 selected optimistic movement with rollback and a failure notice. Under B2, grouped deployment/live validation remains deferred until app implementation is complete. appendSetlistRow_ batching is included in this slice."
+    "notes": "D-13. M1 selected explicit 48dp Subir/Bajar actions; O2 selected optimistic movement with rollback and a failure notice. Under B2, grouped deployment/live validation completed on 9 Oct 2026; see live evidence. appendSetlistRow_ batching is included in this slice."
   },
   {
     "id": "admin-publish-setlist",
@@ -1029,7 +1034,8 @@
     "evidence": [
       "2026-10-08: user confirmed E1 (reject empty/tab-less drafts with empty_setlist and hide the action) and C1 (approve proposed copy and placement). Spec records U1 no-unpublish and B2 shared deployment after app implementation. Implementation underway; no deployment/live work.",
       "2026-10-08 implementer: backend publishSetlist/checkPublish, confirmed-only Room mutation, admin confirmation/status/failure UI, safe failure logging, and API/domain/design docs implemented. `ktlintFormat` and `CI=true ./init.sh` exited 0; build/check completed, all three verification tools wired, 104 JVM result suites with 649 tests and 0 failures/errors. `node --test backend/apps-script/test/*.test.js` passed 165/165; `git diff --check` passed. No device/live verification or deployment; shared deployment and live checks remain deferred under B2.",
-      "Independent validator (2026-10-08): accept. Reran CI=true ./init.sh (exit 0, all tools wired), Node 165/165, and git diff --check. Confirmed E1/C1/U1/B2 decisions, guarded empty-setlist refusal, read-back before cache publication, failure logging/status and musician read behavior. No deployment, live request, credentials, or local.properties access."
+      "Independent validator (2026-10-08): accept. Reran CI=true ./init.sh (exit 0, all tools wired), Node 165/165, and git diff --check. Confirmed E1/C1/U1/B2 decisions, guarded empty-setlist refusal, read-back before cache publication, failure logging/status and musician read behavior. No deployment, live request, credentials, or local.properties access.",
+      "9 Oct 2026 shared live verification: L1 publishSetlist/checkPublish present; one wrong passphrase returned invalid_passphrase; checkPublish ok in 5.729 s; invalid_date, unknown_jam, and jam_not_editable for the latest past jam matched; before/after readJams unchanged (2 jams, 26 songs, aggregate SHA-256 42CFABE0DE3C8D71). No real jam was published."
     ],
     "notes": "D-13, and the highest-stakes mutation in the product. A silently failed publish means the admin believes the list is live while musicians read something stale: the worst outcome this app can produce. Optimistic state is not acceptable here without explicit confirmation."
   },
