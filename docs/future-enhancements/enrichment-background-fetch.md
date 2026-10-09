@@ -1,4 +1,7 @@
-# Feature Implementation Spec: Enrich the catalog's artists from MusicBrainz in the background
+# Future Enhancement Spec: Enrich the catalog's artists from MusicBrainz in the background
+
+> Preserved for later planning. This enhancement is not in the active `feature_list.json` and must
+> not enter implementation until its open decisions below are answered.
 
 ## Source Feature
 
@@ -6,26 +9,15 @@
 - `area`: data
 - `depends_on`: catalog-repository-cache (`accepted`)
 - `status`: not_started (at planning time, 5 October 2026, HEAD `b421fbc`)
-- `source`: `feature_list.json`
+- source: moved from the active feature_list.json to docs/future-enhancements.md on 9 October 2026
 
-**Planner's recommendation: do not start this slice before the phase 1 critical path.** It has
-**no visible effect** in the app (see Goal), its only consumer is the phase 2 assistant (D-14,
-D-20), and the feature entry itself says it is "fully removable if the timeline tightens". With
-24 of 38 slices accepted, the admin chain (passphrase, write auth, seven mutations, action
-registry) still open and the assistant due in week 5, run it only when the critical path is waiting
-on a human, or move it to the start of phase 2. The spec is still implementation-ready if the user
-approves it (**U1–U4 below must be answered first**).
+This enhancement was moved out of the active app plan on 9 October 2026 at the user request. It has no visible effect in the app; its only consumer is the phase 2 assistant (D-14, D-20). Reopen it only after the user confirms the remaining decisions (U1-U4 below).
 
-**The feature entry does not match the approved design** and must be reworded by the orchestrator
-once U1 is answered. It says "its artwork and canonical metadata appear once fetched", but
-`DESIGN.md` (song detail, "Not shown (D-20, D-09): … artwork …") shows no artwork anywhere, and no
-screen shows any enrichment field. Proposed wording, for U1 = narrow:
-
-- `user_visible_behavior`: "Nothing visible. Each catalog artist's country is fetched from
-  MusicBrainz in the background and cached, so the phase 2 assistant can filter blues nacional by
-  data; the app is fully usable if the fetch never succeeds."
-- `verification`: keep the three lines, reading "on song add" as "when a catalog refresh brings an
-  artist that was never looked up" (the Sheet owns the catalog, D-04; the app adds no songs).
+The former active-list entry described artwork and canonical metadata becoming visible, which
+does not match this country-only proposal or current screen design. This preserved spec is a draft:
+if the item is restored, first resolve U1-U4, then rewrite its active-list behavior and verification
+criteria to match the resulting scope. In particular, the old "on song add" wording conflicts with
+the Sheet-owned catalog (D-04), so it must not be reused unchanged.
 
 ## Goal
 

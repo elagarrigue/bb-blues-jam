@@ -8,9 +8,9 @@ The feature is implemented and self-verified. Guarded Apps Script add/remove act
 
 Implemented an app-owned typed registry for all ten setlist mutations, with exhaustive dispatch preserving arguments and typed outcomes, plus singleton Koin wiring to the existing SetlistRepository. Updated the domain and risk inventory; the deeplink scheme remains deferred under D1. Independent validator accepted after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired), inspecting the registry tests (2/2) and confirming there are no feature-module changes.
 
-## 9 October 2026 - enrichment-background-fetch decision blocker
+## 9 October 2026 - enrichment-background-fetch moved to future enhancement
 
-The admin chain and action registry are accepted. The existing enrichment spec says U1-U4 must be answered before implementation; it is now marked blocked pending the user choice. The open choices are feature scope, MusicBrainz User-Agent contact, network/scheduling policy, and whether to add the API-host Konsist rule. Official MusicBrainz API docs say non-commercial use is free, a meaningful User-Agent is required, and clients must stay at or below one request per second. No enrichment code was changed.
+At the user request, removed this optional enrichment from the active feature list and moved its preserved planning spec to docs/future-enhancements/enrichment-background-fetch.md. No implementation started. The future item remains conditional on decisions U1-U4. MusicBrainz documentation allows non-commercial API use with a meaningful User-Agent and a maximum of one request per second; Deezer is not part of the country-only proposal.
 
 ## Current Verified State
 
@@ -18,7 +18,7 @@ The admin chain and action registry are accepted. The existing enrichment spec s
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: 40 of 42 slices accepted; `action-contract-registry` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
+- Current state: 40 of 41 active slices accepted; `action-contract-registry` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Shared Apps Script deployment for reorder, publish, adjust-lineup, assign, and clear-slot was completed by the user. Initial POST exposed a missing `SCHEMA_VERSION` global; the user corrected `Code.gs` and deployed current `Post.js`. L1 now confirms all batch actions. Full read-only L1-L5 checks passed on 9 October 2026; details below. No real jam was modified or published.
   The seed was imported into the real Sheet and reviewed by hand by

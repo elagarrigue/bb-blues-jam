@@ -1116,24 +1116,5 @@
       "Independent validator accepted on 9 October 2026 after confirming the ten-operation inventory, typed dispatch and singleton wiring; it reran CI=true ./init.sh successfully and verified docs and scope."
     ],
     "notes": "D-13 action inventory resolves to ten repository-callable mutations, including both D-18 Otros operations. This app-owned typed Kotlin registry is not an assistant JSON protocol or deeplink scheme; D1 remains deferred. No feature module source/build file changes. Independent validator accepted on 9 October 2026."
-  },
-  {
-    "id": "enrichment-background-fetch",
-    "area": "data",
-    "title": "Enrich songs from music APIs in the background",
-    "user_visible_behavior": "After a song is added, its artwork and canonical metadata appear once fetched, and nothing blocks if the fetch never succeeds.",
-    "depends_on": [
-      "catalog-repository-cache"
-    ],
-    "status": "blocked",
-    "verification": [
-      "Enrichment runs on song add, never during list rendering",
-      "MusicBrainz requests stay within 1 req/s",
-      "With every API unreachable, the app remains fully usable"
-    ],
-    "evidence": [
-      "9 October 2026 planning handoff: selected after the accepted admin chain. The existing 5 October spec explicitly leaves U1-U4 open: confirm country-only vs Deezer/artwork or omit; choose public repository URL vs email in MusicBrainz User-Agent; approve startup scheduling on any network vs constrained WorkManager; approve Konsist host rule vs rely on internal visibility. Asked the user; implementation has not started. Official MusicBrainz API docs checked: free for non-commercial use, meaningful User-Agent required, maximum one request per second. Deezer terms are irrelevant if artwork remains excluded."
-    ],
-    "notes": "D-09; user deferred until after the admin chain, now complete. Blocked pending U1-U4 answers from the user; no implementation started."
   }
 ]

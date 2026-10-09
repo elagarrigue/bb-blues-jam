@@ -55,9 +55,8 @@ questions, well past one spec. **Recommendation for the orchestrator** (this spe
 
 - The jams route, `Jam`/`JamSong` mapping and jam tables: all of S1.
 - Any UI, presenter or Spanish copy. Freshness is exposed as data only. A screen draws it later.
-- Enrichment (MusicBrainz, Deezer). That is `enrichment-background-fetch`, which will use its own
-  table keyed by song id, never columns on `catalog_song`, because a catalog replace wipes that
-  table (D-09).
+- Enrichment is a future enhancement, preserved in
+  `docs/future-enhancements/enrichment-background-fetch.md`; it is not part of the active app plan.
 - Writes, the admin flag (DataStore) and the passphrase.
 - Using tempo, tags, difficulty or `songsterrId` anywhere. They are parsed and stored only (D-20).
 - A Room schema export or migrations (Decision 5).

@@ -32,8 +32,9 @@ parameters and callbacks and never see the library (D-03).
 
 - Tempo, tags, difficulty, `songsterrId`, the tab button and `songsterr-browser-link` (D-20,
   blocked). The screen never reads `CatalogRepository` or `Song`; it reads `JamSong` only.
-- Artwork or any enrichment field (D-09; `enrichment-background-fetch` is a separate, not-started
-  slice). No external API call anywhere in this slice.
+- Artwork or any enrichment field (D-09; enrichment is deferred in
+  `docs/future-enhancements/enrichment-background-fetch.md`). No external API call anywhere in this
+  slice.
 - Admin controls (edit key, lineup, assignments): `admin-set-key`, `admin-adjust-lineup`,
   `admin-assign-musician`. No mutation of any kind (D-13 is untouched).
 - The bottom bar, tab destinations and per-tab state: `bottom-navigation`. This slice only adds
