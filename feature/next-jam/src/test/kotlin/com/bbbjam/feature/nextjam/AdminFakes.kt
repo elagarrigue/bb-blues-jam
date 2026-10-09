@@ -6,6 +6,8 @@ import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.AssignSlotOutcome
 import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.ExtraParticipantChange
+import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.MoveSongOutcome
@@ -57,6 +59,17 @@ class FakeSetlistRepository : SetlistRepository {
     val keyCalls = mutableListOf<AddCall>()
     val lineupChanges = MutableStateFlow<List<LineupChange>>(emptyList())
     val assignments = MutableStateFlow<List<Assignment>>(emptyList())
+    val extraParticipantChanges = MutableStateFlow<List<ExtraParticipantChange>>(emptyList())
+    data class ExtraAddCall(val date: LocalDate, val id: SongId, val name: String, val instrument: String)
+    val extraAddCalls = mutableListOf<ExtraAddCall>()
+    data class ExtraRemoveCall(
+        val date: LocalDate,
+        val id: SongId,
+        val ordinal: Int,
+        val name: String,
+        val instrument: String,
+    )
+    val extraRemoveCalls = mutableListOf<ExtraRemoveCall>()
     val slotClears = MutableStateFlow<List<SlotClear>>(emptyList())
     val moves = MutableStateFlow<List<SetlistMove>>(emptyList())
     val publishes = MutableStateFlow<List<SetlistPublish>>(emptyList())
@@ -124,6 +137,29 @@ class FakeSetlistRepository : SetlistRepository {
     }
 
     override fun observeAssignments(): Flow<List<Assignment>> = assignments
+
+    override suspend fun addExtraParticipant(
+        jamDate: LocalDate,
+        songId: SongId,
+        name: String,
+        instrument: String,
+    ): ExtraParticipantOutcome {
+        extraAddCalls += ExtraAddCall(jamDate, songId, name, instrument)
+        return ExtraParticipantOutcome.Changed
+    }
+
+    override suspend fun removeExtraParticipant(
+        jamDate: LocalDate,
+        songId: SongId,
+        ordinal: Int,
+        expectedName: String,
+        expectedInstrument: String,
+    ): ExtraParticipantOutcome {
+        extraRemoveCalls += ExtraRemoveCall(jamDate, songId, ordinal, expectedName, expectedInstrument)
+        return ExtraParticipantOutcome.Changed
+    }
+
+    override fun observeExtraParticipantChanges(): Flow<List<ExtraParticipantChange>> = extraParticipantChanges
 
     override suspend fun clearSlot(
         jamDate: LocalDate,

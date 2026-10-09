@@ -237,7 +237,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -276,7 +276,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -700,3 +700,15 @@ shared deployment means this is local behavior and has not been live-verified ye
 `publishSetlist` is a guarded, locked write with `{date}`. It rejects invalid, unknown, duplicate or non-upcoming jams before writing; a retry for an already `PUBLICADA` jam succeeds idempotently. A draft must have a valid Jams row and at least one setlist row. The server writes only that row's `estado` cell, flushes, and reads back `PUBLICADA` before returning `{ok:true, alreadyPublished:false}`; a retry returns `alreadyPublished:true` without writing. Missing tabs or no songs return `empty_setlist`. `checkPublish` exercises the same write/read-back against its temporary `_prueba_publicar` Jams tab and always removes that tab; it never changes a real jam. The action is in local source; deployment and live checks are deferred to the user's shared four-feature deployment.
 
 The public `SetlistRepository.publishSetlist(jamDate)` mutation returns `PublishOutcome.Published(alreadyPublished)` only when the server confirms its result. Room changes only after confirmation and only for a cached `DRAFT` jam with an `AVAILABLE` setlist. It queues with other writes and exposes `SetlistPublish` Sending/Failed state for the admin status block; failure logs one safe `BluesJam` line and never optimistically marks the jam published.
+
+### `addExtraParticipant` and `removeExtraParticipant` (`admin-edit-extra-participants`)
+
+Both are passphrase guarded and run under the script lock. They validate date and `songId`, require the unique editable jam and unique song row, validate the `Otros` header, parse its semicolon-separated `Nombre (instrumento)` entries, and write only that cell as plain text. `Otros` remains outside the lineup and never contributes an open slot.
+
+`addExtraParticipant` takes `{date, songId, name, instrument}`. Both values are trimmed, whitespace is collapsed, each is at most 40 UTF-16 units, and neither may contain controls, `;`, `(` or `)`. A name also cannot start with `=`, `+`, `-` or `@` and must contain a letter or digit. The list is limited to 20 entries. Success returns `{ok:true, schemaVersion:1, extras:[{name,instrument},...]}` in canonical order; identical entries are allowed. Errors include `invalid_extra`, `invalid_name` and `extra_limit`.
+
+`removeExtraParticipant` takes `{date, songId, ordinal, expectedName, expectedInstrument}`. The 1-based ordinal and exact normalized pair are compared with the list read under the lock. A mismatch returns `extra_changed` without a write; it never removes a different equal pair. Success returns the same canonical `extras` payload. Both actions refuse malformed current lists rather than rewriting data they cannot interpret.
+
+The public `SetlistRepository` functions share the mutation id, FIFO order/write locks and `AdminWriter`. Only a valid success payload is mirrored by a single Room transaction into the uniquely cached available song; otherwise Room stays unchanged and refresh repairs a cache mirror failure. Sending entries optimistically alter only the admin's `Otros` projection; failures revert and remain dismissible. The local admin flag draws controls only; server authorization remains authoritative.
+
+The self-cleaning `checkSetlistWrite` deploy check now exercises extra append/readback, stale ordinal refusal without a cell write, current ordinal removal/readback, the 20-entry limit and final `Otros` cell value on its disposable marker tab. It deletes the marker tab in `finally`; it does not touch a real jam. This check has been exercised by the local Apps Script harness, but no live deployment check was run for this implementation.

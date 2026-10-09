@@ -16,7 +16,7 @@ import androidx.room.Transaction
  */
 @Dao
 internal interface SetlistDao :
-    SetlistSlotDao,
+    SetlistExtraDao,
     SetlistAssignmentDao {
     @Query("SELECT setlist_state FROM jam WHERE date = :date")
     override suspend fun setlistState(date: String): String?

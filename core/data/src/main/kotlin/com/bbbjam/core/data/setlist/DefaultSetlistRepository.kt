@@ -36,9 +36,12 @@ internal class DefaultSetlistRepository(
     private val slotClears: SetlistSlotClears = SetlistSlotClears(writer, setlistDao, catalogDao, scope, queue),
     private val moves: SetlistMoves =
         SetlistMoves(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
+    private val extraChanges: SetlistExtraParticipants =
+        SetlistExtraParticipants(writer, setlistDao, catalogDao, scope, queue),
 ) : SetlistRepository,
     SetlistSlotClearRepository by slotClears,
     SetlistMoveRepository by moves,
+    SetlistExtraParticipantRepository by extraChanges,
     SetlistPublishRepository by SetlistPublishes(
         writer,
         setlistDao,
@@ -71,6 +74,7 @@ internal class DefaultSetlistRepository(
         keyChanges.dismiss(id)
         lineupChanges.dismiss(id)
         assignments.dismiss(id)
+        extraChanges.dismiss(id)
         slotClears.dismiss(id)
         moves.dismiss(id)
         dismissPublish(id)

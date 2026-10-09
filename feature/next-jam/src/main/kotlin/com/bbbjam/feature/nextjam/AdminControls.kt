@@ -161,6 +161,7 @@ internal fun AdminRowActions(
         model.setKey.events(SetKeyActionUiModel.Event.Open)
     }
     LineupEditor(model.lineup)
+    model.extraParticipants?.let { ExtraParticipantEditor(it) }
     model.move?.let { move -> MoveControl(move, rowKey, onMoveAction) }
     RemovalControl(model.removal)
 }
@@ -229,12 +230,25 @@ private fun RemovalControl(model: RemovalUiModel) {
 
 /** A 48dp underlined text action in [color], as the row's "Ver detalle del tema". */
 @Composable
-internal fun RowTextAction(label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun RowTextAction(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    accessibilityLabel: String? = null,
+    onClick: () -> Unit,
+) {
     val spacing = BluesJamTheme.spacing
     Box(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .then(
+                if (accessibilityLabel == null) {
+                    Modifier
+                } else {
+                    Modifier.semantics { contentDescription = accessibilityLabel }
+                },
+            )
             .clickable(role = Role.Button, onClick = onClick)
             .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
         contentAlignment = Alignment.CenterStart,

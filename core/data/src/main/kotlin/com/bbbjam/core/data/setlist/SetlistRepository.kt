@@ -18,7 +18,9 @@ import kotlinx.coroutines.flow.Flow
 interface SetlistRepository :
     SetlistSlotClearRepository,
     SetlistMoveRepository,
-    SetlistPublishRepository {
+    SetlistPublishRepository,
+    SetlistExtraParticipantRepository {
+
     /**
      * Appends the catalog song [songId] to the setlist of [jamDate] in [key] (the admin's choice,
      * D-08) with the default open lineup (D-18). Publishes a [SetlistAdd.State.Sending] entry while

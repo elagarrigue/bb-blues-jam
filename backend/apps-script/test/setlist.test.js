@@ -1024,6 +1024,51 @@ test('checkSetlistWrite with a Sheet that drops the key write is internal_error 
 });
 
 // ---- admin-adjust-lineup ----
+function extraMutation(fake, action, fields = {}, svc) {
+  return call(fake, action, Object.assign({ date: UPCOMING, songId: 'the-thrill-is-gone' }, fields), svc);
+}
+
+test('addExtraParticipant normalizes and appends under Otros, writing only that plain-text cell', () => {
+  const header = UPCOMING_TAB[0];
+  const song = [...UPCOMING_TAB[1]];
+  song[header.indexOf('Otros')] = 'Juan (saxo)';
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [header, song] } });
+  const body = extraMutation(fake, 'addExtraParticipant', { name: '  Ana   Núñez ', instrument: ' percusión ' });
+  assert.deepStrictEqual(body, { schemaVersion: 1, ok: true, extras: [
+    { name: 'Juan', instrument: 'saxo' }, { name: 'Ana Núñez', instrument: 'percusión' },
+  ] });
+  const cell = header.indexOf('Otros') + 1;
+  assert.deepStrictEqual(fake.log.filter(op => op[0] === 'setValue'), [['setValue', UPCOMING, 2, cell, 'Juan (saxo); Ana Núñez (percusión)']]);
+  assert.deepStrictEqual(fake.log.filter(op => op[0] === 'setNumberFormat'), [['setNumberFormat', UPCOMING, 2, cell, '@']]);
+});
+
+test('removeExtraParticipant removes only a matching ordinal and stale values write nothing', () => {
+  const header = UPCOMING_TAB[0];
+  const song = [...UPCOMING_TAB[1]];
+  song[header.indexOf('Otros')] = 'Juan (saxo); Ana (percusión); Juan (saxo)';
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [header, song] } });
+  const result = extraMutation(fake, 'removeExtraParticipant', {
+    ordinal: 3, expectedName: 'Juan', expectedInstrument: 'saxo',
+  });
+  assert.deepStrictEqual(result.extras, [{ name: 'Juan', instrument: 'saxo' }, { name: 'Ana', instrument: 'percusión' }]);
+  assert.equal(fake.tabs[UPCOMING].getDataRange().getDisplayValues()[1][header.indexOf('Otros')], 'Juan (saxo); Ana (percusión)');
+  const stale = fakeSpreadsheet({ tabs: { [UPCOMING]: [header, song] } });
+  const refused = extraMutation(stale, 'removeExtraParticipant', { ordinal: 2, expectedName: 'Juan', expectedInstrument: 'saxo' });
+  assertError(refused, 'extra_changed');
+  assert.deepStrictEqual(writes(stale.log).filter(op => op[1] === UPCOMING), []);
+});
+
+test('extra participant bounds and safe text are validated before the cell write', () => {
+  const header = UPCOMING_TAB[0];
+  const song = [...UPCOMING_TAB[1]];
+  song[header.indexOf('Otros')] = Array.from({ length: 20 }, (_, index) => `M${index} (saxo)`).join('; ');
+  for (const [fields, code] of [[{ name: 'Ana', instrument: 'saxo' }, 'extra_limit'], [{ name: '=cmd', instrument: 'saxo' }, 'invalid_name'], [{ name: 'Ana', instrument: 'x'.repeat(41) }, 'invalid_extra']]) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [header, song] } });
+    assertError(extraMutation(fake, 'addExtraParticipant', fields), code);
+    assert.deepStrictEqual(writes(fake.log).filter(op => op[1] === UPCOMING), []);
+  }
+});
+
 function setSlotCount(fake, fields = {}, svc) {
   return call(fake, 'setSlotCount', Object.assign({ date: UPCOMING, songId: 'crossroads', instrument: 'guitar', count: 1 }, fields), svc);
 }

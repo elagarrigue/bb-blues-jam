@@ -35,6 +35,7 @@ granularity.
 | Set the key on a song | no | yes |
 | Adjust a song's lineup | no | yes |
 | Assign or clear a musician on a slot | no | yes |
+| Add or remove an extra participant under `Otros` | no | yes |
 | Reorder songs | no | yes |
 | Publish a setlist | no | yes |
 

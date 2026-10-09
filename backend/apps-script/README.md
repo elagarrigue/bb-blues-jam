@@ -5,19 +5,21 @@ Sheet; the Android app calls its `/exec` URL. The contract it serves is
 [`docs/apps-script-api.md`](../../docs/apps-script-api.md); the Sheet it reads is
 [`docs/sheet-schema.md`](../../docs/sheet-schema.md).
 
-It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`. The current
-`src/Post.js` source contains fifteen POST actions: `checkPassphrase`, `checkWriteAccess`,
-`readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`,
-`setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist` and
-`checkPublish`. The user reported deploying the shared app-complete source on 9 October 2026. The
-live router lists all fifteen actions and shared L1–L5 checks passed without changing a real jam.
-The local `src/Post.js` SHA-1 is
-`721F7CCF1481F964FEAAF6A772E16B350CFF724C`; the deployed source hash is not exposed by the API.
+It serves two reads, `GET <url>?resource=catalog` and `GET <url>?resource=jams`.
 
-The deployment instructions and feature sections below preserve their implementation-time context
-where they say deployment is pending. Those statements describe the state before 9 October 2026 and
-are superseded by the completed shared deployment and live evidence recorded here and in the
-affected feature specs.
+The local `src/Post.js` source contains seventeen POST actions, including the new
+`addExtraParticipant` and `removeExtraParticipant` actions. The currently deployed shared router
+still reports fifteen actions and does not include those two extras actions. Under decision B2, the
+shared deployment is deferred until app implementation is complete; then all pending server
+features are deployed together and checked with live L1-L5 probes. Local `checkSetlistWrite`
+exercises extra append/readback, stale ordinal refusal without a write, removal/readback, the entry
+limit, final cell value and cleanup on its disposable marker tab. This local check is required for
+the feature handoff and does not indicate that the shared router has been updated.
+
+The fifteen actions currently reported by the shared router are `checkPassphrase`,
+`checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`,
+`publishSetlist` and `checkPublish`. The remote source hash is not exposed by the API.
 
 Every POST action passes one passphrase guard in the router, with a rate limit of 10 failed
 guesses per 10 minutes; write actions run under the script lock. The GET reads never open the
@@ -34,7 +36,7 @@ guarded `readJams` reads a current or future `BORRADOR` jam's tab. Only `src/Pos
 | `src/Catalog.js` | `buildCatalog(displayRows, rawRows)` and the `Catalogo` header-to-field table. |
 | `src/Jams.js` | `buildJams(jamsDisplay, jamsRaw, readTab, formatDate)`, `buildSetlist`, the `Jams` and jam-tab header tables, and the draft rule. |
 | `src/Code.js` | `doGet`, `handleGet(params, spreadsheet)` and the route table. |
-| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the `ACTIONS` table (`checkPassphrase`, `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`, `setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, and the setlist write path including batched `moveSong_` and `checkSetlistMove_`; mutations find rows by `id_tema` with `findSongRow_`. The only file that opens `Config`. |
+| `src/Post.js` | `doPost`, `handlePost(request, spreadsheet, services)`, the local `ACTIONS` table (including `addExtraParticipant` and `removeExtraParticipant`), the guard `requirePassphrase_` (rate limit, `Config` re-read on every request), the write lock, and the setlist write path including batched `moveSong_` and `checkSetlistMove_`; mutations find rows by `id_tema` with `findSongRow_`. The only file that opens `Config`. |
 | `test/` | Node tests (`node:test`), run outside `init.sh`. `test/helpers/format.js` stands in for `Utilities.formatDate`. |
 | `tools/check-response.js` | Checks a saved live response against the contract. |
 
@@ -91,7 +93,7 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` after the pending deployment, with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish`
+`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish`
 (the action list in the current `ACTIONS` table in `src/Post.js`; a list ending in `clearSlot`
 is missing the reorder actions, while a list ending in `checkSetlistRemove`
 means the `admin-remove-song-from-setlist` version without set-key, one ending in
@@ -252,7 +254,7 @@ are.
    `_prueba_lista` within one request), then set-key's (`checkSetlistWrite`, now also rewriting
    its marker's key, does the same). After the deploy, `curl -sL -d '{}' "$URL"` must end in
    `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong,
-   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish`. No check removes a song from or changes a key in a real jam.
+   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish`. No check removes a song from or changes a key in a real jam.
 
 ### Temporary test jam for the draft check (user approval A3)
 
@@ -296,7 +298,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, moveSong, checkSetlistMove, publishSetlist, checkPublish"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```

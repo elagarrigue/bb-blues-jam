@@ -17,6 +17,7 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.Assignment
+import com.bbbjam.core.data.setlist.ExtraParticipantChange
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
@@ -144,6 +145,9 @@ class NextJamPresenter(
         val removes by remember { setlist.observeRemoves() }.collectAsState(initial = emptyList())
         val keyChanges by remember { setlist.observeKeyChanges() }.collectAsState(initial = emptyList())
         val assignments by remember { setlist.observeAssignments() }.collectAsState(initial = emptyList())
+        val extraParticipantChanges by remember {
+            setlist.observeExtraParticipantChanges()
+        }.collectAsState(initial = emptyList())
         val slotClears by remember { setlist.observeSlotClears() }.collectAsState(initial = emptyList())
         val publishes by remember { setlist.observePublishes() }.collectAsState(initial = emptyList())
         var subscription by remember { mutableIntStateOf(0) }
@@ -159,6 +163,7 @@ class NextJamPresenter(
             removes = removes,
             keyChanges = keyChanges,
             assignments = assignments,
+            extraParticipantChanges = extraParticipantChanges,
             slotClears = slotClears,
             moves = moveControls.moves,
             publishes = publishes,
@@ -305,9 +310,14 @@ internal class AdminState(
     val removal: RemovalState = RemovalState(),
     val keyChanges: List<KeyChange> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
+    val extraParticipantChanges: List<ExtraParticipantChange> = emptyList(),
     val slotClears: List<SlotClear> = emptyList(),
     val moves: List<SetlistMove> = emptyList(),
     val onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> },
+    val extraFormKey: String? = null,
+    val extraName: String = "",
+    val extraInstrument: String = "",
+    val onExtraEvent: (LocalDate, SongId, ExtraParticipantEditorUiModel.Event) -> Unit = { _, _, _ -> },
     val lineupChanges: List<LineupChange> = emptyList(),
     val lineupEditing: String? = null,
     val reservations: LineupReservations = LineupReservations(),
@@ -407,8 +417,14 @@ private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
             Triple(move.id, MoveCopy.failed(move.title), moveFailureMessage(it.reason))
         }
     }
+    val failedExtras = extraParticipantChanges.filter { it.jamDate == date }.mapNotNull { change ->
+        (change.state as? ExtraParticipantChange.State.Failed)?.let {
+            Triple(change.id, NextJamCopy.EXTRA_FAILED, failureMessage(it.reason))
+        }
+    }
     val allFailures =
-        failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments + failedSlotClears + failedMoves
+        failedAdds + failedRemoves + failedKeys + failedLineups + failedAssignments + failedSlotClears + failedMoves +
+            failedExtras
     return allFailures.sortedBy { it.first }.map { (id, title, message) ->
         AddFailureUiModel(
             id = id,
@@ -500,6 +516,11 @@ private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): S
     val removal = removalModel(song)
     val sendingMove = isMoveSending(song)
     val move = moveModel(row, song, total, removal)
+    val extraEditor = state.extraEditor(jam.date, song)
+    val shownExtras = extraEditor.extras
+    val savingExtras = state.extraParticipantChanges.any {
+        it.jamDate == jam.date && it.songId == song.songId && it.state == ExtraParticipantChange.State.Sending
+    }
     val admin = SongRowAdminUiModel(
         setKey = setKey,
         removal = removal,
@@ -513,6 +534,7 @@ private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): S
                 state.slotClears.any {
                     it.jamDate == jam.date && it.songId == song.songId && it.state == SlotClear.State.Sending
                 },
+                savingExtras,
             ).any { it }
         ) {
             NextJamCopy.SAVING
@@ -520,30 +542,20 @@ private fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): S
             null
         },
     )
-    val lineup = song.lineup.toLineupPanel(
-        extras = song.extraParticipants,
-        onAssign = { instrument, position -> state.onAssignSlot(jam.date, song.songId, instrument, position) },
-        onClear = { instrument, position, name ->
-            state.onClearSlot(jam.date, song.songId, instrument, position, name)
-        },
-        canAssign = { instrument, position ->
-            !state.slotClears.isClearing(jam.date, song.songId, instrument, position.value)
-        },
-        canClear = { instrument, position ->
-            !state.slotClears.isClearing(jam.date, song.songId, instrument, position.value)
-        },
-        isClearing = { instrument, position ->
-            state.slotClears.isClearing(jam.date, song.songId, instrument, position.value)
-        },
-    )
+    val lineup = state.lineupPanel(jam.date, song, shownExtras)
     return if (pending == null) {
-        row.copy(lineup = lineup, admin = admin)
+        row.copy(
+            instruments = song.lineup.toInstrumentChips(shownExtras),
+            lineup = lineup,
+            admin = admin.copy(extraParticipants = extraEditor),
+        )
     } else {
         row.copy(
             key = pending.value,
             keyDescription = NextJamCopy.keyDescription(pending.value),
+            instruments = song.lineup.toInstrumentChips(shownExtras),
             lineup = lineup,
-            admin = admin,
+            admin = admin.copy(extraParticipants = extraEditor),
         )
     }
 }

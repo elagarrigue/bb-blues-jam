@@ -937,15 +937,17 @@
     "depends_on": [
       "admin-adjust-lineup"
     ],
-    "status": "not_started",
+      "status": "accepted",
     "verification": [
       "Adding and removing an extra participant persist to the Sheet's Otros cell",
       "Both mutations are public repository functions and are authorized and validated server-side",
       "Extra participants never create open slots or affect instrument filter counts",
       "A failed write reverts the optimistic change and shows a dismissible failure"
     ],
-    "evidence": [],
-    "notes": "Split from admin-adjust-lineup X1 to keep one user flow per slice. D-13 and D-18: add and remove Otros are separate mutations included in the action contract. Planner must specify parsing, limits and concurrent-edit behavior before implementation."
+    "evidence": [
+        "9 October 2026 implementer self-verification: node --test backend/apps-script/test/*.test.js passed 168/168; CI=true ./init.sh exited 0 with konsist, detekt and ktlint wired. The gate ran the data and next-jam suites; SetlistExtraParticipantRepositoryTest reports 2 tests/0 failures, and NextJamAdminTest reports 13 tests/0 failures. checkSetlistWrite locally exercises extra append/readback, stale ordinal refusal without writing, removal/readback, entry limit and disposable-marker cleanup. git diff --check passed. Validator repair: remove controls retain visible Quitar and expose `Quitar a {nombre}, {instrumento}` as the content description; the presenter test asserts the Juan/saxo and Mora/trompeta labels are distinct. Follow-up `CI=true ./init.sh` exited 0 with all tools wired. B2 handoff: shared deployment and live L1-L5 checks are deferred to the app-complete batch; the current deployed router still reports 15 actions without the two new extras actions. Device smoke is a human follow-up because adb is unavailable. Independent validator returned accept on 9 October 2026 after confirming participant-specific accessibility semantics and rerunning the full gate and Apps Script suite."
+    ],
+      "notes": "Split from admin-adjust-lineup X1 to keep one user flow per slice. D-13 and D-18: add and remove Otros are separate mutations included in the action contract. B2 defers shared deployment and live L1-L5 verification until app implementation is complete. Device smoke remains a human follow-up; adb was unavailable during implementation. Passing is implementer self-verification, not acceptance."
   },
   {
     "id": "admin-assign-musician",

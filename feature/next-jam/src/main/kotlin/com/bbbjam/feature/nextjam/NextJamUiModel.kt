@@ -1,5 +1,6 @@
 package com.bbbjam.feature.nextjam
 
+import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.ui.filter.InstrumentFilterBarUiModel
 import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -229,7 +230,25 @@ data class SongRowAdminUiModel(
     val move: MoveUiModel? = null,
     val lineup: LineupEditorUiModel = LineupEditorUiModel.Idle("Cambiar formación", EventHandler {}),
     val saveStatus: String? = null,
+    val extraParticipants: ExtraParticipantEditorUiModel? = null,
 ) : UiModel
+
+data class ExtraParticipantEditorUiModel(
+    val extras: List<ExtraParticipant>,
+    val formVisible: Boolean,
+    val name: String,
+    val instrument: String,
+    val saving: Boolean,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Open : Event
+        data class NameChanged(val value: String) : Event
+        data class InstrumentChanged(val value: String) : Event
+        data object Submit : Event
+        data class Remove(val ordinal: Int, val name: String, val instrument: String) : Event
+    }
+}
 
 /** The move block in an expanded admin row. Position counts the full setlist, not filtered rows. */
 data class MoveUiModel(val positionLine: String, val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel

@@ -102,6 +102,8 @@ var ACTIONS = {
   setSlotCount: { write: true, run: setSlotCount_ },
   assignSlot: { write: true, run: assignSlot_ },
   clearSlot: { write: true, run: clearSlot_ },
+  addExtraParticipant: { write: true, run: addExtraParticipant_ },
+  removeExtraParticipant: { write: true, run: removeExtraParticipant_ },
   moveSong: { write: true, run: moveSong_ },
   checkSetlistMove: { write: true, run: checkSetlistMove_ },
   publishSetlist: { write: true, run: publishSetlist_ },
@@ -394,6 +396,43 @@ function checkSetlistWrite_(request, spreadsheet, services) {
     } catch (ignored) {
       throw new Error('The setlist clear check could not clear its marker slot');
     }
+    const checkExtras = [
+      { name: 'Prueba Uno', instrument: 'saxo' },
+      { name: 'Prueba Dos', instrument: 'percusion' },
+    ];
+    writeExtras_(sheet, markerRow, columns, checkExtras);
+    const extrasCell = sheet.getRange(markerRow, columns.extraParticipants + 1);
+    const addedExtras = parseExtraList_(extrasCell.getDisplayValues()[0][0]);
+    if (JSON.stringify(addedExtras) !== JSON.stringify(checkExtras)) {
+      throw new Error('The extra participant check could not read back its additions');
+    }
+    const beforeStaleCheck = extrasCell.getDisplayValues()[0][0];
+    if (removeExtraAt_(addedExtras, 2, 'Stale Name', 'saxo')) {
+      throw new Error('The extra participant stale check changed its cell');
+    }
+    if (extrasCell.getDisplayValues()[0][0] !== beforeStaleCheck) {
+      throw new Error('The extra participant stale check wrote to its cell');
+    }
+    if (!removeExtraAt_(addedExtras, 2, 'Prueba Dos', 'percusion')) {
+      throw new Error('The extra participant check refused the current marker');
+    }
+    writeExtras_(sheet, markerRow, columns, addedExtras);
+    const remainingExtras = parseExtraList_(extrasCell.getDisplayValues()[0][0]);
+    if (JSON.stringify(remainingExtras) !== JSON.stringify([checkExtras[0]])) {
+      throw new Error('The extra participant check could not read back its removal');
+    }
+    const bounded = [];
+    for (let index = 0; index < 20; index++) appendExtra_(bounded, 'Prueba ' + index, 'saxo');
+    let refusedExtraLimit = false;
+    try {
+      appendExtra_(bounded, 'Exceso', 'saxo');
+    } catch (error) {
+      refusedExtraLimit = error.code === 'extra_limit';
+    }
+    if (bounded.length !== 20 || !refusedExtraLimit) {
+      throw new Error('The extra participant limit check did not reach its boundary');
+    }
+    writeExtras_(sheet, markerRow, columns, remainingExtras);
     const range = sheet.getDataRange();
     rows = buildSetlist(range.getDisplayValues(), range.getValues(), SETLIST_CHECK_TAB);
   } finally {
@@ -403,14 +442,14 @@ function checkSetlistWrite_(request, spreadsheet, services) {
   SLOT_FIELDS.forEach(function (spec) {
     expectedSlots[spec.field] = spec.field === 'guitar2' ? '-' : null;
   });
-  if (!isMarkerRow_(rows, Object.assign({}, marker, { key: CHECK_KEY_ }), expectedSlots)) {
+  if (!isMarkerRow_(rows, Object.assign({}, marker, { key: CHECK_KEY_ }), expectedSlots, 'Prueba Uno (saxo)')) {
     throw new Error('The setlist write check read back a different row');
   }
   return { ok: true };
 }
 
 /** True when `rows` is exactly the marker, with the expected slots and no Otros. */
-function isMarkerRow_(rows, marker, expectedSlots) {
+function isMarkerRow_(rows, marker, expectedSlots, expectedExtras) {
   if (rows.length !== 1) {
     return false;
   }
@@ -419,7 +458,8 @@ function isMarkerRow_(rows, marker, expectedSlots) {
     return row.slots[field] === expectedSlots[field];
   });
   return row.position === String(marker.position) && row.songId === marker.songId && row.title === marker.title &&
-    row.artist === marker.artist && row.key === marker.key && slotsOpen && row.extraParticipants === null;
+    row.artist === marker.artist && row.key === marker.key && slotsOpen &&
+    row.extraParticipants === (expectedExtras === undefined ? null : expectedExtras);
 }
 
 /**
@@ -955,6 +995,91 @@ function normalizeMusicianName_(value) {
     throw new ContractError('invalid_name', 'name must be a plain musician name of at most 40 characters');
   }
   return name;
+}
+
+function normalizeExtraInstrument_(value) {
+  if (typeof value !== 'string' || /[\u0000-\u001f\u007f-\u009f]/.test(value)) {
+    throw new ContractError('invalid_extra', 'instrument must be text');
+  }
+  const instrument = value.trim().replace(/\s+/g, ' ');
+  if (!instrument || instrument.length > 40 || /[;()]/.test(instrument) ||
+      !/[\p{L}\p{N}]/u.test(instrument)) {
+    throw new ContractError('invalid_extra', 'instrument must be at most 40 characters');
+  }
+  return instrument;
+}
+
+function parseExtraList_(cell) {
+  return textCell(cell) === null ? [] : textCell(cell).split(';').map(function (raw) {
+    const match = /^\s*(.*?)\s*\((.*?)\)\s*$/.exec(raw);
+    if (!match || !match[1].trim() || !match[2].trim()) {
+      throw new ContractError('invalid_extra', 'Otros contains a malformed entry');
+    }
+    return { name: match[1].trim(), instrument: match[2].trim() };
+  });
+}
+
+function writeExtras_(sheet, row, columns, extras) {
+  const value = extras.map(function (extra) { return extra.name + ' (' + extra.instrument + ')'; }).join('; ');
+  const cell = sheet.getRange(row, columns.extraParticipants + 1);
+  cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cell.setValue(value);
+}
+
+function removeExtraAt_(extras, ordinal, name, instrument) {
+  const target = extras[ordinal - 1];
+  if (!target || target.name !== name || target.instrument !== instrument) return false;
+  extras.splice(ordinal - 1, 1);
+  return true;
+}
+
+function appendExtra_(extras, name, instrument) {
+  if (extras.length >= 20) throw new ContractError('extra_limit', 'Otros allows at most 20 entries');
+  extras.push({ name: name, instrument: instrument });
+}
+
+function extraWriteContext_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) throw new ContractError('invalid_song', 'songId must be a lowercase slug');
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) throw notInSetlist_(songId, date);
+  const display = sheet.getDataRange().getDisplayValues();
+  const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
+  if (columns.extraParticipants === undefined || columns.extraParticipants === null) {
+    throw new ContractError('missing_header', 'Otros header is required for extra participant edits');
+  }
+  return { date: date, songId: songId, sheet: sheet, columns: columns, row: findSongRow_(sheet, columns, display, songId) };
+}
+
+function addExtraParticipant_(request, spreadsheet, services) {
+  const name = normalizeMusicianName_(request.name);
+  const instrument = normalizeExtraInstrument_(request.instrument);
+  const context = extraWriteContext_(request, spreadsheet, services);
+  const display = context.sheet.getRange(context.row, context.columns.extraParticipants + 1).getDisplayValues()[0][0];
+  const extras = parseExtraList_(display);
+  appendExtra_(extras, name, instrument);
+  writeExtras_(context.sheet, context.row, context.columns, extras);
+  return { ok: true, schemaVersion: SCHEMA_VERSION, extras: extras };
+}
+
+function removeExtraParticipant_(request, spreadsheet, services) {
+  const ordinal = request.ordinal;
+  if (typeof ordinal !== 'number' || !Number.isInteger(ordinal) || ordinal < 1 || ordinal > 20) {
+    throw new ContractError('invalid_extra', 'ordinal must be between 1 and 20');
+  }
+  const name = normalizeMusicianName_(request.expectedName);
+  const instrument = normalizeExtraInstrument_(request.expectedInstrument);
+  const context = extraWriteContext_(request, spreadsheet, services);
+  const display = context.sheet.getRange(context.row, context.columns.extraParticipants + 1).getDisplayValues()[0][0];
+  const extras = parseExtraList_(display);
+  if (!removeExtraAt_(extras, ordinal, name, instrument)) {
+    throw new ContractError('extra_changed', 'Otros changed; refresh before removing this entry');
+  }
+  writeExtras_(context.sheet, context.row, context.columns, extras);
+  return { ok: true, schemaVersion: SCHEMA_VERSION, extras: extras };
 }
 
 /** Assigns one musician to an active slot in the upcoming jam. All rejection checks precede writes. */

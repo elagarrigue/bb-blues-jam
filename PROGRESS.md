@@ -1,12 +1,16 @@
 # Progress Log
 
+## 9 October 2026 - admin-edit-extra-participants accepted
+
+The feature is implemented and self-verified. Guarded Apps Script add/remove actions, repository mutations on the shared queue, a transactional Room mirror, and the admin-only inline editor are in place. `node --test backend/apps-script/test/*.test.js` passed 168/168. `CI=true ./init.sh` exited 0 with konsist, detekt and ktlint wired; the gate's data and next-jam suites passed, including 2 repository tests and 13 admin presenter tests. Local `checkSetlistWrite` covers append/readback, stale ordinal refusal without a write, removal/readback, the entry limit and disposable-tab cleanup. `git diff --check` passed. Under B2, shared deployment and live L1-L5 checks are deferred until app implementation is complete; the current shared router lists 15 actions and does not yet include these two. Device smoke remains a human follow-up because `adb` is unavailable. Validator repair: each visible `Quitar` keeps its text and has the participant-specific content description `Quitar a {nombre}, {instrumento}`; the presenter test verifies Juan/saxo and Mora/trompeta labels differ. Follow-up `CI=true ./init.sh` exited 0 with konsist, detekt and ktlint wired; `git diff --check` passed. Status: accepted after independent validation.
+
 ## Current Verified State
 
 - Repository root: `C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam`
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check`
-- Current state: 38 of 42 slices accepted; `admin-adjust-lineup` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
+- Current state: 39 of 42 slices accepted; `admin-edit-extra-participants` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
 - Shared Apps Script deployment for reorder, publish, adjust-lineup, assign, and clear-slot was completed by the user. Initial POST exposed a missing `SCHEMA_VERSION` global; the user corrected `Code.gs` and deployed current `Post.js`. L1 now confirms all batch actions. Full read-only L1-L5 checks passed on 9 October 2026; details below. No real jam was modified or published.
   The seed was imported into the real Sheet and reviewed by hand by
@@ -3713,3 +3717,7 @@ Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
 - Updated API, domain, Sheet, access, design, architecture, and Apps Script README documentation. User-approved B2 remains in effect: shared deployment/live checks and latency measurement are deferred; no credentials or live endpoint were used.
 - Verification passed: `ktlintFormat`; `CI=true ./init.sh` exit 0, build/check complete, `konsist`, `detekt` and `ktlint` all wired; 104 JVM result suites, 649 tests, zero failures/errors; Node Apps Script suite 165/165; `git diff --check`. No device or live Apps Script verification; shared deployment/live checks remain deferred under B2.
 - Independent validator accepted after rerunning the gate, Node 165/165 and `git diff --check`; it verified E1/C1/U1/B2, server refusal/read-back, confirmed-only cache update, failure handling and musician visibility. No deployment or live requests were run.
+
+## 9 October 2026 - `admin-edit-extra-participants` implementation checkpoint
+
+The feature is implemented and self-verified. Guarded Apps Script add/remove actions, repository mutations on the shared queue, a transactional Room mirror, and the admin-only inline editor are in place. `node --test backend/apps-script/test/*.test.js` passed 168/168. `CI=true ./init.sh` exited 0 with konsist, detekt and ktlint wired; the gate's data and next-jam suites passed, including 2 repository tests and 13 admin presenter tests. Local `checkSetlistWrite` covers append/readback, stale ordinal refusal without a write, removal/readback, the entry limit and disposable-tab cleanup. `git diff --check` passed. Under B2, shared deployment and live L1-L5 checks are deferred until app implementation is complete; the current shared router lists 15 actions and does not yet include these two. Device smoke remains a human follow-up because `adb` is unavailable. Validator repair: each visible `Quitar` keeps its text and has the participant-specific content description `Quitar a {nombre}, {instrumento}`; the presenter test verifies Juan/saxo and Mora/trompeta labels differ. Follow-up `CI=true ./init.sh` exited 0 with konsist, detekt and ktlint wired; `git diff --check` passed. Status: `passing`, not accepted.

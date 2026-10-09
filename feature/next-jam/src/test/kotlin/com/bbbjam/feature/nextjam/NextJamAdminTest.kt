@@ -9,6 +9,7 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistPublish
+import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
@@ -134,6 +135,42 @@ class NextJamAdminTest {
             assertEquals(NextJamCopy.DRAFT_BADGE, sending.admin?.status?.badge)
             assertEquals(NextJamCopy.PUBLISHING, (sending.admin?.status?.publish as PublishUiModel.Publishing).status)
             hold.complete(Unit)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `admin extra form submits through repository and musician rows expose no editor`() = runTest {
+        val extras = listOf(ExtraParticipant("Juan", "saxo"), ExtraParticipant("Mora", "trompeta"))
+        val song = redHouse.copy(extraParticipants = extras)
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(song)), JamStatus.PUBLISHED)))
+            val initial = expectMostRecentItem() as NextJamUiModel.Jam
+            val row = (initial.setlist as SetlistUiModel.Songs).rows.single()
+            row.events(SongRowUiModel.Event.ToggleExpanded)
+            val expanded = awaitItem() as NextJamUiModel.Jam
+            var editor = checkNotNull((expanded.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            assertEquals(extras, editor.extras)
+            val removeLabels = editor.extras.map(::extraRemoveAccessibilityLabel)
+            assertEquals(listOf("Quitar a Juan, saxo", "Quitar a Mora, trompeta"), removeLabels)
+            assertEquals(2, removeLabels.distinct().size)
+            editor.events(ExtraParticipantEditorUiModel.Event.Open)
+            val form = awaitItem() as NextJamUiModel.Jam
+            editor = checkNotNull((form.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            assertTrue(editor.formVisible)
+            editor.events(ExtraParticipantEditorUiModel.Event.NameChanged("Ana"))
+            val named = awaitItem() as NextJamUiModel.Jam
+            editor = checkNotNull((named.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            editor.events(ExtraParticipantEditorUiModel.Event.InstrumentChanged("percusión"))
+            val instrumented = awaitItem() as NextJamUiModel.Jam
+            editor = checkNotNull((instrumented.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            editor.events(ExtraParticipantEditorUiModel.Event.Submit)
+            assertEquals(
+                FakeSetlistRepository.ExtraAddCall(jamDate, song.songId, "Ana", "percusión"),
+                setlist.extraAddCalls.single(),
+            )
+            val musician = snapshot(jam(Setlist.Available(listOf(song)), JamStatus.PUBLISHED)).toUiModel(today).asJam()
+            assertNull((musician.setlist as SetlistUiModel.Songs).rows.single().admin)
             cancelAndIgnoreRemainingEvents()
         }
     }

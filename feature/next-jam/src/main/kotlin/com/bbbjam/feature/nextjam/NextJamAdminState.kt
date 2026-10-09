@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.Assignment
+import com.bbbjam.core.data.setlist.ExtraParticipantChange
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
@@ -34,6 +35,7 @@ internal fun rememberNextJamAdminState(
     removes: List<SetlistRemove>,
     keyChanges: List<KeyChange>,
     assignments: List<Assignment>,
+    extraParticipantChanges: List<ExtraParticipantChange>,
     slotClears: List<SlotClear>,
     moves: List<SetlistMove>,
     publishes: List<SetlistPublish>,
@@ -45,8 +47,13 @@ internal fun rememberNextJamAdminState(
 ): AdminState? {
     rememberAdminRefresh(adminSession, jams)
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
-    var publishConfirming by rememberSaveable { mutableStateOf<String?>(null) }
-    var publishConfirmConsumed by remember { mutableStateOf(false) }
+    val publishControls = rememberPublishControls(setlist)
+    val extraFormKey = rememberSaveable { mutableStateOf<String?>(null) }
+    val extraName = rememberSaveable { mutableStateOf("") }
+    val extraInstrument = rememberSaveable { mutableStateOf("") }
+    val extraAddConsumed = remember { mutableStateOf(false) }
+    val extraForm =
+        remember(setlist) { ExtraParticipantFormState(extraFormKey, extraName, extraInstrument, extraAddConsumed) }
     val scope = rememberCoroutineScope()
     val onRemoval = removalHandler(setlist, scope, { confirming == it }) { confirming = it }
     if (!isAdmin) return null
@@ -57,6 +64,7 @@ internal fun rememberNextJamAdminState(
         removal = RemovalState(removes, confirming, onRemoval),
         keyChanges = keyChanges,
         assignments = assignments,
+        extraParticipantChanges = extraParticipantChanges,
         slotClears = slotClears,
         moves = moves,
         lineupChanges = lineup.lineupChanges,
@@ -65,6 +73,10 @@ internal fun rememberNextJamAdminState(
         onLineupEditor = lineup.onLineupEditor,
         onLineupCount = lineup.onLineupCount,
         onSetKey = onSetKey,
+        extraFormKey = extraFormKey.value,
+        extraName = extraName.value,
+        extraInstrument = extraInstrument.value,
+        onExtraEvent = { date, songId, event -> extraForm.handle(date, songId, event, setlist, scope) },
         onAssignSlot = onAssignSlot,
         onClearSlot = { date, songId, instrument, position, name ->
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -73,30 +85,10 @@ internal fun rememberNextJamAdminState(
         },
         onMove = onMove,
         publishes = publishes,
-        publishConfirming = publishConfirming,
-        onRequestPublish = { date ->
-            publishConfirming = date.toString()
-            publishConfirmConsumed = false
-        },
-        onCancelPublish = { date ->
-            if (publishConfirming == date.toString()) {
-                publishConfirming = null
-                publishConfirmConsumed = false
-            }
-        },
-        onConfirmPublish = { date ->
-            if (publishConfirming == date.toString() && !publishConfirmConsumed) {
-                publishConfirmConsumed = true
-                scope.launch(start = CoroutineStart.UNDISPATCHED) {
-                    setlist.publishSetlist(date)
-                    if (publishConfirming == date.toString()) publishConfirming = null
-                    publishConfirmConsumed = false
-                }
-            }
-        },
-        onRetryPublish = { date, id ->
-            setlist.dismiss(id)
-            scope.launch(start = CoroutineStart.UNDISPATCHED) { setlist.publishSetlist(date) }
-        },
+        publishConfirming = publishControls.confirming,
+        onRequestPublish = publishControls.onRequest,
+        onCancelPublish = publishControls.onCancel,
+        onConfirmPublish = publishControls.onConfirm,
+        onRetryPublish = publishControls.onRetry,
     )
 }
