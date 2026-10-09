@@ -21,14 +21,13 @@ What remains open is the second deadline: the assistant's usefulness in week 5 d
 real repertoire is loaded, with keys (tempo, tags and difficulty are set aside for now, D-20). The seed has thirteen songs and no
 tags; the real catalog is growing past it. Loading should run in parallel with development.
 
-### The Apps Script action surface is not specified
+### Setlist mutation inventory — resolved by `action-contract-registry`
 
-D-13 requires every mutation to exist as a repository function or deeplink from phase 1, which means
-the list of mutations must be enumerated before features are sliced — not discovered feature by
-feature. From the domain model, the set is: add song to setlist, remove song, set key, adjust
-lineup, assign musician to slot, clear slot, reorder songs, publish — and, since D-18, add and
-remove an extra participant ("Otros"). Each needs an Apps Script
-endpoint and a repository function. Confirm this list is complete before writing `feature_list.json`.
+D-13's complete inventory is ten repository-callable operations: add song to setlist, remove song,
+set key, adjust lineup, assign musician to slot, clear slot, add and remove an extra participant
+(`Otros`), reorder songs, and publish. The app-owned `SetlistActionRegistry` delegates each action
+to its existing `SetlistRepository` function with its typed outcome. Apps Script continues to
+authorize writes. D1 still defers the deeplink scheme; a deeplink is not required for this inventory.
 
 ### Instrument strip: chips, not icons — resolved
 
@@ -402,7 +401,8 @@ Stated so they can be challenged rather than silently relied upon.
       read it back, delete) 4.91, 4.43 and 5.09 s; `readJams` 3.78, 3.62, 3.69 s; the
       non-mutating `addSong` probes 2.4–5.1 s (the deeper the check, the slower). An add is
       therefore about 5 s, which the pending row covers.
-- [ ] Confirm the full mutation list for the action contract before slicing features.
+- [x] Confirmed the ten-mutation inventory in `action-contract-registry`; the app-owned registry
+      covers all repository-callable setlist writes.
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.
 - [x] Reconcile the DESIGN.md palette — done 19 September 2026 against the Stitch export.

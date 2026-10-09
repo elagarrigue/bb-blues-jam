@@ -937,7 +937,7 @@
     "depends_on": [
       "admin-adjust-lineup"
     ],
-      "status": "accepted",
+    "status": "accepted",
     "verification": [
       "Adding and removing an extra participant persist to the Sheet's Otros cell",
       "Both mutations are public repository functions and are authorized and validated server-side",
@@ -945,9 +945,9 @@
       "A failed write reverts the optimistic change and shows a dismissible failure"
     ],
     "evidence": [
-        "9 October 2026 implementer self-verification: node --test backend/apps-script/test/*.test.js passed 168/168; CI=true ./init.sh exited 0 with konsist, detekt and ktlint wired. The gate ran the data and next-jam suites; SetlistExtraParticipantRepositoryTest reports 2 tests/0 failures, and NextJamAdminTest reports 13 tests/0 failures. checkSetlistWrite locally exercises extra append/readback, stale ordinal refusal without writing, removal/readback, entry limit and disposable-marker cleanup. git diff --check passed. Validator repair: remove controls retain visible Quitar and expose `Quitar a {nombre}, {instrumento}` as the content description; the presenter test asserts the Juan/saxo and Mora/trompeta labels are distinct. Follow-up `CI=true ./init.sh` exited 0 with all tools wired. B2 handoff: shared deployment and live L1-L5 checks are deferred to the app-complete batch; the current deployed router still reports 15 actions without the two new extras actions. Device smoke is a human follow-up because adb is unavailable. Independent validator returned accept on 9 October 2026 after confirming participant-specific accessibility semantics and rerunning the full gate and Apps Script suite."
+      "9 October 2026 implementer self-verification: node --test backend/apps-script/test/*.test.js passed 168/168; CI=true ./init.sh exited 0 with konsist, detekt and ktlint wired. The gate ran the data and next-jam suites; SetlistExtraParticipantRepositoryTest reports 2 tests/0 failures, and NextJamAdminTest reports 13 tests/0 failures. checkSetlistWrite locally exercises extra append/readback, stale ordinal refusal without writing, removal/readback, entry limit and disposable-marker cleanup. git diff --check passed. Validator repair: remove controls retain visible Quitar and expose `Quitar a {nombre}, {instrumento}` as the content description; the presenter test asserts the Juan/saxo and Mora/trompeta labels are distinct. Follow-up `CI=true ./init.sh` exited 0 with all tools wired. B2 handoff: shared deployment and live L1-L5 checks are deferred to the app-complete batch; the current deployed router still reports 15 actions without the two new extras actions. Device smoke is a human follow-up because adb is unavailable. Independent validator returned accept on 9 October 2026 after confirming participant-specific accessibility semantics and rerunning the full gate and Apps Script suite."
     ],
-      "notes": "Split from admin-adjust-lineup X1 to keep one user flow per slice. D-13 and D-18: add and remove Otros are separate mutations included in the action contract. B2 defers shared deployment and live L1-L5 verification until app implementation is complete. Device smoke remains a human follow-up; adb was unavailable during implementation. Passing is implementer self-verification, not acceptance."
+    "notes": "Split from admin-adjust-lineup X1 to keep one user flow per slice. D-13 and D-18: add and remove Otros are separate mutations included in the action contract. B2 defers shared deployment and live L1-L5 verification until app implementation is complete. Device smoke remains a human follow-up; adb was unavailable during implementation. Passing is implementer self-verification, not acceptance."
   },
   {
     "id": "admin-assign-musician",
@@ -1105,14 +1105,17 @@
       "admin-reorder-songs",
       "admin-publish-setlist"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
-      "All eight mutations are registered: add song, remove song, set key, adjust lineup, assign musician, clear slot, reorder, publish",
+      "All ten mutations are registered: add song, remove song, set key, adjust lineup, assign musician, clear slot, add/remove extra participant, reorder, publish",
       "A test asserts no mutation exists only in the UI layer",
       "Konsist confirms the registry lives in :app and no feature module depends on another"
     ],
-    "evidence": [],
-    "notes": "D-13, the slice the whole phase 2 assistant rests on. Confirm the mutation list is complete before this runs; it is an open question in risks-and-open-questions.md. Capture the feature-module diff here: proving the assistant was added without touching feature modules is course evidence. D-18 adds mutations to the documented list: add extra participant and remove extra participant (\"Otros\"). Confirm the full list, including these, before this slice runs."
+    "evidence": [
+      "Baseline `CI=true ./init.sh` exited 0 before implementation; `./gradlew ktlintFormat` exited 0. Final `CI=true ./init.sh` exited 0 and reported konsist, detekt and ktlint wired. `app/build/test-results/testDebugUnitTest/TEST-com.bbbjam.actions.SetlistActionRegistryTest.xml`: 2 tests, 0 failures/errors. Tests assert all ten inventory entries are unique and complete, dispatch all ten exact argument sets exactly once with typed outcomes preserved, and resolve the Koin singleton against the SetlistRepository binding. `git diff --check` passed. `git diff --name-only -- feature` was empty.",
+      "Independent validator accepted on 9 October 2026 after confirming the ten-operation inventory, typed dispatch and singleton wiring; it reran CI=true ./init.sh successfully and verified docs and scope."
+    ],
+    "notes": "D-13 action inventory resolves to ten repository-callable mutations, including both D-18 Otros operations. This app-owned typed Kotlin registry is not an assistant JSON protocol or deeplink scheme; D1 remains deferred. No feature module source/build file changes. Independent validator accepted on 9 October 2026."
   },
   {
     "id": "enrichment-background-fetch",

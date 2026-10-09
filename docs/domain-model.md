@@ -236,3 +236,13 @@ deliberate choice.
 ### Publishing a setlist
 
 `SetlistRepository.publishSetlist(date)` is the public D-13 mutation that moves the upcoming jam from `DRAFT` to `PUBLISHED`. Apps Script validates that the jam is upcoming and its available tab contains at least one song, then writes and reads back only the Jams status cell. `Published` is returned only after server confirmation; no optimistic status exists. The confirmed Room mirror updates only a cached `DRAFT` jam whose setlist is `AVAILABLE`, so an offline or withheld cache remains safe until refresh. Publishing is idempotent, and there is no unpublish operation in the MVP.
+
+### Complete setlist mutation inventory (D-13)
+
+The app-owned `SetlistActionRegistry` exposes exactly these ten repository-callable mutations:
+add song, remove song, set key, adjust lineup slot count, assign musician, clear slot, add extra
+participant under `Otros`, remove extra participant under `Otros`, reorder song, and publish setlist.
+Each delegates to the corresponding `SetlistRepository` function and preserves its specific typed
+outcome. Read-only refresh/observe operations, failure dismissal and admin login are not setlist
+mutations. Apps Script remains the write authority; the registry is not a credential or protocol
+boundary. A deeplink scheme remains deferred under D1.
