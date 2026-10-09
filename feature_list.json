@@ -1125,13 +1125,15 @@
     "depends_on": [
       "catalog-repository-cache"
     ],
-    "status": "not_started",
+    "status": "blocked",
     "verification": [
       "Enrichment runs on song add, never during list rendering",
       "MusicBrainz requests stay within 1 req/s",
       "With every API unreachable, the app remains fully usable"
     ],
-    "evidence": [],
-    "notes": "D-09. MusicBrainz for identity and artistArea, Deezer for artwork and preview, Last.fm for similar artists. artistArea is what lets blues nacional argentino be filtered by data rather than by model memory, which matters for D-14. Fully removable if the timeline tightens. Deferred by the user on 5 October 2026: run after the admin chain or at the start of phase 2 (spec docs/specs/enrichment-background-fetch.md; U2-U4 to be answered then). Only artist country from MusicBrainz is worth enriching under D-20; nothing visible."
+    "evidence": [
+      "9 October 2026 planning handoff: selected after the accepted admin chain. The existing 5 October spec explicitly leaves U1-U4 open: confirm country-only vs Deezer/artwork or omit; choose public repository URL vs email in MusicBrainz User-Agent; approve startup scheduling on any network vs constrained WorkManager; approve Konsist host rule vs rely on internal visibility. Asked the user; implementation has not started. Official MusicBrainz API docs checked: free for non-commercial use, meaningful User-Agent required, maximum one request per second. Deezer terms are irrelevant if artwork remains excluded."
+    ],
+    "notes": "D-09; user deferred until after the admin chain, now complete. Blocked pending U1-U4 answers from the user; no implementation started."
   }
 ]
