@@ -8,6 +8,7 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.SetlistDao
+import com.bbbjam.core.data.remote.ServiceCodes
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
@@ -84,7 +85,7 @@ internal class SetlistSlotClears(
             null
         }
         val localError = when {
-            song == null || slot == null -> UNAVAILABLE_SLOT
+            song == null || slot == null -> ServiceCodes.SLOT_NOT_IN_LINEUP
             slot.musicianName == null -> SLOT_EMPTY
             slot.musicianName != expectedName -> SLOT_CHANGED
             else -> null
@@ -96,7 +97,10 @@ internal class SetlistSlotClears(
 
     suspend fun send(entry: SlotClear, target: Target?, localError: String?): ClearSlotOutcome {
         val outcome = when {
-            target == null -> ClearSlotOutcome.NotCleared(WriteOutcome.Rejected(localError ?: UNAVAILABLE_SLOT))
+            target == null -> ClearSlotOutcome.NotCleared(
+                WriteOutcome.Rejected(localError ?: ServiceCodes.SLOT_NOT_IN_LINEUP),
+            )
+
             else -> sendValid(entry, target)
         }
         entries.update { list ->
@@ -113,8 +117,8 @@ internal class SetlistSlotClears(
 
     private suspend fun sendValid(entry: SlotClear, target: Target): ClearSlotOutcome {
         val fields = mapOf(
-            "date" to JsonPrimitive(entry.jamDate.toString()),
-            "songId" to JsonPrimitive(entry.songId.value),
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
             "instrument" to JsonPrimitive(entry.instrument.name.lowercase(Locale.ROOT)),
             "ordinal" to JsonPrimitive(entry.ordinal.value),
             "expectedName" to JsonPrimitive(entry.musicianName),
@@ -147,7 +151,6 @@ internal class SetlistSlotClears(
     data class Target(val position: Int, val columnIndex: Int)
 
     private companion object {
-        const val UNAVAILABLE_SLOT = "slot_not_in_lineup"
         const val SLOT_EMPTY = "slot_empty"
         const val SLOT_CHANGED = "slot_changed"
         val FIELDS = listOf("guitar1", "guitar2", "bass", "drums", "vocals", "harmonica", "keyboards")

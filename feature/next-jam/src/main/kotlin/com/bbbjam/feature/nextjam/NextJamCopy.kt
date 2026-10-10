@@ -116,7 +116,6 @@ internal object NextJamCopy {
     fun lineupFailed(title: String): String = "No se pudo cambiar la formación de «$title»"
     fun assignmentFailed(name: String, title: String): String = "No se pudo anotar a «$name» en «$title»"
     const val CLEAR_FAILED = "No se pudo liberar el cupo"
-    const val CLEARING = "Quitando…"
     const val CLEAR_STALE = "Ese cupo ya no está ocupado. Volvé a la próxima jam para ver la lista actual."
     const val SLOT_TAKEN = "Ese cupo ya está ocupado. Actualizá la lista e intentá de nuevo."
     const val INVALID_ASSIGNMENT_NAME = "La planilla no aceptó ese nombre."
@@ -150,11 +149,4 @@ internal object NextJamCopy {
 
     /** "En 29 días": always days, no weeks (exact and short). Only for two days or more. */
     fun inDays(days: Long): String = "En $days días"
-
-    /** The note under a setlist that lost [count] invalid rows (P4); [count] is at least 1. */
-    fun droppedRows(count: Int): String =
-        if (count == 1) "Falta 1 tema: no se pudo leer." else "Faltan $count temas: no se pudieron leer."
-
-    /** What a screen reader says for the key: "Tonalidad Bm". */
-    fun keyDescription(key: String): String = "Tonalidad $key"
 }

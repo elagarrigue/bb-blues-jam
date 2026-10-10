@@ -32,6 +32,7 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackButton
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.state.EmptyStateBlock
+import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -178,7 +179,7 @@ private fun SetKeyScreenPreview() {
         songTitle = "Crossroads",
         currentLabel = SetKeyCopy.CURRENT,
         currentKey = "A",
-        currentKeyDescription = NextJamCopy.keyDescription("A"),
+        currentKeyDescription = SongListText.keyDescription("A"),
         sections = listOf(
             keySection(SetKeyCopy.MAJORS, SetKeyDefaults.MAJORS, "A") {},
             keySection(SetKeyCopy.MINORS, SetKeyDefaults.MINORS, "A") {},

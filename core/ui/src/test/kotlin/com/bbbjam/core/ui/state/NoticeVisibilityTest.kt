@@ -89,7 +89,7 @@ class NoticeVisibilityTest {
         assertEquals(
             false,
             shouldRevealNotice(
-                notice(detail = "Actualizandoâ€¦"),
+                notice(detail = "Actualizando…"),
                 notice(),
                 firstVisibleItemIndex = 1,
                 firstVisibleItemScrollOffset = 0,

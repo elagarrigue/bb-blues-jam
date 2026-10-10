@@ -43,9 +43,9 @@ internal class SetlistKeyChanges(
      */
     suspend fun send(entry: KeyChange): SetKeyOutcome {
         val fields = mapOf(
-            DATE to JsonPrimitive(entry.jamDate.toString()),
-            SONG_ID to JsonPrimitive(entry.songId.value),
-            KEY to JsonPrimitive(entry.key.value),
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
+            SetlistRequestFields.KEY to JsonPrimitive(entry.key.value),
         )
         val outcome = writer.write(SET_KEY, fields)
         return if (outcome == WriteOutcome.Done) {
@@ -79,8 +79,5 @@ internal class SetlistKeyChanges(
 
     private companion object {
         const val SET_KEY = "setKey"
-        const val DATE = "date"
-        const val SONG_ID = "songId"
-        const val KEY = "key"
     }
 }

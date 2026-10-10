@@ -39,24 +39,6 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
  * come only from [AdminControlsDefaults]; no amber.
  */
 
-/** The muted `BORRADOR` badge and the note that musicians do not see the list yet. */
-@Composable
-internal fun AdminDraftBanner(badge: String, note: String?) {
-    val spacing = BluesJamTheme.spacing
-    val style = AdminControlsDefaults.draft()
-    Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-        Surface(color = style.badgeFill, contentColor = style.badgeText, shape = BluesJamTheme.shapes.sm) {
-            Text(
-                text = badge.uppercase(),
-                style = BluesJamTheme.typography.caption,
-                color = style.badgeText,
-                modifier = Modifier.padding(horizontal = spacing.sm, vertical = spacing.xs),
-            )
-        }
-        note?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.note) }
-    }
-}
-
 /** An add in flight: a muted card with the title and "Agregando…", read politely when it appears. */
 @Composable
 internal fun PendingRow(model: PendingRowUiModel) {

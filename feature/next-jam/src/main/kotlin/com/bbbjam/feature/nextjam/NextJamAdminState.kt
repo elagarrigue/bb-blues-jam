@@ -45,7 +45,7 @@ internal fun rememberNextJamAdminState(
     onSetKey: (LocalDate, SongId) -> Unit,
     onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit,
 ): AdminState? {
-    rememberAdminRefresh(adminSession, jams)
+    AdminRefreshEffect(adminSession, jams)
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
     val publishControls = rememberPublishControls(setlist)
     val extraFormKey = rememberSaveable { mutableStateOf<String?>(null) }

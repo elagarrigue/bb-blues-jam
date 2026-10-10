@@ -66,9 +66,9 @@ internal class SetlistSongAdds(
 
     private suspend fun send(entry: SetlistAdd): AddSongOutcome {
         val fields = mapOf(
-            DATE to JsonPrimitive(entry.jamDate.toString()),
-            SONG_ID to JsonPrimitive(entry.songId.value),
-            KEY to JsonPrimitive(entry.key.value),
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
+            SetlistRequestFields.KEY to JsonPrimitive(entry.key.value),
         )
         val outcome = when (val answer = writer.send(ADD_SONG, fields)) {
             is AdminAnswer.Ok -> confirmed(answer.body)
@@ -89,9 +89,6 @@ internal class SetlistSongAdds(
 
     private companion object {
         const val ADD_SONG = "addSong"
-        const val DATE = "date"
-        const val SONG_ID = "songId"
-        const val KEY = "key"
         const val UNKNOWN_SONG = "unknown_song"
     }
 }

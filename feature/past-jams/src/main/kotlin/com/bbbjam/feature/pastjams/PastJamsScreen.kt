@@ -45,8 +45,8 @@ import org.koin.compose.koinInject
  */
 @Composable
 fun PastJamsScreen(
-    onOpenJam: (jamDate: LocalDate) -> Unit = {},
     modifier: Modifier = Modifier,
+    onOpenJam: (jamDate: LocalDate) -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(),
     presenter: PastJamsPresenter = koinInject(),
 ) {

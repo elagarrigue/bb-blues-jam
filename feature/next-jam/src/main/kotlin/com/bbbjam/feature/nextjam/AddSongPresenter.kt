@@ -25,6 +25,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.listError
+import com.bbbjam.core.ui.text.SongListText
 import java.text.Normalizer
 import java.time.LocalDate
 import java.util.Locale
@@ -159,7 +160,7 @@ private fun Song.toRow(isListed: Boolean, onPick: (Song) -> Unit) = CatalogRowUi
     title = title,
     artist = artist,
     key = defaultKey.value,
-    keyDescription = NextJamCopy.keyDescription(defaultKey.value),
+    keyDescription = SongListText.keyDescription(defaultKey.value),
     isListed = isListed,
     listedLabel = if (isListed) AddSongCopy.ALREADY_LISTED else null,
     pickLabel = AddSongCopy.PICK_LABEL,

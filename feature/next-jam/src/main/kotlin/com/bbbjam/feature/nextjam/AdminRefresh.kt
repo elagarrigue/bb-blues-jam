@@ -10,7 +10,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 
 @Composable
-internal fun rememberAdminRefresh(adminSession: AdminSession, jams: JamsRepository) {
+internal fun AdminRefreshEffect(adminSession: AdminSession, jams: JamsRepository) {
     // Read only by the effect, never by the composition, so writing it recomposes nothing.
     var adminRefreshed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {

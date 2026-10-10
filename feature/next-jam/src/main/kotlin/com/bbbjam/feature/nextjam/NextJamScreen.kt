@@ -62,6 +62,7 @@ import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.state.rememberRevealingLazyListState
 import com.bbbjam.core.ui.strip.InstrumentStrip
 import com.bbbjam.core.ui.strip.toInstrumentChips
+import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -79,8 +80,9 @@ import org.koin.compose.koinInject
  * failure cards and "Agregar tema" (which calls [onAddSong]) come after the rows, so nothing above
  * them moves; an expanded row ends with the admin's row actions ("Cambiar tonalidad", which calls
  * [onSetKey], `admin-set-key`, then "Quitar de la lista", `admin-remove-song-from-setlist`), and a
- * row whose key change is still saving shows "Guardando…" under its title. Rows stay keyed by
- * position in the list: a hand-edited tab may repeat a song id, and a lazy list key must be unique.
+ * row whose key change is still saving shows "Guardando…" under its title. Rows are keyed by
+ * `rowKey`: the song id, or the position when a hand-edited tab repeats a song id, because a lazy
+ * list key must be unique.
  * Every state can be pulled to refresh, and while the screen is resumed the presenter refreshes
  * every 30 s inside a jam's live window (`live-refresh-during-jam`).
  * It renders [NextJamUiModel] and forwards events; the presenter decides.
@@ -144,9 +146,9 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
                 ListErrorBlock(model.error)
             }
 
-            is NextJamUiModel.NoUpcomingJam -> NoUpcomingJamContent(model, fill, padding)
+            is NextJamUiModel.NoUpcomingJam -> NoUpcomingJamContent(model, modifier = fill, padding = padding)
 
-            is NextJamUiModel.Jam -> JamContent(model, fill, padding)
+            is NextJamUiModel.Jam -> JamContent(model, modifier = fill, padding = padding)
         }
     }
 }
@@ -160,7 +162,7 @@ internal fun LazyListScope.setlistItems(
         is SetlistUiModel.Songs -> {
             setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
             items(setlist.rows, key = { it.rowKey }) { row ->
-                SongRow(row, onMoveAction, Modifier.animateItem())
+                SongRow(row, modifier = Modifier.animateItem(), onMoveAction = onMoveAction)
             }
             setlist.droppedRowsNote?.let { note ->
                 item(key = NOTE_KEY) {
@@ -218,8 +220,8 @@ private fun Message(text: String) {
 @Composable
 private fun SongRow(
     row: SongRowUiModel,
-    onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
+    onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
 ) {
     val spacing = BluesJamTheme.spacing
     Surface(
@@ -331,10 +333,10 @@ internal fun previewRow(
     isExpanded: Boolean = false,
 ) = SongRowUiModel(
     position = position,
-    positionLabel = position.toString().padStart(2, '0'),
+    positionLabel = SongListText.positionLabel(position),
     title = title,
     key = key,
-    keyDescription = NextJamCopy.keyDescription(key),
+    keyDescription = SongListText.keyDescription(key),
     instruments = lineup.toInstrumentChips(extras),
     artist = artist,
     isExpanded = isExpanded,

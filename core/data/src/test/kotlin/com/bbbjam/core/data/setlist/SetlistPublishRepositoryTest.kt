@@ -11,7 +11,6 @@ import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
-import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.TransportResult
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.SongId
@@ -20,7 +19,6 @@ import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -42,7 +40,7 @@ class SetlistPublishRepositoryTest {
     private val database = Fixtures.inMemoryDatabase()
     private val jamsDao = database.jamsDao()
     private val catalogDao = database.catalogDao()
-    private val post = FakePost()
+    private val post = QueuedPostTransport()
 
     @Test
     fun `publish stays draft while sending then mirrors only confirmed status`() = runTest {
@@ -164,20 +162,6 @@ class SetlistPublishRepositoryTest {
 
     private fun actionOf(json: String) =
         Json.parseToJsonElement(json).jsonObject.getValue("action").jsonPrimitive.content
-
-    private class FakePost : AppsScriptPostTransport {
-        val answers = ArrayDeque<TransportResult>()
-        val bodies = mutableListOf<String>()
-        val posted = MutableStateFlow(0)
-        var gate: CompletableDeferred<Unit>? = null
-
-        override suspend fun post(json: String): TransportResult {
-            bodies += json
-            posted.value = bodies.size
-            gate?.await()
-            return answers.removeFirst()
-        }
-    }
 
     private companion object {
         val DATE: LocalDate = LocalDate.of(2026, 10, 31)

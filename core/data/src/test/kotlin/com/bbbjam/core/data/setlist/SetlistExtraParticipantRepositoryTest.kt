@@ -11,13 +11,10 @@ import com.bbbjam.core.data.cache.JamExtraEntity
 import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
-import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.TransportResult
 import com.bbbjam.core.model.SongId
 import java.io.File
 import java.time.LocalDate
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -35,7 +32,7 @@ class SetlistExtraParticipantRepositoryTest {
     private val database = Fixtures.inMemoryDatabase()
     private val jamsDao = database.jamsDao()
     private val catalogDao = database.catalogDao()
-    private val post = FakePost()
+    private val post = QueuedPostTransport()
 
     @After
     fun tearDown() {
@@ -111,20 +108,6 @@ class SetlistExtraParticipantRepositoryTest {
     private suspend fun cachedExtras() = jamsDao.observeJams().first().single().extras.map(JamExtraEntity::name)
 
     private fun body(value: String) = TransportResult.Body(value)
-
-    private class FakePost : AppsScriptPostTransport {
-        val answers = ArrayDeque<TransportResult>()
-        val bodies = mutableListOf<String>()
-        val posted = MutableStateFlow(0)
-        var gate: CompletableDeferred<Unit>? = null
-
-        override suspend fun post(json: String): TransportResult {
-            bodies += json
-            posted.value = bodies.size
-            gate?.await()
-            return answers.removeFirst()
-        }
-    }
 
     private companion object {
         val DATE = LocalDate.of(2026, 10, 31)

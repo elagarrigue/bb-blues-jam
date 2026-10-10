@@ -12,6 +12,7 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.SongListText
 import java.time.LocalDate
 
 /**
@@ -68,7 +69,7 @@ private fun Setlist.toPastSetlist(): PastSetlistUiModel = when (this) {
         PastSetlistUiModel.Songs(
             // Songs are already in position order (a Setlist invariant).
             rows = songs.map { it.toPastRow() },
-            droppedRowsNote = droppedRows.takeIf { it > 0 }?.let(PastJamsCopy::droppedRows),
+            droppedRowsNote = droppedRows.takeIf { it > 0 }?.let(SongListText::droppedRows),
         )
     }
 
@@ -79,12 +80,9 @@ private fun Setlist.toPastSetlist(): PastSetlistUiModel = when (this) {
 
 private fun JamSong.toPastRow() = PastSongRowUiModel(
     position = position,
-    positionLabel = position.toString().padStart(POSITION_DIGITS, '0'),
+    positionLabel = SongListText.positionLabel(position),
     title = title,
     artist = artist.takeIf { it.isNotBlank() },
     key = key.value,
-    keyDescription = PastJamsCopy.keyDescription(key.value),
+    keyDescription = SongListText.keyDescription(key.value),
 )
-
-/** "01" … "13": positions are padded with `padStart`, never `String.format` (locale-sensitive). */
-private const val POSITION_DIGITS = 2

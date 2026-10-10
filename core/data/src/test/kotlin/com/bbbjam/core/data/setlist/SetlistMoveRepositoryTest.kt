@@ -14,7 +14,6 @@ import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.cache.toDomain
-import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.TransportResult
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
@@ -23,7 +22,6 @@ import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -44,7 +42,7 @@ class SetlistMoveRepositoryTest {
     private val database = Fixtures.inMemoryDatabase()
     private val jamsDao = database.jamsDao()
     private val catalogDao: CatalogDao = database.catalogDao()
-    private val post = FakePost()
+    private val post = QueuedPostTransport()
 
     @After
     fun tearDown() = database.close()
@@ -150,20 +148,6 @@ class SetlistMoveRepositoryTest {
     }
 
     private fun state() = SyncStateEntity("jams", 1, 1, null)
-
-    private class FakePost : AppsScriptPostTransport {
-        val answers = ArrayDeque<TransportResult>()
-        val bodies = mutableListOf<String>()
-        val posted = MutableStateFlow(0)
-        var gate: CompletableDeferred<Unit>? = null
-
-        override suspend fun post(json: String): TransportResult {
-            bodies += json
-            posted.value = bodies.size
-            gate?.await()
-            return answers.removeFirst()
-        }
-    }
 
     private companion object {
         val DATE = LocalDate.of(2026, 10, 31)

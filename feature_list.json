@@ -1116,5 +1116,50 @@
       "Independent validator accepted on 9 October 2026 after confirming the ten-operation inventory, typed dispatch and singleton wiring; it reran CI=true ./init.sh successfully and verified docs and scope."
     ],
     "notes": "D-13 action inventory resolves to ten repository-callable mutations, including both D-18 Otros operations. This app-owned typed Kotlin registry is not an assistant JSON protocol or deeplink scheme; D1 remains deferred. No feature module source/build file changes. Independent validator accepted on 9 October 2026."
+  },
+  {
+    "id": "project-hygiene-pass",
+    "area": "repo",
+    "title": "Whole-project cleanliness review with no behavior change",
+    "user_visible_behavior": "No visible change: the app behaves the same, while the code, build and orientation docs are free of dead code, stale state, and avoidable warnings.",
+    "depends_on": [
+      "action-contract-registry"
+    ],
+    "status": "accepted",
+    "verification": [
+      "An audit lists every finding (dead code, unused resources/dependencies, lint warnings, oversized or duplicated code, stale docs such as START-HERE.md) with a fix or an explicit reason to keep it",
+      "Fixes keep behavior identical: every existing test passes unchanged in intent, and no D-01..D-20 rule is touched",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; the :app lint warning count does not increase and drops where a fix applies"
+    ],
+    "evidence": [
+      "T0 baseline (orchestrator's CI=true ./init.sh, exit 0, konsist/detekt/ktlint wired): 654 JVM tests in 106 result classes, 0 failures/errors (konsist-test 17). Lint: :app 15 warnings (GradleDependency 7, NewerVersionAvailable 8); :feature:next-jam 4 (ComposableNaming 1, ModifierParameter 3); :feature:past-jams 1 (ModifierParameter); others No issues found.",
+      "Per-task checks, all exit 0: T2/T3 ./gradlew :feature:next-jam:lintDebug :feature:past-jams:lintDebug :feature:next-jam:check :feature:past-jams:check; T4 :feature:next-jam:check (no test file changed); T5 :core:ui:check :feature:next-jam:check :feature:past-jams:check :feature:song-detail:check; T6 :core:data:check (request-body assertions untouched); T7/T8 :core:data:check :core:ui:check :app:assembleDebug :app:check. ./gradlew ktlintFormat run before each.",
+      "T9 CI=true ./init.sh exit 0, 'konsist: wired', 'detekt: wired', 'ktlint: wired', Baseline OK. 657 JVM tests in 107 classes, 0 failures/errors = T0 + SongListTextTest (3); every pre-existing class count identical to T0 (script diff: changed {}), konsist-test still 17.",
+      "V4 lint after T9: :feature:next-jam and :feature:past-jams 'No issues found' (4 -> 0, 1 -> 0); :app 0 errors, 15 warnings, ids only GradleDependency and NewerVersionAvailable (H1: left as is); :core:data, :core:ui, :feature:info, :feature:song-detail 'No issues found'.",
+      "V3 script over git show 582027f:PROGRESS.md lines 16-380: 'checked lines: 341 missing: 0' (multiset of non-blank lines found in the new PROGRESS.md).",
+      "V5: string literals in git diff 582027f -- '*/src/main/*.kt' (plus new files): nothing added; removed only the dead copy (F2, F3), the duplicated helpers now once in SongListText, and the 'date'/'songId'/'key'/error-code constants now once in SetlistRequestFields/ServiceCodes. backend/apps-script untouched; init.sh, detekt.yml, .editorconfig and Konsist rules untouched. git diff --check clean.",
+      "NextJamPresenter.kt 626 -> 376 lines; NextJamAdminMapping.kt 259 lines. Above the spec's ~330 estimate because Setlist.toUiModel (the musician row mapping, which uses the private RowState) stays in the presenter: it is not in the spec's list of admin-mapping symbols to move.",
+      "Findings fixed: F1-F7, F9-F19, F22 (empty local dir deleted). Kept with the spec's reasons: F8 (H1), F20, F21, F23-F27. Deferred: D1-D7 (Post.js split stays deferred, H2). No device check: nothing drawn changes.",
+      "Independent validator accepted on 10 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; 657 tests, 0 failures), confirming byte-identical request fields, error codes and copy, a move-only presenter split, a lossless PROGRESS.md archive, and lint at 0 for next-jam and past-jams."
+    ],
+    "notes": "Requested by the user on 10 October 2026 ('revisá todo el proyecto, que sea clean'). Refactors stay inside the existing module layout (architecture skill); no verification rule is changed. Implemented 10 October 2026; status passing awaits independent validation."
+  },
+  {
+    "id": "ui-polish-pass",
+    "area": "ui",
+    "title": "Review every screen against DESIGN.md and the design prompt and implement the improvements",
+    "user_visible_behavior": "The screens match the design tokens and per-screen requirements more closely, with better spacing, hierarchy, copy, accessibility and touch targets, and no new product scope.",
+    "depends_on": [
+      "project-hygiene-pass"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A per-screen audit compares each screen with DESIGN.md, bb-blues-jam-design-prompt.md and docs/design/screens, and lists each improvement with its source rule",
+      "Improvements use only BluesJamTheme tokens (D-17), Rioplatense voseo copy (D-12), 48dp touch targets and content descriptions; no out-of-scope MVP item is added",
+      "Presenter and UI-model tests cover any changed state or copy; ContrastTest still passes",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [],
+    "notes": "Requested by the user on 10 October 2026 ('revisá la UI por mejoras, implementá las mejoras'). Anything that would change product scope or a D-xx decision is listed as a proposal, not implemented."
   }
 ]

@@ -34,13 +34,6 @@ internal object PastJamsCopy {
     const val NOT_FOUND_TITLE = "Esta jam ya no está en el archivo"
     const val NOT_FOUND_MESSAGE =
         "Puede que la organización la haya cambiado. Volvé a Anteriores para ver las jams guardadas."
-
-    /** What a screen reader says for a past song's key: "Tonalidad B" (the next-jam form). */
-    fun keyDescription(key: String): String = "Tonalidad $key"
-
-    /** The note under a past setlist that lost [count] invalid rows (next-jam P4); [count] is at least 1. */
-    fun droppedRows(count: Int): String =
-        if (count == 1) "Falta 1 tema: no se pudo leer." else "Faltan $count temas: no se pudieron leer."
 }
 
 /** "Sábado 25 de julio de 2026": day, date and year, no time. */

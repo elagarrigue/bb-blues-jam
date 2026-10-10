@@ -204,6 +204,74 @@ takes a fifth constructor parameter `random: Random = Random.Default` for the ji
 `get()`s). Anteriores has the pull only. The debug flag `bluesjam.demoUpcomingJamLive` (Build
 Conventions, Debug demo jam) makes the window observable on a device.
 
+As built by `admin-adjust-lineup` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026): `Lineup.defaultCount`, `count`
+and `withSlotCount` mirror last-open-first removal and canonical restoration, never remove filled
+slots or exceed defaults. `SetlistRepository.setSlotCount`/`observeLineupChanges` use public
+`SetSlotCountOutcome` and `LineupChange` (`Sending`/`Failed`); `SetlistLineupChanges` is built by
+`DefaultSetlistRepository`, sharing its ids/order/writes/scope, no Koin binding. Confirmed seven
+slot fields replace only one available cached song's slots through `SetlistDao.replaceSlots`,
+before clearing the entry. `LineupChangeOverlay` applies latest Sending per instrument before
+admin filtering/counts/strip/panel; Failed is the revert. Row actions: detail, key, lineup editor,
+removal last. `SongRowAdminUiModel.saveStatus` unifies key and lineup saving. Editor owns one
+saveable row key; retained handlers read latest counts and synchronously reserve targets so two
+pre-recomposition taps queue distinct counts. `Instrument.fullName` exports the shared name copy.
+Server `setSlotCount` is router-guarded, reuses `findSongRow_`, and writes only changed plain-text
+slot cells; future ordinal mutations reuse `presentSlotFields_` and refuse unexpected cell state.
+
+As built by `admin-assign-musician` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026): `SlotPosition` is a
+1-based instrument ordinal in original lineup order and `MusicianName.parseOrNull` is the write-time
+normalizer/validator. `SetlistRepository.assignSlot` and `observeAssignments` use public
+`Assignment`/`AssignSlotOutcome` types and share `DefaultSetlistRepository`'s write ordering, ids and
+`DataScope`; a confirmed `{schemaVersion,column,name}` response is required before its guarded
+single-slot DAO update. Sending assignments overlay only the admin's matching open slot before
+filter/count/strip/panel derivation; failed assignments revert and become dismissible cards.
+`LineupPanelUiModel` keeps optional slot action metadata absent by default, and the expanded Próxima
+jam panel supplies actions only in admin mode. `AssignMusicianPresenter` owns form validation and
+suggestions from cached upcoming/past jams; `AssignMusicianScreen` is a full-screen flow in the
+existing feature. `AppRoutes.ASSIGN_SLOT` carries ISO date, `SongId`, instrument and positive
+ordinal in the outer host. No new module or Koin binding is introduced.
+
+As built by `admin-clear-slot` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026):
+`SetlistRepository.clearSlot` is a public compare-and-clear mutation exposed through
+`SetlistSlotClearRepository`, with `ClearSlotOutcome` and `SlotClear` (`Sending`/`Failed`). It shares
+the repository's mutation ids, FIFO order/write barriers and `DataScope`. The client captures the
+expected cached display name as text so legacy names do not pass through new-assignment validation;
+the server re-resolves U1 and compare-checks that exact cell. A valid seven-field response is mirrored
+transactionally to the unique cached song. Sending clears overlay only the admin lineup before
+strip/panel/filter/count mapping; failures leave Room unchanged and produce dismissible cards.
+`LineupPanelUiModel`'s filled-line action stays absent by default and is supplied only on Próxima jam
+for eligible admin slots; ordinal metadata follows the source lineup through the stable partition.
+
+As built by `admin-reorder-songs` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026): `SetlistRepository.moveSong`
+uses public `SetlistMove`/`MoveSongOutcome` types and the same mutation id, order and write queues.
+`SetlistDao.moveSetlistSong` rekeys only changed songs and their child slots/extras in one
+transaction after confirmation. Sending entries overlay the admin order by id and call order; failed
+entries never overlay. Song rows use stable song ids (position fallback for duplicate ids), retain the
+pre-overlay position for detail navigation, and anchor the moved row in the viewport. Move actions
+are explicit 48dp `Subir`/`Bajar` buttons and remain absent for musicians.
+
+As built by `admin-publish-setlist` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026): Apps Script's `publishSetlist` validates and writes/read-backs only the upcoming Jams `estado` cell; `checkPublish` uses a self-cleaning temporary Jams tab. `SetlistRepository.publishSetlist` returns `PublishOutcome`, shares the `DefaultSetlistRepository` mutation id/order/write barriers and `DataScope`, and exposes `SetlistPublish` Sending/Failed state. `SetlistDao.markPublished` changes only a cached DRAFT/AVAILABLE jam after confirmation. No optimistic status is projected. `WriteFailureLog` records a safe local line. In `:feature:next-jam`, `AdminStatusUiModel` keeps the confirmed badge, `PublishUiModel` holds saveable inline confirmation and failure state, and the persistent assertive card lives in the under-header status block. Only the approved `primaryAction`, `onPrimaryAction`, `published` and `onPublished` amber roles are added to its Konsist allowlist.
+
+As built locally by `admin-edit-extra-participants` (not deployed yet: B2, the shared deployment
+after app implementation is complete): `SetlistExtraParticipantRepository.addExtraParticipant`/
+`removeExtraParticipant` (part of `SetlistRepository`) queue on the shared mutation ids, order and
+write barriers, and expose `ExtraParticipantChange` (`Sending`/`Failed`). Apps Script's guarded
+`addExtraParticipant`/`removeExtraParticipant` validate the entry under the script lock (a remove
+names a 1-based ordinal plus the exact expected name and instrument, and is refused without a write
+when they no longer match) and read back; a confirmed response replaces that song's extras in one
+Room transaction. In
+`:feature:next-jam` the admin-only inline editor (`ExtraParticipantControls`,
+`ExtraParticipantFormState`, `ExtraParticipantUiMapping`, copy in `ExtraParticipantCopy`) shows a
+Sending-only optimistic change with "Guardando…"; a failure restores confirmed data and becomes a
+dismissible card. Each `Quitar` has a participant-specific content description.
+
+As built by `action-contract-registry` (`:app` only, no feature module change):
+`com.bbbjam.actions.SetlistActionRegistry` lists the ten D-13 setlist mutations
+(`SetlistMutation`), takes a typed `SetlistAction` and dispatches it exhaustively to the one
+matching `SetlistRepository` function, returning a typed `SetlistActionResult` that wraps the
+original outcome. It is a Koin singleton in `AppModule`. It is the phase 2 assistant's surface, not
+a JSON protocol or a deeplink scheme (D1 stays deferred).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -248,6 +316,9 @@ Conventions, Debug demo jam) makes the window observable on a device.
   features write dates), hand-written `when` tables, not `DateTimeFormatter` with a `Locale`: desugared java.time on API 24–25 and the JVM may render
   locale text differently, and the copy must be identical on the device and in tests. Times are
   padded with `padStart`, not `String.format` (locale-sensitive).
+- Song-row text every setlist screen shares (the two-digit position label, the key's screen-reader
+  description "Tonalidad Bm", the dropped-rows note) → `SongListText` in `:core:ui`
+  (`com.bbbjam.core.ui.text`, beside `SpanishDateNames`; moved there by `project-hygiene-pass`).
 - A component used by two features → `:core:ui`. Never copy it between features.
   The instrument strip is the example (`instrument-strip-component`): `InstrumentStrip(chips)` draws
   only `InstrumentChipUiModel`s (no domain type in the composable), and the pure mapper
@@ -333,8 +404,9 @@ Conventions, Debug demo jam) makes the window observable on a device.
   `rememberSaveable(stateSaver = ExpandedRows.Saver)` (survives rotation; in Molecule it behaves as
   `remember`), keyed by the song id and scoped to the jam date (since
   `admin-remove-song-from-setlist`: a removal renumbers positions, and a position key would hand the
-  removed song's expansion to the song that moves up). The lazy list keeps position keys, because a
-  hand-edited tab may repeat a song id and lazy keys must be unique. **Never recreate such a
+  removed song's expansion to the song that moves up). Since `admin-reorder-songs` the lazy list is keyed by
+  `rowKey`: the song id, or the position when a hand-edited tab repeats a song id, because lazy
+  keys must be unique. **Never recreate such a
   state object** (`remember(snapshot) { … }`): handlers without a key compare equal, so Compose may
   keep an earlier model's handler, and it must still write through the same state. A child
   presenter pays off only when a row has its own dependencies (the admin slot mutations).
@@ -708,55 +780,7 @@ Then include the module in `settings.gradle.kts` and add its Koin module to `sta
   (5 October 2026): two hosts, per-tab routes with `saveState`/`restoreState`, the song detail
   above the tabs, M1 motion; `TemporaryTabs` deleted. Per-tab state survived rotation and process
   death on the device.
-- Deeplink scheme: still open, **deferred to `action-contract-registry`** (D1, 5 October 2026). No
-  destination declares `deepLinks`, no manifest intent filter; D-13 is met by repository functions
-  in the action registry.
-
-
-As built locally by `admin-adjust-lineup` (live deployment pending): `Lineup.defaultCount`, `count`
-and `withSlotCount` mirror last-open-first removal and canonical restoration, never remove filled
-slots or exceed defaults. `SetlistRepository.setSlotCount`/`observeLineupChanges` use public
-`SetSlotCountOutcome` and `LineupChange` (`Sending`/`Failed`); `SetlistLineupChanges` is built by
-`DefaultSetlistRepository`, sharing its ids/order/writes/scope, no Koin binding. Confirmed seven
-slot fields replace only one available cached song's slots through `SetlistDao.replaceSlots`,
-before clearing the entry. `LineupChangeOverlay` applies latest Sending per instrument before
-admin filtering/counts/strip/panel; Failed is the revert. Row actions: detail, key, lineup editor,
-removal last. `SongRowAdminUiModel.saveStatus` unifies key and lineup saving. Editor owns one
-saveable row key; retained handlers read latest counts and synchronously reserve targets so two
-pre-recomposition taps queue distinct counts. `Instrument.fullName` exports the shared name copy.
-Server `setSlotCount` is router-guarded, reuses `findSongRow_`, and writes only changed plain-text
-slot cells; future ordinal mutations reuse `presentSlotFields_` and refuse unexpected cell state.
-
-As built locally by `admin-assign-musician` (deployment/live checks deferred): `SlotPosition` is a
-1-based instrument ordinal in original lineup order and `MusicianName.parseOrNull` is the write-time
-normalizer/validator. `SetlistRepository.assignSlot` and `observeAssignments` use public
-`Assignment`/`AssignSlotOutcome` types and share `DefaultSetlistRepository`'s write ordering, ids and
-`DataScope`; a confirmed `{schemaVersion,column,name}` response is required before its guarded
-single-slot DAO update. Sending assignments overlay only the admin's matching open slot before
-filter/count/strip/panel derivation; failed assignments revert and become dismissible cards.
-`LineupPanelUiModel` keeps optional slot action metadata absent by default, and the expanded Próxima
-jam panel supplies actions only in admin mode. `AssignMusicianPresenter` owns form validation and
-suggestions from cached upcoming/past jams; `AssignMusicianScreen` is a full-screen flow in the
-existing feature. `AppRoutes.ASSIGN_SLOT` carries ISO date, `SongId`, instrument and positive
-ordinal in the outer host. No new module or Koin binding is introduced.
-
-As built locally by `admin-clear-slot` (deployment/live checks deferred):
-`SetlistRepository.clearSlot` is a public compare-and-clear mutation exposed through
-`SetlistSlotClearRepository`, with `ClearSlotOutcome` and `SlotClear` (`Sending`/`Failed`). It shares
-the repository's mutation ids, FIFO order/write barriers and `DataScope`. The client captures the
-expected cached display name as text so legacy names do not pass through new-assignment validation;
-the server re-resolves U1 and compare-checks that exact cell. A valid seven-field response is mirrored
-transactionally to the unique cached song. Sending clears overlay only the admin lineup before
-strip/panel/filter/count mapping; failures leave Room unchanged and produce dismissible cards.
-`LineupPanelUiModel`'s filled-line action stays absent by default and is supplied only on PrÃ³xima jam
-for eligible admin slots; ordinal metadata follows the source lineup through the stable partition.
-
-As built locally by `admin-reorder-songs` (deployment/live checks deferred): `SetlistRepository.moveSong`
-uses public `SetlistMove`/`MoveSongOutcome` types and the same mutation id, order and write queues.
-`SetlistDao.moveSetlistSong` rekeys only changed songs and their child slots/extras in one
-transaction after confirmation. Sending entries overlay the admin order by id and call order; failed
-entries never overlay. Song rows use stable song ids (position fallback for duplicate ids), retain the
-pre-overlay position for detail navigation, and anchor the moved row in the viewport. Move actions
-are explicit 48dp `Subir`/`Bajar` buttons and remain absent for musicians.
-
-As built locally by `admin-publish-setlist` (deployment/live checks deferred): Apps Script's `publishSetlist` validates and writes/read-backs only the upcoming Jams `estado` cell; `checkPublish` uses a self-cleaning temporary Jams tab. `SetlistRepository.publishSetlist` returns `PublishOutcome`, shares the `DefaultSetlistRepository` mutation id/order/write barriers and `DataScope`, and exposes `SetlistPublish` Sending/Failed state. `SetlistDao.markPublished` changes only a cached DRAFT/AVAILABLE jam after confirmation. No optimistic status is projected. `WriteFailureLog` records a safe local line. In `:feature:next-jam`, `AdminStatusUiModel` keeps the confirmed badge, `PublishUiModel` holds saveable inline confirmation and failure state, and the persistent assertive card lives in the under-header status block. Only the approved `primaryAction`, `onPrimaryAction`, `published` and `onPublished` amber roles are added to its Konsist allowlist.
+- Deeplink scheme: still open and **still deferred** (D1, 5 October 2026) after
+  `action-contract-registry` (accepted 9 October 2026), which met D-13 with a typed registry of
+  repository functions, not with deeplinks. No destination declares `deepLinks`, no manifest
+  intent filter.

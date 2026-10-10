@@ -5,6 +5,7 @@ import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.SetlistDao
+import com.bbbjam.core.data.remote.ServiceCodes
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -42,11 +43,11 @@ internal class SetlistRemovals(
      */
     suspend fun send(entry: SetlistRemove): RemoveSongOutcome {
         val fields = mapOf(
-            DATE to JsonPrimitive(entry.jamDate.toString()),
-            SONG_ID to JsonPrimitive(entry.songId.value),
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
         )
         val outcome = writer.write(REMOVE_SONG, fields)
-        if (outcome == WriteOutcome.Done || outcome == WriteOutcome.Rejected(SONG_NOT_IN_SETLIST)) {
+        if (outcome == WriteOutcome.Done || outcome == WriteOutcome.Rejected(ServiceCodes.SONG_NOT_IN_SETLIST)) {
             mirror(entry)
         }
         return if (outcome == WriteOutcome.Done) {
@@ -79,8 +80,5 @@ internal class SetlistRemovals(
 
     private companion object {
         const val REMOVE_SONG = "removeSong"
-        const val SONG_NOT_IN_SETLIST = "song_not_in_setlist"
-        const val DATE = "date"
-        const val SONG_ID = "songId"
     }
 }

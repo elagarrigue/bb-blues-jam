@@ -58,8 +58,8 @@ internal class SetlistMoves(
         val result = writer.write(
             MOVE_SONG,
             mapOf(
-                DATE to JsonPrimitive(entry.jamDate.toString()),
-                SONG_ID to JsonPrimitive(entry.songId.value),
+                SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+                SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
                 TO_POSITION to JsonPrimitive(entry.toPosition),
             ),
         )
@@ -85,8 +85,6 @@ internal class SetlistMoves(
 
     private companion object {
         const val MOVE_SONG = "moveSong"
-        const val DATE = "date"
-        const val SONG_ID = "songId"
         const val TO_POSITION = "toPosition"
     }
 }

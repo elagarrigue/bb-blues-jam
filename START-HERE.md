@@ -7,9 +7,8 @@ Empezá cada sesión con: "Leé START-HERE.md".
 flujo `planner` → `implementer` → `validator`. El estado verificado al día vive en `PROGRESS.md`,
 no acá; este documento solo orienta.
 
-Generado el 19 de septiembre de 2026. Actualizado el 29 de septiembre de 2026.
-Estado: semana 2 cerrada. Seis rebanadas `accepted`: baseline Compose, esqueleto de módulos, Konsist,
-detekt/ktlint, patrón de *presenters* con Molecule y tema con tokens. El *gate* está completo.
+Generado el 19 de septiembre de 2026. Actualizado el 10 de octubre de 2026.
+Estado: 40 rebanadas `accepted`; el estado al día vive en `PROGRESS.md`.
 
 ---
 
@@ -77,9 +76,10 @@ actualizada a medida que avanzás; no es documentación muerta.
 
 ### Pendiente inmediato
 
-- Seguir con la siguiente rebanada lista de `feature_list.json` (ver `PROGRESS.md`)
-- Cargar el repertorio real en la planilla (tempo, etiquetas, dificultad), en paralelo; la semana 5
-  lo necesita. Agregar la columna `Otros` a los tabs de fecha (D-18, `docs/sheet-schema.md`)
+- Lo pendiente y la siguiente rebanada están en `PROGRESS.md` ("Current Verified State") y en
+  `feature_list.json`
+- Cargar el repertorio real en la planilla, con tonalidades, en paralelo; la semana 5 lo necesita.
+  Tempo, etiquetas y dificultad quedan de lado por ahora (D-20)
 - Opcional, de la semana 1: prototipo del camino crítico en Google AI Studio
 
 ---
@@ -217,7 +217,7 @@ Van en `.claude/agents/`. El repo del curso trae `agents/openai.yaml` en cada sk
 Usá los prompts de la sección 5 de `bb-blues-jam-design-prompt.md`. Guardá los resultados y
 referencialos desde `DESIGN.md`.
 
-### 6.6 Primera spec con feature-spec — SIGUIENTE
+### 6.6 Primera spec con feature-spec — HECHO
 
 ```
 Usá el subagente planner sobre gradle-kotlin-compose-baseline. No implementes nada:
@@ -288,8 +288,8 @@ Edición del 14 de septiembre al 23 de octubre de 2026.
 | Semana | Módulo | Aplicación |
 |---|---|---|
 | 1 | Aprender a aprender con IA | Hecho: exploración de dominios, investigación de APIs, definición del problema |
-| 2 | Prompt y context engineering | Hecho: `harness-starter`, subagentes, `DESIGN.md`, `AGENTS.md` en U, skill `architecture`. Falta la primera `feature-spec` |
-| 3 | IDEs agénticos | Ciclo `feature-flow` sobre la app base |
+| 2 | Prompt y context engineering | Hecho: `harness-starter`, subagentes, `DESIGN.md`, `AGENTS.md` en U, skill `architecture`, primera `feature-spec` |
+| 3 | IDEs agénticos | Hecho: ciclo `feature-flow` (planner → implementer → validator) sobre la app base; el registro por rebanada está en `PROGRESS.md` |
 | 4 | CLI y MCP | Skills propias; posible MCP para Google Sheets |
 | 5 | APIs de IA | El asistente: function calling sobre el contrato de acciones |
 | 6 | Prototipado y proyecto final | Cierre del MVP, Songsterr si hay tiempo, vídeo |

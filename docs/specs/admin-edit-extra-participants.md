@@ -20,7 +20,7 @@ Apps Script already routes every write through the passphrase guard and script l
 
 ## Goal and non-goals
 
-In the expanded PrÃ³xima jam admin row, add a clear `Agregar a Otros` control and an inline form for a name and free-text instrument. Each existing extra also gets an accessible `Quitar` action. The admin sees a Sending-only optimistic row change with `Guardando…`; a confirmed server response updates Room, while a failed write restores confirmed data and creates a dismissible failure card. The musician projection never receives pending values or edit controls.
+In the expanded Próxima jam admin row, add a clear `Agregar a Otros` control and an inline form for a name and free-text instrument. Each existing extra also gets an accessible `Quitar` action. The admin sees a Sending-only optimistic row change with `Guardando…`; a confirmed server response updates Room, while a failed write restores confirmed data and creates a dismissible failure card. The musician projection never receives pending values or edit controls.
 
 Do not add or remove lineup slots, assign musicians to slots, change suggestions, edit song detail, alter past jams, support offline writes, add a route, or add an action-registry/deeplink entry. Do not create a feature module, ViewModel, dependency, or Room migration. No changes to `Catalogo` or the Jams row.
 

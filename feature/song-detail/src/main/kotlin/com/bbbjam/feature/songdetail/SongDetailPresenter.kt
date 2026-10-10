@@ -12,6 +12,7 @@ import com.bbbjam.core.ui.lineup.toInstrumentGroups
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.SongListText
 import java.time.LocalDate
 
 /**
@@ -60,7 +61,7 @@ internal fun JamsSnapshot.toSongDetail(jamDate: LocalDate, position: Int, onBack
         artist = song.artist.takeIf { it.isNotBlank() },
         keyLabel = SongDetailCopy.KEY_LABEL,
         key = song.key.value,
-        keyDescription = SongDetailCopy.keyDescription(song.key.value),
+        keyDescription = SongListText.keyDescription(song.key.value),
         lineup = song.lineup.toInstrumentGroups(song.extraParticipants),
         back = back,
     )

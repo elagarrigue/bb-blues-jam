@@ -8,6 +8,7 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.JamExtraEntity
 import com.bbbjam.core.data.cache.SetlistDao
+import com.bbbjam.core.data.remote.ServiceCodes
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
@@ -110,7 +111,7 @@ internal class SetlistExtraParticipants(
 
         ordinal != null && ordinal !in 1..MAX_EXTRAS -> INVALID_EXTRA
 
-        !exists -> SONG_NOT_IN_SETLIST
+        !exists -> ServiceCodes.SONG_NOT_IN_SETLIST
 
         ordinal != null &&
             extras.getOrNull(ordinal - 1) !=
@@ -171,8 +172,8 @@ internal class SetlistExtraParticipants(
         name: String?,
         instrument: String?,
     ): Map<String, JsonPrimitive> = buildMap {
-        put("date", JsonPrimitive(entry.jamDate.toString()))
-        put("songId", JsonPrimitive(entry.songId.value))
+        put(SetlistRequestFields.DATE, JsonPrimitive(entry.jamDate.toString()))
+        put(SetlistRequestFields.SONG_ID, JsonPrimitive(entry.songId.value))
         if (ordinal == null) {
             put("name", JsonPrimitive(ExtraParticipantContract.normalize(name.orEmpty())))
             put("instrument", JsonPrimitive(ExtraParticipantContract.normalize(instrument.orEmpty())))
@@ -210,7 +211,6 @@ internal class SetlistExtraParticipants(
     private companion object {
         const val AVAILABLE = "AVAILABLE"
         const val MAX_EXTRAS = 20
-        const val SONG_NOT_IN_SETLIST = "song_not_in_setlist"
         const val INVALID_EXTRA = "invalid_extra"
         const val EXTRA_CHANGED = "extra_changed"
         const val EXTRA_LIMIT = "extra_limit"

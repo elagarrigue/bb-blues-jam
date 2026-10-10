@@ -18,11 +18,11 @@ import com.bbbjam.core.ui.state.rememberRevealingLazyListState
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 @Composable
-internal fun NoUpcomingJamContent(model: NextJamUiModel.NoUpcomingJam, fill: Modifier, padding: PaddingValues) {
+internal fun NoUpcomingJamContent(model: NextJamUiModel.NoUpcomingJam, modifier: Modifier, padding: PaddingValues) {
     val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = EMPTY_KEY)
     LazyColumn(
         state = listState,
-        modifier = fill,
+        modifier = modifier,
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.md),
     ) {
@@ -33,7 +33,7 @@ internal fun NoUpcomingJamContent(model: NextJamUiModel.NoUpcomingJam, fill: Mod
 }
 
 @Composable
-internal fun JamContent(model: NextJamUiModel.Jam, fill: Modifier, padding: PaddingValues) {
+internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: PaddingValues) {
     val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = HEADER_KEY)
     val rowKeys = ((model.setlist as? SetlistUiModel.Songs)?.rows).orEmpty().map { it.rowKey }
     var moveAnchor by remember { mutableStateOf<MoveScrollAnchor?>(null) }
@@ -54,7 +54,7 @@ internal fun JamContent(model: NextJamUiModel.Jam, fill: Modifier, padding: Padd
     }
     LazyColumn(
         state = listState,
-        modifier = fill,
+        modifier = modifier,
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
     ) {

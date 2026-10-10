@@ -1,5 +1,11 @@
 # Progress Log
 
+## 10 October 2026 - project-hygiene-pass accepted
+
+Whole-project cleanliness pass with no behavior change (`docs/specs/project-hygiene-pass.md`). Fixed: dead `AdminDraftBanner` and unused copy constants (F1-F3); the five next-jam/past-jams lint warnings (`AdminRefreshEffect`, `modifier` naming and order; F4-F7); admin mapping moved unchanged from `NextJamPresenter.kt` (626 -> 376 lines) to `NextJamAdminMapping.kt`, with `decorate`'s two `copy` branches merged (F9); `SongListText` in `:core:ui` replaces the three features' copies of the position label, `Tonalidad` description and dropped-rows note (F10); `SetlistRequestFields` plus `ServiceCodes.SONG_NOT_IN_SETLIST`/`SLOT_NOT_IN_LINEUP` in `:core:data` (F11); one `QueuedPostTransport` test double instead of five (F12); mojibake (F13); stale KDoc and skill wording on row keys (F14); template instrumented test, its runner and deps, and `:app`'s unused tooling deps removed (F15, F16); `START-HERE.md`, this file's "Current Verified State" (old text kept verbatim under "Archived Verified State") and the architecture skill's "As built" paragraphs updated (F17-F19). Kept as the spec says: F8 (`:app` version warnings, H1), F20, F21, F23-F27; deferred D1-D7 (Post.js split, H2).
+
+Verification: T0 baseline 654 JVM tests in 106 classes. Final `CI=true ./init.sh` exit 0 with `konsist`, `detekt` and `ktlint` all `wired`; 657 tests in 107 classes, 0 failures/errors (T0 + `SongListTextTest` 3, every other class count unchanged; Konsist 17). Lint: `:feature:next-jam` 4 -> 0 and `:feature:past-jams` 1 -> 0 ("No issues found"); `:app` only `GradleDependency`/`NewerVersionAvailable` (15). V3 archive check: 341 non-blank lines, missing 0. No added string literal in `src/main`; `backend/apps-script` and every verification rule untouched; `git diff --check` clean. No device run (nothing drawn changes). Next: independent validation, then `ui-polish-pass`.
+
 ## 9 October 2026 - admin-edit-extra-participants accepted
 
 The feature is implemented and self-verified. Guarded Apps Script add/remove actions, repository mutations on the shared queue, a transactional Room mirror, and the admin-only inline editor are in place. `node --test backend/apps-script/test/*.test.js` passed 168/168. `CI=true ./init.sh` exited 0 with konsist, detekt and ktlint wired; the gate's data and next-jam suites passed, including 2 repository tests and 13 admin presenter tests. Local `checkSetlistWrite` covers append/readback, stale ordinal refusal without a write, removal/readback, the entry limit and disposable-tab cleanup. `git diff --check` passed. Under B2, shared deployment and live L1-L5 checks are deferred until app implementation is complete; the current shared router lists 15 actions and does not yet include these two. Device smoke remains a human follow-up because `adb` is unavailable. Validator repair: each visible `Quitar` keeps its text and has the participant-specific content description `Quitar a {nombre}, {instrumento}`; the presenter test verifies Juan/saxo and Mora/trompeta labels differ. Follow-up `CI=true ./init.sh` exited 0 with konsist, detekt and ktlint wired; `git diff --check` passed. Status: accepted after independent validation.
@@ -14,370 +20,36 @@ At the user request, removed this optional enrichment from the active feature li
 
 ## Current Verified State
 
+Short snapshot, rewritten by `project-hygiene-pass` on 10 October 2026. The earlier, longer
+section (per-session gate history, the old "What exists" inventory) is kept verbatim under
+"Archived Verified State" at the end of this file; per-slice evidence lives in `feature_list.json`
+and the Session Log.
+
 - Repository root: `C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam`
 - Standard startup path: `./init.sh`
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
-  `./gradlew check`
-- Current state: 40 of 41 active slices accepted; `action-contract-registry` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
+  `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
+  `konsist`, `detekt` and `ktlint` all `wired`.
+- Slices (`feature_list.json`, 43 entries): 41 `accepted`; `songsterr-browser-link` `blocked`
+  (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
+  `not_started`. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `project-hygiene-pass` entry at the top of this file.
+- Code layout: eight Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
+  `:feature:info`, `:feature:next-jam`, `:feature:past-jams`, `:feature:song-detail`), plus
+  `:konsist-test` (17 architecture rules) and the included build `build-logic`. The Apps Script
+  backend lives in `backend/apps-script/` (Node tests outside the gate). Where each piece goes:
+  `.claude/skills/architecture/SKILL.md`.
+- Deployment: the shared Apps Script router is live with 15 actions (shared live batch L1–L5
+  passed on 9 October 2026, no real jam modified or published). `addExtraParticipant` and
+  `removeExtraParticipant` are implemented and tested locally but not deployed yet (B2: shared
+  deployment after app implementation is complete).
+- Human checks still owed: the `Actualizar` action with TalkBack; a device smoke of the
+  `admin-edit-extra-participants` editor (`adb` was unavailable).
 - **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
-- Shared Apps Script deployment for reorder, publish, adjust-lineup, assign, and clear-slot was completed by the user. Initial POST exposed a missing `SCHEMA_VERSION` global; the user corrected `Code.gs` and deployed current `Post.js`. L1 now confirms all batch actions. Full read-only L1-L5 checks passed on 9 October 2026; details below. No real jam was modified or published.
-  The seed was imported into the real Sheet and reviewed by hand by
-  the user (29–30 September 2026, the user's report; no agent can read the Sheet).
-- Shared live batch, 9 October 2026: L1 all expected actions present; L2/L3/L4 checks passed for lineup, reorder and publish; L5 readJams identical before/after (2 jams, 26 songs; aggregate SHA-256 `42CFABE0DE3C8D71`). Temporary-tab self-checks `checkSetlistMove`, `checkSetlistWrite`, `checkSetlistRemove`, and `checkPublish` all returned `ok`; no real jam was modified or published. Local `src/Post.js` SHA-1 `721F7CCF1481F964FEAAF6A772E16B350CFF724C`; remote source hash was not independently observable. `admin-adjust-lineup` is accepted after independent validation.
-- Latest verification, 9 October 2026: independent validator accepted `admin-adjust-lineup`; `CI=true ./init.sh` exited 0 with `konsist`, `detekt`, and `ktlint` all wired.
-- Previous full local verification at: 8 October 2026 (`admin-publish-setlist`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 104 JVM test-result suites, 649 tests, zero failures/errors; Node 165/165. Independent validator accepted after rerunning the gate and reviewing E1/C1 behavior and server-confirmed publication. This acceptance preceded the user-reported shared deployment; the subsequent live probe is recorded above.
-  Before that, 7 October 2026 (`offline-notice-visible`, independently accepted) —
-  `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
-  including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,
-  `live-refresh-during-jam`, `passing`) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 92 result files, 576 tests, 0 failures. Pixel 5: device steps 1–6 of the spec;
-  see session 078. Before that, 6 October 2026 (session 077, `admin-set-key` Part B, `in_progress`) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 87 result files, 538 tests, 0 failures. Pixel 5: picker, rotation, font scale
-  2.0, `AccessRefused` revert and card, musician view; no DataStore dir before or after; settings
-  restored. Before that, session 076 ( `admin-remove-song-from-setlist` Part B,
-  `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 84 result files, 519 tests, 0 failures. Pixel 5: confirmation, rotation,
-  `AccessRefused` card, no DataStore dir before or after; settings restored. Before that, session
-  075 (`admin-set-key` Part A, `in_progress`) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 83 result files, 509 tests, 0 failures; Node 132/132. `src/Post.js` SHA-1
-  `be205ea3f5d5081e5896666d3490ae30cab06119` (both Part A halves), **not deployed** (the deployed one is
-  still `94bb9154…`). Before that, session 074 (`admin-remove-song-from-setlist` Part A,
-  `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 83 result files, 498 tests, 0 failures; Node 124/124. `src/Post.js` SHA-1
-  `faf0fd85d53ce9277b3882e6573fedfe6ad64256`, **not deployed** (the deployed one is still
-  `94bb9154…`). Before that, session 073 (`admin-add-song-to-setlist` Parts A and B,
-  `passing`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 83 result files, 489 tests, 0 failures; Node 113/113. Deployed Post.js SHA-1
-  `94bb91548469d3f9c6c868788f09d3d2684c5cf1`; live checks L1–L6 as expected. Pixel 5: admin view,
-  picker, `AccessRefused` card, demo draft, musician view; settings restored. Before that, session
-  072 (Part A): 78 result files, 464 tests.
-  Before that, 5 October 2026 (session 070, `debug-admin-session`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 75 result files, 433 tests, 0 failures (new `DebugAdminSessionTest` 6). Release
-  dex has no `DebugAdminSession`. Pixel 5: `Modo admin activo` with no login, flag left on. Before
-  that, session 069 (`admin-passphrase-login`, since accepted) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 74 result files, 427 tests, 0 failures; Node 83/83. Before that, session 068
-  (`past-jam-detail`, since accepted)
-  — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 70 result files, 397 tests, 0 failures (`AppRoutesTest` 6 → 9,
-  `PastJamsPresenterTest` 5 → 6, `PastJamsStatesTest` 12 → 14, new `PastJamDetailMappingTest` 9,
-  `PastJamDetailPresenterTest` 2, `PastJamDetailModelShapeTest` 3, `PastJamDetailDefaultsTest` 3).
-  Pixel 5: Anteriores, then the 2026-07-25 detail with 13 rows and amber keys; back paths and
-  rotation. Before that, session 067 (`unpublished-setlist-state`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 66 result files, 374 tests, 0 failures (`JamTest` 6 → 10, `NextJamPresenterTest`
-  17 → 16, `NextJamStatesTest` 9 → 11, `SongDetailMappingTest` 7 → 8, `DemoUpcomingJamRepositoryTest`
-  6 → 8, new `NextJamDraftTest` 4 and `DraftSetlistDefaultsTest` 3). Node 70/70. Pixel 5: the draft
-  card on the draft demo jam. Before that, session 066 (`bottom-navigation`) — `CI=true ./init.sh`
-  exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
-  `ktlint: wired`; 64 result files, 359 tests, 0 failures (`ContrastTest` 14 → 15, `AppRoutesTest`
-  5 → 6, new `AppTabTest` 4 and `TabBarDefaultsTest` 3). Pixel 5: per-tab state across tab
-  switches, the song detail, rotation and process death. Before that, session 065
-  (`past-jams-list`) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`;
-  62 result files, 350 tests, 0 failures (the 57 previous files unchanged except `ContrastTest`
-  13 → 14, plus `SpanishDateNamesTest` 2, `PastJamsStatesTest` 12, `PastJamsPresenterTest` 5,
-  `PastJamsDefaultsTest` 2, `PastJamsModuleTest` 1). Pixel 5: Anteriores shows the 2026-07-25 row;
-  offline relaunch shows the staleness notice above it. Before that, session 064
-  (`debug-demo-upcoming-jam`) — `CI=true ./init.sh`
-  exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`; 57 result files,
-  327 tests, 0 failures (the 56 previous files plus `DemoUpcomingJamRepositoryTest` 6).
-  `:app:assembleRelease` exit 0 with no demo class in the release dex. Pixel 5: the demo jam on
-  Próxima jam and its song detail with the flag on, the Sheet's state with it off. Before that,
-  4 October 2026 (session 063, `song-detail-screen`) — `CI=true ./init.sh` exit
-  0, `konsist: wired` (17/17, new `navigation-only-in-app`), `detekt: wired`, `ktlint: wired`; 56
-  result files, 321 tests, 0 failures. Navigation Compose 2.9.8 added to `:app` with no resolved
-  version moving. Pixel 5 (5 October, temporary jam 2026-10-31): detail opened from an expanded
-  row with a filter and a scroll set; key the tallest node, 48dp "Volver", one "Tonalidad A" node;
-  Volver, system back, fast double taps and rotation all return an identical list; "Bm" on one line
-  at font scale 2.0; settings restored, empty crash buffer. Before that, session 062 (`list-states`) — `CI=true ./init.sh` exit 0,
-  `konsist: wired` (16/16, new `no-dp-literal-outside-core-ui`), `detekt: wired`, `ktlint: wired`;
-  49 result files, 290 tests, 0 failures. Pixel 5: offline first launch shows the error block,
-  Retry online shows the skeleton then the no-upcoming block, offline with cache shows the
-  staleness notice; empty crash buffer, every setting restored. Before that, session 061
-  (`instrument-filter-chips`) — `CI=true ./init.sh`
-  exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 46 result files,
-  263 tests, 0 failures: the 43 previous files unchanged except `ContrastTest` 9 → 11, plus
-  `InstrumentFilterMapperTest` 8, `InstrumentFilterDefaultsTest` 3 and `NextJamFilterTest` 10. Lint
-  `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: cold start
-  636 ms, `jams cache: upcoming 2026-10-31, past 1, songs 26`, spec step C done (session 061),
-  empty crash buffer, every setting restored. Before that, 3 October 2026 (session 057,
-  `song-row-expansion`) — `CI=true ./init.sh` exit 0,
-  `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 43 result files, 240 tests,
-  0 failures: the 40 previous files unchanged except `ContrastTest` 8 → 9 and `NextJamPresenterTest`
-  7 → 11, plus `LineupPanelMapperTest` 7, `LineupPanelDefaultsTest` 3 and `ExpandedRowsTest` 5. Lint
-  `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: installed, cold
-  start 609 ms, empty crash buffer and AndroidRuntime log, `jams cache: upcoming none`, so only the
-  no-upcoming line is drawn (no row to expand). Before that, 2 October 2026 (session 052,
-  `instrument-strip-component`) — `CI=true
-  ./init.sh` exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 40
-  result files, 220 tests, 0 failures: the 38 previous files unchanged except `ContrastTest` 6 → 8
-  and `NextJamPresenterTest` 6 → 7, plus `LineupChipsTest` 9 and `InstrumentStripDefaultsTest` 5.
-  Lint `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: installed,
-  cold start 912 ms, empty crash buffer and AndroidRuntime log, `jams cache: upcoming none`, so only
-  the no-upcoming line is drawn (no strip to check). Before that, session 048
-  (`next-jam-read-only-list`, JVM only) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (15/15, new `no-material-theme-outside-core-ui` and
-  `amber-roles-allowlisted`), `detekt: wired`, `ktlint: wired`; 38 result files, 0 failures: the 35
-  baseline files unchanged except `ModuleIsolationTest` 13 → 15, plus `JamDateTextTest` 7,
-  `NextJamPresenterTest` 6, `NextJamModuleTest` 1. Lint: `:feature:next-jam` no issues, `:app` the
-  same 14 pin warnings. No device run (Pixel 5 absent from `adb devices`). Before that, session 045
-  (`jams-repository-cache`) — `CI=true ./init.sh`
-  exit 0, `konsist: wired` (13/13, new `data-libraries-only-in-core-data-qualified`), `detekt:
-  wired`, `ktlint: wired`; 35 result files, 0 failures (the 29 baseline files unchanged except
-  `JamTest` 4 → 6, `DefaultCatalogRepositoryTest` 14 → 17, `ModuleIsolationTest` 12 → 13, plus six
-  new classes). Pixel 5 (API 34): upgrade over the accepted v1 build, cold start 797 ms, `jams
-  refresh: updated 1 jams …`, `jams cache: upcoming none, past 1, songs 13 (13 from catalog)`,
-  database `user_version` 2; offline (airplane mode, restored to 0) both refreshes `failed Offline`,
-  same rows and `fetched_at`. Before that, session 042 (`catalog-repository-cache`, JVM only) —
-  `CI=true ./init.sh` exit 0, `konsist: wired` (12/12, new `data-libraries-only-in-core-data`),
-  `detekt: wired`, `ktlint: wired`; 29 result files, 0 failures: the 20 baseline files unchanged
-  except `ModuleIsolationTest` 11 → 12, plus nine new `:core:data` classes (58 tests). No device
-  run. Before that, 1 October 2026 (session 039, `apps-script-jams-read-endpoint` repo half) —
-  `node --test backend/apps-script/test/*.test.js` 68/68 (outside the gate); `CI=true ./init.sh`
-  exit 0, three `wired`, the 20 test result files identical to the baseline. Before that, session 036 — live endpoint: checker OK on 100 songs,
-  `config` → `unknown_resource`, warm read median ~2.5 s. Session 035 (`apps-script-read-endpoint` repo half) —
-  `CI=true ./init.sh` exit 0, three `wired`, the 20 test result files identical in names and
-  counts to the baseline; `node --test backend/apps-script/test/*.test.js` 33/33 (outside the
-  gate). Before that, 30 September 2026 (session 033, `build-logic-conventions`) — `CI=true ./init.sh`
-  exit 0, `konsist: wired` (11/11, new `build-file-applies-convention`), `detekt: wired`,
-  `ktlint: wired`; every other suite unchanged (20 result files, 0 failures). Task plans,
-  `buildEnvironment`, manifests, dependency sets and the debug APK (392 non-`META-INF` entries by
-  SHA-1) identical to HEAD `095c88b`. Pixel 5 (API 34): cold start 872 ms, `Status: ok`, empty
-  crash buffer and AndroidRuntime log, Info drawn unchanged.
-  Before that, session 030 — `CI=true ./init.sh` exit 0, `konsist: wired`
-  (10/10, now checking the real `:feature:info`), `detekt: wired`, `ktlint: wired`; new
-  `InfoPresenterTest` (4) and `InfoModuleTest` (1), all other counts as below, 0 failures. Pixel 5
-  (API 34): cold start 760 ms, empty crash buffer and AndroidRuntime logcat, Info drawn from the
-  tokens (background `#111318`, no amber), each link starts an `ACTION_VIEW` for its host (Chrome for
-  Instagram and Linktree, the YouTube app for YouTube) and back returns to Info; the admin notice
-  appears. Link `onClickLabel`s are not verified on device (see session 030).
-  Session 028 (docs and one KDoc sentence only) kept the gate green. Before that, 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
-  `konsist: wired` (10 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:model`
-  runs 30 tests in 9 classes on the JVM, 0 failures; `:core:ui` runs `EventHandlerTest` (6),
-  `SamplePresenterTest` (3), `BluesJamColorsTest` (3), `BluesJamTypographyTest` (2),
-  `ContrastTest` (6) and `WindowBackgroundTest` (1), 0 failures. Last launch check on the Pixel 5
-  (API 34) was session 021: cold start, empty AndroidRuntime logcat, background `#111318`, label
-  Barlow Condensed Bold. The display runs in Display P3, so saturated colors in screenshots read
-  as their P3 encoding (amber `#FFB300` → `#F4B63F`). Session 024 changed nothing visible.
-
-### What exists
-
-Six product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-skeleton`,
-`accepted`), `:feature:info` (`info-screen`, `accepted`) and `:feature:next-jam`
-(`next-jam-read-only-list`, `accepted`).
-`:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
-libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
-depends on all three. `:app`'s `ModuleWiringTest` proves `:core:model` is visible from `:app`
-(through `JamStatus`); the `:core:data` marker is gone (session 042).
-
-`:core:data` (`catalog-repository-cache`, `accepted`, convention `bluesjam.android.data`) reads
-the catalog: `OkHttpAppsScriptTransport` (OkHttp 5.1.0) → `AppsScriptEnvelope`
-(kotlinx-serialization 1.9.0) → `CatalogMapper` (the catalog Mapper rules, Q1 duplicates reject
-every copy, Q2 a bad tempo/difficulty/songsterrId is dropped and the song kept) → Room 2.8.4
-(`bluesjam-cache.db`, tables `catalog_song` and `sync_state`). `CatalogRepository` is
-cache-first: `observeCatalog()` emits the cached songs with `Freshness` (`fetchedAt`,
-`lastFailure`, `isRefreshing`, `isStale(now)`: stale after 30 min or a failure) and refreshes in
-the background when stale, never within 60 s of the last attempt; `refresh()` is single-flight. A
-failure (`NotConfigured`, `Offline`, `Service(code)`, `InvalidResponse`) never touches the cache.
-`:app` reads `bluesjam.appsScriptUrl` from the git-ignored `local.properties` into
-`BuildConfig.APPS_SCRIPT_URL`, binds `AppsScriptEndpoint` in `appModule`, starts `dataModule`,
-refreshes once per process start and logs `catalog refresh: …` (tag `BluesJam`, never the URL).
-The manifest now has `INTERNET`. Core library desugaring is on in every Android module.
-
-`:core:data` also reads the jams (`jams-repository-cache`, `passing`): `GET ?resource=jams` →
-`JamDto` → `JamsMapper` (the `Jams` rows: P2 a shared `fecha` rejects every such row, P8 `hora`
-and `lugar` required) and `SetlistMapper` (one tab: P4 a bad row is dropped and reported, the rest
-stay available, positions never renumbered; P1 `Juan(saxo)` valid, a malformed `Otros` entry
-dropped alone) → Room v2 (`jam`, `jam_song`, `jam_slot` with the slot's column index, `jam_extra`,
-foreign keys CASCADE, and the view `jam_song_resolved`, which resolves titles against the cached
-catalog at read time). `JamsRepository.observeJams()` emits `JamsSnapshot(upcoming, past,
-freshness)`: today comes from `JamCalendar` in Buenos Aires (P7), the earliest future jam is
-upcoming and later ones are held back (P5), past jams are newest first with only filled slots (P6).
-Both repositories now turn a refused write into `DataFailure.Storage` and a mapper exception into
-`InvalidResponse("mapping: …")`, and `DataScope` and `BluesJamApp`'s scope log an escaped exception
-instead of crashing. `BluesJamApp` refreshes catalog and jams concurrently and logs `jams refresh:
-…` and `jams cache: …` (counts and dates only).
-
-`:core:model` holds the domain types in `com.bbbjam.core.model` (`domain-model-types`, `accepted`):
-`Jam` (date as identity, `setlist: Setlist`, `isHistorical(today)` with the date from the caller; a
-published jam is never withheld), `Setlist` (`Available(songs, droppedRows)` with positions ≥ 1,
-unique and ascending, gaps allowed, never empty when rows were dropped; `Withheld`;
-`Unavailable(SetlistProblem)`, set by `jams-repository-cache`), `JamStatus` (`DRAFT`, `PUBLISHED` only), `JamSong` (position ≥ 1, `songId`,
-`title`, `artist`, `key`, `lineup`, `extraParticipants` default empty), `Lineup` (`openSlots`,
-`hasOpenSlotFor`, `default()` = seven open slots in Sheet column order; never more of an instrument
-than the default, zero allowed — D-18), `Slot` (open when `musicianName` is null; blank names
-rejected), `ExtraParticipant` (name and free-text instrument, both non-blank, no `;`, `(`, `)`;
-never open), `Instrument` (six values, `KEYBOARDS` not `KEYS`), `Song` (optional catalog and
-enrichment fields default to null), `Tempo`, `Difficulty`, and the validated value classes `Key`
-(schema **Keys** format, `isMinor`, `parseOrNull`) and `SongId` (lowercase slug, `parseOrNull`).
-Pure Kotlin with java.time; no serialization, no date parsing, no clock (Konsist
-`core-model-no-system-clock`). Invalid values throw `IllegalArgumentException` naming the value.
-
-`:core:ui` holds the presenter contracts of D-02 in `com.bbbjam.core.ui.presenter`: `UiModel`,
-`UiEvent`, `Presenter` and `EventHandler` (`equals` and `hashCode` both from `key`, `operator invoke`
-declared) (`molecule-presenter-harness`, `accepted`). It applies the Compose compiler plugin and
-exposes the Compose BOM, `androidx.compose.runtime:runtime`, `ui` and `material3` (1.3.2) as `api`.
-
-`:core:ui` also holds the design system in `com.bbbjam.core.ui.theme` (`design-tokens-theme`,
-`passing`; D-17): `BluesJamTheme { }` wraps `MaterialTheme` with every dark-scheme role, the type
-scale and the shapes mapped from the `DESIGN.md` tokens, and provides `LocalContentColor` = `text`.
-Screens read `BluesJamTheme.colors` / `.typography` / `.shapes` / `.spacing`. The palette is
-`internal`; amber is public only as `primaryAction`, `slotOpen`, `key`, `published`,
-`activeFilter` (plus their `on…` colors). Fonts are bundled static TTFs (Barlow Condensed
-SemiBold/Bold/ExtraBold, Chivo Regular) with their OFL texts in `assets/licenses`. The only XML
-color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, guarded by
-`WindowBackgroundTest`. `ThemeShowcase` (public, with a `@Preview`) draws every role and style.
-Its test sources hold a sample presenter with no domain types, `SamplePresenterTest` (Molecule
-2.2.0 + Turbine 1.2.1 + coroutines-test 1.10.2, asserting transitions after events) and
-`EventHandlerTest`. Unit tests set `isReturnDefaultValues = true` because the Android Compose
-runtime calls `android.os.Trace`; every presenter module needs the same (architecture skill).
-`compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
-
-Module build setup lives in `build-logic/` (`build-logic-conventions`, `accepted`): an included build
-(`includeBuild("build-logic")` in `pluginManagement`) whose `:convention` subproject holds six binary
-plugins in `com.bbbjam.buildlogic` — `bluesjam.jvm.library` (`:core:model`, `:konsist-test`),
-`bluesjam.android.library` (`:core:data`), `bluesjam.android.application` + `bluesjam.android.compose`
-(`:app`), `bluesjam.android.presenter` (`:core:ui`) and `bluesjam.android.feature` (`:feature:info`).
-They set SDK levels (`compileSdk`, `minSdk`, and now `targetSdk` from the catalog), Java 11,
-Compose, `isReturnDefaultValues`, the presenter test libraries and Koin for features. Module files
-keep only `id("bluesjam.…")`, namespace, `:app`'s identity and build types, and their own
-dependencies. The catalog is shared from `gradle/libs.versions.toml` (new `targetSdk`,
-`android-gradlePlugin`, `kotlin-gradlePlugin`); detekt and ktlint are still applied from the root
-`subprojects {}` block and do not lint `build-logic` itself.
-
-A test-only module `:konsist-test` (`bluesjam.jvm.library`, no project dependency) holds
-`ModuleIsolationTest`: 15 Konsist 0.17.3 tests (12th `data-libraries-only-in-core-data`, 13th
-`data-libraries-only-in-core-data-qualified`, 14th `no-material-theme-outside-core-ui`, 15th
-`amber-roles-allowlisted` with its per-module `AMBER_ROLE_ALLOWLIST`, today only
-`feature/next-jam` → `key`) that enforce the architecture skill's dependency rules
-(no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
-`:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
-`project(":…")` dependencies in `core/*`/`feature/*` build files, every module build file applying
-its `bluesjam.*` convention with no raw plugin and no convention-owned setting, and no color literal
-outside `:core:ui`). Module groups are read from paths,
-so the first `:feature:*` module is covered without editing the suite. The test task declares every
-`.kt`/`.kts` file as an input, so a change elsewhere reruns it (`konsist-isolation-rules`, `accepted`).
-
-`:app` is on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
-`accepted`). AGP 9.4.1 with its built-in Kotlin (no `org.jetbrains.kotlin.android`
-plugin), Kotlin/KGP 2.2.10, the Compose compiler plugin `org.jetbrains.kotlin.plugin.compose` on the
-same `kotlin` catalog key, Compose BOM 2025.09.00 (ui, foundation, ui-tooling-preview, ui-tooling for
-debug only) and activity-compose 1.11.0. appcompat and Material Views are gone; Material 3 arrives
-through `:core:ui`.
-
-`MainActivity` (a `ComponentActivity`, the launcher) turns on edge-to-edge with dark system bars and
-shows `TemporaryTabs` inside `BluesJamTheme`: Próxima jam (first) or Info above a plain two-cell tab
-row (`selectable`, `Role.Tab`, 48dp, `text`/`textMuted`, no amber), each screen with the status-bar
-insets as `contentPadding`; `bottom-navigation` deletes it. `BluesJamApp` (the manifest's
-`android:name`) calls `startKoin` with `appModule`, `dataModule`, `infoModule` and `nextJamModule`; `appModule` binds `ExternalLinkOpener` to `IntentLinkOpener`. Koin is
-4.1.1 (BOM); kotlin-stdlib stays 2.2.10 and Compose 1.9.1 on `:app`'s runtime classpath. `:app` has
-no colors of its own: its `colors.xml` is gone, and the window
-theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`) uses
-`@color/bluesjam_window_background` from `:core:ui`. Dark only: `values-night` was deleted.
-
-`./gradlew check` runs unit tests, Android lint, the Konsist suite, detekt 2.0.0-alpha.6 and ktlint
-1.8.0 (ktlint-gradle 14.2.0). The root `build.gradle.kts` applies both tools to every module that
-applies `kotlin-jvm` or an Android plugin, so a new module gets them with no build code; config is in
-`.editorconfig` (`android_studio` style, Composable naming exception) and `config/detekt/detekt.yml`;
-no baseline file. `init.sh` prints `konsist: wired` only when `:konsist-test:test` exists and its
-results hold at least one test, and `detekt`/`ktlint: wired` only when `check --dry-run` schedules
-the tool's task in every module that compiles Kotlin; otherwise it names the modules missing it.
-The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
-`JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
-`SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
-`ContrastTest`, `WindowBackgroundTest`, `LineupChipsTest`, `InstrumentStripDefaultsTest`, `LineupPanelMapperTest`, `LineupPanelDefaultsTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
-`InstrumentFilterMapperTest`, `InstrumentFilterDefaultsTest`,
-`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest`, `NextJamFilterTest`, `ExpandedRowsTest` and `NextJamModuleTest`, and the
-`:core:data` classes.
-
-`:feature:info` (`info-screen`, `accepted`) is the first feature module and the template for the
-others: `InfoPresenter` (`Presenter<InfoUiModel, Unit>`, constructor `ExternalLinkOpener` from
-`:core:ui`), `InfoUiModel` with `OpenLink`/`DismissLinkError`/`AdminEntryTapped`, the approved copy
-in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders only,
-`koinInject()` default) and `infoModule`. It shows who organizes the jam, the jam, Hideaway, how to
-join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
-está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
-
-`:feature:next-jam` (`next-jam-read-only-list`, `accepted`) is the first feature that reads data
-(project deps `:core:ui` and `:core:data`): `NextJamPresenter(JamsRepository, JamCalendar)` maps
-`observeJams().upcoming` to `NextJamUiModel` (`Loading` until something was ever fetched,
-`NoUpcomingJam`, or `Jam(header, setlist)` with `Songs(rows, droppedRowsNote)` or `NotShown` for a
-withheld or unavailable setlist). The header is "Sábado 31 de octubre · 21:00", the venue as
-written in `lugar`, and the time remaining ("Esta noche" from 18:00 on its own date, "Hoy",
-"Mañana", "En n días") from `JamCalendar.today()` read once per snapshot. Rows show the zero-padded
-position, the title and the key in `typography.key` / `colors.key` (content description
-"Tonalidad <key>"). Copy in `NextJamCopy` (approved C1), day and month names hand-written.
-Under that line each row draws the instrument strip (`instrument-strip-component`, `accepted`):
-`SongRowUiModel.instruments` comes from `lineup.toInstrumentChips(extraParticipants)` in the
-presenter; the screen calls `InstrumentStrip`. `:feature:next-jam` still reads only the amber `key`.
-Rows expand in place (`song-row-expansion`, `in_progress`): the presenter holds one
-`ExpandedRows(jamDate, positions)` in `rememberSaveable` (keyed by the Sheet's position, scoped to
-the jam date, never recreated) and passes it into `toUiModel(today, expanded, onToggle)`; each
-`SongRowUiModel` adds `artist`, `isExpanded`, `stateDescription` ("expandido"/"contraído"),
-`toggleLabel` ("ver los cupos"/"ocultar los cupos"), `lineup: LineupPanelUiModel` and `events`
-(`ToggleExpanded`). The screen's header (title line with `ExpandIndicator`, then the strip collapsed
-or the artist expanded) is the only clickable part (`Role.Button`, `onClickLabel`,
-`stateDescription`); the `LineupPanel` sits below it, and the row animates its size.
-
-`:core:ui` holds the instrument strip in `com.bbbjam.core.ui.strip` (`instrument-strip-component`,
-`in_progress`): `InstrumentChipUiModel(label, contentDescription, kind)` with `InstrumentChipKind`
-`OPEN_SLOT`/`FILLED_SLOT`/`EXTRA` (`isOpen` only for an open slot), the pure mapper
-`Lineup.toInstrumentChips(extras)` (slots in Sheet column order, then the extras in `Otros` order),
-the approved copy in `internal object InstrumentStripCopy` (`GTR: LIBRE` / `Gtr: Tincho` /
-`+ saxo: Juan`; "Guitarra: libre" / "Guitarra: Tincho" / "Otros: saxo, Juan"),
-`InstrumentStripDefaults` (`OPEN_FILL_ALPHA` 0.15, `DOT_TO_EM` 0.5, `style(kind)`), and the
-`InstrumentStrip(chips)` composable: a `FlowRow` of non-interactive chips, one semantics node each,
-static dot, `Icons.Filled.Check` (from `material-icons-core`, now declared explicitly), glyph sizes
-from the caption font size, four `@Preview`s.
-
-Próxima jam filters by instrument (`instrument-filter-chips`, `passing`): under the header,
-`SetlistUiModel.Songs.filterBar` (null for a setlist with no song) draws `InstrumentFilterBar`: the
-heading "Filtrá por cupo libre", `Todos` and six checkbox chips with per-instrument counts, then the
-count line ("3 de 13 temas con cupo libre para bajo o voz") or the no-results block with "Ver todos
-los temas". Multi-select with OR; the presenter holds a `Set<Instrument>` in
-`rememberSaveable(InstrumentFilterSaver)`, never recreated and not tied to the jam date, applies
-the `InstrumentFilterChange`s its handlers send, and filters rows with `matchesInstrumentFilter`;
-expansion is untouched. `:core:ui` `com.bbbjam.core.ui.filter` holds the component, its `UiModel`s,
-the mapper, `InstrumentFilterCopy` and `InstrumentFilterDefaults` (the only `activeFilter` reader).
-
-`:core:ui` also holds the expanded lineup in `com.bbbjam.core.ui.lineup` (`song-row-expansion`,
-`in_progress`): `LineupPanelUiModel(openSlots, filledSlots, extras, noOpenSlotsNote, hint)` of
-`LineupLineUiModel(instrument, detail, contentDescription, kind)`, the pure mapper
-`Lineup.toLineupPanel(extras)` (open slots, then filled, each in lineup order, then extras), the
-approved copy in `internal object LineupPanelCopy` ("Cupos libres", "Cupos cubiertos", "Otros",
-"LIBRE", "No quedan cupos libres.", the hint), `LineupPanelDefaults` (the strip's style per kind
-plus the detail colour), `LineupPanel(model)` (headings, compact non-interactive lines, one
-semantics node each, five `@Preview`s with the indicator's) and `ExpandIndicator(expanded)` (the
-`KeyboardArrowDown` chevron, `textMuted`, turned 180° when expanded). `InstrumentStripCopy.name()`
-is now visible inside `:core:ui`.
-
-Product code: the `:core:model` domain types, the Info screen, the read-only Próxima jam screen and
-the catalog and jams data layer (`:core:data`).
-
-`backend/apps-script/` (not a Gradle module; `apps-script-read-endpoint`, `in_progress`) holds
-the Apps Script web app: `appsscript.json` (V8, `spreadsheets.currentonly`, executes as the owner,
-anonymous access) and `src/Normalize.js`, `Catalog.js`, `Code.js` — one route,
-`GET ?resource=catalog`, which never opens `Config`. Node tests (33, `node:test`, no
-`package.json`) run outside `init.sh`; `tools/check-response.js` checks a live response. The
-contract is `docs/apps-script-api.md`, with mapper fixtures in `docs/api-samples/`. Not deployed
-yet: deploying is the user's step.
-
-The Sheet contract is `docs/sheet-schema.md` (`sheet-schema-definition`, `accepted`): tabs, headers,
-exact Spanish enum values, cell reading rules, slot identity (the k-th slot of an instrument is the
-k-th column of it not holding `-`), a Type-to-Sheet mapping of every `:core:model` field, and the
-**Mapper rules** the repository slices must enforce. `docs/sheet-seed/` is the one-time import
-file; the real Sheet is the authority and already holds more songs.
-
-### Reachable without unblocking the Sheet schema
-
-Eight slices, in plan order: `gradle-kotlin-compose-baseline`, `module-skeleton`,
-`konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
-`design-tokens-theme`, `domain-model-types`, `info-screen`.
-
-Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.
+- `:app` lint: only version-check warnings (`GradleDependency`, `NewerVersionAvailable`) on
+  `gradle/libs.versions.toml`. The pins are deliberate (Kotlin stdlib 2.2.10 trap, documented in
+  the catalog and the architecture skill); `NewerVersionAvailable` queries Maven at lint time, so
+  the count can rise with no repo change. Upgrading is a separate slice.
 
 ## Session Log
 
@@ -3732,3 +3404,373 @@ The feature is implemented and self-verified. Guarded Apps Script add/remove act
 ## 9 October 2026 - `action-contract-registry` implementation checkpoint
 
 Implemented the app-owned typed `SetlistActionRegistry` for exactly ten setlist mutations and bound it as a Koin singleton to `SetlistRepository`. Exhaustive dispatch delegates once and wraps each original typed outcome without collapsing error details. `./gradlew ktlintFormat` exited 0. Baseline and final `CI=true ./init.sh` both exited 0; the final gate reports konsist, detekt and ktlint wired. The app test report records 2 registry tests, 0 failures/errors: full ten-action inventory/dispatch argument and outcome checks, plus Koin singleton/repository resolution. `git diff --check` passed, and `git diff --name-only -- feature` returned no feature-module changes. Updated domain/risk mutation inventory from the open eight/ten wording to the resolved ten actions; deeplink scheme remains deferred. Status is `passing`, not accepted.
+
+## Archived Verified State (moved 10 October 2026)
+
+Moved verbatim from "Current Verified State" by `project-hygiene-pass`; historical, not current.
+
+
+- Repository root: `C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam`
+- Standard startup path: `./init.sh`
+- Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
+  `./gradlew check`
+- Current state: 40 of 41 active slices accepted; `action-contract-registry` is latest accepted (9 October 2026). Human check owed: the `Actualizar` action with TalkBack.
+- **User to-do, non-blocking:** delete the `2026-10-31` test jam (the `Jams` row and its tab).
+- Shared Apps Script deployment for reorder, publish, adjust-lineup, assign, and clear-slot was completed by the user. Initial POST exposed a missing `SCHEMA_VERSION` global; the user corrected `Code.gs` and deployed current `Post.js`. L1 now confirms all batch actions. Full read-only L1-L5 checks passed on 9 October 2026; details below. No real jam was modified or published.
+  The seed was imported into the real Sheet and reviewed by hand by
+  the user (29–30 September 2026, the user's report; no agent can read the Sheet).
+- Shared live batch, 9 October 2026: L1 all expected actions present; L2/L3/L4 checks passed for lineup, reorder and publish; L5 readJams identical before/after (2 jams, 26 songs; aggregate SHA-256 `42CFABE0DE3C8D71`). Temporary-tab self-checks `checkSetlistMove`, `checkSetlistWrite`, `checkSetlistRemove`, and `checkPublish` all returned `ok`; no real jam was modified or published. Local `src/Post.js` SHA-1 `721F7CCF1481F964FEAAF6A772E16B350CFF724C`; remote source hash was not independently observable. `admin-adjust-lineup` is accepted after independent validation.
+- Latest verification, 9 October 2026: independent validator accepted `admin-adjust-lineup`; `CI=true ./init.sh` exited 0 with `konsist`, `detekt`, and `ktlint` all wired.
+- Previous full local verification at: 8 October 2026 (`admin-publish-setlist`, local verification only) — `CI=true ./init.sh` exit 0, all three tools `wired`; 104 JVM test-result suites, 649 tests, zero failures/errors; Node 165/165. Independent validator accepted after rerunning the gate and reviewing E1/C1 behavior and server-confirmed publication. This acceptance preceded the user-reported shared deployment; the subsequent live probe is recorded above.
+  Before that, 7 October 2026 (`offline-notice-visible`, independently accepted) —
+  `CI=true ./init.sh` exit 0; `konsist`, `detekt`, `ktlint` all `wired`; 587 tests,
+  including 11 notice tests and 17 Konsist rules. Before that, 7 October 2026 (session 078,
+  `live-refresh-during-jam`, `passing`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 92 result files, 576 tests, 0 failures. Pixel 5: device steps 1–6 of the spec;
+  see session 078. Before that, 6 October 2026 (session 077, `admin-set-key` Part B, `in_progress`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 87 result files, 538 tests, 0 failures. Pixel 5: picker, rotation, font scale
+  2.0, `AccessRefused` revert and card, musician view; no DataStore dir before or after; settings
+  restored. Before that, session 076 ( `admin-remove-song-from-setlist` Part B,
+  `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 84 result files, 519 tests, 0 failures. Pixel 5: confirmation, rotation,
+  `AccessRefused` card, no DataStore dir before or after; settings restored. Before that, session
+  075 (`admin-set-key` Part A, `in_progress`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 83 result files, 509 tests, 0 failures; Node 132/132. `src/Post.js` SHA-1
+  `be205ea3f5d5081e5896666d3490ae30cab06119` (both Part A halves), **not deployed** (the deployed one is
+  still `94bb9154…`). Before that, session 074 (`admin-remove-song-from-setlist` Part A,
+  `in_progress`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 83 result files, 498 tests, 0 failures; Node 124/124. `src/Post.js` SHA-1
+  `faf0fd85d53ce9277b3882e6573fedfe6ad64256`, **not deployed** (the deployed one is still
+  `94bb9154…`). Before that, session 073 (`admin-add-song-to-setlist` Parts A and B,
+  `passing`) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 83 result files, 489 tests, 0 failures; Node 113/113. Deployed Post.js SHA-1
+  `94bb91548469d3f9c6c868788f09d3d2684c5cf1`; live checks L1–L6 as expected. Pixel 5: admin view,
+  picker, `AccessRefused` card, demo draft, musician view; settings restored. Before that, session
+  072 (Part A): 78 result files, 464 tests.
+  Before that, 5 October 2026 (session 070, `debug-admin-session`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 75 result files, 433 tests, 0 failures (new `DebugAdminSessionTest` 6). Release
+  dex has no `DebugAdminSession`. Pixel 5: `Modo admin activo` with no login, flag left on. Before
+  that, session 069 (`admin-passphrase-login`, since accepted) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 74 result files, 427 tests, 0 failures; Node 83/83. Before that, session 068
+  (`past-jam-detail`, since accepted)
+  — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 70 result files, 397 tests, 0 failures (`AppRoutesTest` 6 → 9,
+  `PastJamsPresenterTest` 5 → 6, `PastJamsStatesTest` 12 → 14, new `PastJamDetailMappingTest` 9,
+  `PastJamDetailPresenterTest` 2, `PastJamDetailModelShapeTest` 3, `PastJamDetailDefaultsTest` 3).
+  Pixel 5: Anteriores, then the 2026-07-25 detail with 13 rows and amber keys; back paths and
+  rotation. Before that, session 067 (`unpublished-setlist-state`, since accepted) — `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 66 result files, 374 tests, 0 failures (`JamTest` 6 → 10, `NextJamPresenterTest`
+  17 → 16, `NextJamStatesTest` 9 → 11, `SongDetailMappingTest` 7 → 8, `DemoUpcomingJamRepositoryTest`
+  6 → 8, new `NextJamDraftTest` 4 and `DraftSetlistDefaultsTest` 3). Node 70/70. Pixel 5: the draft
+  card on the draft demo jam. Before that, session 066 (`bottom-navigation`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`,
+  `ktlint: wired`; 64 result files, 359 tests, 0 failures (`ContrastTest` 14 → 15, `AppRoutesTest`
+  5 → 6, new `AppTabTest` 4 and `TabBarDefaultsTest` 3). Pixel 5: per-tab state across tab
+  switches, the song detail, rotation and process death. Before that, session 065
+  (`past-jams-list`) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`;
+  62 result files, 350 tests, 0 failures (the 57 previous files unchanged except `ContrastTest`
+  13 → 14, plus `SpanishDateNamesTest` 2, `PastJamsStatesTest` 12, `PastJamsPresenterTest` 5,
+  `PastJamsDefaultsTest` 2, `PastJamsModuleTest` 1). Pixel 5: Anteriores shows the 2026-07-25 row;
+  offline relaunch shows the staleness notice above it. Before that, session 064
+  (`debug-demo-upcoming-jam`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (17/17, unchanged), `detekt: wired`, `ktlint: wired`; 57 result files,
+  327 tests, 0 failures (the 56 previous files plus `DemoUpcomingJamRepositoryTest` 6).
+  `:app:assembleRelease` exit 0 with no demo class in the release dex. Pixel 5: the demo jam on
+  Próxima jam and its song detail with the flag on, the Sheet's state with it off. Before that,
+  4 October 2026 (session 063, `song-detail-screen`) — `CI=true ./init.sh` exit
+  0, `konsist: wired` (17/17, new `navigation-only-in-app`), `detekt: wired`, `ktlint: wired`; 56
+  result files, 321 tests, 0 failures. Navigation Compose 2.9.8 added to `:app` with no resolved
+  version moving. Pixel 5 (5 October, temporary jam 2026-10-31): detail opened from an expanded
+  row with a filter and a scroll set; key the tallest node, 48dp "Volver", one "Tonalidad A" node;
+  Volver, system back, fast double taps and rotation all return an identical list; "Bm" on one line
+  at font scale 2.0; settings restored, empty crash buffer. Before that, session 062 (`list-states`) — `CI=true ./init.sh` exit 0,
+  `konsist: wired` (16/16, new `no-dp-literal-outside-core-ui`), `detekt: wired`, `ktlint: wired`;
+  49 result files, 290 tests, 0 failures. Pixel 5: offline first launch shows the error block,
+  Retry online shows the skeleton then the no-upcoming block, offline with cache shows the
+  staleness notice; empty crash buffer, every setting restored. Before that, session 061
+  (`instrument-filter-chips`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 46 result files,
+  263 tests, 0 failures: the 43 previous files unchanged except `ContrastTest` 9 → 11, plus
+  `InstrumentFilterMapperTest` 8, `InstrumentFilterDefaultsTest` 3 and `NextJamFilterTest` 10. Lint
+  `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: cold start
+  636 ms, `jams cache: upcoming 2026-10-31, past 1, songs 26`, spec step C done (session 061),
+  empty crash buffer, every setting restored. Before that, 3 October 2026 (session 057,
+  `song-row-expansion`) — `CI=true ./init.sh` exit 0,
+  `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 43 result files, 240 tests,
+  0 failures: the 40 previous files unchanged except `ContrastTest` 8 → 9 and `NextJamPresenterTest`
+  7 → 11, plus `LineupPanelMapperTest` 7, `LineupPanelDefaultsTest` 3 and `ExpandedRowsTest` 5. Lint
+  `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: installed, cold
+  start 609 ms, empty crash buffer and AndroidRuntime log, `jams cache: upcoming none`, so only the
+  no-upcoming line is drawn (no row to expand). Before that, 2 October 2026 (session 052,
+  `instrument-strip-component`) — `CI=true
+  ./init.sh` exit 0, `konsist: wired` (15/15, unchanged), `detekt: wired`, `ktlint: wired`; 40
+  result files, 220 tests, 0 failures: the 38 previous files unchanged except `ContrastTest` 6 → 8
+  and `NextJamPresenterTest` 6 → 7, plus `LineupChipsTest` 9 and `InstrumentStripDefaultsTest` 5.
+  Lint `:core:ui` and `:feature:next-jam` no issues, `:app` the same 14 warnings. Pixel 5: installed,
+  cold start 912 ms, empty crash buffer and AndroidRuntime log, `jams cache: upcoming none`, so only
+  the no-upcoming line is drawn (no strip to check). Before that, session 048
+  (`next-jam-read-only-list`, JVM only) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (15/15, new `no-material-theme-outside-core-ui` and
+  `amber-roles-allowlisted`), `detekt: wired`, `ktlint: wired`; 38 result files, 0 failures: the 35
+  baseline files unchanged except `ModuleIsolationTest` 13 → 15, plus `JamDateTextTest` 7,
+  `NextJamPresenterTest` 6, `NextJamModuleTest` 1. Lint: `:feature:next-jam` no issues, `:app` the
+  same 14 pin warnings. No device run (Pixel 5 absent from `adb devices`). Before that, session 045
+  (`jams-repository-cache`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (13/13, new `data-libraries-only-in-core-data-qualified`), `detekt:
+  wired`, `ktlint: wired`; 35 result files, 0 failures (the 29 baseline files unchanged except
+  `JamTest` 4 → 6, `DefaultCatalogRepositoryTest` 14 → 17, `ModuleIsolationTest` 12 → 13, plus six
+  new classes). Pixel 5 (API 34): upgrade over the accepted v1 build, cold start 797 ms, `jams
+  refresh: updated 1 jams …`, `jams cache: upcoming none, past 1, songs 13 (13 from catalog)`,
+  database `user_version` 2; offline (airplane mode, restored to 0) both refreshes `failed Offline`,
+  same rows and `fetched_at`. Before that, session 042 (`catalog-repository-cache`, JVM only) —
+  `CI=true ./init.sh` exit 0, `konsist: wired` (12/12, new `data-libraries-only-in-core-data`),
+  `detekt: wired`, `ktlint: wired`; 29 result files, 0 failures: the 20 baseline files unchanged
+  except `ModuleIsolationTest` 11 → 12, plus nine new `:core:data` classes (58 tests). No device
+  run. Before that, 1 October 2026 (session 039, `apps-script-jams-read-endpoint` repo half) —
+  `node --test backend/apps-script/test/*.test.js` 68/68 (outside the gate); `CI=true ./init.sh`
+  exit 0, three `wired`, the 20 test result files identical to the baseline. Before that, session 036 — live endpoint: checker OK on 100 songs,
+  `config` → `unknown_resource`, warm read median ~2.5 s. Session 035 (`apps-script-read-endpoint` repo half) —
+  `CI=true ./init.sh` exit 0, three `wired`, the 20 test result files identical in names and
+  counts to the baseline; `node --test backend/apps-script/test/*.test.js` 33/33 (outside the
+  gate). Before that, 30 September 2026 (session 033, `build-logic-conventions`) — `CI=true ./init.sh`
+  exit 0, `konsist: wired` (11/11, new `build-file-applies-convention`), `detekt: wired`,
+  `ktlint: wired`; every other suite unchanged (20 result files, 0 failures). Task plans,
+  `buildEnvironment`, manifests, dependency sets and the debug APK (392 non-`META-INF` entries by
+  SHA-1) identical to HEAD `095c88b`. Pixel 5 (API 34): cold start 872 ms, `Status: ok`, empty
+  crash buffer and AndroidRuntime log, Info drawn unchanged.
+  Before that, session 030 — `CI=true ./init.sh` exit 0, `konsist: wired`
+  (10/10, now checking the real `:feature:info`), `detekt: wired`, `ktlint: wired`; new
+  `InfoPresenterTest` (4) and `InfoModuleTest` (1), all other counts as below, 0 failures. Pixel 5
+  (API 34): cold start 760 ms, empty crash buffer and AndroidRuntime logcat, Info drawn from the
+  tokens (background `#111318`, no amber), each link starts an `ACTION_VIEW` for its host (Chrome for
+  Instagram and Linktree, the YouTube app for YouTube) and back returns to Info; the admin notice
+  appears. Link `onClickLabel`s are not verified on device (see session 030).
+  Session 028 (docs and one KDoc sentence only) kept the gate green. Before that, 29 September 2026 (session 024) — `CI=true ./init.sh` exit 0; it prints
+  `konsist: wired` (10 Konsist tests, 0 failures), `detekt: wired`, `ktlint: wired`; `:core:model`
+  runs 30 tests in 9 classes on the JVM, 0 failures; `:core:ui` runs `EventHandlerTest` (6),
+  `SamplePresenterTest` (3), `BluesJamColorsTest` (3), `BluesJamTypographyTest` (2),
+  `ContrastTest` (6) and `WindowBackgroundTest` (1), 0 failures. Last launch check on the Pixel 5
+  (API 34) was session 021: cold start, empty AndroidRuntime logcat, background `#111318`, label
+  Barlow Condensed Bold. The display runs in Display P3, so saturated colors in screenshots read
+  as their P3 encoding (amber `#FFB300` → `#F4B63F`). Session 024 changed nothing visible.
+
+### What exists
+
+Six product modules: `:app`, `:core:model`, `:core:ui`, `:core:data` (`module-skeleton`,
+`accepted`), `:feature:info` (`info-screen`, `accepted`) and `:feature:next-jam`
+(`next-jam-read-only-list`, `accepted`).
+`:core:model` is a Kotlin JVM module with no Android; `:core:ui` and `:core:data` are Android
+libraries (`com.android.library`, built-in Kotlin) that each `api`-depend on `:core:model`; `:app`
+depends on all three. `:app`'s `ModuleWiringTest` proves `:core:model` is visible from `:app`
+(through `JamStatus`); the `:core:data` marker is gone (session 042).
+
+`:core:data` (`catalog-repository-cache`, `accepted`, convention `bluesjam.android.data`) reads
+the catalog: `OkHttpAppsScriptTransport` (OkHttp 5.1.0) → `AppsScriptEnvelope`
+(kotlinx-serialization 1.9.0) → `CatalogMapper` (the catalog Mapper rules, Q1 duplicates reject
+every copy, Q2 a bad tempo/difficulty/songsterrId is dropped and the song kept) → Room 2.8.4
+(`bluesjam-cache.db`, tables `catalog_song` and `sync_state`). `CatalogRepository` is
+cache-first: `observeCatalog()` emits the cached songs with `Freshness` (`fetchedAt`,
+`lastFailure`, `isRefreshing`, `isStale(now)`: stale after 30 min or a failure) and refreshes in
+the background when stale, never within 60 s of the last attempt; `refresh()` is single-flight. A
+failure (`NotConfigured`, `Offline`, `Service(code)`, `InvalidResponse`) never touches the cache.
+`:app` reads `bluesjam.appsScriptUrl` from the git-ignored `local.properties` into
+`BuildConfig.APPS_SCRIPT_URL`, binds `AppsScriptEndpoint` in `appModule`, starts `dataModule`,
+refreshes once per process start and logs `catalog refresh: …` (tag `BluesJam`, never the URL).
+The manifest now has `INTERNET`. Core library desugaring is on in every Android module.
+
+`:core:data` also reads the jams (`jams-repository-cache`, `passing`): `GET ?resource=jams` →
+`JamDto` → `JamsMapper` (the `Jams` rows: P2 a shared `fecha` rejects every such row, P8 `hora`
+and `lugar` required) and `SetlistMapper` (one tab: P4 a bad row is dropped and reported, the rest
+stay available, positions never renumbered; P1 `Juan(saxo)` valid, a malformed `Otros` entry
+dropped alone) → Room v2 (`jam`, `jam_song`, `jam_slot` with the slot's column index, `jam_extra`,
+foreign keys CASCADE, and the view `jam_song_resolved`, which resolves titles against the cached
+catalog at read time). `JamsRepository.observeJams()` emits `JamsSnapshot(upcoming, past,
+freshness)`: today comes from `JamCalendar` in Buenos Aires (P7), the earliest future jam is
+upcoming and later ones are held back (P5), past jams are newest first with only filled slots (P6).
+Both repositories now turn a refused write into `DataFailure.Storage` and a mapper exception into
+`InvalidResponse("mapping: …")`, and `DataScope` and `BluesJamApp`'s scope log an escaped exception
+instead of crashing. `BluesJamApp` refreshes catalog and jams concurrently and logs `jams refresh:
+…` and `jams cache: …` (counts and dates only).
+
+`:core:model` holds the domain types in `com.bbbjam.core.model` (`domain-model-types`, `accepted`):
+`Jam` (date as identity, `setlist: Setlist`, `isHistorical(today)` with the date from the caller; a
+published jam is never withheld), `Setlist` (`Available(songs, droppedRows)` with positions ≥ 1,
+unique and ascending, gaps allowed, never empty when rows were dropped; `Withheld`;
+`Unavailable(SetlistProblem)`, set by `jams-repository-cache`), `JamStatus` (`DRAFT`, `PUBLISHED` only), `JamSong` (position ≥ 1, `songId`,
+`title`, `artist`, `key`, `lineup`, `extraParticipants` default empty), `Lineup` (`openSlots`,
+`hasOpenSlotFor`, `default()` = seven open slots in Sheet column order; never more of an instrument
+than the default, zero allowed — D-18), `Slot` (open when `musicianName` is null; blank names
+rejected), `ExtraParticipant` (name and free-text instrument, both non-blank, no `;`, `(`, `)`;
+never open), `Instrument` (six values, `KEYBOARDS` not `KEYS`), `Song` (optional catalog and
+enrichment fields default to null), `Tempo`, `Difficulty`, and the validated value classes `Key`
+(schema **Keys** format, `isMinor`, `parseOrNull`) and `SongId` (lowercase slug, `parseOrNull`).
+Pure Kotlin with java.time; no serialization, no date parsing, no clock (Konsist
+`core-model-no-system-clock`). Invalid values throw `IllegalArgumentException` naming the value.
+
+`:core:ui` holds the presenter contracts of D-02 in `com.bbbjam.core.ui.presenter`: `UiModel`,
+`UiEvent`, `Presenter` and `EventHandler` (`equals` and `hashCode` both from `key`, `operator invoke`
+declared) (`molecule-presenter-harness`, `accepted`). It applies the Compose compiler plugin and
+exposes the Compose BOM, `androidx.compose.runtime:runtime`, `ui` and `material3` (1.3.2) as `api`.
+
+`:core:ui` also holds the design system in `com.bbbjam.core.ui.theme` (`design-tokens-theme`,
+`passing`; D-17): `BluesJamTheme { }` wraps `MaterialTheme` with every dark-scheme role, the type
+scale and the shapes mapped from the `DESIGN.md` tokens, and provides `LocalContentColor` = `text`.
+Screens read `BluesJamTheme.colors` / `.typography` / `.shapes` / `.spacing`. The palette is
+`internal`; amber is public only as `primaryAction`, `slotOpen`, `key`, `published`,
+`activeFilter` (plus their `on…` colors). Fonts are bundled static TTFs (Barlow Condensed
+SemiBold/Bold/ExtraBold, Chivo Regular) with their OFL texts in `assets/licenses`. The only XML
+color is `bluesjam_window_background` in `core/ui/src/main/res/values/colors.xml`, guarded by
+`WindowBackgroundTest`. `ThemeShowcase` (public, with a `@Preview`) draws every role and style.
+Its test sources hold a sample presenter with no domain types, `SamplePresenterTest` (Molecule
+2.2.0 + Turbine 1.2.1 + coroutines-test 1.10.2, asserting transitions after events) and
+`EventHandlerTest`. Unit tests set `isReturnDefaultValues = true` because the Android Compose
+runtime calls `android.os.Trace`; every presenter module needs the same (architecture skill).
+`compileSdk` and `minSdk` come from the catalog. Build conventions are recorded in `.claude/skills/architecture/SKILL.md`.
+
+Module build setup lives in `build-logic/` (`build-logic-conventions`, `accepted`): an included build
+(`includeBuild("build-logic")` in `pluginManagement`) whose `:convention` subproject holds six binary
+plugins in `com.bbbjam.buildlogic` — `bluesjam.jvm.library` (`:core:model`, `:konsist-test`),
+`bluesjam.android.library` (`:core:data`), `bluesjam.android.application` + `bluesjam.android.compose`
+(`:app`), `bluesjam.android.presenter` (`:core:ui`) and `bluesjam.android.feature` (`:feature:info`).
+They set SDK levels (`compileSdk`, `minSdk`, and now `targetSdk` from the catalog), Java 11,
+Compose, `isReturnDefaultValues`, the presenter test libraries and Koin for features. Module files
+keep only `id("bluesjam.…")`, namespace, `:app`'s identity and build types, and their own
+dependencies. The catalog is shared from `gradle/libs.versions.toml` (new `targetSdk`,
+`android-gradlePlugin`, `kotlin-gradlePlugin`); detekt and ktlint are still applied from the root
+`subprojects {}` block and do not lint `build-logic` itself.
+
+A test-only module `:konsist-test` (`bluesjam.jvm.library`, no project dependency) holds
+`ModuleIsolationTest`: 15 Konsist 0.17.3 tests (12th `data-libraries-only-in-core-data`, 13th
+`data-libraries-only-in-core-data-qualified`, 14th `no-material-theme-outside-core-ui`, 15th
+`amber-roles-allowlisted` with its per-module `AMBER_ROLE_ALLOWLIST`, today only
+`feature/next-jam` → `key`) that enforce the architecture skill's dependency rules
+(no feature→feature or feature→`:app` imports, `:core:*` import allowlist, no Android in
+`:core:model`, no system clock in `:core:model`, no ViewModel, package roots `com.bbbjam.<module path>` without hyphens, allowed
+`project(":…")` dependencies in `core/*`/`feature/*` build files, every module build file applying
+its `bluesjam.*` convention with no raw plugin and no convention-owned setting, and no color literal
+outside `:core:ui`). Module groups are read from paths,
+so the first `:feature:*` module is covered without editing the suite. The test task declares every
+`.kt`/`.kts` file as an input, so a change elsewhere reruns it (`konsist-isolation-rules`, `accepted`).
+
+`:app` is on a Kotlin + Jetpack Compose baseline (`gradle-kotlin-compose-baseline`,
+`accepted`). AGP 9.4.1 with its built-in Kotlin (no `org.jetbrains.kotlin.android`
+plugin), Kotlin/KGP 2.2.10, the Compose compiler plugin `org.jetbrains.kotlin.plugin.compose` on the
+same `kotlin` catalog key, Compose BOM 2025.09.00 (ui, foundation, ui-tooling-preview, ui-tooling for
+debug only) and activity-compose 1.11.0. appcompat and Material Views are gone; Material 3 arrives
+through `:core:ui`.
+
+`MainActivity` (a `ComponentActivity`, the launcher) turns on edge-to-edge with dark system bars and
+shows `TemporaryTabs` inside `BluesJamTheme`: Próxima jam (first) or Info above a plain two-cell tab
+row (`selectable`, `Role.Tab`, 48dp, `text`/`textMuted`, no amber), each screen with the status-bar
+insets as `contentPadding`; `bottom-navigation` deletes it. `BluesJamApp` (the manifest's
+`android:name`) calls `startKoin` with `appModule`, `dataModule`, `infoModule` and `nextJamModule`; `appModule` binds `ExternalLinkOpener` to `IntentLinkOpener`. Koin is
+4.1.1 (BOM); kotlin-stdlib stays 2.2.10 and Compose 1.9.1 on `:app`'s runtime classpath. `:app` has
+no colors of its own: its `colors.xml` is gone, and the window
+theme `Theme.BBBluesJam` (parent `android:Theme.Material.NoActionBar`) uses
+`@color/bluesjam_window_background` from `:core:ui`. Dark only: `values-night` was deleted.
+
+`./gradlew check` runs unit tests, Android lint, the Konsist suite, detekt 2.0.0-alpha.6 and ktlint
+1.8.0 (ktlint-gradle 14.2.0). The root `build.gradle.kts` applies both tools to every module that
+applies `kotlin-jvm` or an Android plugin, so a new module gets them with no build code; config is in
+`.editorconfig` (`android_studio` style, Composable naming exception) and `config/detekt/detekt.yml`;
+no baseline file. `init.sh` prints `konsist: wired` only when `:konsist-test:test` exists and its
+results hold at least one test, and `detekt`/`ktlint: wired` only when `check --dry-run` schedules
+the tool's task in every module that compiles Kotlin; otherwise it names the modules missing it.
+The unit tests are the two template tests plus the nine `:core:model` classes (`ExtraParticipantTest`,
+`JamSongTest`, `JamStatusTest`, `JamTest`, `KeyTest`, `LineupTest`, `SlotTest`, `SongIdTest`,
+`SongTest`), `ModuleWiringTest`, `EventHandlerTest`, `SamplePresenterTest`, `BluesJamColorsTest`, `BluesJamTypographyTest`,
+`ContrastTest`, `WindowBackgroundTest`, `LineupChipsTest`, `InstrumentStripDefaultsTest`, `LineupPanelMapperTest`, `LineupPanelDefaultsTest`, `:feature:info`'s `InfoPresenterTest` and `InfoModuleTest`,
+`InstrumentFilterMapperTest`, `InstrumentFilterDefaultsTest`,
+`:feature:next-jam`'s `JamDateTextTest`, `NextJamPresenterTest`, `NextJamFilterTest`, `ExpandedRowsTest` and `NextJamModuleTest`, and the
+`:core:data` classes.
+
+`:feature:info` (`info-screen`, `accepted`) is the first feature module and the template for the
+others: `InfoPresenter` (`Presenter<InfoUiModel, Unit>`, constructor `ExternalLinkOpener` from
+`:core:ui`), `InfoUiModel` with `OpenLink`/`DismissLinkError`/`AdminEntryTapped`, the approved copy
+in `internal object InfoCopy`, `SocialLink` (three URLs), `InfoScreen` (renders only,
+`koinInject()` default) and `infoModule`. It shows who organizes the jam, the jam, Hideaway, how to
+join, three social links and "Entrar como admin", which only shows "El ingreso de admin todavía no
+está habilitado." until `admin-passphrase-login`. No venue (D-19), no station, no amber.
+
+`:feature:next-jam` (`next-jam-read-only-list`, `accepted`) is the first feature that reads data
+(project deps `:core:ui` and `:core:data`): `NextJamPresenter(JamsRepository, JamCalendar)` maps
+`observeJams().upcoming` to `NextJamUiModel` (`Loading` until something was ever fetched,
+`NoUpcomingJam`, or `Jam(header, setlist)` with `Songs(rows, droppedRowsNote)` or `NotShown` for a
+withheld or unavailable setlist). The header is "Sábado 31 de octubre · 21:00", the venue as
+written in `lugar`, and the time remaining ("Esta noche" from 18:00 on its own date, "Hoy",
+"Mañana", "En n días") from `JamCalendar.today()` read once per snapshot. Rows show the zero-padded
+position, the title and the key in `typography.key` / `colors.key` (content description
+"Tonalidad <key>"). Copy in `NextJamCopy` (approved C1), day and month names hand-written.
+Under that line each row draws the instrument strip (`instrument-strip-component`, `accepted`):
+`SongRowUiModel.instruments` comes from `lineup.toInstrumentChips(extraParticipants)` in the
+presenter; the screen calls `InstrumentStrip`. `:feature:next-jam` still reads only the amber `key`.
+Rows expand in place (`song-row-expansion`, `in_progress`): the presenter holds one
+`ExpandedRows(jamDate, positions)` in `rememberSaveable` (keyed by the Sheet's position, scoped to
+the jam date, never recreated) and passes it into `toUiModel(today, expanded, onToggle)`; each
+`SongRowUiModel` adds `artist`, `isExpanded`, `stateDescription` ("expandido"/"contraído"),
+`toggleLabel` ("ver los cupos"/"ocultar los cupos"), `lineup: LineupPanelUiModel` and `events`
+(`ToggleExpanded`). The screen's header (title line with `ExpandIndicator`, then the strip collapsed
+or the artist expanded) is the only clickable part (`Role.Button`, `onClickLabel`,
+`stateDescription`); the `LineupPanel` sits below it, and the row animates its size.
+
+`:core:ui` holds the instrument strip in `com.bbbjam.core.ui.strip` (`instrument-strip-component`,
+`in_progress`): `InstrumentChipUiModel(label, contentDescription, kind)` with `InstrumentChipKind`
+`OPEN_SLOT`/`FILLED_SLOT`/`EXTRA` (`isOpen` only for an open slot), the pure mapper
+`Lineup.toInstrumentChips(extras)` (slots in Sheet column order, then the extras in `Otros` order),
+the approved copy in `internal object InstrumentStripCopy` (`GTR: LIBRE` / `Gtr: Tincho` /
+`+ saxo: Juan`; "Guitarra: libre" / "Guitarra: Tincho" / "Otros: saxo, Juan"),
+`InstrumentStripDefaults` (`OPEN_FILL_ALPHA` 0.15, `DOT_TO_EM` 0.5, `style(kind)`), and the
+`InstrumentStrip(chips)` composable: a `FlowRow` of non-interactive chips, one semantics node each,
+static dot, `Icons.Filled.Check` (from `material-icons-core`, now declared explicitly), glyph sizes
+from the caption font size, four `@Preview`s.
+
+Próxima jam filters by instrument (`instrument-filter-chips`, `passing`): under the header,
+`SetlistUiModel.Songs.filterBar` (null for a setlist with no song) draws `InstrumentFilterBar`: the
+heading "Filtrá por cupo libre", `Todos` and six checkbox chips with per-instrument counts, then the
+count line ("3 de 13 temas con cupo libre para bajo o voz") or the no-results block with "Ver todos
+los temas". Multi-select with OR; the presenter holds a `Set<Instrument>` in
+`rememberSaveable(InstrumentFilterSaver)`, never recreated and not tied to the jam date, applies
+the `InstrumentFilterChange`s its handlers send, and filters rows with `matchesInstrumentFilter`;
+expansion is untouched. `:core:ui` `com.bbbjam.core.ui.filter` holds the component, its `UiModel`s,
+the mapper, `InstrumentFilterCopy` and `InstrumentFilterDefaults` (the only `activeFilter` reader).
+
+`:core:ui` also holds the expanded lineup in `com.bbbjam.core.ui.lineup` (`song-row-expansion`,
+`in_progress`): `LineupPanelUiModel(openSlots, filledSlots, extras, noOpenSlotsNote, hint)` of
+`LineupLineUiModel(instrument, detail, contentDescription, kind)`, the pure mapper
+`Lineup.toLineupPanel(extras)` (open slots, then filled, each in lineup order, then extras), the
+approved copy in `internal object LineupPanelCopy` ("Cupos libres", "Cupos cubiertos", "Otros",
+"LIBRE", "No quedan cupos libres.", the hint), `LineupPanelDefaults` (the strip's style per kind
+plus the detail colour), `LineupPanel(model)` (headings, compact non-interactive lines, one
+semantics node each, five `@Preview`s with the indicator's) and `ExpandIndicator(expanded)` (the
+`KeyboardArrowDown` chevron, `textMuted`, turned 180° when expanded). `InstrumentStripCopy.name()`
+is now visible inside `:core:ui`.
+
+Product code: the `:core:model` domain types, the Info screen, the read-only Próxima jam screen and
+the catalog and jams data layer (`:core:data`).
+
+`backend/apps-script/` (not a Gradle module; `apps-script-read-endpoint`, `in_progress`) holds
+the Apps Script web app: `appsscript.json` (V8, `spreadsheets.currentonly`, executes as the owner,
+anonymous access) and `src/Normalize.js`, `Catalog.js`, `Code.js` — one route,
+`GET ?resource=catalog`, which never opens `Config`. Node tests (33, `node:test`, no
+`package.json`) run outside `init.sh`; `tools/check-response.js` checks a live response. The
+contract is `docs/apps-script-api.md`, with mapper fixtures in `docs/api-samples/`. Not deployed
+yet: deploying is the user's step.
+
+The Sheet contract is `docs/sheet-schema.md` (`sheet-schema-definition`, `accepted`): tabs, headers,
+exact Spanish enum values, cell reading rules, slot identity (the k-th slot of an instrument is the
+k-th column of it not holding `-`), a Type-to-Sheet mapping of every `:core:model` field, and the
+**Mapper rules** the repository slices must enforce. `docs/sheet-seed/` is the one-time import
+file; the real Sheet is the authority and already holds more songs.
+
+### Reachable without unblocking the Sheet schema
+
+Eight slices, in plan order: `gradle-kotlin-compose-baseline`, `module-skeleton`,
+`konsist-isolation-rules`, `detekt-ktlint-gate`, `molecule-presenter-harness`,
+`design-tokens-theme`, `domain-model-types`, `info-screen`.
+
+Everything from `apps-script-read-endpoint` onward waits on the Sheet schema.

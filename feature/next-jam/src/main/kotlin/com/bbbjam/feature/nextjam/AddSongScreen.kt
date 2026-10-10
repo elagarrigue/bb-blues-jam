@@ -36,6 +36,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.ListErrorBlock
 import com.bbbjam.core.ui.state.SkeletonList
+import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -195,7 +196,7 @@ private fun AddSongScreenPreview() {
         title = title,
         artist = artist,
         key = key,
-        keyDescription = NextJamCopy.keyDescription(key),
+        keyDescription = SongListText.keyDescription(key),
         isListed = listed,
         listedLabel = if (listed) AddSongCopy.ALREADY_LISTED else null,
         pickLabel = AddSongCopy.PICK_LABEL,

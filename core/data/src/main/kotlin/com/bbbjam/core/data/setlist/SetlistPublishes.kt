@@ -50,7 +50,10 @@ internal class SetlistPublishes(
     }
 
     private suspend fun send(entry: SetlistPublish): PublishOutcome {
-        val result = writer.send(PUBLISH_SETLIST, mapOf(DATE to JsonPrimitive(entry.jamDate.toString())))
+        val result = writer.send(
+            PUBLISH_SETLIST,
+            mapOf(SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString())),
+        )
         val outcome = when (result) {
             is AdminAnswer.Refused -> PublishOutcome.NotPublished(result.outcome)
 
@@ -91,7 +94,6 @@ internal class SetlistPublishes(
 
     private companion object {
         const val PUBLISH_SETLIST = "publishSetlist"
-        const val DATE = "date"
         const val ALREADY_PUBLISHED = "alreadyPublished"
     }
 }

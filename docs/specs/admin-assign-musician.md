@@ -25,7 +25,7 @@ Current shared implementation to reuse:
 
 ## Goal
 
-In admin mode on PrÃ³xima jam, each open line in an expanded song row offers a 48dp `Anotar` action. It opens a full-screen `Anotar mÃºsico` flow for that fixed slot. A valid submission closes the screen and optimistically fills the admin's row; success confirms the cached slot, while failure restores the open slot and shows a dismissible error. Musicians see no new controls or optimistic data.
+In admin mode on Próxima jam, each open line in an expanded song row offers a 48dp `Anotar` action. It opens a full-screen `Anotar músico` flow for that fixed slot. A valid submission closes the screen and optimistically fills the admin's row; success confirms the cached slot, while failure restores the open slot and shows a dismissible error. Musicians see no new controls or optimistic data.
 
 The mutation is `SetlistRepository.assignSlot(date, songId, instrument, ordinal, musicianName)` in `:core:data`, callable without UI (D-13). The server authorizes and validates every write.
 

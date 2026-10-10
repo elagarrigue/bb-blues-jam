@@ -56,8 +56,8 @@ internal class SetlistLineupChanges(
 
     private suspend fun sendValid(entry: LineupChange): SetSlotCountOutcome {
         val fields = mapOf(
-            "date" to JsonPrimitive(entry.jamDate.toString()),
-            "songId" to JsonPrimitive(entry.songId.value),
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
             "instrument" to JsonPrimitive(entry.instrument.name.lowercase(Locale.ROOT)),
             "count" to JsonPrimitive(entry.count),
         )

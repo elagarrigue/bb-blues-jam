@@ -6,6 +6,7 @@ import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.SetlistDao
+import com.bbbjam.core.data.remote.ServiceCodes
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.SlotPosition
@@ -54,7 +55,7 @@ internal class SetlistAssignments(
             null
         }
         val localError = when {
-            song == null || slot == null -> UNAVAILABLE_SLOT
+            song == null || slot == null -> ServiceCodes.SLOT_NOT_IN_LINEUP
             slot.musicianName != null -> SLOT_TAKEN
             else -> null
         }
@@ -65,7 +66,10 @@ internal class SetlistAssignments(
 
     suspend fun send(entry: Assignment, target: Target?, localError: String?): AssignSlotOutcome {
         val outcome = when {
-            target == null -> AssignSlotOutcome.NotAssigned(WriteOutcome.Rejected(localError ?: UNAVAILABLE_SLOT))
+            target == null -> AssignSlotOutcome.NotAssigned(
+                WriteOutcome.Rejected(localError ?: ServiceCodes.SLOT_NOT_IN_LINEUP),
+            )
+
             else -> sendValid(entry, target)
         }
         entries.update { list ->
@@ -82,8 +86,8 @@ internal class SetlistAssignments(
 
     private suspend fun sendValid(entry: Assignment, target: Target): AssignSlotOutcome {
         val fields = mapOf(
-            "date" to JsonPrimitive(entry.jamDate.toString()),
-            "songId" to JsonPrimitive(entry.songId.value),
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
             "instrument" to JsonPrimitive(entry.instrument.name.lowercase(Locale.ROOT)),
             "ordinal" to JsonPrimitive(entry.ordinal.value),
             "name" to JsonPrimitive(entry.musicianName.value),
@@ -127,7 +131,6 @@ internal class SetlistAssignments(
     data class Target(val position: Int, val columnIndex: Int)
 
     private companion object {
-        const val UNAVAILABLE_SLOT = "slot_not_in_lineup"
         const val SLOT_TAKEN = "slot_taken"
     }
 }

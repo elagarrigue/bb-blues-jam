@@ -22,6 +22,7 @@ import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.SongListText
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -109,7 +110,7 @@ private fun pickerContent(song: JamSong, current: String, back: BackUiModel, onP
         songTitle = song.title,
         currentLabel = SetKeyCopy.CURRENT,
         currentKey = current,
-        currentKeyDescription = NextJamCopy.keyDescription(current),
+        currentKeyDescription = SongListText.keyDescription(current),
         sections = listOf(
             keySection(SetKeyCopy.MAJORS, SetKeyDefaults.MAJORS, current, onPick),
             keySection(SetKeyCopy.MINORS, SetKeyDefaults.MINORS, current, onPick),
@@ -123,7 +124,7 @@ internal fun keySection(label: String, keys: List<Key>, current: String, onPick:
         val isCurrent = key.value == current
         KeyCellUiModel(
             key = key.value,
-            description = NextJamCopy.keyDescription(key.value),
+            description = SongListText.keyDescription(key.value),
             isCurrent = isCurrent,
             currentLabel = if (isCurrent) SetKeyCopy.CURRENT_CELL else null,
             pickLabel = SetKeyCopy.PICK_LABEL,

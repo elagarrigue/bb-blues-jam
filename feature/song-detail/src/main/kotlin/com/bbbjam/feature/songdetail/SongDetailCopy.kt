@@ -15,7 +15,4 @@ internal object SongDetailCopy {
     const val NOT_FOUND_TITLE = "Este tema ya no está en la lista"
     const val NOT_FOUND_MESSAGE =
         "Puede que la organización haya cambiado la lista. Volvé a la próxima jam para ver la actual."
-
-    /** What a screen reader says for the key block: "Tonalidad Bm", as in the song row. */
-    fun keyDescription(key: String): String = "$KEY_LABEL $key"
 }
