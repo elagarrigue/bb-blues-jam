@@ -261,9 +261,13 @@ names a 1-based ordinal plus the exact expected name and instrument, and is refu
 when they no longer match) and read back; a confirmed response replaces that song's extras in one
 Room transaction. In
 `:feature:next-jam` the admin-only inline editor (`ExtraParticipantControls`,
-`ExtraParticipantFormState`, `ExtraParticipantUiMapping`, copy in `ExtraParticipantCopy`) shows a
+`ExtraParticipantFormState`, `ExtraParticipantUiMapping`, copy in `NextJamCopy`) shows a
 Sending-only optimistic change with "Guardando…"; a failure restores confirmed data and becomes a
-dismissible card. Each `Quitar` has a participant-specific content description.
+dismissible card. Since `ui-polish-pass` each extra's `Quitar` is a `LineupPanel` line action:
+`toLineupPanel(onRemoveExtra = …)` gives the extra lines `actionLabel` "Quitar" and the
+participant-specific `actionDescription` ("Quitar a Juan, saxo", `LineupPanelCopy`), and the
+admin mapping forwards it to the same `removeExtraParticipant` event; the editor only holds the
+add form (`Agregar`/`Cancelar`, `submitEnabled`).
 
 As built by `action-contract-registry` (`:app` only, no feature module change):
 `com.bbbjam.actions.SetlistActionRegistry` lists the ten D-13 setlist mutations

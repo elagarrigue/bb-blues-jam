@@ -188,4 +188,33 @@ class LineupPanelMapperTest {
         val panel = Lineup(listOf(Slot(Instrument.KEYBOARDS, name))).toLineupPanel(emptyList())
         assertEquals(listOf(filled("Teclados", name, "Teclados: $name")), panel.filledSlots)
     }
+
+    @Test
+    fun `admin remove-extra action is Quitar, described per participant, with its ordinal`() {
+        val calls = mutableListOf<Pair<Int, ExtraParticipant>>()
+        val extras = listOf(ExtraParticipant("Juan", "saxo"), ExtraParticipant("Mora", "trompeta"))
+        val panel = Lineup(listOf(Slot(Instrument.GUITAR, "Ana"))).toLineupPanel(
+            extras,
+            onRemoveExtra = { ordinal, extra -> calls += ordinal to extra },
+        )
+
+        assertEquals(listOf("Quitar", "Quitar"), panel.extras.map { it.actionLabel })
+        assertEquals(
+            listOf("Quitar a Juan, saxo", "Quitar a Mora, trompeta"),
+            panel.extras.map { it.actionDescription },
+        )
+        // The line itself still reads as the extra, as for a musician.
+        assertEquals(listOf("Otros: saxo, Juan", "Otros: trompeta, Mora"), panel.extras.map { it.contentDescription })
+        assertTrue(panel.extras[0].action != panel.extras[1].action)
+
+        panel.extras[1].action?.invoke(LineupLineEvent.Activate)
+        assertEquals(listOf(2 to ExtraParticipant("Mora", "trompeta")), calls)
+    }
+
+    @Test
+    fun `without a remove handler extra lines carry no action`() {
+        val panel = Lineup(listOf(Slot(Instrument.GUITAR, "Ana")))
+            .toLineupPanel(listOf(ExtraParticipant("Juan", "saxo")))
+        assertEquals(listOf(extra("+ saxo", "Juan", "Otros: saxo, Juan")), panel.extras)
+    }
 }

@@ -35,6 +35,8 @@ internal class ExtraParticipantFormState(
 
             ExtraParticipantEditorUiModel.Event.Submit -> submit(date, songId, key, setlist, scope)
 
+            ExtraParticipantEditorUiModel.Event.Cancel -> if (formKey.value == key) cancel()
+
             is ExtraParticipantEditorUiModel.Event.Remove -> scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 setlist.removeExtraParticipant(date, songId, event.ordinal, event.name, event.instrument)
             }
@@ -48,6 +50,13 @@ internal class ExtraParticipantFormState(
         consumed.value = false
     }
 
+    private fun cancel() {
+        formKey.value = null
+        name.value = ""
+        instrument.value = ""
+        consumed.value = false
+    }
+
     private fun submit(
         date: LocalDate,
         songId: SongId,
@@ -56,6 +65,7 @@ internal class ExtraParticipantFormState(
         scope: CoroutineScope,
     ) {
         if (formKey.value != key || consumed.value) return
+        if (!isSubmittable(name.value, instrument.value)) return
         consumed.value = true
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             setlist.addExtraParticipant(date, songId, name.value, instrument.value)
@@ -64,3 +74,6 @@ internal class ExtraParticipantFormState(
         }
     }
 }
+
+/** Both "Otros" fields hold something besides spaces; the submit is drawn enabled only then. */
+internal fun isSubmittable(name: String, instrument: String): Boolean = name.isNotBlank() && instrument.isNotBlank()

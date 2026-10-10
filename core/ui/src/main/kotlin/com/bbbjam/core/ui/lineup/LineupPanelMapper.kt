@@ -12,6 +12,8 @@ import com.bbbjam.core.ui.strip.InstrumentStripCopy
  * The panel of one song: the open slots in lineup order, then the filled slots in lineup order (a
  * stable partition, so two guitars keep their column order within each section), then [extras] in
  * their `Otros` order. Guitars are not numbered. An extra is never a slot and never open (D-18).
+ * With [onRemoveExtra] (the admin) each extra line gets "Quitar", called with its 1-based ordinal in
+ * [extras] and the participant.
  *
  * Pure: presenters call it, so every feature that draws an expanded lineup maps it identically.
  */
@@ -21,7 +23,9 @@ fun Lineup.toLineupPanel(
     canClear: (Instrument, SlotPosition) -> Boolean = { _, _ -> true },
     isClearing: (Instrument, SlotPosition) -> Boolean = { _, _ -> false },
     clearingLabel: String = "Quitando…",
+    onRemoveExtra: ((ordinal: Int, ExtraParticipant) -> Unit)? = null,
     onClear: ((Instrument, SlotPosition, String) -> Unit)? = null,
+    // Last, so a trailing lambda stays the assign handler.
     onAssign: ((Instrument, SlotPosition) -> Unit)? = null,
 ): LineupPanelUiModel {
     val indexed = slots.mapIndexed { index, slot -> index to slot }
@@ -51,7 +55,10 @@ fun Lineup.toLineupPanel(
                 },
             )
         },
-        extras = extras.map { it.toLine() },
+        extras = extras.mapIndexed { index, extra ->
+            val ordinal = index + 1
+            extra.toLine(onRemoveExtra?.let { handler -> { handler(ordinal, extra) } }, ordinal)
+        },
         noOpenSlotsNote = noOpenSlotsNote(hasOpenSlot = open.isNotEmpty()),
         hint = openSlotsHint(hasOpenSlot = open.isNotEmpty()),
     )
@@ -108,9 +115,18 @@ internal fun Slot.toLine(
     }
 }
 
-internal fun ExtraParticipant.toLine() = LineupLineUiModel(
+internal fun ExtraParticipant.toLine(onRemove: (() -> Unit)? = null, ordinal: Int = 0) = LineupLineUiModel(
     instrument = LineupPanelCopy.extraInstrument(instrument),
     detail = name,
     contentDescription = InstrumentStripCopy.extraDescription(instrument, name),
     kind = InstrumentChipKind.EXTRA,
+    actionLabel = onRemove?.let { LineupPanelCopy.REMOVE_EXTRA },
+    action = onRemove?.let { callback ->
+        com.bbbjam.core.ui.presenter.EventHandler(key = "remove-extra:$ordinal:$name:$instrument") { event ->
+            when (event) {
+                LineupLineEvent.Activate -> callback()
+            }
+        }
+    },
+    actionDescription = onRemove?.let { LineupPanelCopy.removeExtraDescription(name, instrument) },
 )

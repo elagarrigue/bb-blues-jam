@@ -186,7 +186,7 @@ internal fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): 
     val sendingMove = isMoveSending(song)
     val move = moveModel(row, song, total, removal)
     val extraEditor = state.extraEditor(jam.date, song)
-    val shownExtras = extraEditor.extras
+    val shownExtras = state.shownExtras(jam.date, song)
     val savingExtras = state.extraParticipantChanges.any {
         it.jamDate == jam.date && it.songId == song.songId && it.state == ExtraParticipantChange.State.Sending
     }

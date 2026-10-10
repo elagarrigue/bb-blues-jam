@@ -168,7 +168,8 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
 - **Colors:** bar container `surface`; selected icon and label `text` on an indicator
   `surfaceRaised` (12.75:1); unselected icon and label `textMuted`. **No amber**: the selected tab
   is a location, not an action ("amber only for what the user can act on"); the export's amber
-  active tab is not adopted. Label in `caption`.
+  active tab is not adopted. Label in `caption`, one centred line, cut with "…" when it does not fit
+  at a large font scale (`TabBarDefaults.LABEL_MAX_LINES`), so it never wraps out of its item.
 - **Size and semantics:** Material 3 `NavigationBar` (80dp, 24dp icons); each item is a
   screen-reader tab with its selected state and well over 48dp tall. The bar applies the
   navigation-bar inset itself.
@@ -206,7 +207,8 @@ than hard cards; the visual separation comes from surface elevation, not from he
 ### Song row, collapsed
 
 One line where possible: position number, title, **key** (always visible even collapsed), and the
-instrument strip.
+instrument strip. A long title (or any title at a large font scale) wraps to a second line before it
+is cut with "…"; the key and chevron stay vertically centred on it (`ui-polish-pass`, U8).
 
 ### Instrument strip
 
@@ -263,11 +265,16 @@ Decided 3 October 2026 (`song-row-expansion`):
 - **Sections:** `CUPOS LIBRES`, `CUPOS CUBIERTOS`, `OTROS` (caption, `textMuted`, uppercase, marked
   as headings), each drawn only when non-empty. With at least one open slot, a caption hint follows
   the open lines ("Para tocar, anotate en la jam: la organización te suma a un tema."); with none,
-  "No quedan cupos libres." replaces the open section.
+  "No quedan cupos libres." replaces the open section. The hint addresses musicians, so the admin's
+  panel omits it. Lines inside a section are `xs` apart; a heading after anything already drawn gets
+  an extra `sm` above it, so the groups read as groups.
 - **Lines** are full width and compact: the strip's glyph and fill for the same kind, the full
   instrument name, then the detail — `LIBRE` in `slotOpen`, a musician's name in `text` (9.52:1 on
   `slotFilled`), an extra's name in `textMuted` with `+ saxo` as its instrument. Long names wrap to
-  two lines, then "…". Each line is one screen-reader node with the strip's description.
+  two lines, then "…". Each line is one screen-reader node with the strip's description. An admin
+  line with an action (`Anotar`, `Liberar`, `Quitar`) stacks the instrument above the detail, so
+  the detail gets the full width and a large font never breaks `LIBRE` or a name mid-word; the
+  action stays at the line's end.
 - **Open slots look available, not tappable, in the musician view**: no click, no ripple, no role,
   no "Pedir cupo" (self-signup is out of scope). A control that looks tappable and does nothing is a
   false affordance. Lines have no 48dp minimum because nothing in the panel is a touch target. Open
@@ -445,21 +452,25 @@ through `AdminControlsDefaults`, **no amber**:
   see no control. While sending, the admin projection moves that exact original ordinal into the
   open section as `Quitando…` and suppresses actions on that slot. A failure restores the confirmed
   musician and adds a dismissible `No se pudo liberar el cupo` card; stale targets say `Ese cupo ya
-  no está ocupado` and offer `Volvé a la próxima jam para ver la lista actual.`. The immediate action
+  no está ocupado. Actualizá la lista para ver cómo quedó.`. The immediate action
   uses the established neutral admin/action treatment, not amber.
 - **Adjusting a lineup** (`admin-adjust-lineup`): after `Cambiar tonalidad` and before removal,
   `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
   default instrument, full name in `body`/`text`, count (`2 cupos`, `1 cupo`, `No va en este tema`)
-  in `caption`/`textMuted`. Minus/plus are 48dp `surfaceRaised` squares, `shapes.md`, glyphs in
-  `songTitle`/`text`, `Role.Button`, with explicit instrument descriptions; disabled controls are
-  muted, not clickable, with disabled semantics. Removing a filled-only instrument is disabled
+  in `caption`/`textMuted`. The editor's lines are inset `spacing.md`, like the panel and the row's
+  actions. Minus/plus are 48dp squares, `shapes.md`, glyphs in `songTitle`, `Role.Button`, with
+  explicit instrument descriptions. An enabled one has a `surfaceRaised` fill, a hairline `border`
+  outline (the fill alone is about 1.05:1 on `surface`) and a `text` glyph; a disabled one has no
+  fill, no outline and a `textMuted` glyph, is not clickable and has disabled semantics, so the
+  state shows in shape, not brightness alone. Removing a filled-only instrument is disabled
   with `Tiene músico anotado. Liberá el cupo antes de sacarlo.` beneath it. `Listo` and the entry
   action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
   Sending counts update the strip, panel and filters at once for the admin only. One muted
   `Guardando…` line covers key and lineup together; failure reverts and leaves a persistent card.
 - **Reordering songs** (`admin-reorder-songs`): each expanded admin row ends with the move block,
   after detail, key, slot and lineup controls and before removal. It shows `Posición x de n` and
-  adjacent 48dp `Subir`/`Bajar` actions; the edge action is disabled with muted text and semantics.
+  adjacent 48dp `Subir`/`Bajar` actions; the edge action is disabled with muted text, no underline
+  and disabled semantics.
   The admin row moves optimistically with a polite `Guardando…` status and remains under the
   thumb. Failure restores the confirmed position and adds a dismissible card. Musicians see the
   confirmed order only. Colors use neutral admin action tokens, not amber.
@@ -656,8 +667,8 @@ instrument strip can grow.
 
 ### Publishing (`admin-publish-setlist`, as built locally)
 
-The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta lista.` for a draft; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Desde la app no se puede volver a borrador.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando�`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
+The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta lista.` for a draft; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Desde la app no se puede volver a borrador.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
 
 ### Extra participants (`admin-edit-extra-participants`)
 
-In an admin song row, show an inline `OTROS` editor after the lineup slots. Keep existing extras in their current order, each followed by a visible `Quitar` action with an accessible name identifying the participant and instrument. Place `Agregar a Otros` after the list; expand it inline to name and free-text instrument fields and a submit action. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando�`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.
+In an admin song row, each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). After `Cambiar formación`, `Agregar a Otros` expands inline to two labelled outlined fields (`Nombre`, `Instrumento`; colours from `AdminControlsDefaults.extraField()`, no amber) inset `spacing.md` like the rest of the row, then `Agregar` and `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.

@@ -19,7 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
@@ -61,7 +64,7 @@ private fun InfoContent(model: InfoUiModel, modifier: Modifier, contentPadding: 
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         Column {
-            Text(text = model.title, style = BluesJamTheme.typography.h1)
+            Text(text = model.title, style = BluesJamTheme.typography.h1, modifier = Modifier.semantics { heading() })
             Text(text = model.tagline, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
         }
         model.sections.forEach { section ->
@@ -102,7 +105,7 @@ private fun InfoCard(title: String, content: @Composable () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
         ) {
             // songTitle is the only 24sp heading style in DESIGN.md; no new token for section headings.
-            Text(text = title, style = BluesJamTheme.typography.songTitle)
+            Text(text = title, style = BluesJamTheme.typography.songTitle, modifier = Modifier.semantics { heading() })
             content()
         }
     }
@@ -122,7 +125,7 @@ private fun LinkRow(link: InfoLinkUiModel, onClick: () -> Unit) {
     }
 }
 
-/** The admin line: the same discreet caption in both states, each action a 48dp text target. */
+/** The admin line: the same discreet caption in both states, each action a 48dp underlined text target. */
 @Composable
 private fun AdminLine(model: AdminEntryUiModel, onEvent: (InfoUiModel.Event) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -152,7 +155,13 @@ private fun CaptionAction(text: String, onClick: () -> Unit) {
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
+        // Underlined like the other secondary text actions, so it never reads as the status line.
+        Text(
+            text = text,
+            style = BluesJamTheme.typography.caption,
+            color = BluesJamTheme.colors.textMuted,
+            textDecoration = TextDecoration.Underline,
+        )
     }
 }
 

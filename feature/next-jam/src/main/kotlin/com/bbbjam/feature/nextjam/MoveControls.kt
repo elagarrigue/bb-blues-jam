@@ -60,7 +60,7 @@ private fun MoveAction(model: MoveActionUiModel, modifier: Modifier, onClick: ()
             text = model.label,
             style = BluesJamTheme.typography.body,
             color = if (model.enabled) style.action else style.disabled,
-            textDecoration = TextDecoration.Underline,
+            textDecoration = if (model.enabled || style.underlineDisabled) TextDecoration.Underline else null,
         )
     }
 }

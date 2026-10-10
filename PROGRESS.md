@@ -1,5 +1,11 @@
 # Progress Log
 
+## 10 October 2026 - ui-polish-pass accepted
+
+Per-screen UI polish (`docs/specs/ui-polish-pass.md`, tasks U1-U14; proposals P-A..P-D and deferred D1-D5 untouched). U1 tab label one centred line (`TabBarDefaults.LABEL_MAX_LINES`); U2 admin panel lines with an action stack instrument above detail (new `LineupLine.kt` in `:core:ui`, split out of `LineupPanel.kt` for detekt `TooManyFunctions`); U6 `sm` before every later panel heading; U4 extras' `Quitar` is now a panel line action (`toLineupPanel(onRemoveExtra)`, `LineupLineUiModel.actionDescription` "Quitar a {name}, {instrument}", same `removeExtraParticipant` call), the editor keeps only the add form with labelled `OutlinedTextField`s (`AdminControlsDefaults.extraField()`), `Agregar` enabled only when both trimmed fields are non-blank (`submitEnabled`) and `Cancelar` (`Event.Cancel`); `ExtraParticipantCopy.kt` deleted; U5 admin panel `hint = null`; U3 enabled lineup buttons `surfaceRaised` + `border` outline, disabled no fill/no outline, disabled move/submit actions not underlined; U7 lineup editor inset `spacing.md`; U8 collapsed title up to two lines; U11 header and admin status block end with an extra `sm`; U9 headings on Info title/cards and the Próxima jam date; U10 Info admin actions underlined; U12 assign screen `shapes.md` button and token field colours (`AssignMusicianDefaults.field()`), `slotName` uses `Instrument.fullName()`; U13 `SLOT_TAKEN`/`CLEAR_STALE` copy; U14 DESIGN.md mojibake (and those two CRLF lines). DESIGN.md and the architecture skill updated.
+
+Verification: `CI=true ./init.sh` exit 0 with `konsist`, `detekt`, `ktlint` all `wired`; 668 JVM tests in 108 classes, 0 failures/errors (baseline 657 + 11 new). Lint for `:core:ui`, `:feature:next-jam`, `:feature:info`: no issues. `git diff --check` clean. Device (Pixel 5): before/after screenshots in `docs/evidence/ui-polish-pass/` for spec items a-g at font scale 1.0 and 2.0, plus `uiautomator` checks (one `Quitar a Valeria, saxo` node, no admin hint, disabled `−`/`+`/`Subir`/`Agregar` report `enabled=false`). No write control tapped; `local.properties`, font scale and connectivity restored. Owed: TalkBack heading navigation (U9). Observation outside scope: with a long suggestion list the assign screen's `Anotar` button starts under the gesture bar until the screen is scrolled (`before-g-assign-musician.png`); not investigated. Independent validator accepted on 10 October 2026 after rerunning the gate; the orchestrator then removed the now-unused `NextJamCopy.REMOVE_EXTRA`.
+
 ## 10 October 2026 - project-hygiene-pass accepted
 
 Whole-project cleanliness pass with no behavior change (`docs/specs/project-hygiene-pass.md`). Fixed: dead `AdminDraftBanner` and unused copy constants (F1-F3); the five next-jam/past-jams lint warnings (`AdminRefreshEffect`, `modifier` naming and order; F4-F7); admin mapping moved unchanged from `NextJamPresenter.kt` (626 -> 376 lines) to `NextJamAdminMapping.kt`, with `decorate`'s two `copy` branches merged (F9); `SongListText` in `:core:ui` replaces the three features' copies of the position label, `Tonalidad` description and dropped-rows note (F10); `SetlistRequestFields` plus `ServiceCodes.SONG_NOT_IN_SETLIST`/`SLOT_NOT_IN_LINEUP` in `:core:data` (F11); one `QueuedPostTransport` test double instead of five (F12); mojibake (F13); stale KDoc and skill wording on row keys (F14); template instrumented test, its runner and deps, and `:app`'s unused tooling deps removed (F15, F16); `START-HERE.md`, this file's "Current Verified State" (old text kept verbatim under "Archived Verified State") and the architecture skill's "As built" paragraphs updated (F17-F19). Kept as the spec says: F8 (`:app` version warnings, H1), F20, F21, F23-F27; deferred D1-D7 (Post.js split, H2).
@@ -30,10 +36,10 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 43 entries): 41 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 43 entries): 42 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
-  `not_started`. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `project-hygiene-pass` entry at the top of this file.
+  accepted 10 October 2026. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `ui-polish-pass` entry at the top of this file.
 - Code layout: eight Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
   `:feature:info`, `:feature:next-jam`, `:feature:past-jams`, `:feature:song-detail`), plus
   `:konsist-test` (17 architecture rules) and the included build `build-logic`. The Apps Script

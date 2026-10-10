@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -210,13 +212,17 @@ private fun RemovalControl(model: RemovalUiModel) {
     }
 }
 
-/** A 48dp underlined text action in [color], as the row's "Ver detalle del tema". */
+/**
+ * A 48dp underlined text action in [color], as the row's "Ver detalle del tema". A disabled one is
+ * `textMuted` with no underline and disabled semantics, as a disabled "Subir"/"Bajar".
+ */
 @Composable
 internal fun RowTextAction(
     label: String,
     color: Color,
     modifier: Modifier = Modifier,
     accessibilityLabel: String? = null,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     val spacing = BluesJamTheme.spacing
@@ -231,17 +237,43 @@ internal fun RowTextAction(
                     Modifier.semantics { contentDescription = accessibilityLabel }
                 },
             )
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
             text = label,
             style = BluesJamTheme.typography.body,
-            color = color,
-            textDecoration = TextDecoration.Underline,
+            color = if (enabled) color else AdminControlsDefaults.move().disabled,
+            textDecoration = if (enabled) TextDecoration.Underline else null,
         )
     }
+}
+
+/**
+ * Material's outlined-field colours, every one set from [this] style (D-17: Material's focused
+ * amber is not a design decision); the error roles are `error`.
+ */
+@Composable
+internal fun AdminControlsDefaults.FieldStyle.textFieldColors(): TextFieldColors {
+    val error = BluesJamTheme.colors.error
+    return OutlinedTextFieldDefaults.colors(
+        focusedTextColor = text,
+        unfocusedTextColor = text,
+        errorTextColor = text,
+        focusedContainerColor = container,
+        unfocusedContainerColor = container,
+        errorContainerColor = container,
+        cursorColor = cursor,
+        errorCursorColor = error,
+        focusedBorderColor = focusedBorder,
+        unfocusedBorderColor = unfocusedBorder,
+        errorBorderColor = error,
+        focusedLabelColor = label,
+        unfocusedLabelColor = label,
+        errorLabelColor = error,
+        errorSupportingTextColor = error,
+    )
 }
 
 /** The admin's line on Próxima jam with no upcoming jam (J1): how to create one in the Sheet. */

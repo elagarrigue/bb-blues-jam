@@ -9,8 +9,8 @@ import com.bbbjam.core.ui.strip.InstrumentChipKind
  * The lineup of one song, as the expanded row shows it (DESIGN.md "Song row, expanded"): open slots
  * first, then filled slots, then the extra participants, each list in its own section.
  * [noOpenSlotsNote] replaces the open section when no slot is open, and [hint] follows the open
- * lines only when at least one slot is open; each is null otherwise. Read-only: nothing here is a
- * control.
+ * lines only when at least one slot is open; each is null otherwise (the admin's panel has no
+ * hint). Read-only for musicians: only the admin's lines carry an action.
  */
 data class LineupPanelUiModel(
     val openSlots: List<LineupLineUiModel>,
@@ -30,9 +30,14 @@ data class LineupLineUiModel(
     val detail: String,
     val contentDescription: String,
     val kind: InstrumentChipKind,
-    /** Present only for an open admin slot in Próxima jam. */
+    /**
+     * Present only on the admin's lines in Próxima jam: "Anotar" on an open slot, "Liberar" on a
+     * filled one, "Quitar" on an extra.
+     */
     val actionLabel: String? = null,
     val action: EventHandler<LineupLineEvent>? = null,
+    /** What a screen reader says for the action button when its label alone is ambiguous, or null. */
+    val actionDescription: String? = null,
 ) : UiModel
 
 sealed interface LineupLineEvent : UiEvent {

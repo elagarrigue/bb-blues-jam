@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextDecoration
@@ -195,7 +196,12 @@ internal const val ADMIN_HINT_KEY = "admin-hint"
 @Composable
 internal fun Header(header: JamHeaderUiModel) {
     Column {
-        Text(text = header.date, style = BluesJamTheme.typography.h1, color = BluesJamTheme.colors.text)
+        Text(
+            text = header.date,
+            style = BluesJamTheme.typography.h1,
+            color = BluesJamTheme.colors.text,
+            modifier = Modifier.semantics { heading() },
+        )
         Text(text = header.venue, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
         Text(
             text = header.timeRemaining,
@@ -293,6 +299,9 @@ private fun RowHeader(row: SongRowUiModel) {
     }
 }
 
+/** A long title wraps to a second line before it is cut with "…"; key and chevron stay centred on it. */
+private const val TITLE_MAX_LINES = 2
+
 @Composable
 private fun TitleLine(row: SongRowUiModel) {
     Row(
@@ -309,7 +318,7 @@ private fun TitleLine(row: SongRowUiModel) {
             text = row.title,
             style = BluesJamTheme.typography.songTitle,
             color = BluesJamTheme.colors.text,
-            maxLines = 1,
+            maxLines = TITLE_MAX_LINES,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )

@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +30,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import com.bbbjam.core.ui.strip.fullName
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
@@ -44,15 +46,21 @@ internal fun LineupEditor(model: LineupEditorUiModel) {
             val spacing = BluesJamTheme.spacing
             val style = AdminControlsDefaults.lineupEditor()
             Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-                Text(
-                    text = model.heading,
-                    style = BluesJamTheme.typography.caption,
-                    color = style.heading,
-                    modifier = Modifier
-                        .padding(start = spacing.md, top = spacing.xs)
-                        .semantics { heading() },
-                )
-                model.lines.forEach { line -> LineupEditorLine(line) }
+                // Inset like the panel and the row's actions (`ui-polish-pass`, U7).
+                Column(
+                    modifier = Modifier.padding(horizontal = spacing.md),
+                    verticalArrangement = Arrangement.spacedBy(spacing.xs),
+                ) {
+                    Text(
+                        text = model.heading,
+                        style = BluesJamTheme.typography.caption,
+                        color = style.heading,
+                        modifier = Modifier
+                            .padding(top = spacing.xs)
+                            .semantics { heading() },
+                    )
+                    model.lines.forEach { line -> LineupEditorLine(line) }
+                }
                 RowTextAction(model.doneLabel, style.action) {
                     model.events(LineupEditorUiModel.Event.Done)
                 }
@@ -113,11 +121,14 @@ private fun EditorCountButton(
     onClick: () -> Unit,
 ) {
     val size = LocalMinimumInteractiveComponentSize.current
+    val shape = BluesJamTheme.shapes.md
+    val button = if (enabled) style.button else style.disabledButton
     Box(
         modifier = Modifier
             .size(size)
-            .clip(BluesJamTheme.shapes.md)
-            .background(style.buttonFill, BluesJamTheme.shapes.md)
+            .clip(shape)
+            .then(button.fill?.let { Modifier.background(it, shape) } ?: Modifier)
+            .then(button.outline?.let { Modifier.border(Dp.Hairline, it, shape) } ?: Modifier)
             .then(
                 if (enabled) {
                     Modifier.clickable(role = Role.Button, onClick = onClick)
@@ -131,7 +142,7 @@ private fun EditorCountButton(
         Text(
             text = glyph,
             style = BluesJamTheme.typography.songTitle,
-            color = if (enabled) style.buttonGlyph else style.disabledGlyph,
+            color = button.glyph,
         )
     }
 }

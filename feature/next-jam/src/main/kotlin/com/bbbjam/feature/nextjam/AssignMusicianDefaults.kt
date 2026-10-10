@@ -1,18 +1,19 @@
 package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.ui.strip.fullName
+import com.bbbjam.core.ui.theme.BluesJamColors
 
-/** Presentation labels for instruments in the fixed-slot assignment flow. */
+/** Presentation rules of the fixed-slot assignment flow, apart from the composable so a JVM test can check them. */
 internal object AssignMusicianDefaults {
-    fun instrumentName(instrument: Instrument): String = when (instrument) {
-        Instrument.GUITAR -> "Guitarra"
-        Instrument.BASS -> "Bajo"
-        Instrument.DRUMS -> "Batería"
-        Instrument.VOCALS -> "Voz"
-        Instrument.HARMONICA -> "Armónica"
-        Instrument.KEYBOARDS -> "Teclados"
-    }
-
+    /** "Guitarra 2", "Bajo": the instrument's approved name, numbered only for guitars. */
     fun slotName(instrument: Instrument, ordinal: Int): String =
-        "${instrumentName(instrument)}${if (instrument == Instrument.GUITAR) " $ordinal" else ""}"
+        "${instrument.fullName()}${if (instrument == Instrument.GUITAR) " $ordinal" else ""}"
+
+    /**
+     * The name field, set explicitly from tokens (D-17) with the admin login's roles: focused border
+     * `text`, unfocused `border`, label `textMuted`, container `surface`. No amber.
+     */
+    fun field(colors: BluesJamColors = BluesJamColors): AdminControlsDefaults.FieldStyle =
+        AdminControlsDefaults.extraField(colors)
 }

@@ -11,13 +11,17 @@ import com.bbbjam.core.ui.lineup.toLineupPanel
 import com.bbbjam.core.ui.presenter.EventHandler
 import java.time.LocalDate
 
+/** The extras the admin's row shows: the latest sending change's list, else the confirmed one. */
+internal fun AdminState.shownExtras(date: LocalDate, song: JamSong): List<ExtraParticipant> =
+    extraParticipantChanges.pendingExtras(date, song.songId, song.extraParticipants)
+
 internal fun AdminState.extraEditor(date: LocalDate, song: JamSong): ExtraParticipantEditorUiModel {
-    val extras = extraParticipantChanges.pendingExtras(date, song.songId, song.extraParticipants)
+    val formVisible = extraFormKey == removalKey(date, song.songId)
     return ExtraParticipantEditorUiModel(
-        extras = extras,
-        formVisible = extraFormKey == removalKey(date, song.songId),
+        formVisible = formVisible,
         name = extraName,
         instrument = extraInstrument,
+        submitEnabled = formVisible && isSubmittable(extraName, extraInstrument),
         saving = extraParticipantChanges.any {
             it.jamDate == date && it.songId == song.songId && it.state == ExtraParticipantChange.State.Sending
         },
@@ -32,6 +36,13 @@ internal fun AdminState.lineupPanel(
 ): LineupPanelUiModel = song.lineup.toLineupPanel(
     extras = extras,
     onAssign = { instrument, position -> onAssignSlot(date, song.songId, instrument, position) },
+    onRemoveExtra = { ordinal, extra ->
+        onExtraEvent(
+            date,
+            song.songId,
+            ExtraParticipantEditorUiModel.Event.Remove(ordinal, extra.name, extra.instrument),
+        )
+    },
     onClear = { instrument, position, name -> onClearSlot(date, song.songId, instrument, position, name) },
     canAssign = { instrument: Instrument, position: SlotPosition ->
         !slotClears.isClearing(date, song.songId, instrument, position.value)
@@ -42,7 +53,7 @@ internal fun AdminState.lineupPanel(
     isClearing = { instrument: Instrument, position: SlotPosition ->
         slotClears.isClearing(date, song.songId, instrument, position.value)
     },
-)
+).copy(hint = null) // The hint addresses musicians; the admin is the organization (U5).
 
 private fun List<ExtraParticipantChange>.pendingExtras(
     date: LocalDate,

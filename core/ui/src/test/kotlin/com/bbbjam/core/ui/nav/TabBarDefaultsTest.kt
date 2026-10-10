@@ -46,4 +46,9 @@ class TabBarDefaultsTest {
         assertEquals(Icons.Filled.DateRange, TabBarDefaults.icon(TabIcon.ARCHIVE))
         assertEquals(Icons.Outlined.Info, TabBarDefaults.icon(TabIcon.INFO))
     }
+
+    @Test
+    fun `the label is one line at any font scale`() {
+        assertEquals(1, TabBarDefaults.LABEL_MAX_LINES)
+    }
 }

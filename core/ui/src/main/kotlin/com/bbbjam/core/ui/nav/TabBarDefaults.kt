@@ -14,6 +14,9 @@ import com.bbbjam.core.ui.theme.BluesJamColors
  * `text` on a `surfaceRaised` indicator, the others as `textMuted`, on a `surface` bar.
  */
 internal object TabBarDefaults {
+    /** The label stays one line at any font scale, so it never wraps out of its item (`ui-polish-pass`, U1). */
+    const val LABEL_MAX_LINES = 1
+
     data class BarColors(
         val container: Color,
         val selectedContent: Color,

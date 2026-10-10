@@ -21,6 +21,7 @@ import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.FilterChipUiModel
+import com.bbbjam.core.ui.lineup.LineupLineEvent
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import java.time.Clock
 import java.time.Instant
@@ -30,6 +31,7 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -139,6 +141,12 @@ class NextJamAdminTest {
         }
     }
 
+    private val musicianHint = "Para tocar, anotate en la jam: la organización te suma a un tema."
+
+    private fun NextJamUiModel.Jam.onlyRow() = (setlist as SetlistUiModel.Songs).rows.single()
+
+    private fun NextJamUiModel.Jam.editor() = checkNotNull(onlyRow().admin?.extraParticipants)
+
     @Test
     fun `admin extra form submits through repository and musician rows expose no editor`() = runTest {
         val extras = listOf(ExtraParticipant("Juan", "saxo"), ExtraParticipant("Mora", "trompeta"))
@@ -146,33 +154,98 @@ class NextJamAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(song)), JamStatus.PUBLISHED)))
             val initial = expectMostRecentItem() as NextJamUiModel.Jam
-            val row = (initial.setlist as SetlistUiModel.Songs).rows.single()
-            row.events(SongRowUiModel.Event.ToggleExpanded)
+            initial.onlyRow().events(SongRowUiModel.Event.ToggleExpanded)
             val expanded = awaitItem() as NextJamUiModel.Jam
-            var editor = checkNotNull((expanded.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
-            assertEquals(extras, editor.extras)
-            val removeLabels = editor.extras.map(::extraRemoveAccessibilityLabel)
-            assertEquals(listOf("Quitar a Juan, saxo", "Quitar a Mora, trompeta"), removeLabels)
-            assertEquals(2, removeLabels.distinct().size)
+            var editor = expanded.editor()
+            // The extras and their "Quitar" are panel lines now; the editor does not list them again.
+            val extraLines = expanded.onlyRow().lineup.extras
+            assertEquals(listOf("Quitar", "Quitar"), extraLines.map { it.actionLabel })
+            assertEquals(
+                listOf("Quitar a Juan, saxo", "Quitar a Mora, trompeta"),
+                extraLines.map {
+                    it.actionDescription
+                },
+            )
+            assertFalse(editor.submitEnabled)
             editor.events(ExtraParticipantEditorUiModel.Event.Open)
             val form = awaitItem() as NextJamUiModel.Jam
-            editor = checkNotNull((form.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            editor = form.editor()
             assertTrue(editor.formVisible)
+            assertFalse(editor.submitEnabled)
             editor.events(ExtraParticipantEditorUiModel.Event.NameChanged("Ana"))
             val named = awaitItem() as NextJamUiModel.Jam
-            editor = checkNotNull((named.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            editor = named.editor()
+            assertFalse(editor.submitEnabled)
             editor.events(ExtraParticipantEditorUiModel.Event.InstrumentChanged("percusión"))
             val instrumented = awaitItem() as NextJamUiModel.Jam
-            editor = checkNotNull((instrumented.setlist as SetlistUiModel.Songs).rows.single().admin?.extraParticipants)
+            editor = instrumented.editor()
+            assertTrue(editor.submitEnabled)
             editor.events(ExtraParticipantEditorUiModel.Event.Submit)
             assertEquals(
                 FakeSetlistRepository.ExtraAddCall(jamDate, song.songId, "Ana", "percusión"),
                 setlist.extraAddCalls.single(),
             )
             val musician = snapshot(jam(Setlist.Available(listOf(song)), JamStatus.PUBLISHED)).toUiModel(today).asJam()
-            assertNull((musician.setlist as SetlistUiModel.Songs).rows.single().admin)
+            val musicianRow = (musician.setlist as SetlistUiModel.Songs).rows.single()
+            assertNull(musicianRow.admin)
+            assertTrue(musicianRow.lineup.extras.all { it.action == null && it.actionLabel == null })
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `Quitar on a panel extra line removes that participant through the repository once`() = runTest {
+        val extras = listOf(ExtraParticipant("Juan", "saxo"), ExtraParticipant("Mora", "trompeta"))
+        val song = redHouse.copy(extraParticipants = extras)
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(song)), JamStatus.PUBLISHED)))
+            val initial = expectMostRecentItem() as NextJamUiModel.Jam
+            initial.onlyRow().events(SongRowUiModel.Event.ToggleExpanded)
+            val expanded = awaitItem() as NextJamUiModel.Jam
+            checkNotNull(expanded.onlyRow().lineup.extras[1].action)(LineupLineEvent.Activate)
+            assertEquals(
+                listOf(FakeSetlistRepository.ExtraRemoveCall(jamDate, song.songId, 2, "Mora", "trompeta")),
+                setlist.extraRemoveCalls,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a blank Otros form cannot be submitted and Cancelar closes and clears it with no call`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(redHouse)), JamStatus.PUBLISHED)))
+            val initial = expectMostRecentItem() as NextJamUiModel.Jam
+            initial.onlyRow().events(SongRowUiModel.Event.ToggleExpanded)
+            (awaitItem() as NextJamUiModel.Jam).editor().events(ExtraParticipantEditorUiModel.Event.Open)
+            (awaitItem() as NextJamUiModel.Jam).editor()
+                .events(ExtraParticipantEditorUiModel.Event.NameChanged("  "))
+            (awaitItem() as NextJamUiModel.Jam).editor()
+                .events(ExtraParticipantEditorUiModel.Event.InstrumentChanged("bajo"))
+            val blankName = (awaitItem() as NextJamUiModel.Jam).editor()
+            assertFalse(blankName.submitEnabled)
+            blankName.events(ExtraParticipantEditorUiModel.Event.Submit)
+            assertTrue(setlist.extraAddCalls.isEmpty())
+
+            blankName.events(ExtraParticipantEditorUiModel.Event.Cancel)
+            val cancelled = expectMostRecentItem() as NextJamUiModel.Jam
+            val closed = cancelled.editor()
+            assertFalse(closed.formVisible)
+            assertEquals("", closed.name)
+            assertEquals("", closed.instrument)
+            assertTrue(setlist.extraAddCalls.isEmpty())
+            assertTrue(setlist.extraRemoveCalls.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the admin's panel has no musician hint, a musician's row keeps it`() {
+        val admin = snapshot(jam(Setlist.Available(listOf(redHouse)), JamStatus.PUBLISHED))
+            .toUiModel(today, admin = adminState()).asJam()
+        assertNull(admin.onlyRow().lineup.hint)
+        val musician = snapshot(jam(Setlist.Available(listOf(redHouse)), JamStatus.PUBLISHED)).toUiModel(today).asJam()
+        assertEquals(musicianHint, musician.onlyRow().lineup.hint)
     }
 
     @Test

@@ -2,7 +2,9 @@ package com.bbbjam.feature.nextjam
 
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -59,8 +61,14 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
     ) {
         model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
-        item(key = HEADER_KEY) { Header(model.header) }
-        model.admin?.let { admin -> item(key = ADMIN_STATUS_KEY) { AdminStatusBlock(admin.status) } }
+        // The header and the admin status block end their group with an extra `sm`, so the groups
+        // sit `md` apart while song rows stay `sm` apart (`ui-polish-pass`, U11).
+        item(key = HEADER_KEY) { Box(Modifier.padding(bottom = BluesJamTheme.spacing.sm)) { Header(model.header) } }
+        model.admin?.let { admin ->
+            item(key = ADMIN_STATUS_KEY) {
+                Box(Modifier.padding(bottom = BluesJamTheme.spacing.sm)) { AdminStatusBlock(admin.status) }
+            }
+        }
         setlistItems(model.setlist) { rowKey, action ->
             if (action.enabled) {
                 val rowIndex = rowKeys.indexOf(rowKey)

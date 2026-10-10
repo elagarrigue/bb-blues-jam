@@ -1152,14 +1152,21 @@
     "depends_on": [
       "project-hygiene-pass"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "A per-screen audit compares each screen with DESIGN.md, bb-blues-jam-design-prompt.md and docs/design/screens, and lists each improvement with its source rule",
       "Improvements use only BluesJamTheme tokens (D-17), Rioplatense voseo copy (D-12), 48dp touch targets and content descriptions; no out-of-scope MVP item is added",
       "Presenter and UI-model tests cover any changed state or copy; ContrastTest still passes",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": [],
+    "evidence": [
+      "10 October 2026, implementer: U1-U14 of docs/specs/ui-polish-pass.md implemented; proposals P-A..P-D and deferred D1-D5 not touched.",
+      "CI=true ./init.sh exit 0; konsist, detekt and ktlint all wired; 668 JVM tests in 108 classes, 0 failures, 0 errors, 0 skipped (baseline 657 in 107 + 11: LineupPanelMapperTest +2, TabBarDefaultsTest +1, NextJamAdminTest +3 net (extras test rewritten, plus Quitar-through-panel, blank/Cancelar, admin-hint tests), AdminControlsDefaultsTest +3, new AssignMusicianDefaultsTest 2). Konsist 17 rules and ContrastTest unchanged and green. Android lint :core:ui, :feature:next-jam, :feature:info: No issues found. git diff --check clean.",
+      "Device (Pixel 5, debug build): before/after PNGs in docs/evidence/ui-polish-pass/ (before-*/after-* by spec item a-g). Musician states: real 31 Oct jam online, debugAdmin=false. Admin states: demoUpcomingJam+demoUpcomingJamDraft+debugAdmin, airplane mode, pm clear. No write control tapped (only openers, text entry, Cancelar and Listo); nothing submitted. local.properties restored from backup, font scale back to 1.0, airplane mode off.",
+      "uiautomator (after): admin row 04 OTROS line has node content-desc 'Quitar a Valeria, saxo' (one per extra) and the editor lists no extras; no 'Para tocar' node in the admin row, still present in the musician row; disabled lineup '-'/'+' nodes enabled=false; first row 'Subir' parent enabled=false and drawn without underline; empty Otros form 'Agregar' parent enabled=false, enabled=true once both fields are filled; Cancelar closes the form back to 'Agregar a Otros'.",
+      "Owed: TalkBack heading navigation for U9 (verified by code review only).",
+      "Independent validator accepted on 10 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; 668 tests, 0 failures), reviewing before/after screenshots in docs/evidence/ui-polish-pass/, and confirming extras removal still goes through removeExtraParticipant (D-13), neutral-role tokens only (D-17) and voseo copy (D-12). Orchestrator then removed the unused NextJamCopy.REMOVE_EXTRA; :feature:next-jam:check exited 0."
+    ],
     "notes": "Requested by the user on 10 October 2026 ('revisá la UI por mejoras, implementá las mejoras'). Anything that would change product scope or a D-xx decision is listed as a proposal, not implemented."
   }
 ]

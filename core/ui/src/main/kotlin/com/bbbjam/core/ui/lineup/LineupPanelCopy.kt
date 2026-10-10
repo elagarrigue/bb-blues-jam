@@ -16,6 +16,10 @@ internal object LineupPanelCopy {
     const val ASSIGN = "Anotar"
     const val CLEAR_SLOT = "Liberar"
 
+    /** An extra's admin action, and what a screen reader says for it: "Quitar a Juan, saxo". */
+    const val REMOVE_EXTRA = "Quitar"
+    fun removeExtraDescription(name: String, instrument: String): String = "Quitar a $name, $instrument"
+
     const val NO_OPEN_SLOTS = "No quedan cupos libres."
 
     /** H1: after the open lines, only when at least one slot is open. */

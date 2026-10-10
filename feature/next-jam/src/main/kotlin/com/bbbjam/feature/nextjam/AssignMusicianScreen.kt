@@ -19,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -108,16 +107,8 @@ private fun AssignmentBody(model: AssignMusicianUiModel.Content) {
             if (model.submitEnabled) model.events(AssignMusicianUiModel.Content.Event.Submit)
         }),
         supportingText = model.validationMessage?.let { message -> ({ Text(message) }) },
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = BluesJamTheme.colors.text,
-            unfocusedTextColor = BluesJamTheme.colors.text,
-            focusedBorderColor = BluesJamTheme.colors.border,
-            focusedLabelColor = BluesJamTheme.colors.text,
-            cursorColor = BluesJamTheme.colors.text,
-            errorBorderColor = BluesJamTheme.colors.error,
-            errorLabelColor = BluesJamTheme.colors.error,
-            errorSupportingTextColor = BluesJamTheme.colors.error,
-        ),
+        shape = BluesJamTheme.shapes.md,
+        colors = AssignMusicianDefaults.field().textFieldColors(),
         modifier = Modifier.fillMaxWidth(),
     )
     SuggestionSection(model.currentSection)
@@ -125,6 +116,7 @@ private fun AssignmentBody(model: AssignMusicianUiModel.Content) {
     Button(
         onClick = { model.events(AssignMusicianUiModel.Content.Event.Submit) },
         enabled = model.submitEnabled,
+        shape = BluesJamTheme.shapes.md,
         colors = ButtonDefaults.buttonColors(
             containerColor = BluesJamTheme.colors.surfaceRaised,
             contentColor = BluesJamTheme.colors.text,
