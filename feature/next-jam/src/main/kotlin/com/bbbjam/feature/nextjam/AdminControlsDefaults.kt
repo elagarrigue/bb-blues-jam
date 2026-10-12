@@ -62,6 +62,27 @@ internal object AdminControlsDefaults {
         status = colors.textMuted,
     )
 
+    /**
+     * The removal confirmation dialog (`admin-row-icon-actions`, 12 October 2026 amendment):
+     * `surfaceRaised` container, title and body in `text`, the detail lines `textMuted`, "OK" in
+     * `error` (a destructive action, never amber) and "Cancelar" in `text`.
+     */
+    data class RemovalDialogStyle(
+        val container: Color,
+        val title: Color,
+        val details: Color,
+        val confirm: Color,
+        val cancel: Color,
+    )
+
+    fun removalDialog(colors: BluesJamColors = BluesJamColors): RemovalDialogStyle = RemovalDialogStyle(
+        container = colors.surfaceRaised,
+        title = colors.text,
+        details = colors.textMuted,
+        confirm = colors.error,
+        cancel = colors.text,
+    )
+
     data class KeyChangeStyle(val action: Color, val status: Color)
 
     /**

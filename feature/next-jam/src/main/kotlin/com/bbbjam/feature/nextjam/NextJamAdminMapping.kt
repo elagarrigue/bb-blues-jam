@@ -162,7 +162,7 @@ private fun RowAdmin.removalModel(song: JamSong): RemovalUiModel {
         removal.confirming == key -> RemovalUiModel.Confirming(
             prompt = NextJamCopy.removePrompt(song.title),
             details = removalDetails(song),
-            confirmLabel = NextJamCopy.CONFIRM_REMOVE,
+            confirmLabel = NextJamCopy.OK,
             cancelLabel = NextJamCopy.CANCEL,
             events = handler("confirming"),
         )

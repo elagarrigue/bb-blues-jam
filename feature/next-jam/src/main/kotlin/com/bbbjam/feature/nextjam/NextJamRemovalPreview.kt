@@ -22,7 +22,7 @@ private fun NextJamRemovalPreview() {
     val confirming = RemovalUiModel.Confirming(
         prompt = NextJamCopy.removePrompt("Hoochie Coochie Man"),
         details = listOf(NextJamCopy.assignedMusicians(2), NextJamCopy.PUBLISHED_REMOVE_NOTE),
-        confirmLabel = NextJamCopy.CONFIRM_REMOVE,
+        confirmLabel = NextJamCopy.OK,
         cancelLabel = NextJamCopy.CANCEL,
         events = EventHandler {},
     )

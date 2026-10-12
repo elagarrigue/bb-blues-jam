@@ -79,10 +79,13 @@ internal object NextJamCopy {
 
     /**
      * Removing a song, approved on 6 October 2026 (`docs/specs/admin-remove-song-from-setlist.md`,
-     * U1 and the copy table).
+     * U1 and the copy table). Since the 12 October 2026 amendment (`admin-row-icon-actions`), the
+     * confirmation is a modal dialog with [OK] instead of [CONFIRM_REMOVE]'s "Quitar"; the constant
+     * is kept for any remaining non-dialog reader of the removal copy table.
      */
     const val REMOVE = "Quitar de la lista"
     const val CONFIRM_REMOVE = "Quitar"
+    const val OK = "OK"
     const val CANCEL = "Cancelar"
     const val REMOVING = "Quitando…"
     const val PUBLISHED_REMOVE_NOTE = "La lista está publicada: los músicos van a dejar de verlo."

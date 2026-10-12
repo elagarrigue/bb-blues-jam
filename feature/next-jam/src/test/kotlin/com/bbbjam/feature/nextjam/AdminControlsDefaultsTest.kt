@@ -32,11 +32,14 @@ class AdminControlsDefaultsTest {
         val failure = AdminControlsDefaults.failureCard()
         val draft = AdminControlsDefaults.draft()
         val removal = AdminControlsDefaults.removal()
+        val removalDialog = AdminControlsDefaults.removalDialog()
         val keyChange = AdminControlsDefaults.keyChange()
         val status = AdminControlsDefaults.status()
         listOf(
             keyChange.action, keyChange.status,
             removal.action, removal.prompt, removal.details, removal.confirm, removal.cancel, removal.status,
+            removalDialog.container, removalDialog.title, removalDialog.details,
+            removalDialog.confirm, removalDialog.cancel,
             add.container, add.content, pending.container, pending.content,
             failure.container, failure.title, failure.message, failure.action,
             draft.badgeFill, draft.badgeText, draft.note,
@@ -65,6 +68,18 @@ class AdminControlsDefaultsTest {
                 status = colors.textMuted,
             ),
             AdminControlsDefaults.removal(),
+        )
+        // The removal confirmation dialog (`admin-row-icon-actions`, 12 October 2026 amendment):
+        // "OK" in error, "Cancelar" in text, never amber.
+        assertEquals(
+            AdminControlsDefaults.RemovalDialogStyle(
+                container = colors.surfaceRaised,
+                title = colors.text,
+                details = colors.textMuted,
+                confirm = colors.error,
+                cancel = colors.text,
+            ),
+            AdminControlsDefaults.removalDialog(),
         )
         // Setting a key: a quiet text action and a muted status line (`admin-set-key`).
         assertEquals(

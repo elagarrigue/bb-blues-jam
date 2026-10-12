@@ -1,40 +1,28 @@
 package com.bbbjam.feature.nextjam
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextDecoration
-import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.core.ui.action.IconRowAction
+import com.bbbjam.core.ui.action.IconRowActionIcon
 
-/** "Subir" or "Bajar": a 48dp underlined text action; a disabled edge stays drawn, muted. */
+/**
+ * "Subir"/"Bajar" as an up/down arrow icon button (`admin-row-icon-actions`): a disabled edge stays
+ * drawn, muted, with no click. [model.clickLabel] ("subir un lugar"/"bajar un lugar") is the icon's
+ * only accessible string; [model.label] ("Subir"/"Bajar") stays in the `UiModel` for any test or
+ * copy that still names the action, unused by this composable. [icon] is chosen by the caller
+ * ([IconRowActionIcon.MoveUp]/[IconRowActionIcon.MoveDown]), since the direction is not part of the
+ * `UiModel`.
+ */
 @Composable
-internal fun MoveAction(model: MoveActionUiModel, modifier: Modifier, onClick: () -> Unit) {
-    val spacing = BluesJamTheme.spacing
+internal fun MoveAction(model: MoveActionUiModel, icon: IconRowActionIcon, modifier: Modifier, onClick: () -> Unit) {
     val style = AdminControlsDefaults.move()
-    Box(
-        modifier = modifier
-            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .clickable(
-                enabled = model.enabled,
-                onClickLabel = model.clickLabel,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Text(
-            text = model.label,
-            style = BluesJamTheme.typography.body,
-            color = if (model.enabled) style.action else style.disabled,
-            textDecoration = if (model.enabled || style.underlineDisabled) TextDecoration.Underline else null,
-        )
-    }
+    IconRowAction(
+        icon = icon,
+        contentDescription = model.clickLabel,
+        tint = style.action,
+        mutedTint = style.disabled,
+        modifier = modifier,
+        enabled = model.enabled,
+        onClick = onClick,
+    )
 }

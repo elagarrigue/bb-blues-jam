@@ -215,12 +215,15 @@ always collapsed (`song-detail-replaces-row-expansion`, 11 October 2026).
   the strip) is one button node at least 56dp tall; its action is "ver el detalle del tema" (TalkBack:
   "Presioná dos veces para ver el detalle del tema"), with no state description. It still reads the
   position, title, key description and the strip's chips.
-- **Admin compact bar** (P3): under the header, outside its click, one row of three 48dp
-  underlined `body` text actions, each a third of the width and inset `spacing.md`: `Subir`, `Bajar`
-  (the edge one disabled, muted, not underlined) and `Quitar de la lista` (`error`). Tapping the bar
-  never opens the detail. While the removal confirms, the inline confirmation replaces the bar (the
-  row grows downwards); while it is sent, `Quitando…` does. The `Posición x de n` line is no longer
-  drawn (the position label is in the header). Song-level admin controls live in the song detail.
+- **Admin compact bar** (P3; icons as of `admin-row-icon-actions`, 12 October 2026, overriding the
+  text-action rule below): under the header, outside its click, one row with an up-arrow and a
+  down-arrow 48dp icon button grouped at the start (`KeyboardArrowUp`/`Down`, content descriptions
+  "subir un lugar"/"bajar un lugar", the edge one disabled, muted, no click but still drawn and
+  announced disabled), a flexible gap, then a trash icon button (`Delete`, `error`, content
+  description "Quitar de la lista") at the end. Tapping the bar never opens the detail. Tapping the
+  trash icon opens a modal confirmation dialog over the bar (see "Removing a song"); while the
+  removal is sent, `Quitando…` replaces the bar. The `Posición x de n` line is no longer drawn (the
+  position label is in the header). Song-level admin controls live in the song detail.
 
 ### Instrument strip
 
@@ -405,21 +408,26 @@ through `AdminControlsDefaults`, **no amber**:
   skeleton `Cargando el catálogo`, error `No pudimos cargar el catálogo`, empty `El catálogo está
   vacío` / `Cargá temas en la pestaña Catalogo de la planilla.`, and `Ningún tema coincide con «…».`
   A pick closes the picker at once; the song shows on Próxima jam as a pending row.
-- **Removing a song** (`admin-remove-song-from-setlist`, U1 approved by the user, 6 October 2026):
-  admin only, last in the row's compact bar under its header (`song-detail-replaces-row-expansion`;
-  it used to end an expanded row's panel). Colours in
-  `AdminControlsDefaults.removal()`, **no amber**. Idle: `Quitar de la lista`, a full-width, 48dp,
-  underlined `body` text action in `error` (10.12:1 on `surface`, `ContrastTest`), `Role.Button`.
-  Tapping it changes nothing anywhere; it draws the inline confirmation in its place: the prompt
-  `¿Quitar «Crossroads» de la lista?` (`body`, `text`), then, each only when it applies, `Se borra
-  también el músico anotado.` / `Se borran también los n músicos anotados.` (filled slots plus
-  extras) and `La lista está publicada: los músicos van a dejar de verlo.` (`caption`, `textMuted`),
-  read politely as one node; then two 48dp underlined actions side by side, `Quitar` (`error`) and
-  `Cancelar` (`text`). No dialog, no swipe, no undo, no trash icon (the export's red icon became a
-  labelled text action). While sending, `Quitando…` (`body`, `textMuted`, a polite live region)
-  replaces the controls; the row disappears only when the server confirms. A failure draws the row
-  as before plus a card after the rows, `No se pudo quitar «…»` with the reason and `Cerrar`, as the
-  add-song cards.
+- **Removing a song** (`admin-remove-song-from-setlist`, U1 approved by the user, 6 October 2026;
+  **icon trigger and modal confirmation as of `admin-row-icon-actions`, 12 October 2026 — both
+  reverse earlier lines in this entry, kept below for history**): admin only, last in the row's
+  compact bar under its header (`song-detail-replaces-row-expansion`; it used to end an expanded
+  row's panel). Colours in `AdminControlsDefaults.removal()`/`removalDialog()`, **no amber**. Idle:
+  a trash icon button, content description `Quitar de la lista` (`error`, `IconRowActionIcon.Delete`,
+  48dp, `Role.Button`) — no longer the "labelled text action" the 6 October entry described; the
+  user asked for a trash icon instead, and font-scale wrapping of the text action was the reason
+  (`song-detail-replaces-row-expansion`'s open follow-up). Tapping it changes nothing anywhere; the
+  bar stays drawn and a Material 3 `AlertDialog` opens over it (`surfaceRaised` container, `text`
+  title, `textMuted` details, never amber) — **not** the inline block the 6 October entry specified:
+  the user asked for "un pop up con ok cancelar" on 12 October 2026. Title: the prompt `¿Quitar
+  «Crossroads» de la lista?` (`text`). Body, only when it applies: `Se borra también el músico
+  anotado.` / `Se borran también los n músicos anotados.` (filled slots plus extras) and `La lista
+  está publicada: los músicos van a dejar de verlo.` (`textMuted`). Buttons: `OK` (`error`, calls
+  the same confirm handler) and `Cancelar` (`text`, dismisses); back or a tap outside the dialog
+  equals `Cancelar` (`AlertDialog.onDismissRequest`). Still no swipe and no undo. While sending,
+  `Quitando…` (`body`, `textMuted`, a polite live region) replaces the bar; the row disappears only
+  when the server confirms. A failure draws the row as before plus a card after the rows, `No se
+  pudo quitar «…»` with the reason and `Cerrar`, as the add-song cards.
 - **Setting a key** (`admin-set-key`, V1, O1 and C2 approved by the user, 6 October 2026): admin
   only, on the song detail under the key (`song-detail-replaces-row-expansion`; it used to be in an
   expanded row): `Cambiar tonalidad`, a full-width, 48dp, underlined `body` text action in
@@ -472,9 +480,12 @@ through `AdminControlsDefaults`, **no amber**:
   Sending counts update the strip, panel and filters at once for the admin only. One muted
   `Guardando…` line covers key and lineup together; failure reverts and leaves a persistent card.
 - **Reordering songs** (`admin-reorder-songs`): `Subir`/`Bajar` are the first two actions of each
-  admin row's compact bar, before `Quitar de la lista` (`song-detail-replaces-row-expansion`; the
-  `Posición x de n` line is no longer drawn). 48dp each; the edge action is disabled with muted text,
-  no underline and disabled semantics.
+  admin row's compact bar, grouped at its start before the trash icon at the end
+  (`song-detail-replaces-row-expansion`; icon buttons as of `admin-row-icon-actions`, 12 October
+  2026; the `Posición x de n` line is no longer drawn). 48dp each, up/down arrow icons with content
+  descriptions "subir un lugar"/"bajar un lugar" (unchanged wording from the earlier text action);
+  the edge action is disabled with a muted icon tint, no click, and disabled semantics — still
+  drawn, never hidden.
   The admin row moves optimistically with a polite `Guardando…` status and remains under the
   thumb. Failure restores the confirmed position and adds a dismissible card. Musicians see the
   confirmed order only. Colors use neutral admin action tokens, not amber.
@@ -484,9 +495,9 @@ through `AdminControlsDefaults`, **no amber**:
 
 1. **Próxima jam, musician view** — the most important screen in the app
 2. **Próxima jam, admin view** — same screen plus controls: the draft's songs, the status block,
-   pending adds, failure cards, `Agregar tema` and each row's compact bar (`Subir`, `Bajar`,
-   `Quitar de la lista` with its inline confirmation); a row tap opens the song detail, where the
-   song-level controls are (**Admin controls**)
+   pending adds, failure cards, `Agregar tema` and each row's compact bar (up/down arrow icon
+   buttons, a trash icon button for `Quitar de la lista` with its modal confirmation dialog); a row
+   tap opens the song detail, where the song-level controls are (**Admin controls**)
 3. **Song detail** — key displayed very large as the main element, and the full lineup panel (open
    slots first, then filled, then `OTROS`); for the admin, `Cambiar tonalidad`, the slot actions,
    `Cambiar formación` and `Agregar a Otros`. No tags, tempo, difficulty or tab button for now (D-20)

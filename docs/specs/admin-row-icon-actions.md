@@ -433,6 +433,37 @@ the DESIGN.md conflict; this spec implements it rather than reopening it. If the
 that `Confirming`'s `Quitar`/`Cancelar` should also become icons for visual consistency, that is a
 new question outside this spec's scope (see Non-Goals) and should be raised, not decided silently.
 
+## Amendment, 12 October 2026: removal confirmation as a dialog
+
+User instruction, given while this slice was being implemented: "la confirmación «quitar» debería
+ser un pop up con ok cancelar". This overrides the "inline confirmation (no dialog)" wording in this
+spec and in DESIGN.md's removal section, and puts the Confirming step back in scope.
+
+- **Trigger and state:** unchanged. The trash icon emits the same event; `RemovalUiModel.Confirming`
+  (prompt, details, confirm/cancel handlers) keeps its shape. While a row is `Confirming`, the bar
+  stays drawn and the screen shows a modal dialog built from that model instead of the inline
+  block. No new presenter state; nothing is written until OK.
+- **Dialog:** a Material 3 `AlertDialog` with every colour set explicitly from `BluesJamTheme`
+  tokens (container `surfaceRaised`, title/body `text`, details `textMuted`; never amber, D-17),
+  colours in `AdminControlsDefaults` (e.g. `removalDialog()`). Title: the existing prompt
+  `¿Quitar «{título}» de la lista?`. Body: the existing details lines, only when they apply.
+  Buttons: `OK` (confirm, `error`) and `Cancelar` (dismiss, `text`), each at least 48dp. Back, or a
+  tap outside, equals `Cancelar`. `OK` calls the same confirm handler, which calls
+  `SetlistRepository.removeSong` (D-13).
+- **Copy:** add `NextJamCopy` constants for `OK` and reuse `Cancelar`; both are as the user wrote them.
+- **Sending and failure:** unchanged. `Quitando…` replaces the bar inline in the row while sending;
+  the failure card is unchanged. The dialog closes as soon as OK or Cancelar is tapped.
+- **Tests:** presenter tests for confirm → `removeSong` call and cancel → no call keep passing; add a
+  defaults test for the dialog colour roles (neutral or `error`, never amber).
+- **Docs:** DESIGN.md's removal section records the dialog (dated, user decision), replacing "No
+  dialog"; the bitácora note mentions both changes.
+- **Device:** a screenshot of the open dialog at font scale 1.0 and 2.0; tap only `Cancelar` and the
+  system back, never `OK`.
+
+The Validator Checklist line "still opens the existing inline confirmation (no dialog…)" now reads:
+the trash icon opens the confirmation dialog; `OK` calls `removeSong`, `Cancelar`/back/outside call
+nothing.
+
 ## Validator Checklist
 
 - [ ] `Subir`/`Bajar` render as up/down arrow icon buttons (`Icons.Filled.KeyboardArrowUp`/`Down`)
@@ -440,7 +471,7 @@ new question outside this spec's scope (see Non-Goals) and should be raised, not
 - [ ] Each icon button's content description is unchanged wording ("subir un lugar", "bajar un
       lugar", "Quitar de la lista"); the first row's up and last row's down are disabled, drawn
       muted (not hidden), and report disabled to accessibility.
-- [ ] The trash icon still opens the existing inline confirmation (no dialog, no swipe, no undo)
+- [ ] The trash icon opens the confirmation dialog (see the 12 October amendment; no swipe, no undo)
       and `Confirm` still calls `SetlistRepository.removeSong`; arrows still call
       `SetlistRepository.moveSong` (D-13 — no new or bypassed repository function).
 - [ ] The new icon-button component lives in `:core:ui` (not duplicated per feature);

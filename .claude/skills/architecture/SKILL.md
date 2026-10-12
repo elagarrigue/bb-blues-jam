@@ -312,6 +312,29 @@ onAddSong, onOpenSong)`. `:app` binds the detail's `onSetKey`/`onAssignSlot` to 
 routes; the pickers pop by route back onto the detail. Konsist: the dead `"feature/song-detail"`
 `AMBER_ROLE_ALLOWLIST` entry was removed (user-approved; 17 rules, no logic change).
 
+As built by `admin-row-icon-actions` (user decisions of 12 October 2026: icon buttons, then, mid-
+slice, a modal confirmation): **`:core:ui` gained a shared icon-button component**,
+`com.bbbjam.core.ui.action.IconRowAction` (modeled on `BackButton`: `LocalMinimumInteractiveComponentSize`,
+`clickable`, one `Icon`, enabled/disabled branches, never amber) plus `IconRowActionIcon`
+(`MoveUp`/`MoveDown`/`Delete`, each wrapping one `material-icons-core` `ImageVector`) in its own
+file so a feature names a value instead of importing `androidx.compose.material.icons.*` itself
+(D-03: the dependency stays `implementation` in `:core:ui` only). In `:feature:next-jam`,
+`MoveAction` (`MoveControls.kt`) and `AdminRowBar`'s idle/confirming branches
+(`AdminControls.kt`) now draw `IconRowAction` instead of `RowTextAction`/`Text`: `Subir`/`Bajar`
+became up/down arrow icon buttons (content description = the existing click label, "subir un
+lugar"/"bajar un lugar") and `Quitar de la lista` became a trash icon button, grouped with the
+arrows at the start and a flexible gap before it at the end. No `UiModel` shape changed
+(`MoveActionUiModel`, `RemovalUiModel`) except `RemovalUiModel.Confirming.confirmLabel`, which
+reads `NextJamCopy.OK` ("OK") instead of `CONFIRM_REMOVE` ("Quitar") for the amendment below.
+**Mid-slice amendment:** the removal confirmation (`RemovalUiModel.Confirming`) is now drawn by a
+Material 3 `AlertDialog` (`RemovalConfirmationDialog`) over the still-visible bar, instead of the
+inline block `admin-remove-song-from-setlist` defined; `AdminControlsDefaults.removalDialog()`
+supplies every color (`surfaceRaised`/`text`/`textMuted`/`error`, never amber). `RemovalUiModel`'s
+shape, the confirm/cancel event handlers and the repository calls they trigger
+(`SetlistRepository.removeSong`) are unchanged (D-13); only which composable renders `Confirming`
+changed. `RemovalControl`'s old `Idle`/`Confirming` text-rendering arms are gone (the `Idle` arm was
+already dead code before this slice, confirmed by grep).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

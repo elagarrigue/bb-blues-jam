@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +34,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import com.bbbjam.core.ui.action.IconRowAction
+import com.bbbjam.core.ui.action.IconRowActionIcon
 import com.bbbjam.core.ui.strip.fullName
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
@@ -133,11 +137,13 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
 }
 
 /**
- * The admin's compact bar under a row's header (`song-detail-replaces-row-expansion`, P3): "Subir",
- * "Bajar" and "Quitar de la lista" in one row of 48dp underlined text actions, each a third of the
- * width. While the removal confirms, its inline confirmation replaces the bar; while it is sent,
- * "Quitando…" does (the move actions are already gone). Song-level actions live in the song detail;
- * a later list-level action goes in this bar, before the removal, which stays last.
+ * The admin's compact bar under a row's header (`song-detail-replaces-row-expansion`, P3;
+ * `admin-row-icon-actions`): an up-arrow and down-arrow icon button grouped at the start, a
+ * flexible gap, then a trash icon button for "Quitar de la lista" at the end — icons are small and
+ * fixed-size, so the earlier even thirds left large empty padding per button. While the removal is
+ * sent, "Quitando…" replaces the bar (the move actions are already gone). While it confirms
+ * (12 October 2026 amendment), the bar stays drawn as-is and [RemovalConfirmationDialog] opens on
+ * top of it instead of an inline block; the trash icon keeps its idle appearance underneath.
  */
 @Composable
 internal fun AdminRowBar(
@@ -146,18 +152,32 @@ internal fun AdminRowBar(
     onMoveAction: (String, MoveActionUiModel) -> Unit,
 ) {
     val removal = model.removal
-    if (removal is RemovalUiModel.Idle) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            model.move?.let { move ->
-                MoveAction(move.up, Modifier.weight(1f)) { onMoveAction(rowKey, move.up) }
-                MoveAction(move.down, Modifier.weight(1f)) { onMoveAction(rowKey, move.down) }
-            }
-            RowTextAction(removal.label, AdminControlsDefaults.removal().action, Modifier.weight(1f)) {
-                removal.events(RemovalUiModel.Event.RequestRemove)
-            }
-        }
-    } else {
+    if (removal is RemovalUiModel.Removing) {
         RemovalControl(removal)
+        return
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = BluesJamTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        model.move?.let { move ->
+            MoveAction(move.up, IconRowActionIcon.MoveUp, Modifier) { onMoveAction(rowKey, move.up) }
+            MoveAction(move.down, IconRowActionIcon.MoveDown, Modifier) { onMoveAction(rowKey, move.down) }
+        }
+        Box(modifier = Modifier.weight(1f))
+        IconRowAction(
+            icon = IconRowActionIcon.Delete,
+            contentDescription = NextJamCopy.REMOVE,
+            tint = AdminControlsDefaults.removal().action,
+            mutedTint = AdminControlsDefaults.move().disabled,
+        ) {
+            if (removal is RemovalUiModel.Idle) removal.events(RemovalUiModel.Event.RequestRemove)
+        }
+    }
+    if (removal is RemovalUiModel.Confirming) {
+        RemovalConfirmationDialog(removal)
     }
 }
 
@@ -176,51 +196,66 @@ internal fun SaveStatusLine(status: String) {
 }
 
 /**
- * Removing the song (U1): the action, the inline confirmation (prompt, details, "Quitar" and
- * "Cancelar"), or "Quitando…", read politely. Colours from [AdminControlsDefaults.removal]; no amber.
+ * "Quitando…" while the removal is sent, replacing the bar; no control, read politely. The idle
+ * and confirming steps are drawn by [AdminRowBar] and [RemovalConfirmationDialog] instead (the
+ * `song-detail-replaces-row-expansion` text-only rendering of those two steps is no longer reached,
+ * per the `admin-row-icon-actions` I4 decision).
  */
 @Composable
-private fun RemovalControl(model: RemovalUiModel) {
+private fun RemovalControl(model: RemovalUiModel.Removing) {
     val spacing = BluesJamTheme.spacing
     val style = AdminControlsDefaults.removal()
-    when (model) {
-        is RemovalUiModel.Idle -> RowTextAction(model.label, style.action) {
-            model.events(RemovalUiModel.Event.RequestRemove)
-        }
-
-        is RemovalUiModel.Confirming -> Column(modifier = Modifier.padding(top = spacing.xs)) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = spacing.md)
-                    .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-                verticalArrangement = Arrangement.spacedBy(spacing.xs),
-            ) {
-                Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.prompt)
-                model.details.forEach { line ->
-                    Text(text = line, style = BluesJamTheme.typography.caption, color = style.details)
-                }
-            }
-            Row(modifier = Modifier.fillMaxWidth()) {
-                RowTextAction(model.confirmLabel, style.confirm, Modifier.weight(1f)) {
-                    model.events(RemovalUiModel.Event.Confirm)
-                }
-                RowTextAction(model.cancelLabel, style.cancel, Modifier.weight(1f)) {
-                    model.events(RemovalUiModel.Event.Cancel)
-                }
-            }
-        }
-
-        is RemovalUiModel.Removing -> Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                .semantics { liveRegion = LiveRegionMode.Polite }
-                .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Text(text = model.status, style = BluesJamTheme.typography.body, color = style.status)
-        }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .semantics { liveRegion = LiveRegionMode.Polite }
+            .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(text = model.status, style = BluesJamTheme.typography.body, color = style.status)
     }
+}
+
+/**
+ * The removal confirmation (12 October 2026 amendment): a Material 3 [AlertDialog] over the row's
+ * bar, every colour set explicitly from [AdminControlsDefaults.removalDialog] (`surfaceRaised`
+ * container, `text` title, `textMuted` details, `error` "OK", `text` "Cancelar"; never amber,
+ * D-17). Title is the existing prompt; body is the existing detail lines, only when they apply.
+ * Back or a tap outside dismisses exactly as "Cancelar" does — [AlertDialog]'s own
+ * `onDismissRequest`. "OK" calls the same confirm handler, which calls
+ * `SetlistRepository.removeSong` (D-13); nothing is written by "Cancelar", back or outside.
+ */
+@Composable
+private fun RemovalConfirmationDialog(model: RemovalUiModel.Confirming) {
+    val spacing = BluesJamTheme.spacing
+    val style = AdminControlsDefaults.removalDialog()
+    AlertDialog(
+        onDismissRequest = { model.events(RemovalUiModel.Event.Cancel) },
+        containerColor = style.container,
+        title = { Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.title) },
+        text = if (model.details.isEmpty()) {
+            null
+        } else {
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
+                    model.details.forEach { line ->
+                        Text(text = line, style = BluesJamTheme.typography.caption, color = style.details)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { model.events(RemovalUiModel.Event.Confirm) }) {
+                Text(text = model.confirmLabel, color = style.confirm)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { model.events(RemovalUiModel.Event.Cancel) }) {
+                Text(text = model.cancelLabel, color = style.cancel)
+            }
+        },
+    )
 }
 
 /**

@@ -1,5 +1,42 @@
 # Progress Log
 
+## 12 October 2026 - admin-row-icon-actions accepted
+
+Implemented per `docs/specs/admin-row-icon-actions.md` (T0-T8) plus its same-day amendment (removal
+confirmation as a modal dialog, appended to the spec by the orchestrator mid-slice). `Subir`/`Bajar`
+on the admin row bar are now up/down arrow icon buttons and `Quitar de la lista` a trash icon
+button, grouped with the arrows at the start and the trash at the end of the row, all through a new
+shared `:core:ui` component (`com.bbbjam.core.ui.action.IconRowAction` + `IconRowActionIcon` enum,
+modeled on `BackButton`); no feature imports `androidx.compose.material.icons.*` directly, confirmed
+by grep. `MoveActionUiModel`/`RemovalUiModel`/`SongRowAdminUiModel` shapes are unchanged except
+`Confirming.confirmLabel` now reads `NextJamCopy.OK` ("OK") for the dialog. The removal confirmation
+(`RemovalUiModel.Confirming`) is now drawn by a Material 3 `AlertDialog`
+(`RemovalConfirmationDialog`) over the still-visible bar instead of the old inline block; `OK` and
+`Cancelar`/back/outside still call the same handlers, which still call
+`SetlistRepository.removeSong` (D-13 unchanged). Colours come from new
+`AdminControlsDefaults.removalDialog()` (`surfaceRaised`/`text`/`textMuted`/`error`, never amber).
+
+Bug found and fixed during device verification: the first `IconRowAction` draft set the icon's
+`contentDescription` on the inner `Icon`, which created a semantics node separate from the outer
+clickable `Box` carrying the disabled state, so `uiautomator` reported every move icon as
+`enabled=true` even when visually muted and actually non-interactive. Fixed by moving the
+`contentDescription` onto the clickable `Box` itself (matching `RowTextAction`'s existing pattern),
+confirmed by uiautomator dumps before and after.
+
+Verification: baseline 660 tests/106 classes; final `CI=true ./init.sh` exit 0 with `konsist`,
+`detekt`, `ktlint` all `wired`, 660 tests in 106 classes, 0 failures (new assertions added to
+existing test methods, not new classes). Lint `:core:ui`/`:feature:next-jam`: no issues. `git diff
+--check` clean. Device (Pixel 5, `local.properties` backed up and restored byte-for-byte, demo jam
+confirmed `(demo)` in logcat before every check, `demoUpcomingJamLive=true` needed in addition to
+`demoUpcomingJam=true` because the Sheet already has a real upcoming jam): screenshots and
+`uiautomator` dumps at font scale 1.0 and 2.0 confirm correct content descriptions, disabled state
+on the edge rows, the dialog opening/closing via `Cancelar` and system back (never `OK`), and no
+wrapping/overlap at 2.0 (the follow-up this slice resolves). `Subir`, `Bajar` and the dialog's `OK`
+were never tapped. Evidence in `docs/evidence/admin-row-icon-actions/`. `DESIGN.md`,
+`bb-blues-jam-bitacora.md` (6.20) and the architecture skill updated to record both the icon swap
+and the dialog amendment as dated reversals of earlier decisions, not silent contradictions. Status
+Independent validator accepted on 12 October 2026 after rerunning the gate (660 tests, 0 failures) and checking the uiautomator bounds and screenshots.
+
 ## 11 October 2026 - song-detail-replaces-row-expansion accepted
 
 Próxima jam rows no longer expand (`docs/specs/song-detail-replaces-row-expansion.md`, T0-T9; user decisions: merge the module, list-level actions stay on the list, D-07 kept, H1 = P1, Konsist allowlist entry removal approved). `:feature:song-detail` merged into `:feature:next-jam` and deleted (settings, `:app` dependency, `songDetailModule`). A row header is one button ("ver el detalle del tema") that opens the detail by song id (route `song/{jamDate}/{songId}/{position}`, `findSong`: unique id wins, position only for repeated ids); admin rows keep a compact bar (`Subir`, `Bajar`, `Quitar de la lista`, confirmation/`Quitando…` replace it; the `Posición x de n` line is gone). The detail holds everything the expanded row had: the same open-first `LineupPanel` for musicians and admin (P1; `InstrumentGroups` deleted), and for the admin `Cambiar tonalidad`, `Anotar`, `Liberar`, extra `Quitar`, `Cambiar formación`, `Agregar a Otros`, `Guardando…` and its own failure cards. `SongOverlays` is the one overlay rule list and detail share; `SongDetailPresenter(JamsRepository, AdminSession, SetlistRepository)` stays `Loading` until the flag and the jams are read. No new mutation (D-13). `ExpandedRows`, `ExpandIndicator`, `AdminRowActions` deleted. Docs: architecture skill (+ presenter-pattern note), DESIGN.md, design prompt (enmiendas), bitácora (D-07 amendment, 6.19), risks, domain model, access model, design README.
@@ -42,10 +79,10 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 44 entries): 43 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 45 entries): 44 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
-  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `song-detail-replaces-row-expansion` entry at the top of this file.
+  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions` accepted 12 October 2026. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `admin-row-icon-actions` entry at the top of this file.
 - Code layout: seven Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
   `:feature:info`, `:feature:next-jam`, `:feature:past-jams`; the song detail lives in
   `:feature:next-jam` since `song-detail-replaces-row-expansion`), plus

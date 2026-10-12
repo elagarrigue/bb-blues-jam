@@ -129,7 +129,7 @@ class NextJamRemoveTest {
         )
         val confirming = draft.removal("Crossroads") as RemovalUiModel.Confirming
         assertEquals(emptyList<String>(), confirming.details)
-        assertEquals("Quitar", confirming.confirmLabel)
+        assertEquals("OK", confirming.confirmLabel)
         assertEquals("Cancelar", confirming.cancelLabel)
     }
 

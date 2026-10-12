@@ -1211,6 +1211,30 @@ una sola función compartida por la lista y el detalle, así que los dos muestra
 guarda y los dos vuelven atrás si falla. Ninguna escritura nueva: todo usa las funciones del
 repositorio que ya existían (D-13).
 
+### 6.20 Sesión del 12 de octubre — íconos en la barra y confirmación en un diálogo
+
+**Por qué.** El organizador pidió reemplazar Subir/Bajar por flechas y Quitar de la lista por un
+tacho de basura, resolviendo además el problema abierto de que "Quitar de la lista" se cortaba en
+varias líneas a tamaños de fuente grandes dentro de la barra compacta. Esto revierte una línea de
+`DESIGN.md` (`admin-remove-song-from-setlist`) que decía explícitamente "no trash icon (the
+export's red icon became a labelled text action)": la decisión queda anotada como revertida, no
+borrada, para que el documento siga siendo una historia honesta.
+
+**Mientras se implementaba la rebanada**, el organizador pidió además que la confirmación de
+"Quitar" fuera un pop-up con "ok" y "cancelar" en lugar del bloque en línea que
+`admin-remove-song-from-setlist` (U1, 6 de octubre) había definido. Esto revierte la otra mitad de
+esa misma línea de `DESIGN.md` ("No dialog..."). El estado `RemovalUiModel.Confirming` no cambia de
+forma; solo cambia qué composable lo dibuja: un `AlertDialog` de Material 3 con todos los colores
+explícitos de `BluesJamTheme` (nunca ámbar, D-17), `OK` llamando al mismo manejador de confirmación
+que ya llamaba a `SetlistRepository.removeSong` (D-13), y `Cancelar`/volver atrás/tocar afuera
+llamando al mismo manejador de cancelación, sin escribir nada.
+
+**Qué no cambió.** Ninguna mutación nueva ni atajo: las flechas siguen llamando a
+`SetlistRepository.moveSong` y el tacho a `SetlistRepository.removeSong`, igual que antes (D-13).
+El componente de ícono (`IconRowAction`, con su enum `IconRowActionIcon` para no filtrar
+`material-icons-core` fuera de `:core:ui`, D-03) vive en `:core:ui`, siguiendo el mismo patrón que
+`BackButton`.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
