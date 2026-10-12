@@ -1,4 +1,4 @@
-## 12 October 2026 - strip-extra-chip-filled passing (awaiting validation)
+## 12 October 2026 - strip-extra-chip-filled accepted
 
 The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no glyph, never amber); the panel line is unchanged and differs from the strip chip only by the check. Changed: `InstrumentStripDefaults`, KDoc in `LineupPanelDefaults` and `InstrumentChipUiModel`, three test files, DESIGN.md, architecture SKILL. `CI=true ./init.sh` exit 0 with konsist, detekt and ktlint wired. Device (Pixel 5, demo jam, no writes): before.png and after.png in `docs/evidence/strip-extra-chip-filled/`; the before shot shows row 06's extra, the after shot row 04 `+ saxo: Valeria` (scroll positions differ). Independent validator accepted on 12 October 2026 after rerunning the gate.
 
