@@ -1349,14 +1349,19 @@
     "depends_on": [
       "lineup-max-per-instrument"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "InstrumentStripDefaults.style(EXTRA) uses the filled-slot fill (slotFilled), never amber (D-17); the '+' prefix and the 'Otros: {instrumento}, {nombre}' description still mark it as an extra",
       "Extras are still never counted as slots, never in the filter, never in open-slot counts (D-18); mapper and filter unchanged",
       "InstrumentStripDefaultsTest and LineupPanelDefaultsTest are updated to the new look; ContrastTest still passes; DESIGN.md records the change",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; a Pixel 5 screenshot of a list row with an extra using the debug demo jam"
     ],
-    "evidence": [],
+    "evidence": [
+      "InstrumentStripDefaults.style(EXTRA).fill = slotFilled, textMuted, Glyph.NONE; unit tests updated (strip, panel, ContrastTest 7.22 via the extra style); InstrumentStrip draws style.fill with no Transparent special case",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired (ktlintFormat run first)",
+      "Pixel 5, debug demo jam (logcat: demo jams refresh), no writes: docs/evidence/strip-extra-chip-filled/before.png (row 06, extra with no fill) and after.png (row 04: + saxo: Valeria with the filled fill, no check, no amber, legible); local.properties restored byte-for-byte",
+      "Independent validator accepted on 12 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; InstrumentStripDefaultsTest 6, LineupPanelDefaultsTest 5, ContrastTest 17, 0 failures). It confirmed the slotFilled fill with textMuted and no glyph, no amber (D-17), styling-only diff with no mapper, filter or count change (D-18), no remaining 'no fill' claims, and the before/after screenshots."
+    ],
     "notes": "Requested by the user on 12 October 2026: 'en la lista de canciones, los tags otro deberían verse como otro chip, con el fondo igual que los instrumentos asignados'. Reverses the 'no fill' rule for the strip's extra chip that extras-dialog-and-lines kept on purpose."
   }
 ]

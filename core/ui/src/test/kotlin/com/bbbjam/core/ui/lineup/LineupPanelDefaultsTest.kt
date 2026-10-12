@@ -1,6 +1,5 @@
 package com.bbbjam.core.ui.lineup
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
@@ -46,9 +45,9 @@ class LineupPanelDefaultsTest {
     }
 
     @Test
-    fun `the strip's own extra chip keeps its no-fill look`() {
+    fun `the strip's own extra chip shares the filled fill but has no check`() {
         val style = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
-        assertEquals(Color.Transparent, style.fill)
+        assertEquals(colors.slotFilled, style.fill)
         assertEquals(Glyph.NONE, style.glyph)
     }
 

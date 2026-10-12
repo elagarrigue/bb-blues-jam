@@ -1,3 +1,7 @@
+## 12 October 2026 - strip-extra-chip-filled passing (awaiting validation)
+
+The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no glyph, never amber); the panel line is unchanged and differs from the strip chip only by the check. Changed: `InstrumentStripDefaults`, KDoc in `LineupPanelDefaults` and `InstrumentChipUiModel`, three test files, DESIGN.md, architecture SKILL. `CI=true ./init.sh` exit 0 with konsist, detekt and ktlint wired. Device (Pixel 5, demo jam, no writes): before.png and after.png in `docs/evidence/strip-extra-chip-filled/`; the before shot shows row 06's extra, the after shot row 04 `+ saxo: Valeria` (scroll positions differ). Independent validator accepted on 12 October 2026 after rerunning the gate.
+
 # Progress Log
 
 ## 12 October 2026 - lineup-max-per-instrument accepted (user's Part C redeploy owed)
@@ -113,10 +117,10 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 49 entries): 48 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 50 entries): 49 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
   accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions`, `admin-mode-highlight` and `lineup-grow-any-instrument` accepted 12 October 2026 (Sheet migration, redeploy and live check done the same day); `extras-dialog-and-lines` accepted 12 October 2026; `lineup-max-per-instrument` (Batería and Teclados stay at one, user decision) accepted 12 October 2026; it owes the user's Part C redeploy of `Post.gs` (until then the live script still accepts a second drums/keyboards slot and creates 18-slot tabs; the app never sends one). Live read-only GET on 12 October 2026: after the user widened the 2026-10-31 tab and renamed `Bajo`/`Voz`/`Armónica` to `… 1`, the still-deployed old script answers `missing_header` for that tab, so its setlist does not load until the new script is deployed (Part B of the migration guide). The user then deployed the new script; a second read-only GET the same day returned both jams with 13 songs each, 23-key slots, every new key '-' and matching legacy mirrors: the lineup-grow-any-instrument live check is done. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `lineup-max-per-instrument` entry at the top of this file.
+- Latest gate: see the `strip-extra-chip-filled` entry at the top of this file.
 - Code layout: seven Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
   `:feature:info`, `:feature:next-jam`, `:feature:past-jams`; the song detail lives in
   `:feature:next-jam` since `song-detail-replaces-row-expansion`), plus

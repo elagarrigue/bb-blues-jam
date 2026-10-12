@@ -21,8 +21,8 @@ internal object LineupPanelDefaults {
 
     /**
      * Fill, glyph and instrument text colour of a line: the strip chip's style, except an extra,
-     * which reads exactly like a filled slot here (`extras-dialog-and-lines`). The strip's own
-     * extra chip is unchanged.
+     * which reads exactly like a filled slot here (`extras-dialog-and-lines`). The strip's extra
+     * chip now shares that fill and those colours; only the glyph differs (the strip chip has no check).
      */
     fun style(kind: InstrumentChipKind, colors: BluesJamColors = BluesJamColors): InstrumentStripDefaults.ChipStyle =
         when (kind) {

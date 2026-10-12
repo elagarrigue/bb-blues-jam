@@ -1,6 +1,5 @@
 package com.bbbjam.core.ui.strip
 
-import androidx.compose.ui.graphics.Color
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults.Glyph
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals
@@ -9,7 +8,7 @@ import org.junit.Test
 
 /**
  * The style of each chip kind. Open and filled must differ in glyph (not only in colour), and an
- * extra must never borrow a slot's look: no amber, no `slotFilled`, no dot, no check.
+ * extra shares the filled fill but is never amber and has no dot or check.
  */
 class InstrumentStripDefaultsTest {
 
@@ -34,22 +33,31 @@ class InstrumentStripDefaultsTest {
     }
 
     @Test
-    fun `an extra has no fill, muted text and no slot glyph`() {
+    fun `an extra is muted text on slotFilled with no slot glyph`() {
         val style = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
-        assertEquals(Color.Transparent, style.fill)
+        assertEquals(colors.slotFilled, style.fill)
         assertEquals(colors.textMuted, style.textColor)
+        assertEquals(colors.textMuted, style.glyphColor)
         assertEquals(Glyph.NONE, style.glyph)
     }
 
     @Test
-    fun `an extra never uses amber or the slot fills`() {
+    fun `an extra is never amber`() {
         val style = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
         val amber = colors.slotOpen
         listOf(style.fill, style.textColor, style.glyphColor).forEach { color ->
             assertNotEquals(amber, color)
             assertNotEquals(amber.copy(alpha = InstrumentStripDefaults.OPEN_FILL_ALPHA), color)
-            assertNotEquals(colors.slotFilled, color)
         }
+    }
+
+    @Test
+    fun `an extra shares the filled fill but differs in glyph`() {
+        val extra = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
+        val filled = InstrumentStripDefaults.style(InstrumentChipKind.FILLED_SLOT)
+        assertEquals(filled.fill, extra.fill)
+        assertEquals(Glyph.NONE, extra.glyph)
+        assertEquals(Glyph.CHECK, filled.glyph)
     }
 
     @Test

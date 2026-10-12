@@ -265,9 +265,9 @@ rather than bare icons**. That is a better answer than the original icon-strip i
 - **Filled slot** — `textMuted` text at full alpha on a `slotFilled` fill, a `check` glyph, and the
   label `Gtr: Tincho` carrying the musician's name. Not Stitch's `on-surface-variant/60` text, which
   measures 4.36:1, below AA.
-- **Extra participant ("Otros")** — after all slot chips, in their `Otros` order: no fill,
-  `textMuted` text, never amber and never `slotFilled`, and a leading `+` instead of the dot or the
-  check, as part of the label `+ saxo: Juan` (the instrument as the admin typed it). It is never a
+- **Extra participant ("Otros")** — after all slot chips, in their `Otros` order: the same
+  `slotFilled` fill as a filled slot, `textMuted` text, never amber, no check glyph, and a leading
+  `+` as part of the label `+ saxo: Juan` (the instrument as the admin typed it). It is never a
   slot and never counts as open (D-18).
 
 Chips are not interactive (no click, no 48dp target: filtering is the filter bar's job). Each is one
@@ -280,9 +280,9 @@ the caption's font size, so they scale with the system font. The component is `I
 Two signals separate open from filled without colour or brightness: the **glyph** (dot versus
 check) and the **wording** (`LIBRE` in uppercase versus a name). The fills differ in hue only: in
 greyscale the 15% amber fill and `slotFilled` come out almost the same grey, so the earlier claim of
-"three signals: fill, glyph, and wording" overstated it. An extra adds a third look (no fill, `+`).
+"three signals: fill, glyph, and wording" overstated it. An extra shares the filled slot's fill and text colour; the leading `+` and the missing check separate it.
 Contrast, measured by `ContrastTest`: amber on its composited fill 7.03:1, `textMuted` on
-`slotFilled` 7.22:1, an extra's `textMuted` on the row surface 10.10:1.
+`slotFilled` 7.22:1, an extra's `textMuted` on `slotFilled` is the same 7.22:1.
 
 The cost is width: chips take far more room than 16dp icons, so the strip wraps to a second line on
 a busy song. Accepted, because a musician reading `VOZ: LIBRE` needs no legend, whereas an icon
@@ -307,7 +307,7 @@ musicians and the admin alike (P1). Its rules stay:
   an extra `sm` above it, so the groups read as groups.
 - **Lines** are full width and compact: the strip's glyph and fill for the same kind, the full
   instrument name, then the detail — `LIBRE` in `slotOpen`, a musician's name in `text` (9.52:1 on
-  `slotFilled`), an extra's name in `text` too with `+ saxo` as its instrument; since 12 October 2026 (`extras-dialog-and-lines`) an extra's line has the filled slot's fill and check glyph, and only the `+` prefix, the `Otros:` description and the `OTROS` heading mark it as an extra. The collapsed row's strip chip for an extra (no fill, leading `+`, above) is unchanged and out of scope. Long names wrap to
+  `slotFilled`), an extra's name in `text` too with `+ saxo` as its instrument; since 12 October 2026 (`extras-dialog-and-lines`) an extra's line has the filled slot's fill and check glyph, and only the `+` prefix, the `Otros:` description and the `OTROS` heading mark it as an extra. Since 12 October 2026 (`strip-extra-chip-filled`) the collapsed row's strip chip for an extra also has the filled fill and differs from the panel line only by lacking the check. Long names wrap to
   two lines, then "…". Each line is one screen-reader node with the strip's description. An admin
   line with an action (`Anotar`, `Liberar`, `Quitar`) stacks the instrument above the detail, so
   the detail gets the full width and a large font never breaks `LIBRE` or a name mid-word; the

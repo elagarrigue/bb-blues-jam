@@ -23,6 +23,9 @@ enum class InstrumentChipKind {
     /** A lineup slot with a musician: muted text on `slotFilled`, a check. */
     FILLED_SLOT,
 
-    /** Someone playing outside the lineup ("Otros"): muted text, no fill, a leading "+". Never a slot. */
+    /**
+     * Someone playing outside the lineup ("Otros"): muted text on the filled slot's fill, no check,
+     * a leading "+". Never a slot.
+     */
     EXTRA,
 }

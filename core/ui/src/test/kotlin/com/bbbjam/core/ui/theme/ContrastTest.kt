@@ -58,9 +58,13 @@ class ContrastTest {
     @Test
     fun `text on a filled slot`() = assertContrast(colors.text, colors.slotFilled, expected = 9.52)
 
-    /** The instrument strip's filled chip. An extra chip has no fill: `muted text on a surface` covers it. */
+    /** The instrument strip's filled chip; an extra chip shares this pair, read through its style. */
     @Test
-    fun `muted text on a filled chip`() = assertContrast(colors.textMuted, colors.slotFilled, expected = 7.22)
+    fun `muted text on a filled chip`() {
+        assertContrast(colors.textMuted, colors.slotFilled, expected = 7.22)
+        val extra = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
+        assertContrast(extra.textColor, extra.fill, expected = 7.22)
+    }
 
     /** The selected filter chip, read through the style the component draws. */
     @Test

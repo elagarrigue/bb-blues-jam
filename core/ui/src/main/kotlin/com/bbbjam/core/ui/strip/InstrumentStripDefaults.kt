@@ -22,8 +22,8 @@ internal object InstrumentStripDefaults {
 
     /**
      * Open and filled differ in glyph and wording, never in brightness alone (the two fills are
-     * almost the same grey). An extra has no fill, muted text and no slot glyph, so it can never
-     * read as a slot: never amber, never `slotFilled`.
+     * almost the same grey). An extra shares the filled slot's fill and text, has no slot glyph and
+     * is never amber; its leading "+" and the missing check keep it from reading as a slot.
      */
     fun style(kind: InstrumentChipKind, colors: BluesJamColors = BluesJamColors): ChipStyle = when (kind) {
         InstrumentChipKind.OPEN_SLOT -> ChipStyle(
@@ -41,7 +41,7 @@ internal object InstrumentStripDefaults {
         )
 
         InstrumentChipKind.EXTRA -> ChipStyle(
-            fill = Color.Transparent,
+            fill = colors.slotFilled,
             textColor = colors.textMuted,
             glyphColor = colors.textMuted,
             glyph = Glyph.NONE,
