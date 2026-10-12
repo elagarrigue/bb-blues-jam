@@ -25,6 +25,9 @@ colors:
   slotFilled: "#33353A"
   archive: "#9E8E78"
   error: "#FFB4AB"
+  adminBackground: "#2A1218"
+  adminSurface: "#331A21"
+  adminSurfaceRaised: "#371E25"
 typography:
   h1:
     fontFamily: Barlow Condensed
@@ -143,6 +146,30 @@ Everything else is text, muted text, or surface. If everything glows, nothing st
 amber breathe. A filled slot is specifically *not* amber: it is information, not an opportunity.
 
 Contrast must be real. No grey on grey; the app is read in a dark bar and on stage.
+
+## Admin mode
+
+Decided 12 October 2026 (`admin-mode-highlight`): the admin's background, surface and raised
+surface switch app-wide to a clearly tinted deep-wine ramp (`adminBackground` `#2A1218`,
+`adminSurface` `#331A21`, `adminSurfaceRaised` `#371E25`) whenever `AdminSession.observeIsAdmin()`
+is true, replacing the musician `background`/`surface`/`surfaceRaised` everywhere, including in
+every Material component. The hue (~346°) is deliberately far from the musician palette's cool
+indigo hue (~223°) so the two are distinguishable without reading any text, while the luminance
+stays close enough that every existing text/role contrast pairing in `ContrastTest` still passes at
+essentially the same ratio.
+
+A fixed "MODO ADMIN" strip is drawn once, directly under the status bar and above the tab bar and
+every full-screen route's content (the song detail, a past jam's detail, the catalog/key pickers,
+the assign-musician screen and the admin login) — never inside a scrolling container, so it never
+scrolls away. Its fill is `adminSurfaceRaised` (reused, no fourth token) and its text is `text`; it
+is a single static text node, read once by a screen reader, not a live region. No new amber role:
+"we are in admin mode" is not one of amber's five uses, and the five existing roles keep their
+value unchanged in admin mode. Logging out reverts both the background and the banner in the same
+recomposition that drops every other admin control, with no separate state to keep in sync.
+
+The Android window background resource (`bluesjam_window_background`, painted before Kotlin runs)
+is unaffected: it always mirrors the musician `background` exactly, since the admin flag cannot be
+known before the first Compose frame.
 
 ## Typography
 

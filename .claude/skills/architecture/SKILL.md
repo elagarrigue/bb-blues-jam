@@ -335,6 +335,37 @@ shape, the confirm/cancel event handlers and the repository calls they trigger
 changed. `RemovalControl`'s old `Idle`/`Confirming` text-rendering arms are gone (the `Idle` arm was
 already dead code before this slice, confirmed by grep).
 
+As built by `admin-mode-highlight` (user decision of 12 October 2026, "cambiemos el fondo para que
+resalte el estado", plus an orchestrator amendment fixing the first proposed hue and requiring
+`BluesJamColorsTest` to stay unweakened): **the admin background/surface/banner switch app-wide
+with no `if (isAdmin)` branch anywhere outside `BluesJamTheme`/`AppNavHost`.** `:core:ui` gained
+`BluesJamAdminPalette`/`BluesJamAdminColors` (the three admin hex values, a separate pair of objects
+from `BluesJamPalette`/`BluesJamColors` so the latter's reflection tests are untouched) and
+`AdminModeState` (`com.bbbjam.core.ui.theme`): an `internal object` wrapping one
+`androidx.compose.runtime.mutableStateOf(false)`, written directly in `BluesJamTheme(admin, …)`'s
+own composable body. **This replaced the originally planned `CompositionLocal`/`@Composable get()`
+seam, found to be unworkable during implementation**: a read-site survey limited to `src/main`
+claimed every production read of `background`/`surface`/`surfaceRaised` already runs inside a
+composable, but missed that ~20 `…Defaults` objects across every module (`InstrumentFilterDefaults`,
+`TabBarDefaults`, `ListStateDefaults`, `AdminControlsDefaults`, etc.) read those tokens from
+deliberately **non**-composable functions — precisely so their own JVM tests (~16 files) can call
+them with no Compose runtime. Making the three properties `@Composable get()` broke every one of
+those functions and tests at compile time. `AdminModeState` fixes this: `BluesJamColors.background/
+.surface/.surfaceRaised` stay plain (non-`@Composable`) properties with a `get()` reading
+`AdminModeState.isAdmin`, so every `…Defaults` function, every one of its tests, and
+`BluesJamColorsTest`'s reflection (still exactly 17 roles, no change) are all untouched; a composable
+reading these properties still recomposes correctly, because reading a `mutableStateOf`'s `.value`
+registers a snapshot read regardless of whether the reading function itself is `@Composable`.
+`BluesJamMaterial.colorScheme` became a plain `get()` (not `@Composable`) on the same seam, swapping
+the nine Material roles built from `Background`/`Surface`/`SurfaceRaised` (not `SlotFilled`, which
+never changes). The "MODO ADMIN" banner (`com.bbbjam.core.ui.admin.AdminBanner`, stateless, a single
+static text node, never a live region) is drawn once by `AppNavHost`, which now wraps its whole
+`NavHost` in a `Column` applying the status-bar inset a single time for every destination (the tabs
+shell and every full-screen route used to each apply their own `statusBarsPadding()`, which this
+slice removed to avoid doubling the inset). `MainActivity` reads `AdminSession.observeIsAdmin()`
+once via `koinInject<AdminSession>()` (new `:app` dependency on `koin-compose`, already catalogued)
+and passes `admin` into both `BluesJamTheme` and `AppNavHost`.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

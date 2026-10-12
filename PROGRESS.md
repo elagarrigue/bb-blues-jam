@@ -1,5 +1,13 @@
 # Progress Log
 
+## 12 October 2026 - admin-mode-highlight accepted
+
+Independent validator accepted on 12 October 2026 after rerunning `CI=true ./init.sh`. Orchestrator follow-ups: `AdminModeSwitchTest` (2 tests, flag reset in `@After`) and a stale `LocalAdminMode` KDoc reference fixed; `:core:ui:check` exit 0. Open follow-up: reset `AdminModeState` on dispose so admin previews cannot leak; TalkBack and logout revert on device still owed.
+
+Admin mode now has its own clearly tinted background (deep wine #2A1218 / #331A21 / #371E25, A1) and a fixed MODO ADMIN strip drawn once by `AppNavHost` under the status bar. The three background tokens switch through `AdminModeState` (a `mutableStateOf` written by `BluesJamTheme(admin)`, read once from `AdminSession.observeIsAdmin()` in `MainActivity`), not the spec's CompositionLocal: that did not compile because ~20 `...Defaults` objects and ~16 JVM tests read the tokens outside composition. `BluesJamColorsTest` is unchanged (A2), no `...Defaults` changed, no amber role added. Contrast on the admin ramp is recorded in `AdminContrastTest` (all >= 5.03, AA).
+
+Verification: `CI=true ./init.sh` exit 0, konsist/detekt/ktlint wired, 672 tests in 108 classes, 0 failures (baseline 660/106). Pixel 5 screenshots of each tab, the song detail and the key and assign pickers in both modes are in `docs/evidence/admin-mode-highlight/`; `local.properties` restored byte-for-byte. Not done: pre-slice pixel diff, on-device logout, TalkBack, login/catalog-picker/past-jam-detail screenshots. Awaiting independent validation.
+
 ## 12 October 2026 - admin-row-icon-actions accepted
 
 Implemented per `docs/specs/admin-row-icon-actions.md` (T0-T8) plus its same-day amendment (removal
@@ -79,10 +87,10 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 45 entries): 44 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 48 entries): 45 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
-  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions` accepted 12 October 2026. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `admin-row-icon-actions` entry at the top of this file.
+  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions` and `admin-mode-highlight` accepted 12 October 2026; `lineup-grow-any-instrument` and `extras-dialog-and-lines` specced, `not_started`. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `admin-mode-highlight` entry at the top of this file.
 - Code layout: seven Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
   `:feature:info`, `:feature:next-jam`, `:feature:past-jams`; the song detail lives in
   `:feature:next-jam` since `song-detail-replaces-row-expansion`), plus

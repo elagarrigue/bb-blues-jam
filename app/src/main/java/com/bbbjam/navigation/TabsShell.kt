@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -33,8 +32,9 @@ import java.time.LocalDate
  * detail, rotation and process death. Switching tabs saves the tab left and restores the one
  * entered (`saveState`/`restoreState`); back from Anteriores or Info returns to Próxima jam (the
  * inner host's back handler wins while its stack has more than one entry), and from Próxima jam
- * the activity finishes. The status-bar inset is applied outside the scroll, over `background`, so
- * content never scrolls under the clock. [onOpenSong] opens a song's detail and [onOpenPastJam] a
+ * the activity finishes. The status-bar inset (and, in admin mode, the "MODO ADMIN" banner,
+ * `admin-mode-highlight`) is applied once by [AppNavHost]'s shared wrapper outside this shell, so
+ * content never scrolls under the clock or the banner. [onOpenSong] opens a song's detail and [onOpenPastJam] a
  * past jam's detail, [onOpenAdminLogin] the admin login and [onOpenAddSong] the admin's catalog
  * picker, all in the outer host. The admin's key picker and assign screen open from the song
  * detail (`song-detail-replaces-row-expansion`), not from the tabs.
@@ -59,7 +59,7 @@ internal fun TabsShell(
         NavHost(
             navController = inner,
             startDestination = AppRoutes.NEXT_JAM,
-            modifier = Modifier.weight(1f).statusBarsPadding(),
+            modifier = Modifier.weight(1f),
             enterTransition = { fadeIn(tween(AppMotion.TAB_FADE_MS)) },
             exitTransition = { fadeOut(tween(AppMotion.TAB_FADE_MS)) },
             popEnterTransition = { fadeIn(tween(AppMotion.TAB_FADE_MS)) },

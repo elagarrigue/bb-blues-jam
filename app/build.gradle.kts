@@ -78,6 +78,9 @@ dependencies {
     implementation(project(":feature:past-jams"))
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
+    // Reads the admin flag once at the composition root (admin-mode-highlight), the same
+    // koinInject() convention every feature presenter already uses (D-16).
+    implementation(libs.koin.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     // Navigation Compose lives only in :app (D-03, Konsist navigation-only-in-app): features take

@@ -119,3 +119,66 @@ class ContrastTest {
         const val TOLERANCE = 0.01
     }
 }
+
+/**
+ * The same pairings re-measured on [BluesJamAdminColors] (`admin-mode-highlight`, Scenario 6): the
+ * admin background/surface/surfaceRaised are a visibly different, clearly tinted deep-wine ramp
+ * (orchestrator amendment A1), not a re-use of the musician values, so every ratio here is its own
+ * recorded number, not copied from [ContrastTest]. Every pairing still reaches AA text (4.5:1).
+ */
+class AdminContrastTest {
+
+    private val admin = BluesJamAdminColors
+    private val colors = BluesJamColors
+
+    @Test
+    fun `key on the admin background`() = assertContrast(colors.key, admin.background, expected = 9.77)
+
+    @Test
+    fun `open slot on the admin surface`() = assertContrast(colors.slotOpen, admin.surface, expected = 8.93)
+
+    @Test
+    fun `muted text on the admin surface`() = assertContrast(colors.textMuted, admin.surface, expected = 9.42)
+
+    @Test
+    fun `muted text on the admin background`() = assertContrast(colors.textMuted, admin.background, expected = 10.31)
+
+    @Test
+    fun `text on the admin background`() = assertContrast(colors.text, admin.background, expected = 13.59)
+
+    @Test
+    fun `archive on the admin surface`() = assertContrast(colors.archive, admin.surface, expected = 5.03)
+
+    @Test
+    fun `error on the admin surface`() = assertContrast(colors.error, admin.surface, expected = 9.44)
+
+    /** Backs the "MODO ADMIN" banner's own content colour (T3). */
+    @Test
+    fun `text on the admin raised surface`() = assertContrast(colors.text, admin.surfaceRaised, expected = 11.85)
+
+    @Test
+    fun `muted text on the admin raised surface`() =
+        assertContrast(colors.textMuted, admin.surfaceRaised, expected = 8.98)
+
+    /** The open-slot chip fill (15% amber), composited over the admin surface instead of the musician one. */
+    @Test
+    fun `open slot on its chip fill over the admin surface`() = assertContrast(
+        colors.slotOpen,
+        InstrumentStripDefaults.style(InstrumentChipKind.OPEN_SLOT).fill.compositeOver(admin.surface),
+        expected = 6.48,
+    )
+
+    private fun assertContrast(foreground: Color, background: Color, expected: Double) {
+        val lighter = maxOf(foreground.luminance(), background.luminance())
+        val darker = minOf(foreground.luminance(), background.luminance())
+        val ratio = (lighter + WCAG_FLARE) / (darker + WCAG_FLARE).toDouble()
+        assertTrue("contrast $ratio is below AA text ($AA_TEXT)", ratio >= AA_TEXT)
+        assertEquals("contrast differs from the recorded value", expected, ratio, TOLERANCE)
+    }
+
+    private companion object {
+        const val WCAG_FLARE = 0.05f
+        const val AA_TEXT = 4.5
+        const val TOLERANCE = 0.01
+    }
+}

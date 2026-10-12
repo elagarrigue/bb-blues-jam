@@ -6,6 +6,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.bbbjam.core.ui.admin.AdminBanner
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.AdminLoginScreen
 import com.bbbjam.feature.nextjam.AddSongScreen
@@ -38,42 +40,50 @@ import com.bbbjam.feature.pastjams.PastJamDetailScreen
  * `admin-set-key`), each full screen over it with no bar. A detail
  * slides in from the end over the tabs, which stay drawn under it, and slides out to the end on
  * back (M1). System back pops the detail; on the tabs it is the inner host's (see [TabsShell]).
+ *
+ * The status-bar inset and, while [admin] is true, the "MODO ADMIN" banner (`admin-mode-highlight`)
+ * are applied once here, in a [Column] wrapping the whole [NavHost], rather than per destination:
+ * every destination (the tabs shell and every full-screen route) used to apply its own
+ * `statusBarsPadding()` independently, which would double the inset if this wrapper's inset stayed
+ * too. [TabsShell] no longer applies its own.
  */
 @Composable
-internal fun AppNavHost(modifier: Modifier = Modifier) {
+internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean = false) {
     val nav = rememberNavController()
-    NavHost(
-        navController = nav,
-        startDestination = AppRoutes.TABS,
-        modifier = modifier,
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None },
-    ) {
-        composable(
-            AppRoutes.TABS,
-            // The shell stays drawn under the detail while it slides in and out.
-            exitTransition = { ExitTransition.KeepUntilTransitionsFinished },
+    Column(modifier = modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+        if (admin) AdminBanner()
+        NavHost(
+            navController = nav,
+            startDestination = AppRoutes.TABS,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
         ) {
-            TabsShell(
-                onOpenSong = { date, songId, position ->
-                    nav.navigate(AppRoutes.songDetail(date, songId, position)) { launchSingleTop = true }
-                },
-                onOpenPastJam = { date ->
-                    nav.navigate(AppRoutes.pastJamDetail(date)) { launchSingleTop = true }
-                },
-                onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
-                onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
-            )
+            composable(
+                AppRoutes.TABS,
+                // The shell stays drawn under the detail while it slides in and out.
+                exitTransition = { ExitTransition.KeepUntilTransitionsFinished },
+                popEnterTransition = { EnterTransition.None },
+            ) {
+                TabsShell(
+                    onOpenSong = { date, songId, position ->
+                        nav.navigate(AppRoutes.songDetail(date, songId, position)) { launchSingleTop = true }
+                    },
+                    onOpenPastJam = { date ->
+                        nav.navigate(AppRoutes.pastJamDetail(date)) { launchSingleTop = true }
+                    },
+                    onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
+                    onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
+                )
+            }
+            songDetail(nav)
+            pastJamDetail(nav)
+            adminLogin(nav)
+            addSong(nav)
+            setKey(nav)
+            assignSlot(nav)
         }
-        songDetail(nav)
-        pastJamDetail(nav)
-        adminLogin(nav)
-        addSong(nav)
-        setKey(nav)
-        assignSlot(nav)
     }
 }
 
@@ -99,7 +109,7 @@ private fun NavGraphBuilder.assignSlot(nav: NavHostController) {
         if (args == null) {
             LaunchedEffect(Unit) { nav.popBackStack() }
         } else {
-            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
                 AssignMusicianScreen(
                     jamDate = args.jamDate,
                     songId = args.songId,
@@ -139,7 +149,7 @@ private fun NavGraphBuilder.setKey(nav: NavHostController) {
             // Unreachable from the UI, which only builds routes through AppRoutes.setKey.
             LaunchedEffect(Unit) { nav.popBackStack() }
         } else {
-            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
                 SetKeyScreen(
                     jamDate = args.jamDate,
                     songId = args.songId,
@@ -171,7 +181,7 @@ private fun NavGraphBuilder.addSong(nav: NavHostController) {
             // Unreachable from the UI, which only builds routes through AppRoutes.addSong.
             LaunchedEffect(Unit) { nav.popBackStack() }
         } else {
-            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
                 AddSongScreen(
                     jamDate = jamDate,
                     onBack = {
@@ -211,8 +221,9 @@ private fun NavGraphBuilder.songDetail(nav: NavHostController) {
             // Unreachable from the UI, which only builds routes through AppRoutes.songDetail.
             LaunchedEffect(Unit) { nav.popBackStack() }
         } else {
-            // The status-bar inset sits outside the scroll, over a solid band; the bottom one inside it.
-            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+            // The status-bar inset (and the admin banner) are applied once by AppNavHost's shared
+            // Column, outside the scroll, over a solid band; the bottom inset is inside it.
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
                 SongDetailScreen(
                     jamDate = args.jamDate,
                     songId = args.songId,
@@ -253,8 +264,9 @@ private fun NavGraphBuilder.pastJamDetail(nav: NavHostController) {
             // Unreachable from the UI, which only builds routes through AppRoutes.pastJamDetail.
             LaunchedEffect(Unit) { nav.popBackStack() }
         } else {
-            // As the song detail: the status-bar inset outside the scroll, the bottom one inside it.
-            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+            // As the song detail: the shared status-bar inset (and admin banner) outside the
+            // scroll, the bottom inset inside it.
+            Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
                 PastJamDetailScreen(
                     jamDate = jamDate,
                     onBack = {
@@ -281,7 +293,7 @@ private fun NavGraphBuilder.adminLogin(nav: NavHostController) {
         enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
         popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(AppMotion.DETAIL_SLIDE_MS)) },
     ) { entry ->
-        Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
+        Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
             AdminLoginScreen(
                 onBack = {
                     if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()

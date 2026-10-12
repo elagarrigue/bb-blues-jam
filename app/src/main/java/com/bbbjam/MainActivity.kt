@@ -6,8 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.navigation.AppNavHost
+import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +24,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge(statusBarStyle = darkBars, navigationBarStyle = darkBars)
         super.onCreate(savedInstanceState)
         // AppNavHost hosts the tabs shell (bottom bar, one route per tab) and the song detail above it.
-        setContent { BluesJamTheme { AppNavHost() } }
+        // The admin flag is read once here (admin-mode-highlight), the same observeIsAdmin()
+        // pattern every admin-aware presenter already uses (D-15), and passed down so the admin
+        // background/banner apply app-wide with no per-screen `if (isAdmin)` branch.
+        setContent {
+            val adminSession = koinInject<AdminSession>()
+            val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
+            BluesJamTheme(admin = isAdmin) { AppNavHost(admin = isAdmin) }
+        }
     }
 }

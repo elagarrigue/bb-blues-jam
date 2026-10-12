@@ -1235,6 +1235,63 @@ El componente de ícono (`IconRowAction`, con su enum `IconRowActionIcon` para n
 `material-icons-core` fuera de `:core:ui`, D-03) vive en `:core:ui`, siguiendo el mismo patrón que
 `BackButton`.
 
+### 6.21 Sesión del 12 de octubre — el modo admin se vuelve obvio
+
+**Por qué.** El organizador pidió que fuera imposible no darse cuenta de estar en modo admin:
+"tiene que ser obvio que estamos en modo admin, cambiemos el fondo por ejemplo para que resalte el
+estado". Hasta esta rebanada, la única señal eran los controles extra dispersos en cada pantalla
+(badges de borrador, "Agregar tema", barras de acción de fila). La decisión del organizador fija la
+forma de la solución: un fondo distinto para toda la app más una franja fija "MODO ADMIN" arriba.
+Una enmienda del orquestador (12 de octubre) corrigió el primer valor propuesto: `#1A120B` tenía
+casi la misma luminancia que el `#111318` musical y se veía como el mismo negro en el teléfono. El
+valor final, `#2A1218`, es un vino profundo con un matiz claramente distinto (tono ~346° contra el
+tono ~223° del índigo musical), a una luminancia apenas mayor, así que todo par de contraste
+existente en `ContrastTest` sigue pasando AA con un margen casi idéntico al de hoy. El ámbar no
+cambia de significado (D-17): "estamos en modo admin" no es uno de sus cinco roles.
+
+**El problema real, encontrado al implementar.** La especificación suponía que los tres tokens
+`background`/`surface`/`surfaceRaised` podían volverse `@Composable get()` leyendo un
+`CompositionLocal`, sin tocar ningún archivo `…Defaults`, porque "toda lectura de producción ya
+corre dentro de un composable". Esa relevamiento solo miró `src/main`: no contempló que ~20 objetos
+`…Defaults` (`InstrumentFilterDefaults`, `TabBarDefaults`, `ListStateDefaults`,
+`AdminControlsDefaults`, etc.) leen `colors.surface`/`.surfaceRaised` dentro de una función **no
+composable**, deliberadamente así "para que un test JVM pueda llamarlos sin runtime de Compose" —y
+~16 archivos de test leen esos mismos tokens directamente, también sin composición. Intentar la
+ruta de `CompositionLocal` tal como la especificación la describía no compilaba: cada una de esas
+funciones y cada uno de esos tests rompía. Convertirlas todas en `@Composable` hubiera destruido el
+patrón de testeo del proyecto en ~20 archivos, un rediseño silencioso que el rol de implementador no
+debe hacer. La solución adoptada: `AdminModeState`, un `object` interno con un `mutableStateOf`
+(no un `CompositionLocal`), que `BluesJamTheme(admin = …)` escribe directamente en su cuerpo
+composable. `BluesJamColors.background/.surface/.surfaceRaised` siguen siendo propiedades planas,
+no `@Composable`, con un `get()` que lee `AdminModeState.isAdmin` — leíble desde un composable (que
+sí recompone correctamente, porque leer `.value` de un `mutableStateOf` registra la lectura en el
+sistema de snapshots de Compose aunque la función que lo lee no sea `@Composable`) y leíble desde un
+test JVM plano (que ve `false` y la paleta musical, exactamente como antes de esta rebanada). Esto
+cumple la enmienda A2 del orquestador de un modo más fuerte de lo pedido: `BluesJamColorsTest` no
+necesitó ningún cambio, ni siquiera el de nombrar los roles explícitamente, porque la cuenta de 17
+roles por reflexión nunca se movió.
+
+**Qué se construyó.** `BluesJamAdminPalette`/`BluesJamAdminColors` (objetos nuevos, separados de
+`BluesJamPalette`/`BluesJamColors`, igual que T1 de la especificación pedía) con los tres tokens
+admin. `AdminModeState` (nuevo) y el parámetro `BluesJamTheme(admin: Boolean = false, …)`.
+`BluesJamMaterial.colorScheme` pasó de `val` a una propiedad con `get()` que también lee
+`AdminModeState.isAdmin` para los nueve roles de Material construidos desde
+background/surface/surfaceRaised (sin tocar los que usan `SlotFilled`, que no cambia). El banner
+"MODO ADMIN" (`AdminBanner`, `AdminBannerCopy`, `AdminBannerDefaults`, nuevo paquete
+`com.bbbjam.core.ui.admin`) es un nodo de texto estático (no una región viva, para no anunciarse en
+cada recomposición), con el fondo `surfaceRaised` y el contenido `text`, nunca ámbar. Se dibuja una
+sola vez, en `AppNavHost`, dentro de una `Column` que ahora aplica el inset de la barra de estado
+una sola vez para todo el árbol (las seis rutas de pantalla completa y `TabsShell` dejaron de
+aplicar su propio `statusBarsPadding()`, para no duplicar el inset). `MainActivity` lee
+`AdminSession.observeIsAdmin()` una sola vez, en la raíz de la composición, y pasa `admin` tanto a
+`BluesJamTheme` como a `AppNavHost` — ninguna otra pantalla ni presentador agrega una rama
+`if (isAdmin)` para color.
+
+**Qué no cambió.** Ninguna mutación nueva (D-13); el flag solo decide qué se dibuja, nunca autoriza
+nada (D-11). Ningún rol ámbar nuevo ni cambio a `AMBER_ROLE_ALLOWLIST` (D-17). El recurso Android
+`bluesjam_window_background` sigue espejando la paleta musical exacta: pinta el primer frame antes
+de que Kotlin pueda saber si hay admin.
+
 ## 7. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación |
