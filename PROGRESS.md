@@ -1,5 +1,15 @@
 # Progress Log
 
+## 12 October 2026 - lineup-grow-any-instrument accepted (human migration and redeploy owed)
+
+Amends D-18: any instrument can grow to 3 slots per song through 18 fixed Sheet columns; a new song still starts with the 7 defaults and 11 `-` cells. `Lineup.maxCount`/`MAX_INSTRUMENTS` (18) are separate from `defaultCount`/`DEFAULT_INSTRUMENTS` (7), plus `DEFAULT_COLUMNS` (0,1,3,6,9,12,15). Apps Script (`Normalize.js`, `Jams.js`, `Post.js`): 18 `SLOT_FIELDS`, the un-numbered first headers are aliases of `... 1` (old tabs read unchanged), a column the tab lacks reads `-` (never open), `setSlotCount` accepts 0..3 and answers `instrument_not_expandable` before any write when the tab has no column for the growth, `appendSetlistRow_` writes `-` to the 11 extra cells. Client: `SlotsDto` 18 keys, shared `SLOT_FIELDS` list with exact key-set checks in both mirrors, editor `+` up to 3, Spanish copy for the new code. Docs: sheet-schema, apps-script-api, domain-model, CONTEXT, bitacora D-18 amendment, risks, DESIGN, README, architecture skill, and the user guide `docs/migrations/lineup-grow-any-instrument-sheet-migration.md`.
+
+Repair after validation (REVISE): the client now accepts exactly the 18 `slots` keys, the 18 plus five legacy mirrors, or the legacy seven (default seven slots, others `-`), never a subset (`SlotKeys`, `SlotsDtoSerializer`, both `confirmedSlots` mirrors), so the new app refreshes against the still-deployed old script; the new script sends the five legacy keys next to the 18 in GET and in `setSlotCount`/`clearSlot` answers. Old app against the new script: reads work; `setSlotCount`/`clearSlot` are written but reported as failures (its exact seven-key check rejects the longer object); `assignSlot` works for the guitars only (its column index is the 7-layout). Update script and app together.
+
+Verification after the repair: `CI=true ./init.sh` exit 0, konsist/detekt/ktlint wired, 690 JVM tests (110 classes), 0 failures; `node --test backend/apps-script/test/*.test.js` 179 pass. On the Pixel 5 the new app refreshed against the currently deployed old script (`jams refresh: updated 2 jams`), read-only; `local.properties` unchanged (md5 verified). New rules shown failing with the fix removed, then restored. Pixel 5 screenshots with a temporary, reverted demo patch (3 guitars and 3 vocals on one song) are in `docs/evidence/lineup-grow-any-instrument/`; the editor `+`/`-`/`Listo` taps were not pressed because they post to the real Apps Script. `local.properties` restored byte-for-byte.
+
+Owed: the user widens the real tab and redeploys the three script files as a New version (guide above); then the read-only live check. Deploy the script before using the new app: against the old script the jams refresh fails loudly. Not committed.
+
 ## 12 October 2026 - admin-mode-highlight accepted
 
 Independent validator accepted on 12 October 2026 after rerunning `CI=true ./init.sh`. Orchestrator follow-ups: `AdminModeSwitchTest` (2 tests, flag reset in `@After`) and a stale `LocalAdminMode` KDoc reference fixed; `:core:ui:check` exit 0. Open follow-up: reset `AdminModeState` on dispose so admin previews cannot leak; TalkBack and logout revert on device still owed.
@@ -87,10 +97,10 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 48 entries): 45 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 48 entries): 46 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
-  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions` and `admin-mode-highlight` accepted 12 October 2026; `lineup-grow-any-instrument` and `extras-dialog-and-lines` specced, `not_started`. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `admin-mode-highlight` entry at the top of this file.
+  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions`, `admin-mode-highlight` and `lineup-grow-any-instrument` accepted 12 October 2026 (the last owes the user's Sheet migration, redeploy and a read-only live check, per `docs/migrations/lineup-grow-any-instrument-sheet-migration.md`); `extras-dialog-and-lines` specced, `not_started`. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `lineup-grow-any-instrument` entry at the top of this file.
 - Code layout: seven Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
   `:feature:info`, `:feature:next-jam`, `:feature:past-jams`; the song detail lives in
   `:feature:next-jam` since `song-detail-replaces-row-expansion`), plus

@@ -34,16 +34,54 @@ var SETLIST_FIELDS = [
   { header: 'tono', field: 'key', required: true, integer: false },
 ];
 
-/** The seven slot columns, in Lineup.DEFAULT_INSTRUMENTS order: the order of the `slots` keys. */
+/** What a slot reads as when its column is not in the tab or the song does not use it. */
+var NOT_IN_LINEUP_ = '-';
+
+/**
+ * The eighteen slot columns, three per instrument, in the order of the `slots` keys and of
+ * Lineup.MAX_INSTRUMENTS in the app (D-18, amended 12 October 2026). The original seven are
+ * required, so a tab that was never widened still reads; the other eleven are optional. The
+ * first column of the five single-slot instruments was `Bajo`, `Batería`, `Voz`, `Armónica` and
+ * `Teclados` before the widening: that spelling stays accepted as an alias of `... 1`.
+ */
 var SLOT_FIELDS = [
   { header: 'Guitarra 1', field: 'guitar1', required: true },
   { header: 'Guitarra 2', field: 'guitar2', required: true },
-  { header: 'Bajo', field: 'bass', required: true },
-  { header: 'Batería', field: 'drums', required: true },
-  { header: 'Voz', field: 'vocals', required: true },
-  { header: 'Armónica', field: 'harmonica', required: true },
-  { header: 'Teclados', field: 'keyboards', required: true },
+  { header: 'Guitarra 3', field: 'guitar3', required: false },
+  { header: 'Bajo 1', field: 'bass1', required: true, aliases: ['Bajo'] },
+  { header: 'Bajo 2', field: 'bass2', required: false },
+  { header: 'Bajo 3', field: 'bass3', required: false },
+  { header: 'Batería 1', field: 'drums1', required: true, aliases: ['Batería'] },
+  { header: 'Batería 2', field: 'drums2', required: false },
+  { header: 'Batería 3', field: 'drums3', required: false },
+  { header: 'Voz 1', field: 'vocals1', required: true, aliases: ['Voz'] },
+  { header: 'Voz 2', field: 'vocals2', required: false },
+  { header: 'Voz 3', field: 'vocals3', required: false },
+  { header: 'Armónica 1', field: 'harmonica1', required: true, aliases: ['Armónica'] },
+  { header: 'Armónica 2', field: 'harmonica2', required: false },
+  { header: 'Armónica 3', field: 'harmonica3', required: false },
+  { header: 'Teclados 1', field: 'keyboards1', required: true, aliases: ['Teclados'] },
+  { header: 'Teclados 2', field: 'keyboards2', required: false },
+  { header: 'Teclados 3', field: 'keyboards3', required: false },
 ];
+
+/**
+ * The key each of the five single-slot instruments had before the three-slot layout, and the key it
+ * is now: `bass` is `bass1`, and so on. Responses carry both, with the same value, so an app that
+ * predates the layout keeps reading `slots` (`guitar1` and `guitar2` never changed).
+ */
+var LEGACY_SLOT_KEYS_ = {
+  bass: 'bass1', drums: 'drums1', vocals: 'vocals1', harmonica: 'harmonica1', keyboards: 'keyboards1',
+};
+
+/** `slots` with the five legacy keys appended, each equal to its `...1` key. */
+function withLegacySlotKeys_(slots) {
+  const out = Object.assign({}, slots);
+  Object.keys(LEGACY_SLOT_KEYS_).forEach(function (legacy) {
+    out[legacy] = slots[LEGACY_SLOT_KEYS_[legacy]];
+  });
+  return out;
+}
 
 /** The optional extra-participants column, passed through raw for the mapper to split. */
 var EXTRA_FIELD = { header: 'Otros', field: 'extraParticipants', required: false };
@@ -80,9 +118,9 @@ function buildSetlist(displayRows, rawRows, tabName) {
     });
     const slots = {};
     SLOT_FIELDS.forEach(function (spec) {
-      slots[spec.field] = read(spec);
+      slots[spec.field] = columns[spec.field] === undefined ? NOT_IN_LINEUP_ : read(spec);
     });
-    row.slots = slots;
+    row.slots = withLegacySlotKeys_(slots);
     row.extraParticipants = read(EXTRA_FIELD);
     if (!empty) {
       rows.push(row);
@@ -161,5 +199,5 @@ function setlistError_(code, message) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { JAMS_TAB, PUBLISHED_STATUS, JAMS_FIELDS, SETLIST_FIELDS, SLOT_FIELDS, EXTRA_FIELD, buildSetlist, buildJams };
+  module.exports = { JAMS_TAB, PUBLISHED_STATUS, JAMS_FIELDS, SETLIST_FIELDS, NOT_IN_LINEUP_, LEGACY_SLOT_KEYS_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildSetlist, buildJams };
 }

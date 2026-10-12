@@ -101,6 +101,8 @@ internal object NextJamCopy {
     const val LINEUP_DONE = "Listo"
     const val LINEUP_BLOCKED = "Tiene músico anotado. Liberá el cupo antes de sacarlo."
     const val SLOT_FILLED = "Ese cupo tiene un músico anotado. Liberalo antes de sacarlo."
+    const val NOT_EXPANDABLE =
+        "Esta hoja todavía no tiene columnas para ese cupo. Agregalas en el Sheet y volvé a probar."
     fun lineupCount(count: Int): String = when (count) {
         0 -> "No va en este tema"
         1 -> "1 cupo"

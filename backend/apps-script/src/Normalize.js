@@ -94,14 +94,18 @@ function timeCell(raw, display, formatDate) {
 
 /**
  * Maps each field of `specs` ({ header, field, required }) to its column index in `headerRow`.
- * Headers match by trimmed exact name (case and accents count); unmapped columns are ignored and
+ * Headers match by trimmed exact name (case and accents count), the spec's `header` or any of its
+ * optional `aliases` (an older spelling of the same column); unmapped columns are ignored and
  * optional fields with no column are left out. Throws ContractError `duplicate_header` when a
- * mapped header appears twice, and `missing_header` when a required one is absent.
+ * field is mapped twice (the same header, or a header and its alias), and `missing_header` when a required one is absent.
  */
 function mapColumns(tabName, specs, headerRow) {
   const byHeader = {};
   specs.forEach(function (spec) {
     byHeader[spec.header] = spec;
+    (spec.aliases || []).forEach(function (alias) {
+      byHeader[alias] = spec;
+    });
   });
   const columns = {};
   headerRow.forEach(function (cell, index) {

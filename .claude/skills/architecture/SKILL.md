@@ -223,6 +223,21 @@ pre-recomposition taps queue distinct counts. `Instrument.fullName` exports the 
 Server `setSlotCount` is router-guarded, reuses `findSongRow_`, and writes only changed plain-text
 slot cells; future ordinal mutations reuse `presentSlotFields_` and refuse unexpected cell state.
 
+As built by `lineup-grow-any-instrument` (12 October 2026; amends D-18, slots can also grow, three per
+instrument, via fixed Sheet columns): `:core:model` `Lineup` separates `defaultCount`/`DEFAULT_INSTRUMENTS`
+(what a new song starts with: 7 slots) from `maxCount`/`MAX_INSTRUMENTS` (the 18 Sheet slot columns, three
+per instrument; the `init` guard and `withSlotCount` use the max) and `DEFAULT_COLUMNS` (0, 1, 3, 6, 9, 12,
+15: where each default slot sits among the 18). `:core:data` `SlotsDto` has the 18 keys (the original seven
+required, the other eleven default null), `SlotKeys` (`remote/SlotKeys.kt`) is the single place deciding which `slots` key sets are valid
+(the 18, the 18 plus the five legacy mirrors, or the legacy seven; never a subset), shared by
+`SlotsDtoSerializer` and both `confirmedSlots` mirrors; the script also emits the legacy keys, and a column index is now the index in
+the 18 (`SetlistSongAdds` caches a new song's seven slots at `DEFAULT_COLUMNS`). Apps Script: `SLOT_FIELDS`
+(`Jams.js`) lists the 18 fields; the five un-numbered first headers are `aliases` of `... 1`, a `mapColumns`
+feature, not a second spec (so `createSetlistTab_` and the `column` index of assign/clear stay one-to-one);
+a field whose column the tab lacks reads `-` (`NOT_IN_LINEUP_`), never `null`; `setSlotCount_` validates
+`0..MAX_SLOTS_PER_INSTRUMENT_` and rejects growth into a missing column as `instrument_not_expandable`
+before any write; `appendSetlistRow_` writes `-` to the 11 cells beyond the default. No Room migration.
+
 As built by `admin-assign-musician` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026): `SlotPosition` is a
 1-based instrument ordinal in original lineup order and `MusicianName.parseOrNull` is the write-time
 normalizer/validator. `SetlistRepository.assignSlot` and `observeAssignments` use public

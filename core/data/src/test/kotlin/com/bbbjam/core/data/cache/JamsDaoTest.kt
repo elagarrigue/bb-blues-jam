@@ -36,14 +36,23 @@ class JamsDaoTest {
         val stored = dao.observeJams().first()
         assertEquals(mapped.map { it.jam }, stored.map { it.toDomain() })
         val crossroads = stored.first().slots.filter { it.position == 2 }
-        assertEquals(listOf(0, 2, 3, 4, 5, 6), crossroads.map { it.columnIndex })
+        assertEquals(listOf(0, 3, 6, 9, 12, 15), crossroads.map { it.columnIndex })
         assertEquals("Pedro", crossroads.first().musicianName)
         assertEquals(listOf(1, 2), stored.first().extras.map { it.entryOrder })
     }
 
     @Test
     fun `a lone guitar keeps the column it was typed in, Guitarra 2 or Guitarra 1`() = runTest {
-        fun guitars(first: String, second: String) = SlotsDto(first, second, null, null, null, null, null)
+        fun guitars(first: String, second: String) = SlotsDto(
+            guitar1 = first,
+            guitar2 = second,
+            guitar3 = "-",
+            bass1 = null,
+            drums1 = null,
+            vocals1 = null,
+            harmonica1 = null,
+            keyboards1 = null,
+        )
         val rows = listOf(
             SetlistRowDto("1", "crossroads", "Crossroads", "Eric Clapton", "A", guitars("-", "Pedro"), null),
             SetlistRowDto(

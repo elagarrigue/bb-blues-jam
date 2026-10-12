@@ -93,6 +93,36 @@ class DefaultJamsRepositoryTest {
     }
 
     @Test
+    fun `a refresh against the script before the three-slot layout still succeeds, with the default columns`() =
+        runTest {
+            transport.result = TransportResult.Body(Fixtures.legacySampleBody("jams-seed.json"))
+            val repository = repository()
+
+            val outcome = repository.refresh()
+
+            assertEquals(JamsRefreshOutcome.Updated(1, emptyList(), emptyList(), emptyList()), outcome)
+            val upcoming = checkNotNull(repository.observeJams().first().upcoming)
+            val songs = (upcoming.setlist as Setlist.Available).songs
+            assertEquals(13, songs.size)
+            assertTrue(songs.all { it.lineup.openSlots.size == 7 })
+            val columns = database.jamsDao().observeJams().first().single().slots.filter { it.position == 1 }
+            assertEquals(com.bbbjam.core.model.Lineup.DEFAULT_COLUMNS, columns.map { it.columnIndex })
+        }
+
+    @Test
+    fun `a slots object without its first-column keys fails the refresh and keeps the cache`() = runTest {
+        val repository = repository()
+        repository.refresh()
+        val broken = Fixtures.legacySampleBody("jams-seed.json").replace("\"bass\":null,", "")
+        transport.result = TransportResult.Body(broken)
+
+        val outcome = repository.refresh()
+
+        assertTrue(outcome is JamsRefreshOutcome.Failed)
+        assertEquals(LocalDate.of(2026, 7, 25), repository.observeJams().first().upcoming?.date)
+    }
+
+    @Test
     fun `offline, the cached jams come back with their old time, the failure, and stale`() = runTest {
         val repository = repository()
         repository.refresh()
@@ -640,8 +670,7 @@ class DefaultJamsRepositoryTest {
                 """"setlist":${setlist ?: "null"},"setlistError":${error ?: "null"}}"""
 
         fun rowJson(position: Int, songId: String): String {
-            val slots = listOf("guitar1", "guitar2", "bass", "drums", "vocals", "harmonica", "keyboards")
-                .joinToString(",") { "\"$it\":null" }
+            val slots = Fixtures.slotsJson().removeSurrounding("{", "}")
             return """{"position":"$position","songId":"$songId","title":"T","artist":"A","key":"A",""" +
                 """"slots":{$slots},"extraParticipants":null}"""
         }

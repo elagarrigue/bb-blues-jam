@@ -381,6 +381,15 @@ registrada igual. La planilla lo guarda en una columna `Otros` como `Nombre (ins
 por `;`. Se descartó permitir cupos extra por tema, porque obligaba a columnas variables en la
 planilla y hacía que "hay lugar para guitarra" dependiera de cuántas guitarras se inventaron para ese
 tema. Decidido por el organizador al revisar `domain-model-types`.
+*Enmienda del 12 de octubre de 2026:* los cupos por tema ahora también pueden **crecer**, hasta tres
+por instrumento, y "La formación solo se achica" deja de ser cierto. Una jam temática puede tener
+tres guitarras o tres voces, y mandar a "Otros" al tercero lo sacaba del filtro "¿dónde puedo
+tocar?". Lo que se descartó arriba (columnas variables) se resuelve con columnas **fijas**: la
+planilla tiene 18 columnas de cupo, `Guitarra 1-3`, `Bajo 1-3`, `Batería 1-3`, `Voz 1-3`,
+`Armónica 1-3` y `Teclados 1-3`; un tema nuevo sigue naciendo con los siete cupos por defecto y las
+otras once columnas en `-`. El tope de tres lo valida el servidor, y las pestañas viejas de siete
+columnas siguen funcionando. "Otros" queda para quien toca fuera de la formación. Decidido por el
+organizador al planificar `lineup-grow-any-instrument`.
 
 ### D-19 — Info habla de la comunidad, no del lugar
 La jam es mensual y hoy se hace en La Macanuda, pero el lugar puede cambiar. Por eso Info no muestra

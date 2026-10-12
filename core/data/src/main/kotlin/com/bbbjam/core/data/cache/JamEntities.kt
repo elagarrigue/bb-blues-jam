@@ -53,7 +53,7 @@ internal data class JamSongEntity(
 )
 
 /**
- * One lineup slot. [columnIndex] is the 0-based slot column (`Guitarra 1` = 0 … `Teclados` = 6):
+ * One lineup slot. [columnIndex] is the 0-based slot column (`Guitarra 1` = 0 … `Teclados 3` = 17):
  * the slot's identity in the Sheet (`docs/sheet-schema.md`, Identifiers). A `-` column has no row.
  * [instrument] is the `Instrument` name; [musicianName] is null for an open slot.
  */

@@ -69,7 +69,7 @@ function checkCatalogResponse(body) {
 const JAMS_TOP_KEYS = ['schemaVersion', 'jams'];
 const JAM_KEYS = ['date', 'startTime', 'venue', 'status', 'setlist', 'setlistError'];
 const ROW_KEYS = ['position', 'songId', 'title', 'artist', 'key', 'slots', 'extraParticipants'];
-const SLOT_KEYS = ['guitar1', 'guitar2', 'bass', 'drums', 'vocals', 'harmonica', 'keyboards'];
+const SLOT_KEYS = ['guitar1', 'guitar2', 'guitar3', 'bass1', 'bass2', 'bass3', 'drums1', 'drums2', 'drums3', 'vocals1', 'vocals2', 'vocals3', 'harmonica1', 'harmonica2', 'harmonica3', 'keyboards1', 'keyboards2', 'keyboards3', 'bass', 'drums', 'vocals', 'harmonica', 'keyboards'];
 const ERROR_KEYS = ['code', 'message'];
 const PUBLISHED = 'PUBLICADA';
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

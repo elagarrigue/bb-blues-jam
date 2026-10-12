@@ -120,22 +120,25 @@ class LineupTest {
     }
 
     @Test
-    fun `slot counts outside the default range are rejected`() {
+    fun `slot counts outside the maximum range are rejected`() {
         val lineup = Lineup.default()
 
         assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(GUITAR, -1) }
-        assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(GUITAR, 3) }
+        assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(GUITAR, 4) }
+        Instrument.entries.forEach { instrument ->
+            assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(instrument, 4) }
+        }
     }
 
     @Test
-    fun `more slots of an instrument than the default are rejected`() {
-        val overDefault = listOf(
-            listOf(Slot(GUITAR), Slot(GUITAR), Slot(GUITAR)),
-            listOf(Slot(BASS), Slot(BASS, "Tincho")),
-            Lineup.default().slots + Slot(KEYBOARDS),
-            listOf(Slot(HARMONICA), Slot(HARMONICA)),
+    fun `more slots of an instrument than the maximum are rejected`() {
+        val overMax = listOf(
+            List(4) { Slot(GUITAR) },
+            List(4) { Slot(BASS, "Tincho") },
+            Lineup.default().slots + List(3) { Slot(KEYBOARDS) },
+            List(4) { Slot(HARMONICA) },
         )
-        overDefault.forEach { slots ->
+        overMax.forEach { slots ->
             assertThrows("${slots.map { it.instrument }} accepted", IllegalArgumentException::class.java) {
                 Lineup(slots)
             }
@@ -143,11 +146,42 @@ class LineupTest {
     }
 
     @Test
-    fun `the over-default message names the instrument and the counts`() {
+    fun `the maximum is three for every instrument and differs from the default`() {
+        Instrument.entries.forEach { assertEquals(3, Lineup.maxCount(it)) }
+        assertEquals(18, Lineup.MAX_INSTRUMENTS.size)
+        assertEquals(Instrument.entries.flatMap { instrument -> List(3) { instrument } }, Lineup.MAX_INSTRUMENTS)
+        assertEquals(7, Lineup.DEFAULT_INSTRUMENTS.size)
+        assertEquals(2, Lineup.defaultCount(GUITAR))
+        assertEquals(1, Lineup.defaultCount(VOCALS))
+    }
+
+    @Test
+    fun `each default slot sits in its column of the eighteen`() {
+        assertEquals(listOf(0, 1, 3, 6, 9, 12, 15), Lineup.DEFAULT_COLUMNS)
+        Lineup.DEFAULT_COLUMNS.zip(Lineup.DEFAULT_INSTRUMENTS).forEach { (column, instrument) ->
+            assertEquals(instrument, Lineup.MAX_INSTRUMENTS[column])
+        }
+    }
+
+    @Test
+    fun `growing any instrument to its maximum is valid and keeps the order`() {
+        Instrument.entries.forEach { instrument ->
+            val grown = Lineup.default().withSlotCount(instrument, 3)
+
+            assertEquals(3, grown?.count(instrument))
+            assertEquals(Lineup.default().slots.size + 3 - Lineup.defaultCount(instrument), grown?.slots?.size)
+        }
+        val vocals = Lineup(listOf(Slot(VOCALS, "Lu"), Slot(KEYBOARDS))).withSlotCount(VOCALS, 3)
+        assertEquals(listOf(Slot(VOCALS, "Lu"), Slot(VOCALS), Slot(VOCALS), Slot(KEYBOARDS)), vocals?.slots)
+        assertEquals(null, vocals?.withSlotCount(VOCALS, 1)?.withSlotCount(VOCALS, 0))
+    }
+
+    @Test
+    fun `the over-maximum message names the instrument and the counts`() {
         val error = assertThrows(IllegalArgumentException::class.java) {
-            Lineup(listOf(Slot(GUITAR), Slot(GUITAR), Slot(GUITAR)))
+            Lineup(List(4) { Slot(GUITAR) })
         }
 
-        assertEquals("Lineup has 3 GUITAR slots; the default allows at most 2 (D-18)", error.message)
+        assertEquals("Lineup has 4 GUITAR slots; at most 3 are allowed (D-18)", error.message)
     }
 }

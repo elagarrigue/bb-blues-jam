@@ -15,9 +15,39 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 /** Repository files the tests read: the contract samples and the seed are the fixtures. */
 internal object Fixtures {
+    /** What the script writes for a slot column a tab does not have. */
+    private const val ABSENT = "-"
+
+    private val SLOT_KEYS = listOf("guitar", "bass", "drums", "vocals", "harmonica", "keyboards")
+        .flatMap { name -> (1..3).map { "$name$it" } }
+    private val DEFAULT_SLOT_KEYS =
+        setOf("guitar1", "guitar2", "bass1", "drums1", "vocals1", "harmonica1", "keyboards1")
+
+    /**
+     * A `slots` object with all eighteen keys: the seven default columns open (null) and the eleven
+     * beyond them `-`, except where [cells] overrides a key (a value null is open, a string is written as is).
+     */
+    fun slotsJson(vararg cells: Pair<String, String?>): String {
+        val overrides = cells.toMap()
+        return SLOT_KEYS.joinToString(",", "{", "}") { key ->
+            val value = if (key in overrides) {
+                overrides[key]
+            } else if (key in DEFAULT_SLOT_KEYS) {
+                null
+            } else {
+                "-"
+            }
+            "\"$key\":" + (value?.let { "\"$it\"" } ?: "null")
+        }
+    }
+
     private val rootDir: File by lazy {
         File(requireNotNull(System.getProperty("bbbjam.rootDir")) { "bbbjam.rootDir is not set" })
     }
@@ -43,6 +73,34 @@ internal object Fixtures {
 
     /** A body in the contract's envelope holding [jamsJson]. */
     fun jamsBody(jamsJson: String): String = """{"schemaVersion":1,"jams":$jamsJson}"""
+
+    /**
+     * A jams sample as the script before the three-slot layout served it: every `slots` object has only
+     * the legacy seven keys (`guitar1`, `guitar2`, `bass`, `drums`, `vocals`, `harmonica`, `keyboards`).
+     */
+    fun legacySampleBody(name: String): String {
+        val legacy = mapOf(
+            "guitar1" to "guitar1",
+            "guitar2" to "guitar2",
+            "bass" to "bass1",
+            "drums" to "drums1",
+            "vocals" to "vocals1",
+            "harmonica" to "harmonica1",
+            "keyboards" to "keyboards1",
+        )
+        fun rewrite(element: JsonElement): JsonElement = when (element) {
+            is JsonObject -> if ("guitar1" in element && "keyboards3" in element) {
+                JsonObject(legacy.mapValues { (_, key) -> element.getValue(key) })
+            } else {
+                JsonObject(element.mapValues { rewrite(it.value) })
+            }
+
+            is JsonArray -> JsonArray(element.map(::rewrite))
+
+            else -> element
+        }
+        return Json.encodeToString(JsonElement.serializer(), rewrite(Json.parseToJsonElement(sample(name))))
+    }
 
     /** The jams of a jams sample, through the real envelope decoder. */
     fun sampleJams(name: String): List<JamDto> {
@@ -70,11 +128,22 @@ internal object Fixtures {
         slots = SlotsDto(
             guitar1 = row["Guitarra 1"],
             guitar2 = row["Guitarra 2"],
-            bass = row["Bajo"],
-            drums = row["Batería"],
-            vocals = row["Voz"],
-            harmonica = row["Armónica"],
-            keyboards = row["Teclados"],
+            guitar3 = ABSENT,
+            bass1 = row["Bajo"],
+            bass2 = ABSENT,
+            bass3 = ABSENT,
+            drums1 = row["Batería"],
+            drums2 = ABSENT,
+            drums3 = ABSENT,
+            vocals1 = row["Voz"],
+            vocals2 = ABSENT,
+            vocals3 = ABSENT,
+            harmonica1 = row["Armónica"],
+            harmonica2 = ABSENT,
+            harmonica3 = ABSENT,
+            keyboards1 = row["Teclados"],
+            keyboards2 = ABSENT,
+            keyboards3 = ABSENT,
         ),
         extraParticipants = row["Otros"],
     )

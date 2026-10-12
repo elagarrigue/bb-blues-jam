@@ -26,6 +26,14 @@ const PAST = '2026-07-25';
 const PAST_DRAFT = '2026-09-26';
 const SLOT_HEADERS = ['Guitarra 1', 'Guitarra 2', 'Bajo', 'Batería', 'Voz', 'Armónica', 'Teclados'];
 const TAB_HEADER = ['posicion', 'id_tema', 'titulo', 'artista', 'tono'].concat(SLOT_HEADERS, ['Otros']);
+// A 7-column tab has no column for these eleven: they read as '-' (not in the lineup), never open.
+const OLD_LAYOUT_ABSENT = {
+  guitar3: '-', bass2: '-', bass3: '-', drums2: '-', drums3: '-', vocals2: '-', vocals3: '-',
+  harmonica2: '-', harmonica3: '-', keyboards2: '-', keyboards3: '-',
+};
+// The 18-column layout: what a tab created by the app, or widened by hand, has.
+const WIDE_SLOT_HEADERS = ['Guitarra', 'Bajo', 'Batería', 'Voz', 'Armónica', 'Teclados'].flatMap((name) => [1, 2, 3].map((n) => `${name} ${n}`));
+const WIDE_TAB_HEADER = ['posicion', 'id_tema', 'titulo', 'artista', 'tono'].concat(WIDE_SLOT_HEADERS, ['Otros']);
 const DRAFT_MARKER = 'zz-borrador-secreto';
 const WRITE_OPS = ['insertSheet', 'deleteSheet', 'setValues', 'setValue', 'setNumberFormat', 'deleteRow', 'insertRowAfter'];
 
@@ -399,7 +407,10 @@ test('addSong appends the catalog song at max + 1 with the request key, seven op
   const read = readTab(fake, UPCOMING);
   assert.deepStrictEqual(read[3], {
     position: '4', songId: 'crossroads', title: 'Crossroads', artist: 'Eric Clapton', key: 'E',
-    slots: { guitar1: null, guitar2: null, bass: null, drums: null, vocals: null, harmonica: null, keyboards: null },
+    slots: {
+      ...OLD_LAYOUT_ABSENT, guitar1: null, guitar2: null, bass1: null, drums1: null, vocals1: null, harmonica1: null, keyboards1: null,
+      bass: null, drums: null, vocals: null, harmonica: null, keyboards: null,
+    },
     extraParticipants: null,
   });
   const admin = call(fake, 'readJams');
@@ -429,7 +440,7 @@ test('addSong to a jam with no tab creates it with the header in documented orde
   const body = addSong(fake, {});
   assert.equal(body.position, 1);
   assert.deepStrictEqual(fake.log[0], ['insertSheet', UPCOMING]);
-  assert.deepStrictEqual(fake.log[1], ['setValues', UPCOMING, 1, 1, [TAB_HEADER]]);
+  assert.deepStrictEqual(fake.log[1], ['setValues', UPCOMING, 1, 1, [WIDE_TAB_HEADER]]);
   assert.deepStrictEqual(readTab(fake, UPCOMING).map((r) => [r.position, r.songId, r.key]), [['1', 'crossroads', 'A']]);
   // The same with a header-only tab.
   const empty = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER] } });
@@ -521,7 +532,7 @@ test('checkSetlistWrite creates the check tab, appends the marker, reads it back
   assert.deepStrictEqual(call(fake, 'checkSetlistWrite', {}, svc), { schemaVersion: 1, ok: true });
   assert.equal(SETLIST_CHECK_TAB, '_prueba_lista');
   assert.deepStrictEqual(fake.log[0], ['insertSheet', SETLIST_CHECK_TAB]);
-  assert.deepStrictEqual(fake.log[1], ['setValues', SETLIST_CHECK_TAB, 1, 1, [TAB_HEADER]]);
+  assert.deepStrictEqual(fake.log[1], ['setValues', SETLIST_CHECK_TAB, 1, 1, [WIDE_TAB_HEADER]]);
   assert.deepStrictEqual(fake.log.at(-1), ['deleteSheet', SETLIST_CHECK_TAB]);
   assert.ok(fake.log.every((op) => op[1] === SETLIST_CHECK_TAB), 'another tab was touched');
   assert.deepStrictEqual(Object.keys(fake.tabs).sort(), before);
@@ -846,7 +857,7 @@ test('checkSetlistRemove appends three markers, removes the second, reads back 1
   const svc = services();
   assert.deepStrictEqual(call(fake, 'checkSetlistRemove', {}, svc), { schemaVersion: 1, ok: true });
   assert.deepStrictEqual(fake.log[0], ['insertSheet', SETLIST_CHECK_TAB]);
-  assert.deepStrictEqual(fake.log[1], ['setValues', SETLIST_CHECK_TAB, 1, 1, [TAB_HEADER]]);
+  assert.deepStrictEqual(fake.log[1], ['setValues', SETLIST_CHECK_TAB, 1, 1, [WIDE_TAB_HEADER]]);
   assert.ok(fake.log.some((op) => op[0] === 'deleteRow' && op[2] === 3), 'the second marker was not deleted');
   assert.ok(fake.log.some((op) => op[0] === 'setValues' && op[2] === 3 && JSON.stringify(op[4]) === '[["2"]]'), 'the third marker was not renumbered');
   assert.deepStrictEqual(fake.log.at(-1), ['deleteSheet', SETLIST_CHECK_TAB]);
@@ -1109,7 +1120,7 @@ test('setSlotCount filled slots refused without any partial writes', () => {
 });
 
 test('setSlotCount remove and restore every default instrument; same count is no-op', () => {
-  const instruments = { guitar: ['guitar1', 'guitar2'], bass: ['bass'], drums: ['drums'], vocals: ['vocals'], harmonica: ['harmonica'], keyboards: ['keyboards'] };
+  const instruments = { guitar: ['guitar1', 'guitar2'], bass: ['bass1'], drums: ['drums1'], vocals: ['vocals1'], harmonica: ['harmonica1'], keyboards: ['keyboards1'] };
   for (const [instrument, fields] of Object.entries(instruments)) {
     const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A')] } });
     assert.equal(setSlotCount(fake, { instrument, count: fields.length }).ok, true);
@@ -1126,8 +1137,8 @@ test('setSlotCount validates in order and writes nothing on failures', () => {
     [{ date: '2026-02-30', songId: 'BAD', instrument: 'kazoo', count: -1 }, 'invalid_date'],
     [{ songId: 'BAD', instrument: 'kazoo', count: -1 }, 'invalid_song'],
     ...[undefined, 'kazoo', 'Guitar', '__proto__', 7].map(instrument => [{ instrument, count: -1 }, 'invalid_instrument']),
-    ...[undefined, '1', null, true, -1, 3, 1.5, NaN, Infinity].map(count => [{ count, date: '1999-01-01' }, 'invalid_count']),
-    [{ instrument: 'bass', count: 2 }, 'invalid_count'],
+    ...[undefined, '1', null, true, -1, 4, 1.5, NaN, Infinity].map(count => [{ count, date: '1999-01-01' }, 'invalid_count']),
+    [{ instrument: 'bass', count: 4 }, 'invalid_count'],
     [{ date: '1999-01-01' }, 'unknown_jam'],
     [{ date: PAST }, 'jam_not_editable'],
     [{ date: LATER }, 'jam_not_editable'],
@@ -1157,10 +1168,10 @@ test('setSlotCount uses mapped headers and id after removal renumber, GET mirror
   assert.equal(call(fake, 'removeSong', { date: UPCOMING, songId: 'red-house' }).ok, true);
   fake.log.length = 0;
   const result = setSlotCount(fake, { instrument: 'harmonica', count: 0 });
-  assert.equal(result.slots.harmonica, '-');
+  assert.equal(result.slots.harmonica1, '-');
   const get = handleGet({ resource: 'jams' }, fake.spreadsheet);
   const jam = get.jams.find(j => j.date === UPCOMING);
-  assert.equal(jam.setlist[0].slots.harmonica, '-');
+  assert.equal(jam.setlist[0].slots.harmonica1, '-');
   assert.equal(jam.setlist[0].songId, 'crossroads');
   assert.equal(jam.setlist[0].position, '1');
   assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', UPCOMING, 2, header.indexOf('Armónica') + 1, '@'], ['setValue', UPCOMING, 2, header.indexOf('Armónica') + 1, '-']]);
@@ -1169,8 +1180,8 @@ test('setSlotCount uses mapped headers and id after removal renumber, GET mirror
 test('checkSetlistWrite exercises guitar removal and harmonica removal then restore', () => {
   const fake = fakeSpreadsheet();
   assert.equal(call(fake, 'checkSetlistWrite').ok, true);
-  const values = fake.log.filter(op => op[0] === 'setValue' && (op[3] === 7 || op[3] === 11));
-  assert.deepStrictEqual(values.map(op => [op[3], op[4]]), [[7, '-'], [11, '-'], [11, '']]);
+  const values = fake.log.filter(op => op[0] === 'setValue' && (op[3] === 7 || op[3] === 18));
+  assert.deepStrictEqual(values.map(op => [op[3], op[4]]), [[7, '-'], [18, '-'], [18, '']]);
 });
 
 test('checkSetlistWrite catches a dropped slot write and cleans up', () => {
@@ -1193,7 +1204,7 @@ test('setSlotCount rereads trimmed display cells including names assigned during
     return range;
   };
   const result = setSlotCount(fake);
-  assert.equal(result.slots.bass, 'Concurrent bass');
+  assert.equal(result.slots.bass1, 'Concurrent bass');
   assert.equal(result.slots.guitar2, '-');
   assert.equal(writes(fake.log).length, 2);
 });
@@ -1233,7 +1244,7 @@ test('assignSlot validates inputs in deterministic order before jam or tab acces
     [{ songId: 'BAD', instrument: 'kazoo', ordinal: 0, name: '' }, 'invalid_song'],
     [{ instrument: 'kazoo', ordinal: 0, name: '' }, 'invalid_slot'],
     [{ instrument: 'guitar', ordinal: 0, name: '' }, 'invalid_slot'],
-    [{ instrument: 'guitar', ordinal: 3, name: '' }, 'invalid_slot'],
+    [{ instrument: 'guitar', ordinal: 4, name: '' }, 'invalid_slot'],
     [{ date: '1999-01-01', name: '' }, 'invalid_name'],
     [{ date: '1999-01-01' }, 'unknown_jam'],
     [{ date: PAST }, 'jam_not_editable'],
@@ -1383,4 +1394,143 @@ test('setSlotCount needs passphrase and write lock; neither refusal writes', () 
   assertError(setSlotCount(fake, {}, svc), 'busy');
   assert.deepStrictEqual(writes(fake.log), []);
   assert.equal(ACTIONS.setSlotCount.write, true);
+});
+
+// ---- lineup-grow-any-instrument: three fixed columns per instrument (D-18, amended) ----
+
+const WIDE_DEFAULT = ['', '', '-', '', '-', '-', '', '-', '-', '', '-', '-', '', '-', '-', '', '-', '-'];
+const WIDE_ORDER = ['guitar1', 'guitar2', 'guitar3', 'bass1', 'bass2', 'bass3', 'drums1', 'drums2', 'drums3', 'vocals1', 'vocals2', 'vocals3', 'harmonica1', 'harmonica2', 'harmonica3', 'keyboards1', 'keyboards2', 'keyboards3'];
+
+function wideTab(cells = WIDE_DEFAULT) {
+  return { [UPCOMING]: [WIDE_TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', cells)] };
+}
+
+function withCell(field, value) {
+  return WIDE_DEFAULT.map((cell, index) => (WIDE_ORDER[index] === field ? value : cell));
+}
+
+test('growing any instrument to three on a wide tab writes only the changed cells and moves no name', () => {
+  for (const instrument of ['guitar', 'bass', 'drums', 'vocals', 'harmonica', 'keyboards']) {
+    const fake = fakeSpreadsheet({ tabs: wideTab(withCell(`${instrument}1`, 'Ana')) });
+    const first = 6 + WIDE_ORDER.indexOf(`${instrument}1`);
+    let result = setSlotCount(fake, { instrument, count: 3 });
+    assert.equal(result.ok, true, instrument);
+    assert.equal(result.slots[`${instrument}1`], 'Ana');
+    assert.equal(result.slots[`${instrument}2`], null);
+    assert.equal(result.slots[`${instrument}3`], null);
+    const writtenColumns = writes(fake.log).filter((op) => op[0] === 'setValue').map((op) => op[3]);
+    assert.ok(!writtenColumns.includes(first), `${instrument}: the first slot was rewritten`);
+    result = setSlotCount(fake, { instrument, count: 2 });
+    assert.equal(result.slots[`${instrument}3`], '-');
+    assert.equal(result.slots[`${instrument}2`], null);
+  }
+});
+
+test('growing one instrument by one writes exactly one cell', () => {
+  const fake = fakeSpreadsheet({ tabs: wideTab(withCell('bass1', 'Ana')) });
+  const result = setSlotCount(fake, { instrument: 'bass', count: 2 });
+  assert.equal(result.slots.bass2, null);
+  assert.equal(result.slots.bass3, '-');
+  assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', UPCOMING, 2, 10, '@'], ['setValue', UPCOMING, 2, 10, '']]);
+});
+
+test('count 4 is invalid_count for every instrument on either layout, before any write', () => {
+  for (const options of [{ tabs: wideTab() }, {}]) {
+    for (const instrument of ['guitar', 'bass', 'drums', 'vocals', 'harmonica', 'keyboards']) {
+      const fake = fakeSpreadsheet(options);
+      assertError(setSlotCount(fake, { instrument, count: 4 }), 'invalid_count');
+      assert.deepStrictEqual(writes(fake.log), []);
+    }
+  }
+});
+
+test('a filled third slot at the new ceiling still blocks removal with slot_filled', () => {
+  const full = WIDE_DEFAULT.map((cell, index) => (WIDE_ORDER[index].startsWith('drums') ? 'Pia' : cell));
+  const fake = fakeSpreadsheet({ tabs: wideTab(full) });
+  assertError(setSlotCount(fake, { instrument: 'drums', count: 2 }), 'slot_filled');
+  assert.deepStrictEqual(writes(fake.log), []);
+});
+
+test('growing past the columns an old seven-column tab has is instrument_not_expandable, before any write', () => {
+  for (const [instrument, count] of [['guitar', 3], ['bass', 2], ['bass', 3], ['keyboards', 2], ['vocals', 3]]) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A')] } });
+    assertError(setSlotCount(fake, { instrument, count }), 'instrument_not_expandable');
+    assert.deepStrictEqual(writes(fake.log), [], `${instrument} ${count}`);
+  }
+});
+
+test('an old tab still shrinks and restores inside its own columns, and its missing columns read as "-"', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A')] } });
+  const shrunk = setSlotCount(fake, { instrument: 'guitar', count: 1 });
+  assert.equal(shrunk.slots.guitar2, '-');
+  assert.equal(shrunk.slots.guitar3, '-', 'a column the tab lacks is not an open slot');
+  const restored = setSlotCount(fake, { instrument: 'guitar', count: 2 });
+  assert.equal(restored.slots.guitar2, null);
+  assert.equal(restored.slots.guitar3, '-');
+});
+
+test('either spelling of the first column is read; both in one tab is duplicate_header', () => {
+  const numbered = ['posicion', 'id_tema', 'titulo', 'artista', 'tono', 'Guitarra 1', 'Guitarra 2', 'Bajo 1', 'Batería 1', 'Voz 1', 'Armónica 1', 'Teclados 1', 'Otros'];
+  const cells = ['', '', 'Bea', '', '', '', ''];
+  const fakeNumbered = fakeSpreadsheet({ tabs: { [UPCOMING]: [numbered, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', cells)] } });
+  const read = readTab(fakeNumbered, UPCOMING)[0].slots;
+  assert.equal(read.bass1, 'Bea');
+  assert.equal(read.bass2, '-');
+  const fakeOld = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', cells)] } });
+  assert.equal(readTab(fakeOld, UPCOMING)[0].slots.bass1, 'Bea');
+  for (const both of [numbered.concat(['Bajo']), TAB_HEADER.concat(['Bajo 1'])]) {
+    assertError(setSlotCount(fakeSpreadsheet({ tabs: { [UPCOMING]: [both] } })), 'duplicate_header');
+  }
+});
+
+test('a new song on a wide tab starts with the seven default slots open and eleven "-" cells', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [WIDE_TAB_HEADER] } });
+  assert.equal(addSong(fake, {}).position, 1);
+  const cells = fake.tabs[UPCOMING].cells[1].map((x) => x.value);
+  assert.deepStrictEqual(cells.slice(5, 23), WIDE_DEFAULT);
+  assert.equal(cells.filter((c) => c === '-').length, 11);
+  assert.equal(cells[23], '');
+  const slots = readTab(fake, UPCOMING)[0].slots;
+  assert.equal(Object.values(slots).filter((v) => v === null).length, 7 + 5, 'seven slots plus the five legacy mirrors');
+  assert.equal(Object.values(slots).filter((v) => v === '-').length, 11);
+});
+
+test('a new song on an old tab has no cell for the eleven extra columns', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: [TAB_HEADER] } });
+  addSong(fake, {});
+  assert.equal(fake.tabs[UPCOMING].cells[1].length, 13);
+});
+
+test('assignSlot and clearSlot reach a grown third slot', () => {
+  const fake = fakeSpreadsheet({ tabs: wideTab(WIDE_DEFAULT.map((cell, index) => (WIDE_ORDER[index].startsWith('vocals') ? '' : cell))) });
+  const target = { date: UPCOMING, songId: 'crossroads', instrument: 'vocals' };
+  const assigned = call(fake, 'assignSlot', Object.assign({ ordinal: 3, name: 'Lu' }, target));
+  assert.equal(assigned.ok, true);
+  assert.equal(assigned.column, WIDE_ORDER.indexOf('vocals3'));
+  const cleared = call(fake, 'clearSlot', Object.assign({ ordinal: 3, expectedName: 'Lu' }, target));
+  assert.equal(cleared.column, WIDE_ORDER.indexOf('vocals3'));
+  assert.equal(cleared.slots.vocals3, null);
+  assertError(call(fake, 'assignSlot', Object.assign({ ordinal: 4, name: 'Lu' }, target)), 'invalid_slot');
+});
+
+test('every slots object carries the five legacy keys equal to the first-column keys', () => {
+  const legacy = { bass: 'bass1', drums: 'drums1', vocals: 'vocals1', harmonica: 'harmonica1', keyboards: 'keyboards1' };
+  const sameAsFirstColumn = (slots, label) => {
+    assert.equal(Object.keys(slots).length, 23, label);
+    for (const [old, now] of Object.entries(legacy)) {
+      assert.equal(slots[old], slots[now], `${label}: ${old}`);
+    }
+  };
+  const cells = WIDE_DEFAULT.map((cell, index) => (['bass1', 'drums1', 'vocals1'].includes(WIDE_ORDER[index]) ? 'Ana' : cell));
+  for (const tabs of [wideTab(cells), { [UPCOMING]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric', 'A', ['', '', 'Bea', 'Diego', '-', '', ''])] }]) {
+    const fake = fakeSpreadsheet({ tabs });
+    sameAsFirstColumn(readTab(fake, UPCOMING)[0].slots, 'GET');
+    sameAsFirstColumn(setSlotCount(fake, { instrument: 'harmonica', count: 1 }).slots, 'setSlotCount');
+    sameAsFirstColumn(setSlotCount(fake, { instrument: 'harmonica', count: 0 }).slots, 'setSlotCount shrink');
+  }
+  const filled = fakeSpreadsheet({ tabs: wideTab(cells) });
+  const target = { date: UPCOMING, songId: 'crossroads', instrument: 'bass', ordinal: 1, expectedName: 'Ana' };
+  const cleared = call(filled, 'clearSlot', target);
+  sameAsFirstColumn(cleared.slots, 'clearSlot');
+  assert.equal(cleared.slots.bass, null);
 });

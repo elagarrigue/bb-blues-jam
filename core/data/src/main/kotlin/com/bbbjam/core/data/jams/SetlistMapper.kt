@@ -130,7 +130,7 @@ internal object SetlistMapper {
      * empty cell is an open slot; anything else is the musician's name.
      */
     private fun lineupSlots(slots: SlotsDto): List<Pair<Int, Slot>> =
-        Lineup.DEFAULT_INSTRUMENTS.zip(slots.cells()).mapIndexedNotNull { column, (instrument, raw) ->
+        Lineup.MAX_INSTRUMENTS.zip(slots.cells()).mapIndexedNotNull { column, (instrument, raw) ->
             val cell = raw.trimmedCell()
             if (cell == NOT_IN_LINEUP) null else column to Slot(instrument, cell)
         }

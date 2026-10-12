@@ -65,10 +65,7 @@ class DefaultSetlistRepositoryTest {
                     "schemaVersion": 1,
                     "ok": true,
                     "column": 0,
-                    "slots": {
-                        "guitar1": null, "guitar2": null, "bass": null, "drums": null,
-                        "vocals": null, "harmonica": null, "keyboards": null
-                    }
+                    "slots": ${Fixtures.slotsJson()}
                 }""",
             )
 
@@ -151,6 +148,10 @@ class DefaultSetlistRepositoryTest {
         assertEquals(listOf(1, 2), songs.map { it.position })
         assertEquals(CROSSROADS, songs[1].songId)
         assertEquals(Key("E"), songs[1].key)
+        // The new song's seven default slots sit in their columns of the eighteen-column layout, the
+        // same columns the server answers assignSlot with.
+        val columns = jamsDao.observeJams().first().single().slots.filter { it.position == 2 }.map { it.columnIndex }
+        assertEquals(Lineup.DEFAULT_COLUMNS, columns)
         assertEquals(Lineup.default(), songs[1].lineup)
         assertEquals(emptyList<SetlistAdd>(), repository.observeAdds().first())
 

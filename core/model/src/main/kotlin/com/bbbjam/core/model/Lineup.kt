@@ -1,16 +1,16 @@
 package com.bbbjam.core.model
 
 /**
- * The [Slot]s of one [JamSong]: the default seven with some possibly removed, never more of an
- * instrument than the default (D-18). Zero of an instrument is valid. Slot order is kept: the k-th
- * slot of an instrument is the k-th Sheet column of that instrument not holding `-`.
+ * The [Slot]s of one [JamSong]: the default seven, with some removed or some added, never more
+ * than [maxCount] of an instrument (D-18, amended 12 October 2026). Zero of an instrument is valid.
+ * Slot order is kept: the k-th slot of an instrument is the k-th Sheet column of that instrument not holding `-`.
  */
 data class Lineup(val slots: List<Slot>) {
     init {
         slots.groupingBy { it.instrument }.eachCount().forEach { (instrument, count) ->
-            val allowed = DEFAULT_COUNTS[instrument] ?: 0
+            val allowed = maxCount(instrument)
             require(count <= allowed) {
-                "Lineup has $count $instrument slots; the default allows at most $allowed (D-18)"
+                "Lineup has $count $instrument slots; at most $allowed are allowed (D-18)"
             }
         }
     }
@@ -42,8 +42,8 @@ data class Lineup(val slots: List<Slot>) {
      * remove a filled slot. Open slots are removed from the end of their instrument's order.
      */
     fun withSlotCount(instrument: Instrument, count: Int): Lineup? {
-        require(count in 0..defaultCount(instrument)) {
-            "Lineup slot count $count for $instrument must be in 0..${defaultCount(instrument)}"
+        require(count in 0..maxCount(instrument)) {
+            "Lineup slot count $count for $instrument must be in 0..${maxCount(instrument)}"
         }
 
         val currentCount = count(instrument)
@@ -88,6 +88,33 @@ data class Lineup(val slots: List<Slot>) {
 
         /** The number of slots assigned to [instrument] in the default lineup. */
         fun defaultCount(instrument: Instrument): Int = DEFAULT_COUNTS[instrument] ?: 0
+
+        private const val MAX_SLOTS_PER_INSTRUMENT = 3
+
+        /**
+         * Every Sheet slot column, three per instrument, in the Sheet's column order (the order of
+         * the `slots` keys). The k-th entry of an instrument is its k-th slot column.
+         */
+        val MAX_INSTRUMENTS: List<Instrument> = listOf(
+            Instrument.GUITAR,
+            Instrument.BASS,
+            Instrument.DRUMS,
+            Instrument.VOCALS,
+            Instrument.HARMONICA,
+            Instrument.KEYBOARDS,
+        ).flatMap { instrument -> List(MAX_SLOTS_PER_INSTRUMENT) { instrument } }
+
+        /**
+         * The [MAX_INSTRUMENTS] column of each [DEFAULT_INSTRUMENTS] entry: the k-th default slot of an
+         * instrument is that instrument's k-th column (0, 1, 3, 6, 9, 12, 15).
+         */
+        val DEFAULT_COLUMNS: List<Int> = DEFAULT_INSTRUMENTS.mapIndexed { index, instrument ->
+            val ordinal = DEFAULT_INSTRUMENTS.take(index).count { it == instrument }
+            MAX_INSTRUMENTS.indices.filter { MAX_INSTRUMENTS[it] == instrument }[ordinal]
+        }
+
+        /** The most slots [instrument] may hold in one song's lineup, independent of its default. */
+        fun maxCount(instrument: Instrument): Int = MAX_INSTRUMENTS.count { it == instrument }
 
         /** The default lineup: seven open slots in [DEFAULT_INSTRUMENTS] order. */
         fun default(): Lineup = Lineup(DEFAULT_INSTRUMENTS.map { Slot(it) })

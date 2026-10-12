@@ -61,7 +61,7 @@ private fun SongAdminState.lineupLine(date: LocalDate, song: JamSong, instrument
         removeDescription = "Sacar un cupo de $name",
         addDescription = "Sumar un cupo de $name",
         canRemove = canRemove,
-        canAdd = count < Lineup.defaultCount(instrument),
+        canAdd = count < Lineup.maxCount(instrument),
         blockedNote = if (count > 0 && !canRemove) NextJamCopy.LINEUP_BLOCKED else null,
         events = EventHandler(key = "${removalKey(date, song.songId)}|$instrument|count") {
             onLineupCount(date, song.songId, instrument, it)

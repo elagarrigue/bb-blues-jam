@@ -59,7 +59,7 @@ internal fun rememberLineupControls(
                 )
                 val delta = if (event == LineupEditorLineUiModel.Event.Add) 1 else -1
                 val target = shown.count(instrument) + delta
-                if (target in 0..com.bbbjam.core.model.Lineup.defaultCount(instrument) &&
+                if (target in 0..com.bbbjam.core.model.Lineup.maxCount(instrument) &&
                     shown.withSlotCount(instrument, target) != null
                 ) {
                     val token = reservations.reserve(date, id, instrument, target)

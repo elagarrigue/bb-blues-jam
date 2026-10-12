@@ -106,6 +106,27 @@ class NextJamLineupChangeTest {
     }
 
     @Test
+    fun `a tab without the column for a slot reports why in Spanish`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(listOf(crossroads)))
+            expectMostRecentItem()
+            setlist.lineupChanges.value = listOf(
+                change(
+                    1,
+                    2,
+                    LineupChange.State.Failed(WriteOutcome.Rejected("instrument_not_expandable")),
+                    Instrument.BASS,
+                ),
+            )
+            assertEquals(
+                "Esta hoja todavía no tiene columnas para ese cupo. Agregalas en el Sheet y volvé a probar.",
+                awaitItem().failures().single().message,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `musician ignores changes and latest Sending per instrument wins`() = runTest {
         session.isAdmin.value = false
         setlist.lineupChanges.value = listOf(change(1, 0))

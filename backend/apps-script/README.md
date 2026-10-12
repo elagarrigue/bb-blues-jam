@@ -115,6 +115,17 @@ In the Apps Script editor, open each file and search (Ctrl+F) for its distinctiv
 
 If any check fails, paste that file again over its whole content, save, and check again.
 
+### Redeploy for three slots per instrument (`lineup-grow-any-instrument`, 12 October 2026)
+
+Three files change: `Normalize.gs`, `Jams.gs` and `Post.gs` (`Code.gs`, `Catalog.gs` and
+`appsscript.json` do not). The procedure is **Updating the code later**; the step-by-step version
+for the person doing it, including the Sheet columns to add, is
+[`docs/migrations/lineup-grow-any-instrument-sheet-migration.md`](../../docs/migrations/lineup-grow-any-instrument-sheet-migration.md).
+Distinctive lines to add to the paste check: `Normalize.gs` has `(spec.aliases || [])`; `Jams.gs` has
+`var NOT_IN_LINEUP_ = '-';`; `Post.gs` has `var MAX_SLOTS_PER_INSTRUMENT_ = 3;`. The
+`unknown_action` list is unchanged, so it cannot tell the old version from the new one: use the
+paste check.
+
 ### Redeploy for the jams route (`apps-script-jams-read-endpoint`)
 
 The script is already deployed with the catalog route. This adds the `jams` route. The

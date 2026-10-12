@@ -34,7 +34,15 @@ class JamsRefreshOutcomeTest {
 
     @Test
     fun `row issues are logged by index and never with a musician's name`() {
-        val slots = SlotsDto("Ana", "Luis", null, null, null, null, null)
+        val slots = SlotsDto(
+            guitar1 = "Ana",
+            guitar2 = "Luis",
+            bass1 = null,
+            drums1 = null,
+            vocals1 = null,
+            harmonica1 = null,
+            keyboards1 = null,
+        )
         val rows = listOf(
             SetlistRowDto("1", "crossroads", "Crossroads", "Eric Clapton", "A", slots, "Juan saxo; Marta (voz)"),
             SetlistRowDto("2", "crossroads", "Crossroads", "Eric Clapton", "Bb m", slots, null),

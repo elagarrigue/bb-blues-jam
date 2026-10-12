@@ -82,14 +82,105 @@ class SetlistLineupChangesTest {
         assertEquals("guitar", request.getValue("instrument").jsonPrimitive.content)
         assertEquals("1", request.getValue("count").jsonPrimitive.content)
         post.answers +=
-            body(
-                """{"schemaVersion":1,"ok":true,
-            "slots":{"guitar1":"Concurrent","guitar2":null,
-            "bass":null,"drums":null,"vocals":null,
-            "harmonica":null,"keyboards":null}}""",
-            )
+            body("""{"schemaVersion":1,"ok":true,"slots":${Fixtures.slotsJson("guitar1" to "Concurrent")}}""")
         assertEquals(SetSlotCountOutcome.SlotCountSet, repository.setSlotCount(DATE, CROSSROADS, Instrument.GUITAR, 2))
         assertEquals(2, cachedSongs()[1].lineup.count(Instrument.GUITAR))
+    }
+
+    @Test
+    fun `growing a non-guitar instrument to three mirrors the eighteen confirmed columns`() = runTest {
+        val repository = seeded()
+        seedFour()
+        post.answers += body(
+            """{"schemaVersion":1,"ok":true,"slots":${
+                Fixtures.slotsJson("vocals1" to "Lu", "vocals2" to null, "vocals3" to null)
+            }}""",
+        )
+        assertEquals(SetSlotCountOutcome.SlotCountSet, repository.setSlotCount(DATE, CROSSROADS, Instrument.VOCALS, 3))
+        val crossroads = jamsDao.observeJams().first().single().slots.filter { it.position == 2 }
+        assertEquals(listOf(0, 1, 3, 6, 9, 10, 11, 12, 15), crossroads.map { it.columnIndex })
+        assertEquals(Instrument.VOCALS.name, crossroads.first { it.columnIndex == 11 }.instrument)
+        assertEquals(3, cachedSongs()[1].lineup.count(Instrument.VOCALS))
+        assertEquals("Lu", cachedSongs()[1].lineup.slotAt(Instrument.VOCALS, SlotPosition(1))?.musicianName)
+        assertEquals(
+            "3",
+            Json.parseToJsonElement(post.bodies.single()).jsonObject.getValue("count").jsonPrimitive.content,
+        )
+    }
+
+    @Test
+    fun `a legacy seven-key confirmed answer mirrors the default columns`() = runTest {
+        val repository = seeded()
+        seedFour()
+        post.answers += body(
+            """{"schemaVersion":1,"ok":true,"slots":{"guitar1":"Concurrent","guitar2":"-","bass":null,"drums":null,
+            "vocals":"Lu","harmonica":null,"keyboards":null}}""",
+        )
+        assertEquals(SetSlotCountOutcome.SlotCountSet, repository.setSlotCount(DATE, CROSSROADS, Instrument.GUITAR, 1))
+        val crossroads = jamsDao.observeJams().first().single().slots.filter { it.position == 2 }
+        assertEquals(listOf(0, 3, 6, 9, 12, 15), crossroads.map { it.columnIndex })
+        assertEquals("Lu", crossroads.first { it.columnIndex == 9 }.musicianName)
+    }
+
+    @Test
+    fun `an eighteen-plus-legacy answer is mirrored and a disagreeing legacy key is unavailable`() = runTest {
+        val repository = seeded()
+        seedFour()
+        val mirrors = ""","bass":null,"drums":null,"vocals":null,"harmonica":null,"keyboards":null}"""
+        post.answers += body(
+            """{"schemaVersion":1,"ok":true,"slots":${Fixtures.slotsJson().removeSuffix("}") + mirrors}}""",
+        )
+        assertEquals(SetSlotCountOutcome.SlotCountSet, repository.setSlotCount(DATE, CROSSROADS, Instrument.BASS, 1))
+        val bad = Fixtures.slotsJson("bass1" to "Lu").removeSuffix("}") + mirrors
+        post.answers += body("""{"schemaVersion":1,"ok":true,"slots":$bad}""")
+        assertEquals(
+            SetSlotCountOutcome.NotSet(WriteOutcome.Unavailable),
+            repository.setSlotCount(DATE, CROSSROADS, Instrument.BASS, 1),
+        )
+    }
+
+    @Test
+    fun `clearSlot accepts the legacy seven-key answer and rejects any other key set`() = runTest {
+        val repository = seeded()
+        seedFour()
+        database.setlistDao().assignOpenSlot(DATE.toString(), "red-house", 1, 0, "Ana")
+        post.answers += body(
+            """{"schemaVersion":1,"ok":true,"column":0,"slots":{"guitar1":null,"guitar2":"-","bass":null,"drums":null,
+            "vocals":null,"harmonica":null,"keyboards":null}}""",
+        )
+        assertEquals(
+            ClearSlotOutcome.Cleared,
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana"),
+        )
+        assertEquals(
+            listOf(0, 3, 6, 9, 12, 15),
+            jamsDao.observeJams().first().single().slots.filter { it.position == 1 }.map { it.columnIndex },
+        )
+        database.setlistDao().assignOpenSlot(DATE.toString(), "red-house", 1, 0, "Ana")
+        post.answers += body("""{"schemaVersion":1,"ok":true,"column":0,"slots":{"guitar1":null,"guitar2":"-"}}""")
+        assertTrue(
+            repository.clearSlot(DATE, SongId("red-house"), Instrument.GUITAR, SlotPosition(1), "Ana") !is
+                ClearSlotOutcome.Cleared,
+        )
+    }
+
+    @Test
+    fun `a fourth slot is refused locally without posting, and a seven-key answer is unavailable`() = runTest {
+        val repository = seeded()
+        seedFour()
+        assertEquals(
+            SetSlotCountOutcome.NotSet(WriteOutcome.Rejected("invalid_count")),
+            repository.setSlotCount(DATE, CROSSROADS, Instrument.BASS, 4),
+        )
+        assertTrue(post.bodies.isEmpty())
+        post.answers += body(
+            """{"schemaVersion":1,"ok":true,"slots":{"guitar1":null,"guitar2":null,"bass1":null,"drums1":null,
+            "vocals1":null,"harmonica1":null,"keyboards1":null}}""",
+        )
+        assertEquals(
+            SetSlotCountOutcome.NotSet(WriteOutcome.Unavailable),
+            repository.setSlotCount(DATE, CROSSROADS, Instrument.BASS, 2),
+        )
     }
 
     @Test
@@ -103,10 +194,12 @@ class SetlistLineupChangesTest {
             body("""{"schemaVersion":1,"ok":true}""") to WriteOutcome.Unavailable,
             body("""{"schemaVersion":1,"ok":true,"slots":{"guitar1":false}}""") to WriteOutcome.Unavailable,
             body(
+                """{"schemaVersion":1,"ok":true,"slots":${Fixtures.slotsJson("keyboards1" to " ")}}""",
+            ) to WriteOutcome.Unavailable,
+            body(
                 """{"schemaVersion":1,"ok":true,
-            "slots":{"guitar1":null,"guitar2":null,
-            "bass":null,"drums":null,"vocals":null,
-            "harmonica":null,"keyboards":" "}}""",
+            "slots":{"guitar1":null,"guitar2":null,"bass1":null,"drums1":null,"vocals1":null,
+            "harmonica1":null,"keyboards1":null}}""",
             ) to WriteOutcome.Unavailable,
         )
         cases.forEach { (answer, reason) ->
@@ -123,7 +216,7 @@ class SetlistLineupChangesTest {
         }
         assertEquals(
             SetSlotCountOutcome.NotSet(WriteOutcome.Rejected("invalid_count")),
-            repository.setSlotCount(DATE, CROSSROADS, Instrument.GUITAR, 3),
+            repository.setSlotCount(DATE, CROSSROADS, Instrument.GUITAR, 4),
         )
         assertEquals(cases.size, post.bodies.size)
     }
@@ -303,10 +396,7 @@ class SetlistLineupChangesTest {
     }
 
     private fun lineupOk() = body(
-        """{"schemaVersion":1,"ok":true,
-            "slots":{"guitar1":"Concurrent","guitar2":"-",
-            "bass":null,"drums":null,"vocals":null,
-            "harmonica":null,"keyboards":null}}""",
+        """{"schemaVersion":1,"ok":true,"slots":${Fixtures.slotsJson("guitar1" to "Concurrent", "guitar2" to "-")}}""",
     )
 
     // ---- fixtures ----

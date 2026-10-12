@@ -34,7 +34,7 @@ Catalog is the only pool the assistant may select from.
 ### Lineup
 The set of Slots defined for one JamSong — which instruments are needed and how many of each. The
 default Lineup is 2 guitars, bass, drums, vocals, harmonica, keyboards. Adjusting it per song only
-removes Slots; a Lineup never has more of an instrument than the default (D-18).
+removes or adds Slots; a Lineup never has more than three of an instrument (D-18, amended 12 October 2026).
 
 ### Slot
 One position for one instrument within a JamSong's Lineup. A Slot is either open or filled.

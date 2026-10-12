@@ -9,6 +9,7 @@ import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.SetlistDao
 import com.bbbjam.core.data.remote.ServiceCodes
+import com.bbbjam.core.data.remote.SlotKeys
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
@@ -153,33 +154,11 @@ internal class SetlistSlotClears(
     private companion object {
         const val SLOT_EMPTY = "slot_empty"
         const val SLOT_CHANGED = "slot_changed"
-        val FIELDS = listOf("guitar1", "guitar2", "bass", "drums", "vocals", "harmonica", "keyboards")
 
-        fun confirmedSlots(body: JsonObject, entry: SlotClear): List<JamSlotEntity>? =
-            responseSlots(body)?.let { slots ->
-                FIELDS.mapIndexedNotNull { column, field ->
-                    val value = slots.getValue(field)
-                    val name = (value as? JsonPrimitive)?.takeUnless { it == JsonNull }?.content
-                    if (name == "-") {
-                        null
-                    } else {
-                        JamSlotEntity(
-                            entry.jamDate.toString(),
-                            0,
-                            column,
-                            com.bbbjam.core.model.Lineup.DEFAULT_INSTRUMENTS[column].name,
-                            name,
-                        )
-                    }
-                }
-            }
-
-        private fun responseSlots(body: JsonObject): JsonObject? = (body["slots"] as? JsonObject)
+        fun confirmedSlots(body: JsonObject, entry: SlotClear): List<JamSlotEntity>? = (body["slots"] as? JsonObject)
             ?.takeIf { body["schemaVersion"] == JsonPrimitive(1) }
-            ?.takeIf { it.keys == FIELDS.toSet() }
-            ?.takeIf { slots -> slots.values.all(::validSlotValue) }
-
-        private fun validSlotValue(value: kotlinx.serialization.json.JsonElement): Boolean =
-            value == JsonNull || (value is JsonPrimitive && value.isString && value.content.isNotBlank())
+            ?.let(SlotKeys::cells)
+            ?.takeIf { cells -> cells.all(::validCell) }
+            ?.let { cells -> slotEntities(cells, entry.jamDate.toString()) }
     }
 }

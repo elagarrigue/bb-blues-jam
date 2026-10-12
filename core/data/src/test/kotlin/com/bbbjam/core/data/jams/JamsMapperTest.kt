@@ -40,7 +40,7 @@ class JamsMapperTest {
         assertEquals("B.B. King", songs.first().artist)
         assertEquals(Key("B"), songs.first().key)
         assertEquals(0, jam.available().droppedRows)
-        assertEquals(listOf(0, 1, 2, 3, 4, 5, 6), mapped.jams.single().slotColumns.getValue(1))
+        assertEquals(Lineup.DEFAULT_COLUMNS, mapped.jams.single().slotColumns.getValue(1))
     }
 
     @Test
@@ -110,8 +110,8 @@ class JamsMapperTest {
         assertEquals(1, crossroads.lineup.slots.count { it.instrument == Instrument.GUITAR })
         assertEquals(5, crossroads.lineup.openSlots.size)
         assertEquals(Lineup.default(), songs[2].lineup)
-        assertEquals(listOf(0, 1, 2, 3, 4, 6), mapped.slotColumns.getValue(1))
-        assertEquals(listOf(0, 2, 3, 4, 5, 6), mapped.slotColumns.getValue(2))
+        assertEquals(listOf(0, 1, 3, 6, 9, 15), mapped.slotColumns.getValue(1))
+        assertEquals(listOf(0, 3, 6, 9, 12, 15), mapped.slotColumns.getValue(2))
     }
 
     @Test
@@ -237,7 +237,7 @@ class JamsMapperTest {
         val first = mapped.jams[0].jam
         assertEquals(JamStatus.DRAFT, first.status)
         assertEquals(listOf(1, 2), first.available().songs.map { it.position })
-        assertEquals(mapOf(1 to (0..6).toList(), 2 to (0..6).toList()), mapped.jams[0].slotColumns)
+        assertEquals(mapOf(1 to Lineup.DEFAULT_COLUMNS, 2 to Lineup.DEFAULT_COLUMNS), mapped.jams[0].slotColumns)
         assertEquals(Setlist.Available(emptyList()), mapped.jams[1].jam.setlist)
         assertEquals(Setlist.Unavailable(SetlistProblem.INVALID_TAB), mapped.jams[2].jam.setlist)
         assertEquals(Setlist.Unavailable(SetlistProblem.UNKNOWN), mapped.jams[3].jam.setlist)
@@ -462,8 +462,15 @@ class JamsMapperTest {
         extras: String? = null,
     ) = SetlistRowDto(position, songId, title, artist, key, slots, extras)
 
-    private fun slots(vararg cells: String?) =
-        SlotsDto(cells[0], cells[1], cells[2], cells[3], cells[4], cells[5], cells[6])
+    /** The seven default cells; the eleven slot columns beyond the default read as `-`, as on a 7-column tab. */
+    private fun slots(vararg cells: String?) = SlotsDto(
+        cells[0], cells[1], "-",
+        cells[2], "-", "-",
+        cells[3], "-", "-",
+        cells[4], "-", "-",
+        cells[5], "-", "-",
+        cells[6], "-", "-",
+    )
 
     private companion object {
         val DATE: LocalDate = LocalDate.of(2026, 7, 25)

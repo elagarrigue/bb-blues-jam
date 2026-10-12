@@ -11,7 +11,7 @@ Setlist = Available(songs: List<JamSong>, droppedRows) | Withheld | Unavailable(
 SetlistProblem = MISSING_TAB | INVALID_TAB | INVALID_ROWS | UNKNOWN
 JamSong(position, songId, title, artist, key, lineup: Lineup,
         extraParticipants: List<ExtraParticipant> = [])
-Lineup(slots: List<Slot>)                // at most the default count of each instrument (D-18)
+Lineup(slots: List<Slot>)                // at most 3 of each instrument (D-18, amended)
 Slot(instrument, musicianName?)          // open when musicianName is null
 ExtraParticipant(name, instrument)       // free-text instrument; never open (D-18)
 Song(id, title, artist, defaultKey, tempo?, tags, difficulty?,
@@ -80,7 +80,8 @@ the model's memory, which is exactly where an LLM is weakest on this repertoire 
   slots open (D-18). The same song twice in one setlist is refused. Adding never creates a jam.
 - A **JamSong** references exactly one **Song** and owns exactly one **Lineup**.
 - A **Lineup** is a list of **Slots**. Default: 2 guitars, 1 bass, 1 drums, 1 vocals, 1 harmonica,
-  1 keyboards — adjustable per JamSong only by removing Slots, never beyond the default (D-18).
+  1 keyboards — adjustable per JamSong by removing open Slots or adding Slots up to 3 of each instrument
+  (D-18, amended 12 October 2026; `Lineup.maxCount`, distinct from `Lineup.defaultCount`).
 - A **JamSong** may also list **Extra Participants** ("Otros"): a name and a free-text instrument
   for anyone playing outside the Lineup. They are never open and never count for the open-slot
   filter (D-18).

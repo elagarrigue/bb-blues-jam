@@ -168,7 +168,7 @@ in `sheet-schema.md`, **Reading cells**.
 
 ### Setlist row
 
-Every row has exactly these keys, in this order, and `slots` has exactly these seven:
+Every row has exactly these keys, in this order, and `slots` has exactly these eighteen:
 
 | Field | Jam tab header | Value |
 |---|---|---|
@@ -177,15 +177,17 @@ Every row has exactly these keys, in this order, and `slots` has exactly these s
 | `title` | `titulo` | text or `null`: the fallback copy; the mapper resolves the catalog |
 | `artist` | `artista` | text or `null`: same fallback |
 | `key` | `tono` | text or `null` |
-| `slots` | the seven slot columns | `{"guitar1","guitar2","bass","drums","vocals","harmonica","keyboards"}` from `Guitarra 1`, `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados`; each `null` (empty), `"-"` (raw) or a name |
+| `slots` | the eighteen slot columns, three per instrument | `{"guitar1","guitar2","guitar3","bass1","bass2","bass3","drums1","drums2","drums3","vocals1","vocals2","vocals3","harmonica1","harmonica2","harmonica3","keyboards1","keyboards2","keyboards3"}` from `Guitarra 1`-`3`, `Bajo 1`-`3`, `Batería 1`-`3`, `Voz 1`-`3`, `Armónica 1`-`3`, `Teclados 1`-`3` (the first of the five single-slot instruments also under its old un-numbered header); each `null` (empty), `"-"` (raw) or a name. A column the tab does not have reads `"-"`, never `null`. The five legacy keys `bass`, `drums`, `vocals`, `harmonica`, `keyboards` are **also** sent, after the eighteen, each equal to its `...1` key (23 keys in all), so an app that predates the layout keeps reading |
 | `extraParticipants` | `Otros` | the raw trimmed cell, or `null` when empty or when the column is missing (D-18) |
 
 Rows come in tab order, not sorted: the mapper sorts by `position`. A row whose mapped cells are
 all empty is skipped, and unmapped columns are ignored. The key order of `slots` is the column
-order of `Lineup.DEFAULT_INSTRUMENTS`, so the mapper can compute a slot's ordinal (the k-th
+order of `Lineup.MAX_INSTRUMENTS`, so the mapper can compute a slot's ordinal (the k-th
 non-`-` column of that instrument). `-` and `Otros` are passed through raw: the Kotlin mapper is
 their only parser. Required tab headers: `posicion`, `id_tema`, `titulo`, `artista`, `tono` and
-all seven slot columns; `Otros` is optional.
+the original seven slot columns (`Guitarra 1`, `Guitarra 2`, and `Bajo`/`Bajo 1`, `Batería`/`Batería 1`,
+`Voz`/`Voz 1`, `Armónica`/`Armónica 1`, `Teclados`/`Teclados 1`); the other eleven slot columns and
+`Otros` are optional. Having both spellings of one slot is `duplicate_header`.
 
 ### Errors
 
@@ -345,8 +347,8 @@ cells ignored; 1 for an empty tab). Only the mapped columns are written, found b
 reads find them; each cell is set to the plain-text format `@` **before** its value, so Sheets
 cannot turn a title such as `7/4` into a date. `posicion` is written as text (the read path
 accepts it, `integerTextCell`). `titulo` and `artista` are the catalog's; `tono` is the request's
-`key`, never `tono_default` (D-08); the seven slot cells and `Otros` are written empty (open,
-D-18). The answer is `{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads",
+`key`, never `tono_default` (D-08); the seven default slot cells and `Otros` are written empty (open,
+D-18) and the eleven slot cells beyond the default are written `-` where the tab has the column. The answer is `{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads",
 "artist":"Eric Clapton"}`, `position` a JSON number.
 
 Codes are English and never contain the passphrase. A Sheets failure after the checks (rare) is
@@ -452,10 +454,14 @@ Request: `{"action":"setSlotCount","passphrase":"?","date":"2026-10-31","songId"
 A guarded write under the shared script lock. Before any write it validates, in order: real ISO
 calendar date (`invalid_date`), canonical song id (`invalid_song`), one of `guitar`, `bass`,
 `drums`, `vocals`, `harmonica`, `keyboards` (`invalid_instrument`), JSON integer count from zero
-to two for guitar or one for the rest (`invalid_count`), unique editable jam (`unknown_jam`,
+to three for every instrument (`invalid_count`; the ceiling is the domain's, not the tab's), unique editable jam (`unknown_jam`,
 `duplicate_date`, `jam_not_editable`), tab and headers, and exactly one song row through
 `findSongRow_` (`song_not_in_setlist`, `duplicate_song`). A missing song tab is
 `song_not_in_setlist`; malformed headers use the existing `missing_header`/`duplicate_header`.
+
+Growing past the columns the tab itself has (a jam tab never widened to the eighteen-column layout)
+is `instrument_not_expandable`, answered before any write; a tab missing `Guitarra 3` still lets the
+admin use `+` up to the old default. The client shows it in Spanish and writes nothing locally.
 
 `presentSlotFields_` resolves non-`-` columns in header-mapped slot order. `planSlotCount_`
 removes **last open column first**, or refuses `slot_filled` before writing if names would need
@@ -465,11 +471,13 @@ position, title, `Otros` and `Catalogo` are untouched. Restoring the first guita
 name's ordinal without moving its cell; future assignment/clear mutations must re-resolve ordinal
 on the server and check the resolved cell's expected state.
 
-Success rereads all seven cells, including concurrent names, and answers
-`{"schemaVersion":1,"ok":true,"slots":{"guitar1":null,"guitar2":"-","bass":null,"drums":null,"vocals":null,"harmonica":null,"keyboards":null}}`.
+Success rereads all eighteen cells, including concurrent names, and answers
+`{"schemaVersion":1,"ok":true,"slots":{"guitar1":null,"guitar2":"-","guitar3":"-","bass1":null,"bass2":"-","bass3":"-", ... ,"keyboards3":"-"}}` (all eighteen keys in the order above, then the five legacy keys `bass`, `drums`, `vocals`, `harmonica`, `keyboards` equal to their `...1` keys: 23 keys; `clearSlot` answers the same way, `assignSlot` has no `slots`).
+
+Compatibility. The current app accepts exactly one of: the eighteen keys, the eighteen plus the five legacy keys (each equal to its `...1` key, else `Unavailable`), or the legacy seven (`guitar1`, `guitar2`, `bass`, `drums`, `vocals`, `harmonica`, `keyboards`, mapped to columns 0, 1, 3, 6, 9, 12, 15, the rest `-`); any other key set fails the read or is `Unavailable`. The app version installed before this change (HEAD 21768e5) checks a confirmed `setSlotCount` or `clearSlot` answer's `slots` for exactly its seven keys, so the new script's longer object is `Unavailable` to it, and `assignSlot` compares the answer's `column` with its own seven-column index, which differs from the new script's index for every instrument but the guitar. So with the OLD app against the NEW script: reading works; adding a song and changing the key or the order work; `setSlotCount` and `clearSlot` **are written to the Sheet** but the app reports a failure and shows the old state until the next refresh; `assignSlot` works for the two guitars and for any other instrument is written but reported as a failure. Updating the app avoids all of it.
 Cells use trimmed display text: empty is `null`, absent is `"-"`, filled is a nonblank name.
 The extended `checkSetlistWrite` removes marker guitar 2, removes harmonica then restores it,
-using the same planner/writer and checking readback; it expects only guitar 2 absent before
+using the same planner/writer and checking readback; it expects only guitar 2 and the eleven slots beyond the default absent before
 cleanup. It never changes a real jam. This extension awaits deployment/live evidence.
 
 ### `assignSlot` (`admin-assign-musician`)
@@ -488,7 +496,7 @@ header mapping order, not the drawn open-first order. Thus guitar ordinal 1 targ
 Guitarra 1 is absent. An occupied cell is never overwritten. Success formats and writes exactly that
 one cell as plain text and answers
 `{"schemaVersion":1,"ok":true,"column":1,"name":"Tincho"}`, where `column` is the zero-based
-canonical seven-slot array index and `name` is the normalized spelling. Every rejection is
+canonical eighteen-slot array index (`guitar1` = 0 … `keyboards3` = 17) and `name` is the normalized spelling. Every rejection is
 write-free. It never opens `Catalogo`. The extended `checkSetlistWrite` assigns and reads back a
 marker in its disposable tab before deleting the tab; live verification is deferred until the app
 implementation is complete.
@@ -501,7 +509,7 @@ instrument, positive default-lineup ordinal and nonblank expected name before ch
 editable jam, tab, headers and song row. It resolves the 1-based ordinal among active non-`-`
 columns with U1. An empty target returns `slot_empty`; a cell whose trimmed display text differs
 from `expectedName` returns `slot_changed`. Both rejections are write-free. Success clears exactly
-that cell as plain text, rereads all seven slot fields and returns `{schemaVersion, ok, column,
+that cell as plain text, rereads all eighteen slot fields and returns `{schemaVersion, ok, column,
 slots}`. Existing Sheet names are compared as-is and do not pass through the new-assignment name
 validator. The extended `checkSetlistWrite` assigns and clears a disposable marker musician, checks
 the open-slot readback and removes the temporary tab in `finally`. Deployment/live validation is
@@ -577,7 +585,7 @@ songId, title, artist, key, state)` with `State.Sending`/`State.Failed(reason)`,
 2. A `Sending` entry is published, and the write is queued in `DataScope` behind a fair mutex, so
    writes go one at a time in call order and the caller's cancellation does not cancel one.
 3. `ok` with a JSON-number `position` above 0 and non-blank `title`/`artist` → the song and seven
-   open slots (`Lineup.DEFAULT_INSTRUMENTS`, columns 0..6) are inserted in one transaction by
+   open slots (`Lineup.DEFAULT_INSTRUMENTS` in `Lineup.DEFAULT_COLUMNS`: columns 0, 1, 3, 6, 9, 12, 15) are inserted in one transaction by
    `SetlistDao.insertSetlistSong` (IGNORE: a row a refresh already brought wins; only while the
    cached jam's setlist is `AVAILABLE`), the entry is removed, and the answer is `Added`. A
    malformed `ok` is `NotAdded(Unavailable)`.
@@ -675,9 +683,9 @@ interval is one constant (`LiveRefresh.INTERVAL`) if the estimate proves wrong.
 Lineup change (`admin-adjust-lineup`): `setSlotCount(jamDate, songId, instrument, count)` returns
 `SetSlotCountOutcome.SlotCountSet` or `NotSet(reason)`; `observeLineupChanges()` exposes
 `LineupChange` entries (`Sending`/`Failed`) sharing all mutation ids and `dismiss`. It runs in
-`DataScope` with the same order/write mutexes, surviving caller cancellation. Out-of-range counts
+`DataScope` with the same order/write mutexes, surviving caller cancellation. Counts outside 0..3 (`Lineup.maxCount`)
 fail locally with `invalid_count`, without a POST. `AdminWriter.send` supplies the guarded request.
-A successful payload must contain exactly seven slot fields, each null, `-`, or a nonblank string;
+A successful payload must contain exactly one of the valid key sets (the eighteen, the eighteen plus the five legacy mirrors, or the legacy seven; never a subset), each null, `-`, or a nonblank string;
 malformed success is `Unavailable`. First `SetlistDao.replaceSlots` transactionally mirrors the
 server's columns for exactly one cached (date, songId) while `AVAILABLE`, then the entry disappears.
 A cache SQLException waits for refresh; failure never changes Room. Only Sending entries overlay

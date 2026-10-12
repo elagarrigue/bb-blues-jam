@@ -107,7 +107,7 @@ carries a time, and the header of the next-jam screen needs it.
 | `titulo` | `title` (fallback only) | yes | Copy of the catalog title. Used only as a fallback, see below |
 | `artista` | `artist` (fallback only) | yes | Copy of the catalog artist. Same fallback |
 | `tono` | `key` | yes | See **Keys**. That night's key, not the catalog default (D-08) |
-| `Guitarra 1`, `Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados` | `lineup` | header yes, cells no | One column per slot of the default lineup (D-06); see **Slot columns** |
+| `Guitarra 1`-`3`, `Bajo 1`-`3`, `Batería 1`-`3`, `Voz 1`-`3`, `Armónica 1`-`3`, `Teclados 1`-`3` | `lineup` | the original seven yes, the other eleven no; cells no | Three fixed columns per instrument (D-06, D-18 amended 12 October 2026); see **Slot columns** |
 | `Otros` | `extraParticipants` | no | `Nombre (instrumento)` entries separated by `;`, e.g. `Juan (saxo); Ana (percusión)`. Empty or missing column = none (D-18); see **`Otros`** |
 
 `Catalogo` is authoritative for title and artist: the app resolves `id_tema` there. The copies in
@@ -126,8 +126,12 @@ is created with the header row above, in that order. The new row goes after the 
 columns only (found by header, so an extra column the admin added is left alone), with every
 written cell set to plain text (`@`) first: `posicion` is stored as text, which the read path
 accepts. `id_tema`, `titulo` and `artista` come from `Catalogo` (exactly one row with that `id`, a
-title and an artist), `tono` is the key the app sent (never `tono_default`, D-08), the seven slot
-cells and `Otros` are written empty (the default lineup, all open, D-18). A song already in the
+title and an artist), `tono` is the key the app sent (never `tono_default`, D-08), the seven default
+slot cells and `Otros` are written empty (the default lineup, all open, D-18), and the eleven slot
+cells beyond the default (`Guitarra 3`, `Bajo 2`-`3`, `Batería 2`-`3`, `Voz 2`-`3`, `Armónica 2`-`3`,
+`Teclados 2`-`3`) are written `-`, so none is mistaken for an open slot until the admin grows that
+instrument. A tab that was never widened has no such columns and nothing is written for them. A
+new tab is created with all eighteen slot headers. A song already in the
 tab is refused (`song_already_in_setlist`). Every check runs before the first write.
 
 `removeSong` (user decision R1 (a)) finds its row by the trimmed `id_tema`, never by `posicion`
@@ -142,15 +146,17 @@ before any write) and writes **only that row's `tono` cell**, as plain text (`@`
 value), in the spelling the admin picked (`A#` and `Bb` are both kept as sent; `[A-G][#b]?m?`).
 No other cell is written and `Catalogo`, so `tono_default`, is never opened (D-08).
 
-`setSlotCount` (`admin-adjust-lineup`) also finds one row by `id_tema`. It only removes open
-slots, writing `-` to the last open column first; restoration writes an empty plain-text cell
-to the first `-` column first. A name is never written or moved; insufficient open slots are
-`slot_filled` before any write. Zero of any instrument is valid, never above the default.
+`setSlotCount` (`admin-adjust-lineup`, widened by `lineup-grow-any-instrument`) also finds one row
+by `id_tema`. Removing writes `-` to the last open column first; adding writes an empty plain-text
+cell to the first `-` column first. A name is never written or moved; insufficient open slots are
+`slot_filled` before any write. Zero of any instrument is valid, and so is any count up to **3**
+(`invalid_count` beyond it, validated server-side before any write). Growing past the columns a
+specific tab has (a tab never widened) is `instrument_not_expandable`, before any write.
 Restoring Guitarra 1 before filled Guitarra 2 changes the name's ordinal to second without moving
 its cell. Later ordinal-based assignment and clearing must resolve the current non-`-` columns
 server-side and refuse if the resolved cell is no longer in the expected state.
-The `_prueba_lista` deploy marker now ends with Guitarra 2 absent and all other slots open,
-after harmonica removal/restoration; its temporary tab is still cleaned up. Deployment is pending.
+The `_prueba_lista` deploy marker now ends with Guitarra 2 and the eleven slots beyond the default
+absent (`-`) and all other slots open, after harmonica removal/restoration; its temporary tab is still cleaned up. Deployment is pending.
 
 `assignSlot` (`admin-assign-musician`) locates the same unique row by `id_tema`, resolves the
 1-based ordinal among non-`-` columns for that instrument in canonical header order (U1), checks the
@@ -158,7 +164,7 @@ target is still empty, then writes the normalized musician name to that one slot
 It never overwrites an occupied cell and never touches `Catalogo`. For example, if Guitarra 1 is
 `-` and Guitarra 2 is active, guitar ordinal 1 resolves to Guitarra 2. This ordinal is independent
 of the app's open-first display order. Rejections happen before any cell is written; success returns
-the canonical seven-slot array index and normalized name. The assignment step in
+the canonical eighteen-slot column index and normalized name. The assignment step in
 `checkSetlistWrite` uses only the disposable marker tab. Deployment and live validation remain
 deferred until app implementation is complete.
 
@@ -179,19 +185,35 @@ Deployment and live validation remain deferred until app implementation is compl
 
 ### Slot columns
 
-All seven slot headers are **required in every jam tab**; a tab missing one is invalid. Their cells
-are optional. Each header maps to one `Instrument`, and the header order is the order of
-`Lineup.DEFAULT_INSTRUMENTS`:
+There are **eighteen slot columns, three per instrument**, in this order (the order of
+`Lineup.MAX_INSTRUMENTS` and of the `slots` keys of the jams response). The original seven are
+**required in every jam tab**; a tab missing one is invalid. The other eleven are optional columns:
+a tab that lacks one reads that slot as `-` (not in the lineup), so every jam tab written before
+`lineup-grow-any-instrument` keeps working unchanged, and the admin widens only the tabs they want.
 
-| Header | `Instrument` |
-|---|---|
-| `Guitarra 1` | `GUITAR` |
-| `Guitarra 2` | `GUITAR` |
-| `Bajo` | `BASS` |
-| `Batería` | `DRUMS` |
-| `Voz` | `VOCALS` |
-| `Armónica` | `HARMONICA` |
-| `Teclados` | `KEYBOARDS` |
+| Header | `Instrument` | Required | Default cell of a new song |
+|---|---|---|---|
+| `Guitarra 1` | `GUITAR` | yes | open |
+| `Guitarra 2` | `GUITAR` | yes | open |
+| `Guitarra 3` | `GUITAR` | no | `-` |
+| `Bajo 1` (or `Bajo`) | `BASS` | yes | open |
+| `Bajo 2`, `Bajo 3` | `BASS` | no | `-` |
+| `Batería 1` (or `Batería`) | `DRUMS` | yes | open |
+| `Batería 2`, `Batería 3` | `DRUMS` | no | `-` |
+| `Voz 1` (or `Voz`) | `VOCALS` | yes | open |
+| `Voz 2`, `Voz 3` | `VOCALS` | no | `-` |
+| `Armónica 1` (or `Armónica`) | `HARMONICA` | yes | open |
+| `Armónica 2`, `Armónica 3` | `HARMONICA` | no | `-` |
+| `Teclados 1` (or `Teclados`) | `KEYBOARDS` | yes | open |
+| `Teclados 2`, `Teclados 3` | `KEYBOARDS` | no | `-` |
+
+**Response keys.** The jams response names the first column of the five single-slot instruments `bass1`... and also repeats it as `bass`, `drums`, `vocals`, `harmonica`, `keyboards` for apps that predate the layout (`apps-script-api.md`).
+
+**Two spellings of the first column.** Every real jam tab written before this change has the
+un-numbered `Bajo`, `Batería`, `Voz`, `Armónica` and `Teclados`; the widened layout names them
+`... 1`. Both are accepted for the same slot (`Bajo` is an alias of `Bajo 1`, and so on), so a tab
+never has to be renamed. A tab holding both spellings of one slot has that header twice for the
+script: `duplicate_header`. New tabs the script creates use the numbered spelling.
 
 | Cell | Meaning |
 |---|---|
@@ -199,11 +221,13 @@ are optional. Each header maps to one `Instrument`, and the header order is the 
 | a name | Filled slot: `musicianName` |
 | `-` | Not part of this song's lineup (the per-song adjustment in D-06) |
 
-The lineup is built from the seven columns in the order above, skipping `-` cells. A song with no
-harmonica has `-` under `Armónica`. A song with one guitar may have `-` under either guitar column;
-**Identifiers** says which column its slot is. Slots are only ever removed from the default seven,
-never added (D-18). Anyone playing outside the lineup — a sax, percussion, a third guitar — goes in
-`Otros`.
+The lineup is built from the eighteen columns in the order above, skipping `-` cells and columns the
+tab does not have. A song with no harmonica has `-` under `Armónica 1`. A song with one guitar may
+have `-` under either of the first two guitar columns; **Identifiers** says which column its slot is.
+A song starts with the default seven slots and the admin can remove any open slot or add slots up
+to three per instrument (D-18, amended 12 October 2026: slots can also grow, through these fixed
+columns, never through a variable-width row). Anyone playing beyond the lineup — a sax, percussion,
+a fourth guitar — goes in `Otros`.
 
 For past jams the slot cells are optional history. An empty cell in a past jam means "not
 recorded", and the app never presents a past jam as having open slots.
@@ -285,7 +309,7 @@ the mapper or the type; "enrichment" fields are never in the Sheet.
 | `JamSong.songId: SongId` | `id_tema` |
 | `JamSong.title` / `JamSong.artist` | `Catalogo.titulo` / `artista` via `id_tema`; the tab's `titulo` / `artista` only when `id_tema` is not found |
 | `JamSong.key: Key` | `tono` (D-08) |
-| `JamSong.lineup: Lineup` | The seven slot columns, skipping `-` |
+| `JamSong.lineup: Lineup` | The eighteen slot columns, skipping `-` and absent columns |
 | `Lineup.slots` | One `Slot` per slot column not holding `-`, in header order |
 | `Lineup.openSlots`, `Lineup.hasOpenSlotFor` | Derived from `slots` |
 | `Slot.instrument: Instrument` | The column header (**Slot columns**) |

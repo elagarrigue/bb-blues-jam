@@ -7,6 +7,7 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.SetlistDao
+import com.bbbjam.core.data.remote.SlotKeys
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.SongId
@@ -37,7 +38,7 @@ internal class SetlistLineupChanges(
     }
 
     suspend fun send(entry: LineupChange): SetSlotCountOutcome {
-        val outcome = if (entry.count !in 0..Lineup.defaultCount(entry.instrument)) {
+        val outcome = if (entry.count !in 0..Lineup.maxCount(entry.instrument)) {
             SetSlotCountOutcome.NotSet(WriteOutcome.Rejected("invalid_count"))
         } else {
             sendValid(entry)
@@ -82,32 +83,8 @@ internal class SetlistLineupChanges(
     }
 
     private companion object {
-        val FIELDS = listOf("guitar1", "guitar2", "bass", "drums", "vocals", "harmonica", "keyboards")
-
-        fun confirmedSlots(body: JsonObject, entry: LineupChange): List<JamSlotEntity>? {
-            val slots = (body["slots"] as? JsonObject)?.takeIf { it.keys == FIELDS.toSet() } ?: return null
-            val valid = slots.values.all {
-                it == JsonNull || (it is JsonPrimitive && it.isString && it.content.isNotBlank())
-            }
-            return if (valid) {
-                FIELDS.mapIndexedNotNull { column, field ->
-                    val value = slots.getValue(field)
-                    val name = (value as? JsonPrimitive)?.takeUnless { it == JsonNull }?.content
-                    if (name == "-") {
-                        null
-                    } else {
-                        JamSlotEntity(
-                            entry.jamDate.toString(),
-                            0,
-                            column,
-                            Lineup.DEFAULT_INSTRUMENTS[column].name,
-                            name,
-                        )
-                    }
-                }
-            } else {
-                null
-            }
-        }
+        fun confirmedSlots(body: JsonObject, entry: LineupChange): List<JamSlotEntity>? =
+            (body["slots"] as? JsonObject)?.let(SlotKeys::cells)?.takeIf { cells -> cells.all(::validCell) }
+                ?.let { cells -> slotEntities(cells, entry.jamDate.toString()) }
     }
 }

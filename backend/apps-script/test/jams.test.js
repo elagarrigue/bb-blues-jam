@@ -84,7 +84,8 @@ test('the seed jam is PUBLICADA with 13 rows, every slot and extraParticipants n
   assert.equal(jam.setlist.length, 13);
   assert.deepStrictEqual(jam.setlist.map((r) => r.position), ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']);
   for (const row of jam.setlist) {
-    assert.ok(Object.values(row.slots).every((v) => v === null));
+    assert.ok(SLOT_KEYS.slice(0, 2).concat(['bass1', 'drums1', 'vocals1', 'harmonica1', 'keyboards1']).every((k) => row.slots[k] === null));
+    assert.ok(['guitar3', 'bass2', 'bass3', 'drums3', 'keyboards3'].every((k) => row.slots[k] === '-'));
     assert.equal(row.extraParticipants, null);
   }
   assert.deepStrictEqual(calls, ['2026-07-25']);
@@ -220,9 +221,13 @@ test('the jam, the row and the slots keep their documented key order', () => {
 
 test('slots map the seven headers by name, "-" passes through, rows stay in tab order', () => {
   const rows = edgeResponse().body.jams[0].setlist;
-  assert.deepStrictEqual(rows[0].slots, { guitar1: 'Pedro', guitar2: '-', bass: null, drums: null, vocals: null, harmonica: null, keyboards: null });
+  assert.deepStrictEqual(rows[0].slots, {
+    guitar1: 'Pedro', guitar2: '-', guitar3: '-', bass1: null, bass2: '-', bass3: '-', drums1: null, drums2: '-', drums3: '-',
+    vocals1: null, vocals2: '-', vocals3: '-', harmonica1: null, harmonica2: '-', harmonica3: '-', keyboards1: null, keyboards2: '-', keyboards3: '-',
+    bass: null, drums: null, vocals: null, harmonica: null, keyboards: null,
+  });
   assert.equal(rows[1].slots.guitar1, 'Ana');
-  assert.equal(rows[1].slots.harmonica, '-');
+  assert.equal(rows[1].slots.harmonica1, '-');
   assert.equal(rows[1].songId, 'the-thrill-is-gone');
 });
 

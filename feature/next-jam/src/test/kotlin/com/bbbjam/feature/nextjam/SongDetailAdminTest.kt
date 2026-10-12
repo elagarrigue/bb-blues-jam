@@ -362,10 +362,47 @@ class SongDetailAdminTest {
             retained(LineupEditorLineUiModel.Event.Add)
             retained(LineupEditorLineUiModel.Event.Add)
             retained(LineupEditorLineUiModel.Event.Add)
-            assertEquals(listOf(1, 0, 1, 2), setlist.lineupCalls.map { it.count })
+            assertEquals(listOf(1, 0, 1, 2, 3), setlist.lineupCalls.map { it.count })
             setlist.lineupHold?.complete(Unit)
             editing.events(LineupEditorUiModel.Event.Done)
             awaitSong { it.controls().lineup is LineupEditorUiModel.Idle }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    private fun SongDetailUiModel.editor() =
+        (this as SongDetailUiModel.Song).controls().lineup as LineupEditorUiModel.Editing
+
+    @Test
+    fun `every instrument can grow to three and the plus disables at three`() = runTest {
+        val twoVocals = crossroads.copy(
+            lineup = Lineup(listOf(Slot(Instrument.VOCALS, "Lu"), Slot(Instrument.VOCALS))),
+            extraParticipants = emptyList(),
+        )
+        val threeVocals = twoVocals.copy(lineup = twoVocals.lineup.withSlotCount(Instrument.VOCALS, 3)!!)
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
+            jams.snapshots.emit(
+                snapshot(listOf(crossroads.copy(lineup = Lineup.default(), extraParticipants = emptyList()))),
+            )
+            (awaitSong().controls().lineup as LineupEditorUiModel.Idle).events(LineupEditorUiModel.Event.Open)
+            val one = awaitSong { it.controls().lineup is LineupEditorUiModel.Editing }
+                .controls().lineup as LineupEditorUiModel.Editing
+            val vocals = one.lines.single { it.instrument == Instrument.VOCALS }
+            assertEquals("1 cupo", vocals.countLabel)
+            assertTrue(vocals.canAdd)
+            vocals.events(LineupEditorLineUiModel.Event.Add)
+            assertEquals(Instrument.VOCALS to 2, setlist.lineupCalls.last().let { it.instrument to it.count })
+            jams.snapshots.emit(snapshot(listOf(twoVocals)))
+            val two = expectMostRecentItem().editor()
+            val twoLine = two.lines.single { it.instrument == Instrument.VOCALS }
+            assertEquals("2 cupos", twoLine.countLabel)
+            assertTrue(twoLine.canAdd)
+            jams.snapshots.emit(snapshot(listOf(threeVocals)))
+            val three = expectMostRecentItem().editor()
+            val threeLine = three.lines.single { it.instrument == Instrument.VOCALS }
+            assertEquals("3 cupos", threeLine.countLabel)
+            assertFalse(threeLine.canAdd)
+            assertTrue(threeLine.canRemove)
             cancelAndIgnoreRemainingEvents()
         }
     }

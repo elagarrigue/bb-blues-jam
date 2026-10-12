@@ -118,7 +118,8 @@ private suspend fun storeConfirmedSong(
 ): AddSongOutcome.Added {
     val date = entry.jamDate.toString()
     val song = JamSongEntity(date, added.position, entry.songId.value, added.title, added.artist, entry.key.value)
-    val slots = Lineup.DEFAULT_INSTRUMENTS.mapIndexed { column, instrument ->
+    // A new song starts with the seven default slots, each in its column of the eighteen-column layout.
+    val slots = Lineup.DEFAULT_INSTRUMENTS.zip(Lineup.DEFAULT_COLUMNS) { instrument, column ->
         JamSlotEntity(date, added.position, column, instrument.name, musicianName = null)
     }
     try {

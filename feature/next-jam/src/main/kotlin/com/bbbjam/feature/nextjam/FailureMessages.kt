@@ -40,6 +40,7 @@ internal fun keyFailureMessage(reason: WriteOutcome): String = when {
 
 internal fun lineupFailureMessage(reason: WriteOutcome): String = when {
     reason is WriteOutcome.Rejected && reason.code == "slot_filled" -> NextJamCopy.SLOT_FILLED
+    reason is WriteOutcome.Rejected && reason.code == "instrument_not_expandable" -> NextJamCopy.NOT_EXPANDABLE
     else -> keyFailureMessage(reason)
 }
 

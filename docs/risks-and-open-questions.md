@@ -419,9 +419,24 @@ Stated so they can be challenged rather than silently relied upon.
   (`JamCalendar`). They agree only while the Sheet's time zone is Buenos Aires; keep it so.
 
 
+- **Growing a lineup on an un-widened tab** (`lineup-grow-any-instrument`, 12 October 2026): the
+  editor allows `+` up to three for every instrument, but a jam tab keeps the columns it has. On a
+  seven-column tab, `setSlotCount` past the old default answers `instrument_not_expandable` before
+  writing and the app shows a failure card telling the admin to add the columns; nothing is written
+  or cached. A tab with both spellings of a first column (`Bajo` and `Bajo 1`) is `duplicate_header`.
+  Compatibility (decided in the repair of this slice): the new app accepts exactly the 18 `slots`
+  keys, those 18 plus the five legacy mirrors, or the legacy seven (the default seven slots, the rest
+  `-`), never a subset, so a missing key is never read as an open slot; any other key set fails the
+  jams refresh or is `Unavailable` for a confirmed write. The new script sends the 18 keys plus the five
+  legacy mirrors. **Old app against the new script:** reads work, but the old app checks a confirmed `setSlotCount` or `clearSlot` answer's `slots` for exactly its seven keys, so the new script's longer object is `Unavailable` to it, and `assignSlot` compares the answer's `column` with its own seven-column index, which differs from the new script's index for every instrument but the guitar. The old app's `setSlotCount`/`clearSlot` are written but
+  reported as failures until the next refresh, and `assignSlot` is reported as a failure for every
+  instrument but the guitar (the write happens). Update the script and the app together.
+  Slots cached before the update carry the old column numbers until the next refresh replaces them,
+  so an assignment tapped in that first moment can come back `Unavailable` once.
+
 - **Adjust-lineup risks** (`admin-adjust-lineup`, live verification completed 9 October 2026):
   JS resolves Sheet columns, Kotlin mirrors counts for display only; confirmed cache always comes
-  from the server's seven-cell answer. Guitar overlay ordering can differ briefly before confirm.
+  from the server's eighteen-cell answer (three per instrument since `lineup-grow-any-instrument`). Guitar overlay ordering can differ briefly before confirm.
   Restoring a first guitar changes a filled second guitar's ordinal: assign (implemented locally)
   re-resolves current columns server-side and refuses unexpected cell state; clear must follow the
   same rule. Pending admin-only

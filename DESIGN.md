@@ -496,12 +496,12 @@ through `AdminControlsDefaults`, **no amber**:
   uses the established neutral admin/action treatment, not amber.
 - **Adjusting a lineup** (`admin-adjust-lineup`): on the song detail, after the panel inside its
   block, `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
-  default instrument, full name in `body`/`text`, count (`2 cupos`, `1 cupo`, `No va en este tema`)
+  instrument, full name in `body`/`text`, count (`3 cupos`, `2 cupos`, `1 cupo`, `No va en este tema`)
   in `caption`/`textMuted`. The editor's lines are inset `spacing.md`, like the panel. Minus/plus are 48dp squares, `shapes.md`, glyphs in `songTitle`, `Role.Button`, with
   explicit instrument descriptions. An enabled one has a `surfaceRaised` fill, a hairline `border`
   outline (the fill alone is about 1.05:1 on `surface`) and a `text` glyph; a disabled one has no
   fill, no outline and a `textMuted` glyph, is not clickable and has disabled semantics, so the
-  state shows in shape, not brightness alone. Removing a filled-only instrument is disabled
+  state shows in shape, not brightness alone. The plus is enabled up to three slots for every instrument (`lineup-grow-any-instrument`); at three it is disabled like the minus at zero. A jam tab never widened to the three-column layout answers a plus past its columns with the dismissible failure card (`Esta hoja todavía no tiene columnas para ese cupo…`). Removing a filled-only instrument is disabled
   with `Tiene músico anotado. Liberá el cupo antes de sacarlo.` beneath it. `Listo` and the entry
   action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
   Sending counts update the strip, panel and filters at once for the admin only. One muted
