@@ -21,7 +21,7 @@ variant and `-<state>` for a state.
 |---|---|
 | `next-jam` | Próxima jam, musician view |
 | `next-jam-admin` | Próxima jam, admin view |
-| `next-jam-expanded` | A song row expanded in place |
+| `next-jam-expanded` | A song row expanded in place (historical: rows no longer expand since `song-detail-replaces-row-expansion`) |
 | `next-jam-filtered` | An instrument filter active |
 | `song-detail` | Song detail |
 | `past-jams` | Past jams list |

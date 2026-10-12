@@ -74,11 +74,10 @@ class NextJamMoveTest {
         SetlistMove(id, jamDate, SongId(songId), songId, target, state)
 
     @Test
-    fun `expanded admin rows model absolute positions and keep disabled edge actions`() = runTest {
+    fun `admin rows keep disabled edge actions by absolute position`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot())
             val model = awaitJam()
-            assertEquals("Posición 1 de 4", checkNotNull(model.row("crossroads").admin?.move).positionLine)
             assertFalse(checkNotNull(model.row("crossroads").admin?.move).up.enabled)
             assertTrue(checkNotNull(model.row("crossroads").admin?.move).down.enabled)
             assertTrue(checkNotNull(model.row("pride").admin?.move).up.enabled)
@@ -162,9 +161,9 @@ class NextJamMoveTest {
     @Test
     fun `duplicate ids receive position row keys and opening detail retains cached position`() = runTest {
         val duplicateSongs = listOf(songs[0], songs[1], songs[2].copy(songId = SongId("hoochie")), songs[3])
-        var opened: Int? = null
+        var opened: Pair<SongId, Int>? = null
         moleculeFlow(RecompositionMode.Immediate) {
-            presenter().present(NextJamPresenter.Params(onOpenSong = { _, position -> opened = position }))
+            presenter().present(NextJamPresenter.Params(onOpenSong = { _, id, position -> opened = id to position }))
         }.test {
             repository.snapshots.emit(snapshot(duplicateSongs))
             val model = awaitJam()
@@ -174,7 +173,8 @@ class NextJamMoveTest {
             val moved = awaitItem()
             val row = moved.row("thrill")
             row.events(SongRowUiModel.Event.OpenDetail)
-            assertEquals(3, opened)
+            // The song carries the repeated id, so the cached (pre-overlay) position picks it in the detail.
+            assertEquals(SongId("hoochie") to 3, opened)
             cancelAndIgnoreRemainingEvents()
         }
     }

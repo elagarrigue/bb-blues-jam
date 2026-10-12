@@ -67,7 +67,7 @@ Cada tema define una formación: una lista de puestos por instrumento. Por defec
 El admin puede ajustar esta formación por tema. Un **cupo libre** es un puesto sin nadie asignado.
 
 Este modelo es la base de toda la pantalla principal: la vista colapsada, el filtro y el orden
-dentro del tema expandido dependen de él.
+de los cupos en el detalle del tema dependen de él (enmienda del 11 de octubre de 2026).
 
 ---
 
@@ -110,14 +110,14 @@ La pantalla más importante de la app. Es la que se abre 90% de las veces. Tiene
 Esa tira es lo que hace que la lista sirva sin expandir nada y que el filtro sea legible de un
 vistazo. Resolvela para que entre en poco espacio y se entienda sin leyenda.
 
-**Al tocar una fila, se expande en el lugar** y muestra los cupos, en este orden:
+**Al tocar una fila, se abre el detalle del tema** (enmienda del 11 de octubre de 2026): la fila ya no se expande en el
+lugar. El detalle muestra los cupos en este orden:
 
 1. **Primero los cupos libres**, presentados como algo disponible
 2. **Después los cupos cubiertos**, con nombre del músico e instrumento
 
-Lo accionable va arriba. Varias filas pueden estar expandidas a la vez.
-
-En la fila expandida también: artista del tema y acceso al detalle completo.
+Lo accionable va arriba. Al volver, la lista queda igual: misma pestaña, mismo filtro, mismo
+scroll.
 
 **Estado sin publicar:** si la lista todavía no fue publicada, el músico ve la fecha y el lugar,
 pero en lugar de temas ve un mensaje de que la lista se está armando.
@@ -128,22 +128,24 @@ La misma pantalla, con:
 - Distintivo de estado: **Borrador** o **Publicada**
 - Acción para publicar, prominente cuando está en borrador
 - Botón para agregar tema
-- Manija de arrastre en cada fila para reordenar
-- Dentro de la fila expandida: cada cupo libre es tocable para asignar un músico, y cada cupo
-  cubierto permite quitar a esa persona
-- Acceso a editar la formación del tema y la tonalidad
+- Manija de arrastre en cada fila para reordenar (como se construyó: **Subir** y **Bajar**)
+- En la fila quedan solo las acciones de la lista: **Subir**, **Bajar** y **Quitar de la lista**,
+  en una barra compacta bajo la fila (enmienda del 11 de octubre de 2026)
+- Los cupos (anotar y liberar), la formación, los Otros y la tonalidad se editan en el detalle del
+  tema (enmienda del 11 de octubre de 2026)
 
-Mostrá una fila expandida en modo admin y la misma en modo músico, lado a lado.
+Mostrá el detalle de un tema en modo admin y el mismo en modo músico, lado a lado.
 
 ### 3. Detalle del tema
 
-Complementa la fila expandida: acá va todo lo que no entra en la lista.
+Se abre al tocar una fila de la lista y tiene todo lo que no entra en ella (enmienda del 11 de octubre de 2026).
 
 - Título, artista, artwork si hay
 - **Tonalidad, bien grande.** Es el dato principal de esta pantalla.
-- Formación completa, con cupos libres y cubiertos agrupados por instrumento
+- Formación completa: primero los cupos libres, después los cubiertos, después Otros; la misma
+  vista para músicos y admin (enmienda del 11 de octubre de 2026), en lugar de agrupar por instrumento
 - Por ahora sin etiquetas, tempo, dificultad ni botón de tablatura (D-20)
-- En modo admin: editar tonalidad, formación y asignaciones
+- En modo admin: cambiar la tonalidad, anotar y liberar cupos, cambiar la formación y editar Otros
 
 ### 4. Jams anteriores — lista
 
@@ -194,7 +196,8 @@ una hoja inferior o una pantalla completa — elegí y justificá brevemente.
 - El ámbar no se usa para decorar. Si un elemento es ámbar, es porque el usuario lo necesita ahora.
   Un cupo libre es un buen candidato a ámbar; un cupo cubierto no.
 - Expandir y colapsar no debe mover el resto de la lista de forma desorientadora. Pensá la
-  transición.
+  transición. (enmienda del 11 de octubre de 2026): las filas ya no se expanden; la regla vale para la confirmación de quitar un
+  tema, que reemplaza la barra de la fila.
 - Áreas táctiles de 48dp como mínimo. Se usa parado, con poca luz.
 - Los controles de admin no deben reorganizar la pantalla al aparecer. La disposición es la misma;
   se suman controles.
@@ -206,11 +209,11 @@ una hoja inferior o una pantalla completa — elegí y justificá brevemente.
 ## Qué entregar
 
 1. Las ocho pantallas listadas, tamaño teléfono
-2. Próxima jam en cuatro variantes: colapsada, con una fila expandida, con filtro activo, y en
-   modo admin
+2. Próxima jam en cuatro variantes: colapsada, con filtro activo, en modo admin, y el detalle del
+   tema en modo admin (enmienda del 11 de octubre de 2026), en lugar de una fila expandida
 3. Los cinco estados de lista
 4. Una hoja de estilo: colores con su rol, escala tipográfica, la tira de instrumentos como
-   componente, y la fila de tema en sus dos estados
+   componente, y la fila de tema (un solo estado (enmienda del 11 de octubre de 2026))
 
 ---
 

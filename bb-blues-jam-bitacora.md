@@ -310,6 +310,9 @@ existir.
 ### D-07 — Lista colapsada con tira de instrumentos
 Título, tonalidad y tira compacta de íconos por instrumento. La pregunta más frecuente del músico
 es "¿dónde puedo tocar?", y la tira la responde sin expandir nada.
+*Enmienda del 11 de octubre de 2026:* la fila ya no se expande; al tocarla se abre el detalle del
+tema, que tiene los cupos y, para el admin, todos los controles del tema. La lista colapsada con la
+tira sigue igual (ver 6.19).
 
 ### D-08 — La tonalidad la define el admin, no una API
 Ninguna API da tonalidad ni tempo confiables, y no importa: la tonalidad de una jam es la que canta
@@ -1184,6 +1187,29 @@ cambios suyos a medio hacer y dejó dos commits que no compilaban. Y un comando 
 la URL resultó no funcionar en esta terminal, lo que me hizo afirmar algo sin poder comprobarlo. Los
 dos quedaron anotados y corregidos: commits por ruta explícita mientras corre un agente, y la URL
 leída con Python. Un orquestador también necesita su propio gate.
+
+### 6.19 Sesión del 11 de octubre — la fila deja de expandirse
+
+**Por qué.** Después de varias rebanadas de admin, la fila expandida de Próxima jam había juntado más
+lógica que el propio detalle del tema: el panel de cupos, anotar y liberar, la formación, los Otros,
+la tonalidad, mover y quitar. El detalle, en cambio, solo mostraba la formación agrupada por
+instrumento. El organizador lo vio y pidió invertirlo: que tocar una fila abra el detalle, y que el
+detalle tenga todo.
+
+**Decisiones.** El organizador eligió fusionar `:feature:song-detail` dentro de `:feature:next-jam`
+(en vez de llevar la lógica de admin al módulo del detalle, que habría obligado a compartir código
+entre features) y dejar en la lista solo las acciones de la lista: Subir, Bajar y Quitar de la
+lista, en una barra compacta bajo cada fila. D-07 y D-15 quedan como estaban, y D-03 se sigue
+cumpliendo: Konsist lo comprobó agregando una dependencia prohibida a propósito. Una decisión del
+`planner` pasó por el organizador y la confirmó el usuario: el detalle muestra el mismo panel
+(primero libres, después cubiertos, después Otros) para músicos y admin, en lugar de agrupar por
+instrumento (P1). El `planner` además resolvió que el detalle se identifique por el id del tema, no
+por la posición (P2), para que mover o quitar otro tema mientras está abierto no lo cambie por otro.
+
+**Una sola regla.** Los cambios en vuelo (tonalidad, formación, anotar, liberar, Otros) se dibujan con
+una sola función compartida por la lista y el detalle, así que los dos muestran lo mismo mientras se
+guarda y los dos vuelven atrás si falla. Ninguna escritura nueva: todo usa las funciones del
+repositorio que ya existían (D-13).
 
 ## 7. Mapa a los módulos del curso
 

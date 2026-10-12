@@ -167,7 +167,19 @@ class FakeSetlistRepository : SetlistRepository {
         instrument: Instrument,
         ordinal: SlotPosition,
         expectedName: String,
-    ): ClearSlotOutcome = ClearSlotOutcome.Cleared
+    ): ClearSlotOutcome {
+        clearCalls += ClearCall(jamDate, songId, instrument, ordinal, expectedName)
+        return ClearSlotOutcome.Cleared
+    }
+
+    data class ClearCall(
+        val date: LocalDate,
+        val id: SongId,
+        val instrument: Instrument,
+        val ordinal: SlotPosition,
+        val expectedName: String,
+    )
+    val clearCalls = mutableListOf<ClearCall>()
 
     override fun observeSlotClears(): Flow<List<SlotClear>> = slotClears
 

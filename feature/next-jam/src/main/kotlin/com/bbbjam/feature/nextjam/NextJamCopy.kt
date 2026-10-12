@@ -38,20 +38,10 @@ internal object NextJamCopy {
         "Cuando la organización la publique, vas a ver acá los temas, las tonalidades y los cupos libres."
 
     /**
-     * A row's state and its action for screen readers, approved on 3 October 2026
-     * (`docs/specs/song-row-expansion.md`, C1). TalkBack reads the action as "Presioná dos veces
-     * para ver los cupos".
+     * A row's action for screen readers (`song-detail-replaces-row-expansion`, P5): TalkBack reads
+     * "Presioná dos veces para ver el detalle del tema". Rows no longer expand, so there is no state.
      */
-    const val ROW_EXPANDED = "expandido"
-    const val ROW_COLLAPSED = "contraído"
-    const val SHOW_SLOTS = "ver los cupos"
-    const val HIDE_SLOTS = "ocultar los cupos"
-
-    /**
-     * The expanded row's entry to the song detail, approved on 4 October 2026
-     * (`docs/specs/song-detail-screen.md`, C1).
-     */
-    const val OPEN_DETAIL = "Ver detalle del tema"
+    const val OPEN_DETAIL = "ver el detalle del tema"
 
     /**
      * The admin's controls on Próxima jam, approved on 5–6 October 2026

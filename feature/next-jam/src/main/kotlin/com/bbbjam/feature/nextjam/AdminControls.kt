@@ -31,14 +31,16 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import com.bbbjam.core.ui.strip.fullName
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /*
  * The admin's controls on Próxima jam (`admin-add-song-to-setlist`). They are only appended: the
- * draft badge under the header, the rest after the rows, and the row actions at the end of an
- * expanded row's panel (`admin-remove-song-from-setlist`), so nothing a musician sees moves. Colours
- * come only from [AdminControlsDefaults]; no amber.
+ * draft badge under the header, the rest after the rows, and each row's compact bar under its header
+ * (`song-detail-replaces-row-expansion`), so nothing a musician sees moves. The song detail reuses
+ * the text action, the status line and the failure card. Colours come only from
+ * [AdminControlsDefaults]; no amber.
  */
 
 /** An add in flight: a muted card with the title and "Agregando…", read politely when it appears. */
@@ -131,28 +133,37 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
 }
 
 /**
- * The admin's part of an expanded row, after "Ver detalle del tema". Each action is a full-width,
- * 48dp, underlined text action, as the detail action: "Cambiar tonalidad" (`admin-set-key`), then
- * the removal, which stays last. A later row action goes before the removal.
+ * The admin's compact bar under a row's header (`song-detail-replaces-row-expansion`, P3): "Subir",
+ * "Bajar" and "Quitar de la lista" in one row of 48dp underlined text actions, each a third of the
+ * width. While the removal confirms, its inline confirmation replaces the bar; while it is sent,
+ * "Quitando…" does (the move actions are already gone). Song-level actions live in the song detail;
+ * a later list-level action goes in this bar, before the removal, which stays last.
  */
 @Composable
-internal fun AdminRowActions(
+internal fun AdminRowBar(
     model: SongRowAdminUiModel,
     rowKey: String,
     onMoveAction: (String, MoveActionUiModel) -> Unit,
 ) {
-    RowTextAction(model.setKey.label, AdminControlsDefaults.keyChange().action) {
-        model.setKey.events(SetKeyActionUiModel.Event.Open)
+    val removal = model.removal
+    if (removal is RemovalUiModel.Idle) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            model.move?.let { move ->
+                MoveAction(move.up, Modifier.weight(1f)) { onMoveAction(rowKey, move.up) }
+                MoveAction(move.down, Modifier.weight(1f)) { onMoveAction(rowKey, move.down) }
+            }
+            RowTextAction(removal.label, AdminControlsDefaults.removal().action, Modifier.weight(1f)) {
+                removal.events(RemovalUiModel.Event.RequestRemove)
+            }
+        }
+    } else {
+        RemovalControl(removal)
     }
-    LineupEditor(model.lineup)
-    model.extraParticipants?.let { ExtraParticipantEditor(it) }
-    model.move?.let { move -> MoveControl(move, rowKey, onMoveAction) }
-    RemovalControl(model.removal)
 }
 
 /**
- * "Guardando…" under the row's title line while its key is a pending change (O1): `caption`,
- * `textMuted`, read politely when it appears. Drawn inside the row header, in both states.
+ * "Guardando…" while a write of the song is pending (O1): `caption`, `textMuted`, read politely
+ * when it appears. Drawn inside the row header and under the song detail's title.
  */
 @Composable
 internal fun SaveStatusLine(status: String) {
@@ -213,8 +224,10 @@ private fun RemovalControl(model: RemovalUiModel) {
 }
 
 /**
- * A 48dp underlined text action in [color], as the row's "Ver detalle del tema". A disabled one is
- * `textMuted` with no underline and disabled semantics, as a disabled "Subir"/"Bajar".
+ * A 48dp underlined text action in [color]. A disabled one is `textMuted` with no underline and
+ * disabled semantics, as a disabled "Subir"/"Bajar". [startInset] is the text's start inset (`md`
+ * by default, inside a card; the song detail passes `sm` so a free-standing action lines up with
+ * the title).
  */
 @Composable
 internal fun RowTextAction(
@@ -223,6 +236,7 @@ internal fun RowTextAction(
     modifier: Modifier = Modifier,
     accessibilityLabel: String? = null,
     enabled: Boolean = true,
+    startInset: Dp = BluesJamTheme.spacing.md,
     onClick: () -> Unit,
 ) {
     val spacing = BluesJamTheme.spacing
@@ -238,7 +252,7 @@ internal fun RowTextAction(
                 },
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
+            .padding(start = startInset, end = spacing.md, bottom = spacing.xs),
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(

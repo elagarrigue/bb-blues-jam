@@ -12,15 +12,21 @@ import org.junit.Test
 /** The string routes (R1): built and parsed only in [AppRoutes], checked here on the JVM. */
 class AppRoutesTest {
 
+    private val crossroads = SongId("crossroads")
+
     @Test
-    fun `the song detail route is the ISO date and the position`() {
-        assertEquals("song/2026-10-31/2", AppRoutes.songDetail(LocalDate.of(2026, 10, 31), 2))
+    fun `the song detail route is the ISO date, the song id and the position`() {
+        assertEquals(
+            "song/2026-10-31/crossroads/2",
+            AppRoutes.songDetail(LocalDate.of(2026, 10, 31), crossroads, 2),
+        )
     }
 
     @Test
-    fun `the pattern holds both argument names`() {
-        assertEquals("song/{jamDate}/{position}", AppRoutes.SONG_DETAIL)
+    fun `the pattern holds the three argument names`() {
+        assertEquals("song/{jamDate}/{songId}/{position}", AppRoutes.SONG_DETAIL)
         assertTrue(AppRoutes.SONG_DETAIL.contains("{${AppRoutes.JAM_DATE}}"))
+        assertTrue(AppRoutes.SONG_DETAIL.contains("{${AppRoutes.SONG_ID}}"))
         assertTrue(AppRoutes.SONG_DETAIL.contains("{${AppRoutes.POSITION}}"))
         assertEquals("tabs", AppRoutes.TABS)
     }
@@ -44,19 +50,25 @@ class AppRoutesTest {
     }
 
     @Test
-    fun `parse accepts a valid date and position`() {
-        assertEquals(SongDetailArgs(LocalDate.of(2026, 10, 31), 2), AppRoutes.parseSongDetail("2026-10-31", 2))
+    fun `parse accepts a valid date, song id and position`() {
+        assertEquals(
+            SongDetailArgs(LocalDate.of(2026, 10, 31), crossroads, 2),
+            AppRoutes.parseSongDetail("2026-10-31", "crossroads", 2),
+        )
     }
 
     @Test
-    fun `parse rejects a missing value, a malformed date and a position below 1`() {
-        assertNull(AppRoutes.parseSongDetail(null, 2))
-        assertNull(AppRoutes.parseSongDetail("2026-10-31", null))
-        assertNull(AppRoutes.parseSongDetail("31/10/2026", 2))
-        assertNull(AppRoutes.parseSongDetail("2026-13-01", 2))
-        assertNull(AppRoutes.parseSongDetail("", 2))
-        assertNull(AppRoutes.parseSongDetail("2026-10-31", 0))
-        assertNull(AppRoutes.parseSongDetail("2026-10-31", -1))
+    fun `parse rejects a missing value, a malformed date or id and a position below 1`() {
+        assertNull(AppRoutes.parseSongDetail(null, "crossroads", 2))
+        assertNull(AppRoutes.parseSongDetail("2026-10-31", null, 2))
+        assertNull(AppRoutes.parseSongDetail("2026-10-31", "", 2))
+        assertNull(AppRoutes.parseSongDetail("2026-10-31", "Cross Roads", 2))
+        assertNull(AppRoutes.parseSongDetail("2026-10-31", "crossroads", null))
+        assertNull(AppRoutes.parseSongDetail("31/10/2026", "crossroads", 2))
+        assertNull(AppRoutes.parseSongDetail("2026-13-01", "crossroads", 2))
+        assertNull(AppRoutes.parseSongDetail("", "crossroads", 2))
+        assertNull(AppRoutes.parseSongDetail("2026-10-31", "crossroads", 0))
+        assertNull(AppRoutes.parseSongDetail("2026-10-31", "crossroads", -1))
     }
 
     @Test
@@ -64,8 +76,11 @@ class AppRoutesTest {
         (1..12).forEach { month ->
             listOf(1, 9, 28).forEach { day ->
                 val date = LocalDate.of(2026, month, day)
-                val segments = AppRoutes.songDetail(date, 13).split('/')
-                assertEquals(SongDetailArgs(date, 13), AppRoutes.parseSongDetail(segments[1], segments[2].toInt()))
+                val segments = AppRoutes.songDetail(date, crossroads, 13).split('/')
+                assertEquals(
+                    SongDetailArgs(date, crossroads, 13),
+                    AppRoutes.parseSongDetail(segments[1], segments[2], segments[3].toInt()),
+                )
             }
         }
     }

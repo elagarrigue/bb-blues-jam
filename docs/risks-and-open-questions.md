@@ -53,6 +53,12 @@ fill slots, but this is how a newly published list will look. The user saw it on
 
 ### Expanded song row (`song-row-expansion`, 3 October 2026)
 
+**Superseded on 11 October 2026 by `song-detail-replaces-row-expansion`:** rows no longer expand;
+a row tap opens the song detail, which draws the same lineup panel (for musicians and the admin)
+and holds the admin's song-level controls. The section is kept for its history; the panel's
+semantics gap (no Compose UI harness) now applies to the song detail, and the risks below that
+mention expansion are gone.
+
 Settled with the user before implementation: the panel replaces the strip when a row is expanded;
 open slots look available but are not interactive for musicians; lines are compact (no 48dp
 minimum); a hint line follows the open slots. Spec in `../DESIGN.md`.
@@ -220,9 +226,8 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   - No undo (U1): recovery is adding the song again, which does not restore its key or assignments.
     The inline confirmation names the assigned musicians and, on a published list, says musicians
     stop seeing it.
-  - The row's "Quitando…" state is drawn only while the row is expanded (the action lives in the
-    panel); collapsing it during the write hides the status, and the card or the row's disappearance
-    still reports the outcome.
+  - (Resolved by `song-detail-replaces-row-expansion`: the removal lives in the row's compact bar,
+    which rows always draw, so "Quitando…" is always visible while the removal is sent.)
 - **Set-key risks** (`admin-set-key`, as built; live checks 7 October 2026: `checkSetlistWrite`
   with the key rewrite 4.4 s, rejected `setKey` probes 1.9–6.5 s, `readJams` 4.3–6.8 s; a real
   `setKey` is never run live, so its own latency is estimated from these, about 2–6 s):
@@ -239,8 +244,8 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
     key until the next refresh; the Sheet is correct.
   - Pending and failed key changes live in memory: a pending overlay dies with the process, and the
     cache then shows the key the Sheet last confirmed.
-  - The song detail shows the confirmed (cached) key only, so for a few seconds it can disagree with
-    the admin's row.
+  - (Resolved by `song-detail-replaces-row-expansion`: the admin's song detail applies the same
+    overlay as the row, so both show the pending key with "Guardando…".)
   - `Guardando…` adds a line to the row while sending, so the rows below move down by one caption
     line and back.
   - A key in a non-canonical spelling (`A#`) is shown as is in the picker and marks no cell; picking
@@ -447,3 +452,16 @@ Stated so they can be challenged rather than silently relied upon.
   aggregate SHA-256 prefix `42CFABE0DE3C8D71`). No real jam was changed. A live latency measurement
   for the complete move and park path has not been made, and row-anchor/refresh behavior still need
   device smoke.
+
+- **Song detail replaces the row expansion** (`song-detail-replaces-row-expansion`, 11 October 2026):
+  - Admin edits now take a navigation step; the list shows a pending or failed song-level write only
+    as the row's key and strip, "Guardando…" and the cards (accepted by the user's decision).
+  - The detail's failure cards sit after its controls; on a long panel they may be off-screen (a
+    polite live region announces them).
+  - The detail has no pull to refresh, staleness notice or live polling: during the jam an admin on
+    the detail sees the cache until going back (writes still mirror into Room).
+  - A removal sending from the list does not block opening that row's detail; the detail turns not
+    found when the removal is confirmed.
+  - Saved state from an older build holds an `ExpandedRows` entry that is no longer read (harmless),
+    and a saved `song/{date}/{position}` back stack fails to parse and pops (the handled branch).
+  - TalkBack reading of the row's new action ("ver el detalle del tema") is a human follow-up.

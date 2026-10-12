@@ -1177,7 +1177,7 @@
     "depends_on": [
       "ui-polish-pass"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "No expanded-row state, ExpandIndicator or in-place panel remains on Próxima jam; a row tap navigates to the song detail, keeping the filter and scroll on back",
       "The song detail shows artist, key, the full lineup panel with Otros and, for the admin, lineup editing, assign/clear slot, set key and add/remove extras through the existing repository functions (D-13)",
@@ -1186,7 +1186,17 @@
       "DESIGN.md, the design prompt notes, the architecture skill and the bitácora record the change; presenter tests cover the moved behavior; CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired",
       "Device check on the Pixel 5 with the debug demo jam and debug admin: musician and admin detail, back preserves list state"
     ],
-    "evidence": [],
+    "evidence": [
+      "T0 baseline CI=true ./init.sh exit 0 (konsist, detekt, ktlint wired): 668 JVM tests in 108 classes, 0 failures.",
+      "Gate after every task T1-T6 exit 0 with all three tools wired: T1 667/107, T2 669/107, T3 669/107, T4 682/108, T5 666/107, T6 660/106; final CI=true ./init.sh on 11 October 2026 exit 0, 660 tests in 106 classes, 0 failures/errors.",
+      "Per class: SongDetailAdminTest +13 (new: musician/admin detail, Loading until flag (draft never NotFound), Anotar/Cambiar tonalidad callbacks, Liberar clears once, pending key with Guardando and own-song failure cards with Cerrar -> dismiss, list and detail agree on the same Sending entries, extras form, extra Quitar, lineup editor distinct counts, filled-slot block, renumbering keeps the song and removal turns NotFound live, earlier handlers call current callbacks); SongDetailMappingTest 8 -> 10 (id lookup, duplicate id by position); deleted ExpandedRowsTest (5), InstrumentGroupsMapperTest (6), SongDetailModuleTest (1, folded into NextJamModuleTest); NextJamPresenterTest 16 -> 12, NextJamAdminTest 16 -> 13, NextJamFilterTest 10 -> 9, NextJamKeyChangeTest 9 -> 8, NextJamLineupChangeTest 5 -> 4, NextJamRemoveTest 9 -> 8 (expansion tests deleted, song-level ones moved to the detail).",
+      "Konsist failing case: temporary implementation(project(\":feature:past-jams\")) in feature/next-jam/build.gradle.kts, ./gradlew :konsist-test:test --rerun-tasks -> 17 tests, 1 failed: build-file-project-deps \"feature/next-jam may not depend on :feature:past-jams\"; reverted (no diff). Dead \"feature/song-detail\" AMBER_ROLE_ALLOWLIST entry removed (user-approved).",
+      "Lint: :feature:next-jam and :core:ui 'No issues found'; :app only GradleDependency (7) and NewerVersionAvailable (8). git diff --check clean.",
+      "Device Pixel 5 (09281FDD4004U6), demo jam confirmed by logcat 'jams cache: upcoming 2026-10-11 (demo)' before every check. Before shots from HEAD fa13197 built in a temporary worktree (removed). Musician: row is one clickable node with no chevron; tap -> detail with CUPOS LIBRES/CUBIERTOS panel and hint, no control; rotation in the detail keeps it; Guitarra filter + scroll, open row 05, system back -> identical uiautomator dump and same screenshot.",
+      "Device admin (debugAdmin=true): rows show Subir (disabled on row 1), Bajar, Quitar de la lista bar; Quitar de la lista -> inline confirmation (list stays, detail not opened) -> Cancelar; row tap -> detail with Cambiar tonalidad, Anotar on open lines, Liberar on filled, one 'Quitar a Valeria, saxo' node, no hint; Cambiar formacion -> FORMACION editor -> Listo; Agregar a Otros -> form (Agregar enabled=false) -> Cancelar; Cambiar tonalidad -> picker -> Volver -> detail; Anotar -> assign screen -> Volver -> detail; back -> list. Font scale 2.0 shots of detail and bar. Screenshots in docs/evidence/song-detail-replaces-row-expansion/ (24 PNGs).",
+      "Write controls never tapped: Subir, Bajar, Quitar (confirm), any key cell, assign submit, Liberar, -/+, Agregar, an extra's Quitar, Publicar. local.properties restored byte-for-byte (SHA-1 c96c7eca46165bd395fbf23d503e50d56fbcb5b0 before and after), font scale 1.0, auto-rotate restored, connectivity untouched. TalkBack reading of the row action not run (human follow-up).",
+      "Independent validator accepted on 11 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; 660 tests in 106 classes, 0 failures). It confirmed detail admin controls call only existing SetlistRepository functions or navigation (D-13), one shared SongOverlays rule for list and detail with a JVM test, lookup by song id, no feature-to-feature dependency, Konsist at 17 rules with only the approved dead allowlist entry removed, and justified test deletions. Follow-ups: 'Quitar de la lista' wraps in the compact bar; TalkBack reading of the row action is owed."
+    ],
     "notes": "Requested by the user on 11 October 2026: the expanded row had more logic than the song detail. User decisions: merge the song detail into :feature:next-jam (option recommended over moving the admin logic into :feature:song-detail), and keep the list-level actions (Subir/Bajar, Quitar de la lista) on the list rows. D-07 (collapsed list with the instrument strip) stays."
   }
 ]

@@ -18,7 +18,6 @@ import com.bbbjam.di.appModule
 import com.bbbjam.feature.info.di.infoModule
 import com.bbbjam.feature.nextjam.di.nextJamModule
 import com.bbbjam.feature.pastjams.di.pastJamsModule
-import com.bbbjam.feature.songdetail.di.songDetailModule
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +49,7 @@ class BluesJamApp : Application() {
         super.onCreate()
         val koin = startKoin {
             androidContext(this@BluesJamApp)
-            modules(appModule, dataModule, infoModule, nextJamModule, pastJamsModule, songDetailModule)
+            modules(appModule, dataModule, infoModule, nextJamModule, pastJamsModule)
         }.koin
         // Debug only, each behind its own flag: the demo upcoming jam (bluesjam.demoUpcomingJam) and
         // the debug admin session (bluesjam.debugAdmin). Loaded after dataModule so they override

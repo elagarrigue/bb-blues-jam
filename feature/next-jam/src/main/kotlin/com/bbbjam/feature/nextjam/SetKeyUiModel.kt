@@ -7,8 +7,8 @@ import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 
 /**
- * The key picker (`admin-set-key`, V1): full screen over the tabs, reached from an expanded admin
- * row's "Cambiar tonalidad". Every state has the back control.
+ * The key picker (`admin-set-key`, V1): full screen over the tabs, reached from the song detail's
+ * "Cambiar tonalidad" (`song-detail-replaces-row-expansion`). Every state has the back control.
  */
 sealed interface SetKeyUiModel : UiModel {
     val back: BackUiModel

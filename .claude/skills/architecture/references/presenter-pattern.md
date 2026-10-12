@@ -27,7 +27,10 @@ once per snapshot with `remember(snapshot) { calendar.today() }`, and the mappin
 `JamDateTextTest`, `NextJamModuleTest`, with `FakeJamsRepository` on a `MutableSharedFlow(replay =
 1)` and `JamCalendar(Clock.fixed(…), BUENOS_AIRES)`) are in its `src/test`.
 
-Row expansion exists (`song-row-expansion`) and does **not** follow the sketch's child
+**Historical, superseded by `song-detail-replaces-row-expansion` (11 October 2026): rows no longer
+expand; a row tap opens the song detail, and `ExpandedRows` is deleted. The note below and the
+sketch's `expanded` state are kept for the reasoning about per-row state.** Row expansion existed
+(`song-row-expansion`) and did **not** follow the sketch's child
 `SongRowPresenter`: `NextJamPresenter` holds one `ExpandedRows(jamDate, positions)` in
 `rememberSaveable(stateSaver = ExpandedRows.Saver) { mutableStateOf(ExpandedRows.NONE) }` and passes
 it, with an `onToggle(date, position)` lambda, into the pure `JamsSnapshot.toUiModel(today,

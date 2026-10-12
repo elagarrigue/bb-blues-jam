@@ -1,5 +1,11 @@
 # Progress Log
 
+## 11 October 2026 - song-detail-replaces-row-expansion accepted
+
+Próxima jam rows no longer expand (`docs/specs/song-detail-replaces-row-expansion.md`, T0-T9; user decisions: merge the module, list-level actions stay on the list, D-07 kept, H1 = P1, Konsist allowlist entry removal approved). `:feature:song-detail` merged into `:feature:next-jam` and deleted (settings, `:app` dependency, `songDetailModule`). A row header is one button ("ver el detalle del tema") that opens the detail by song id (route `song/{jamDate}/{songId}/{position}`, `findSong`: unique id wins, position only for repeated ids); admin rows keep a compact bar (`Subir`, `Bajar`, `Quitar de la lista`, confirmation/`Quitando…` replace it; the `Posición x de n` line is gone). The detail holds everything the expanded row had: the same open-first `LineupPanel` for musicians and admin (P1; `InstrumentGroups` deleted), and for the admin `Cambiar tonalidad`, `Anotar`, `Liberar`, extra `Quitar`, `Cambiar formación`, `Agregar a Otros`, `Guardando…` and its own failure cards. `SongOverlays` is the one overlay rule list and detail share; `SongDetailPresenter(JamsRepository, AdminSession, SetlistRepository)` stays `Loading` until the flag and the jams are read. No new mutation (D-13). `ExpandedRows`, `ExpandIndicator`, `AdminRowActions` deleted. Docs: architecture skill (+ presenter-pattern note), DESIGN.md, design prompt (enmiendas), bitácora (D-07 amendment, 6.19), risks, domain model, access model, design README.
+
+Verification: T0 668 tests / 108 classes; gate green after every task; final `CI=true ./init.sh` exit 0 with `konsist`, `detekt`, `ktlint` all `wired`, 660 tests in 106 classes, 0 failures (per-class deltas in `feature_list.json`). Konsist failing case shown (`build-file-project-deps` on a temporary `:feature:past-jams` dependency, reverted). Lint `:feature:next-jam`, `:core:ui`: no issues. `git diff --check` clean. Device (Pixel 5, demo jam confirmed in logcat): musician and admin before/after screenshots in `docs/evidence/song-detail-replaces-row-expansion/` (before from HEAD fa13197), back keeps filter and scroll (identical dump), pickers return to the detail, font scale 2.0 shots. No write control tapped; `local.properties` (byte-identical), font scale, rotation and connectivity restored. Observations: `Quitar de la lista` wraps to two lines in its third at 1.0 and three at 2.0 (usable). Owed: TalkBack reading of the row action. Independent validator accepted on 11 October 2026 after rerunning the gate; follow-up polish: let `Quitar de la lista` take its natural width in the compact bar.
+
 ## 10 October 2026 - ui-polish-pass accepted
 
 Per-screen UI polish (`docs/specs/ui-polish-pass.md`, tasks U1-U14; proposals P-A..P-D and deferred D1-D5 untouched). U1 tab label one centred line (`TabBarDefaults.LABEL_MAX_LINES`); U2 admin panel lines with an action stack instrument above detail (new `LineupLine.kt` in `:core:ui`, split out of `LineupPanel.kt` for detekt `TooManyFunctions`); U6 `sm` before every later panel heading; U4 extras' `Quitar` is now a panel line action (`toLineupPanel(onRemoveExtra)`, `LineupLineUiModel.actionDescription` "Quitar a {name}, {instrument}", same `removeExtraParticipant` call), the editor keeps only the add form with labelled `OutlinedTextField`s (`AdminControlsDefaults.extraField()`), `Agregar` enabled only when both trimmed fields are non-blank (`submitEnabled`) and `Cancelar` (`Event.Cancel`); `ExtraParticipantCopy.kt` deleted; U5 admin panel `hint = null`; U3 enabled lineup buttons `surfaceRaised` + `border` outline, disabled no fill/no outline, disabled move/submit actions not underlined; U7 lineup editor inset `spacing.md`; U8 collapsed title up to two lines; U11 header and admin status block end with an extra `sm`; U9 headings on Info title/cards and the Próxima jam date; U10 Info admin actions underlined; U12 assign screen `shapes.md` button and token field colours (`AssignMusicianDefaults.field()`), `slotName` uses `Instrument.fullName()`; U13 `SLOT_TAKEN`/`CLEAR_STALE` copy; U14 DESIGN.md mojibake (and those two CRLF lines). DESIGN.md and the architecture skill updated.
@@ -36,12 +42,13 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 43 entries): 42 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 44 entries): 43 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
-  accepted 10 October 2026. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `ui-polish-pass` entry at the top of this file.
-- Code layout: eight Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
-  `:feature:info`, `:feature:next-jam`, `:feature:past-jams`, `:feature:song-detail`), plus
+  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `song-detail-replaces-row-expansion` entry at the top of this file.
+- Code layout: seven Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
+  `:feature:info`, `:feature:next-jam`, `:feature:past-jams`; the song detail lives in
+  `:feature:next-jam` since `song-detail-replaces-row-expansion`), plus
   `:konsist-test` (17 architecture rules) and the included build `build-logic`. The Apps Script
   backend lives in `backend/apps-script/` (Node tests outside the gate). Where each piece goes:
   `.claude/skills/architecture/SKILL.md`.

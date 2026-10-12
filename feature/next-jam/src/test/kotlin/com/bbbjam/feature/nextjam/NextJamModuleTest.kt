@@ -34,6 +34,7 @@ class NextJamModuleTest {
             assertNotSame(first, second)
             assertNotSame(app.koin.get<AddSongPresenter>(), app.koin.get<AddSongPresenter>())
             assertNotSame(app.koin.get<SetKeyPresenter>(), app.koin.get<SetKeyPresenter>())
+            assertNotSame(app.koin.get<SongDetailPresenter>(), app.koin.get<SongDetailPresenter>())
         } finally {
             app.close()
         }

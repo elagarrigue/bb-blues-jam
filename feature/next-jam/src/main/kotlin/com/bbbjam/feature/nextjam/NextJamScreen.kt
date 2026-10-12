@@ -36,8 +36,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
@@ -47,13 +45,9 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
-import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.InstrumentFilterBar
 import com.bbbjam.core.ui.filter.instrumentFilterBar
-import com.bbbjam.core.ui.lineup.ExpandIndicator
-import com.bbbjam.core.ui.lineup.LineupPanel
-import com.bbbjam.core.ui.lineup.toLineupPanel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.ListErrorBlock
@@ -70,20 +64,19 @@ import org.koin.compose.koinInject
 
 /**
  * Próxima jam: the upcoming jam's date, venue and time remaining, and its songs as rows (position,
- * title, key in the amber `key` role) with the instrument strip under each; tapping a row's header
- * expands it in place to the artist and the lineup panel. A draft jam shows the draft card instead
- * of rows (`unpublished-setlist-state`). Under the header, the instrument filter
- * bar narrows the rows to songs with an open slot for the selected instruments. Loading, error,
- * empty and offline are drawn with the `:core:ui` state components (`list-states`). An expanded
- * row offers "Ver detalle del tema", which calls [onOpenSong] with the jam's date and the song's
- * position (`song-detail-screen`); `:app` binds it to navigation. For the admin
+ * title, key in the amber `key` role) with the instrument strip under each (D-07). A draft jam shows
+ * the draft card instead of rows (`unpublished-setlist-state`). Under the header, the instrument
+ * filter bar narrows the rows to songs with an open slot for the selected instruments. Loading,
+ * error, empty and offline are drawn with the `:core:ui` state components (`list-states`). Tapping
+ * a row's header calls [onOpenSong] with the jam's date, the song id and its position
+ * (`song-detail-replaces-row-expansion`: rows no longer expand; the song detail holds the lineup
+ * and the admin's song-level controls); `:app` binds it to navigation. For the admin
  * (`admin-add-song-to-setlist`) the draft badge sits under the header and the pending adds, the
  * failure cards and "Agregar tema" (which calls [onAddSong]) come after the rows, so nothing above
- * them moves; an expanded row ends with the admin's row actions ("Cambiar tonalidad", which calls
- * [onSetKey], `admin-set-key`, then "Quitar de la lista", `admin-remove-song-from-setlist`), and a
- * row whose key change is still saving shows "Guardando…" under its title. Rows are keyed by
- * `rowKey`: the song id, or the position when a hand-edited tab repeats a song id, because a lazy
- * list key must be unique.
+ * them moves; each row gains a compact bar under its header with "Subir", "Bajar" and "Quitar de la
+ * lista" (`admin-reorder-songs`, `admin-remove-song-from-setlist`), and a row with a write still
+ * saving shows "Guardando…" under its title. Rows are keyed by `rowKey`: the song id, or the
+ * position when a hand-edited tab repeats a song id, because a lazy list key must be unique.
  * Every state can be pulled to refresh, and while the screen is resumed the presenter refreshes
  * every 30 s inside a jam's live window (`live-refresh-during-jam`).
  * It renders [NextJamUiModel] and forwards events; the presenter decides.
@@ -93,15 +86,8 @@ import org.koin.compose.koinInject
 fun NextJamScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    onOpenSong: (jamDate: LocalDate, position: Int) -> Unit = { _, _ -> },
+    onOpenSong: (jamDate: LocalDate, songId: SongId, position: Int) -> Unit = { _, _, _ -> },
     onAddSong: (jamDate: LocalDate) -> Unit = {},
-    onSetKey: (jamDate: LocalDate, songId: SongId) -> Unit = { _, _ -> },
-    onAssignSlot: (
-        jamDate: LocalDate,
-        songId: SongId,
-        instrument: Instrument,
-        position: SlotPosition,
-    ) -> Unit = { _, _, _, _ -> },
     presenter: NextJamPresenter = koinInject(),
 ) {
     // RESUMED only while this tab is selected, the activity is in front and no destination sits
@@ -112,8 +98,6 @@ fun NextJamScreen(
         NextJamPresenter.Params(
             isResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
             onAddSong = onAddSong,
-            onSetKey = onSetKey,
-            onAssignSlot = onAssignSlot,
             onOpenSong = onOpenSong,
         ),
     )
@@ -217,11 +201,11 @@ private fun Message(text: String) {
 }
 
 /**
- * One song row. Only the header toggles, so a stray tap on the panel never collapses it. The header
- * is one button node (title line, then the strip while collapsed or the artist while expanded) with
- * the row's state and action; the panel sits outside it, one node per line, so each slot is spoken
- * once in either state. `animateContentSize` grows the row downwards: the header and the rows above
- * it do not move, the rows below slide.
+ * One song row, always collapsed. The header is one button node (title line, "Guardando…", then the
+ * strip) whose action opens the song detail (P5: "ver el detalle del tema"); for the admin the
+ * compact bar sits under it, outside its click, so a tap on "Subir", "Bajar" or "Quitar de la lista"
+ * never opens the detail. `animateContentSize` grows the row downwards when the removal's inline
+ * confirmation replaces the bar: the header and the rows above it do not move, the rows below slide.
  */
 @Composable
 private fun SongRow(
@@ -229,7 +213,6 @@ private fun SongRow(
     modifier: Modifier = Modifier,
     onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
 ) {
-    val spacing = BluesJamTheme.spacing
     Surface(
         color = BluesJamTheme.colors.surface,
         contentColor = BluesJamTheme.colors.text,
@@ -238,39 +221,8 @@ private fun SongRow(
     ) {
         Column(modifier = Modifier.animateContentSize()) {
             RowHeader(row)
-            if (row.isExpanded) {
-                LineupPanel(
-                    model = row.lineup,
-                    modifier = Modifier.padding(start = spacing.md, end = spacing.md),
-                )
-                OpenDetailAction(row)
-                row.admin?.let { admin -> AdminRowActions(admin, row.rowKey, onMoveAction) }
-            }
+            row.admin?.let { admin -> AdminRowBar(admin, row.rowKey, onMoveAction) }
         }
-    }
-}
-
-/**
- * The expanded row's entry to the song detail: a full-width text action, underlined like the other
- * secondary text actions, `text` and never amber, at least 48dp tall. Drawn only while expanded.
- */
-@Composable
-private fun OpenDetailAction(row: SongRowUiModel) {
-    val spacing = BluesJamTheme.spacing
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .clickable(role = Role.Button) { row.events(SongRowUiModel.Event.OpenDetail) }
-            .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Text(
-            text = row.detailLabel,
-            style = BluesJamTheme.typography.body,
-            color = BluesJamTheme.colors.text,
-            textDecoration = TextDecoration.Underline,
-        )
     }
 }
 
@@ -282,24 +234,19 @@ private fun RowHeader(row: SongRowUiModel) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClickLabel = row.toggleLabel, role = Role.Button) {
-                row.events(SongRowUiModel.Event.ToggleExpanded)
+            .clickable(onClickLabel = row.openDetailLabel, role = Role.Button) {
+                row.events(SongRowUiModel.Event.OpenDetail)
             }
-            .semantics { stateDescription = row.stateDescription }
             .padding(horizontal = spacing.md, vertical = spacing.sm),
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         TitleLine(row)
         row.admin?.saveStatus?.let { status -> SaveStatusLine(status) }
-        if (!row.isExpanded) {
-            InstrumentStrip(row.instruments)
-        } else if (row.artist.isNotBlank()) {
-            Text(text = row.artist, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
-        }
+        InstrumentStrip(row.instruments)
     }
 }
 
-/** A long title wraps to a second line before it is cut with "…"; key and chevron stay centred on it. */
+/** A long title wraps to a second line before it is cut with "…"; the key stays centred on it. */
 private const val TITLE_MAX_LINES = 2
 
 @Composable
@@ -328,18 +275,15 @@ private fun TitleLine(row: SongRowUiModel) {
             color = BluesJamTheme.colors.key,
             modifier = Modifier.semantics { contentDescription = row.keyDescription },
         )
-        ExpandIndicator(expanded = row.isExpanded)
     }
 }
 
 internal fun previewRow(
     position: Int,
     title: String,
-    artist: String,
     key: String,
     lineup: Lineup,
     extras: List<ExtraParticipant> = emptyList(),
-    isExpanded: Boolean = false,
 ) = SongRowUiModel(
     position = position,
     positionLabel = SongListText.positionLabel(position),
@@ -347,12 +291,7 @@ internal fun previewRow(
     key = key,
     keyDescription = SongListText.keyDescription(key),
     instruments = lineup.toInstrumentChips(extras),
-    artist = artist,
-    isExpanded = isExpanded,
-    stateDescription = if (isExpanded) NextJamCopy.ROW_EXPANDED else NextJamCopy.ROW_COLLAPSED,
-    toggleLabel = if (isExpanded) NextJamCopy.HIDE_SLOTS else NextJamCopy.SHOW_SLOTS,
-    lineup = lineup.toLineupPanel(extras),
-    detailLabel = NextJamCopy.OPEN_DETAIL,
+    openDetailLabel = NextJamCopy.OPEN_DETAIL,
     events = EventHandler {},
 )
 
@@ -371,10 +310,10 @@ private fun NextJamScreenPreview() {
     )
     val saxo = listOf(ExtraParticipant("Juan", "saxo"))
     val rows = listOf(
-        previewRow(1, "Sweet Little Angel", "B.B. King", "B", Lineup.default()),
-        previewRow(2, "Walking Thru the Park", "Muddy Waters", "A", mixed, saxo, isExpanded = true),
-        previewRow(4, "Blues Del Politico", "Pappo", "C", Lineup(emptyList())),
-        previewRow(5, "The Thrill Is Gone", "B.B. King", "Bm", Lineup.default(), isExpanded = true),
+        previewRow(1, "Sweet Little Angel", "B", Lineup.default()),
+        previewRow(2, "Walking Thru the Park", "A", mixed, saxo),
+        previewRow(4, "Blues Del Politico", "C", Lineup(emptyList())),
+        previewRow(5, "The Thrill Is Gone", "Bm", Lineup.default()),
     )
     val lineups = listOf(Lineup.default(), mixed, Lineup(emptyList()), Lineup.default())
     val model = NextJamUiModel.Jam(

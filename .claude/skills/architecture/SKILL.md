@@ -21,14 +21,15 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`) the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
+| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
 Feature modules are added by the slice that first needs them, not up front. `:feature:info` exists
 (set by `info-screen`), `:feature:next-jam` exists (set by `next-jam-read-only-list`; the first
-feature that reads data, depending on `:core:ui` and `:core:data`), `:feature:song-detail`
-exists (set by `song-detail-screen`, same dependencies) and `:feature:past-jams` exists (set by
+feature that reads data, depending on `:core:ui` and `:core:data`; since
+`song-detail-replaces-row-expansion` it also holds the song detail, which `song-detail-screen` had
+set up as `:feature:song-detail`, a module now deleted) and `:feature:past-jams` exists (set by
 `past-jams-list`, same dependencies; Anteriores, read-only; its row colours come only from
 `PastJamsDefaults`). `past-jam-detail` adds the past jam's detail to `:feature:past-jams`:
 `PastJamDetailPresenter(JamsRepository)` (its only dependency, so it cannot read the admin flag),
@@ -145,8 +146,10 @@ holds the confirming row as one saveable `String` key (`removalKey(date, songId)
 so a double tap removes once. `AdminState` gains `removal: RemovalState(removes, confirming,
 onEvent)`; row handlers are keyed by (date, songId, step). `NextJamAdminUiModel.failures` merges
 failed adds and removes in id order (type name `AddFailureUiModel` kept). The screen draws
-`AdminRowActions(row.admin)` after `Ver detalle del tema` in an expanded row; **a later row action
-goes inside `AdminRowActions`, before the removal**, which stays last. Colours in
+`AdminRowActions(row.admin)` after `Ver detalle del tema` in an expanded row (superseded by
+`song-detail-replaces-row-expansion`: rows no longer expand; **a later list-level action goes in
+the compact `AdminRowBar`, before the removal, which stays last; a song-level action goes in the
+song detail**). Colours in
 `AdminControlsDefaults.removal()` (`error`, `text`, `textMuted`; no amber).
 
 As built by `admin-set-key` Part A (backend and `:core:data`, no UI yet): `Post.js` adds `setKey`
@@ -182,7 +185,9 @@ launches `setKey` undispatched and calls `onDone` once, and the current cell doe
 colours in `SetKeyDefaults` (`key` only, on the current key), copy in `SetKeyCopy`. `:app`:
 `AppRoutes.SET_KEY` (`setKey/{jamDate}/{songId}`, `setKey(date, songId)`, `parseSetKey` with an ISO
 date and `SongId.parseOrNull`), a `setKey` destination beside `addSong` (same slide, insets and
-`RESUMED` back guard; a pick pops by route), `TabsShell(onOpenSetKey)` → `NextJamScreen(onSetKey)`.
+`RESUMED` back guard; a pick pops by route), `TabsShell(onOpenSetKey)` → `NextJamScreen(onSetKey)`
+(since `song-detail-replaces-row-expansion` the song detail opens the picker; `TabsShell` and
+`NextJamScreen` no longer take it).
 Konsist unchanged (17 rules, `:feature:next-jam` still `{key}`).
 
 As built by `live-refresh-during-jam`: **periodic refresh lives in the presenter, gated by the
@@ -226,7 +231,8 @@ normalizer/validator. `SetlistRepository.assignSlot` and `observeAssignments` us
 single-slot DAO update. Sending assignments overlay only the admin's matching open slot before
 filter/count/strip/panel derivation; failed assignments revert and become dismissible cards.
 `LineupPanelUiModel` keeps optional slot action metadata absent by default, and the expanded Próxima
-jam panel supplies actions only in admin mode. `AssignMusicianPresenter` owns form validation and
+jam panel (the song detail's panel since `song-detail-replaces-row-expansion`) supplies actions only
+in admin mode. `AssignMusicianPresenter` owns form validation and
 suggestions from cached upcoming/past jams; `AssignMusicianScreen` is a full-screen flow in the
 existing feature. `AppRoutes.ASSIGN_SLOT` carries ISO date, `SongId`, instrument and positive
 ordinal in the outer host. No new module or Koin binding is introduced.
@@ -276,6 +282,36 @@ matching `SetlistRepository` function, returning a typed `SetlistActionResult` t
 original outcome. It is a Koin singleton in `AppModule`. It is the phase 2 assistant's surface, not
 a JSON protocol or a deeplink scheme (D1 stays deferred).
 
+As built by `song-detail-replaces-row-expansion` (user decisions of 11 October 2026: merge the
+module, list-level actions stay on the list, D-07 kept; H1 = P1): **Próxima jam rows no longer
+expand.** `:feature:song-detail` is merged into `:feature:next-jam` (package
+`com.bbbjam.feature.nextjam`; `SongDetailPresenter`, `SongDetailUiModel`, `SongDetailScreen`,
+`SongDetailCopy`, `SongDetailDefaults`; one `factory` in `nextJamModule`) and the module, its
+`settings.gradle.kts` include, `:app` dependency and `songDetailModule` are gone. A row's header is
+one `Role.Button` node whose action (`onClickLabel` "ver el detalle del tema") is
+`SongRowUiModel.Event.OpenDetail`, the only row event; `SongRowUiModel` lost `isExpanded`,
+`stateDescription`, `toggleLabel`, `lineup`, `artist` and `detailLabel`, and `SongRowAdminUiModel` is
+`(removal, move, saveStatus)`, drawn as the compact `AdminRowBar` under the header ("Subir", "Bajar",
+"Quitar de la lista"; the confirmation or "Quitando…" replaces it). `ExpandedRows`,
+`ExpandIndicator` and `InstrumentGroups*` are deleted. **The detail is named by song id**
+(`onOpenSong(jamDate, songId, cachedPosition)`; lookup `List<JamSong>.findSong(songId, position)`:
+the one song with the id, else the one at the position among repeated ids, else not found), so a
+move or removal renumbering the list never switches it to another song. **`SongOverlays`** (key,
+lineup, assignment, clear and extras entries; `overlaid(date, song, reserve)`, `pendingKey`,
+`isSaving`, `failures(date, songId?)`, `rememberSongOverlays(setlist)`) is the one overlay rule the
+list and the detail apply; `AdminState.overlays` derives it from its lists. `SongDetailPresenter(
+JamsRepository, AdminSession, SetlistRepository)` with `Params(jamDate, songId, position, onBack,
+onSetKey, onAssignSlot)` reads the flag with **no initial value** and stays `Loading` until both the
+flag and the jams are read (an admin never sees a draft's song as not found); for the admin it looks
+the song up in the upcoming jam's `jam.setlist` and adds `SongDetailAdminUiModel(saveStatus, setKey,
+lineup, extraParticipants, failures)` built from `SongAdminState` (`rememberSongAdminState`: the
+lineup controls, the "Otros" form, `clearSlot` launched undispatched). Musicians and admins see the
+same `LineupPanel` (open slots first, `OTROS` last); the admin's has line actions and no hint. The
+detail never refreshes (the list owns the per-login refresh). `NextJamPresenter.Params(isResumed,
+onAddSong, onOpenSong)`. `:app` binds the detail's `onSetKey`/`onAssignSlot` to the existing
+routes; the pickers pop by route back onto the detail. Konsist: the dead `"feature/song-detail"`
+`AMBER_ROLE_ALLOWLIST` entry was removed (user-approved; 17 rules, no logic change).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -293,8 +329,10 @@ a JSON protocol or a deeplink scheme (D1 stays deferred).
   colors). A component slice that uses a Material 3 component sets its colors explicitly from
   `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
 - Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
-  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` and `:feature:song-detail`
-  may read `key` only; `:feature:past-jams` may read `key` only since `past-jam-detail` (the detail
+  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` may read `key` (and, since
+  `admin-publish-setlist`, `primaryAction`, `onPrimaryAction`, `published`, `onPublished`; the song
+  detail, merged into it by `song-detail-replaces-row-expansion`, reads `key` only, through
+  `SongDetailDefaults`); `:feature:past-jams` may read `key` only since `past-jam-detail` (the detail
   rows' key, through `PastJamDetailDefaults`; the Anteriores list reads no amber role);
   `:feature:info` may read `primaryAction` and `onPrimaryAction` since `admin-passphrase-login`
   (the login's "Entrar", `button-primary`, through `AdminLoginDefaults`; the field reads none). The rule
@@ -332,8 +370,9 @@ a JSON protocol or a deeplink scheme (D1 stays deferred).
   The expanded lineup is the second example (`song-row-expansion`): `com.bbbjam.core.ui.lineup`
   holds `LineupPanel(model)`, the pure mapper `Lineup.toLineupPanel(extras)` (open slots first, then
   filled, then extras), `LineupPanelUiModel`/`LineupLineUiModel`, internal `LineupPanelCopy` and
-  `LineupPanelDefaults` (line styles reuse `InstrumentStripDefaults.style`), and `ExpandIndicator`,
-  the row chevron, which is here because features do not depend on the icons library.
+  `LineupPanelDefaults` (line styles reuse `InstrumentStripDefaults.style`). `ExpandIndicator`, the
+  row chevron, was here until `song-detail-replaces-row-expansion` removed the expansion; the panel
+  is now drawn by the song detail.
 - The instrument filter is the third example (`instrument-filter-chips`): `com.bbbjam.core.ui.filter`
   holds `InstrumentFilterBar(model)`, `InstrumentFilterBarUiModel`/`FilterChipUiModel`, the pure
   mapper `instrumentFilterBar(lineups, selected, onChange)`, the row predicate
@@ -381,11 +420,9 @@ a JSON protocol or a deeplink scheme (D1 stays deferred).
   (their only `LazyListState`, replacing the implicit default) and passes the result as
   `LazyColumn(state = …)`; neither screen re-derives the rule. A user scrolled away from the top is
   never pulled back, and the notice disappearing never scrolls.
-- The song detail is the fifth example (`song-detail-screen`): `com.bbbjam.core.ui.lineup` adds
-  `InstrumentGroups(model)`, `InstrumentGroupsUiModel`/`InstrumentGroupUiModel` and the pure mapper
-  `Lineup.toInstrumentGroups(extras)` (groups in first-appearance order, open before filled inside a
-  group, extras never merged), reusing the panel's internal `Line` (now with a `showInstrument` flag
-  and an ellipsis bounded by `LineupPanelDefaults.INSTRUMENT_MAX_WIDTH`). `com.bbbjam.core.ui.nav`
+- The song detail is the fifth example (`song-detail-screen`): `com.bbbjam.core.ui.lineup` added
+  `InstrumentGroups` (the lineup grouped by instrument), deleted by `song-detail-replaces-row-expansion`
+  (P1: the detail draws the same `LineupPanel` for everyone). `com.bbbjam.core.ui.nav`
   holds `BackButton(model)`, `BackUiModel` (`Event.Back`), the mapper `backUiModel(onBack)` and
   internal `NavCopy`; `nav` names the back control, not the library, and nothing in `:core:ui`
   imports navigation. `bottom-navigation` adds the bar there: `TabBar(model)` (Material 3
@@ -394,27 +431,25 @@ a JSON protocol or a deeplink scheme (D1 stays deferred).
   (colors: `surface`, `text`, `surfaceRaised`, `textMuted`; no amber). `:app` owns the labels and
   routes (`AppTab`). `BluesJamTypography.keyDisplay` (96sp) is used only by the detail.
 - **Navigation callbacks in presenter `Params`** (`song-detail-screen`): a screen takes plain
-  callbacks (`onOpenSong(jamDate, position)`, `onBack`) and passes them to its presenter's `Params`
+  callbacks (`onOpenSong(jamDate, songId, position)` since `song-detail-replaces-row-expansion`,
+  `onBack`) and passes them to its presenter's `Params`
   (`NextJamPresenter.Params`, `SongDetailPresenter.Params`). The presenter reads each through
   `val current by rememberUpdatedState(params.callback)` and builds handlers that call `current`, so
   an earlier model's handler (Compose may keep it, handlers compare equal) still calls the current
   callback. `:app` binds the callbacks to `NavController` calls; routes are built and parsed only in
   `AppRoutes`. Features never import `androidx.navigation` (Konsist `navigation-only-in-app`).
-- Per-row UI state of a list (which rows are expanded) → **one state object in the parent
-  presenter**, keyed by a stable id, passed into the pure mapping; not a child presenter called in a
-  loop. A `remember` inside a child presenter called in `map {}` is keyed by call order, so removing
-  or inserting a row moves its state to a neighbour unless each call is wrapped in `key(id)`.
-  `NextJamPresenter` holds `ExpandedRows(jamDate, songIds)` in
-  `rememberSaveable(stateSaver = ExpandedRows.Saver)` (survives rotation; in Molecule it behaves as
-  `remember`), keyed by the song id and scoped to the jam date (since
-  `admin-remove-song-from-setlist`: a removal renumbers positions, and a position key would hand the
-  removed song's expansion to the song that moves up). Since `admin-reorder-songs` the lazy list is keyed by
-  `rowKey`: the song id, or the position when a hand-edited tab repeats a song id, because lazy
-  keys must be unique. **Never recreate such a
-  state object** (`remember(snapshot) { … }`): handlers without a key compare equal, so Compose may
-  keep an earlier model's handler, and it must still write through the same state. A child
-  presenter pays off only when a row has its own dependencies (the admin slot mutations).
-  The filter selection is held the same way, beside it: `Set<Instrument>` in
+- Per-row UI state of a list → **one state object in the parent presenter**, keyed by a stable id,
+  passed into the pure mapping; not a child presenter called in a loop. A `remember` inside a child
+  presenter called in `map {}` is keyed by call order, so removing or inserting a row moves its
+  state to a neighbour unless each call is wrapped in `key(id)`. Row expansion (`ExpandedRows`, keyed
+  by jam date and song id) was the first such state; `song-detail-replaces-row-expansion` removed it
+  (a row tap opens the song detail). The confirming removal (`removalKey(date, songId)`) is held the
+  same way. Since `admin-reorder-songs` the lazy list is keyed by `rowKey`: the song id, or the
+  position when a hand-edited tab repeats a song id, because lazy keys must be unique. **Never
+  recreate such a state object** (`remember(snapshot) { … }`): handlers without a key compare
+  equal, so Compose may keep an earlier model's handler, and it must still write through the same
+  state.
+  The filter selection is held the same way: `Set<Instrument>` in
   `rememberSaveable(stateSaver = InstrumentFilterSaver)` (enum names), created once, never
   recreated, and **not** scoped to the jam date (it describes the musician). The presenter filters
   rows with `matchesInstrumentFilter` and builds the bar from every song, so the count line equals

@@ -173,7 +173,7 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
 - **Size and semantics:** Material 3 `NavigationBar` (80dp, 24dp icons); each item is a
   screen-reader tab with its selected state and well over 48dp tall. The bar applies the
   navigation-bar inset itself.
-- **Per-tab state:** each tab keeps its scroll, and Próxima jam its expanded rows and filter, across
+- **Per-tab state:** each tab keeps its scroll, and Próxima jam its filter, across
   tab switches, the song detail, rotation and process death. Tapping the selected tab does nothing.
   Back from Anteriores or Info goes to Próxima jam; back from Próxima jam leaves the app.
 - **Status bar:** the status-bar area is a solid `background` band above every tab and the song
@@ -186,16 +186,16 @@ The component is `TabBar` in `:core:ui` (`com.bbbjam.core.ui.nav`); its colors c
 `TabBarDefaults`.
 
 The next-jam screen is opened 90% of the time and must answer "where can I play?" without the user
-expanding anything:
+opening anything:
 
 1. Header — date, venue name and address, and time remaining in natural language ("en 5 días",
    "esta noche")
 2. Filter chips by instrument, with a clear-filter affordance and a count of matching songs when a
    filter is active
-3. The song list, collapsed by default
+3. The song list, always collapsed (D-07)
 
-Expanding happens in place, and several rows may be expanded at once. Expansion must not displace
-the rest of the list disorientingly — design the transition.
+Rows never expand (`song-detail-replaces-row-expansion`, 11 October 2026): a tap on a row opens the
+song detail, and back returns to the same tab, filter and scroll.
 
 ## Shapes
 
@@ -206,9 +206,21 @@ than hard cards; the visual separation comes from surface elevation, not from he
 
 ### Song row, collapsed
 
-One line where possible: position number, title, **key** (always visible even collapsed), and the
-instrument strip. A long title (or any title at a large font scale) wraps to a second line before it
-is cut with "…"; the key and chevron stay vertically centred on it (`ui-polish-pass`, U8).
+One line where possible: position number, title, **key** (always visible), and the instrument strip.
+A long title (or any title at a large font scale) wraps to a second line before it is cut with "…";
+the key stays vertically centred on it (`ui-polish-pass`, U8). There is no chevron: the row is
+always collapsed (`song-detail-replaces-row-expansion`, 11 October 2026).
+
+- **Tap opens the song detail.** The header (position, title, key, `Guardando…` when it applies,
+  the strip) is one button node at least 56dp tall; its action is "ver el detalle del tema" (TalkBack:
+  "Presioná dos veces para ver el detalle del tema"), with no state description. It still reads the
+  position, title, key description and the strip's chips.
+- **Admin compact bar** (P3): under the header, outside its click, one row of three 48dp
+  underlined `body` text actions, each a third of the width and inset `spacing.md`: `Subir`, `Bajar`
+  (the edge one disabled, muted, not underlined) and `Quitar de la lista` (`error`). Tapping the bar
+  never opens the detail. While the removal confirms, the inline confirmation replaces the bar (the
+  row grows downwards); while it is sent, `Quitando…` does. The `Posición x de n` line is no longer
+  drawn (the position label is in the header). Song-level admin controls live in the song detail.
 
 ### Instrument strip
 
@@ -247,21 +259,16 @@ a busy song. Accepted, because a musician reading `VOZ: LIBRE` needs no legend, 
 strip does.
 
 Note what the chips give away for free: a filled slot showing the musician's name answers "who is
-playing this?" without expanding the row.
+playing this?" without opening the song.
 
-### Song row, expanded
+### Lineup panel
 
-Artist name, then **open slots first**, presented as available, then filled slots below with the
-musician's name and instrument, then the extra participants. Actionable content goes on top.
-Decided 3 October 2026 (`song-row-expansion`):
+Rows no longer expand (`song-detail-replaces-row-expansion`, 11 October 2026): the lineup panel the
+expanded row drew (`song-row-expansion`, 3 October 2026) is now drawn by the song detail, for
+musicians and the admin alike (P1). Its rules stay:
 
-- **Header-only toggle.** Tapping the row's header (position, title, key, and a `textMuted` chevron
-  that points down collapsed and up expanded) expands or collapses it; a tap on the panel does
-  nothing, so a stray touch never collapses a row and future admin taps on slots never fight the
-  row's click. Several rows may be expanded at once.
-- **The panel replaces the strip.** Expanded, the header shows the artist (`body`, `textMuted`)
-  instead of the strip; the panel is a superset of the strip, and showing both would repeat every
-  slot on screen and for screen readers.
+- **Order:** **open slots first**, presented as available, then filled slots with the musician's
+  name and instrument, then the extra participants. Actionable content goes on top.
 - **Sections:** `CUPOS LIBRES`, `CUPOS CUBIERTOS`, `OTROS` (caption, `textMuted`, uppercase, marked
   as headings), each drawn only when non-empty. With at least one open slot, a caption hint follows
   the open lines ("Para tocar, anotate en la jam: la organización te suma a un tema."); with none,
@@ -277,51 +284,49 @@ Decided 3 October 2026 (`song-row-expansion`):
   action stays at the line's end.
 - **Open slots look available, not tappable, in the musician view**: no click, no ripple, no role,
   no "Pedir cupo" (self-signup is out of scope). A control that looks tappable and does nothing is a
-  false affordance. Lines have no 48dp minimum because nothing in the panel is a touch target. Open
-  slots become tappable only in the admin view (`admin-assign-musician`, which decides how its
-  targets reach 48dp).
-- **Motion:** the row animates its own height; the tapped header and everything above it stay
-  still, the rows below slide. No auto-scroll.
-- **Screen readers:** the header is one button whose state is "expandido" / "contraído" and whose
-  action is "ver los cupos" / "ocultar los cupos"; the panel's headings and lines follow as separate
-  nodes, so each slot is spoken once in either state.
+  false affordance. Lines have no 48dp minimum because nothing in the musician's panel is a touch
+  target; the admin's line actions are 48dp.
 
-The component is `LineupPanel` in `:core:ui` (`com.bbbjam.core.ui.lineup`), with `ExpandIndicator`
-for the chevron. A line's instrument text is cut with "…" at 160dp (`LineupPanelDefaults
-.INSTRUMENT_MAX_WIDTH`), so a long free-text extra instrument cannot squeeze the name.
-
-Under the panel, an expanded row ends with **`Ver detalle del tema`**: a full-width text action
-(`body`, `text`, underlined like the other secondary text actions, at least 48dp tall, a button for
-screen readers), never amber. It opens the song detail (`song-detail-screen`).
+The component is `LineupPanel` in `:core:ui` (`com.bbbjam.core.ui.lineup`). A line's instrument text
+is cut with "…" at 160dp (`LineupPanelDefaults.INSTRUMENT_MAX_WIDTH`), so a long free-text extra
+instrument cannot squeeze the name. (`ExpandIndicator`, the old row chevron, is deleted.)
 
 ### Song detail
 
-Decided 4 October 2026 (`song-detail-screen`; N1, K1, G1, C1, R1, K2):
+Decided 4 October 2026 (`song-detail-screen`; N1, K1, C1, R1, K2) and reshaped 11 October 2026
+(`song-detail-replaces-row-expansion`; P1, P2, P4): the detail now holds everything the expanded row
+had.
 
 - **Full screen** over the tabs, with no tab bar; it slides in from the end over the tabs in 250 ms
-  and out to the end on back (M1, `bottom-navigation`).
+  and out to the end on back (M1, `bottom-navigation`). Opened by a tap on a Próxima jam row.
   A back arrow at the top start (`text`, never amber, 48dp target, described "Volver") and the
-  system back both return to Próxima jam with the same tab, expanded rows, filter and scroll.
-- **Order:** back arrow; title (`h1`, `text`, wraps); artist (`body`, `textMuted`) only when there
-  is one; the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in `keyDisplay`,
-  colour `key`, one screen-reader node "Tonalidad Bm"; then the lineup on a `surface` block with
-  `rounded.md`.
-- **Lineup grouped by instrument** (G1): the note ("No quedan cupos libres.") or the hint first,
-  then one uppercase caption heading per instrument in the Sheet's column order (an instrument with
-  no slot has no group) with its lines, then `OTROS` and the extras. Within a group, **open first**,
-  then filled. This is the detail's one exception to "open above filled, always": a filled Guitarra
-  group sits above an open Bajo slot. Extras are never merged into a group, even "guitarra" typed as
-  free text. A slot line draws its glyph and detail only (the heading names the instrument); an
-  extra line draws `+ saxo` and the name. Not interactive, compact lines, amber only inside
-  `:core:ui`.
-- **States:** while the local read runs, only the back arrow (no skeleton); a song that is no longer
-  in the list, or a setlist that is not shown, is the empty block "Este tema ya no está en la
-  lista" / "Puede que la organización haya cambiado la lista. Volvé a la próxima jam para ver la
-  actual." Never an error, and no staleness notice (the list shows it).
+  system back both return to Próxima jam with the same tab, filter and scroll.
+- **Order:** back arrow; title (`h1`, `text`, wraps, a heading); artist (`body`, `textMuted`) only
+  when there is one; for the admin, `Guardando…` (`caption`, `textMuted`, polite) while a write of
+  the song is sending; the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in
+  `keyDisplay`, colour `key`, one screen-reader node "Tonalidad Bm" (for the admin, the pending key
+  while one is saving); for the admin, `Cambiar tonalidad` under the key (48dp underlined text action
+  in `text`, its text lined up with the key); then the lineup on a `surface` block with `rounded.md`
+  and padding `md`: the **Lineup panel** (above), and for the admin, after it inside the same block,
+  `Cambiar formación` (or the inline `FORMACIÓN` editor) and `Agregar a Otros` (or its form); then,
+  for the admin, the failure cards of this song only (`Cerrar` dismisses them here and on the list).
+- **Lineup (P1):** the same open-first panel for musicians and the admin, replacing the earlier
+  grouping by instrument (G1, `InstrumentGroups`, deleted). The admin's lines carry `Anotar` (opens
+  the assign screen above the detail), `Liberar` and an extra's `Quitar`; the admin's panel has no
+  hint.
+- **Identity (P2):** the detail is named by the song id, so a move or a removal renumbering the list
+  while it is open never switches it to another song; a repeated id falls back to the position.
+- **States:** while the local read runs, and for everyone until the admin flag is read too, only the
+  back arrow (no skeleton), so the admin never sees a draft's song as not found; a song that is no
+  longer in the list (also live, when a refresh or a confirmed removal drops it), or a setlist that
+  is not shown, is the empty block "Este tema ya no está en la lista" / "Puede que la organización
+  haya cambiado la lista. Volvé a la próxima jam para ver la actual." Never an error, and no
+  staleness notice, pull to refresh or live polling (the list has them).
 - **Not shown** (D-20, D-09): tempo, tags, difficulty, songsterr, artwork, the jam's date or venue.
 
-The components are `InstrumentGroups` (`com.bbbjam.core.ui.lineup`) and `BackButton`
-(`com.bbbjam.core.ui.nav`) in `:core:ui`.
+The components are `LineupPanel` (`com.bbbjam.core.ui.lineup`) and `BackButton`
+(`com.bbbjam.core.ui.nav`) in `:core:ui`; the admin controls are the feature's own
+(`AdminControls.kt`, `LineupEditorControl.kt`, `ExtraParticipantControls.kt`).
 
 ### Jam summary counter
 
@@ -401,8 +406,8 @@ through `AdminControlsDefaults`, **no amber**:
   vacío` / `Cargá temas en la pestaña Catalogo de la planilla.`, and `Ningún tema coincide con «…».`
   A pick closes the picker at once; the song shows on Próxima jam as a pending row.
 - **Removing a song** (`admin-remove-song-from-setlist`, U1 approved by the user, 6 October 2026):
-  admin only, at the end of an **expanded** row's panel, after `Ver detalle del tema` (later row
-  actions such as `Cambiar tonalidad` go between the two, as built by `admin-set-key`). Colours in
+  admin only, last in the row's compact bar under its header (`song-detail-replaces-row-expansion`;
+  it used to end an expanded row's panel). Colours in
   `AdminControlsDefaults.removal()`, **no amber**. Idle: `Quitar de la lista`, a full-width, 48dp,
   underlined `body` text action in `error` (10.12:1 on `surface`, `ContrastTest`), `Role.Button`.
   Tapping it changes nothing anywhere; it draws the inline confirmation in its place: the prompt
@@ -414,16 +419,16 @@ through `AdminControlsDefaults`, **no amber**:
   labelled text action). While sending, `Quitando…` (`body`, `textMuted`, a polite live region)
   replaces the controls; the row disappears only when the server confirms. A failure draws the row
   as before plus a card after the rows, `No se pudo quitar «…»` with the reason and `Cerrar`, as the
-  add-song cards. Expansion follows the song id, so the song that moves up is not drawn expanded.
+  add-song cards.
 - **Setting a key** (`admin-set-key`, V1, O1 and C2 approved by the user, 6 October 2026): admin
-  only, in an **expanded** row's panel after `Ver detalle del tema` and before `Quitar de la lista`
-  (the removal stays last): `Cambiar tonalidad`, a full-width, 48dp, underlined `body` text action in
+  only, on the song detail under the key (`song-detail-replaces-row-expansion`; it used to be in an
+  expanded row): `Cambiar tonalidad`, a full-width, 48dp, underlined `body` text action in
   `text` (`AdminControlsDefaults.keyChange()`), `Role.Button`, never amber. It opens the key picker.
-  **The optimistic rule**: after a pick the row shows the new key at once in the amber `key` role,
-  with `Guardando…` (`caption`, `textMuted`, a polite live region) under the title line in both
-  states, until the server answers. Only a change still sending is drawn; the latest of two wins. On
-  success the key stays and the line goes; on failure the row **reverts** to the confirmed key and a
-  card after the rows says `No se pudo cambiar la tonalidad de «…»` with the reason and `Cerrar`, as
+  **The optimistic rule**: after a pick the row and the detail show the new key at once in the amber
+  `key` role, with `Guardando…` (`caption`, `textMuted`, a polite live region) under the title, until
+  the server answers. Only a change still sending is drawn; the latest of two wins. On
+  success the key stays and the line goes; on failure the row and the detail **revert** to the
+  confirmed key and a card (after the rows, and on that song's detail) says `No se pudo cambiar la tonalidad de «…»` with the reason and `Cerrar`, as
   the other cards. Musicians never see a pending key.
 - **Key picker, as built** (`SetKeyScreen`, colours in `SetKeyDefaults`): full screen over the tabs,
   scrollable; a 48dp `Volver`, the title `Cambiar tonalidad` (`h1`, a heading), the song title
@@ -438,27 +443,26 @@ through `AdminControlsDefaults`, **no amber**:
   clickable; a non-canonical key (`A#`) marks no cell. Amber is never on a selectable cell. A tap
   closes the picker at once. Gone state: `Este tema ya no está en la lista` / `Volvé a la próxima
   jam para ver la actual.`
-- **Assigning a musician** (`admin-assign-musician`): each open line in an expanded admin row adds
+- **Assigning a musician** (`admin-assign-musician`): each open line of the admin's song detail adds
   a 48dp `Anotar` action in the `slotOpen` role; filled lines, `Otros`, and musician rows stay
   read-only. It opens a full-screen scrollable `Anotar músico` flow with a 48dp `Volver`, song
   title, fixed `CUPO` instrument, `Nombre` field with Done IME, validation caption, and sections
   `ESTA JAM` and `JAMS ANTERIORES`. Suggestion rows and submit are at least 48dp; no instrument
   selector is drawn. Submit closes immediately; only the admin row shows `Guardando…` while the
-  server confirms. Failure reopens the slot and adds a dismissible card. Focus and button colors use
+  server confirms (the row and the detail). Failure reopens the slot and adds a dismissible card. Focus and button colors use
   neutral tokens; amber remains reserved for open-slot affordance and key. Gone state:
   `Ese cupo ya no está libre` / `Volvé a la próxima jam para ver la lista actual.`
-- **Clearing a filled slot** (`admin-clear-slot`): each filled line in an expanded admin row adds a
+- **Clearing a filled slot** (`admin-clear-slot`): each filled line of the admin's song detail adds a
   48dp `Liberar` action with an accessible instrument, musician and action description; musicians
   see no control. While sending, the admin projection moves that exact original ordinal into the
   open section as `Quitando…` and suppresses actions on that slot. A failure restores the confirmed
   musician and adds a dismissible `No se pudo liberar el cupo` card; stale targets say `Ese cupo ya
   no está ocupado. Actualizá la lista para ver cómo quedó.`. The immediate action
   uses the established neutral admin/action treatment, not amber.
-- **Adjusting a lineup** (`admin-adjust-lineup`): after `Cambiar tonalidad` and before removal,
-  `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
+- **Adjusting a lineup** (`admin-adjust-lineup`): on the song detail, after the panel inside its
+  block, `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
   default instrument, full name in `body`/`text`, count (`2 cupos`, `1 cupo`, `No va en este tema`)
-  in `caption`/`textMuted`. The editor's lines are inset `spacing.md`, like the panel and the row's
-  actions. Minus/plus are 48dp squares, `shapes.md`, glyphs in `songTitle`, `Role.Button`, with
+  in `caption`/`textMuted`. The editor's lines are inset `spacing.md`, like the panel. Minus/plus are 48dp squares, `shapes.md`, glyphs in `songTitle`, `Role.Button`, with
   explicit instrument descriptions. An enabled one has a `surfaceRaised` fill, a hairline `border`
   outline (the fill alone is about 1.05:1 on `surface`) and a `text` glyph; a disabled one has no
   fill, no outline and a `textMuted` glyph, is not clickable and has disabled semantics, so the
@@ -467,10 +471,10 @@ through `AdminControlsDefaults`, **no amber**:
   action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
   Sending counts update the strip, panel and filters at once for the admin only. One muted
   `Guardando…` line covers key and lineup together; failure reverts and leaves a persistent card.
-- **Reordering songs** (`admin-reorder-songs`): each expanded admin row ends with the move block,
-  after detail, key, slot and lineup controls and before removal. It shows `Posición x de n` and
-  adjacent 48dp `Subir`/`Bajar` actions; the edge action is disabled with muted text, no underline
-  and disabled semantics.
+- **Reordering songs** (`admin-reorder-songs`): `Subir`/`Bajar` are the first two actions of each
+  admin row's compact bar, before `Quitar de la lista` (`song-detail-replaces-row-expansion`; the
+  `Posición x de n` line is no longer drawn). 48dp each; the edge action is disabled with muted text,
+  no underline and disabled semantics.
   The admin row moves optimistically with a polite `Guardando…` status and remains under the
   thumb. Failure restores the confirmed position and adds a dismissible card. Musicians see the
   confirmed order only. Colors use neutral admin action tokens, not amber.
@@ -479,12 +483,13 @@ through `AdminControlsDefaults`, **no amber**:
 ## Core Screens
 
 1. **Próxima jam, musician view** — the most important screen in the app
-2. **Próxima jam, admin view** — same screen plus controls. As built so far: the draft's songs,
-   the draft badge, pending adds, failure cards, `Agregar tema` and the expanded row's
-   `Cambiar tonalidad` (the key picker, optimistic key with `Guardando…`) and `Quitar de la lista`
-   with its inline confirmation (**Admin controls**)
-3. **Song detail** — key displayed very large as the main element, and the full lineup grouped by
-   instrument. No tags, tempo, difficulty or tab button for now (D-20)
+2. **Próxima jam, admin view** — same screen plus controls: the draft's songs, the status block,
+   pending adds, failure cards, `Agregar tema` and each row's compact bar (`Subir`, `Bajar`,
+   `Quitar de la lista` with its inline confirmation); a row tap opens the song detail, where the
+   song-level controls are (**Admin controls**)
+3. **Song detail** — key displayed very large as the main element, and the full lineup panel (open
+   slots first, then filled, then `OTROS`); for the admin, `Cambiar tonalidad`, the slot actions,
+   `Cambiar formación` and `Agregar a Otros`. No tags, tempo, difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first
    few titles. As built (`past-jams-list`, 5 October 2026): the title `Jams anteriores` (`h1`,
    `text`, a heading, drawn in every state), then one row per past jam, newest first, spaced `sm`.
@@ -671,4 +676,4 @@ The admin status block sits directly beneath the Próxima jam header. It always 
 
 ### Extra participants (`admin-edit-extra-participants`)
 
-In an admin song row, each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). After `Cambiar formación`, `Agregar a Otros` expands inline to two labelled outlined fields (`Nombre`, `Instrumento`; colours from `AdminControlsDefaults.extraField()`, no amber) inset `spacing.md` like the rest of the row, then `Agregar` and `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.
+On the admin's song detail (an admin song row until `song-detail-replaces-row-expansion`), each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). After `Cambiar formación`, `Agregar a Otros` expands inline to two labelled outlined fields (`Nombre`, `Instrumento`; colours from `AdminControlsDefaults.extraField()`, no amber) inset `spacing.md` like the rest of the panel's block, then `Agregar` and `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.

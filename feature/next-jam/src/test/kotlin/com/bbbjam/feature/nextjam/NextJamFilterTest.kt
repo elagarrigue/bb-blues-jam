@@ -67,11 +67,6 @@ class NextJamFilterTest {
 
     private fun NextJamUiModel.rows() = ((this as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
 
-    private fun NextJamUiModel.expandedPositions() = rows().filter { it.isExpanded }.map { it.position }
-
-    private fun NextJamUiModel.toggle(position: Int) =
-        rows().single { it.position == position }.events(SongRowUiModel.Event.ToggleExpanded)
-
     /** The default seven slots, open only for [open]; every other slot holds a name. */
     private fun openFor(vararg open: Instrument) =
         Lineup(Lineup.DEFAULT_INSTRUMENTS.map { Slot(it, if (it in open) null else "Nombre") })
@@ -249,25 +244,6 @@ class NextJamFilterTest {
             val after = awaitItem()
             assertEquals(listOf("Todos"), after.checked())
             assertEquals((1..6).toList(), after.positions())
-        }
-    }
-
-    @Test
-    fun `filtering keeps every row's expansion, shown or hidden`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            start().toggle(3)
-            awaitItem().toggle(1)
-            val expanded = awaitItem()
-            assertEquals(listOf(1, 3), expanded.expandedPositions())
-
-            // Row 1 is hidden under bajo; row 3 stays expanded.
-            expanded.tap("Bajo")
-            val bass = awaitItem()
-            assertEquals(listOf(2, 3), bass.positions())
-            assertEquals(listOf(3), bass.expandedPositions())
-
-            bass.tap("Todos")
-            assertEquals(listOf(1, 3), awaitItem().expandedPositions())
         }
     }
 

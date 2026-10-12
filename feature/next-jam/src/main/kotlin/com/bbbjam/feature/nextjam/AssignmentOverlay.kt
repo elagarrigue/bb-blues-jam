@@ -27,8 +27,4 @@ internal fun Lineup.overlayAssignments(date: LocalDate, songId: SongId, assignme
     return if (changed) Lineup(next) else this
 }
 
-internal fun AdminState.isSavingAssignment(date: LocalDate, songId: SongId): Boolean = assignments.any {
-    it.jamDate == date && it.songId == songId && it.state == Assignment.State.Sending
-}
-
 private data class SlotKey(val instrument: Instrument, val ordinal: Int)

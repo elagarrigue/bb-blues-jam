@@ -139,7 +139,8 @@ transfer and no per-record access rules.
 
 ## Remove song (`admin-remove-song-from-setlist`)
 
-- "Quitar de la lista" is drawn from the admin flag, in an expanded row; the removal is authorized by
+- "Quitar de la lista" is drawn from the admin flag, in the row's compact bar (an expanded row until
+  `song-detail-replaces-row-expansion`); the removal is authorized by
   Apps Script (router guard), never by the flag. A refused removal keeps admin mode (W3). With the
   debug admin flag and no stored passphrase, a removal answers `AccessRefused` without a request.
 - Removing from a published list is allowed; the confirmation says musicians stop seeing the song.

@@ -17,7 +17,8 @@ import com.bbbjam.core.model.Slot
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The expanded lineup (DESIGN.md, song row expanded): open slots first under "Cupos libres", then
+ * The lineup panel of the song detail (DESIGN.md "Song detail"; the expanded row it was drawn in is
+ * gone since `song-detail-replaces-row-expansion`): open slots first under "Cupos libres", then
  * "Cupos cubiertos", then "Otros"; a section is drawn only when it has lines. Not interactive for
  * musicians: no click, no ripple, no role. Lines are compact (no 48dp minimum, because nothing here
  * is a touch target) and each is one screen-reader node with its description.

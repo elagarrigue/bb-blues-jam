@@ -261,22 +261,6 @@ class NextJamRemoveTest {
     }
 
     @Test
-    fun `scenario 9, the song that moves up into a removed song's place is not drawn expanded`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            repository.snapshots.emit(snapshot(jam(listOf(crossroads, hoochie, thrill))))
-            expectMostRecentItem().row("Hoochie Coochie Man").events(SongRowUiModel.Event.ToggleExpanded)
-            assertEquals(listOf("Hoochie Coochie Man"), awaitItem().rows().filter { it.isExpanded }.map { it.title })
-
-            // The server removed Hoochie and renumbered: The Thrill Is Gone now sits at position 2.
-            repository.snapshots.emit(snapshot(jam(listOf(crossroads, thrill.copy(position = 2)))))
-            val after = awaitItem()
-            assertEquals(listOf(1, 2), after.rows().map { it.position })
-            assertEquals(emptyList<String>(), after.rows().filter { it.isExpanded }.map { it.title })
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
     fun `scenario 10, removing the last song leaves the admin's empty state and the musician's published one`() {
         val empty = JamsSnapshot(
             upcoming = Jam(

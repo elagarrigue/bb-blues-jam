@@ -1,7 +1,7 @@
 package com.bbbjam.core.ui.lineup
 
 /**
- * The expanded lineup panel copy, approved by the user on 3 October 2026
+ * The lineup panel copy (drawn on the song detail), approved by the user on 3 October 2026
  * (`docs/specs/song-row-expansion.md`, C1 and H1). Rioplatense Spanish with vos (D-12). Instrument
  * names and line descriptions come from the strip's approved copy (`InstrumentStripCopy`).
  */

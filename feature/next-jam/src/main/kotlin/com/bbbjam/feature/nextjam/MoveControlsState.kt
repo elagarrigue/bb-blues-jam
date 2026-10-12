@@ -76,7 +76,6 @@ internal fun RowAdmin.moveModel(
     null
 } else {
     MoveUiModel(
-        positionLine = MoveCopy.position(row.position, total),
         up = moveAction(song.songId, row.position > 1, NextJamCopy.MOVE_UP, "subir un lugar", -1),
         down = moveAction(song.songId, row.position < total, NextJamCopy.MOVE_DOWN, "bajar un lugar", 1),
     )

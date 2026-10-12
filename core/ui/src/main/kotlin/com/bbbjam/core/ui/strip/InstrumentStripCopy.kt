@@ -40,7 +40,7 @@ internal object InstrumentStripCopy {
         Instrument.KEYBOARDS -> "Tec"
     }
 
-    /** "Guitarra": the full instrument name, also used by the expanded lineup panel. */
+    /** "Guitarra": the full instrument name, also used by the lineup panel. */
     fun name(instrument: Instrument): String = when (instrument) {
         Instrument.GUITAR -> "Guitarra"
         Instrument.BASS -> "Bajo"

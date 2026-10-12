@@ -27,8 +27,8 @@ import com.bbbjam.feature.info.AdminLoginScreen
 import com.bbbjam.feature.nextjam.AddSongScreen
 import com.bbbjam.feature.nextjam.AssignMusicianScreen
 import com.bbbjam.feature.nextjam.SetKeyScreen
+import com.bbbjam.feature.nextjam.SongDetailScreen
 import com.bbbjam.feature.pastjams.PastJamDetailScreen
-import com.bbbjam.feature.songdetail.SongDetailScreen
 
 /**
  * The app's navigation (`song-detail-screen`, N1; reshaped by `bottom-navigation`): Navigation
@@ -58,20 +58,14 @@ internal fun AppNavHost(modifier: Modifier = Modifier) {
             popEnterTransition = { EnterTransition.None },
         ) {
             TabsShell(
-                onOpenSong = { date, position ->
-                    nav.navigate(AppRoutes.songDetail(date, position)) { launchSingleTop = true }
+                onOpenSong = { date, songId, position ->
+                    nav.navigate(AppRoutes.songDetail(date, songId, position)) { launchSingleTop = true }
                 },
                 onOpenPastJam = { date ->
                     nav.navigate(AppRoutes.pastJamDetail(date)) { launchSingleTop = true }
                 },
                 onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
                 onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
-                onOpenSetKey = { date, songId ->
-                    nav.navigate(AppRoutes.setKey(date, songId)) { launchSingleTop = true }
-                },
-                onOpenAssignSlot = { date, songId, instrument, position ->
-                    nav.navigate(AppRoutes.assignSlot(date, songId, instrument, position)) { launchSingleTop = true }
-                },
             )
         }
         songDetail(nav)
@@ -191,12 +185,17 @@ private fun NavGraphBuilder.addSong(nav: NavHostController) {
     }
 }
 
-/** The song detail (`song-detail-screen`): full screen over the tabs, with the M1 slide. */
+/**
+ * The song detail (`song-detail-screen`): full screen over the tabs, with the M1 slide. Since
+ * `song-detail-replaces-row-expansion` it is named by song id and opens the admin's key picker and
+ * assign screen above itself; both pop by route, back onto the detail.
+ */
 private fun NavGraphBuilder.songDetail(nav: NavHostController) {
     composable(
         AppRoutes.SONG_DETAIL,
         arguments = listOf(
             navArgument(AppRoutes.JAM_DATE) { type = NavType.StringType },
+            navArgument(AppRoutes.SONG_ID) { type = NavType.StringType },
             navArgument(AppRoutes.POSITION) { type = NavType.IntType },
         ),
         enterTransition = { slideIntoContainer(SlideDirection.Start, tween(AppMotion.DETAIL_SLIDE_MS)) },
@@ -205,6 +204,7 @@ private fun NavGraphBuilder.songDetail(nav: NavHostController) {
         val arguments = entry.arguments
         val args = AppRoutes.parseSongDetail(
             jamDate = arguments?.getString(AppRoutes.JAM_DATE),
+            songId = arguments?.getString(AppRoutes.SONG_ID),
             position = arguments?.takeIf { it.containsKey(AppRoutes.POSITION) }?.getInt(AppRoutes.POSITION),
         )
         if (args == null) {
@@ -215,12 +215,22 @@ private fun NavGraphBuilder.songDetail(nav: NavHostController) {
             Box(modifier = Modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
                 SongDetailScreen(
                     jamDate = args.jamDate,
+                    songId = args.songId,
                     position = args.position,
                     onBack = {
                         // A second tap while the pop runs must never pop the tabs and leave a blank host.
                         if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.popBackStack()
                     },
                     contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+                    // The admin's pickers open above the detail and pop back to it by route.
+                    onSetKey = { date, songId ->
+                        nav.navigate(AppRoutes.setKey(date, songId)) { launchSingleTop = true }
+                    },
+                    onAssignSlot = { date, songId, instrument, position ->
+                        nav.navigate(AppRoutes.assignSlot(date, songId, instrument, position)) {
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
         }

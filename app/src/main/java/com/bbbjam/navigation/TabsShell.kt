@@ -18,8 +18,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.bbbjam.core.model.Instrument
-import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.TabBar
 import com.bbbjam.core.ui.theme.BluesJamTheme
@@ -31,23 +29,22 @@ import java.time.LocalDate
 /**
  * The tabs shell (`bottom-navigation`), the outer host's [AppRoutes.TABS] destination: an inner
  * host with one route per tab above the bottom bar. Its controller, with every tab's saved state
- * (scroll, expanded rows, filter), is saved inside the outer `tabs` entry, so it survives the song
+ * (scroll, filter), is saved inside the outer `tabs` entry, so it survives the song
  * detail, rotation and process death. Switching tabs saves the tab left and restores the one
  * entered (`saveState`/`restoreState`); back from Anteriores or Info returns to Próxima jam (the
  * inner host's back handler wins while its stack has more than one entry), and from Próxima jam
  * the activity finishes. The status-bar inset is applied outside the scroll, over `background`, so
  * content never scrolls under the clock. [onOpenSong] opens a song's detail and [onOpenPastJam] a
- * past jam's detail, [onOpenAdminLogin] the admin login, [onOpenAddSong] the admin's catalog
- * picker and [onOpenSetKey] the admin's key picker, all in the outer host.
+ * past jam's detail, [onOpenAdminLogin] the admin login and [onOpenAddSong] the admin's catalog
+ * picker, all in the outer host. The admin's key picker and assign screen open from the song
+ * detail (`song-detail-replaces-row-expansion`), not from the tabs.
  */
 @Composable
 internal fun TabsShell(
-    onOpenSong: (jamDate: LocalDate, position: Int) -> Unit,
+    onOpenSong: (jamDate: LocalDate, songId: SongId, position: Int) -> Unit,
     onOpenPastJam: (jamDate: LocalDate) -> Unit,
     onOpenAdminLogin: () -> Unit,
     onOpenAddSong: (jamDate: LocalDate) -> Unit,
-    onOpenSetKey: (jamDate: LocalDate, songId: SongId) -> Unit,
-    onOpenAssignSlot: (jamDate: LocalDate, songId: SongId, instrument: Instrument, position: SlotPosition) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inner = rememberNavController()
@@ -69,12 +66,7 @@ internal fun TabsShell(
             popExitTransition = { fadeOut(tween(AppMotion.TAB_FADE_MS)) },
         ) {
             composable(AppRoutes.NEXT_JAM) {
-                NextJamScreen(
-                    onOpenSong = onOpenSong,
-                    onAddSong = onOpenAddSong,
-                    onSetKey = onOpenSetKey,
-                    onAssignSlot = onOpenAssignSlot,
-                )
+                NextJamScreen(onOpenSong = onOpenSong, onAddSong = onOpenAddSong)
             }
             composable(AppRoutes.PAST_JAMS) { PastJamsScreen(onOpenJam = onOpenPastJam) }
             composable(AppRoutes.INFO) { InfoScreen(onOpenAdminLogin = onOpenAdminLogin) }

@@ -104,9 +104,8 @@ class NextJamDraftTest {
         val model = snapshot(draft).toUiModel(today)
         assertEquals(withheldDraft, model)
         model.assertNoSecret()
-        // Expansion and filter state have nothing to apply to.
-        val expanded = ExpandedRows(jamDate, setOf("secret-song", "crossroads"))
-        val withState = snapshot(draft).toUiModel(today, expanded, filter = setOf(Instrument.BASS))
+        // Filter state has nothing to apply to.
+        val withState = snapshot(draft).toUiModel(today, filter = setOf(Instrument.BASS))
         assertEquals(withheldDraft, withState)
 
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {

@@ -41,12 +41,19 @@ internal object AppRoutes {
 
     const val JAM_DATE = "jamDate"
     const val POSITION = "position"
+    const val SONG_ID = "songId"
 
-    /** The song detail pattern, `song/{jamDate}/{position}`. */
-    const val SONG_DETAIL = "song/{$JAM_DATE}/{$POSITION}"
+    /**
+     * The song detail pattern, `song/{jamDate}/{songId}/{position}`. Since
+     * `song-detail-replaces-row-expansion` (P2) the song is named by id, so a move or a removal
+     * confirmed while the detail is open never switches it to another song; [POSITION] only picks
+     * between rows a hand-edited tab gives the same id.
+     */
+    const val SONG_DETAIL = "song/{$JAM_DATE}/{$SONG_ID}/{$POSITION}"
 
-    /** `song/2026-10-31/2`: `LocalDate.toString()` is ISO-8601, never locale-dependent. */
-    fun songDetail(jamDate: LocalDate, position: Int): String = "song/$jamDate/$position"
+    /** `song/2026-10-31/crossroads/2`: the ISO date, the song id (`[a-z0-9-]`, path-safe), the position. */
+    fun songDetail(jamDate: LocalDate, songId: SongId, position: Int): String =
+        "song/$jamDate/${songId.value}/$position"
 
     /** The past jam detail pattern, `pastJam/{jamDate}` (`past-jam-detail`). */
     const val PAST_JAM_DETAIL = "pastJam/{$JAM_DATE}"
@@ -66,13 +73,12 @@ internal object AppRoutes {
     /** The picker's jam date, or null when it is missing or not ISO. */
     fun parseAddSong(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 
-    const val SONG_ID = "songId"
     const val INSTRUMENT = "instrument"
     const val ORDINAL = "ordinal"
 
     /**
      * The admin's key picker (`admin-set-key`), `setKey/{jamDate}/{songId}`: full screen in the outer
-     * host, opened from an expanded row's "Cambiar tonalidad". The song is named by id, never by
+     * host, opened from the song detail's "Cambiar tonalidad". The song is named by id, never by
      * position: a removal renumbers positions (R1).
      */
     const val SET_KEY = "setKey/{$JAM_DATE}/{$SONG_ID}"
@@ -114,12 +120,18 @@ internal object AppRoutes {
     fun parsePastJamDetail(jamDate: String?): LocalDate? = jamDate?.toIsoDateOrNull()
 
     /**
-     * The song detail's arguments, or null when the date is missing or not ISO, or the position is
-     * missing or below 1 (setlist positions start at 1).
+     * The song detail's arguments, or null when the date is missing or not ISO, the id is missing or
+     * invalid, or the position is missing or below 1 (setlist positions start at 1).
      */
-    fun parseSongDetail(jamDate: String?, position: Int?): SongDetailArgs? {
-        if (position == null || position < 1) return null
-        return jamDate?.toIsoDateOrNull()?.let { SongDetailArgs(it, position) }
+    fun parseSongDetail(jamDate: String?, songId: String?, position: Int?): SongDetailArgs? {
+        val id = songId?.let { SongId.parseOrNull(it) }
+        val date = jamDate?.toIsoDateOrNull()
+        val validPosition = position?.takeIf { it >= 1 }
+        return if (id == null || date == null || validPosition == null) {
+            null
+        } else {
+            SongDetailArgs(date, id, validPosition)
+        }
     }
 
     private fun String.toIsoDateOrNull(): LocalDate? = try {
@@ -129,8 +141,8 @@ internal object AppRoutes {
     }
 }
 
-/** A song of a jam, as the song detail route names it. */
-internal data class SongDetailArgs(val jamDate: LocalDate, val position: Int)
+/** A song of a jam, as the song detail route names it: by id, [position] only for duplicate ids. */
+internal data class SongDetailArgs(val jamDate: LocalDate, val songId: SongId, val position: Int)
 
 /** A song of a jam, as the key picker route names it. */
 internal data class SetKeyArgs(val jamDate: LocalDate, val songId: SongId)

@@ -35,12 +35,11 @@ private const val DETAIL_MAX_LINES = 2
 
 /**
  * One compact line: glyph, instrument and detail, one screen-reader node with the line's
- * description. [showInstrument] is false where a heading already names the instrument (the song
- * detail's groups). The instrument text is cut with "…" at [LineupPanelDefaults.INSTRUMENT_MAX_WIDTH],
+ * description. The instrument text is cut with "…" at [LineupPanelDefaults.INSTRUMENT_MAX_WIDTH],
  * so a long free-text extra instrument never squeezes the name.
  */
 @Composable
-internal fun Line(line: LineupLineUiModel, showInstrument: Boolean = true) {
+internal fun Line(line: LineupLineUiModel) {
     val spacing = BluesJamTheme.spacing
     val style = LineupPanelDefaults.style(line.kind)
     Row(
@@ -60,19 +59,17 @@ internal fun Line(line: LineupLineUiModel, showInstrument: Boolean = true) {
     ) {
         LineGlyph(style)
         if (line.action == null) {
-            if (showInstrument) {
-                InstrumentText(
-                    line,
-                    style,
-                    Modifier.widthIn(max = LineupPanelDefaults.INSTRUMENT_MAX_WIDTH),
-                )
-            }
+            InstrumentText(
+                line,
+                style,
+                Modifier.widthIn(max = LineupPanelDefaults.INSTRUMENT_MAX_WIDTH),
+            )
             DetailText(line, Modifier.weight(1f))
         } else {
             // With an action the instrument sits above the detail, so a large font never breaks
             // "LIBRE" or a name letter by letter between the instrument and the action.
             Column(modifier = Modifier.weight(1f).padding(vertical = spacing.xs)) {
-                if (showInstrument) InstrumentText(line, style)
+                InstrumentText(line, style)
                 DetailText(line)
             }
         }

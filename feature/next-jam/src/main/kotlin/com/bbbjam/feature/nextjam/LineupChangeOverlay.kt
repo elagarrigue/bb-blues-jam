@@ -10,9 +10,3 @@ internal fun List<LineupChange>.pendingLineup(date: LocalDate, songId: SongId, c
     filter { it.jamDate == date && it.songId == songId && it.state == LineupChange.State.Sending }
         .groupBy { it.instrument }.values.map { entries -> entries.maxBy { it.id } }
         .fold(confirmed) { lineup, change -> lineup.withSlotCount(change.instrument, change.count) ?: lineup }
-
-internal fun AdminState.isSavingLineup(date: LocalDate, id: SongId): Boolean {
-    val sending = lineupChanges.filter { it.jamDate == date && it.songId == id }
-        .any { it.state == LineupChange.State.Sending }
-    return sending || reservations.has(date, id)
-}

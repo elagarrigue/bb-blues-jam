@@ -77,14 +77,13 @@ class NextJamLineupChangeTest {
     private fun admin(changes: List<LineupChange>) = AdminState(emptyList(), {}, {}, lineupChanges = changes)
 
     @Test
-    fun `Sending overlays strip panel filter and counts and Failed reverts`() = runTest {
+    fun `Sending overlays strip filter and counts and Failed reverts`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(listOf(crossroads)))
             val original = expectMostRecentItem().row("Crossroads")
             setlist.lineupChanges.value = listOf(change(1, 0))
             val sending = awaitItem().row("Crossroads")
             assertEquals(original.instruments.size - 2, sending.instruments.size)
-            assertEquals(original.lineup.openSlots.size - 2, sending.lineup.openSlots.size)
             assertEquals("Guardando…", sending.admin?.saveStatus)
             val filtered = snapshot(
                 listOf(crossroads),
@@ -124,48 +123,11 @@ class NextJamLineupChangeTest {
     }
 
     @Test
-    fun `editor open close retained handler queues distinct counts before recomposition`() = runTest {
-        setlist.lineupHold = CompletableDeferred()
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            repository.snapshots.emit(snapshot(listOf(crossroads)))
-            val idle = expectMostRecentItem().row("Crossroads").admin?.lineup as LineupEditorUiModel.Idle
-            idle.events(LineupEditorUiModel.Event.Open)
-            val editing = awaitItem().row("Crossroads").admin?.lineup as LineupEditorUiModel.Editing
-            val retained = editing.lines.single { it.instrument == Instrument.GUITAR }.events
-            retained(LineupEditorLineUiModel.Event.Remove)
-            retained(LineupEditorLineUiModel.Event.Remove)
-            retained(LineupEditorLineUiModel.Event.Remove)
-            assertEquals(listOf(1, 0), setlist.lineupCalls.map { it.count })
-            val emptyGuitar = expectMostRecentItem().row("Crossroads").admin?.lineup as LineupEditorUiModel.Editing
-            assertEquals("No va en este tema", emptyGuitar.lines.first().countLabel)
-            assertFalse(emptyGuitar.lines.first().canRemove)
-            retained(LineupEditorLineUiModel.Event.Add)
-            retained(LineupEditorLineUiModel.Event.Add)
-            retained(LineupEditorLineUiModel.Event.Add)
-            assertEquals(listOf(1, 0, 1, 2), setlist.lineupCalls.map { it.count })
-            setlist.lineupHold?.complete(Unit)
-            editing.events(LineupEditorUiModel.Event.Done)
-            assertTrue(expectMostRecentItem().row("Crossroads").admin?.lineup is LineupEditorUiModel.Idle)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `filled slots cannot be removed and zero slots remain drawable`() {
-        val filled = crossroads.copy(lineup = Lineup(listOf(Slot(Instrument.GUITAR, "Tincho"))))
-        val editingAdmin = AdminState(emptyList(), {}, {}, lineupEditing = removalKey(jamDate, filled.songId))
-        val editor = snapshot(
-            listOf(filled),
-        ).toUiModel(today, admin = editingAdmin).row("Crossroads").admin?.lineup as LineupEditorUiModel.Editing
-        assertFalse(editor.lines.first().canRemove)
-        assertTrue(editor.lines.first().canAdd)
-        assertEquals("Tiene músico anotado. Liberá el cupo antes de sacarlo.", editor.lines.first().blockedNote)
-        val zero = snapshot(
-            listOf(crossroads.copy(lineup = Lineup(emptyList()))),
-        ).toUiModel(today, admin = editingAdmin).row("Crossroads")
+    fun `a song with no slot at all draws an empty strip`() {
+        val zero = snapshot(listOf(crossroads.copy(lineup = Lineup(emptyList()))))
+            .toUiModel(today, admin = admin(emptyList())).row("Crossroads")
         assertTrue(zero.instruments.isEmpty())
-        assertTrue(zero.lineup.openSlots.isEmpty())
-        assertTrue((zero.admin?.lineup as LineupEditorUiModel.Editing).lines.all { it.canAdd && !it.canRemove })
+        assertNull(checkNotNull(zero.admin).saveStatus)
     }
 
     @Test

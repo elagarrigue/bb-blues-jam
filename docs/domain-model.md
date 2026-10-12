@@ -156,8 +156,8 @@ and their positions are written in safe batches without duplicate positions.
 ### Finding a place to play
 
 A musician opens the app, taps their instrument's filter chip, and sees only the songs with an open
-slot for it, with a count of how many songs matched out of how many. Tapping a row expands it in
-place, open slots listed first.
+slot for it, with a count of how many songs matched out of how many. Tapping a row opens the song
+detail, open slots listed first (`song-detail-replaces-row-expansion`; rows no longer expand).
 
 ### Changing a key at the last minute
 

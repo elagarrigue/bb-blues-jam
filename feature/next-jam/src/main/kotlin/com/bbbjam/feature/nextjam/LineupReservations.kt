@@ -33,7 +33,7 @@ internal class LineupReservations {
         .fold(confirmed) { lineup, (key, target) -> lineup.withSlotCount(key.third, target.count) ?: lineup }
 }
 
-internal fun AdminState.lineupEditor(date: LocalDate, song: JamSong): LineupEditorUiModel {
+internal fun SongAdminState.lineupEditor(date: LocalDate, song: JamSong): LineupEditorUiModel {
     val key = removalKey(date, song.songId)
     val editing = lineupEditing == key
     val handler = EventHandler<LineupEditorUiModel.Event>(key = "$key|lineup|$editing") {
@@ -51,7 +51,7 @@ internal fun AdminState.lineupEditor(date: LocalDate, song: JamSong): LineupEdit
     }
 }
 
-private fun AdminState.lineupLine(date: LocalDate, song: JamSong, instrument: Instrument): LineupEditorLineUiModel {
+private fun SongAdminState.lineupLine(date: LocalDate, song: JamSong, instrument: Instrument): LineupEditorLineUiModel {
     val count = song.lineup.count(instrument)
     val canRemove = count > 0 && song.lineup.withSlotCount(instrument, count - 1) != null
     val name = instrument.fullName().lowercase()

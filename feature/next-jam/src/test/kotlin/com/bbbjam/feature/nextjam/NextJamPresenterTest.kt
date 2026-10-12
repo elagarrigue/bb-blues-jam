@@ -99,52 +99,8 @@ class NextJamPresenterTest {
     private fun filled(label: String, description: String) =
         InstrumentChipUiModel(label, description, InstrumentChipKind.FILLED_SLOT)
 
-    private val hint = "Para tocar, anotate en la jam: la organización te suma a un tema."
-
-    private fun openLine(instrument: String, description: String) =
-        LineupLineUiModel(instrument, "LIBRE", description, InstrumentChipKind.OPEN_SLOT)
-
-    private fun filledLine(instrument: String, name: String, description: String) =
-        LineupLineUiModel(instrument, name, description, InstrumentChipKind.FILLED_SLOT)
-
-    /** The expanded panel of `Lineup.default()`, written out from the approved copy (row expansion spec, C1). */
-    private val defaultPanel = LineupPanelUiModel(
-        openSlots = listOf(
-            openLine("Guitarra", "Guitarra: libre"),
-            openLine("Guitarra", "Guitarra: libre"),
-            openLine("Bajo", "Bajo: libre"),
-            openLine("Batería", "Batería: libre"),
-            openLine("Voz", "Voz: libre"),
-            openLine("Armónica", "Armónica: libre"),
-            openLine("Teclados", "Teclados: libre"),
-        ),
-        filledSlots = emptyList(),
-        extras = emptyList(),
-        noOpenSlotsNote = null,
-        hint = hint,
-    )
-
-    private val emptyPanel = LineupPanelUiModel(emptyList(), emptyList(), emptyList(), "No quedan cupos libres.", null)
-
-    /** Scenario 3 of the row expansion spec: open first, then filled, then the extra. */
-    private val mixedPanel = LineupPanelUiModel(
-        openSlots = listOf(
-            openLine("Guitarra", "Guitarra: libre"),
-            openLine("Batería", "Batería: libre"),
-            openLine("Voz", "Voz: libre"),
-        ),
-        filledSlots = listOf(
-            filledLine("Guitarra", "Tincho", "Guitarra: Tincho"),
-            filledLine("Bajo", "Nico", "Bajo: Nico"),
-            filledLine("Armónica", "Mono", "Armónica: Mono"),
-        ),
-        extras = listOf(LineupLineUiModel("+ saxo", "Juan", "Otros: saxo, Juan", InstrumentChipKind.EXTRA)),
-        noOpenSlotsNote = null,
-        hint = hint,
-    )
-
     /**
-     * An expected collapsed row; [positionLabel] is written out and the position read from it.
+     * An expected row (rows never expand); [positionLabel] is written out and the position read from it.
      * Handlers without a key compare equal, so `EventHandler {}` matches any.
      */
     private fun row(
@@ -152,7 +108,6 @@ class NextJamPresenterTest {
         title: String,
         key: String,
         chips: List<InstrumentChipUiModel> = defaultChips,
-        panel: LineupPanelUiModel = defaultPanel,
     ) = SongRowUiModel(
         rowKey = seedSongs.firstOrNull { it.title == title }?.songId?.value ?: "p${positionLabel.toInt()}",
         position = positionLabel.toInt(),
@@ -161,17 +116,9 @@ class NextJamPresenterTest {
         key = key,
         keyDescription = "Tonalidad $key",
         instruments = chips,
-        artist = "Someone",
-        isExpanded = false,
-        stateDescription = "contraído",
-        toggleLabel = "ver los cupos",
-        lineup = panel,
-        detailLabel = "Ver detalle del tema",
+        openDetailLabel = "ver el detalle del tema",
         events = EventHandler {},
     )
-
-    private fun SongRowUiModel.expanded() =
-        copy(isExpanded = true, stateDescription = "expandido", toggleLabel = "ocultar los cupos")
 
     private fun jam(
         setlist: Setlist,
@@ -486,9 +433,8 @@ class NextJamPresenterTest {
                     filled("Arm: Mono", "Armónica: Mono"),
                     InstrumentChipUiModel("+ saxo: Juan", "Otros: saxo, Juan", InstrumentChipKind.EXTRA),
                 ),
-                panel = mixedPanel,
             ),
-            row("02", "Walking Thru the Park", "A", emptyList(), emptyPanel),
+            row("02", "Walking Thru the Park", "A", emptyList()),
         )
         val model = snapshot(
             jam(Setlist.Available(listOf(withExtra, emptyLineup))),
@@ -518,164 +464,21 @@ class NextJamPresenterTest {
 
     private fun NextJamUiModel.rows() = ((this as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
 
-    private fun NextJamUiModel.expandedPositions() = rows().filter { it.isExpanded }.map { it.position }
-
-    private fun NextJamUiModel.toggle(position: Int) =
-        rows().single { it.position == position }.events(SongRowUiModel.Event.ToggleExpanded)
-
-    @Test
-    fun `rows start collapsed, a tap expands only that row, and two rows stay expanded at once`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            assertEquals(loading, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(3)))))
-            val first = awaitItem()
-            assertEquals(
-                NextJamUiModel.Jam(
-                    header,
-                    SetlistUiModel.Songs(
-                        listOf(
-                            row("01", "Sweet Little Angel", "B"),
-                            row("02", "Walking Thru the Park", "A"),
-                            row("03", "Dust My Broom", "D"),
-                        ),
-                        null,
-                        bar(3),
-                    ),
-                    staleness = null,
-                ),
-                first,
-            )
-
-            first.toggle(1)
-            val one = awaitItem()
-            assertEquals(
-                listOf(
-                    row("01", "Sweet Little Angel", "B").expanded(),
-                    row("02", "Walking Thru the Park", "A"),
-                    row("03", "Dust My Broom", "D"),
-                ),
-                one.rows(),
-            )
-
-            one.toggle(3)
-            val two = awaitItem()
-            assertEquals(listOf(1, 3), two.expandedPositions())
-            assertEquals(listOf("expandido", "contraído", "expandido"), two.rows().map { it.stateDescription })
-            assertEquals(
-                listOf("ocultar los cupos", "ver los cupos", "ocultar los cupos"),
-                two.rows().map { it.toggleLabel },
-            )
-
-            // Scenario 2: collapsing row 3 leaves row 1 expanded.
-            two.toggle(3)
-            assertEquals(listOf(1), awaitItem().expandedPositions())
-        }
-    }
-
-    @Test
-    fun `expansion follows the position through a refresh, and a new jam starts collapsed`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            assertEquals(loading, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(3)))))
-            awaitItem().toggle(2)
-            assertEquals(listOf(2), awaitItem().expandedPositions())
-
-            // Scenario 4: the refresh drops row 1 and fills a name on row 2.
-            val filledRow2 = seedSongs[1].copy(lineup = mixedLineup)
-            repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(filledRow2, seedSongs[2])))))
-            assertEquals(
-                listOf(
-                    row("02", "Walking Thru the Park", "A", mixedChips, mixedPanelWithoutExtra)
-                        .expanded(),
-                    row("03", "Dust My Broom", "D"),
-                ),
-                awaitItem().rows(),
-            )
-
-            // The next upcoming jam: same positions, another date, every row collapsed.
-            val nextJam = jam(Setlist.Available(seedSongs.take(3)), date = LocalDate.of(2026, 11, 28))
-            repository.snapshots.emit(snapshot(nextJam))
-            val next = awaitItem()
-            assertEquals(emptyList<Int>(), next.expandedPositions())
-            next.toggle(2)
-            assertEquals(listOf(2), awaitItem().expandedPositions())
-        }
-    }
-
-    @Test
-    fun `an earlier model's handler still writes through the same state after a refresh`() = runTest {
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            assertEquals(loading, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(2)))))
-            val stale = awaitItem()
-            repository.snapshots.emit(
-                snapshot(jam(Setlist.Available(listOf(seedSongs[0].copy(lineup = mixedLineup), seedSongs[1])))),
-            )
-            assertEquals(emptyList<Int>(), awaitItem().expandedPositions())
-
-            // Handlers have no key, so Compose may keep the first model's one; it must still work.
-            stale.toggle(1)
-            val after = awaitItem()
-            assertEquals(listOf(1), after.expandedPositions())
-            assertEquals(mixedPanelWithoutExtra, after.rows()[0].lineup)
-        }
-    }
-
-    @Test
-    fun `an expanded row carries the artist and its lineup with open slots before filled ones`() {
-        val song = seedSongs[0].copy(
-            artist = "B.B. King",
-            lineup = mixedLineup,
-            extraParticipants = listOf(ExtraParticipant("Juan", "saxo")),
-        )
-        val date = LocalDate.of(2026, 10, 31)
-        val model = snapshot(jam(Setlist.Available(listOf(song, seedSongs[1]))))
-            .toUiModel(LocalDate.of(2026, 10, 2), ExpandedRows(date, setOf("sweet-little-angel")))
-        val expanded = model.rows()[0]
-        assertEquals(true, expanded.isExpanded)
-        assertEquals("B.B. King", expanded.artist)
-        assertEquals(mixedPanel, expanded.lineup)
-        // Every open line comes before every filled one, and the extra is last and never open.
-        val kinds = (expanded.lineup.openSlots + expanded.lineup.filledSlots + expanded.lineup.extras).map { it.kind }
-        assertEquals(
-            List(3) { InstrumentChipKind.OPEN_SLOT } + List(3) { InstrumentChipKind.FILLED_SLOT } +
-                InstrumentChipKind.EXTRA,
-            kinds,
-        )
-        assertEquals(false, model.rows()[1].isExpanded)
-        // Another jam's date never expands this jam's rows.
-        val otherJam = snapshot(jam(Setlist.Available(listOf(song))))
-            .toUiModel(LocalDate.of(2026, 10, 2), ExpandedRows(LocalDate.of(2026, 7, 25), setOf("sweet-little-angel")))
-        assertEquals(false, otherJam.rows()[0].isExpanded)
-    }
-
-    /** The strip of [mixedLineup], in column order (instrument strip spec, C1). */
-    private val mixedChips = listOf(
-        open("GTR: LIBRE", "Guitarra: libre"),
-        filled("Gtr: Tincho", "Guitarra: Tincho"),
-        filled("Bajo: Nico", "Bajo: Nico"),
-        open("BAT: LIBRE", "Batería: libre"),
-        open("VOZ: LIBRE", "Voz: libre"),
-        filled("Arm: Mono", "Armónica: Mono"),
-    )
-
-    private val mixedPanelWithoutExtra get() = mixedPanel.copy(extras = emptyList())
-
     private fun NextJamUiModel.songRows(): List<SongRowUiModel> =
         ((this as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
 
     @Test
-    fun `OpenDetail on row 2 calls onOpenSong with the jam date and position 2`() = runTest {
-        val opened = mutableListOf<Pair<LocalDate, Int>>()
-        val params = NextJamPresenter.Params { date, position -> opened += date to position }
+    fun `OpenDetail on row 2 calls onOpenSong with the jam date, its song id and position 2`() = runTest {
+        val opened = mutableListOf<Triple<LocalDate, SongId, Int>>()
+        val params = NextJamPresenter.Params { date, songId, position -> opened += Triple(date, songId, position) }
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(3)))))
             val rows = awaitItem().songRows()
-            assertEquals("Ver detalle del tema", rows[1].detailLabel)
+            assertEquals("ver el detalle del tema", rows[1].openDetailLabel)
             rows[1].events(SongRowUiModel.Event.OpenDetail)
-            assertEquals(listOf(LocalDate.of(2026, 10, 31) to 2), opened)
-            // Opening is navigation only: no refresh, no expansion change.
+            assertEquals(listOf(Triple(LocalDate.of(2026, 10, 31), SongId("walking-thru-the-park"), 2)), opened)
+            // Opening is navigation only: no refresh.
             assertEquals(0, repository.refreshCalls)
         }
     }
@@ -683,13 +486,13 @@ class NextJamPresenterTest {
     @Test
     fun `an earlier model's OpenDetail handler calls the current onOpenSong`() = runTest {
         val calls = mutableListOf<String>()
-        var params by mutableStateOf(NextJamPresenter.Params { _, position -> calls += "first $position" })
+        var params by mutableStateOf(NextJamPresenter.Params { _, _, position -> calls += "first $position" })
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params) }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(2)))))
             val first = awaitItem().songRows()
 
-            params = NextJamPresenter.Params { _, position -> calls += "second $position" }
+            params = NextJamPresenter.Params { _, _, position -> calls += "second $position" }
             awaitItem()
             // The first model's handler, not the latest one's.
             first[0].events(SongRowUiModel.Event.OpenDetail)

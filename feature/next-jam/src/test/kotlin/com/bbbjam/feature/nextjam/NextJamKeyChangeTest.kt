@@ -69,19 +69,7 @@ class NextJamKeyChangeTest {
         date: LocalDate = jamDate,
     ) = KeyChange(id, date, SongId(songId), "Crossroads", Key(key), state)
 
-    private fun admin(changes: List<KeyChange>, onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> }) =
-        AdminState(emptyList(), {}, {}, keyChanges = changes, onSetKey = onSetKey)
-
-    @Test
-    fun `an admin row offers Cambiar tonalidad, which opens the picker for its jam and song`() {
-        val opened = mutableListOf<Pair<LocalDate, SongId>>()
-        val model = snapshot().toUiModel(today, admin = admin(emptyList()) { date, id -> opened += date to id })
-        val setKey = checkNotNull(model.row("Hoochie Coochie Man").admin).setKey
-        assertEquals("Cambiar tonalidad", setKey.label)
-        setKey.events(SetKeyActionUiModel.Event.Open)
-        assertEquals(listOf(jamDate to SongId("hoochie")), opened)
-        assertNull(checkNotNull(model.row("Crossroads").admin).saveStatus)
-    }
+    private fun admin(changes: List<KeyChange>) = AdminState(emptyList(), {}, {}, keyChanges = changes)
 
     @Test
     fun `a musician's rows never get the overlay or the action`() = runTest {

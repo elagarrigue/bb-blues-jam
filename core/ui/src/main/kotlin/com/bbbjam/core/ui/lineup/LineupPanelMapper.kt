@@ -15,7 +15,7 @@ import com.bbbjam.core.ui.strip.InstrumentStripCopy
  * With [onRemoveExtra] (the admin) each extra line gets "Quitar", called with its 1-based ordinal in
  * [extras] and the participant.
  *
- * Pure: presenters call it, so every feature that draws an expanded lineup maps it identically.
+ * Pure: presenters call it, so every screen that draws a lineup panel maps it identically.
  */
 fun Lineup.toLineupPanel(
     extras: List<ExtraParticipant>,
@@ -64,10 +64,10 @@ fun Lineup.toLineupPanel(
     )
 }
 
-/** The note drawn when no slot is open, or null. Shared with the instrument groups. */
+/** The note drawn when no slot is open, or null. */
 internal fun noOpenSlotsNote(hasOpenSlot: Boolean): String? = if (hasOpenSlot) null else LineupPanelCopy.NO_OPEN_SLOTS
 
-/** The hint drawn when at least one slot is open, or null. Shared with the instrument groups. */
+/** The hint drawn when at least one slot is open, or null. */
 internal fun openSlotsHint(hasOpenSlot: Boolean): String? = if (hasOpenSlot) LineupPanelCopy.HINT else null
 
 internal fun Slot.toLine(

@@ -1,8 +1,6 @@
 package com.bbbjam.feature.nextjam
 
-import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.ui.filter.InstrumentFilterBarUiModel
-import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
@@ -13,8 +11,9 @@ import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
 
 /**
- * Everything Próxima jam draws, as plain values. Rows expand in place (`song-row-expansion`) and
- * can be filtered by instrument (`instrument-filter-chips`). Every non-happy path is its own state
+ * Everything Próxima jam draws, as plain values. A row opens the song detail
+ * (`song-detail-replaces-row-expansion`; rows no longer expand) and rows can be filtered by
+ * instrument (`instrument-filter-chips`). Every non-happy path is its own state
  * (`list-states`): skeleton rows while nothing was read, an error block when nothing is cached and
  * the read failed, an empty block when there is nothing to list, and a staleness notice above
  * cached data whose latest refresh failed. Every state can be pulled to refresh
@@ -179,17 +178,14 @@ sealed interface SetlistUiModel : UiModel {
 data class DraftSetlistUiModel(val label: String, val title: String, val message: String) : UiModel
 
 /**
- * One song row. [position] is the Sheet's `posicion`, never renumbered by the read path (a removal
- * renumbers the Sheet itself, `admin-remove-song-from-setlist`); [positionLabel] is it
- * zero-padded ("01"). [keyDescription] is what a screen reader says for [key]. [instruments] is the
- * instrument strip (slots in Sheet column order, then the extra participants), drawn while
- * collapsed. When [isExpanded], the row shows [artist] and [lineup] (open slots first) instead.
- * [stateDescription] ("expandido"/"contraído") and [toggleLabel] ("ocultar los cupos"/"ver los
- * cupos") are the header's state and action for screen readers. [lineup] is built for every row,
- * so the whole setlist is data whether or not it is drawn. [detailLabel] ("Ver detalle del tema")
- * is the expanded row's action that opens the song detail (`song-detail-screen`). [admin] is the
- * admin's part of the row, drawn in the expanded panel after the detail action; null for musicians,
- * so a musician's row is exactly what it was before admin controls existed.
+ * One song row, always collapsed (`song-detail-replaces-row-expansion`; D-07). [position] is the
+ * Sheet's `posicion`, never renumbered by the read path (a removal renumbers the Sheet itself,
+ * `admin-remove-song-from-setlist`); [positionLabel] is it zero-padded ("01"). [keyDescription] is
+ * what a screen reader says for [key]. [instruments] is the instrument strip (slots in Sheet column
+ * order, then the extra participants). Tapping the header opens the song detail
+ * ([Event.OpenDetail]); [openDetailLabel] ("ver el detalle del tema") is that action for screen
+ * readers. [admin] is the admin's part of the row, the compact bar under the header; null for
+ * musicians, so a musician's row is exactly what it was before admin controls existed.
  */
 data class SongRowUiModel(
     val position: Int,
@@ -199,45 +195,36 @@ data class SongRowUiModel(
     val key: String,
     val keyDescription: String,
     val instruments: List<InstrumentChipUiModel>,
-    val artist: String,
-    val isExpanded: Boolean,
-    val stateDescription: String,
-    val toggleLabel: String,
-    val lineup: LineupPanelUiModel,
-    val detailLabel: String,
+    val openDetailLabel: String,
     val events: EventHandler<Event>,
     val admin: SongRowAdminUiModel? = null,
 ) : UiModel {
     sealed interface Event : UiEvent {
-        /** Expand a collapsed row or collapse an expanded one; other rows keep their state. */
-        data object ToggleExpanded : Event
-
         /** Open this song's detail. Navigation only, never a write. */
         data object OpenDetail : Event
     }
 }
 
 /**
- * The admin's part of one row (D-15). [setKey] ("Cambiar tonalidad", `admin-set-key`) and [removal]
- * (the remove action, its inline confirmation, or the status while the removal is sent,
- * `admin-remove-song-from-setlist`, U1) are drawn only while the row is expanded, in that order: the
- * removal stays last. [saveStatus] is "Guardando…" while the row's key is a pending change drawn
- * ahead of the server (O1), else null; it is drawn under the title line in both states.
+ * The admin's part of one row (D-15): the list-level actions only, drawn as a compact bar under the
+ * header (`song-detail-replaces-row-expansion`, P3). [move] ("Subir"/"Bajar", `admin-reorder-songs`;
+ * null while the removal is sent) and [removal] (the remove action, its inline confirmation, or the
+ * status while the removal is sent, `admin-remove-song-from-setlist`, U1), which replaces the bar
+ * while it confirms. [saveStatus] is "Guardando…" while a write of the song is sending (its key,
+ * lineup, slots, extras or position), else null; it is drawn under the title line. Song-level
+ * controls live in the song detail.
  */
 data class SongRowAdminUiModel(
-    val setKey: SetKeyActionUiModel,
     val removal: RemovalUiModel,
     val move: MoveUiModel? = null,
-    val lineup: LineupEditorUiModel = LineupEditorUiModel.Idle("Cambiar formación", EventHandler {}),
     val saveStatus: String? = null,
-    val extraParticipants: ExtraParticipantEditorUiModel? = null,
 ) : UiModel
 
 /**
  * The admin's "Otros" editor (`admin-edit-extra-participants`): "Agregar a Otros", or the open form
  * with its two fields, "Agregar" (enabled only when [submitEnabled]: both trimmed values non-blank)
- * and "Cancelar". The extras themselves, each with its "Quitar", are lines of the row's lineup panel
- * (`ui-polish-pass`, U4), which sends [Event.Remove] here.
+ * and "Cancelar". The extras themselves, each with its "Quitar", are lines of the song detail's
+ * lineup panel (`ui-polish-pass`, U4), which sends [Event.Remove] here.
  */
 data class ExtraParticipantEditorUiModel(
     val formVisible: Boolean,
@@ -257,8 +244,8 @@ data class ExtraParticipantEditorUiModel(
     }
 }
 
-/** The move block in an expanded admin row. Position counts the full setlist, not filtered rows. */
-data class MoveUiModel(val positionLine: String, val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel
+/** The move actions of an admin row. Edges count the full setlist, not filtered rows. */
+data class MoveUiModel(val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel
 
 /** One visible one-place reorder action. Disabled actions remain drawn to keep the layout stable. */
 data class MoveActionUiModel(
@@ -272,7 +259,7 @@ data class MoveActionUiModel(
     }
 }
 
-/** "Cambiar tonalidad": opens the key picker for this row's song. Navigation only. */
+/** "Cambiar tonalidad": opens the key picker for the detail's song. Navigation only. */
 data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
         data object Open : Event
@@ -316,7 +303,7 @@ sealed interface RemovalUiModel : UiModel {
     data class Removing(val status: String) : RemovalUiModel
 }
 
-/** Inline lineup editor, one open row at a time. */
+/** The song detail's inline lineup editor (one open song at a time). */
 sealed interface LineupEditorUiModel : UiModel {
     sealed interface Event : UiEvent {
         data object Open : Event
