@@ -1198,5 +1198,23 @@
       "Independent validator accepted on 11 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; 660 tests in 106 classes, 0 failures). It confirmed detail admin controls call only existing SetlistRepository functions or navigation (D-13), one shared SongOverlays rule for list and detail with a JVM test, lookup by song id, no feature-to-feature dependency, Konsist at 17 rules with only the approved dead allowlist entry removed, and justified test deletions. Follow-ups: 'Quitar de la lista' wraps in the compact bar; TalkBack reading of the row action is owed."
     ],
     "notes": "Requested by the user on 11 October 2026: the expanded row had more logic than the song detail. User decisions: merge the song detail into :feature:next-jam (option recommended over moving the admin logic into :feature:song-detail), and keep the list-level actions (Subir/Bajar, Quitar de la lista) on the list rows. D-07 (collapsed list with the instrument strip) stays."
+  },
+  {
+    "id": "admin-row-icon-actions",
+    "area": "next-jam",
+    "title": "Icon actions in the admin row bar: arrows for move, trash for remove",
+    "user_visible_behavior": "In admin rows on Próxima jam, Subir and Bajar become up and down arrow icon buttons and Quitar de la lista becomes a trash icon button; each keeps its accessible label, disabled state and the existing removal confirmation.",
+    "depends_on": [
+      "song-detail-replaces-row-expansion"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Subir/Bajar render as up/down arrow icon buttons and Quitar de la lista as a trash icon button, each at least 48dp with a voseo content description; the first row's up and last row's down are disabled and announced as such",
+      "The trash icon still opens the existing inline confirmation (no dialog, no swipe, no undo) and calls the same repository functions (D-13)",
+      "Icons come from material-icons-core and colours from BluesJamTheme tokens, never amber (D-17); DESIGN.md's 'no trash icon' rule is updated to record the user's decision",
+      "Presenter/defaults tests cover labels and enabled state; CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; Pixel 5 screenshots at font scale 1.0 and 2.0 with the debug demo jam and debug admin"
+    ],
+    "evidence": [],
+    "notes": "Requested by the user on 12 October 2026: 'cambiemos subir / bajar por flechas, y el quitar de la lista por un icono trash'. Overrides DESIGN.md's earlier 'no trash icon' line for the row bar. Also resolves the follow-up where 'Quitar de la lista' wrapped in the compact bar."
   }
 ]
