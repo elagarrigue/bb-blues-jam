@@ -1340,5 +1340,23 @@
       "Independent validator accepted on 12 October 2026 after rerunning node --test (183 pass) and CI=true ./init.sh (konsist, detekt and ktlint wired; 698 tests). It confirmed per-instrument maxCount drives withSlotCount, the editor and SetlistLineupChanges; filled cells beyond a ceiling are still read (amendment); SLOT_CEILINGS_ returns invalid_count before any Sheet read; new tabs get 14 slot headers; the wire key set is unchanged, so app and scripts stay compatible both ways. Owed: the user's Part C redeploy of Post.gs."
     ],
     "notes": "User decision on 12 October 2026, after widening the real 2026-10-31 tab: 'batería y teclados, solo 1'. The user's tab has Guitarra 1-3, Bajo 1-3, Voz 1-3, Armónica 1-3, Batería and Teclados."
+  },
+  {
+    "id": "strip-extra-chip-filled",
+    "area": "core-ui",
+    "title": "Show Otros in the song list strip as chips with the filled-slot background",
+    "user_visible_behavior": "In the Próxima jam list, each Otros participant in a row's instrument strip is drawn as its own chip with the same background as an assigned instrument, instead of a chip with no fill.",
+    "depends_on": [
+      "lineup-max-per-instrument"
+    ],
+    "status": "not_started",
+    "verification": [
+      "InstrumentStripDefaults.style(EXTRA) uses the filled-slot fill (slotFilled), never amber (D-17); the '+' prefix and the 'Otros: {instrumento}, {nombre}' description still mark it as an extra",
+      "Extras are still never counted as slots, never in the filter, never in open-slot counts (D-18); mapper and filter unchanged",
+      "InstrumentStripDefaultsTest and LineupPanelDefaultsTest are updated to the new look; ContrastTest still passes; DESIGN.md records the change",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; a Pixel 5 screenshot of a list row with an extra using the debug demo jam"
+    ],
+    "evidence": [],
+    "notes": "Requested by the user on 12 October 2026: 'en la lista de canciones, los tags otro deberían verse como otro chip, con el fondo igual que los instrumentos asignados'. Reverses the 'no fill' rule for the strip's extra chip that extras-dialog-and-lines kept on purpose."
   }
 ]
