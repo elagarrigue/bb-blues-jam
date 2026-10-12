@@ -1308,5 +1308,24 @@
       "Independent validator accepted on 12 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired). It judged the AdminModeState snapshot-state seam sound and contained, confirmed the single shared status-bar inset and banner across all routes, no amber change, and an obvious wine-vs-indigo difference in the screenshots. Orchestrator then applied two follow-ups: AdminModeSwitchTest (2 tests: musician palette by default, admin ramp and unchanged amber when the flag is set, reset in @After) and a stale KDoc reference; :core:ui:check exited 0."
     ],
     "notes": "Requested by the user on 12 October 2026: 'tiene que ser obvio que estamos en modo admin, cambiemos el fondo por ejemplo para que resalte el estado'. User decision: background change plus a fixed MODO ADMIN banner."
+  },
+  {
+    "id": "lineup-max-per-instrument",
+    "area": "model+backend+next-jam",
+    "title": "Per-instrument slot ceilings: Batería and Teclados stay at one",
+    "user_visible_behavior": "In Cambiar formación, Guitarra, Bajo, Voz and Armónica grow up to three slots, while Batería and Teclados stay at one; the + is disabled at each instrument's own ceiling.",
+    "depends_on": [
+      "lineup-grow-any-instrument",
+      "extras-dialog-and-lines"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Lineup has a per-instrument ceiling (GUITAR 3, BASS 3, VOCALS 3, HARMONICA 3, DRUMS 1, KEYBOARDS 1) used by the editor's + and by withSlotCount",
+      "Apps Script setSlotCount validates the same per-instrument ceiling server-side; new jam tabs are created with 14 slot columns (no Batería 2-3, Teclados 2-3); Node tests cover it",
+      "The wire contract stays compatible with the accepted key-set rule (a tab without Batería 2-3/Teclados 2-3 reads those as '-'); the migration guide, sheet-schema, apps-script-api, DESIGN.md and the D-18 amendment state the per-instrument ceilings",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; node --test passes"
+    ],
+    "evidence": [],
+    "notes": "User decision on 12 October 2026, after widening the real 2026-10-31 tab: 'batería y teclados, solo 1'. The user's tab has Guitarra 1-3, Bajo 1-3, Voz 1-3, Armónica 1-3, Batería and Teclados."
   }
 ]
