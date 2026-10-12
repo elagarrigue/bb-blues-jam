@@ -2,20 +2,19 @@ package com.bbbjam.feature.nextjam
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The admin's "Otros" editor after "Cambiar formación": "Agregar a Otros", or the open form with two
- * labelled fields inset like the rest of the row, "Agregar" (muted and not underlined until both
- * fields hold something) and "Cancelar". The extras and their "Quitar" are lines of the row's
- * lineup panel, so they are not listed again here (`ui-polish-pass`, U4).
+ * The admin's "Otros" opener after "Cambiar formación": "Agregar a Otros" (which opens
+ * [AddExtraDialog], drawn by the screen beside the list, not here) and "Guardando…" while a write
+ * is pending. The extras and their "Quitar" are lines of the row's lineup panel.
  */
 @Composable
 internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
@@ -23,15 +22,27 @@ internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
     val action = AdminControlsDefaults.lineupEditor().action
     Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
         if (model.saving) SaveStatusLine(NextJamCopy.SAVING)
-        if (!model.formVisible) {
-            RowTextAction(NextJamCopy.ADD_EXTRA, action) {
-                model.events(ExtraParticipantEditorUiModel.Event.Open)
-            }
-        } else {
-            Column(
-                modifier = Modifier.padding(horizontal = spacing.md),
-                verticalArrangement = Arrangement.spacedBy(spacing.xs),
-            ) {
+        RowTextAction(NextJamCopy.ADD_EXTRA, action) {
+            model.events(ExtraParticipantEditorUiModel.Event.Open)
+        }
+    }
+}
+
+/**
+ * The "Agregar a Otros" dialog (`extras-dialog-and-lines`): two labelled fields, "Agregar" (enabled
+ * only when both hold text) and "Cancelar". Back and a tap outside dismiss exactly as "Cancelar"
+ * does ([AlertDialog]'s `onDismissRequest`); "Agregar" calls the same `addExtraParticipant` (D-13).
+ * Colours come from [ExtraDialogDefaults.style], never amber.
+ */
+@Composable
+internal fun AddExtraDialog(model: ExtraParticipantEditorUiModel) {
+    val style = ExtraDialogDefaults.style()
+    AlertDialog(
+        onDismissRequest = { model.events(ExtraParticipantEditorUiModel.Event.Cancel) },
+        containerColor = style.container,
+        title = { Text(text = NextJamCopy.ADD_EXTRA, style = BluesJamTheme.typography.body, color = style.title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
                 ExtraTextField(NextJamCopy.EXTRA_NAME, model.name) {
                     model.events(ExtraParticipantEditorUiModel.Event.NameChanged(it))
                 }
@@ -39,21 +50,24 @@ internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
                     model.events(ExtraParticipantEditorUiModel.Event.InstrumentChanged(it))
                 }
             }
-            Row(modifier = Modifier.fillMaxWidth()) {
-                RowTextAction(
-                    NextJamCopy.SUBMIT_EXTRA,
-                    action,
-                    Modifier.weight(1f),
-                    enabled = model.submitEnabled,
-                ) {
-                    model.events(ExtraParticipantEditorUiModel.Event.Submit)
-                }
-                RowTextAction(NextJamCopy.CANCEL, action, Modifier.weight(1f)) {
-                    model.events(ExtraParticipantEditorUiModel.Event.Cancel)
-                }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = model.submitEnabled,
+                onClick = { model.events(ExtraParticipantEditorUiModel.Event.Submit) },
+            ) {
+                Text(
+                    text = NextJamCopy.SUBMIT_EXTRA,
+                    color = if (model.submitEnabled) style.confirm else style.disabled,
+                )
             }
-        }
-    }
+        },
+        dismissButton = {
+            TextButton(onClick = { model.events(ExtraParticipantEditorUiModel.Event.Cancel) }) {
+                Text(text = NextJamCopy.CANCEL, color = style.cancel)
+            }
+        },
+    )
 }
 
 @Composable

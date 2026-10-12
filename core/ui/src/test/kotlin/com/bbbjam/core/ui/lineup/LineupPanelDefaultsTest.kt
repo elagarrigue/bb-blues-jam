@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.lineup
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.bbbjam.core.ui.strip.InstrumentChipKind
+import com.bbbjam.core.ui.strip.InstrumentStripDefaults
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults.Glyph
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals
@@ -33,15 +34,22 @@ class LineupPanelDefaultsTest {
     }
 
     @Test
-    fun `an extra line is never amber nor slotFilled and has no slot glyph`() {
+    fun `an extra line is styled exactly like a filled slot and is never amber`() {
         val style = LineupPanelDefaults.style(InstrumentChipKind.EXTRA)
-        assertEquals(Color.Transparent, style.fill)
-        assertNotEquals(colors.slotFilled, style.fill)
+        assertEquals(LineupPanelDefaults.style(InstrumentChipKind.FILLED_SLOT), style)
+        assertEquals(colors.slotFilled, style.fill)
+        assertEquals(Glyph.CHECK, style.glyph)
         assertNotEquals(colors.slotOpen, style.textColor)
-        assertEquals(Glyph.NONE, style.glyph)
         val detail = LineupPanelDefaults.detailColor(InstrumentChipKind.EXTRA)
         assertNotEquals(colors.slotOpen, detail)
-        assertEquals(colors.textMuted, detail)
+        assertEquals(colors.text, detail)
+    }
+
+    @Test
+    fun `the strip's own extra chip keeps its no-fill look`() {
+        val style = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
+        assertEquals(Color.Transparent, style.fill)
+        assertEquals(Glyph.NONE, style.glyph)
     }
 
     @Test

@@ -1338,6 +1338,10 @@ Cosas que hay que registrar mientras se avanza, porque después no se recuperan:
 | Una publicación falla en silencio y los músicos leen una lista desactualizada | Error no ignorable al publicar; registrar localmente los fallos de escritura |
 | La tira de instrumentos distingue libre de cubierto solo por brillo | Sumar forma o relleno a la distinción, más etiqueta accesible por ícono |
 
+### Nota del 12 de octubre de 2026 — Otros en un diálogo y con estilo de cupo cubierto
+
+Pedido del usuario: agregar a Otros desde un pop-up (Nombre, Instrumento, Agregar/Cancelar) en vez del formulario al final del detalle, y mostrar cada extra como una línea con el estilo de un cupo cubierto. Es un cambio visual: D-18 (los extras nunca son cupos ni se cuentan) no cambia; la línea conserva el prefijo `+` y la descripción `Otros:`.
+
 ## 10. Próximos pasos
 
 1. ~~Correr `build-brief` sobre los dos documentos de descubrimiento~~ — hecho, ver 6.2

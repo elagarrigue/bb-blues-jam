@@ -90,6 +90,11 @@ internal fun SongDetailContent(model: SongDetailUiModel, modifier: Modifier, con
         end = contentPadding.calculateEndPadding(layoutDirection) + spacing.md,
         bottom = contentPadding.calculateBottomPadding() + spacing.lg,
     )
+    // The "Agregar a Otros" dialog is a sibling of the list, not an item in it: it floats over the
+    // whole screen and survives the list scrolling (`extras-dialog-and-lines`).
+    (model as? SongDetailUiModel.Song)?.admin?.extraParticipants?.takeIf { it.formVisible }?.let {
+        AddExtraDialog(it)
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()

@@ -1,5 +1,13 @@
 # Progress Log
 
+## 12 October 2026 - extras-dialog-and-lines accepted
+
+"Agregar a Otros" now opens `AddExtraDialog` (Material 3 AlertDialog, drawn by `SongDetailContent` beside the LazyColumn, not as a list item) over the unchanged `ExtraParticipantFormState`; back, outside tap and Cancelar all send `Cancel`. Colours come from the new `ExtraDialogDefaults` (own object: `AdminControlsDefaults` was at the detekt TooManyFunctions limit), so the dialog follows the admin palette. `LineupPanelDefaults.style/detailColor(EXTRA)` now equal FILLED_SLOT; the strip chip and `InstrumentChipKind.EXTRA` are unchanged. DESIGN.md, the bitácora and the architecture skill carry dated notes.
+
+Verification: `CI=true ./init.sh` exit 0, konsist/detekt/ktlint wired, 693 tests (111 classes), 0 failures. The first gate run failed detekt (TooManyFunctions, LongMethod) and was fixed by moving the style to its own object; no rule changed. Pixel 5 check and screenshots in `docs/evidence/extras-dialog-and-lines/`; Agregar never tapped; local.properties restored byte-for-byte.
+
+Next: independent validation.
+
 ## 12 October 2026 - lineup-grow-any-instrument accepted (human migration and redeploy owed)
 
 Amends D-18: any instrument can grow to 3 slots per song through 18 fixed Sheet columns; a new song still starts with the 7 defaults and 11 `-` cells. `Lineup.maxCount`/`MAX_INSTRUMENTS` (18) are separate from `defaultCount`/`DEFAULT_INSTRUMENTS` (7), plus `DEFAULT_COLUMNS` (0,1,3,6,9,12,15). Apps Script (`Normalize.js`, `Jams.js`, `Post.js`): 18 `SLOT_FIELDS`, the un-numbered first headers are aliases of `... 1` (old tabs read unchanged), a column the tab lacks reads `-` (never open), `setSlotCount` accepts 0..3 and answers `instrument_not_expandable` before any write when the tab has no column for the growth, `appendSetlistRow_` writes `-` to the 11 extra cells. Client: `SlotsDto` 18 keys, shared `SLOT_FIELDS` list with exact key-set checks in both mirrors, editor `+` up to 3, Spanish copy for the new code. Docs: sheet-schema, apps-script-api, domain-model, CONTEXT, bitacora D-18 amendment, risks, DESIGN, README, architecture skill, and the user guide `docs/migrations/lineup-grow-any-instrument-sheet-migration.md`.
@@ -97,10 +105,10 @@ and the Session Log.
 - Standard verification path: `CI=true ./init.sh`, which wraps `./gradlew build` and
   `./gradlew check` (unit tests, Android lint, Konsist, detekt, ktlint) and must end with
   `konsist`, `detekt` and `ktlint` all `wired`.
-- Slices (`feature_list.json`, 48 entries): 46 `accepted`; `songsterr-browser-link` `blocked`
+- Slices (`feature_list.json`, 49 entries): 47 `accepted`; `songsterr-browser-link` `blocked`
   (D-20); `project-hygiene-pass` accepted 10 October 2026 by the independent validator; `ui-polish-pass`
-  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions`, `admin-mode-highlight` and `lineup-grow-any-instrument` accepted 12 October 2026 (the last owes the user's Sheet migration, redeploy and a read-only live check, per `docs/migrations/lineup-grow-any-instrument-sheet-migration.md`); `extras-dialog-and-lines` specced, `not_started`. `enrichment-background-fetch` moved to `docs/future-enhancements/`.
-- Latest gate: see the `lineup-grow-any-instrument` entry at the top of this file.
+  accepted 10 October 2026; `song-detail-replaces-row-expansion` accepted 11 October 2026; `admin-row-icon-actions`, `admin-mode-highlight` and `lineup-grow-any-instrument` accepted 12 October 2026 (the last owes the user's Sheet migration, redeploy and a read-only live check, per `docs/migrations/lineup-grow-any-instrument-sheet-migration.md`); `extras-dialog-and-lines` accepted 12 October 2026; `lineup-max-per-instrument` (Batería and Teclados stay at one, user decision) `not_started`. Live read-only GET on 12 October 2026: after the user widened the 2026-10-31 tab and renamed `Bajo`/`Voz`/`Armónica` to `… 1`, the still-deployed old script answers `missing_header` for that tab, so its setlist does not load until the new script is deployed (Part B of the migration guide). `enrichment-background-fetch` moved to `docs/future-enhancements/`.
+- Latest gate: see the `extras-dialog-and-lines` entry at the top of this file.
 - Code layout: seven Gradle modules (`:app`, `:core:model`, `:core:ui`, `:core:data`,
   `:feature:info`, `:feature:next-jam`, `:feature:past-jams`; the song detail lives in
   `:feature:next-jam` since `song-detail-replaces-row-expansion`), plus

@@ -1272,7 +1272,7 @@
     "depends_on": [
       "lineup-grow-any-instrument"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "'Agregar a Otros' opens a modal dialog with labelled Nombre and Instrumento fields, Agregar enabled only when both are filled, and Cancelar/back/outside closing it with no write; Agregar calls the same addExtraParticipant (D-13)",
       "The inline extras form at the end of the detail is gone",
@@ -1280,7 +1280,11 @@
       "Dialog colours come from BluesJamTheme tokens only, never amber (D-17); voseo copy (D-12); tests cover the form state and the line model",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; Pixel 5 screenshots with the debug demo jam and debug admin, never tapping Agregar against the real Sheet"
     ],
-    "evidence": [],
+    "evidence": [
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 693 JVM tests in 111 classes, 0 failures (baseline 690/110). New ExtraDialogDefaultsTest (2); LineupPanelDefaultsTest rewritten (extra == filled-slot style and detail colour text, never amber; strip extra chip unchanged); the existing SongDetailAdminTest form test (Open/blank cannot submit/Cancel clears/Submit calls addExtraParticipant once) still covers the form state machine.",
+      "Pixel 5 (debug demo jam, Live+Draft+debugAdmin, logcat confirmed (demo)): Agregar a Otros opens a modal dialog (Nombre, Instrumento, Cancelar, Agregar); Agregar disabled with name only, enabled with both; Cancelar, back and a tap outside each closed it and reopening showed empty fields; Agregar never tapped, no write. Extra Valeria/saxo shows with filled-slot fill and check under OTROS with Quitar; musician view (flags without debugAdmin) shows it as a read-only line. Font 2.0: dialog buttons stack and stay reachable. Screenshots in docs/evidence/extras-dialog-and-lines/. local.properties restored (sha256 5623d705... identical), font_scale back to 1.0.",
+      "Independent validator accepted on 12 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired). It confirmed Agregar sends the same Submit event to addExtraParticipant (D-13), Cancelar/back/outside send Cancel with no write, the inline form is gone and the dialog floats beside the list, token-only colours with no amber or error (D-17), extras still never counted as slots (D-18; only the panel's paint changed, the strip chip pinned by a test), and real presenter coverage in SongDetailAdminTest."
+    ],
     "notes": "Requested by the user on 12 October 2026: 'Otros: usemos un pop up para agregar otros en vez de una vista al final del detalle. Además, mostrarlos igual que cupos cubiertos, un elemento por otro agregado.'"
   },
   {
