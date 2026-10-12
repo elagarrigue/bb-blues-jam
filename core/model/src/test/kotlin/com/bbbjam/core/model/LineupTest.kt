@@ -126,8 +126,19 @@ class LineupTest {
         assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(GUITAR, -1) }
         assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(GUITAR, 4) }
         Instrument.entries.forEach { instrument ->
-            assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(instrument, 4) }
+            assertThrows(IllegalArgumentException::class.java) {
+                lineup.withSlotCount(instrument, Lineup.maxCount(instrument) + 1)
+            }
         }
+    }
+
+    @Test
+    fun `drums and keyboards cannot grow past one while bass reaches three`() {
+        val lineup = Lineup.default()
+
+        assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(DRUMS, 2) }
+        assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(KEYBOARDS, 2) }
+        assertEquals(3, lineup.withSlotCount(BASS, 3)?.count(BASS))
     }
 
     @Test
@@ -136,6 +147,7 @@ class LineupTest {
             List(4) { Slot(GUITAR) },
             List(4) { Slot(BASS, "Tincho") },
             Lineup.default().slots + List(3) { Slot(KEYBOARDS) },
+            List(4) { Slot(DRUMS) },
             List(4) { Slot(HARMONICA) },
         )
         overMax.forEach { slots ->
@@ -146,8 +158,10 @@ class LineupTest {
     }
 
     @Test
-    fun `the maximum is three for every instrument and differs from the default`() {
-        Instrument.entries.forEach { assertEquals(3, Lineup.maxCount(it)) }
+    fun `the ceilings are three except drums and keyboards at one while the wire keeps eighteen columns`() {
+        Instrument.entries.forEach {
+            assertEquals(if (it == DRUMS || it == KEYBOARDS) 1 else 3, Lineup.maxCount(it))
+        }
         assertEquals(18, Lineup.MAX_INSTRUMENTS.size)
         assertEquals(Instrument.entries.flatMap { instrument -> List(3) { instrument } }, Lineup.MAX_INSTRUMENTS)
         assertEquals(7, Lineup.DEFAULT_INSTRUMENTS.size)
@@ -166,14 +180,24 @@ class LineupTest {
     @Test
     fun `growing any instrument to its maximum is valid and keeps the order`() {
         Instrument.entries.forEach { instrument ->
-            val grown = Lineup.default().withSlotCount(instrument, 3)
+            val max = Lineup.maxCount(instrument)
+            val grown = Lineup.default().withSlotCount(instrument, max)
 
-            assertEquals(3, grown?.count(instrument))
-            assertEquals(Lineup.default().slots.size + 3 - Lineup.defaultCount(instrument), grown?.slots?.size)
+            assertEquals(max, grown?.count(instrument))
+            assertEquals(Lineup.default().slots.size + max - Lineup.defaultCount(instrument), grown?.slots?.size)
         }
         val vocals = Lineup(listOf(Slot(VOCALS, "Lu"), Slot(KEYBOARDS))).withSlotCount(VOCALS, 3)
         assertEquals(listOf(Slot(VOCALS, "Lu"), Slot(VOCALS), Slot(VOCALS), Slot(KEYBOARDS)), vocals?.slots)
         assertEquals(null, vocals?.withSlotCount(VOCALS, 1)?.withSlotCount(VOCALS, 0))
+    }
+
+    @Test
+    fun `a lineup read from a widened tab may hold a filled slot beyond a ceiling`() {
+        val lineup = Lineup(listOf(Slot(DRUMS, "Pablo"), Slot(DRUMS, "Nico")))
+
+        assertEquals(2, lineup.count(DRUMS))
+        assertThrows(IllegalArgumentException::class.java) { lineup.withSlotCount(DRUMS, 2) }
+        assertEquals(null, lineup.withSlotCount(DRUMS, 1))
     }
 
     @Test

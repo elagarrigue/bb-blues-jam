@@ -1,4 +1,4 @@
-# Migration guide: three slots per instrument (`lineup-grow-any-instrument`)
+# Migration guide: slots per instrument (`lineup-grow-any-instrument`, `lineup-max-per-instrument`)
 
 For the person who owns the Google Sheet and the Apps Script project (the organizer). Do this once.
 It has two parts, the Sheet and the script, and a checklist at the end to tell the agent what you
@@ -6,8 +6,9 @@ did. Nothing here is done by the agent: it does not edit the real Sheet, redeplo
 the live write endpoint.
 
 What changes for you: in `Cambiar formación` the admin will be able to add slots for **any**
-instrument up to **3** (today only the guitar, up to 2). To hold them, a jam tab gets **18 slot
-columns** instead of 7: three per instrument. A song that does not use a third slot of some
+instrument up to **3** (today only the guitar, up to 2), except `Batería` and `Teclados`, which stay at
+**1** (`lineup-max-per-instrument`). To hold them, a jam tab gets **14 slot columns** instead of 7:
+three each for Guitarra, Bajo, Voz and Armónica, one each for Batería and Teclados. A song that does not use a third slot of some
 instrument has `-` in that cell, exactly like an unused second guitar does today.
 
 Nothing breaks for the app you have installed if you do only part of this, with one exception
@@ -47,38 +48,40 @@ Do this for the tab of the **upcoming** jam, the one the admin edits (`Jams` row
 future `fecha`, the tab is named after it, e.g. `2026-10-31`). Past jam tabs can stay as they are:
 the app never edits a past jam.
 
-The 18 slot headers, **exactly** as written (capital letters and accents count, one space before the
+The 14 slot headers, **exactly** as written (capital letters and accents count, one space before the
 digit), after `tono` and before `Otros`, in this order:
 
-| # | Header | # | Header | # | Header |
-|---|---|---|---|---|---|
-| 1 | `Guitarra 1` | 7 | `Batería 1` | 13 | `Armónica 1` |
-| 2 | `Guitarra 2` | 8 | `Batería 2` | 14 | `Armónica 2` |
-| 3 | `Guitarra 3` | 9 | `Batería 3` | 15 | `Armónica 3` |
-| 4 | `Bajo 1` | 10 | `Voz 1` | 16 | `Teclados 1` |
-| 5 | `Bajo 2` | 11 | `Voz 2` | 17 | `Teclados 2` |
-| 6 | `Bajo 3` | 12 | `Voz 3` | 18 | `Teclados 3` |
+| # | Header | # | Header |
+|---|---|---|---|
+| 1 | `Guitarra 1` | 8 | `Voz 1` |
+| 2 | `Guitarra 2` | 9 | `Voz 2` |
+| 3 | `Guitarra 3` | 10 | `Voz 3` |
+| 4 | `Bajo 1` | 11 | `Armónica 1` |
+| 5 | `Bajo 2` | 12 | `Armónica 2` |
+| 6 | `Bajo 3` | 13 | `Armónica 3` |
+| 7 | `Batería` (or `Batería 1`) | 14 | `Teclados` (or `Teclados 1`) |
 
 Your tab today has, in this order: `posicion`, `id_tema`, `titulo`, `artista`, `tono`, `Guitarra 1`,
-`Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados`, `Otros`. The result has 5 + 18 + 1 = 24
-columns.
+`Guitarra 2`, `Bajo`, `Batería`, `Voz`, `Armónica`, `Teclados`, `Otros`. The result has 5 + 14 + 1 = 20
+columns. A tab you already widened to 18 columns (with `Batería 2-3` and `Teclados 2-3`) keeps working
+too: the script reads those columns, and the app never grows Batería or Teclados past one.
 
 1. Open the Sheet and the tab of the upcoming jam.
 2. Insert a column **to the right of `Guitarra 2`** and give it the header `Guitarra 3`.
 3. Rename the header `Bajo` to `Bajo 1` (optional, both work). Insert two columns to its right:
    `Bajo 2`, `Bajo 3`.
-4. Do the same for `Batería`, `Voz`, `Armónica` and `Teclados`: rename to `... 1` (optional) and insert
-   `... 2` and `... 3` to the right of each.
+4. Do the same for `Voz` and `Armónica`: rename to `... 1` (optional) and insert `... 2` and `... 3` to
+   the right of each. Leave `Batería` and `Teclados` as they are (one column each).
 5. **Fill every new cell of every existing song with a single dash `-`.** This is the step that
    matters: an **empty** cell means "open slot", so an empty `Guitarra 3` would show a third guitar
-   slot to every musician. The 11 new columns are `Guitarra 3`, `Bajo 2`, `Bajo 3`, `Batería 2`,
-   `Batería 3`, `Voz 2`, `Voz 3`, `Armónica 2`, `Armónica 3`, `Teclados 2`, `Teclados 3`. Select each
+   slot to every musician. The 7 new columns are `Guitarra 3`, `Bajo 2`, `Bajo 3`, `Voz 2`,
+   `Voz 3`, `Armónica 2`, `Armónica 3`. Select each
    new column's data cells, type `-` and press Ctrl+Enter, or fill them all at once.
 6. Do not touch the other columns. The script finds columns by header name, so the order is only for
    your own reading; `posicion` ... `tono` and `Otros` stay where they are.
 
-New songs added from the app after this get the 7 default slots open and the 11 extra cells written
-`-` for you. A new jam tab created by the app already has the 18 headers.
+New songs added from the app after this get the 7 default slots open and the 7 extra cells written
+`-` for you. A new jam tab created by the app already has the 14 slot headers (20 columns).
 
 ## Part B: update the Apps Script
 
@@ -98,7 +101,7 @@ they are. This follows `backend/apps-script/README.md`, section "Updating the co
    |---|---|
    | `Normalize.gs` | `(spec.aliases \|\| [])` |
    | `Jams.gs` | `var NOT_IN_LINEUP_ = '-';` and `{ header: 'Teclados 3', field: 'keyboards3', required: false },` |
-   | `Post.gs` | `var MAX_SLOTS_PER_INSTRUMENT_ = 3;` and `instrument_not_expandable` |
+   | `Post.gs` | `var SLOT_CEILINGS_` and `instrument_not_expandable` |
 
    The other two checks of the README table still apply: `Code.gs` has `jams: readJams_,` and
    `Catalog.gs` does **not** have `class ContractError`. If any check fails, paste that file again
@@ -112,6 +115,23 @@ they are. This follows `backend/apps-script/README.md`, section "Updating the co
 6. This version changes no route and no action name, so the `Known: ...` list that
    `curl -sL -d '{}' "$URL"` prints is the same before and after: it cannot tell you whether the
    deploy took. The paste check in step 3 and the read-only check below are what tell you.
+
+## Part C: second deploy (`lineup-max-per-instrument`)
+
+If you already deployed Part B before this slice, only **one file** changed since: `Post`. Your
+2026-10-31 tab already has the 14 columns, so the Sheet needs nothing.
+
+1. Open the Sheet, then **Extensions → Apps Script**.
+2. Replace the **whole content** of `Post.gs` with `backend/apps-script/src/Post.js`, save (Ctrl+S).
+3. Verify the paste: `Post.gs` must contain `var SLOT_CEILINGS_` (and no longer
+   `MAX_SLOTS_PER_INSTRUMENT_`).
+4. **Deploy → Manage deployments** → the existing deployment → **Edit** → **Version: New version** →
+   **Deploy**. Never **New deployment**; the URL does not change.
+
+After it, a `setSlotCount` for `drums` or `keyboards` with count 2 is answered `invalid_count`, and new
+jam tabs are created with 14 slot columns. The agent does **not** try `setSlotCount` live; it can only
+confirm the deploy took by the read-only GET, which does not show it, so the paste check is the proof.
+The app works against the old script too: the editor stops at each ceiling by itself.
 
 ## Tell the agent
 
@@ -132,7 +152,7 @@ Only after you confirm the checklist, the agent runs a **read-only** check again
 the passphrase or the URL:
 
 - the response is `schemaVersion` 1 with no error;
-- every song of a published jam has an 18-key `slots` object (`guitar1` ... `keyboards3`);
+- every song of a published jam has an 18-key `slots` object, unchanged by the ceilings (`guitar1` ... `keyboards3`);
 - on a widened tab, the 11 new keys are `"-"` for every existing song, and names and open slots are
   unchanged from before;
 - on a tab you did not widen, the same 18 keys come back with the 11 new ones as `"-"`;

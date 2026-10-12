@@ -127,11 +127,11 @@ columns only (found by header, so an extra column the admin added is left alone)
 written cell set to plain text (`@`) first: `posicion` is stored as text, which the read path
 accepts. `id_tema`, `titulo` and `artista` come from `Catalogo` (exactly one row with that `id`, a
 title and an artist), `tono` is the key the app sent (never `tono_default`, D-08), the seven default
-slot cells and `Otros` are written empty (the default lineup, all open, D-18), and the eleven slot
-cells beyond the default (`Guitarra 3`, `Bajo 2`-`3`, `Batería 2`-`3`, `Voz 2`-`3`, `Armónica 2`-`3`,
-`Teclados 2`-`3`) are written `-`, so none is mistaken for an open slot until the admin grows that
+slot cells and `Otros` are written empty (the default lineup, all open, D-18), and the slot
+cells beyond the default that the tab has (`Guitarra 3`, `Bajo 2`-`3`, `Voz 2`-`3`, `Armónica 2`-`3`;
+also `Batería 2`-`3` and `Teclados 2`-`3` on a tab widened to 18) are written `-`, so none is mistaken for an open slot until the admin grows that
 instrument. A tab that was never widened has no such columns and nothing is written for them. A
-new tab is created with all eighteen slot headers. A song already in the
+new tab is created with **fourteen** slot headers (20 columns with the five setlist columns and `Otros`): no `Batería 2`-`3` and no `Teclados 2`-`3` (`lineup-max-per-instrument`). A song already in the
 tab is refused (`song_already_in_setlist`). Every check runs before the first write.
 
 `removeSong` (user decision R1 (a)) finds its row by the trimmed `id_tema`, never by `posicion`
@@ -206,6 +206,8 @@ a tab that lacks one reads that slot as `-` (not in the lineup), so every jam ta
 | `Armónica 2`, `Armónica 3` | `HARMONICA` | no | `-` |
 | `Teclados 1` (or `Teclados`) | `KEYBOARDS` | yes | open |
 | `Teclados 2`, `Teclados 3` | `KEYBOARDS` | no | `-` |
+
+**Ceilings (`lineup-max-per-instrument`, 12 October 2026).** The app grows an instrument up to its own ceiling: Guitarra, Bajo, Voz and Armónica 3; Batería and Teclados 1. The wire stays 18 columns (`drums2`-`3`, `keyboards2`-`3` are `-` on a 14-column tab). A tab that does have `Batería 2` or `Teclados 2` is still read: an open cell there is ignored, a filled one is shown as a filled slot (a name is never hidden); the app never grows or writes past a ceiling.
 
 **Response keys.** The jams response names the first column of the five single-slot instruments `bass1`... and also repeats it as `bass`, `drums`, `vocals`, `harmonica`, `keyboards` for apps that predate the layout (`apps-script-api.md`).
 

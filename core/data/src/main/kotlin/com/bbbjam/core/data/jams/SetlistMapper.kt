@@ -127,12 +127,20 @@ internal object SetlistMapper {
 
     /**
      * The slot of each column not holding `-`, paired with its 0-based column, in column order. An
-     * empty cell is an open slot; anything else is the musician's name.
+     * empty cell is an open slot; anything else is the musician's name. A column beyond the
+     * instrument's ceiling (a hand-widened tab) is read only when filled: an open one is ignored, a
+     * name is never hidden.
      */
     private fun lineupSlots(slots: SlotsDto): List<Pair<Int, Slot>> =
         Lineup.MAX_INSTRUMENTS.zip(slots.cells()).mapIndexedNotNull { column, (instrument, raw) ->
             val cell = raw.trimmedCell()
-            if (cell == NOT_IN_LINEUP) null else column to Slot(instrument, cell)
+            val beyondCeiling =
+                Lineup.MAX_INSTRUMENTS.take(column).count { it == instrument } >= Lineup.maxCount(instrument)
+            when {
+                cell == NOT_IN_LINEUP -> null
+                beyondCeiling && cell == null -> null
+                else -> column to Slot(instrument, cell)
+            }
         }
 
     /**

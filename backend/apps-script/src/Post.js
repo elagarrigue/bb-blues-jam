@@ -89,8 +89,14 @@ var SLOT_COLUMNS_ = {
   harmonica: ['harmonica1', 'harmonica2', 'harmonica3'], keyboards: ['keyboards1', 'keyboards2', 'keyboards3'],
 };
 
-/** The most slots one instrument may hold in a song, whatever columns a given tab has. */
-var MAX_SLOTS_PER_INSTRUMENT_ = 3;
+/**
+ * The most slots setSlotCount lets each instrument hold (D-18, amended 12 October 2026): Batería and
+ * Teclados stay at one. A ceiling limits growth only; a tab that has a wider column is still read.
+ */
+var SLOT_CEILINGS_ = { guitar: 3, bass: 3, vocals: 3, harmonica: 3, drums: 1, keyboards: 1 };
+
+/** Slot columns a new jam tab does not get (beyond the ceilings); a tab that has them still reads them. */
+var NOT_CREATED_SLOT_FIELDS_ = ['drums2', 'drums3', 'keyboards2', 'keyboards3'];
 
 /**
  * The slot columns beyond the default lineup (2 guitars, 1 of the rest). A new song's row writes
@@ -927,8 +933,8 @@ function setSlotCount_(request, spreadsheet, services) {
   }
   const fields = SLOT_COLUMNS_[instrument];
   const count = request.count;
-  if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > MAX_SLOTS_PER_INSTRUMENT_) {
-    throw new ContractError('invalid_count', 'count must be an integer from 0 to ' + MAX_SLOTS_PER_INSTRUMENT_);
+  if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > SLOT_CEILINGS_[instrument]) {
+    throw new ContractError('invalid_count', 'count must be an integer from 0 to ' + SLOT_CEILINGS_[instrument]);
   }
   requireEditableJam_(spreadsheet, services, date);
   const sheet = spreadsheet.getSheetByName(date);
@@ -1281,9 +1287,11 @@ function setlistSpecs_() {
   return SETLIST_FIELDS.concat(SLOT_FIELDS, [EXTRA_FIELD]);
 }
 
-/** Inserts the tab `name` with the jam tab header row. */
+/** Inserts the tab `name` with the jam tab header row: 20 columns, the 14 slot columns the ceilings allow. */
 function createSetlistTab_(spreadsheet, name) {
-  const headers = setlistSpecs_().map(function (spec) {
+  const headers = setlistSpecs_().filter(function (spec) {
+    return NOT_CREATED_SLOT_FIELDS_.indexOf(spec.field) < 0;
+  }).map(function (spec) {
     return spec.header;
   });
   const sheet = spreadsheet.insertSheet(name);
@@ -1299,7 +1307,7 @@ function newSongCell_(field) {
 /**
  * Appends `song` on the row after the last one, in the mapped columns only (the tab's own column
  * order, found by header as the reads find it). Each cell is set to plain text before its value is
- * written, so Sheets keeps a title such as 7/4 as text. Default slots and Otros are written empty: open; slots beyond the default are written `-`.
+ * written, so Sheets keeps a title such as 7/4 as text. Default slots and Otros are written empty: open; slots beyond the default are written `-`. A column the tab lacks (a 14-column tab has no Batería 2) is skipped.
  */
 function appendSetlistRow_(sheet, song) {
   const specs = setlistSpecs_();

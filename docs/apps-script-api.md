@@ -348,7 +348,7 @@ reads find them; each cell is set to the plain-text format `@` **before** its va
 cannot turn a title such as `7/4` into a date. `posicion` is written as text (the read path
 accepts it, `integerTextCell`). `titulo` and `artista` are the catalog's; `tono` is the request's
 `key`, never `tono_default` (D-08); the seven default slot cells and `Otros` are written empty (open,
-D-18) and the eleven slot cells beyond the default are written `-` where the tab has the column. The answer is `{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads",
+D-18) and the slot cells beyond the default are written `-` where the tab has the column (a tab created by the app has 14 slot columns, so no `Batería 2`-`3` or `Teclados 2`-`3`). The answer is `{"schemaVersion":1,"ok":true,"position":4,"title":"Crossroads",
 "artist":"Eric Clapton"}`, `position` a JSON number.
 
 Codes are English and never contain the passphrase. A Sheets failure after the checks (rare) is
@@ -454,10 +454,12 @@ Request: `{"action":"setSlotCount","passphrase":"?","date":"2026-10-31","songId"
 A guarded write under the shared script lock. Before any write it validates, in order: real ISO
 calendar date (`invalid_date`), canonical song id (`invalid_song`), one of `guitar`, `bass`,
 `drums`, `vocals`, `harmonica`, `keyboards` (`invalid_instrument`), JSON integer count from zero
-to three for every instrument (`invalid_count`; the ceiling is the domain's, not the tab's), unique editable jam (`unknown_jam`,
+to the instrument's ceiling (`invalid_count`, "count must be an integer from 0 to N", before any Sheet read; N is 3 for `guitar`, `bass`, `vocals`, `harmonica` and 1 for `drums`, `keyboards`; the ceiling is the domain's, not the tab's), unique editable jam (`unknown_jam`,
 `duplicate_date`, `jam_not_editable`), tab and headers, and exactly one song row through
 `findSongRow_` (`song_not_in_setlist`, `duplicate_song`). A missing song tab is
 `song_not_in_setlist`; malformed headers use the existing `missing_header`/`duplicate_header`.
+
+A tab that has `Batería 2` or `Teclados 2` is read and can be shrunk to 1 when open, but never grown (a count of 2 is `invalid_count`).
 
 Growing past the columns the tab itself has (a jam tab never widened to the eighteen-column layout)
 is `instrument_not_expandable`, answered before any write; a tab missing `Guitarra 3` still lets the

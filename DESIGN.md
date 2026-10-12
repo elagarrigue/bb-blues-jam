@@ -501,7 +501,7 @@ through `AdminControlsDefaults`, **no amber**:
   explicit instrument descriptions. An enabled one has a `surfaceRaised` fill, a hairline `border`
   outline (the fill alone is about 1.05:1 on `surface`) and a `text` glyph; a disabled one has no
   fill, no outline and a `textMuted` glyph, is not clickable and has disabled semantics, so the
-  state shows in shape, not brightness alone. The plus is enabled up to three slots for every instrument (`lineup-grow-any-instrument`); at three it is disabled like the minus at zero. A jam tab never widened to the three-column layout answers a plus past its columns with the dismissible failure card (`Esta hoja todavía no tiene columnas para ese cupo…`). Removing a filled-only instrument is disabled
+  state shows in shape, not brightness alone. The plus is enabled up to each instrument's own ceiling (`lineup-grow-any-instrument`, `lineup-max-per-instrument`): three for Guitarra, Bajo, Voz and Armónica, one for Batería and Teclados, so those two have the plus disabled from the start; at the ceiling it is disabled like the minus at zero. A jam tab never widened to the three-column layout answers a plus past its columns with the dismissible failure card (`Esta hoja todavía no tiene columnas para ese cupo…`). Removing a filled-only instrument is disabled
   with `Tiene músico anotado. Liberá el cupo antes de sacarlo.` beneath it. `Listo` and the entry
   action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
   Sending counts update the strip, panel and filters at once for the admin only. One muted

@@ -2,13 +2,16 @@ package com.bbbjam.core.model
 
 /**
  * The [Slot]s of one [JamSong]: the default seven, with some removed or some added, never more
- * than [maxCount] of an instrument (D-18, amended 12 October 2026). Zero of an instrument is valid.
+ * than [maxCount] of an instrument added by the app (D-18, amended 12 October 2026). Zero of an instrument
+ * is valid. [maxCount] limits growth only: a Sheet tab with a filled column beyond an instrument's ceiling
+ * (for example `Batería 2`) is still read, so a lineup may hold up to one slot per Sheet column and no
+ * assigned musician is ever hidden. The app never writes columns beyond a ceiling.
  * Slot order is kept: the k-th slot of an instrument is the k-th Sheet column of that instrument not holding `-`.
  */
 data class Lineup(val slots: List<Slot>) {
     init {
         slots.groupingBy { it.instrument }.eachCount().forEach { (instrument, count) ->
-            val allowed = maxCount(instrument)
+            val allowed = MAX_INSTRUMENTS.count { it == instrument }
             require(count <= allowed) {
                 "Lineup has $count $instrument slots; at most $allowed are allowed (D-18)"
             }
@@ -91,6 +94,16 @@ data class Lineup(val slots: List<Slot>) {
 
         private const val MAX_SLOTS_PER_INSTRUMENT = 3
 
+        /** Per-instrument growth ceilings: Batería and Teclados stay at one (user decision, 12 October 2026). */
+        private val CEILINGS: Map<Instrument, Int> = mapOf(
+            Instrument.GUITAR to 3,
+            Instrument.BASS to 3,
+            Instrument.VOCALS to 3,
+            Instrument.HARMONICA to 3,
+            Instrument.DRUMS to 1,
+            Instrument.KEYBOARDS to 1,
+        )
+
         /**
          * Every Sheet slot column, three per instrument, in the Sheet's column order (the order of
          * the `slots` keys). The k-th entry of an instrument is its k-th slot column.
@@ -113,8 +126,11 @@ data class Lineup(val slots: List<Slot>) {
             MAX_INSTRUMENTS.indices.filter { MAX_INSTRUMENTS[it] == instrument }[ordinal]
         }
 
-        /** The most slots [instrument] may hold in one song's lineup, independent of its default. */
-        fun maxCount(instrument: Instrument): Int = MAX_INSTRUMENTS.count { it == instrument }
+        /**
+         * The most slots the app lets [instrument] grow to in one song's lineup, independent of its
+         * default. A ceiling, not a column count: [MAX_INSTRUMENTS] stays the wire shape.
+         */
+        fun maxCount(instrument: Instrument): Int = CEILINGS.getValue(instrument)
 
         /** The default lineup: seven open slots in [DEFAULT_INSTRUMENTS] order. */
         fun default(): Lineup = Lineup(DEFAULT_INSTRUMENTS.map { Slot(it) })

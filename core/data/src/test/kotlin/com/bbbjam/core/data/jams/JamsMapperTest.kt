@@ -399,6 +399,27 @@ class JamsMapperTest {
     }
 
     @Test
+    fun `a column beyond an instrument ceiling is ignored when open and still read when filled`() {
+        val widened = SlotsDto(
+            "-", "-", "-", "-", "-", "-",
+            "Pablo", "", "-",
+            "-", "-", "-", "-", "-", "-",
+            "Ana", "Beto", "",
+        )
+        val songs = JamsMapper.map(listOf(jam(setlist = listOf(row("1", slots = widened)))))
+            .jams.single().jam.available().songs
+
+        assertEquals(
+            listOf(
+                Slot(Instrument.DRUMS, "Pablo"),
+                Slot(Instrument.KEYBOARDS, "Ana"),
+                Slot(Instrument.KEYBOARDS, "Beto"),
+            ),
+            songs.single().lineup.slots,
+        )
+    }
+
+    @Test
     fun `slot cells give open, filled or no slot, and slot columns follow the dash`() {
         val dashes = slots(" - ", "Pedro", "-", "-", "-", "-", "-")
         val noLineup = slots("-", "-", "-", "-", "-", "-", "-")

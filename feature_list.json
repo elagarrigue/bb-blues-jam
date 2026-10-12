@@ -1323,14 +1323,22 @@
       "lineup-grow-any-instrument",
       "extras-dialog-and-lines"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Lineup has a per-instrument ceiling (GUITAR 3, BASS 3, VOCALS 3, HARMONICA 3, DRUMS 1, KEYBOARDS 1) used by the editor's + and by withSlotCount",
       "Apps Script setSlotCount validates the same per-instrument ceiling server-side; new jam tabs are created with 14 slot columns (no Batería 2-3, Teclados 2-3); Node tests cover it",
       "The wire contract stays compatible with the accepted key-set rule (a tab without Batería 2-3/Teclados 2-3 reads those as '-'); the migration guide, sheet-schema, apps-script-api, DESIGN.md and the D-18 amendment state the per-instrument ceilings",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; node --test passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "Implemented 12 Oct 2026 with the orchestrator amendment (never hide a name). Lineup.maxCount is a ceiling from a private map (GUITAR/BASS/VOCALS/HARMONICA 3, DRUMS/KEYBOARDS 1); MAX_INSTRUMENTS stays 18; the init guard counts columns so a filled Batería 2 on a widened tab is still read; SetlistMapper.lineupSlots ignores only OPEN cells beyond a ceiling. SlotKeys/SlotsDto untouched. Post.js: SLOT_CEILINGS_ replaces MAX_SLOTS_PER_INSTRUMENT_ (invalid_count before any Sheet read), NOT_CREATED_SLOT_FIELDS_ makes createSetlistTab_ write 14 slot headers (20 columns). Only Post.js changed in the backend.",
+      "Kotlin tests added: LineupTest (drums and keyboards cannot pass one while bass reaches three; ceilings with the wire at 18; a filled slot beyond a ceiling is valid when read), JamsMapperTest (a column beyond a ceiling is ignored when open and still read when filled), SetlistLineupChangesTest (a second drums or keyboards slot is refused locally without posting), SongDetailAdminTest (the editor stops adding at one for drums and keyboards but not for bass). JVM total 698 tests, 0 failures (693 before).",
+      "Node: failing first against the old Post.js, 3 new tests failed (drums/keyboards count 2 invalid_count, 14-header created tab, Batería 2 refuses count 2; 180 pass, 3 fail). After the change, seven older tests were adapted (created-tab header, harmonica1 now column 16, ceilings loop, vocals filled-third, not-expandable list) and node --test backend/apps-script/test/*.test.js: 183 pass, 0 fail (179 before + 4 new).",
+      "Device (Pixel 5, debug demo jam, 'demo jams refresh' in logcat, bluesjam.demoUpcomingJamLive + demoUpcomingJamDraft + debugAdmin true, MODO ADMIN visible). A temporary debug-fixture change gave 'Sweet Little Angel' 3 bass slots (reverted with git checkout). Cambiar formación opened only: Bajo '3 cupos' with + disabled, Batería '1 cupo' + disabled, Teclados '1 cupo' + disabled (Voz and Armónica at 1 keep + enabled); screenshot docs/evidence/lineup-max-per-instrument/01-editor-ceilings.png. No +, -, Listo, Anotar or Liberar was tapped; nothing reached the script. local.properties restored byte-for-byte (sha1 c96c7eca46165bd395fbf23d503e50d56fbcb5b0 before and after); the app was reinstalled from the restored build.",
+      "Docs: migration guide Part A reduced to 14 columns (7 new), Part C (second deploy, paste only Post.gs, check string 'var SLOT_CEILINGS_', agent never tries setSlotCount live); sheet-schema, apps-script-api, backend README paste check, DESIGN.md editor section, bitácora D-18 second amendment, architecture SKILL 'As built'. The user still has to do Part C (second, small redeploy); the app works against the old script meanwhile.",
+      "CI=true ./init.sh exit 0: konsist wired, detekt wired, ktlint wired (ktlintFormat run beforehand). Not done: no live script call, no real Sheet touched, no redeploy.",
+      "Independent validator accepted on 12 October 2026 after rerunning node --test (183 pass) and CI=true ./init.sh (konsist, detekt and ktlint wired; 698 tests). It confirmed per-instrument maxCount drives withSlotCount, the editor and SetlistLineupChanges; filled cells beyond a ceiling are still read (amendment); SLOT_CEILINGS_ returns invalid_count before any Sheet read; new tabs get 14 slot headers; the wire key set is unchanged, so app and scripts stay compatible both ways. Owed: the user's Part C redeploy of Post.gs."
+    ],
     "notes": "User decision on 12 October 2026, after widening the real 2026-10-31 tab: 'batería y teclados, solo 1'. The user's tab has Guitarra 1-3, Bajo 1-3, Voz 1-3, Armónica 1-3, Batería and Teclados."
   }
 ]

@@ -184,6 +184,18 @@ class SetlistLineupChangesTest {
     }
 
     @Test
+    fun `a second drums or keyboards slot is refused locally without posting`() = runTest {
+        val repository = seeded()
+        listOf(Instrument.DRUMS, Instrument.KEYBOARDS).forEach { instrument ->
+            assertEquals(
+                SetSlotCountOutcome.NotSet(WriteOutcome.Rejected("invalid_count")),
+                repository.setSlotCount(DATE, CROSSROADS, instrument, 2),
+            )
+        }
+        assertTrue(post.bodies.isEmpty())
+    }
+
+    @Test
     fun `lineup refusals and malformed successes preserve Room and can be dismissed`() = runTest {
         val repository = seeded()
         val before = jamsDao.observeJams().first()

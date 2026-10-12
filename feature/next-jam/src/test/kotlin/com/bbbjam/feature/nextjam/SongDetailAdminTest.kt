@@ -408,6 +408,24 @@ class SongDetailAdminTest {
     }
 
     @Test
+    fun `the editor stops adding at one for drums and keyboards but not for bass`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
+            jams.snapshots.emit(
+                snapshot(listOf(crossroads.copy(lineup = Lineup.default(), extraParticipants = emptyList()))),
+            )
+            (awaitSong().controls().lineup as LineupEditorUiModel.Idle).events(LineupEditorUiModel.Event.Open)
+            val editor = awaitSong { it.controls().lineup is LineupEditorUiModel.Editing }
+                .controls().lineup as LineupEditorUiModel.Editing
+            fun canAdd(instrument: Instrument) = editor.lines.single { it.instrument == instrument }.canAdd
+            assertFalse(canAdd(Instrument.DRUMS))
+            assertFalse(canAdd(Instrument.KEYBOARDS))
+            assertTrue(canAdd(Instrument.BASS))
+            assertTrue(canAdd(Instrument.GUITAR))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `a filled slot cannot be removed in the editor and says why`() = runTest {
         val filled = crossroads.copy(lineup = Lineup(listOf(Slot(Instrument.GUITAR, "Tincho"))))
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {

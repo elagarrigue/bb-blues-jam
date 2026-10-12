@@ -390,6 +390,7 @@ planilla tiene 18 columnas de cupo, `Guitarra 1-3`, `Bajo 1-3`, `Batería 1-3`, 
 otras once columnas en `-`. El tope de tres lo valida el servidor, y las pestañas viejas de siete
 columnas siguen funcionando. "Otros" queda para quien toca fuera de la formación. Decidido por el
 organizador al planificar `lineup-grow-any-instrument`.
+*Segunda enmienda del 12 de octubre de 2026:* los topes son por instrumento, **3** para Guitarra, Bajo, Voz y Armónica y **1** para Batería y Teclados ("batería y teclados, solo 1"). El cable sigue en 18 columnas (`drums2-3` y `keyboards2-3` quedan en `-`) para no abrir una tercera regla de claves ni romper los índices ya desplegados; las pestañas nuevas nacen con 14 columnas de cupo. Una pestaña que tenga `Batería 2` igual se lee: el tope limita el crecimiento, nunca oculta a un músico anotado.
 
 ### D-19 — Info habla de la comunidad, no del lugar
 La jam es mensual y hoy se hace en La Macanuda, pero el lugar puede cambiar. Por eso Info no muestra

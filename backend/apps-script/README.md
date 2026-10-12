@@ -122,7 +122,7 @@ Three files change: `Normalize.gs`, `Jams.gs` and `Post.gs` (`Code.gs`, `Catalog
 for the person doing it, including the Sheet columns to add, is
 [`docs/migrations/lineup-grow-any-instrument-sheet-migration.md`](../../docs/migrations/lineup-grow-any-instrument-sheet-migration.md).
 Distinctive lines to add to the paste check: `Normalize.gs` has `(spec.aliases || [])`; `Jams.gs` has
-`var NOT_IN_LINEUP_ = '-';`; `Post.gs` has `var MAX_SLOTS_PER_INSTRUMENT_ = 3;`. The
+`var NOT_IN_LINEUP_ = '-';`; `Post.gs` has `var SLOT_CEILINGS_`. The
 `unknown_action` list is unchanged, so it cannot tell the old version from the new one: use the
 paste check.
 

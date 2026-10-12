@@ -235,8 +235,10 @@ the 18 (`SetlistSongAdds` caches a new song's seven slots at `DEFAULT_COLUMNS`).
 (`Jams.js`) lists the 18 fields; the five un-numbered first headers are `aliases` of `... 1`, a `mapColumns`
 feature, not a second spec (so `createSetlistTab_` and the `column` index of assign/clear stay one-to-one);
 a field whose column the tab lacks reads `-` (`NOT_IN_LINEUP_`), never `null`; `setSlotCount_` validates
-`0..MAX_SLOTS_PER_INSTRUMENT_` and rejects growth into a missing column as `instrument_not_expandable`
+`0..SLOT_CEILINGS_[instrument]` and rejects growth into a missing column as `instrument_not_expandable`
 before any write; `appendSetlistRow_` writes `-` to the 11 cells beyond the default. No Room migration.
+
+As built by `lineup-max-per-instrument` (12 October 2026; amends D-18 again): `Lineup.maxCount` is now a per-instrument growth ceiling (GUITAR/BASS/VOCALS/HARMONICA 3, DRUMS/KEYBOARDS 1, a private map), while `MAX_INSTRUMENTS` stays the 18 wire columns and the `init` guard keeps counting columns, so a tab with a filled `Batería 2` is read and never hides a name (`SetlistMapper.lineupSlots` ignores only open cells beyond a ceiling). `withSlotCount`, the editor's `canAdd` and `SetlistLineupChanges` follow `maxCount`. `SlotKeys`/`SlotsDto` are unchanged. Apps Script: `SLOT_CEILINGS_` replaces `MAX_SLOTS_PER_INSTRUMENT_` (checked before any Sheet read); `createSetlistTab_` skips `NOT_CREATED_SLOT_FIELDS_` (`drums2-3`, `keyboards2-3`) so new tabs have 14 slot columns.
 
 As built by `admin-assign-musician` (deployed in the shared batch; live checks L1–L5 passed on 9 October 2026): `SlotPosition` is a
 1-based instrument ordinal in original lineup order and `MusicianName.parseOrNull` is the write-time
