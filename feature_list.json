@@ -1168,5 +1168,25 @@
       "Independent validator accepted on 10 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; 668 tests, 0 failures), reviewing before/after screenshots in docs/evidence/ui-polish-pass/, and confirming extras removal still goes through removeExtraParticipant (D-13), neutral-role tokens only (D-17) and voseo copy (D-12). Orchestrator then removed the unused NextJamCopy.REMOVE_EXTRA; :feature:next-jam:check exited 0."
     ],
     "notes": "Requested by the user on 10 October 2026 ('revisá la UI por mejoras, implementá las mejoras'). Anything that would change product scope or a D-xx decision is listed as a proposal, not implemented."
+  },
+  {
+    "id": "song-detail-replaces-row-expansion",
+    "area": "next-jam",
+    "title": "Remove the expanded row and move its logic into the song detail",
+    "user_visible_behavior": "Tapping a song row on Próxima jam opens the song detail directly; there is no expanded state. The detail shows everything the expanded panel showed, and the admin edits lineup, slots (assign/clear), key and Otros there. The list keeps the collapsed row with the instrument strip, and admin rows keep compact Subir/Bajar and Quitar de la lista controls.",
+    "depends_on": [
+      "ui-polish-pass"
+    ],
+    "status": "not_started",
+    "verification": [
+      "No expanded-row state, ExpandIndicator or in-place panel remains on Próxima jam; a row tap navigates to the song detail, keeping the filter and scroll on back",
+      "The song detail shows artist, key, the full lineup panel with Otros and, for the admin, lineup editing, assign/clear slot, set key and add/remove extras through the existing repository functions (D-13)",
+      "Admin list rows keep Subir/Bajar and Quitar de la lista without expanding",
+      ":feature:song-detail is merged into :feature:next-jam; Konsist still enforces no feature-to-feature dependency (D-03), and D-15 stays as written",
+      "DESIGN.md, the design prompt notes, the architecture skill and the bitácora record the change; presenter tests cover the moved behavior; CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired",
+      "Device check on the Pixel 5 with the debug demo jam and debug admin: musician and admin detail, back preserves list state"
+    ],
+    "evidence": [],
+    "notes": "Requested by the user on 11 October 2026: the expanded row had more logic than the song detail. User decisions: merge the song detail into :feature:next-jam (option recommended over moving the admin logic into :feature:song-detail), and keep the list-level actions (Subir/Bajar, Quitar de la lista) on the list rows. D-07 (collapsed list with the instrument strip) stays."
   }
 ]
