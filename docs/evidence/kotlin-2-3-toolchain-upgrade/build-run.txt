@@ -1,0 +1,1015 @@
+Calculating task graph as configuration cache cannot be reused because file 'gradle\libs.versions.toml' has changed.
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:compileKotlin
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :core:data:generateReleaseAssets UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :feature:past-jams:preBuild UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :feature:next-jam:preBuild UP-TO-DATE
+> Task :feature:info:preBuild UP-TO-DATE
+> Task :core:ui:generateReleaseAssets UP-TO-DATE
+> Task :core:data:generateDebugAssets UP-TO-DATE
+> Task :feature:next-jam:generateDebugAssets UP-TO-DATE
+> Task :feature:past-jams:generateDebugAssets UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :feature:info:generateReleaseAssets UP-TO-DATE
+> Task :feature:next-jam:generateReleaseAssets UP-TO-DATE
+> Task :core:data:preBuild UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:ui:generateDebugAssets UP-TO-DATE
+> Task :feature:info:generateDebugAssets UP-TO-DATE
+> Task :feature:past-jams:preDebugBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :feature:info:preDebugBuild UP-TO-DATE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :feature:next-jam:preDebugBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :core:data:processDebugNavigationResources
+> Task :feature:info:processDebugNavigationResources
+> Task :core:ui:processDebugNavigationResources
+> Task :feature:next-jam:processDebugNavigationResources
+> Task :feature:past-jams:processDebugNavigationResources
+> Task :core:ui:extractDeepLinksDebug
+> Task :feature:info:javaPreCompileDebug
+> Task :core:ui:javaPreCompileDebug
+> Task :app:javaPreCompileDebug
+> Task :feature:next-jam:javaPreCompileDebug
+> Task :core:ui:writeDebugAarMetadata
+> Task :feature:info:generateDebugResources
+> Task :app:generateDebugResources
+> Task :feature:next-jam:generateDebugResources
+> Task :feature:info:mergeDebugAssets
+> Task :feature:past-jams:generateDebugResources
+> Task :feature:next-jam:mergeDebugAssets
+> Task :core:data:generateDebugResources
+> Task :core:ui:generateDebugResources
+> Task :feature:past-jams:javaPreCompileDebug
+> Task :feature:past-jams:mergeDebugAssets
+> Task :feature:info:writeDebugAarMetadata
+> Task :core:ui:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :core:data:writeDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:extractDeepLinksDebug
+> Task :core:data:mergeDebugAssets
+> Task :core:data:extractDeepLinksDebug
+> Task :app:generateDebugBuildConfig
+> Task :feature:next-jam:writeDebugAarMetadata
+> Task :feature:past-jams:writeDebugAarMetadata
+> Task :feature:info:extractDeepLinksDebug
+> Task :app:createDebugCompatibleScreenManifests
+> Task :feature:past-jams:packageDebugResources
+> Task :feature:next-jam:extractDeepLinksDebug
+> Task :feature:past-jams:extractDeepLinksDebug
+> Task :feature:next-jam:packageDebugResources
+> Task :feature:info:packageDebugResources
+> Task :core:data:packageDebugResources
+> Task :core:data:mapDebugSourceSetPaths
+> Task :core:ui:packageDebugResources
+> Task :feature:next-jam:processDebugManifest
+> Task :core:ui:processDebugManifest
+> Task :feature:info:processDebugManifest
+> Task :core:ui:mapDebugSourceSetPaths
+> Task :feature:info:mapDebugSourceSetPaths
+> Task :feature:past-jams:processDebugManifest
+> Task :core:data:processDebugManifest
+> Task :core:data:parseDebugLocalResources
+> Task :app:packageDebugResources
+> Task :feature:past-jams:parseDebugLocalResources
+> Task :feature:info:parseDebugLocalResources
+> Task :feature:past-jams:mapDebugSourceSetPaths
+> Task :feature:next-jam:mapDebugSourceSetPaths
+> Task :feature:next-jam:parseDebugLocalResources
+> Task :core:ui:parseDebugLocalResources
+> Task :feature:info:generateDebugRFile
+> Task :core:data:generateDebugRFile
+> Task :feature:next-jam:generateDebugRFile
+> Task :core:ui:mergeDebugJniLibFolders
+> Task :feature:past-jams:generateDebugRFile
+> Task :core:ui:mergeDebugNativeLibs NO-SOURCE
+> Task :feature:info:mergeDebugJniLibFolders
+> Task :feature:info:mergeDebugNativeLibs NO-SOURCE
+> Task :core:ui:copyDebugJniLibsProjectOnly
+> Task :core:data:mergeDebugJniLibFolders
+> Task :core:data:mergeDebugNativeLibs NO-SOURCE
+> Task :feature:next-jam:mergeDebugJniLibFolders
+> Task :feature:next-jam:mergeDebugNativeLibs NO-SOURCE
+> Task :core:ui:generateDebugRFile
+> Task :core:data:copyDebugJniLibsProjectOnly
+> Task :feature:past-jams:mergeDebugJniLibFolders
+> Task :feature:past-jams:mergeDebugNativeLibs NO-SOURCE
+> Task :feature:next-jam:copyDebugJniLibsProjectOnly
+> Task :feature:info:copyDebugJniLibsProjectOnly
+> Task :app:writeDebugAppMetadata
+> Task :feature:next-jam:compileDebugLibraryResources
+> Task :core:data:preReleaseBuild UP-TO-DATE
+> Task :core:data:compileDebugLibraryResources
+> Task :core:ui:preReleaseBuild UP-TO-DATE
+> Task :feature:past-jams:compileDebugLibraryResources
+> Task :feature:info:preReleaseBuild UP-TO-DATE
+> Task :app:mergeReleaseJniLibFolders
+> Task :feature:next-jam:preReleaseBuild UP-TO-DATE
+> Task :core:data:mergeReleaseJniLibFolders
+> Task :core:data:mergeReleaseNativeLibs NO-SOURCE
+> Task :feature:info:compileDebugLibraryResources
+> Task :feature:past-jams:preReleaseBuild UP-TO-DATE
+> Task :core:data:copyReleaseJniLibsProjectOnly
+> Task :app:mergeDebugJniLibFolders
+> Task :core:data:prepareReleaseArtProfile
+> Task :core:ui:mergeReleaseJniLibFolders
+> Task :core:ui:prepareReleaseArtProfile
+> Task :feature:info:mergeReleaseJniLibFolders
+> Task :feature:past-jams:mergeReleaseJniLibFolders
+> Task :core:ui:mergeReleaseNativeLibs NO-SOURCE
+> Task :feature:info:prepareReleaseArtProfile
+> Task :feature:info:mergeReleaseNativeLibs NO-SOURCE
+> Task :feature:next-jam:prepareReleaseArtProfile
+> Task :feature:past-jams:mergeReleaseNativeLibs NO-SOURCE
+> Task :feature:past-jams:prepareReleaseArtProfile
+> Task :feature:info:copyReleaseJniLibsProjectOnly
+> Task :core:data:processReleaseNavigationResources
+> Task :app:writeDebugSigningConfigVersions
+> Task :core:ui:copyReleaseJniLibsProjectOnly
+> Task :core:ui:processReleaseNavigationResources
+> Task :core:data:generateReleaseResources
+> Task :feature:next-jam:mergeReleaseJniLibFolders
+> Task :feature:next-jam:mergeReleaseNativeLibs NO-SOURCE
+> Task :app:validateSigningDebug
+> Task :core:ui:generateReleaseResources
+> Task :feature:info:generateReleaseResources
+> Task :feature:past-jams:copyReleaseJniLibsProjectOnly
+> Task :feature:info:processReleaseNavigationResources
+> Task :core:ui:packageReleaseResources
+> Task :feature:info:packageReleaseResources
+> Task :core:ui:javaPreCompileRelease
+> Task :core:data:packageReleaseResources
+> Task :feature:next-jam:copyReleaseJniLibsProjectOnly
+> Task :feature:next-jam:processReleaseNavigationResources
+> Task :feature:next-jam:javaPreCompileRelease
+> Task :feature:info:javaPreCompileRelease
+> Task :feature:past-jams:processReleaseNavigationResources
+> Task :core:data:parseReleaseLocalResources
+> Task :feature:past-jams:generateReleaseResources
+> Task :feature:next-jam:generateReleaseResources
+> Task :core:ui:compileDebugLibraryResources
+> Task :feature:next-jam:packageReleaseResources
+> Task :core:ui:parseReleaseLocalResources
+> Task :feature:past-jams:packageReleaseResources
+> Task :feature:info:parseReleaseLocalResources
+> Task :core:data:generateReleaseRFile
+> Task :app:generateReleaseBuildConfig
+> Task :feature:past-jams:parseReleaseLocalResources
+> Task :core:ui:generateReleaseRFile
+> Task :app:generateReleaseResources
+> Task :feature:info:generateReleaseRFile
+> Task :feature:past-jams:generateReleaseRFile
+> Task :app:javaPreCompileRelease
+> Task :feature:past-jams:javaPreCompileRelease
+> Task :feature:info:writeReleaseAarMetadata
+> Task :core:data:writeReleaseAarMetadata
+> Task :feature:next-jam:writeReleaseAarMetadata
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:packageReleaseResources
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease
+> Task :core:data:extractDeepLinksRelease
+> Task :feature:past-jams:writeReleaseAarMetadata
+> Task :core:ui:extractDeepLinksRelease
+> Task :core:data:processReleaseManifest
+> Task :feature:info:extractDeepLinksRelease
+> Task :core:data:javaPreCompileDebug
+> Task :core:data:javaPreCompileRelease
+> Task :feature:next-jam:parseReleaseLocalResources
+> Task :feature:next-jam:extractDeepLinksRelease
+> Task :core:ui:writeReleaseAarMetadata
+> Task :feature:past-jams:extractDeepLinksRelease
+> Task :core:ui:processReleaseManifest
+> Task :feature:info:processReleaseManifest
+> Task :core:data:mapReleaseSourceSetPaths
+> Task :core:ui:mapReleaseSourceSetPaths
+> Task :feature:next-jam:generateReleaseRFile
+> Task :feature:info:mapReleaseSourceSetPaths
+> Task :feature:past-jams:copyDebugJniLibsProjectOnly
+> Task :feature:past-jams:processReleaseManifest
+> Task :feature:next-jam:mapReleaseSourceSetPaths
+> Task :feature:past-jams:mapReleaseSourceSetPaths
+> Task :core:data:compileReleaseLibraryResources
+> Task :app:desugarReleaseFileDependencies
+> Task :app:mergeReleaseStartupProfile
+> Task :feature:info:compileReleaseLibraryResources
+> Task :feature:next-jam:processReleaseManifest
+> Task :core:ui:mergeReleaseAssets
+> Task :app:generateDebugGlobalSynthetics
+> Task :feature:next-jam:compileReleaseLibraryResources
+> Task :feature:past-jams:generateReleaseAssets UP-TO-DATE
+> Task :feature:past-jams:mergeReleaseAssets
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:extractProguardFiles
+> Task :core:data:extractProguardFiles
+> Task :feature:info:mergeReleaseAssets
+> Task :core:data:prepareLintJarForPublish
+> Task :core:data:mergeReleaseAssets
+> Task :feature:info:extractProguardFiles
+> Task :core:ui:compileReleaseLibraryResources
+> Task :feature:next-jam:extractProguardFiles
+> Task :core:ui:extractProguardFiles
+> Task :feature:past-jams:extractProguardFiles
+> Task :feature:past-jams:prepareLintJarForPublish
+> Task :feature:next-jam:prepareLintJarForPublish
+> Task :feature:info:extractDeepLinksForAarRelease
+> Task :core:ui:prepareLintJarForPublish
+> Task :feature:next-jam:extractDeepLinksForAarRelease
+> Task :app:processReleaseNavigationResources
+> Task :app:processDebugNavigationResources
+> Task :feature:next-jam:mergeReleaseAssets
+> Task :feature:info:prepareLintJarForPublish
+> Task :app:parseDebugLocalResources
+> Task :feature:past-jams:compileReleaseLibraryResources
+> Task :app:compileDebugNavigationResources
+> Task :app:compileReleaseNavigationResources
+> Task :feature:past-jams:extractDeepLinksForAarRelease
+> Task :core:ui:extractDeepLinksForAarRelease
+> Task :app:mergeReleaseArtProfile
+> Task :app:checkReleaseAarMetadata
+> Task :app:parseReleaseLocalResources
+> Task :app:checkDebugAarMetadata
+> Task :core:data:extractDeepLinksForAarRelease
+> Task :core:data:writeReleaseLintModelMetadata
+> Task :app:generateReleaseRFile
+> Task :core:ui:writeReleaseLintModelMetadata
+> Task :feature:info:writeReleaseLintModelMetadata
+> Task :app:generateDebugRFile
+> Task :feature:next-jam:writeReleaseLintModelMetadata
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :feature:past-jams:writeReleaseLintModelMetadata
+> Task :app:mergeDebugAssets
+> Task :app:mergeReleaseAssets
+> Task :app:checkDebugDuplicateClasses
+> Task :app:checkReleaseDuplicateClasses
+> Task :core:data:checkReleaseAarMetadata
+> Task :core:ui:extractDeepLinksForAarDebug
+> Task :core:ui:prepareDebugArtProfile
+> Task :app:compressDebugAssets
+> Task :core:data:extractDeepLinksForAarDebug
+> Task :app:compressReleaseAssets
+> Task :core:data:prepareDebugArtProfile
+> Task :feature:info:extractDeepLinksForAarDebug
+> Task :feature:info:prepareDebugArtProfile
+> Task :app:collectReleaseDependencies
+> Task :app:processReleaseMainManifest
+> Task :app:processDebugMainManifest
+> Task :app:processReleaseManifest
+> Task :app:processDebugManifest
+> Task :core:data:checkDebugAarMetadata
+> Task :feature:next-jam:extractDeepLinksForAarDebug
+> Task :feature:next-jam:prepareDebugArtProfile
+> Task :app:processDebugManifestForPackage
+> Task :feature:past-jams:extractDeepLinksForAarDebug
+> Task :feature:past-jams:prepareDebugArtProfile
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :core:data:writeDebugLintModelMetadata
+> Task :core:ui:writeDebugLintModelMetadata
+> Task :feature:info:writeDebugLintModelMetadata
+> Task :feature:next-jam:writeDebugLintModelMetadata
+> Task :feature:past-jams:writeDebugLintModelMetadata
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:data:preDebugAndroidTestBuild UP-TO-DATE
+> Task :core:data:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:ui:preDebugAndroidTestBuild UP-TO-DATE
+> Task :core:ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :feature:info:preDebugAndroidTestBuild UP-TO-DATE
+> Task :feature:info:preDebugUnitTestBuild UP-TO-DATE
+> Task :feature:next-jam:preDebugAndroidTestBuild UP-TO-DATE
+> Task :feature:next-jam:preDebugUnitTestBuild UP-TO-DATE
+> Task :feature:past-jams:preDebugAndroidTestBuild UP-TO-DATE
+> Task :feature:past-jams:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest
+> Task :konsist-test:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :konsist-test:compileKotlin NO-SOURCE
+> Task :konsist-test:compileJava NO-SOURCE
+> Task :konsist-test:processResources NO-SOURCE
+> Task :konsist-test:classes UP-TO-DATE
+> Task :konsist-test:jar UP-TO-DATE
+> Task :konsist-test:assemble UP-TO-DATE
+> Task :app:sdkReleaseDependencyData
+> Task :app:processReleaseManifestForPackage
+> Task :feature:info:checkReleaseAarMetadata
+> Task :konsist-test:processTestResources NO-SOURCE
+> Task :core:data:stripDebugDebugSymbols NO-SOURCE
+> Task :feature:next-jam:checkReleaseAarMetadata
+> Task :core:data:stripReleaseDebugSymbols NO-SOURCE
+> Task :core:data:copyDebugJniLibsProjectAndLocalJars
+> Task :core:data:copyReleaseJniLibsProjectAndLocalJars
+> Task :feature:info:checkDebugAarMetadata
+> Task :feature:past-jams:checkReleaseAarMetadata
+> Task :feature:next-jam:checkDebugAarMetadata
+> Task :feature:past-jams:checkDebugAarMetadata
+> Task :core:data:mergeReleaseResources
+> Task :app:expandReleaseL8ArtProfileWildcards
+> Task :app:loadKtlintReporters
+> Task :app:runKtlintCheckOverAndroidTestDebugSourceSet NO-SOURCE
+> Task :app:ktlintAndroidTestDebugSourceSetCheck SKIPPED
+> Task :app:runKtlintCheckOverAndroidTestReleaseSourceSet NO-SOURCE
+> Task :app:ktlintAndroidTestReleaseSourceSetCheck SKIPPED
+> Task :app:runKtlintCheckOverAndroidTestSourceSet NO-SOURCE
+> Task :app:ktlintAndroidTestSourceSetCheck SKIPPED
+> Task :konsist-test:loadKtlintReporters
+> Task :core:data:javaPreCompileDebugUnitTest
+> Task :core:data:loadKtlintReporters
+> Task :core:model:loadKtlintReporters
+> Task :app:l8DexDesugarLibDebug
+> Task :app:runKtlintCheckOverTestFixturesDebugSourceSet NO-SOURCE
+> Task :app:ktlintTestFixturesDebugSourceSetCheck SKIPPED
+> Task :app:runKtlintCheckOverTestFixturesReleaseSourceSet NO-SOURCE
+> Task :app:ktlintTestFixturesReleaseSourceSetCheck SKIPPED
+> Task :app:runKtlintCheckOverTestFixturesSourceSet NO-SOURCE
+> Task :app:ktlintTestFixturesSourceSetCheck SKIPPED
+> Task :app:runKtlintCheckOverTestReleaseSourceSet NO-SOURCE
+> Task :app:ktlintTestReleaseSourceSetCheck SKIPPED
+> Task :core:model:compileKotlin
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:model:jar
+> Task :core:data:generateDebugUnitTestStubRFile
+> Task :core:ui:checkReleaseAarMetadata
+> Task :core:ui:checkDebugAarMetadata
+> Task :konsist-test:compileTestKotlin
+> Task :konsist-test:detekt
+> Task :app:detekt
+> Task :core:model:detekt
+> Task :core:data:verifyReleaseResources
+> Task :app:mergeReleaseResources
+> Task :core:ui:extractDebugAnnotations
+> Task :konsist-test:runKtlintCheckOverMainSourceSet NO-SOURCE
+> Task :konsist-test:ktlintMainSourceSetCheck SKIPPED
+> Task :core:ui:extractReleaseAnnotations
+> Task :konsist-test:compileTestJava NO-SOURCE
+> Task :konsist-test:testClasses UP-TO-DATE
+> Task :app:mergeDebugNativeLibs
+> Task :app:mergeReleaseNativeLibs
+> Task :core:data:detekt
+> Task :core:data:runKtlintCheckOverAndroidTestDebugSourceSet NO-SOURCE
+> Task :core:data:ktlintAndroidTestDebugSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverAndroidTestReleaseSourceSet NO-SOURCE
+> Task :core:data:ktlintAndroidTestReleaseSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverAndroidTestSourceSet NO-SOURCE
+> Task :core:data:ktlintAndroidTestSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverDebugSourceSet NO-SOURCE
+> Task :core:data:ktlintDebugSourceSetCheck SKIPPED
+> Task :app:mergeDebugResources
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.21/79346ed53db48b18312a472602eb5c057070c54d/kotlin-compiler-embeddable-2.0.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.2.21/b13aed5cf8412f9ee9d1e4db21bdcfebcc24f606/kotlin-compiler-embeddable-2.2.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+> Task :konsist-test:runKtlintCheckOverKotlinScripts
+> Task :core:data:kspDebugKotlin
+> Task :app:runKtlintCheckOverReleaseSourceSet
+> Task :app:mergeExtDexDebug
+> Task :app:mergeExtDexRelease
+> Task :app:runKtlintCheckOverTestDebugSourceSet
+> Task :konsist-test:runKtlintCheckOverTestSourceSet
+> Task :app:runKtlintCheckOverDebugSourceSet
+> Task :app:ktlintTestDebugSourceSetCheck
+> Task :core:data:extractDebugAnnotations
+> Task :app:ktlintDebugSourceSetCheck
+> Task :core:data:runKtlintCheckOverReleaseSourceSet NO-SOURCE
+> Task :core:data:ktlintReleaseSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverTestDebugSourceSet NO-SOURCE
+> Task :core:data:ktlintTestDebugSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverTestFixturesDebugSourceSet NO-SOURCE
+> Task :core:data:ktlintTestFixturesDebugSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverTestFixturesReleaseSourceSet NO-SOURCE
+> Task :core:data:ktlintTestFixturesReleaseSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverTestFixturesSourceSet NO-SOURCE
+> Task :core:data:ktlintTestFixturesSourceSetCheck SKIPPED
+> Task :core:data:runKtlintCheckOverTestReleaseSourceSet NO-SOURCE
+> Task :core:data:ktlintTestReleaseSourceSetCheck SKIPPED
+> Task :konsist-test:ktlintKotlinScriptCheck
+> Task :core:model:assemble
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
+
+> Task :app:runKtlintCheckOverMainSourceSet
+> Task :core:data:runKtlintCheckOverKotlinScripts
+> Task :app:runKtlintCheckOverKotlinScripts
+> Task :core:model:runKtlintCheckOverKotlinScripts
+> Task :app:runKtlintCheckOverTestSourceSet
+> Task :konsist-test:ktlintTestSourceSetCheck
+> Task :core:data:ktlintKotlinScriptCheck
+> Task :konsist-test:test
+> Task :konsist-test:check
+> Task :konsist-test:build
+> Task :core:model:processTestResources NO-SOURCE
+> Task :core:ui:stripDebugDebugSymbols NO-SOURCE
+> Task :core:model:ktlintKotlinScriptCheck
+> Task :core:ui:stripReleaseDebugSymbols NO-SOURCE
+> Task :core:ui:copyDebugJniLibsProjectAndLocalJars
+
+> Task :app:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
+
+> Task :core:ui:compileDebugKotlin
+> Task :core:model:runKtlintCheckOverMainSourceSet
+> Task :core:model:runKtlintCheckOverTestSourceSet
+> Task :app:ktlintKotlinScriptCheck
+> Task :app:ktlintReleaseSourceSetCheck
+> Task :app:extractReleaseNativeSymbolTables
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :core:model:ktlintTestSourceSetCheck
+> Task :core:ui:copyReleaseJniLibsProjectAndLocalJars
+> Task :feature:info:stripDebugDebugSymbols NO-SOURCE
+> Task :app:ktlintMainSourceSetCheck
+> Task :feature:info:stripReleaseDebugSymbols NO-SOURCE
+> Task :core:ui:javaPreCompileDebugUnitTest
+> Task :core:ui:loadKtlintReporters
+> Task :core:ui:runKtlintCheckOverAndroidTestDebugSourceSet NO-SOURCE
+> Task :core:ui:ktlintAndroidTestDebugSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverAndroidTestReleaseSourceSet NO-SOURCE
+> Task :core:ui:ktlintAndroidTestReleaseSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverAndroidTestSourceSet NO-SOURCE
+> Task :core:ui:ktlintAndroidTestSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverDebugSourceSet NO-SOURCE
+> Task :core:ui:ktlintDebugSourceSetCheck SKIPPED
+> Task :core:data:kspReleaseKotlin
+> Task :feature:info:copyReleaseJniLibsProjectAndLocalJars
+> Task :core:ui:compileReleaseKotlin
+> Task :core:data:runKtlintCheckOverMainSourceSet
+> Task :app:processDebugResources
+> Task :core:ui:runKtlintCheckOverReleaseSourceSet NO-SOURCE
+> Task :core:ui:ktlintReleaseSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverTestDebugSourceSet NO-SOURCE
+> Task :core:ui:ktlintTestDebugSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverTestFixturesDebugSourceSet NO-SOURCE
+> Task :core:ui:ktlintTestFixturesDebugSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverTestFixturesReleaseSourceSet NO-SOURCE
+> Task :core:ui:ktlintTestFixturesReleaseSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverTestFixturesSourceSet NO-SOURCE
+> Task :core:ui:ktlintTestFixturesSourceSetCheck SKIPPED
+> Task :core:ui:runKtlintCheckOverTestReleaseSourceSet NO-SOURCE
+> Task :core:ui:ktlintTestReleaseSourceSetCheck SKIPPED
+> Task :feature:info:copyDebugJniLibsProjectAndLocalJars
+> Task :app:processReleaseResources
+> Task :core:ui:detekt
+> Task :core:data:extractReleaseAnnotations
+> Task :core:data:runKtlintCheckOverTestSourceSet
+> Task :core:ui:runKtlintCheckOverTestSourceSet
+> Task :feature:info:detekt
+> Task :core:ui:ktlintTestSourceSetCheck
+> Task :core:data:ktlintMainSourceSetCheck
+> Task :feature:next-jam:stripDebugDebugSymbols NO-SOURCE
+> Task :feature:next-jam:copyDebugJniLibsProjectAndLocalJars
+> Task :feature:next-jam:stripReleaseDebugSymbols NO-SOURCE
+> Task :feature:next-jam:copyReleaseJniLibsProjectAndLocalJars
+> Task :app:ktlintTestSourceSetCheck
+> Task :core:ui:compileReleaseJavaWithJavac NO-SOURCE
+> Task :feature:info:loadKtlintReporters
+> Task :core:ui:processReleaseJavaRes
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:model:ktlintMainSourceSetCheck
+> Task :core:ui:bundleLibRuntimeToJarRelease
+> Task :core:ui:processDebugJavaRes
+> Task :feature:info:generateDebugUnitTestStubRFile
+> Task :core:ui:createFullJarRelease
+> Task :core:data:ktlintTestSourceSetCheck
+> Task :core:ui:mergeReleaseGeneratedProguardFiles
+> Task :core:ui:mergeReleaseConsumerProguardFiles
+> Task :core:ui:bundleLibCompileToJarRelease
+> Task :core:model:compileTestKotlin
+> Task :core:ui:mergeDebugGeneratedProguardFiles
+> Task :core:ui:mergeDebugConsumerProguardFiles
+> Task :core:ui:runKtlintCheckOverMainSourceSet
+> Task :feature:info:javaPreCompileDebugUnitTest
+> Task :core:ui:mergeReleaseJavaResource
+> Task :core:ui:syncReleaseLibJars
+> Task :core:ui:bundleReleaseLocalLintAar
+> Task :core:ui:mergeReleaseResources
+> Task :core:model:compileTestJava NO-SOURCE
+> Task :core:model:testClasses UP-TO-DATE
+> Task :core:ui:bundleLibRuntimeToJarDebug
+> Task :core:ui:createFullJarDebug
+> Task :core:ui:runKtlintCheckOverKotlinScripts
+> Task :core:ui:bundleReleaseAar
+> Task :core:ui:generateReleaseLintModel
+> Task :core:ui:generateDebugLintModel
+> Task :core:ui:generateReleaseLintVitalModel
+> Task :feature:info:runKtlintCheckOverAndroidTestDebugSourceSet NO-SOURCE
+> Task :feature:info:ktlintAndroidTestDebugSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverAndroidTestReleaseSourceSet NO-SOURCE
+> Task :feature:info:ktlintAndroidTestReleaseSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverAndroidTestSourceSet NO-SOURCE
+> Task :feature:info:ktlintAndroidTestSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverDebugSourceSet NO-SOURCE
+> Task :feature:info:ktlintDebugSourceSetCheck SKIPPED
+> Task :core:ui:mergeDebugJavaResource
+> Task :core:ui:generateDebugLintReportModel
+> Task :core:ui:syncDebugLibJars
+> Task :core:ui:generateDebugUnitTestStubRFile
+> Task :core:ui:bundleDebugLocalLintAar
+> Task :core:ui:ktlintMainSourceSetCheck
+> Task :core:ui:bundleDebugAar
+> Task :core:ui:generateDebugAndroidTestLintModel
+> Task :core:ui:assembleDebug
+> Task :feature:info:runKtlintCheckOverReleaseSourceSet NO-SOURCE
+> Task :feature:info:ktlintReleaseSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverTestDebugSourceSet NO-SOURCE
+> Task :feature:info:ktlintTestDebugSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverTestFixturesDebugSourceSet NO-SOURCE
+> Task :feature:info:ktlintTestFixturesDebugSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverTestFixturesReleaseSourceSet NO-SOURCE
+> Task :feature:info:ktlintTestFixturesReleaseSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverTestFixturesSourceSet NO-SOURCE
+> Task :feature:info:ktlintTestFixturesSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverTestReleaseSourceSet NO-SOURCE
+> Task :feature:info:ktlintTestReleaseSourceSetCheck SKIPPED
+> Task :core:ui:generateDebugUnitTestLintModel
+> Task :core:ui:ktlintKotlinScriptCheck
+> Task :core:ui:bundleLibRuntimeToDirRelease
+> Task :core:model:test
+> Task :core:model:check
+> Task :core:model:build
+> Task :feature:next-jam:generateDebugUnitTestStubRFile
+> Task :feature:next-jam:javaPreCompileDebugUnitTest
+> Task :feature:past-jams:stripDebugDebugSymbols NO-SOURCE
+> Task :core:ui:bundleLibCompileToJarDebug
+> Task :feature:past-jams:copyDebugJniLibsProjectAndLocalJars
+> Task :feature:past-jams:stripReleaseDebugSymbols NO-SOURCE
+> Task :core:ui:bundleLibRuntimeToDirDebug
+> Task :app:optimizeReleaseResources
+> Task :core:data:compileDebugKotlin
+> Task :feature:next-jam:detekt
+> Task :feature:past-jams:detekt
+> Task :feature:past-jams:copyReleaseJniLibsProjectAndLocalJars
+> Task :core:ui:lintAnalyzeDebugAndroidTest
+> Task :core:ui:verifyReleaseResources
+> Task :core:ui:assembleRelease
+> Task :core:ui:assemble
+> Task :feature:past-jams:generateDebugUnitTestStubRFile
+> Task :feature:past-jams:loadKtlintReporters
+> Task :feature:past-jams:runKtlintCheckOverAndroidTestDebugSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintAndroidTestDebugSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverAndroidTestReleaseSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintAndroidTestReleaseSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverAndroidTestSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintAndroidTestSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverDebugSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintDebugSourceSetCheck SKIPPED
+> Task :feature:info:runKtlintCheckOverKotlinScripts
+> Task :feature:past-jams:javaPreCompileDebugUnitTest
+> Task :feature:past-jams:runKtlintCheckOverReleaseSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintReleaseSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverTestDebugSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintTestDebugSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverTestFixturesDebugSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintTestFixturesDebugSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverTestFixturesReleaseSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintTestFixturesReleaseSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverTestFixturesSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintTestFixturesSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverTestReleaseSourceSet NO-SOURCE
+> Task :feature:past-jams:ktlintTestReleaseSourceSetCheck SKIPPED
+> Task :feature:past-jams:runKtlintCheckOverKotlinScripts
+> Task :feature:past-jams:runKtlintCheckOverMainSourceSet
+> Task :feature:info:ktlintKotlinScriptCheck
+> Task :feature:past-jams:runKtlintCheckOverTestSourceSet
+> Task :feature:past-jams:ktlintKotlinScriptCheck
+> Task :feature:past-jams:ktlintMainSourceSetCheck
+> Task :feature:info:runKtlintCheckOverTestSourceSet
+> Task :feature:info:mergeReleaseResources
+> Task :feature:info:runKtlintCheckOverMainSourceSet
+> Task :feature:next-jam:loadKtlintReporters
+> Task :feature:next-jam:runKtlintCheckOverAndroidTestDebugSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintAndroidTestDebugSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverAndroidTestReleaseSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintAndroidTestReleaseSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverAndroidTestSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintAndroidTestSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverDebugSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintDebugSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverReleaseSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintReleaseSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverTestDebugSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintTestDebugSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverTestFixturesDebugSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintTestFixturesDebugSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverTestFixturesReleaseSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintTestFixturesReleaseSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverTestFixturesSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintTestFixturesSourceSetCheck SKIPPED
+> Task :feature:next-jam:runKtlintCheckOverTestReleaseSourceSet NO-SOURCE
+> Task :feature:next-jam:ktlintTestReleaseSourceSetCheck SKIPPED
+> Task :feature:info:ktlintTestSourceSetCheck
+> Task :feature:info:ktlintMainSourceSetCheck
+> Task :feature:next-jam:runKtlintCheckOverKotlinScripts
+> Task :core:data:compileReleaseKotlin
+> Task :feature:past-jams:ktlintTestSourceSetCheck
+> Task :feature:next-jam:mergeReleaseResources
+> Task :feature:next-jam:ktlintKotlinScriptCheck
+> Task :feature:next-jam:runKtlintCheckOverMainSourceSet
+> Task :feature:next-jam:ktlintMainSourceSetCheck
+
+> Task :core:data:compileReleaseKotlin
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistPublishes.kt:71:31 No cast needed.
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistSlotClears.kt:84:17 Unnecessary safe call on a non-null receiver of type 'JamSlotEntity'.
+
+> Task :feature:next-jam:runKtlintCheckOverTestSourceSet
+
+> Task :core:data:compileDebugKotlin
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistPublishes.kt:71:31 No cast needed.
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistSlotClears.kt:84:17 Unnecessary safe call on a non-null receiver of type 'JamSlotEntity'.
+
+> Task :feature:next-jam:ktlintTestSourceSetCheck
+> Task :core:ui:lintVitalAnalyzeRelease
+> Task :core:ui:compileDebugUnitTestKotlin
+> Task :core:ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugUnitTestJavaRes
+> Task :core:data:compileReleaseJavaWithJavac NO-SOURCE
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:mergeDebugGeneratedProguardFiles
+> Task :core:data:mergeReleaseGeneratedProguardFiles
+> Task :core:data:mergeDebugConsumerProguardFiles
+> Task :core:data:mergeReleaseConsumerProguardFiles
+> Task :core:data:processReleaseJavaRes
+> Task :core:data:mergeReleaseJavaResource
+> Task :core:data:bundleLibRuntimeToJarRelease
+> Task :core:data:syncReleaseLibJars
+> Task :core:data:processDebugJavaRes
+> Task :core:data:bundleLibCompileToJarDebug
+> Task :core:data:bundleLibRuntimeToJarDebug
+> Task :core:data:bundleReleaseLocalLintAar
+> Task :core:data:bundleLibCompileToJarRelease
+> Task :core:data:createFullJarRelease
+> Task :feature:past-jams:mergeReleaseResources
+> Task :core:ui:lintAnalyzeDebugUnitTest
+> Task :feature:next-jam:verifyReleaseResources
+> Task :core:ui:lintAnalyzeDebug
+> Task :core:data:bundleLibRuntimeToDirDebug
+> Task :core:data:bundleLibRuntimeToDirRelease
+> Task :core:data:generateDebugLintModel
+> Task :core:data:generateReleaseLintModel
+> Task :core:data:generateDebugLintReportModel
+> Task :core:data:generateReleaseLintVitalModel
+> Task :core:data:mergeDebugJavaResource
+> Task :feature:next-jam:extractReleaseAnnotations
+> Task :feature:info:extractDebugAnnotations
+> Task :feature:past-jams:extractDebugAnnotations
+> Task :feature:next-jam:extractDebugAnnotations
+> Task :core:data:createFullJarDebug
+> Task :core:data:syncDebugLibJars
+> Task :core:data:bundleReleaseAar
+> Task :core:data:bundleDebugLocalLintAar
+> Task :feature:info:extractReleaseAnnotations
+> Task :core:data:bundleDebugAar
+> Task :core:data:assembleDebug
+> Task :core:data:assembleRelease
+> Task :core:data:assemble
+> Task :core:data:generateDebugAndroidTestLintModel
+> Task :core:data:generateDebugUnitTestLintModel
+> Task :feature:info:verifyReleaseResources
+> Task :feature:past-jams:extractReleaseAnnotations
+> Task :core:data:kspDebugUnitTestKotlin
+> Task :core:data:lintVitalAnalyzeRelease
+> Task :feature:past-jams:compileReleaseKotlin
+> Task :feature:past-jams:compileReleaseJavaWithJavac NO-SOURCE
+> Task :feature:past-jams:mergeReleaseGeneratedProguardFiles
+> Task :feature:past-jams:processReleaseJavaRes
+> Task :feature:past-jams:bundleLibCompileToJarRelease
+> Task :feature:past-jams:mergeReleaseConsumerProguardFiles
+> Task :feature:past-jams:bundleLibRuntimeToJarRelease
+> Task :feature:past-jams:mergeReleaseJavaResource
+> Task :feature:past-jams:createFullJarRelease
+> Task :feature:past-jams:syncReleaseLibJars
+> Task :feature:past-jams:bundleReleaseLocalLintAar
+> Task :feature:past-jams:bundleReleaseAar
+> Task :feature:past-jams:compileDebugKotlin
+> Task :feature:past-jams:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:past-jams:bundleLibCompileToJarDebug
+> Task :core:ui:testDebugUnitTest
+> Task :feature:past-jams:processDebugJavaRes
+> Task :feature:past-jams:mergeDebugGeneratedProguardFiles
+> Task :feature:past-jams:mergeDebugConsumerProguardFiles
+> Task :core:ui:test
+> Task :feature:past-jams:bundleLibRuntimeToJarDebug
+> Task :feature:past-jams:createFullJarDebug
+> Task :feature:past-jams:mergeDebugJavaResource
+> Task :feature:past-jams:syncDebugLibJars
+> Task :feature:past-jams:bundleDebugLocalLintAar
+> Task :feature:info:compileDebugKotlin
+> Task :feature:info:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:info:mergeDebugGeneratedProguardFiles
+> Task :feature:info:mergeDebugConsumerProguardFiles
+> Task :feature:info:processDebugJavaRes
+> Task :feature:info:compileReleaseKotlin
+> Task :feature:info:compileReleaseJavaWithJavac NO-SOURCE
+> Task :feature:past-jams:bundleLibRuntimeToDirRelease
+> Task :feature:info:mergeDebugJavaResource
+> Task :feature:info:bundleLibCompileToJarRelease
+> Task :feature:info:bundleLibRuntimeToJarDebug
+> Task :feature:info:processReleaseJavaRes
+> Task :feature:info:mergeReleaseGeneratedProguardFiles
+> Task :feature:info:mergeReleaseConsumerProguardFiles
+> Task :feature:info:bundleLibCompileToJarDebug
+> Task :feature:past-jams:bundleLibRuntimeToDirDebug
+> Task :feature:info:bundleLibRuntimeToDirDebug
+> Task :feature:info:bundleLibRuntimeToDirRelease
+> Task :feature:info:createFullJarDebug
+> Task :feature:info:syncDebugLibJars
+> Task :feature:info:bundleDebugLocalLintAar
+> Task :feature:past-jams:verifyReleaseResources
+> Task :feature:info:mergeReleaseJavaResource
+> Task :feature:info:bundleLibRuntimeToJarRelease
+> Task :feature:info:syncReleaseLibJars
+> Task :feature:info:createFullJarRelease
+> Task :feature:info:bundleReleaseLocalLintAar
+> Task :feature:info:bundleDebugAar
+> Task :feature:info:assembleDebug
+> Task :feature:info:bundleReleaseAar
+> Task :feature:info:assembleRelease
+> Task :feature:info:assemble
+> Task :feature:info:generateDebugLintModel
+> Task :feature:info:generateReleaseLintModel
+> Task :feature:past-jams:assembleRelease
+> Task :feature:past-jams:generateDebugUnitTestLintModel
+> Task :feature:info:generateDebugUnitTestLintModel
+> Task :feature:info:generateReleaseLintVitalModel
+> Task :feature:past-jams:generateReleaseLintVitalModel
+> Task :feature:past-jams:bundleDebugAar
+> Task :feature:past-jams:assembleDebug
+> Task :feature:past-jams:assemble
+> Task :feature:past-jams:generateDebugAndroidTestLintModel
+> Task :feature:past-jams:generateDebugLintModel
+> Task :feature:past-jams:generateDebugLintReportModel
+> Task :feature:info:generateDebugLintReportModel
+> Task :feature:past-jams:generateReleaseLintModel
+> Task :feature:info:generateDebugAndroidTestLintModel
+
+> Task :feature:next-jam:compileDebugKotlin
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/AddSongPresenter.kt:151:37 Unnecessary safe call on a non-null receiver of type 'Freshness'.
+
+> Task :feature:past-jams:lintVitalAnalyzeRelease
+
+> Task :feature:next-jam:compileReleaseKotlin
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/AddSongPresenter.kt:151:37 Unnecessary safe call on a non-null receiver of type 'Freshness'.
+
+> Task :feature:next-jam:compileReleaseJavaWithJavac NO-SOURCE
+> Task :feature:next-jam:mergeReleaseGeneratedProguardFiles
+> Task :feature:next-jam:mergeReleaseConsumerProguardFiles
+> Task :feature:next-jam:processReleaseJavaRes
+> Task :feature:next-jam:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:next-jam:mergeDebugGeneratedProguardFiles
+> Task :feature:next-jam:mergeDebugConsumerProguardFiles
+
+> Task :feature:past-jams:compileDebugUnitTestKotlin
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:58:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:72:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:78:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:82:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:92:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:96:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:99:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:108:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/PastJamsPullRefreshTest.kt:109:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+
+> Task :feature:next-jam:processDebugJavaRes
+> Task :feature:next-jam:mergeReleaseJavaResource
+> Task :feature:next-jam:bundleLibRuntimeToJarRelease
+> Task :feature:next-jam:bundleLibCompileToJarRelease
+> Task :feature:next-jam:mergeDebugJavaResource
+> Task :feature:next-jam:generateReleaseLintVitalModel
+> Task :feature:next-jam:generateDebugLintModel
+> Task :feature:next-jam:generateDebugLintReportModel
+> Task :feature:next-jam:bundleLibCompileToJarDebug
+> Task :feature:next-jam:bundleLibRuntimeToJarDebug
+> Task :feature:next-jam:createFullJarRelease
+> Task :feature:next-jam:generateReleaseLintModel
+> Task :feature:next-jam:createFullJarDebug
+> Task :feature:next-jam:syncReleaseLibJars
+> Task :feature:next-jam:syncDebugLibJars
+> Task :feature:next-jam:bundleDebugLocalLintAar
+> Task :feature:next-jam:bundleDebugAar
+> Task :feature:next-jam:assembleDebug
+> Task :feature:next-jam:generateDebugUnitTestLintModel
+> Task :feature:next-jam:generateDebugAndroidTestLintModel
+> Task :feature:past-jams:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature:info:lintVitalAnalyzeRelease
+> Task :feature:past-jams:processDebugUnitTestJavaRes
+> Task :feature:next-jam:bundleReleaseLocalLintAar
+> Task :feature:next-jam:bundleReleaseAar
+> Task :feature:next-jam:assembleRelease
+> Task :feature:next-jam:assemble
+> Task :feature:info:compileDebugUnitTestKotlin
+> Task :feature:info:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature:info:processDebugUnitTestJavaRes
+> Task :core:data:lintAnalyzeDebugAndroidTest
+> Task :core:data:compileDebugUnitTestKotlin
+> Task :core:data:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :core:data:processDebugUnitTestJavaRes
+> Task :feature:next-jam:bundleLibRuntimeToDirDebug
+> Task :feature:next-jam:bundleLibRuntimeToDirRelease
+> Task :feature:info:testDebugUnitTest
+> Task :feature:info:test
+> Task :feature:past-jams:testDebugUnitTest
+> Task :feature:past-jams:test
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by androidx.datastore.preferences.protobuf.UnsafeUtil$MemoryAccessor (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/androidx.datastore/datastore-preferences-external-protobuf/1.2.1/200a891fd29602b4bcff8e197d243a372fb026d5/datastore-preferences-external-protobuf-1.2.1.jar)
+WARNING: Please consider reporting this to the maintainers of class androidx.datastore.preferences.protobuf.UnsafeUtil$MemoryAccessor
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+> Task :core:data:lintAnalyzeDebug
+> Task :app:compileReleaseKotlin
+> Task :app:processReleaseJavaRes
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by androidx.sqlite.driver.bundled.NativeLibraryLoader in an unnamed module (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/androidx.sqlite/sqlite-bundled-jvm/2.6.2/b3975852b3b6f58c63d5d64e5f65b2226350238e/sqlite-bundled-jvm-2.6.2.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :app:compileDebugKotlin
+> Task :app:processDebugJavaRes
+> Task :feature:info:lintAnalyzeDebugAndroidTest
+> Task :app:compileDebugJavaWithJavac
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:generateDebugAndroidTestLintModel
+> Task :app:generateDebugLintReportModel
+> Task :app:generateDebugUnitTestLintModel
+> Task :app:generateReleaseLintVitalReportModel
+> Task :feature:next-jam:lintVitalAnalyzeRelease
+> Task :app:mergeReleaseJavaResource
+> Task :app:mergeDebugJavaResource
+> Task :app:dexBuilderRelease
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :core:data:testDebugUnitTest
+> Task :core:data:test
+> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:mergeLibDexDebug
+
+> Task :feature:next-jam:compileDebugUnitTestKotlin
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:40:55 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:44:44 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:56:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:57:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:67:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:68:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:78:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:79:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:91:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:92:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:102:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:112:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:113:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:116:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:117:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:126:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:127:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:137:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:138:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:141:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:142:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/LiveRefreshLoopTest.kt:151:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamAdminTest.kt:194:31 Unnecessary safe call on a non-null receiver of type 'NextJamAdminUiModel'.
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamAdminTest.kt:327:41 Unnecessary safe call on a non-null receiver of type 'NextJamAdminUiModel'.
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:80:59 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:98:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:103:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:104:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:195:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:211:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:214:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:234:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:239:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:254:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:260:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:264:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:269:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:282:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:288:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:297:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:301:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:304:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:322:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:327:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:341:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:363:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:367:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamLiveRefreshTest.kt:374:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/NextJamMoveTest.kt:170:32 No cast needed.
+
+> Task :app:dexBuilderDebug
+> Task :app:mergeProjectDexDebug
+> Task :feature:info:lintAnalyzeDebug
+> Task :feature:next-jam:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature:next-jam:processDebugUnitTestJavaRes
+> Task :app:packageDebug
+> Task :app:assembleDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:testDebugUnitTest
+> Task :app:test
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:mergeDexRelease
+> Task :core:data:lintAnalyzeDebugUnitTest
+> Task :app:lintVitalReportRelease SKIPPED
+> Task :app:lintVitalRelease SKIPPED
+> Task :feature:next-jam:testDebugUnitTest
+> Task :feature:next-jam:test
+> Task :app:lintAnalyzeDebugAndroidTest
+> Task :feature:past-jams:lintAnalyzeDebug
+> Task :app:lintAnalyzeDebugUnitTest
+> Task :feature:info:lintAnalyzeDebugUnitTest
+> Task :feature:next-jam:lintAnalyzeDebugAndroidTest
+> Task :feature:past-jams:lintAnalyzeDebugAndroidTest
+> Task :feature:past-jams:lintAnalyzeDebugUnitTest
+> Task :core:data:lintReportDebug
+> Task :core:data:lintDebug
+> Task :core:data:lint
+> Task :core:data:check
+> Task :core:data:build
+> Task :core:ui:lintReportDebug
+> Task :core:ui:lintDebug
+> Task :core:ui:lint
+> Task :core:ui:check
+> Task :core:ui:build
+> Task :feature:info:lintReportDebug
+> Task :feature:info:lintDebug
+> Task :feature:info:lint
+> Task :feature:info:check
+> Task :feature:info:build
+> Task :feature:past-jams:lintReportDebug
+> Task :feature:past-jams:lintDebug
+> Task :feature:past-jams:lint
+> Task :feature:past-jams:check
+> Task :feature:past-jams:build
+> Task :app:l8DexDesugarLibRelease
+> Task :app:compileReleaseArtProfile
+> Task :app:packageRelease
+> Task :app:assembleRelease
+> Task :app:assemble
+> Task :app:createReleaseApkListingFileRedirect
+> Task :feature:next-jam:lintAnalyzeDebug
+> Task :feature:next-jam:lintAnalyzeDebugUnitTest
+> Task :feature:next-jam:lintReportDebug
+> Task :feature:next-jam:lintDebug
+> Task :feature:next-jam:lint
+> Task :feature:next-jam:check
+> Task :feature:next-jam:build
+> Task :app:lintAnalyzeDebug
+
+> Task :app:lintReportDebug
+Wrote HTML report to file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/app/build/reports/lint-results-debug.html
+Wrote SARIF report to file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/app/build/reports/lint-results-debug.sarif
+
+> Task :app:lintDebug
+> Task :app:lint
+> Task :app:check
+> Task :app:build
+
+BUILD SUCCESSFUL in 3m 12s
+609 actionable tasks: 605 executed, 4 up-to-date
+Configuration cache entry stored.

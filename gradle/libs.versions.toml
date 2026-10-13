@@ -3,7 +3,10 @@ compileSdk = "37"
 minSdk = "24"
 targetSdk = "37"
 agp = "9.4.1"
-kotlin = "2.2.10"
+# Single source for KGP, the compiler and the Compose/serialization plugins (and build-logic's KGP).
+# 2.3.21 is the latest 2.3 patch: it matches the Kotlin embedded in Gradle 9.6 (kotlin-dsl in
+# build-logic) and clears Koog's 2.3.10 floor. 2.4.x waits for a Gradle whose embedded Kotlin can read it.
+kotlin = "2.3.21"
 coreKtx = "1.19.0"
 activityCompose = "1.11.0"
 composeBom = "2025.09.00"
@@ -15,23 +18,23 @@ ktlint = "1.8.0"
 molecule = "2.2.0"
 turbine = "1.2.1"
 kotlinxCoroutines = "1.10.2"
+# Koin 4.2 pulls Compose 1.10; held with the Compose BOM (2025.09.00), not for the stdlib.
 koin = "4.1.1"
-# Data stack (catalog-repository-cache). Pinned so kotlin-stdlib stays at the 2.2.10 compiler:
-# OkHttp 5.2+ needs stdlib 2.2.20+, kotlinx-serialization 1.10 needs 2.3.0. KSP 2.3.x is the
-# first line that works with AGP 9 built-in Kotlin (2.2.10-2.0.2 fails on kotlin.sourceSets).
+# Data stack (catalog-repository-cache). kotlin-stdlib follows the compiler (2.3.21); OkHttp 5.5.0
+# needs stdlib 2.2.21 and kotlinx-serialization 1.11.0 needs 2.3.20, so neither is held back any more.
+# KSP 2.3.x is the first line that works with AGP 9 built-in Kotlin and is decoupled from the Kotlin
+# version (2.3.12 is the latest).
 ksp = "2.3.12"
 room = "2.8.4"
-okhttp = "5.1.0"
-kotlinxSerialization = "1.9.0"
+okhttp = "5.5.0"
+kotlinxSerialization = "1.11.0"
 desugarJdkLibs = "2.1.5"
 sqlite = "2.6.2"
-# Navigation (song-detail-screen, N1). 2.9.8 is the last 2.9.x and asks only for versions at or below
-# what the build resolves (stdlib 2.0.21, Compose 1.7.2, activity-compose 1.8.0). 2.10.x raises
-# Compose to 1.10 and activity-compose to 1.13 over the pinned BOM. Upgrade with Kotlin and the BOM.
+# Navigation (song-detail-screen, N1). 2.9.8 is the last 2.9.x. 2.10.x raises Compose to 1.10 and
+# activity-compose to 1.13 over the pinned BOM (2025.09.00, Compose 1.9). Upgrade with the BOM.
 navigationCompose = "2.9.8"
 # DataStore Preferences (admin-passphrase-login, A2): the verified admin passphrase. 1.2.1 asks for
-# stdlib 2.0.21, coroutines 1.9.0 and okio 3.9.1, all at or below what the build resolves, so no
-# resolved version moves up on :app. Upgrade with Kotlin.
+# versions at or below what the build resolves; nothing urgent holds it, upgrade when convenient.
 datastore = "1.2.1"
 
 [libraries]

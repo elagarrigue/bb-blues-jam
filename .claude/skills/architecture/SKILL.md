@@ -737,21 +737,24 @@ them.
   `BuildConfig.APPS_SCRIPT_URL` (`""` when missing), and `appModule` binds
   `AppsScriptEndpoint.of(BuildConfig.APPS_SCRIPT_URL)`. Never log it (`AppsScriptEndpoint` hides
   it in `toString`).
-- **Data stack pins** (`catalog-repository-cache`): KSP 2.3.12, Room 2.8.4, OkHttp 5.1.0,
-  kotlinx-serialization 1.9.0, desugar_jdk_libs 2.1.5; test only mockwebserver3 5.1.0,
-  sqlite-bundled-jvm 2.6.2, koin-test (BOM). Held so kotlin-stdlib stays at the 2.2.10 compiler on
-  `:app`'s runtime classpath: OkHttp 5.2+ needs stdlib 2.2.20+, serialization 1.10 needs 2.3.0
-  (the Koin 4.2 trap again). KSP 2.2.10-2.0.2 fails under built-in Kotlin ("Using
-  kotlin.sourceSets DSL to add Kotlin sources is not allowed"). Upgrade them with Kotlin.
+- **Data stack pins** (`catalog-repository-cache`; Kotlin raised by `kotlin-2-3-toolchain-upgrade`):
+  Kotlin 2.3.21 (single `kotlin` catalog key: KGP, compiler, Compose and serialization plugins,
+  build-logic; chosen to match Gradle 9.6's embedded Kotlin and Koog's 2.3.10 floor; 2.4.x waits for
+  a Gradle that can read it), kotlin-stdlib 2.3.21, KSP 2.3.12 (decoupled from the Kotlin version),
+  Room 2.8.4, OkHttp 5.5.0, kotlinx-serialization 1.11.0, desugar_jdk_libs 2.1.5; test only
+  mockwebserver3 5.5.0, sqlite-bundled-jvm 2.6.2, koin-test (BOM). The stdlib hold is gone; what
+  still holds Koin and Navigation is the Compose 1.9 line (BOM 2025.09.00), see below. KSP
+  2.2.10-2.0.2 fails under built-in Kotlin ("Using kotlin.sourceSets DSL to add Kotlin sources is
+  not allowed").
 - **Navigation pin** (`song-detail-screen`, N1): Navigation Compose 2.9.8 (catalog
   `androidx-navigation-compose`), declared in `app/build.gradle.kts` only, never in a convention or
-  another module. The last 2.9.x; it resolves with no version moving up (stdlib 2.2.10, Compose
+  another module. The last 2.9.x; it resolved with no version moving up (Compose
   1.9.1, activity-compose 1.11.0, serialization 1.9.0, lifecycle 2.9.3), adding only
   `androidx.navigation` and `lifecycle-viewmodel-compose` 2.9.3. 2.10.x raises Compose to 1.10 and
-  activity-compose to 1.13 (the Koin 4.2 trap again). It brings ViewModel artifacts transitively;
+  activity-compose to 1.13 over the Compose 1.9 BOM. It brings ViewModel artifacts transitively;
   that does not relax D-02 (no `viewModel()`, no `hiltViewModel`). Routes are strings (R1): typed
   routes would need the serialization plugin in `:app` and break the data-library rules. Upgrade it
-  with Kotlin, the BOM and Koin.
+  with the BOM and Koin (a Compose upgrade slice).
 - **DataStore pin** (`admin-passphrase-login`, A2): `androidx.datastore:datastore-preferences`
   1.2.1 (catalog `androidx-datastore-preferences`), `implementation` in `core/data/build.gradle.kts`
   only. It asks for stdlib 2.0.21, coroutines 1.9.0 and okio 3.9.1, all at or below what resolves;
@@ -812,8 +815,8 @@ them.
 - **Koin 4.1.1** (set by `info-screen`, approved 30 September 2026; D-16). Catalog: `koin-bom`
   (versioned) and `koin-core`, `koin-android`, `koin-compose` (BOM-managed). Feature modules use
   `koin-core` + `koin-compose` (for `koinInject()`); `:app` uses `koin-android` (for
-  `androidContext`). Not 4.2.x: it raises `kotlin-stdlib` to 2.3.20 and Compose to 1.10.x over the
-  pinned Kotlin 2.2.10 and BOM 2025.09.00; upgrade Koin together with Kotlin and the BOM. 4.1.1
+  `androidContext`). Not 4.2.x: it raises Compose to 1.10.x over the
+  pinned BOM 2025.09.00 (the stdlib reason went away with Kotlin 2.3.21); upgrade Koin together with the BOM. 4.1.1
   only moves lifecycle 2.9.0 → 2.9.3. `koin-android` brings `koin-core-viewmodel` and the lifecycle
   ViewModel artifacts transitively; that does not relax the ViewModel ban (D-02).
 - **UI copy lives in Kotlin, not string resources** (set by `info-screen`, Decision 6): an

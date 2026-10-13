@@ -4,6 +4,20 @@ The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no
 
 # Progress Log
 
+## 13 October 2026 - kotlin-2-3-toolchain-upgrade accepted
+
+Independent validator accepted after rerunning the gate (699 tests, three tools wired), buildEnvironment and dependencyInsight. Correction to the implementer note below: kotlin-stdlib shows "By constraint" in dependencyInsight; that is KGP's stdlib alignment selecting the higher version, not a force. Next: assistant-agent-core.
+
+## 13 October 2026 - kotlin-2-3-toolchain-upgrade passing (awaiting validation)
+
+Catalog-only change in `gradle/libs.versions.toml`: `kotlin` 2.2.10 to 2.3.21, `kotlinxSerialization` 1.9.0 to 1.11.0, `okhttp` (and mockwebserver3) 5.1.0 to 5.5.0; pin comments rewritten (Kotlin, Data stack, Koin, Navigation, DataStore). KSP 2.3.12, Room 2.8.4, BOM, Koin, Navigation, DataStore, AGP, Gradle, detekt, ktlint, Konsist unchanged. No source edit was needed, no fallback from the Risks list was taken, no Koog added. Docs updated: architecture skill (Data stack, Navigation, DataStore, Koin bullets) and `docs/technical-discovery.md`.
+
+Verification (evidence in `docs/evidence/kotlin-2-3-toolchain-upgrade/`): baseline `CI=true ./init.sh` exit 0 with 699 JVM tests (sum of `tests=` over `TEST-*.xml`; the spec's 698 was the earlier recorded run); `./gradlew build` green; `CI=true ./init.sh` twice after the change, both exit 0, konsist/detekt/ktlint wired, 699 tests; a second Gradle run printed "Configuration cache entry reused". `buildEnvironment`: one KGP, `kotlin-gradle-plugin:2.2.10 -> 2.3.21`, AGP 9.4.1. `dependencyInsight` on `:app` debug and release runtime: kotlin-stdlib 2.3.21, kotlinx-serialization-json 1.11.0, okhttp 5.5.0, compose runtime 1.9.1 (unchanged), lifecycle-runtime 2.9.3 (unchanged); no "forced"/"constraint" in the output. Debug classpath diff: Kotlin, serialization, OkHttp/okio (3.18.1) move up, nothing Compose/lifecycle/Koin. `:konsist-test` still resolves Konsist 0.17.3 (stdlib per `after-konsist-testRuntimeClasspath.txt`). No change to init.sh, config/, .editorconfig, konsist-test/src; no baseline, suppression or flag added.
+
+Device (physical 1080x2340, debug demo jam already set in `local.properties`; the app was already in persisted admin mode, no admin control tapped, no Sheet write): Proxima jam, a song detail (Sweet Little Angel, opened by tapping the card title), Anteriores and Info all rendered; `device-1..4` PNGs. `local.properties` md5 unchanged (569913ae...), not modified.
+
+Next: independent validation. Not committed.
+
 ## 12 October 2026 - lineup-max-per-instrument accepted (user's Part C redeploy owed)
 
 Per-instrument ceilings (user: "batería y teclados, solo 1"): Guitarra, Bajo, Voz and Armónica grow to 3, Batería and Teclados stay at 1. `Lineup.maxCount` is now a ceiling (private map) while `MAX_INSTRUMENTS` stays the 18 wire columns and the `init` guard counts columns, so per the orchestrator amendment a tab with a filled `Batería 2` is still read (a name is never hidden); `SetlistMapper.lineupSlots` ignores only open cells beyond a ceiling. `SlotKeys`/`SlotsDto` untouched. `Post.js`: `SLOT_CEILINGS_` (`invalid_count` before any Sheet read), and `createSetlistTab_` writes 14 slot headers (20 columns) via `NOT_CREATED_SLOT_FIELDS_`. Docs: migration guide Part A (14 columns) and new Part C, sheet-schema, apps-script-api, README paste check, DESIGN.md, bitácora D-18, architecture skill.

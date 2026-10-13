@@ -1373,13 +1373,16 @@
     "depends_on": [
       "strip-extra-chip-filled"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Kotlin, KSP and the libraries pinned for stdlib 2.2.10 (kotlinx-serialization, OkHttp and any other pin noted in gradle/libs.versions.toml) are raised consistently, with the pin comments updated",
       "The resolved kotlin-stdlib on :app is 2.3.x and no dependency is forced down",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired and no fewer tests than before",
       "No detekt or ktlint rule is disabled or baselined to make the upgrade pass",
       "The app installs and the Próxima jam, Jams pasadas and Info tabs render on a device (debug demo jam)"
+    ],
+    "evidence": [
+      "Independent validator accepted on 13 October 2026 after rerunning CI=true ./init.sh (konsist, detekt, ktlint wired; 699 tests), buildEnvironment (single KGP 2.3.21) and :app dependencyInsight (stdlib 2.3.21, serialization 1.11.0, okhttp 5.5.0; the 'By constraint' reason is KGP's stdlib alignment, not a force). Device evidence rests on the implementer's screenshots."
     ]
   },
   {

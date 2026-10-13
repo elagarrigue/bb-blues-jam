@@ -33,18 +33,18 @@ and no hidden gestures without a visible alternative.
   controls to its own `UiModel`; there is no `:feature:admin`.
 - **Room** for local caching of the catalog and enrichment data. Wired by
   `catalog-repository-cache` with the rest of the data stack in `:core:data`: Room 2.8.4 through
-  KSP 2.3.12 (the 2.2.10-2.0.2 line fails under AGP 9 built-in Kotlin), OkHttp 5.1.0,
-  kotlinx-serialization 1.9.0 with its Kotlin 2.2.10 plugin, and core library desugaring
-  (desugar_jdk_libs 2.1.5) in every Android module for java.time below API 26. Pinned so
-  kotlin-stdlib stays at 2.2.10: OkHttp 5.2+ needs stdlib 2.2.20+ and serialization 1.10 needs
-  2.3.0. A Kotlin upgrade moves OkHttp, serialization and Koin together.
+  KSP 2.3.12 (the 2.2.10-2.0.2 line fails under AGP 9 built-in Kotlin), OkHttp 5.5.0,
+  kotlinx-serialization 1.11.0 with its Kotlin 2.3.21 plugin, and core library desugaring
+  (desugar_jdk_libs 2.1.5) in every Android module for java.time below API 26. Kotlin 2.3.21
+  (D-21, `kotlin-2-3-toolchain-upgrade`) is the single compiler version, so kotlin-stdlib is 2.3.21 and
+  OkHttp and serialization are no longer held back; Koin and Navigation wait for a Compose upgrade.
 - **DataStore** for the admin flag.
 - **Navigation Compose 2.9.8** (`song-detail-screen`, N1, 4 October 2026), declared only in `:app`
   with string routes built and parsed in `AppRoutes` (R1); features take callbacks and plain values,
   and the Konsist rule `navigation-only-in-app` keeps the library out of every other module (K2).
-  2.9.8 is the last 2.9.x and resolves under the pinned Kotlin 2.2.10 and Compose BOM 2025.09.00
+  2.9.8 is the last 2.9.x and resolves under the pinned Compose BOM 2025.09.00
   with no version moving up; 2.10.x would raise Compose to 1.10 and activity-compose to 1.13.
-  Upgrade it together with Kotlin, the BOM and Koin. The deeplink scheme is still open.
+  Upgrade it together with the BOM and Koin. The deeplink scheme is still open.
 - **Gradle** with a `check` task covering tests, Konsist, detekt, and ktlint.
 
 Two corrections were made to the reference composable-presenter pattern: `hashCode` derived from
@@ -159,7 +159,7 @@ first call to the new version took 3.97 s (not proven cold); the validator's lat
   the bundled SQLite driver (`androidx.sqlite:sqlite-bundled-jvm` 2.6.2, test only) with
   `ContextWrapper(null)` and `isReturnDefaultValues = true`; no Robolectric (it worked in the
   prototype but took ~34 s on its first run). The HTTP client is tested against MockWebServer
-  (`mockwebserver3` 5.1.0), and no test reaches the network. The contract samples and the seed
+  (`mockwebserver3` 5.5.0), and no test reaches the network. The contract samples and the seed
   CSV are the mapper fixtures. The stub `android.database.SQLException` drops its message, so a
   Room feature that reads the message (`@Upsert`) fails on the JVM; the cache uses
   `@Insert(onConflict = REPLACE)` instead. The device's framework SQLite is proven only on device.

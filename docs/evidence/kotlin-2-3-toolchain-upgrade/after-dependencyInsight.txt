@@ -1,0 +1,130 @@
+### debug org.jetbrains.kotlin:kotlin-stdlib
+org.jetbrains.kotlin:kotlin-stdlib:2.3.21
+  Variant jvmRuntimeElements:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | jar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | standard-jvm | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | jvm          | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | debug        |
+### debug org.jetbrains.kotlinx:kotlinx-serialization-json
+org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0
+  Variant jvmRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | jar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | standard-jvm | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | jvm          | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | debug        |
+### debug com.squareup.okhttp3:okhttp
+com.squareup.okhttp3:okhttp:5.5.0
+  Variant androidRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | aar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | android      | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | androidJvm   | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | debug        |
+### debug androidx.compose.runtime:runtime
+androidx.compose.runtime:runtime:1.9.1
+  Variant androidRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | aar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | android      | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | jvm          | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | debug        |
+### debug androidx.lifecycle:lifecycle-runtime
+androidx.lifecycle:lifecycle-runtime:2.9.3
+  Variant releaseRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | android      | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | androidJvm   | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | debug        |
+   Selection reasons:
+### release org.jetbrains.kotlin:kotlin-stdlib
+org.jetbrains.kotlin:kotlin-stdlib:2.3.21
+  Variant jvmRuntimeElements:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | jar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | standard-jvm | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | jvm          | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | release      |
+### release org.jetbrains.kotlinx:kotlinx-serialization-json
+org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0
+  Variant jvmRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | jar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | standard-jvm | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | jvm          | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | release      |
+### release com.squareup.okhttp3:okhttp
+com.squareup.okhttp3:okhttp:5.5.0
+  Variant androidRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | aar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | android      | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | androidJvm   | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | release      |
+### release androidx.compose.runtime:runtime
+androidx.compose.runtime:runtime:1.9.1
+  Variant androidRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.libraryelements                      | aar          |              |
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | android      | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | jvm          | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | release      |
+### release androidx.lifecycle:lifecycle-runtime
+androidx.lifecycle:lifecycle-runtime:2.9.3
+  Variant releaseRuntimeElements-published:
+    | Attribute Name                                  | Provided     | Requested    |
+    |-------------------------------------------------|--------------|--------------|
+    | org.gradle.status                               | release      |              |
+    | org.gradle.category                             | library      | library      |
+    | org.gradle.jvm.environment                      | android      | android      |
+    | org.gradle.usage                                | java-runtime | java-runtime |
+    | org.jetbrains.kotlin.platform.type              | androidJvm   | androidJvm   |
+    | com.android.build.api.attributes.AgpVersionAttr |              | 9.4.1        |
+    | com.android.build.api.attributes.BuildTypeAttr  |              | release      |
+   Selection reasons:
