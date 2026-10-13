@@ -412,6 +412,32 @@ Consecuencia a tener en cuenta para la fase 2: el asistente va a elegir del cat�
 título, artista, tonalidad e historial de jams, sin filtrar por etiquetas como "slow blues" o
 "shuffle". "Blues nacional" sigue siendo posible por el país del artista que trae MusicBrainz (D-09).
 
+### D-21 — El agente corre en el teléfono con Koog, sobre Kotlin 2.3
+El Agents SDK de OpenAI que vimos en clase existe para Python y TypeScript, no para Kotlin. Koog,
+el framework de agentes de JetBrains, ofrece lo mismo en Kotlin (agente, *tools*, salida
+estructurada) y apunta a cualquier endpoint compatible con OpenAI, como DevExpert Inference
+(alias de modelo `chat`: con esta key el gateway rechaza el nombre `mimo-v2.5`). Se descartaron un servidor aparte con `openai-agents`, porque sumaba infraestructura,
+y un bucle propio sobre OkHttp, porque no es un SDK. Koog 1.x pide Kotlin 2.3 y el proyecto estaba
+fijado en 2.2.10. En vez de usar Koog 0.5.4, una API vieja anterior a la 1.0, se sube el toolchain
+primero, en su propia rebanada. Decidido por el organizador el 13 de octubre de 2026.
+
+### D-22 — La key de inferencia va en `BuildConfig`, en todos los builds
+La key de DevExpert se lee de `local.properties` (`devexpert.key`, que git ignora) y entra en
+`BuildConfig` en todos los tipos de build. Riesgo aceptado: cualquiera que tenga el APK puede
+extraerla. Se descartaron pedirla en la app y limitarla al build de debug. Si falta la key, el tab
+muestra "no configurado" y la app no se cae.
+
+### D-23 — El asistente es `:feature:assistant`, con un tab solo para el admin
+El asistente es una *feature* propia y su tab se dibuja solo con la sesión de admin. No es el
+`:feature:admin` que descarta D-15: los controles de admin sobre las pantallas existentes siguen
+en sus *features*. El agente, sus *tools* y el cliente viven fuera del módulo de *feature*.
+
+### D-24 — El asistente propone; el admin aplica
+El agente lee el catálogo y las jams pasadas con *tools* y responde un JSON estructurado: temas,
+mensaje de cierre y preguntas. Antes de mostrar la lista, cada tema se valida contra el catálogo
+(D-14). El agente nunca escribe. Cargar la propuesta en la próxima jam es una acción explícita del
+admin y pasa por el contrato de acciones (D-13); Apps Script sigue siendo la autoridad de escritura.
+
 ---
 
 # Parte III — Harness y seguimiento

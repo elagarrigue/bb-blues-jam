@@ -1364,5 +1364,74 @@
       "Independent validator accepted on 12 October 2026 after rerunning CI=true ./init.sh (konsist, detekt and ktlint wired; InstrumentStripDefaultsTest 6, LineupPanelDefaultsTest 5, ContrastTest 17, 0 failures). It confirmed the slotFilled fill with textMuted and no glyph, no amber (D-17), styling-only diff with no mapper, filter or count change (D-18), no remaining 'no fill' claims, and the before/after screenshots."
     ],
     "notes": "Requested by the user on 12 October 2026: 'en la lista de canciones, los tags otro deberían verse como otro chip, con el fondo igual que los instrumentos asignados'. Reverses the 'no fill' rule for the strip's extra chip that extras-dialog-and-lines kept on purpose."
+  },
+  {
+    "id": "kotlin-2-3-toolchain-upgrade",
+    "area": "build",
+    "title": "Raise the Kotlin toolchain to 2.3 for phase 2",
+    "user_visible_behavior": "No visible change. The build compiles with Kotlin 2.3.x so Koog 1.x (D-21) can be added; every screen behaves as before.",
+    "depends_on": [
+      "strip-extra-chip-filled"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Kotlin, KSP and the libraries pinned for stdlib 2.2.10 (kotlinx-serialization, OkHttp and any other pin noted in gradle/libs.versions.toml) are raised consistently, with the pin comments updated",
+      "The resolved kotlin-stdlib on :app is 2.3.x and no dependency is forced down",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired and no fewer tests than before",
+      "No detekt or ktlint rule is disabled or baselined to make the upgrade pass",
+      "The app installs and the Próxima jam, Jams pasadas and Info tabs render on a device (debug demo jam)"
+    ]
+  },
+  {
+    "id": "assistant-agent-core",
+    "area": "assistant",
+    "title": "Koog setlist agent with catalog and past-jam tools",
+    "user_visible_behavior": "No screen yet. A Koog agent pointed at DevExpert Inference (model alias chat) answers an admin request with a structured response: an ordered list of catalog songs with reasons, a closing message and follow-up questions, using tools to read the catalog and past jams.",
+    "depends_on": [
+      "kotlin-2-3-toolchain-upgrade"
+    ],
+    "status": "not_started",
+    "verification": [
+      "devexpert.key is read from local.properties into BuildConfig in every build type (D-22); a missing key yields a typed not-configured result, never a crash; the key never appears in logs or toString",
+      "Tools read the catalog and past jams (songs and who played each slot) through the existing repositories; no Sheet write is reachable from the agent (D-24)",
+      "The structured response is parsed into a typed model; every song id is validated against the catalog and unknown ids are never returned as part of the list (D-14)",
+      "Unit tests with a fake prompt executor cover tool calls, parsing, catalog validation, malformed output and network failure",
+      "A live call with the real key (no Sheet writes) for the brief's example request is recorded as evidence, including whether the model honored tool calling and structured output",
+      "Konsist, detekt and ktlint stay wired; no feature module depends on another"
+    ]
+  },
+  {
+    "id": "assistant-admin-tab",
+    "area": "assistant",
+    "title": "Admin-only Asistente tab with the chat",
+    "user_visible_behavior": "With the admin session active, a new Asistente tab shows a chat: the admin writes a request, sees a loading state, and gets the proposed list (position, title, artist, key, reason), the closing message and any questions, and can keep refining. Without the admin session the tab does not exist.",
+    "depends_on": [
+      "assistant-agent-core"
+    ],
+    "status": "not_started",
+    "verification": [
+      ":feature:assistant exists with a composable presenter tested with Molecule (no ViewModel, D-02) and depends on no other feature module (D-03)",
+      "The tab is drawn only when the admin flag is active, and disappears when the session ends",
+      "Not-configured, loading, error and offline states have Spanish (vos) copy",
+      "Screens read BluesJamTheme tokens only (D-17)",
+      "Device check with the debug admin session: one real request answered and screenshots recorded; no list is applied"
+    ]
+  },
+  {
+    "id": "assistant-apply-proposal",
+    "area": "assistant",
+    "title": "Load the assistant's proposal into the upcoming setlist",
+    "user_visible_behavior": "Under a proposal the admin taps Usar esta lista, confirms, and the songs are added to the upcoming jam in order through the action contract, with progress and per-song failure feedback.",
+    "depends_on": [
+      "assistant-admin-tab"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The apply path goes only through the action contract (D-13) and repository functions; the feature module does not import :app",
+      "Explicit confirmation before any write; the agent never triggers a write (D-24)",
+      "Partial failures are reported per song and never reported as success",
+      "Unit tests cover ordering, duplicates already in the setlist, and failures",
+      "Device check against the debug demo jam only, never the real Sheet"
+    ]
   }
 ]

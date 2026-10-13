@@ -57,7 +57,8 @@ Explicitly out of scope. These are product definition, not deferral of undecided
 
 - **Musician self-signup.** Only the admin assigns musicians (D-05). No identity, no concurrency
   control on the last slot, no open backend writes.
-- **The assistant.** Phase 2. No AI chat screen ships in the MVP.
+- **The assistant.** Phase 2. No AI chat screen ships in the MVP. Phase 2 is defined in
+  [phase-2-brief.md](phase-2-brief.md).
 - **Tablature rendered in-app.** Songs store a `songsterrId` and the detail screen opens the browser
   (D-10).
 - **User accounts, profiles, musician-to-musician chat, notifications, onboarding.**

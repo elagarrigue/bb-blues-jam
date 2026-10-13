@@ -21,11 +21,12 @@ optional slice. The phase 2 assistant remains a later product phase, outside the
 
 ## Phase 2 admin assistant
 
-- **Status:** planned for phase 2; excluded from the MVP. It composes upcoming setlists from the
+- **Status:** phase 2 started 13 October 2026; excluded from the MVP. It composes upcoming setlists from the
   Sheet catalog under thematic constraints and uses the app-owned action contract without changing
   feature modules. See [build brief](build-brief.md), [domain model](domain-model.md), and
   [action contract registry spec](specs/action-contract-registry.md).
-- **Prerequisite:** product discovery and a separate phase 2 brief before implementation.
+- **Prerequisite:** met on 13 October 2026 — see [phase 2 brief](phase-2-brief.md); slices are in
+  `feature_list.json`.
 
 ## Songsterr browser link
 

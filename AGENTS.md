@@ -47,8 +47,10 @@ without saying so and waiting for confirmation.
   during list rendering — MusicBrainz allows 1 req/s (D-09).
 - **Every write is validated server-side in Apps Script.** The local admin flag only controls which
   controls are drawn; it does not authorize anything.
-- **Out of scope for the MVP:** musician self-signup, in-app tablature, the AI assistant, profiles,
-  chat, notifications, onboarding, and a light theme.
+- **Out of scope for the MVP:** musician self-signup, in-app tablature, profiles, chat,
+  notifications, onboarding, and a light theme.
+- **Phase 2 assistant** (`docs/phase-2-brief.md`, D-21 … D-24): admin-only tab, Koog agent on the
+  device, proposals validated against the catalog, never writes on its own.
 
 ## Commands
 
@@ -72,6 +74,7 @@ the `architecture` skill. It holds the module layout, where each piece goes, and
 - `docs/build-brief.md` — product goals, MVP slice, and non-goals.
 - `docs/domain-model.md` — entities, states, and authority per entity.
 - `docs/risks-and-open-questions.md` — current blockers and open questions.
+- `docs/phase-2-brief.md` — the setlist assistant: behavior, decisions, slices.
 
 Read optional docs only when relevant:
 
@@ -84,7 +87,7 @@ Read optional docs only when relevant:
   Apps Script client.
 - `DESIGN.md` — when touching any UI. It carries the design tokens and the visual rules.
 - `bb-blues-jam-design-prompt.md` — per-screen design requirements. Source of truth for screens.
-- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The 20 decisions (D-01 … D-20) and
+- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The decisions (D-01 … D-24) and
   their reasoning live here. Consult when a change might contradict one.
 
 ## Startup Workflow
@@ -146,4 +149,4 @@ A feature is done only when all are true:
 ## Reminder
 
 No ViewModels. No feature module imports another. No mutation only in the UI. `passing` is not
-`accepted`. When a change would contradict D-01 … D-20, stop and ask.
+`accepted`. When a change would contradict D-01 … D-24, stop and ask.
