@@ -107,6 +107,21 @@ no external API reachable at all.
 MusicBrainz's 1 req/s limit means enrichment runs in the background when a song is added and is
 cached in Room. Never while rendering a list.
 
+**Setlist assistant (phase 2, `assistant-agent-core`, 13 October 2026).** The agent runs on the device
+with Koog 1.3.0 (`ai.koog:agents-core` and `ai.koog:http-client-ktor` only, never the `koog-agents`
+umbrella) over `ktor-client-okhttp` 3.3.3, pointed at DevExpert Inference's chat completions endpoint
+(`https://inference.devexpert.io/v1/chat/completions`, alias `chat`; the Responses endpoint is never
+used). Findings from the live call (`docs/evidence/assistant-agent-core/live-call.md`):
+
+- Tool calling works (`searchCatalog`, `pastJams`; the gateway accepts `reasoning_content` echoed back).
+- **Native structured output (`response_format: json_schema`) is accepted together with `tools`, but
+  the model then skipped the tools** and answered at once with an empty proposal
+  (`live-call-1-native.md`). The agent therefore uses Koog's `StructuredRequest.Manual` (schema in the
+  prompt, no `response_format`). In the recorded run (`live-call.md`) the model called both tools and the
+  final answer parsed, with 5 validated songs plus questions.
+- Koog 1.3.0 ships Java 17 bytecode, so every module now compiles at Java 17 (D8 desugars for minSdk 24).
+- Latency in the recorded Manual run: about 1.6 s and 5.2 s for the two requests, 7.6 s in total. Output varies between runs: an earlier, unsaved Manual run returned 12 validated songs.
+
 Songsterr has no official API, so it is optional per song: the `songsterrId` is stored from phase 1
 and the detail screen opens the tab in the browser (D-10).
 

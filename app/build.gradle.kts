@@ -14,6 +14,11 @@ val localProperties: Properties = Properties().apply {
 }
 val appsScriptUrl: String = localProperties.getProperty("bluesjam.appsScriptUrl", "").trim()
 
+// The DevExpert Inference key (D-22, assistant-agent-core) also lives only in local.properties
+// (devexpert.key). It is built into every build type, release included: the risk of a key in the APK
+// is accepted. Without it the app builds with "" and the assistant answers NotConfigured. Never log it.
+val devexpertKey: String = localProperties.getProperty("devexpert.key", "").trim()
+
 // Debug-only demo upcoming jam (debug-demo-upcoming-jam): bluesjam.demoUpcomingJam=true in
 // local.properties shows a fixed demo jam built in app/src/debug when the Sheet has no upcoming jam,
 // so device checks need no temporary Sheet data. Absent means false; release is always false.
@@ -48,6 +53,9 @@ android {
 
         val escapedUrl = appsScriptUrl.replace("\\", "\\\\").replace("\"", "\\\"")
         buildConfigField("String", "APPS_SCRIPT_URL", "\"$escapedUrl\"")
+
+        val escapedKey = devexpertKey.replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField("String", "DEVEXPERT_KEY", "\"$escapedKey\"")
     }
 
     buildTypes {

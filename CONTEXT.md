@@ -93,7 +93,11 @@ locally. Never required for a Song to be usable; the MVP works with the Sheet al
 
 ### Assistant
 The phase 2 admin-only chat that composes Setlists from the Catalog under thematic constraints. Out
-of scope for the MVP, but its action contract is honored from phase 1.
+of scope for the MVP, but its action contract is honored from phase 1. Since `assistant-agent-core`
+(13 October 2026) its agent core exists without a screen: it answers a request with a **Proposal**, a
+validated, catalog-only ordered list of songs (each with the catalog's title, artist and key plus a
+short reason), a closing message, follow-up questions and the ids it had to reject. A Proposal changes
+nothing; loading it into the setlist is a separate, confirmed step through the action contract.
 
 ### Action Contract
 The rule that every mutation is reachable as a repository function or deeplink, so the Assistant can

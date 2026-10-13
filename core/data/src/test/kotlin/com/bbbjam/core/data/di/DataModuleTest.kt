@@ -9,6 +9,8 @@ import com.bbbjam.core.data.admin.AdminCredentialStore
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.LoginOutcome
+import com.bbbjam.core.data.assistant.AssistantCredentials
+import com.bbbjam.core.data.assistant.SetlistAssistant
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.RefreshOutcome
@@ -23,6 +25,7 @@ import java.time.Clock
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
@@ -42,6 +45,7 @@ class DataModuleTest {
         val testModule = module {
             single<Context> { ContextWrapper(null) }
             single { AppsScriptEndpoint.of("") }
+            single { AssistantCredentials.of("") }
             single<BluesJamDatabase> { database }
             // The jams refresh reads the store (admin-add-song-to-setlist); the production file needs
             // a real Context, so the store is the same factory over a temp file.
@@ -79,6 +83,11 @@ class DataModuleTest {
 
             // admin-add-song-to-setlist: one setlist repository, whose entries live in memory.
             assertSame(app.koin.get<SetlistRepository>(), app.koin.get<SetlistRepository>())
+
+            // assistant-agent-core: one assistant, which is not configured without a key.
+            val assistant = app.koin.get<SetlistAssistant>()
+            assertSame(assistant, app.koin.get<SetlistAssistant>())
+            assertFalse(assistant.isConfigured)
         } finally {
             app.close()
             database.close()

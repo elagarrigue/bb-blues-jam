@@ -1,0 +1,17 @@
+Repository: /c/Users/Emmanuel/AndroidStudioProjects/BBBluesJam
+
+== Build ==
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.21/79346ed53db48b18312a472602eb5c057070c54d/kotlin-compiler-embeddable-2.0.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+
+== Check ==
+
+== Verification tools status ==
+  konsist: wired
+  detekt: wired
+  ktlint: wired
+
+Baseline OK.
+Startup command: ./gradlew :app:installDebug   (requires a connected device or emulator)

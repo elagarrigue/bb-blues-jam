@@ -1,0 +1,2 @@
+16230478 app/build/outputs/apk/debug/app-debug.apk
+10817528 app/build/outputs/apk/release/app-release-unsigned.apk

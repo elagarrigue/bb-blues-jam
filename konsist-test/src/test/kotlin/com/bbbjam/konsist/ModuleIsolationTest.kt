@@ -143,6 +143,18 @@ class ModuleIsolationTest {
     }
 
     @Test
+    fun `the assistant package reads data only through the catalog and jams repositories`() {
+        scope.files
+            .filter { it.modulePath == CORE_DATA && it.packagee?.name.orEmpty().isUnder(ASSISTANT_PACKAGE) }
+            .assertFalse(testName = "assistant-reads-only") { file ->
+                file.imports.any { import -> ASSISTANT_FORBIDDEN_PACKAGES.any { import.name.isUnder(it) } } ||
+                    file.text.lineSequence()
+                        .filterNot { it.trimStart().startsWith("import ") }
+                        .any { ASSISTANT_FORBIDDEN_QUALIFIED.containsMatchIn(it) }
+            }
+    }
+
+    @Test
     fun `only the app imports the navigation library`() {
         scope.files
             .filter { it.modulePath != APP && it.modulePath != KONSIST_TEST }
@@ -299,10 +311,18 @@ class ModuleIsolationTest {
         /**
          * HTTP, the Room cache, JSON and DataStore (the admin passphrase, `admin-passphrase-login`
          * A6) belong to `:core:data`: Sheet I/O and stored state live only in repositories (D-13),
-         * so no other module may import them.
+         * so no other module may import them. Koog (`ai.koog.`) and Ktor (`io.ktor.`) joined with
+         * `assistant-agent-core`: only `:core:data` touches the agent runtime and its HTTP client.
          */
         val DATA_LIBRARY_PREFIXES =
-            listOf("okhttp3.", "androidx.room.", "kotlinx.serialization.", "androidx.datastore.")
+            listOf(
+                "okhttp3.",
+                "androidx.room.",
+                "kotlinx.serialization.",
+                "androidx.datastore.",
+                "ai.koog.",
+                "io.ktor.",
+            )
 
         /**
          * A reference to a data library outside an import line, such as a fully qualified
@@ -315,7 +335,7 @@ class ModuleIsolationTest {
          * serialization-core.
          */
         val QUALIFIED_DATA_LIBRARY =
-            Regex("""\b(okhttp3|androidx\.room|kotlinx\.serialization|androidx\.datastore)\.""")
+            Regex("""\b(okhttp3|androidx\.room|kotlinx\.serialization|androidx\.datastore|ai\.koog|io\.ktor)\.""")
 
         /**
          * Navigation Compose is `:app`'s (`song-detail-screen`, N1 and K2): features take callbacks
@@ -324,6 +344,18 @@ class ModuleIsolationTest {
          * library and nothing exposes it as `api`.
          */
         const val NAVIGATION_PREFIX = "androidx.navigation."
+
+        /**
+         * The assistant agent is read-only (D-24): its package, main and test sources, imports nothing
+         * from the packages that write or that reach the Sheet, the cache or the transport directly. It
+         * sees the data through `catalog` and `jams` (the repositories its tools read). Known limit: a
+         * text match on the package names, so an import alias or a split qualified name escapes.
+         */
+        const val ASSISTANT_PACKAGE = "com.bbbjam.core.data.assistant"
+        val ASSISTANT_FORBIDDEN_PACKAGES = listOf("setlist", "admin", "remote", "cache")
+            .map { "com.bbbjam.core.data.$it" }
+        val ASSISTANT_FORBIDDEN_QUALIFIED =
+            Regex("""\bcom\.bbbjam\.core\.data\.(setlist|admin|remote|cache)\b""")
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")

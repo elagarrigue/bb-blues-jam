@@ -1393,7 +1393,7 @@
     "depends_on": [
       "kotlin-2-3-toolchain-upgrade"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "devexpert.key is read from local.properties into BuildConfig in every build type (D-22); a missing key yields a typed not-configured result, never a crash; the key never appears in logs or toString",
       "Tools read the catalog and past jams (songs and who played each slot) through the existing repositories; no Sheet write is reachable from the agent (D-24)",
@@ -1401,6 +1401,15 @@
       "Unit tests with a fake prompt executor cover tool calls, parsing, catalog validation, malformed output and network failure",
       "A live call with the real key (no Sheet writes) for the brief's example request is recorded as evidence, including whether the model honored tool calling and structured output",
       "Konsist, detekt and ktlint stay wired; no feature module depends on another"
+    ],
+    "evidence": [
+      "Gate: CI=true ./init.sh exit 0 with konsist, detekt and ktlint wired; 736 JVM tests (baseline 699), 0 failures, 1 skipped (the opt-in live test). :app:assembleDebug and :app:assembleRelease succeed (evidence docs/evidence/assistant-agent-core/gate-final.txt, assemble.txt).",
+      "Java: the inline Koog call failed at Java 11 (\"Cannot inline bytecode built with JVM target 17 into bytecode that is being built with JVM target 11\", java11-inline-error.txt); every module now builds at Java 17 through the convention plugins (orchestrator amendment to spec Decision 3).",
+      "Live call against the real gateway (live-call.md): endpoint /v1/chat/completions, alias chat, tool calling honored (searchCatalog, pastJams). Structured output with response_format (Native) made the model skip the tools (live-call-1-native.md), so the agent uses StructuredRequest.Manual; the final answer parsed and validated against the catalog.",
+      "Konsist: 18 rules; ai.koog./io.ktor. data-library tightening and the new assistant-reads-only rule both shown failing (konsist-failing-run.txt) then green.",
+      "Deviation: jackson-module-kotlin cannot be dexed at minSdk 24, so Jackson (via Koog serialization-jackson) is excluded on the two Koog dependencies (assemble-failure-jackson.txt). Classpath diff (classpath-diff.txt, 101 added artifacts): Koog and Ktor modules (including ktor-server-core/cio/sse, unused), slf4j-api and slf4j-simple, kotlin-reflect, kotlin-logging, jansi, typesafe config, reactive-streams, kotlinx-io, kotlinx-schema-*, serialization-json-io; coroutines 1.9.0->1.10.2 and org.jetbrains:annotations 23.0.0->26.0.2-1 move up; Compose, lifecycle, Koin, Room, OkHttp unchanged. APK debug 16230478->21037328 bytes, release 10817528->14428292.",
+      "Not independently validated yet; no device step (no UI in this slice).",
+      "Independent validator accepted on 13 October 2026 on revalidation (first pass: revise for a cancellation test that could not fail and three doc inaccuracies). Reran CI=true ./init.sh (three tools wired) and :core:data:testDebugUnitTest --rerun; key absent from every non-ignored file. Carried forward: assistant-admin-tab's device check must send one real request (Jackson-excluded runtime path)."
     ]
   },
   {

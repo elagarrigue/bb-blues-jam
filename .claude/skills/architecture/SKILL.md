@@ -385,6 +385,32 @@ slice removed to avoid doubling the inset). `MainActivity` reads `AdminSession.o
 once via `koinInject<AdminSession>()` (new `:app` dependency on `koin-compose`, already catalogued)
 and passes `admin` into both `BluesJamTheme` and `AppNavHost`.
 
+As built by `assistant-agent-core` (13 October 2026; phase 2, D-21 to D-24; no UI yet, the next slice
+is `assistant-admin-tab`): **no new module.** A `:core:assistant` module would have violated
+`core-import-allowlist` and `build-file-project-deps` (a `:core:*` may depend only on `:core:model`), so
+the agent lives in `:core:data`, package `com.bbbjam.core.data.assistant`. The public surface is plain
+Kotlin, no Koog, Ktor or serialization type: `SetlistAssistant` (`isConfigured`, `startConversation()`),
+`AssistantConversation` (`suspend send(request): AssistantReply`, history in memory, one turn at a time
+behind a `Mutex`, a blank request is a caller bug), `AssistantReply` (`NotConfigured`, `Proposal(songs,
+message, questions, rejectedSongIds)`, `Failed(AssistantFailure)`), `ProposedSong`, `AssistantFailure`
+(`Offline`, `Unauthorized`, `Unavailable(status)`, `InvalidResponse`, `TooManySteps`, `CatalogEmpty`) and
+`AssistantCredentials`. Internal: `DefaultSetlistAssistant(credentials, catalog, jams, executorFactory)`
+(a Koin `single`, binding `AssistantHttp.executorFactory()`; `:app` supplies the credentials),
+`CatalogTool` (`searchCatalog`) and `PastJamsTool` (`pastJams`), both `SimpleTool`s holding one
+repository (`CatalogRepository` / `JamsRepository`) and returning compact text, `ProposalValidator`
+(catalog-only, title/artist/key from the catalog, malformed/unknown/repeated ids to `rejectedSongIds`),
+`ProposalDto`, `AssistantPrompt`, `AssistantErrors` (cause-chain mapping; only IO, Koog HTTP/client,
+parsing and agent exceptions are caught, cancellation is rethrown) and `AssistantModel` (alias `chat`,
+`OpenAIEndpoint.Completions` only, never `Responses`). **The agent is read-only (D-24):** the Konsist
+rule `assistant-reads-only` bans, in that package's main and test sources, any import or qualified
+reference to `com.bbbjam.core.data.setlist`, `.admin`, `.remote` and `.cache`; proposals reach the
+setlist only through `assistant-apply-proposal` and the action contract. **Structured output is
+`StructuredRequest.Manual`, not `Native`:** the live call showed the gateway's model skipping the tools
+and answering at once when `response_format` is sent (`docs/evidence/assistant-agent-core/
+live-call-1-native.md`); with the schema in the prompt it called both tools and returned a valid
+proposal (`live-call.md`). A later change of alias or gateway is `AssistantModel.MODEL_ID`/`BASE_URL`.
+The opt-in live test is `AssistantLiveCallTest` (`-Pbbbjam.assistantLive=true`, off in the gate).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -556,7 +582,8 @@ match on each `:core:model` file), the data-library rule (`data-libraries-only-i
 and a fully qualified reference there compiles; known limits: it is a line-based text match, so a
 qualified name split across lines at a dot, or with a backticked segment, is not caught, and the
 compile classpath still blocks okhttp3, Room, serialization-json and DataStore but not
-serialization-core; `androidx.datastore.` joined both lists with `admin-passphrase-login`), the
+serialization-core; `androidx.datastore.` joined both lists with `admin-passphrase-login`, and
+`ai.koog.` and `io.ktor.` with `assistant-agent-core`), the
 package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
@@ -576,14 +603,15 @@ constant escapes, and literals inside `:core:ui` components are not checked. All
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 17 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 18 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
 `jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
 `amber-roles-allowlisted`, with `next-jam-read-only-list`; the 16th,
 `no-dp-literal-outside-core-ui`, with `list-states`; the 17th, `navigation-only-in-app` (outside
 `:app` and `:konsist-test`, no import of `androidx.navigation.`; an import text match, a fully
 qualified use escapes but would not compile, because only `:app` declares the library), with
-`song-detail-screen`); the two that read build files are
+`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below); the
+two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
@@ -604,8 +632,8 @@ them.
 
   | Plugin | Applies / sets | Used by |
   |---|---|---|
-  | `bluesjam.jvm.library` | `org.jetbrains.kotlin.jvm`; `java {}` source/target 11; `jvmTarget = JVM_11` | `:core:model`, `:konsist-test` |
-  | `bluesjam.android.library` | `com.android.library`; common Android setup (SDKs, Java 11, core library desugaring) | through `.data`, `.presenter` |
+  | `bluesjam.jvm.library` | `org.jetbrains.kotlin.jvm`; `java {}` source/target 17; `jvmTarget = JVM_17` | `:core:model`, `:konsist-test` |
+  | `bluesjam.android.library` | `com.android.library`; common Android setup (SDKs, Java 17, core library desugaring) | through `.data`, `.presenter` |
   | `bluesjam.android.application` | `com.android.application`; common Android setup; `targetSdk` from the catalog; `buildFeatures.buildConfig = true` | `:app` |
   | `bluesjam.android.compose` | requires an Android plugin first; Compose compiler plugin; `buildFeatures.compose = true` | `:app` (and through the two below) |
   | `bluesjam.android.presenter` | `.android.library` + `.android.compose`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, molecule-runtime, turbine, kotlinx-coroutines-test | `:core:ui` |
@@ -637,9 +665,14 @@ them.
   Android module (`configureAndroidCommon` in `ProjectExtensions.kt`), `targetSdk` in `:app` only
   through `bluesjam.android.application`. Change a level in `[versions]`, never in a module.
   `configureAndroidCommon` also turns on core library desugaring (below).
-- **Java 11 everywhere**, set by the conventions: `compileOptions` `VERSION_11` in Android modules;
-  `java {}` `VERSION_11` plus `jvmTarget = JVM_11` in JVM modules. No `jvmToolchain(11)`, which
-  would make foojay download a JDK 11 for nothing. `build-logic` itself targets the daemon JVM
+- **Java 17 everywhere**, set by the conventions: `compileOptions` `VERSION_17` in Android modules;
+  `java {}` `VERSION_17` plus `jvmTarget = JVM_17` in JVM modules. No `jvmToolchain(17)`, which
+  would make foojay download a JDK 17 for nothing. (Raised from 11 on 13 October 2026 by
+  `assistant-agent-core`: Koog 1.3.0 ships Java 17 bytecode and the agent calls its inline reified
+  APIs, which Kotlin refuses to inline into a Java 11 target. Reproduced first: "Cannot inline
+  bytecode built with JVM target 17 into bytecode that is being built with JVM target 11", saved in
+  `docs/evidence/assistant-agent-core/java11-inline-error.txt`. The orchestrator chose one level for
+  every module over a `:core:data`-only exception; minSdk 24 is unaffected, D8 desugars.) `build-logic` itself targets the daemon JVM
   (pinned by `gradle/gradle-daemon-jvm.properties`); do not add a toolchain there either.
 - **New modules keep sources in `src/main/kotlin`** (and `src/test/kotlin`). `:app` keeps
   `src/main/java`. Libraries need no `AndroidManifest.xml`; the namespace comes from the DSL,
@@ -737,6 +770,11 @@ them.
   `BuildConfig.APPS_SCRIPT_URL` (`""` when missing), and `appModule` binds
   `AppsScriptEndpoint.of(BuildConfig.APPS_SCRIPT_URL)`. Never log it (`AppsScriptEndpoint` hides
   it in `toString`).
+- **The DevExpert key** (`assistant-agent-core`, D-22) follows the same path: `devexpert.key` in the
+  git-ignored `local.properties` becomes `BuildConfig.DEVEXPERT_KEY` in `defaultConfig` (every build
+  type, release included; `""` when missing), and `appModule` binds
+  `AssistantCredentials.of(BuildConfig.DEVEXPERT_KEY)`. The risk of a key in the APK is accepted
+  (D-22). `AssistantCredentials.toString()` never prints it; never log it.
 - **Data stack pins** (`catalog-repository-cache`; Kotlin raised by `kotlin-2-3-toolchain-upgrade`):
   Kotlin 2.3.21 (single `kotlin` catalog key: KGP, compiler, Compose and serialization plugins,
   build-logic; chosen to match Gradle 9.6's embedded Kotlin and Koog's 2.3.10 floor; 2.4.x waits for
@@ -746,6 +784,13 @@ them.
   still holds Koin and Navigation is the Compose 1.9 line (BOM 2025.09.00), see below. KSP
   2.2.10-2.0.2 fails under built-in Kotlin ("Using kotlin.sourceSets DSL to add Kotlin sources is
   not allowed").
+- **Koog and Ktor pins** (`assistant-agent-core`): `ai.koog:agents-core` and
+  `ai.koog:http-client-ktor` 1.3.0 (catalog `koog`), `io.ktor:ktor-client-okhttp` 3.3.3 (catalog
+  `ktor`, the version Koog 1.3.0 is built against), all `implementation` in `core/data/build.gradle.kts`
+  only. Never the `koog-agents` umbrella (it pulls Anthropic, AWS, Ollama, OpenTelemetry...). Koog
+  needs Kotlin >= 2.3.10 and Java 17 bytecode. The Ktor client uses the OkHttp engine over a client built
+  in `AssistantHttp`, and Koog gets its `KtorKoogHttpClient.Factory` explicitly (no `ServiceLoader`).
+  The classpath diff and APK sizes are in `docs/evidence/assistant-agent-core/`.
 - **Navigation pin** (`song-detail-screen`, N1): Navigation Compose 2.9.8 (catalog
   `androidx-navigation-compose`), declared in `app/build.gradle.kts` only, never in a convention or
   another module. The last 2.9.x; it resolved with no version moving up (Compose
@@ -810,7 +855,7 @@ them.
   "com.bbbjam.feature.<name>" }`, its only project dependency `implementation(project(":core:ui"))`
   (plus `implementation(project(":core:data"))` once a feature reads data, as
   `feature/next-jam/build.gradle.kts` does), `androidx.compose.foundation` and tooling-preview
-  (+ debug tooling). SDKs, Java 11, Compose, the test flag, Koin and the presenter test libraries
+  (+ debug tooling). SDKs, Java 17, Compose, the test flag, Koin and the presenter test libraries
   come from the convention.
 - **Koin 4.1.1** (set by `info-screen`, approved 30 September 2026; D-16). Catalog: `koin-bom`
   (versioned) and `koin-core`, `koin-android`, `koin-compose` (BOM-managed). Feature modules use

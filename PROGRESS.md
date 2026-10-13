@@ -4,6 +4,26 @@ The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no
 
 # Progress Log
 
+## 13 October 2026 - assistant-agent-core accepted
+
+Independent validator accepted on revalidation after a revise (cancellation test rewritten to observe send's own outcome and shown failing; spec, technical-discovery, risks and feature evidence corrected to match the recorded classpath and live call). Next: assistant-admin-tab; its device check must send one real request to exercise the Jackson-excluded Koog path on Android.
+
+## 13 October 2026 - assistant-agent-core passing (awaiting validation)
+
+A Koog 1.3.0 agent in `:core:data` (package `com.bbbjam.core.data.assistant`, no new module, no UI), pointed at DevExpert Inference chat completions (alias `chat`). Public API: `SetlistAssistant`, `AssistantConversation.send`, `AssistantReply` (`NotConfigured`, `Proposal`, `Failed`), `AssistantFailure`; read-only tools `searchCatalog` and `pastJams` over `CatalogRepository`/`JamsRepository`; `ProposalValidator` keeps only catalog songs with catalog title/artist/key and lists rejected ids; history in memory; `DEVEXPERT_KEY` BuildConfig field from `local.properties` `devexpert.key` in every build type (D-22), `AssistantCredentials` hides it in `toString`.
+
+**Java amendment (orchestrator, supersedes spec Decision 3):** the inline Koog call was reproduced failing at Java 11 first (`java11-inline-error.txt`: "Cannot inline bytecode built with JVM target 17 into bytecode that is being built with JVM target 11"); then every module (Android and JVM conventions) was raised to Java 17 uniformly, and the architecture skill's "Java 11 everywhere" became "Java 17 everywhere" with a dated note. No mixed levels.
+
+Dependencies added (catalog `koog` 1.3.0, `ktor` 3.3.3; `implementation` in `core/data` only): `ai.koog:agents-core`, `ai.koog:http-client-ktor`, `io.ktor:ktor-client-okhttp`. Jackson (`serialization-jackson`) is excluded on the two Koog dependencies because `jackson-module-kotlin` cannot be dexed at minSdk 24 (`assemble-failure-jackson.txt`); the agent uses the kotlinx serializer. Classpath diff (`classpath-diff.txt`): Koog/Ktor modules added, kotlinx-coroutines moved up 1.9.0 to 1.10.2 (DataStore held it lower); Compose, lifecycle, Koin, Room, OkHttp unchanged. APK debug 16230478 to 21037328 bytes, release 10817528 to 14428292.
+
+**Live call** (`live-call.md`, `live-call-1-native.md`): endpoint `/v1/chat/completions`, alias `chat`. With `response_format: json_schema` (Native) the gateway accepted `tools` but the model skipped them and answered with an empty proposal. Fallback taken per spec Decision 6: `StructuredRequest.Manual` (schema in the prompt). Then tool calling was honored (both tools called, tool results sent back, `reasoning_content` accepted) and the final answer parsed and validated. Decision 5 fallback (own LLMClient) was not needed. The model is not deterministic: an earlier Manual run returned 12 validated songs, the recorded final run 5 plus questions (only the final run is saved). The key appears in no output or evidence file (the test asserts it); `local.properties` md5 unchanged (569913ae...).
+
+Konsist: 18 rules. `ai.koog.`/`io.ktor.` added to the data-library lists and new `assistant-reads-only` (no import or qualified reference to `core.data.setlist/.admin/.remote/.cache` from the assistant package, main and test); both shown failing (`konsist-failing-run.txt`) then green.
+
+Verification: baseline `CI=true ./init.sh` exit 0, 699 tests. Final `CI=true ./init.sh` exit 0 with konsist, detekt, ktlint wired, 736 tests (37 new: credentials 3, validator 5, catalog tool 5, past jams tool 7, MockWebServer assistant 15, live 1 skipped by default, Konsist 1), 0 failures. `:app:assembleDebug` and `:app:assembleRelease` succeed. The first gate run failed detekt MaxLineLength in the live test (fixed by shortening lines; no rule changed). No device step (no UI). Docs updated: architecture skill, CONTEXT, technical-discovery, risks, spec notes. Not committed.
+
+Next: independent validation, then `assistant-admin-tab`.
+
 ## 13 October 2026 - kotlin-2-3-toolchain-upgrade accepted
 
 Independent validator accepted after rerunning the gate (699 tests, three tools wired), buildEnvironment and dependencyInsight. Correction to the implementer note below: kotlin-stdlib shows "By constraint" in dependencyInsight; that is KGP's stdlib alignment selecting the higher version, not a force. Next: assistant-agent-core.

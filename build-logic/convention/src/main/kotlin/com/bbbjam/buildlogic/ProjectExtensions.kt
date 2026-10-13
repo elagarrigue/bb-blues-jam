@@ -21,7 +21,7 @@ internal fun VersionCatalog.intVersion(alias: String): Int = findVersion(alias).
 internal fun VersionCatalog.library(alias: String): Provider<MinimalExternalModuleDependency> = findLibrary(alias).get()
 
 /**
- * SDK levels from the catalog, Java 11 and core library desugaring, shared by every Android module.
+ * SDK levels from the catalog, Java 17 and core library desugaring, shared by every Android module.
  *
  * Desugaring is on everywhere because `minSdk` is below 26: lint `NewApi` fails a library that uses
  * java.time without it even when `:app` has it, and a library that enables it without `:app` fails
@@ -31,8 +31,8 @@ internal fun Project.configureAndroidCommon(android: CommonExtension) {
     android.apply {
         compileSdk { version = release(libs.intVersion("compileSdk")) }
         defaultConfig.minSdk = libs.intVersion("minSdk")
-        compileOptions.sourceCompatibility = JavaVersion.VERSION_11
-        compileOptions.targetCompatibility = JavaVersion.VERSION_11
+        compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+        compileOptions.targetCompatibility = JavaVersion.VERSION_17
         compileOptions.isCoreLibraryDesugaringEnabled = true
     }
     dependencies {

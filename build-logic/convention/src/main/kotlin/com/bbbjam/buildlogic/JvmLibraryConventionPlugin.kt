@@ -8,18 +8,18 @@ import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
-/** A pure Kotlin JVM module (`:core:model`, `:konsist-test`): Kotlin JVM, Java 11, no toolchain. */
+/** A pure Kotlin JVM module (`:core:model`, `:konsist-test`): Kotlin JVM, Java 17, no toolchain. */
 class JvmLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("org.jetbrains.kotlin.jvm")
             extensions.configure<JavaPluginExtension> {
-                sourceCompatibility = JavaVersion.VERSION_11
-                targetCompatibility = JavaVersion.VERSION_11
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
             }
             extensions.configure<KotlinJvmProjectExtension> {
                 compilerOptions {
-                    jvmTarget.set(JvmTarget.JVM_11)
+                    jvmTarget.set(JvmTarget.JVM_17)
                 }
             }
         }
