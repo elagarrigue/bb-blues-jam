@@ -1,3 +1,11 @@
+## 14 October 2026 - admin-set-jam-status passing (awaiting validation)
+
+The admin moves the upcoming jam between BORRADOR, CREADA and PUBLICADA from Próxima jam (D-26). **Server:** `setJamStatus({date, status})` last in `ACTIONS` (refusals before any write, idempotent `changed:false`, plain-text write with read-back), `publishSetlist` kept as a thin alias (its node tests pass unmodified), `checkPublish` also writes CREADA. **`:core:data`:** `SetlistJamStatusRepository`, `SetJamStatusOutcome` (incl. `ScriptOutdated`), `JamStatusChange`, Room mirror only after a confirmed echo. **`:app`:** registry `SET_JAM_STATUS` (12, test shown failing first). **UI:** neutral `Pasar a creada`/`Pasar a borrador` actions, immediate for BORRADOR<->CREADA (U1: no dialog, orchestrator decision), modal dialog only when leaving PUBLICADA, sending line, failure card, outdated-script card; no new amber. Assistant `DRAFT_LINE` updated. Docs and the architecture skill updated.
+
+Verification: node 207 pass (12 failing first); `CI=true ./init.sh` exit 0, three tools wired, 910 tests (validator REVISE repaired: queue-order and caller-cancellation tests, style from JamStatusDefaults, guide wording), 0 failures. Device (Pixel, read-only, md5 of `local.properties` unchanged): real PUBLICADA jam shows both actions, the dialog opens, Cancelar and back write nothing (no `setJamStatus` in logcat; note a success logs nothing, so the proof is also that the badge stayed PUBLICADA and no sending line appeared); BORRADOR and CREADA controls by screenshot only. Evidence: `docs/evidence/admin-set-jam-status/`.
+
+**Owed by the user:** the combined script redeploy (Code, Jams, Post) per `docs/migrations/jam-status-script-update.md`; the orchestrator then runs the no-write proofs. Until then `Pasar a …` answers "todavía no sabe cambiar el estado" and publishing works.
+
 ## 14 October 2026 - jam-status-created passing (awaiting validation)
 
 Three jam states (D-26): `JamStatus.CREATED` (CREADA, date only), BORRADOR now hidden from musicians, PUBLICADA unchanged. Server: the anonymous GET serves only CREADA/PUBLICADA rows (`musicianJams_`, GET route only; `buildJams`/`readAllJams_` unfiltered), `jamStatuses=3` (without it CREADA is presented as BORRADOR; another value is `invalid_jam_statuses`), `readJams` reads future BORRADOR and CREADA tabs, writes and `publishSetlist` accept CREADA. Client: `JamsMapper` drops a valid BORRADOR on anonymous reads (`hiddenDrafts`, logged as dates), `JamsSnapshot.heldBack` + `forMusicians()` used by Próxima jam (no admin), Anteriores and the past detail; the transport takes query parameters; admin badge `CREADA` with new notes, `Publicar lista` for BORRADOR and CREADA; `markPublished` from CREATED; debug flag `bluesjam.demoUpcomingJamCreated` and live-mode `heldBack`; assistant `jamSchedule` says CREADA. No Room change, Konsist unchanged (19 rules). Docs updated; migration guide `docs/migrations/jam-status-script-update.md`.
@@ -27,6 +35,10 @@ Verification: baseline `CI=true ./init.sh` exit 0; final exit 0, konsist/detekt/
 The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no glyph, never amber); the panel line is unchanged and differs from the strip chip only by the check. Changed: `InstrumentStripDefaults`, KDoc in `LineupPanelDefaults` and `InstrumentChipUiModel`, three test files, DESIGN.md, architecture SKILL. `CI=true ./init.sh` exit 0 with konsist, detekt and ktlint wired. Device (Pixel 5, demo jam, no writes): before.png and after.png in `docs/evidence/strip-extra-chip-filled/`; the before shot shows row 06's extra, the after shot row 04 `+ saxo: Valeria` (scroll positions differ). Independent validator accepted on 12 October 2026 after rerunning the gate.
 
 # Progress Log
+
+## 14 October 2026 - admin-set-jam-status accepted (combined redeploy owed)
+
+Independent validator accepted on revalidation (910 JVM, 207 node). The user owes the single redeploy of Code/Jams/Post for jam-status-created and admin-set-jam-status; then the orchestrator runs the no-write deploy checks. Nobody types CREADA in the Sheet before it.
 
 ## 14 October 2026 - jam-status-created accepted (redeploy deferred)
 

@@ -77,6 +77,25 @@ class SetlistDaoTest {
     }
 
     @Test
+    fun `updateJamStatus sets the status of the cached jam with the date and no other`() = runTest {
+        val published = JamEntity(UPCOMING, 1, "21:00", "Lugar", "PUBLISHED", "AVAILABLE", null, 0)
+        val other = JamEntity(LATER, 2, "21:00", "Lugar", "PUBLISHED", "AVAILABLE", null, 0)
+        jamsDao.replaceJams(
+            JamRows(listOf(published, other), emptyList(), emptyList(), emptyList()),
+            SyncStateEntity("jams", 1, 1, null),
+        )
+
+        assertEquals(1, dao.updateJamStatus(UPCOMING, "DRAFT"))
+        assertEquals(0, dao.updateJamStatus("1999-01-01", "CREATED"))
+        assertEquals(
+            listOf("DRAFT", "PUBLISHED"),
+            jamsDao.observeJams().first().sortedBy { it.jam.sheetOrder }.map { it.jam.status },
+        )
+        assertEquals(1, dao.updateJamStatus(UPCOMING, "CREATED"))
+        assertEquals("CREATED", jamsDao.observeJams().first().single { it.jam.date == UPCOMING }.jam.status)
+    }
+
+    @Test
     fun `removeSetlistSong deletes the song with its slots and extras and moves later songs up with their own`() =
         runTest {
             jamsDao.replaceJams(fourSongs(), SyncStateEntity("jams", 1, 1, null))

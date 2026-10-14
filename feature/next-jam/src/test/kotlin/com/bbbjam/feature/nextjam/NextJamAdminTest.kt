@@ -121,7 +121,7 @@ class NextJamAdminTest {
             val confirmation = confirmingJam.admin?.status?.publish as PublishUiModel.Confirming
             assertEquals(NextJamCopy.PUBLISH_PROMPT, confirmation.prompt)
             assertEquals(publishDetails(2), confirmation.details)
-            assertEquals(NextJamCopy.PUBLISH_IRREVERSIBLE, confirmation.irreversibleNote)
+            assertEquals(NextJamCopy.PUBLISH_REVERSIBLE, confirmation.reversibleNote)
 
             confirmation.events(PublishUiModel.Event.Cancel)
             val cancelled = awaitItem() as NextJamUiModel.Jam

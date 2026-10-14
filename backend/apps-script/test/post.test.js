@@ -190,7 +190,7 @@ const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
 test('the action table: checkPassphrase and readJams read, every other action writes', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam']);
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
@@ -205,6 +205,7 @@ test('the action table: checkPassphrase and readJams read, every other action wr
   assert.equal(ACTIONS.checkPublish.write, true);
   assert.equal(ACTIONS.createJam.write, true);
   assert.equal(ACTIONS.checkCreateJam.write, true);
+  assert.equal(ACTIONS.setJamStatus.write, true);
   for (const name of ACTION_NAMES) {
     assert.deepStrictEqual(Object.keys(ACTIONS[name]).sort(), ['run', 'write']);
     assert.equal(typeof ACTIONS[name].run, 'function');
@@ -489,7 +490,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -594,7 +595,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam'));
+  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus'));
   });
   withAppsScript({
     getActiveSpreadsheet() {
@@ -645,5 +646,6 @@ test('Post.js holds the lines the README tells the user to look for after pastin
   assert.ok(source.includes('addSong: { write: true, run: addSong_ },'));
   assert.ok(source.includes('removeSong: { write: true, run: removeSong_ },'));
   assert.ok(source.includes('setKey: { write: true, run: setKey_ },'));
+  assert.ok(source.includes('setJamStatus: { write: true, run: setJamStatus_ },'));
   assert.ok(!source.includes('checkPassphrase: checkPassphrase_,'), 'the old marker must be gone, so an old paste is detectable');
 });

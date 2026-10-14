@@ -124,6 +124,7 @@ class NextJamPresenter(
         val removes by remember { setlist.observeRemoves() }.collectAsState(initial = emptyList())
         val overlays = rememberSongOverlays(setlist)
         val publishes by remember { setlist.observePublishes() }.collectAsState(initial = emptyList())
+        val statusChanges by remember { setlist.observeJamStatusChanges() }.collectAsState(initial = emptyList())
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val moveControls = rememberMoveControls(setlist, snapshot)
@@ -137,6 +138,7 @@ class NextJamPresenter(
             overlays = overlays,
             moves = moveControls.moves,
             publishes = publishes,
+            statusChanges = statusChanges,
             onMove = moveControls.onMove,
             onAddSong = { date -> currentOnAddSong(date) },
         )

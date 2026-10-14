@@ -57,7 +57,7 @@ internal object NextJamCopy {
     const val PUBLISHED_NOTE = "Los músicos ya ven esta lista."
     const val PUBLISH = "Publicar lista"
     const val PUBLISH_PROMPT = "¿Publicar la lista?"
-    const val PUBLISH_IRREVERSIBLE = "Desde la app no se puede volver a borrador."
+    const val PUBLISH_REVERSIBLE = "Después podés volver a cambiar el estado desde acá."
     const val PUBLISH_CONFIRM = "Publicar"
     const val PUBLISHING = "Publicando…"
     const val PUBLISH_FAILED = "No se pudo publicar la lista"
@@ -66,6 +66,18 @@ internal object NextJamCopy {
     const val PUBLISH_OFFLINE =
         "No pudimos confirmar la publicación: no hay conexión o el servidor tardó. Reintentá; si ya estaba publicada, no pasa nada."
     const val EMPTY_PUBLISH = "La lista no tiene temas. Agregá al menos uno antes de publicar."
+    const val TO_CREATED = "Pasar a creada"
+    const val TO_DRAFT = "Pasar a borrador"
+    const val STATUS_SAVING = "Cambiando el estado…"
+    const val UNPUBLISH_PROMPT = "¿Dejar de publicar la lista?"
+    const val UNPUBLISH_TO_CREATED_BODY =
+        "Los músicos van a dejar de ver la lista cuando actualicen la app. Van a seguir viendo la fecha."
+    const val UNPUBLISH_TO_DRAFT_BODY =
+        "Los músicos van a dejar de ver esta jam, con su fecha y su lista, cuando actualicen la app."
+    const val STATUS_FAILED = "No se pudo cambiar el estado"
+    const val STATUS_CONSEQUENCE = "La jam sigue como estaba."
+    const val STATUS_SCRIPT_OUTDATED =
+        "El script de la planilla todavía no sabe cambiar el estado. Actualizalo con la guía y probá de nuevo."
     const val ADMIN_EMPTY_TITLE = "Todavía no hay temas"
     const val ADMIN_EMPTY = "Agregá el primero desde el catálogo."
     const val ADMIN_NO_UPCOMING = "Para armar la lista, cargá la fecha en la pestaña Jams de la planilla."

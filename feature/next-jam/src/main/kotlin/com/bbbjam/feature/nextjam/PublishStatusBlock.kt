@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
@@ -43,7 +44,9 @@ internal fun AdminStatusBlock(model: AdminStatusUiModel) {
             )
         }
         Text(text = model.note, style = BluesJamTheme.typography.caption, color = style.note)
+        model.statusChange?.let { JamStatusActions(it) }
         model.publish?.let { PublishControl(it) }
+        model.statusChange?.confirming?.let { UnpublishDialog(it, model.statusChange.events) }
     }
 }
 
@@ -59,7 +62,7 @@ private fun PublishControl(model: PublishUiModel) {
         is PublishUiModel.Confirming -> Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
             Text(text = model.prompt, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
             Text(text = model.details, style = BluesJamTheme.typography.caption, color = style.note)
-            Text(text = model.irreversibleNote, style = BluesJamTheme.typography.caption, color = style.note)
+            Text(text = model.reversibleNote, style = BluesJamTheme.typography.caption, color = style.note)
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 PrimaryPublishButton(model.confirmLabel, Modifier.weight(1f)) {
                     model.events(PublishUiModel.Event.Confirm)
@@ -134,7 +137,12 @@ private fun PrimaryPublishButton(label: String, modifier: Modifier = Modifier, o
 }
 
 @Composable
-private fun PublishTextAction(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun PublishTextAction(
+    label: String,
+    modifier: Modifier = Modifier,
+    color: Color = BluesJamTheme.colors.text,
+    onClick: () -> Unit,
+) {
     Box(
         modifier = modifier
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
@@ -144,7 +152,7 @@ private fun PublishTextAction(label: String, modifier: Modifier = Modifier, onCl
         Text(
             text = label,
             style = BluesJamTheme.typography.body,
-            color = BluesJamTheme.colors.text,
+            color = color,
             textDecoration = TextDecoration.Underline,
         )
     }

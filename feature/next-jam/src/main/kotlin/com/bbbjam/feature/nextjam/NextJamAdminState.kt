@@ -8,6 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
 import com.bbbjam.core.data.setlist.SetlistPublish
@@ -32,12 +33,14 @@ internal fun rememberNextJamAdminState(
     overlays: SongOverlays,
     moves: List<SetlistMove>,
     publishes: List<SetlistPublish>,
+    statusChanges: List<JamStatusChange>,
     onMove: (LocalDate, SongId, Int) -> Unit,
     onAddSong: (LocalDate) -> Unit,
 ): AdminState? {
     AdminRefreshEffect(adminSession, jams)
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
     val publishControls = rememberPublishControls(setlist)
+    val statusControls = rememberJamStatusControls(setlist)
     val scope = rememberCoroutineScope()
     val onRemoval = removalHandler(setlist, scope, { confirming == it }) { confirming = it }
     if (!isAdmin) return null
@@ -59,5 +62,11 @@ internal fun rememberNextJamAdminState(
         onCancelPublish = publishControls.onCancel,
         onConfirmPublish = publishControls.onConfirm,
         onRetryPublish = publishControls.onRetry,
+        statusChanges = statusChanges,
+        statusConfirming = statusControls.confirming,
+        onStatusRequest = statusControls.onRequest,
+        onStatusCancel = statusControls.onCancel,
+        onStatusConfirm = statusControls.onConfirm,
+        onStatusRetry = statusControls.onRetry,
     )
 }

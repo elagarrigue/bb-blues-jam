@@ -38,7 +38,9 @@ internal class DefaultSetlistRepository(
         SetlistMoves(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
     private val extraChanges: SetlistExtraParticipants =
         SetlistExtraParticipants(writer, setlistDao, catalogDao, scope, queue),
+    private val jamStatuses: SetlistJamStatuses = SetlistJamStatuses(writer, setlistDao, scope, queue, failureLog),
 ) : SetlistRepository,
+    SetlistJamStatusRepository by jamStatuses,
     SetlistSlotClearRepository by slotClears,
     SetlistMoveRepository by moves,
     SetlistExtraParticipantRepository by extraChanges,
@@ -79,6 +81,7 @@ internal class DefaultSetlistRepository(
         slotClears.dismiss(id)
         moves.dismiss(id)
         dismissPublish(id)
+        dismissJamStatusChange(id)
     }
 
     /**

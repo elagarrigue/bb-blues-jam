@@ -74,6 +74,9 @@ class FakeSetlistRepository : SetlistRepository {
     val moves = MutableStateFlow<List<SetlistMove>>(emptyList())
     val publishes = MutableStateFlow<List<SetlistPublish>>(emptyList())
     val publishCalls = mutableListOf<LocalDate>()
+    val statusChanges = MutableStateFlow<List<com.bbbjam.core.data.setlist.JamStatusChange>>(emptyList())
+    val statusCalls = mutableListOf<Pair<LocalDate, com.bbbjam.core.model.JamStatus>>()
+    var statusHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     val publishResults = ArrayDeque<PublishOutcome>()
     var publishHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     val moveCalls = mutableListOf<Triple<LocalDate, SongId, Int>>()
@@ -208,6 +211,24 @@ class FakeSetlistRepository : SetlistRepository {
     override fun dismissPublish(id: Long) {
         dismissed += id
         publishes.value = publishes.value.filterNot { it.id == id && it.state is SetlistPublish.State.Failed }
+    }
+
+    override suspend fun setJamStatus(
+        jamDate: LocalDate,
+        status: com.bbbjam.core.model.JamStatus,
+    ): com.bbbjam.core.data.setlist.SetJamStatusOutcome {
+        statusCalls += jamDate to status
+        statusHold?.await()
+        return com.bbbjam.core.data.setlist.SetJamStatusOutcome.StatusSet(status, changed = true)
+    }
+
+    override fun observeJamStatusChanges(): Flow<List<com.bbbjam.core.data.setlist.JamStatusChange>> = statusChanges
+
+    override fun dismissJamStatusChange(id: Long) {
+        dismissed += id
+        statusChanges.value = statusChanges.value.filterNot {
+            it.id == id && it.state !is com.bbbjam.core.data.setlist.JamStatusChange.State.Sending
+        }
     }
 
     override fun dismiss(id: Long) {

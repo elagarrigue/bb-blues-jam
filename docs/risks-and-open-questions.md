@@ -346,6 +346,7 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   does not release it either. **Amended by `jam-status-created` (D-26):** the anonymous GET now omits
   a `BORRADOR` row entirely (and a typo or empty `estado`), the mapper drops it, and the musician
   screens project it away (`forMusicians()`).
+- **Combined redeploy owed (`admin-set-jam-status`).** The guide `docs/migrations/jam-status-script-update.md` is ready and covers both D-26 slices. Until the user redeploys, the new app's `Pasar a …` shows the "script todavía no sabe cambiar el estado" message and writes nothing; publishing keeps working. U1 (a dialog for BORRADOR ↔ CREADA too) was answered by the orchestrator: no dialog, only leaving PUBLICADA confirms.
 - **Old builds and the script redeploy ordering (`jam-status-created`).** The script changes (Code,
   Jams, Post) go out in **one** redeploy together with `admin-set-jam-status` (owed, see
   `docs/migrations/jam-status-script-update.md`). Until then new builds hide a `BORRADOR` jam on the

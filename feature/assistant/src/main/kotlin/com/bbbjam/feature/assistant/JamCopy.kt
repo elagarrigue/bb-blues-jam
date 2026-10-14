@@ -13,7 +13,8 @@ internal object JamCopy {
     const val CREATE_RETRY = "Reintentar"
     const val DIALOG_TITLE = "¿Crear la jam?"
     const val CANCEL = "Cancelar"
-    const val DRAFT_LINE = "Se crea como borrador: los músicos no la ven hasta que publiques la lista."
+    const val DRAFT_LINE =
+        "Se crea como borrador: los músicos no la ven hasta que la pases a creada o publiques la lista."
 
     const val CREATING = "Creando la jam…"
     const val CREATED = "Jam creada como borrador."

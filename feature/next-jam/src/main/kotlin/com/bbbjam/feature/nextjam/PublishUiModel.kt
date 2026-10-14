@@ -1,5 +1,6 @@
 package com.bbbjam.feature.nextjam
 
+import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.Setlist
@@ -7,7 +8,8 @@ import com.bbbjam.core.ui.presenter.EventHandler
 
 internal fun AdminState.publishUiModel(jam: Jam): PublishUiModel? {
     val songCount = (jam.setlist as? Setlist.Available)?.songs?.size ?: 0
-    if (songCount == 0) return null
+    val changing = statusChanges.any { it.jamDate == jam.date && it.state == JamStatusChange.State.Sending }
+    if (songCount == 0 || changing) return null
     val entries = publishes.filter { it.jamDate == jam.date }
     val sending = entries.lastOrNull { it.state == SetlistPublish.State.Sending }
     val failed = entries.lastOrNull { it.state is SetlistPublish.State.Failed }
@@ -48,7 +50,7 @@ private fun AdminState.confirmingPublish(date: java.time.LocalDate, songCount: I
     PublishUiModel.Confirming(
         prompt = NextJamCopy.PUBLISH_PROMPT,
         details = publishDetails(songCount),
-        irreversibleNote = NextJamCopy.PUBLISH_IRREVERSIBLE,
+        reversibleNote = NextJamCopy.PUBLISH_REVERSIBLE,
         confirmLabel = NextJamCopy.PUBLISH_CONFIRM,
         cancelLabel = NextJamCopy.CANCEL,
         events = EventHandler(key = date) { event ->

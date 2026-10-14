@@ -8,10 +8,12 @@ import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.PublishOutcome
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
+import com.bbbjam.core.data.setlist.SetJamStatusOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.SlotPosition
@@ -31,6 +33,7 @@ enum class SetlistMutation {
     MOVE_SONG,
     PUBLISH_SETLIST,
     CREATE_JAM,
+    SET_JAM_STATUS,
 }
 
 sealed interface SetlistAction {
@@ -104,6 +107,10 @@ sealed interface SetlistAction {
         override val mutation = SetlistMutation.CREATE_JAM
     }
 
+    data class SetJamStatus(val jamDate: LocalDate, val status: JamStatus) : SetlistAction {
+        override val mutation = SetlistMutation.SET_JAM_STATUS
+    }
+
     companion object {
         private val DATE = LocalDate.of(2026, 10, 31)
         private val SONG = SongId("red-house")
@@ -123,6 +130,7 @@ sealed interface SetlistAction {
             MoveSong(DATE, SONG, 2),
             PublishSetlist(DATE),
             CreateJam(DATE, LocalTime.of(21, 0), "La Macanuda"),
+            SetJamStatus(DATE, JamStatus.CREATED),
         )
     }
 }
@@ -139,6 +147,7 @@ sealed interface SetlistActionResult {
     data class SongMoved(val outcome: MoveSongOutcome) : SetlistActionResult
     data class SetlistPublished(val outcome: PublishOutcome) : SetlistActionResult
     data class JamCreated(val outcome: CreateJamOutcome) : SetlistActionResult
+    data class JamStatusSet(val outcome: SetJamStatusOutcome) : SetlistActionResult
 }
 
 class SetlistActionRegistry(private val repository: SetlistRepository) {
@@ -199,6 +208,10 @@ class SetlistActionRegistry(private val repository: SetlistRepository) {
 
         is SetlistAction.CreateJam -> SetlistActionResult.JamCreated(
             repository.createJam(action.date, action.startTime, action.venue),
+        )
+
+        is SetlistAction.SetJamStatus -> SetlistActionResult.JamStatusSet(
+            repository.setJamStatus(action.jamDate, action.status),
         )
     }
 }

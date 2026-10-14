@@ -8,10 +8,12 @@ import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.PublishOutcome
 import com.bbbjam.core.data.setlist.RemoveSongOutcome
+import com.bbbjam.core.data.setlist.SetJamStatusOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.SlotPosition
@@ -36,25 +38,27 @@ class SetlistActionRegistryTest {
     private val ordinal = SlotPosition(2)
     private val musician = requireNotNull(MusicianName.parseOrNull("Ana"))
 
+    private val actions = listOf(
+        SetlistAction.AddSong(date, songId, key),
+        SetlistAction.RemoveSong(date, songId),
+        SetlistAction.SetKey(date, songId, key),
+        SetlistAction.SetSlotCount(date, songId, instrument, 2),
+        SetlistAction.AssignSlot(date, songId, instrument, ordinal, musician),
+        SetlistAction.ClearSlot(date, songId, instrument, ordinal, musician.value),
+        SetlistAction.AddExtraParticipant(date, songId, "Ada", "saxo"),
+        SetlistAction.RemoveExtraParticipant(date, songId, 3, "Ada", "saxo"),
+        SetlistAction.MoveSong(date, songId, 4),
+        SetlistAction.PublishSetlist(date),
+        SetlistAction.CreateJam(date, LocalTime.of(21, 30), "La Macanuda"),
+        SetlistAction.SetJamStatus(date, JamStatus.CREATED),
+    )
+
     @Test
     fun `inventory contains every mutation once and dispatch delegates exact inputs and outcomes`() = runBlocking {
         val repository = RecordingSetlistRepository()
         val registry = SetlistActionRegistry(repository)
-        val actions = listOf(
-            SetlistAction.AddSong(date, songId, key),
-            SetlistAction.RemoveSong(date, songId),
-            SetlistAction.SetKey(date, songId, key),
-            SetlistAction.SetSlotCount(date, songId, instrument, 2),
-            SetlistAction.AssignSlot(date, songId, instrument, ordinal, musician),
-            SetlistAction.ClearSlot(date, songId, instrument, ordinal, musician.value),
-            SetlistAction.AddExtraParticipant(date, songId, "Ada", "saxo"),
-            SetlistAction.RemoveExtraParticipant(date, songId, 3, "Ada", "saxo"),
-            SetlistAction.MoveSong(date, songId, 4),
-            SetlistAction.PublishSetlist(date),
-            SetlistAction.CreateJam(date, LocalTime.of(21, 30), "La Macanuda"),
-        )
-        assertEquals(11, SetlistAction.inventory.size)
-        assertEquals(11, SetlistAction.inventory.map(SetlistAction::mutation).toSet().size)
+        assertEquals(12, SetlistAction.inventory.size)
+        assertEquals(12, SetlistAction.inventory.map(SetlistAction::mutation).toSet().size)
         assertEquals(SetlistMutation.entries.toSet(), registry.registeredMutations)
         assertEquals(actions.map(SetlistAction::mutation), SetlistAction.inventory.map(SetlistAction::mutation))
 
@@ -77,6 +81,7 @@ class SetlistActionRegistryTest {
                 SetlistActionResult.SongMoved(MoveSongOutcome.Moved),
                 SetlistActionResult.SetlistPublished(PublishOutcome.Published(alreadyPublished = false)),
                 SetlistActionResult.JamCreated(CreateJamOutcome.Created(date, LocalTime.of(21, 30), "La Macanuda")),
+                SetlistActionResult.JamStatusSet(SetJamStatusOutcome.StatusSet(JamStatus.CREATED, changed = true)),
             ),
             results,
         )
@@ -93,6 +98,7 @@ class SetlistActionRegistryTest {
                 RecordedCall(SetlistMutation.MOVE_SONG, listOf(date, songId, 4)),
                 RecordedCall(SetlistMutation.PUBLISH_SETLIST, listOf(date)),
                 RecordedCall(SetlistMutation.CREATE_JAM, listOf(date, LocalTime.of(21, 30), "La Macanuda")),
+                RecordedCall(SetlistMutation.SET_JAM_STATUS, listOf(date, JamStatus.CREATED)),
             ),
             repository.calls,
         )
@@ -213,6 +219,15 @@ internal class RecordingSetlistRepository : SetlistRepository {
         record(SetlistMutation.CREATE_JAM, date, startTime, venue)
         return createOutcome ?: CreateJamOutcome.Created(date, startTime, venue)
     }
+
+    override suspend fun setJamStatus(jamDate: LocalDate, status: JamStatus): SetJamStatusOutcome {
+        record(SetlistMutation.SET_JAM_STATUS, jamDate, status)
+        return SetJamStatusOutcome.StatusSet(status, changed = true)
+    }
+
+    override fun observeJamStatusChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.JamStatusChange>>()
+
+    override fun dismissJamStatusChange(id: Long) = Unit
 
     override suspend fun addExtraParticipant(
         jamDate: LocalDate,

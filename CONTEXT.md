@@ -65,7 +65,8 @@ from an external API. The most-sought datum after open Slots.
 
 ### Published
 The state in which a Jam's Setlist is visible to musicians (`PUBLICADA` in the Sheet). Before it, the
-Jam is a Draft or Created.
+Jam is a Draft or Created. The admin can move the upcoming Jam between the three states from the app, in either
+direction (`admin-set-jam-status`).
 
 ### Draft
 The state (`BORRADOR`, D-26) in which the Jam does not exist for musicians: no date, no list. Only the

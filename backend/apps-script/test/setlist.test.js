@@ -310,7 +310,7 @@ test('publishSetlist retries idempotently and checkPublish cleans up and verifie
   let flushes = 0;
   svc.flush = () => { flushes++; };
   assert.deepStrictEqual(call(fake, 'checkPublish', {}, svc), { schemaVersion: 1, ok: true });
-  assert.equal(flushes, 1);
+  assert.equal(flushes, 2);
   assert.ok(fake.log.some((op) => op[0] === 'setValue' && op[1] === PUBLISH_CHECK_TAB && op[4] === 'PUBLICADA'));
   assert.ok(fake.log.every((op) => !WRITE_OPS.includes(op[0]) || op[1] === PUBLISH_CHECK_TAB));
   assert.equal(fake.tabs[PUBLISH_CHECK_TAB], undefined);
@@ -1798,4 +1798,112 @@ test('musicianJams_ and presentStatuses_ are pure and keep the input untouched',
   assert.deepStrictEqual(presentStatuses_([{ status: 'CREADA', setlist: null }], undefined)[0].status, 'BORRADOR');
   assert.deepStrictEqual(presentStatuses_([{ status: 'CREADA' }], '3')[0].status, 'CREADA');
   assert.throws(() => presentStatuses_([], '9'), (err) => err.code === 'invalid_jam_statuses');
+});
+
+// ---- admin-set-jam-status ----
+const STATUSES = ['BORRADOR', 'CREADA', 'PUBLICADA'];
+
+function jamsWith(status, later = 'BORRADOR') {
+  return [JAMS[0], JAMS[1], JAMS[2], [UPCOMING, '21:00', 'La Macanuda', status], [LATER, '21:00', 'La Macanuda', later]];
+}
+
+test('setJamStatus moves the upcoming jam between all six ordered pairs, writing only its estado cell', () => {
+  for (const from of STATUSES) {
+    for (const to of STATUSES.filter((s) => s !== from)) {
+      const fake = fakeSpreadsheet({ jams: jamsWith(from) });
+      const result = call(fake, 'setJamStatus', { date: UPCOMING, status: to });
+      assert.deepStrictEqual(result, { schemaVersion: 1, ok: true, date: UPCOMING, status: to, previous: from, changed: true }, `${from} -> ${to}`);
+      assert.deepStrictEqual(writes(fake.log), [
+        ['setNumberFormat', 'Jams', 4, 4, '@'],
+        ['setValue', 'Jams', 4, 4, to],
+      ], `${from} -> ${to}`);
+      assert.equal(jamsGrid(fake)[3][3], to);
+    }
+  }
+});
+
+test('setJamStatus to the current status is idempotent: no write, the lock still taken and released', () => {
+  for (const status of STATUSES) {
+    const fake = fakeSpreadsheet({ jams: jamsWith(status) });
+    const svc = services();
+    const result = call(fake, 'setJamStatus', { date: UPCOMING, status }, svc);
+    assert.deepStrictEqual(result, { schemaVersion: 1, ok: true, date: UPCOMING, status, previous: status, changed: false });
+    assert.deepStrictEqual(writes(fake.log), [], status);
+    assert.equal(svc.lock.tries, 1);
+    assert.equal(svc.lock.releases, 1);
+  }
+});
+
+test('setJamStatus to PUBLICADA needs a setlist with a song; leaving PUBLICADA does not', () => {
+  for (const tabs of [{ [UPCOMING]: null }, { [UPCOMING]: [TAB_HEADER] }]) {
+    for (const from of ['BORRADOR', 'CREADA']) {
+      const fake = fakeSpreadsheet({ jams: jamsWith(from), tabs });
+      assertError(call(fake, 'setJamStatus', { date: UPCOMING, status: 'PUBLICADA' }), 'empty_setlist');
+      assert.deepStrictEqual(writes(fake.log), []);
+    }
+    const leaving = fakeSpreadsheet({ jams: jamsWith('PUBLICADA'), tabs });
+    assert.equal(call(leaving, 'setJamStatus', { date: UPCOMING, status: 'BORRADOR' }).changed, true);
+    const moving = fakeSpreadsheet({ jams: jamsWith('BORRADOR'), tabs });
+    assert.equal(call(moving, 'setJamStatus', { date: UPCOMING, status: 'CREADA' }).changed, true);
+  }
+});
+
+test('publishSetlist is an alias of setJamStatus PUBLICADA on a CREADA jam', () => {
+  const fake = fakeSpreadsheet({ jams: jamsWith('CREADA') });
+  assert.deepStrictEqual(call(fake, 'publishSetlist', { date: UPCOMING }), { schemaVersion: 1, ok: true, alreadyPublished: false });
+  assert.equal(jamsGrid(fake)[3][3], 'PUBLICADA');
+});
+
+test('setJamStatus refuses everything wrong before any write', () => {
+  const cases = [
+    [{ date: '2026-02-30', status: 'CREADA' }, 'invalid_date'],
+    [{ date: 20261031, status: 'CREADA' }, 'invalid_date'],
+    [{ status: 'CREADA' }, 'invalid_date'],
+    [{ date: UPCOMING }, 'invalid_status'],
+    [{ date: UPCOMING, status: 5 }, 'invalid_status'],
+    [{ date: UPCOMING, status: 'borrador' }, 'invalid_status'],
+    [{ date: UPCOMING, status: 'ARCHIVADA' }, 'invalid_status'],
+    [{ date: UPCOMING, status: ' CREADA' }, 'invalid_status'],
+    [{ date: PAST, status: 'CREADA' }, 'jam_not_editable'],
+    [{ date: LATER, status: 'CREADA' }, 'jam_not_editable'],
+    [{ date: '1999-01-01', status: 'CREADA' }, 'unknown_jam'],
+  ];
+  for (const [fields, code] of cases) {
+    const fake = fakeSpreadsheet({ jams: jamsWith('BORRADOR') });
+    assertError(call(fake, 'setJamStatus', fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+  const duplicate = fakeSpreadsheet({ jams: jamsWith('BORRADOR').concat([[UPCOMING, '22:00', 'Otro', 'BORRADOR']]) });
+  assertError(call(duplicate, 'setJamStatus', { date: UPCOMING, status: 'CREADA' }), 'duplicate_date');
+  assert.deepStrictEqual(writes(duplicate.log), []);
+  const typo = fakeSpreadsheet({ jams: jamsWith('ARCHIVADA') });
+  assertError(call(typo, 'setJamStatus', { date: UPCOMING, status: 'CREADA' }), 'jam_not_editable');
+  assert.deepStrictEqual(writes(typo.log), []);
+  const noJams = fakeSpreadsheet();
+  delete noJams.tabs.Jams;
+  assertError(call(noJams, 'setJamStatus', { date: UPCOMING, status: 'CREADA' }), 'missing_tab');
+});
+
+test('setJamStatus accepts an upcoming BORRADOR jam', () => {
+  const fake = fakeSpreadsheet({ jams: jamsWith('BORRADOR') });
+  assert.equal(call(fake, 'setJamStatus', { date: UPCOMING, status: 'CREADA' }).ok, true);
+});
+
+test('setJamStatus: a cell that reads back different is internal_error and the lock is released', () => {
+  const fake = fakeSpreadsheet({ jams: jamsWith('BORRADOR'), lostCells: [{ sheet: 'Jams', row: 4, column: 4, value: 'CREADA' }] });
+  const svc = services();
+  assertError(call(fake, 'setJamStatus', { date: UPCOMING, status: 'CREADA' }, svc), 'internal_error');
+  assert.equal(svc.lock.tries, 1);
+  assert.equal(svc.lock.releases, 1);
+});
+
+test('checkPublish also moves its temporary row back to CREADA and reads it', () => {
+  const fake = fakeSpreadsheet();
+  assert.deepStrictEqual(call(fake, 'checkPublish', {}), { schemaVersion: 1, ok: true });
+  const values = fake.log.filter((op) => op[0] === 'setValue' && op[1] === PUBLISH_CHECK_TAB).map((op) => op[4]);
+  assert.deepStrictEqual(values, ['PUBLICADA', 'CREADA']);
+  assert.equal(fake.tabs[PUBLISH_CHECK_TAB], undefined);
+  const dropped = fakeSpreadsheet({ lostCells: [{ sheet: PUBLISH_CHECK_TAB, row: 2, column: 4, value: 'CREADA' }] });
+  assertError(call(dropped, 'checkPublish'), 'internal_error');
+  assert.equal(dropped.tabs[PUBLISH_CHECK_TAB], undefined);
 });

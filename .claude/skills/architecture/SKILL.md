@@ -477,6 +477,20 @@ release `false`; the draft flag wins); `DemoUpcomingJam.on/startingAt` and `Demo
 `JamStatus`, and live mode moves the replaced real upcoming jam to the front of `heldBack`. Konsist unchanged
 (19 rules).
 
+As built by `admin-set-jam-status` (14 October 2026; D-26): one new write action, `setJamStatus({date, status})`
+(last in `ACTIONS`, router-guarded, `status` is the exact Sheet text; refusals `invalid_date`, `invalid_status`, then
+`requireEditableJam_`, all before any write; the same status answers `changed: false` with no write; target
+PUBLICADA still needs a setlist). `writeJamStatus_` takes the status and reads it back; `publishSetlist_` stayed as a
+thin alias (same refusals, same `{ok, alreadyPublished}` answer, its node tests unmodified) so installed admin builds
+and the `PUBLISH_SETLIST` registry entry keep working, and `checkPublish` also writes `CREADA` on its temporary row.
+`:core:data`: public `SetlistJamStatusRepository` (`setJamStatus`, `observeJamStatusChanges`, `dismissJamStatusChange`),
+`SetJamStatusOutcome` (`StatusSet`, `NotSet`, `ScriptOutdated`), `JamStatusChange` (`Sending`, `Failed`, `Outdated`),
+the internal `SetlistJamStatuses` on the shared `SetlistMutationQueue`; Room changes only after a confirmed echo
+(`markPublished` for PUBLISHED, `SetlistJamDao.updateJamStatus` otherwise), never optimistically. `:app`: registry
+`SET_JAM_STATUS` (12 mutations). `:feature:next-jam`: `JamStatusUiModel` in the admin status block, `JamStatusControls`
+(saveable "date|STATUS" confirming key, an in-flight guard), pure `AdminState.jamStatusUiModel`, `JamStatusViews`
+(neutral actions, `UnpublishDialog`); BORRADOR and CREADA change at once, only leaving PUBLICADA confirms; no new amber.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

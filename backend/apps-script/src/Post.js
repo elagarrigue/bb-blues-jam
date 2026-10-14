@@ -38,6 +38,11 @@
  * Jams row, as BORRADOR, with no setlist tab (addSong still creates it with the first song). Every
  * refusal happens before any write; another future jam does not block it.
  *
+ * admin-set-jam-status adds `setJamStatus` (D-26): the upcoming jam's `estado` goes to BORRADOR, CREADA or
+ * PUBLICADA in any direction; same status = `changed: false`, no write. `publishSetlist` stays as a thin
+ * alias of it (PUBLICADA, older answer shape) for installed admin builds. `checkPublish` also writes
+ * CREADA on its temporary row and reads it back.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
  * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -135,6 +140,7 @@ var ACTIONS = {
   checkPublish: { write: true, run: checkPublish_ },
   createJam: { write: true, run: createJam_ },
   checkCreateJam: { write: true, run: checkCreateJam_ },
+  setJamStatus: { write: true, run: setJamStatus_ },
 };
 
 /**
@@ -710,25 +716,51 @@ function checkSetlistMove_(request, spreadsheet, services) {
   return { ok: true };
 }
 
-/** Publishes the upcoming setlist by changing and reading back only the Jams `estado` cell. */
+/**
+ * Sets the upcoming jam's `estado` to BORRADOR, CREADA or PUBLICADA (admin-set-jam-status, D-26).
+ * Validation order, all before any write: invalid_date, invalid_status, the editable-jam rules
+ * (requireEditableJam_), then the row. The same status answers `changed: false` with no write.
+ */
+function setJamStatus_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const status = request.status;
+  if (typeof status !== 'string' || JAM_STATUSES_WRITABLE_.indexOf(status) === -1) {
+    throw new ContractError('invalid_status', 'status must be BORRADOR, CREADA or PUBLICADA');
+  }
+  const result = setJamStatusCore_(spreadsheet, services, date, status);
+  return { ok: true, date: date, status: status, previous: result.previous, changed: result.changed };
+}
+
+/** The shared body of setJamStatus and publishSetlist; `date` and `status` are already valid. */
+function setJamStatusCore_(spreadsheet, services, date, status) {
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, sheet.getDataRange().getDisplayValues()[0] || []);
+  const jam = findJamRow_(sheet, columns, date, spreadsheet);
+  if (jam.status === status) return { previous: jam.status, changed: false };
+
+  if (status === PUBLISHED_STATUS) {
+    const tab = spreadsheet.getSheetByName(date);
+    if (!tab) throw new ContractError('empty_setlist', 'The jam has no setlist tab');
+    const range = tab.getDataRange();
+    const rows = buildSetlist(range.getDisplayValues(), range.getValues(), date);
+    if (rows.length === 0) throw new ContractError('empty_setlist', 'The jam has no songs');
+  }
+  writeJamStatus_(sheet, jam.row, columns, services, status);
+  return { previous: jam.status, changed: true };
+}
+
+/** Publishes the upcoming setlist: setJamStatus to PUBLICADA with the older answer shape. */
 function publishSetlist_(request, spreadsheet, services) {
   const date = request.date;
   if (typeof date !== 'string' || !isCalendarDate_(date)) {
     throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
   }
-  requireEditableJam_(spreadsheet, services, date);
-  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
-  const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, sheet.getDataRange().getDisplayValues()[0] || []);
-  const jam = findJamRow_(sheet, columns, date, spreadsheet);
-  if (jam.status === PUBLISHED_STATUS) return { ok: true, alreadyPublished: true };
-
-  const tab = spreadsheet.getSheetByName(date);
-  if (!tab) throw new ContractError('empty_setlist', 'The jam has no setlist tab');
-  const range = tab.getDataRange();
-  const rows = buildSetlist(range.getDisplayValues(), range.getValues(), date);
-  if (rows.length === 0) throw new ContractError('empty_setlist', 'The jam has no songs');
-  writeJamStatus_(sheet, jam.row, columns, services);
-  return { ok: true, alreadyPublished: false };
+  const result = setJamStatusCore_(spreadsheet, services, date, PUBLISHED_STATUS);
+  return { ok: true, alreadyPublished: !result.changed };
 }
 
 /** Self-cleaning proof that a draft Jams row can be published and read back. */
@@ -743,19 +775,28 @@ function checkPublish_(request, spreadsheet, services) {
   ]);
   const columns = mapColumns(PUBLISH_CHECK_TAB, JAMS_FIELDS, ['fecha', 'hora', 'lugar', 'estado']);
   let published;
+  let reverted;
   try {
     const jam = findJamRow_(sheet, columns, '2099-01-01', spreadsheet);
-    writeJamStatus_(sheet, jam.row, columns, services);
+    writeJamStatus_(sheet, jam.row, columns, services, PUBLISHED_STATUS);
     const range = sheet.getDataRange();
     const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
       return Utilities.formatDate(value, spreadsheet.getSpreadsheetTimeZone(), pattern);
     }).jams;
     published = jams;
+    writeJamStatus_(sheet, jam.row, columns, services, CREATED_STATUS);
+    const second = sheet.getDataRange();
+    reverted = buildJams(second.getDisplayValues(), second.getValues(), function () { return null; }, function (value, pattern) {
+      return Utilities.formatDate(value, spreadsheet.getSpreadsheetTimeZone(), pattern);
+    }).jams;
   } finally {
     spreadsheet.deleteSheet(sheet);
   }
   if (!published || published.length !== 2 || published[0].status !== PUBLISHED_STATUS || published[1].status !== DRAFT_STATUS) {
     throw new Error('The publish check read back a different status');
+  }
+  if (!reverted || reverted.length !== 2 || reverted[0].status !== CREATED_STATUS || reverted[1].status !== DRAFT_STATUS) {
+    throw new Error('The publish check read back a different status after CREADA');
   }
   return { ok: true };
 }
@@ -885,13 +926,16 @@ function findJamRow_(sheet, columns, date, spreadsheet) {
   return matches[0];
 }
 
+/** The statuses setJamStatus accepts, exactly as the Sheet spells them (no trimming, no case folding). */
+var JAM_STATUSES_WRITABLE_ = [DRAFT_STATUS, CREATED_STATUS, PUBLISHED_STATUS];
+
 /** Writes the one `estado` cell as text, flushes, and refuses success unless its value reads back. */
-function writeJamStatus_(sheet, row, columns, services) {
+function writeJamStatus_(sheet, row, columns, services, status) {
   const cell = sheet.getRange(row, columns.status + 1);
   cell.setNumberFormat(PLAIN_TEXT_FORMAT);
-  cell.setValue(PUBLISHED_STATUS);
+  cell.setValue(status);
   services.flush();
-  if (cell.getDisplayValues()[0][0] !== PUBLISHED_STATUS) throw new Error('The published status did not read back');
+  if (cell.getDisplayValues()[0][0] !== status) throw new Error('The ' + status + ' status did not read back');
 }
 
 /**

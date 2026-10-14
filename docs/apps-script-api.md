@@ -7,7 +7,7 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
 (`apps-script-jams-read-endpoint`), and fifteen POST actions in local source: `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
-`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam` and `checkCreateJam`. Every POST
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam` and `setJamStatus`. Every POST
 action passes the passphrase guard in the router. Earlier actions have the deployment history below;
 the latest local mutations are not live-verified. The user deferred one shared deployment and live
 checks until app implementation is complete.
@@ -259,7 +259,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -298,7 +298,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -730,9 +730,30 @@ failure reverts and produces a dismissible named card. Suggestions read cached u
 including current `Otros` names, but those extras are never assignable slots. The user's deferred
 shared deployment means this is local behavior and has not been live-verified yet.
 
+### `setJamStatus` (`admin-set-jam-status`, D-26)
+
+`setJamStatus` is a guarded, locked write with `{date, status}`; `status` is the Sheet text, exactly `BORRADOR`,
+`CREADA` or `PUBLICADA` (no trimming, no case folding). Refusals, all before any write and in this order:
+`invalid_date`, `invalid_status` (missing, non-string or not one of the three), then the editable-jam rules
+(`missing_tab`, `unknown_jam`, `duplicate_date`, `jam_not_editable`). The editable jam is the upcoming jam the admin
+snapshot shows: the earliest jam dated today or later whose `estado` is one of the three known values, **BORRADOR
+included**; a later jam held back behind it, a past jam and a jam with a misspelled `estado` are `jam_not_editable`.
+If the cell already holds the target the answer is `changed: false` with **no write**, for any status. For target
+`PUBLICADA` the jam needs a setlist tab with at least one song, else `empty_setlist`; leaving `PUBLICADA` or moving
+between `BORRADOR` and `CREADA` needs none. The write sets only that row's `estado` cell as plain text, flushes and
+reads it back (a mismatch is `internal_error`). Answer: `{ok: true, date, status, previous, changed}`, `previous`
+being the trimmed text that was in the cell.
+
+The client `SetlistJamStatusRepository.setJamStatus(date, status)` maps `JamStatus` to this text in one place, treats an
+echo whose `date`/`status` differ or whose `changed` is not a boolean as `NotSet(Unavailable)`, and treats
+`unknown_action` (a script not yet redeployed) as `ScriptOutdated`. Room changes only after a confirmed echo:
+`markPublished` for `PUBLICADA`, `updateJamStatus` otherwise. There is no optimistic badge.
+
 ### `publishSetlist` and `checkPublish` (`admin-publish-setlist`)
 
 `publishSetlist` is a guarded, locked write with `{date}`. It rejects invalid, unknown, duplicate or non-upcoming jams before writing; a retry for an already `PUBLICADA` jam succeeds idempotently. Since `jam-status-created` (D-26) it publishes from `BORRADOR` **and** from `CREADA`; an `estado` it does not know is still `jam_not_editable`. A draft or created jam must have a valid Jams row and at least one setlist row. The server writes only that row's `estado` cell, flushes, and reads back `PUBLICADA` before returning `{ok:true, alreadyPublished:false}`; a retry returns `alreadyPublished:true` without writing. Missing tabs or no songs return `empty_setlist`. `checkPublish` exercises the same write/read-back against its temporary `_prueba_publicar` Jams tab and always removes that tab; it never changes a real jam. The action is in local source; deployment and live checks are deferred to the user's shared four-feature deployment.
+
+Since `admin-set-jam-status` (D-26) `publishSetlist` is a thin alias of `setJamStatus` with status `PUBLICADA` and keeps its refusals and its `{ok, alreadyPublished}` answer, so installed admin builds keep working. `checkPublish` has one more step: after the publish and its read-back on the temporary row it writes `CREADA` on the same row and reads it back, expecting `[CREADA, BORRADOR]`; the temporary tab is still deleted in `finally`.
 
 The public `SetlistRepository.publishSetlist(jamDate)` mutation returns `PublishOutcome.Published(alreadyPublished)` only when the server confirms its result. Room changes only after confirmation and only for a cached `DRAFT` or `CREATED` jam with an `AVAILABLE` setlist. It queues with other writes and exposes `SetlistPublish` Sending/Failed state for the admin status block; failure logs one safe `BluesJam` line and never optimistically marks the jam published.
 

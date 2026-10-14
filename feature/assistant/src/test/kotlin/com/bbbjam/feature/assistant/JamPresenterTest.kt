@@ -116,7 +116,7 @@ class JamPresenterTest {
                     "Fecha: sábado 28 de noviembre de 2026",
                     "Hora: 21:30",
                     "Lugar: La Macanuda",
-                    "Se crea como borrador: los músicos no la ven hasta que publiques la lista.",
+                    "Se crea como borrador: los músicos no la ven hasta que la pases a creada o publiques la lista.",
                     "La próxima jam sigue siendo la del sábado 31 de octubre; esta queda en espera hasta que pase.",
                 ),
                 dialog.lines,

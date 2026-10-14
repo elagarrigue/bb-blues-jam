@@ -401,7 +401,7 @@ The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter
 
 ### Status badge
 
-**Borrador** or **Publicada**. Published is amber; draft is muted.
+**Borrador**, **Creada** or **Publicada**. Published is amber; draft and created are muted.
 
 ### Admin controls
 
@@ -758,7 +758,20 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
 
 ### Publishing (`admin-publish-setlist`, as built locally)
 
-The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Desde la app no se puede volver a borrador.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
+The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
+
+### Changing the status (`admin-set-jam-status`)
+
+Under the badge and note the status block draws neutral, underlined `text` actions of 48dp with `Role.Button`, **never
+amber**: `Pasar a creada` and `Pasar a borrador` (a BORRADOR jam shows the first, CREADA the second, PUBLICADA both).
+BORRADOR and CREADA change at once, without a dialog (reversible, no list shown). Leaving PUBLICADA opens a modal
+`AlertDialog` (`surfaceRaised`, `text` title `¿Dejar de publicar la lista?`, `textMuted` body that says what musicians stop
+seeing, `error` confirm `Pasar a creada`/`Pasar a borrador`, `text` `Cancelar`; back or a tap outside is `Cancelar`).
+While a change or a publication of the jam is sending, the actions and the publish button are replaced by one polite
+live region, `Cambiando el estado…` (or `Publicando…`); the badge keeps the confirmed status until the server confirms.
+A failure is the same assertive card as publishing's (`No se pudo cambiar el estado`, the reason, `La jam sigue como estaba.`,
+`Reintentar`, `Cerrar`); with a script that does not know `setJamStatus` the card says `El script de la planilla todavía no
+sabe cambiar el estado. Actualizalo con la guía y probá de nuevo.` with `Cerrar` only. No new amber role.
 
 ### Extra participants (`admin-edit-extra-participants`)
 

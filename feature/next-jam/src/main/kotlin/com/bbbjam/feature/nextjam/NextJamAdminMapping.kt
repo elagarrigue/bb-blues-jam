@@ -2,6 +2,7 @@ package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.ExtraParticipantChange
+import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
@@ -55,6 +56,12 @@ internal class AdminState(
     val onCancelPublish: (LocalDate) -> Unit = {},
     val onConfirmPublish: (LocalDate) -> Unit = {},
     val onRetryPublish: (LocalDate, Long) -> Unit = { _, _ -> },
+    val statusChanges: List<JamStatusChange> = emptyList(),
+    val statusConfirming: String? = null,
+    val onStatusRequest: (LocalDate, JamStatus, JamStatus) -> Unit = { _, _, _ -> },
+    val onStatusCancel: (LocalDate) -> Unit = {},
+    val onStatusConfirm: (LocalDate) -> Unit = {},
+    val onStatusRetry: (LocalDate, Long, JamStatus) -> Unit = { _, _, _ -> },
 ) {
     /** The song-level overlay rule this list shares with the song detail. */
     val overlays: SongOverlays
@@ -96,6 +103,7 @@ internal fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
                 JamStatus.PUBLISHED -> NextJamCopy.PUBLISHED_NOTE
             },
             publish = if (isPublished) null else publishUiModel(jam),
+            statusChange = jamStatusUiModel(jam),
         ),
         pending = mine.filter { it.state == SetlistAdd.State.Sending }
             .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },
