@@ -449,6 +449,17 @@ escritura del asistente, la crea el admin al confirmar, nunca el agente (D-24), 
 contrato de acciones (D-13). Si ya hay otra jam futura, se crea igual: la app sigue mostrando la más
 cercana y la nueva queda en espera, y el agente lo avisa. Decidido el 14 de octubre de 2026.
 
+### D-26 — Tres estados de jam: BORRADOR, CREADA y PUBLICADA
+Pedido del organizador del 14 de octubre de 2026. `BORRADOR`: la jam no existe para los músicos, ni
+fecha ni lista. `CREADA`: los músicos ven fecha, hora y lugar, y el aviso de que la lista se está
+armando (lo que antes hacía `BORRADOR`). `PUBLICADA`: ven todo. El admin ve y edita la lista en los
+tres estados. Toda jam nace en `BORRADOR`, también la que crea el asistente (D-25). El admin cambia el
+estado desde la app en cualquier dirección; pasar de `PUBLICADA` a otro estado pide confirmación,
+porque los músicos dejan de ver la lista. Enmienda D-04: la autoridad de la app pasa de "estado
+publicado" a "estado de la jam", y se reemplaza la regla de que publicar no tenía vuelta atrás. El
+ocultamiento se hace en Apps Script (el GET anónimo no sirve una jam `BORRADOR`) y otra vez en el
+cliente; el flag de admin solo decide qué se dibuja.
+
 ---
 
 # Parte III — Harness y seguimiento

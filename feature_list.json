@@ -1485,5 +1485,41 @@
       "Device: stopped at the confirmation dialog (stored passphrase and real jam); Cancelar; no write, no createJam in logcat. Creation itself not exercised on a device. The Apps Script redeploy (docs/migrations/assistant-create-jam-script-update.md) is owed by the user.",
       "Independent validator accepted on 14 October 2026 after CI=true ./init.sh and a forced ./gradlew check --rerun-tasks (866 tests, 0 failures) and node --test (192 pass), with a security review of createJam (guard + lock, every check before any write, venue formula guard, plain-text write and read-back, checkCreateJam cleanup). The user redeployed the script; deployProbe lists createJam and checkCreateJam (docs/evidence/assistant-create-jam/deploy-probe.md). Not exercised on a device: the creation itself (the Pixel has a stored passphrase and the real 2026-10-31 jam). Low note left open: checkCreateJam_ writes the temp tab header before its try block; a leftover is deleted by the next run."
     ]
+  },
+  {
+    "id": "jam-status-created",
+    "area": "core-data",
+    "title": "Three jam states: BORRADOR hidden, CREADA date only, PUBLICADA full (D-26)",
+    "user_visible_behavior": "A BORRADOR jam no longer exists for musicians: Próxima jam behaves as if there were no upcoming jam. A CREADA jam shows musicians the date, time and venue with the 'la lista se está armando' block (today's draft view). A PUBLICADA jam shows everything. The admin sees and edits the setlist in all three states, with a status badge.",
+    "depends_on": [
+      "assistant-create-jam"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Jam.status gains CREATED (estado CREADA in the Sheet); sheet-schema, domain-model, CONTEXT and D-26 updated; unknown estado handling stays defined",
+      "Apps Script anonymous GET jams omits BORRADOR jams entirely and serves CREADA like the old draft (no setlist); readJams (admin) returns all three with their setlist; node tests shown failing first",
+      "JamsMapper/presenters hide a BORRADOR jam from musicians even if it reaches the client, and treat CREADA as Withheld for musicians; Room/cache cannot leak a BORRADOR jam to a non-admin view",
+      "Admin views show the setlist and all admin controls in BORRADOR, CREADA and PUBLICADA, with a status badge; publishSetlist keeps working until admin-set-jam-status replaces it",
+      "createJam (D-25) still writes BORRADOR; the assistant's 'held back' logic and Usar esta lista keep working",
+      "A migration note covers existing rows: BORRADOR jams become invisible to musicians, mark them CREADA to keep today's behaviour; musicians on an old app version are considered",
+      "CI=true ./init.sh exit 0 with konsist, detekt and ktlint wired; device check read-only (debug demo jam and debug admin), no Sheet writes"
+    ]
+  },
+  {
+    "id": "admin-set-jam-status",
+    "area": "feature-next-jam",
+    "title": "The admin changes the jam status from the app (BORRADOR, CREADA, PUBLICADA)",
+    "user_visible_behavior": "On Próxima jam the admin sees the current status and can move the upcoming jam to any of the three states. Moving away from PUBLICADA asks for confirmation because musicians stop seeing the list; publishing keeps its existing rules.",
+    "depends_on": [
+      "jam-status-created"
+    ],
+    "status": "not_started",
+    "verification": [
+      "One server-validated mutation setJamStatus(date, status) behind the passphrase guard and lock, upcoming jam only, read-back of the status cell, idempotent; publishing still refuses an empty or tab-less setlist; node tests shown failing first",
+      "Repository function + SetlistActionRegistry entry (D-13); publishSetlist is kept or migrated with the registry completeness test updated, decided in the spec",
+      "Confirmation dialog when leaving PUBLICADA, no amber beyond existing roles (D-17); Spanish vos copy; confirmed state shown only after server read-back",
+      "A user migration guide (paste Post.gs, new version of the same deployment, check strings) covering both D-26 slices; a no-write deployProbe confirms the deploy",
+      "CI=true ./init.sh exit 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (stop at the dialog unless no stored passphrase + demo jam)"
+    ]
   }
 ]
