@@ -48,10 +48,10 @@ import com.bbbjam.feature.pastjams.PastJamDetailScreen
  * too. [TabsShell] no longer applies its own.
  */
 @Composable
-internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean = false) {
+internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean? = false) {
     val nav = rememberNavController()
     Column(modifier = modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
-        if (admin) AdminBanner()
+        if (admin == true) AdminBanner()
         NavHost(
             navController = nav,
             startDestination = AppRoutes.TABS,
@@ -75,6 +75,7 @@ internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean = false) {
                     },
                     onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
                     onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
+                    admin = admin,
                 )
             }
             songDetail(nav)

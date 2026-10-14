@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.nav
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Info
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals
@@ -45,6 +46,7 @@ class TabBarDefaultsTest {
         assertEquals(Icons.AutoMirrored.Filled.List, TabBarDefaults.icon(TabIcon.SETLIST))
         assertEquals(Icons.Filled.DateRange, TabBarDefaults.icon(TabIcon.ARCHIVE))
         assertEquals(Icons.Outlined.Info, TabBarDefaults.icon(TabIcon.INFO))
+        assertEquals(Icons.Filled.Star, TabBarDefaults.icon(TabIcon.ASSISTANT))
     }
 
     @Test

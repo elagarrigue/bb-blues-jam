@@ -32,6 +32,7 @@ internal class DefaultSetlistAssistant(
     private val catalog: CatalogRepository,
     private val jams: JamsRepository,
     private val executorFactory: AssistantExecutorFactory,
+    private val statusProbe: AssistantStatusProbe = AssistantStatusProbe(),
 ) : SetlistAssistant {
     private val executor: PromptExecutor by lazy { executorFactory.create(credentials.key) }
 
@@ -39,6 +40,8 @@ internal class DefaultSetlistAssistant(
         get() = credentials.isConfigured
 
     override fun startConversation(): AssistantConversation = Conversation()
+
+    override suspend fun checkStatus(): AssistantStatus = statusProbe.check(credentials.key)
 
     private inner class Conversation : AssistantConversation {
         private val history = ArrayList<AssistantPrompt.Turn>()

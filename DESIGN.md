@@ -183,7 +183,7 @@ arm's length on stage. It is the largest style in the app; rows keep `key` (44sp
 
 ## Layout
 
-Three tabs in a bottom navigation bar: **Próxima jam**, **Anteriores**, **Info**.
+Three tabs in a bottom navigation bar: **Próxima jam**, **Anteriores**, **Info**. Phase 2 adds a fourth, **Asistente**, drawn only while the admin session is active (last, so the musician tabs never move).
 
 ### Bottom bar
 
@@ -696,8 +696,36 @@ instrument strip can grow.
 - Add a light theme, onboarding, or a welcome screen.
 - Use stock photography — minimal illustration or none.
 - Hide actions behind gestures with no visible alternative.
-- Design self-signup, in-app tablature, profiles, chat, notifications, or an AI assistant screen.
+- Design self-signup, in-app tablature, profiles, chat, notifications, or an AI assistant screen for musicians (phase 2 adds the admin-only Asistente tab, see "Asistente").
   These are out of scope for the MVP.
+
+## Asistente (phase 2, `assistant-admin-tab`)
+
+An admin-only fourth tab, **Asistente**, a chat over the setlist assistant. It follows the admin palette
+automatically and writes nothing (D-24); "Usar esta lista" is a later slice.
+
+- Column: title `Asistente` (`h1`, `text`, heading), a `LazyColumn` of turns (`md` apart), the composer pinned at the
+  bottom above the keyboard (`imePadding`; the bar is not drawn while the keyboard is up). The list scrolls to the
+  newest turn when one is added or changes state.
+- Request card: `surfaceRaised`, `shapes.md`, caption `VOS` (`caption`, `textMuted`), request in `body`/`text`.
+  Reply card: `surface`, same shape.
+- Proposal: heading `PROPUESTA · n temas` (`caption`, `textMuted`, heading); each song one merged, non-clickable node:
+  position (`songTitle`, `textMuted`), title (`songTitle`, `text`, 2 lines), key at the end (`songTitle` size, amber
+  `key` role, described "Tonalidad Bm"), artist (`body`, `textMuted`), reason (`body`, `text`). Then the message,
+  `PREGUNTAS` with each question as `• …`, and a muted caption for discarded ids (ids are never shown).
+- Pending: status and hint in one polite live region, static (no spinner, as the skeleton list), and a `Cancelar`
+  underlined 48dp text action in `text`. Failed/cancelled: message in `error` / `textMuted`, `Reintentar` underlined
+  48dp text action in `text`, only on the last turn.
+- Composer: outlined field `Tu pedido` with the admin login's colours, up to 5 lines; full-width `Enviar` button
+  (`button-primary`, disabled `surfaceRaised`/`textMuted`, label `Esperando respuesta…` while pending).
+- Service status (amendment, 13 October 2026): the tab reads the gateway's status when shown. While unavailable a banner sits under
+  the title: a `surfaceRaised` card (`shapes.md`), message in `body`/`text` (one polite live region) and an underlined 48dp
+  `Reintentar` text action in `text`; never amber and never `error`. ServiceDown: "El asistente no está disponible en este
+  momento. El servicio de IA no responde; probá más tarde."; Offline and Unauthorized reuse the failure copy. While checking, a
+  static `caption`/`textMuted` line "Comprobando el servicio…" (no spinner, polite live region) sits above the field. In every
+  case but Available `Enviar` is disabled, and a turn's `Reintentar` is withheld.
+- Amber on this screen: only `Enviar` and the keys (Konsist allowlist `feature/assistant`).
+- Not configured and the intro use `EmptyStateBlock`.
 
 ## Open Design Questions
 

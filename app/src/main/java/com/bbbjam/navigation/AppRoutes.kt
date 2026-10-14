@@ -33,6 +33,9 @@ internal object AppRoutes {
     /** The Info tab. */
     const val INFO = "info"
 
+    /** The admin-only Asistente tab (`assistant-admin-tab`); registered always, drawn only for the admin. */
+    const val ASSISTANT = "assistant"
+
     /**
      * The admin login (`admin-passphrase-login`, A7): full screen in the outer host, opened from
      * Info. No argument: the passphrase never enters a route or a saved Bundle.

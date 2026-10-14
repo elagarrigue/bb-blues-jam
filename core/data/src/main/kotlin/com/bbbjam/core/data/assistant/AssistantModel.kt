@@ -14,6 +14,7 @@ import ai.koog.prompt.llm.LLModel
 internal object AssistantModel {
     const val BASE_URL = "https://inference.devexpert.io"
     const val CHAT_COMPLETIONS_PATH = "v1/chat/completions"
+    const val MODELS_PATH = "v1/models"
     const val MODEL_ID = "chat"
 
     /** Iterations (LLM calls plus tool rounds) the agent may spend on one request. */

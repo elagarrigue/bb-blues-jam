@@ -29,8 +29,9 @@ class MainActivity : ComponentActivity() {
         // background/banner apply app-wide with no per-screen `if (isAdmin)` branch.
         setContent {
             val adminSession = koinInject<AdminSession>()
-            val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
-            BluesJamTheme(admin = isAdmin) { AppNavHost(admin = isAdmin) }
+            // null until the flag is read: the Asistente tab neither shows nor redirects before then.
+            val isAdmin: Boolean? by remember { adminSession.observeIsAdmin() }.collectAsState(initial = null)
+            BluesJamTheme(admin = isAdmin == true) { AppNavHost(admin = isAdmin) }
         }
     }
 }

@@ -24,8 +24,8 @@ internal fun interface AssistantExecutorFactory {
  */
 internal object AssistantHttp {
     private const val CONNECT_TIMEOUT_SECONDS = 15L
-    private const val READ_TIMEOUT_SECONDS = 90L
-    private const val CALL_TIMEOUT_SECONDS = 120L
+    private const val READ_TIMEOUT_SECONDS = 60L
+    private const val CALL_TIMEOUT_SECONDS = 60L
     private const val MILLIS_PER_SECOND = 1000L
 
     /** A reasoning model can think for a while: long read and call timeouts (the UI shows a loading state). */

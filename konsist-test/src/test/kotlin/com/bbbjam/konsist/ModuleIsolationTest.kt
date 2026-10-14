@@ -405,6 +405,8 @@ class ModuleIsolationTest {
             "feature/past-jams" to setOf("key"),
             // admin-passphrase-login (A6): the "Entrar" button of the admin login, `button-primary`.
             "feature/info" to setOf("primaryAction", "onPrimaryAction"),
+            // assistant-admin-tab: "Enviar" (`button-primary`) and the key of each proposed song.
+            "feature/assistant" to setOf("key", "primaryAction", "onPrimaryAction"),
         )
 
         /**

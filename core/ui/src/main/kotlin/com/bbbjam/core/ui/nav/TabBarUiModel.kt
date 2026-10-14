@@ -33,4 +33,7 @@ enum class TabIcon {
 
     /** Info. */
     INFO,
+
+    /** Asistente (phase 2, admin only). */
+    ASSISTANT,
 }

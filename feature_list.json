@@ -1420,13 +1420,20 @@
     "depends_on": [
       "assistant-agent-core"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       ":feature:assistant exists with a composable presenter tested with Molecule (no ViewModel, D-02) and depends on no other feature module (D-03)",
       "The tab is drawn only when the admin flag is active, and disappears when the session ends",
       "Not-configured, loading, error and offline states have Spanish (vos) copy",
       "Screens read BluesJamTheme tokens only (D-17)",
       "Device check with the debug admin session: one real request answered and screenshots recorded; no list is applied"
+    ],
+    "evidence": [
+      "Implemented 13 October 2026: :feature:assistant (AssistantChat single, AssistantPresenter, mapping, screen, copy, defaults, module), TabIcon.ASSISTANT, AppTab.ASSISTANT gated by Boolean? admin flag (visibleTabs, shouldLeaveAssistant), Konsist allowlist entry shown failing first (docs/evidence/assistant-admin-tab/konsist-failing-run.txt) then green.",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 770 tests, 0 failures (baseline 736); gate-baseline.txt, gate-final.txt.",
+      "Amendment (service status, user-approved 13 Oct 2026): checkStatus (GET /v1/models, no tokens) + status banner/Checking line, Enviar disabled unless Available, timeouts 120 s -> 60 s. CI=true ./init.sh exit 0, three tools wired, 789 tests, 0 failures. Device with the gateway down: 06-service-down.png (banner, Enviar disabled), 07-service-down-retry.png (one Reintentar tap, still down); no chat request sent.",
+      "D3 passed 14 Oct 2026 (gateway back): one real request on the Pixel 5 (API 34) returned PROPUESTA 12 temas with message and two questions within 37 s (polled upper bound); keyboard hides on Enviar; D4 song rows are one non-clickable grouped node with Tonalidad X. Verifies the Jackson-excluded Koog path on Android. D1, D2, D5 also pass. Screenshots 01-02, 05-11 and device-check.md in docs/evidence/assistant-admin-tab/. Earlier 13 Oct request timed out during a full gateway outage (502), not an app bug.",
+      "Independent validator accepted on 14 October 2026 after rerunning CI=true ./init.sh (three tools wired, 789 tests, 0 failures) and checking D-02/03/12/15/17/22/23/24, the service-status amendment and screenshots 06, 09, 10. Orchestrator then removed six unused imports in AssistantScreen.kt and fixed two stale evidence references (04-proposal.png renamed 04-timeout-failure.png); compile, ktlint and detekt green."
     ]
   },
   {

@@ -411,6 +411,22 @@ live-call-1-native.md`); with the schema in the prompt it called both tools and 
 proposal (`live-call.md`). A later change of alias or gateway is `AssistantModel.MODEL_ID`/`BASE_URL`.
 The opt-in live test is `AssistantLiveCallTest` (`-Pbbbjam.assistantLive=true`, off in the gate).
 
+As built by `assistant-admin-tab` (13 October 2026; phase 2): **`:feature:assistant`** (depends on `:core:ui` and `:core:data`
+only, `bluesjam.android.feature`) holds `AssistantChat`, `AssistantPresenter`, the pure `assistantModel(...)`, `AssistantUiModel`,
+`AssistantScreen`/`AssistantTurn`, `AssistantCopy`, `AssistantDefaults` and `di/assistantModule`. **`AssistantChat` is a Koin
+`single`, not a ViewModel and with no Android type** (D-02): a plain class over `SetlistAssistant` and a `CoroutineScope` the module
+supplies (`SupervisorJob + Dispatchers.Default` with a handler that logs the exception class name only). It owns one
+`AssistantConversation` and a `StateFlow<List<ChatTurn>>`, so the conversation and a pending 8 s+ request outlive the presenter's
+composition (a presenter is a `factory`, its composition dies when the tab is left); only `cancel` cancels. The presenter
+(`factory`) holds only the composer draft (`rememberSaveable`). Nothing is written (D-24); the feature never references
+`SetlistRepository`, `AdminWriter` or the action registry (the apply slice does). **Tab gating in `:app`:** `AppTab.ASSISTANT` is last;
+`MainActivity` collects `observeIsAdmin()` as `Boolean?` (`initial = null`); `visibleTabs(admin)` (only `true` shows it),
+`tabBarModel(selected, admin, onSelect)` and `shouldLeaveAssistant(selected, admin)` (only a real `false`) are pure and tested;
+`TabsShell(admin)` always registers the route, draws `AssistantScreen` only for the admin and hides the bar while the keyboard is
+visible; the activity declares `windowSoftInputMode="adjustResize"` (without it the system panned the whole window). `:core:ui`
+`TabIcon.ASSISTANT` maps to `Icons.Filled.Star`. Service status amendment: `SetlistAssistant.checkStatus()` (`AssistantStatus`, a token-free `GET /v1/models` in `AssistantStatusProbe`) feeds `AssistantChat.service`; the tab shows a banner and disables `Enviar` unless Available; `AssistantHttp` timeouts are 60 s. Konsist: `AMBER_ROLE_ALLOWLIST["feature/assistant"] = {key, primaryAction,
+onPrimaryAction}` (shown failing first).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

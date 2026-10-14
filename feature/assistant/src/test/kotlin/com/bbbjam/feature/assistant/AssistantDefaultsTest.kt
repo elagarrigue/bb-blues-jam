@@ -1,0 +1,69 @@
+package com.bbbjam.feature.assistant
+
+import com.bbbjam.core.ui.theme.BluesJamColors
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class AssistantDefaultsTest {
+    private val colors = BluesJamColors
+
+    // Every non-amber colour is pinned to a named non-amber token with assertEquals; the amber roles
+    // this module may read are only the three it is allowlisted for (Konsist reads test sources too),
+    // and BluesJamColorsTest guards which tokens are amber.
+
+    @Test
+    fun `cards use surfaceRaised for the request and surface for the reply`() {
+        assertEquals(colors.surfaceRaised, AssistantDefaults.requestCard().fill)
+        assertEquals(colors.surface, AssistantDefaults.replyCard().fill)
+        assertEquals(colors.textMuted, AssistantDefaults.requestCard().caption)
+        assertEquals(colors.text, AssistantDefaults.replyCard().text)
+    }
+
+    @Test
+    fun `the key is the only amber on a proposed song`() {
+        val song = AssistantDefaults.song()
+        assertEquals(colors.key, song.key)
+        assertEquals(colors.textMuted, song.position)
+        assertEquals(colors.text, song.title)
+        assertEquals(colors.textMuted, song.artist)
+        assertEquals(colors.text, song.reason)
+    }
+
+    @Test
+    fun `notices and actions are never amber`() {
+        val notice = AssistantDefaults.notice()
+        assertEquals(colors.error, notice.failure)
+        assertEquals(colors.textMuted, notice.cancelled)
+        assertEquals(colors.text, notice.action)
+    }
+
+    @Test
+    fun `amber is on the send button only while it is enabled`() {
+        val enabled = AssistantDefaults.sendButton(enabled = true)
+        assertEquals(colors.primaryAction, enabled.fill)
+        assertEquals(colors.onPrimaryAction, enabled.content)
+        val disabled = AssistantDefaults.sendButton(enabled = false)
+        assertEquals(colors.surfaceRaised, disabled.fill)
+        assertEquals(colors.textMuted, disabled.content)
+    }
+
+    @Test
+    fun `the field has the admin login field's colours and no amber`() {
+        val field = AssistantDefaults.field()
+        assertEquals(colors.surface, field.container)
+        assertEquals(colors.text, field.text)
+        assertEquals(colors.textMuted, field.label)
+        assertEquals(colors.border, field.unfocusedBorder)
+        assertEquals(colors.text, field.focusedBorder)
+        assertEquals(colors.text, field.cursor)
+    }
+
+    @Test
+    fun `the service banner is a surfaceRaised card with text copy, never amber`() {
+        val banner = AssistantDefaults.banner()
+        assertEquals(colors.surfaceRaised, banner.fill)
+        assertEquals(colors.text, banner.text)
+        assertEquals(colors.text, banner.action)
+        assertEquals(colors.textMuted, banner.checking)
+    }
+}

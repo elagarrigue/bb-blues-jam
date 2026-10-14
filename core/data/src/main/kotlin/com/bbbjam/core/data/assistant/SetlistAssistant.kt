@@ -11,6 +11,12 @@ interface SetlistAssistant {
 
     /** A new conversation with empty history. Conversations are plain objects, kept in memory only. */
     fun startConversation(): AssistantConversation
+
+    /**
+     * Whether the gateway can be used now: one plain read of its model list that consumes no tokens.
+     * [AssistantStatus.NotConfigured] makes no request. Cancellation is rethrown.
+     */
+    suspend fun checkStatus(): AssistantStatus
 }
 
 /** One chat. It keeps its answered turns in memory so the admin can refine a proposal. */
