@@ -39,5 +39,6 @@ internal object ProposalValidator {
         },
         message = proposal.message,
         questions = proposal.questions,
+        jam = proposal.jam?.let { JamProposalDto(it.date.toString(), it.startTime.toString(), it.venue) },
     )
 }

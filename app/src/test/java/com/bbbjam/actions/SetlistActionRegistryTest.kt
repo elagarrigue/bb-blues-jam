@@ -3,6 +3,7 @@ package com.bbbjam.actions
 import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.AssignSlotOutcome
 import com.bbbjam.core.data.setlist.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.CreateJamOutcome
 import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.PublishOutcome
@@ -17,6 +18,7 @@ import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.di.appModule
 import java.time.LocalDate
+import java.time.LocalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
@@ -49,9 +51,10 @@ class SetlistActionRegistryTest {
             SetlistAction.RemoveExtraParticipant(date, songId, 3, "Ada", "saxo"),
             SetlistAction.MoveSong(date, songId, 4),
             SetlistAction.PublishSetlist(date),
+            SetlistAction.CreateJam(date, LocalTime.of(21, 30), "La Macanuda"),
         )
-        assertEquals(10, SetlistAction.inventory.size)
-        assertEquals(10, SetlistAction.inventory.map(SetlistAction::mutation).toSet().size)
+        assertEquals(11, SetlistAction.inventory.size)
+        assertEquals(11, SetlistAction.inventory.map(SetlistAction::mutation).toSet().size)
         assertEquals(SetlistMutation.entries.toSet(), registry.registeredMutations)
         assertEquals(actions.map(SetlistAction::mutation), SetlistAction.inventory.map(SetlistAction::mutation))
 
@@ -73,6 +76,7 @@ class SetlistActionRegistryTest {
                 ),
                 SetlistActionResult.SongMoved(MoveSongOutcome.Moved),
                 SetlistActionResult.SetlistPublished(PublishOutcome.Published(alreadyPublished = false)),
+                SetlistActionResult.JamCreated(CreateJamOutcome.Created(date, LocalTime.of(21, 30), "La Macanuda")),
             ),
             results,
         )
@@ -88,6 +92,7 @@ class SetlistActionRegistryTest {
                 RecordedCall(SetlistMutation.REMOVE_EXTRA_PARTICIPANT, listOf(date, songId, 3, "Ada", "saxo")),
                 RecordedCall(SetlistMutation.MOVE_SONG, listOf(date, songId, 4)),
                 RecordedCall(SetlistMutation.PUBLISH_SETLIST, listOf(date)),
+                RecordedCall(SetlistMutation.CREATE_JAM, listOf(date, LocalTime.of(21, 30), "La Macanuda")),
             ),
             repository.calls,
         )
@@ -120,6 +125,7 @@ internal data class RecordedCall(val mutation: SetlistMutation, val arguments: L
 
 internal class RecordingSetlistRepository : SetlistRepository {
     var addOutcome: AddSongOutcome = AddSongOutcome.Added(7)
+    var createOutcome: CreateJamOutcome? = null
     val calls = mutableListOf<RecordedCall>()
 
     private fun record(mutation: SetlistMutation, vararg args: Any?) {
@@ -202,6 +208,11 @@ internal class RecordingSetlistRepository : SetlistRepository {
     override fun observePublishes() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistPublish>>()
 
     override fun dismissPublish(id: Long) = Unit
+
+    override suspend fun createJam(date: LocalDate, startTime: LocalTime, venue: String): CreateJamOutcome {
+        record(SetlistMutation.CREATE_JAM, date, startTime, venue)
+        return createOutcome ?: CreateJamOutcome.Created(date, startTime, venue)
+    }
 
     override suspend fun addExtraParticipant(
         jamDate: LocalDate,

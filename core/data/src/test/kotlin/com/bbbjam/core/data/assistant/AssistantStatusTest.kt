@@ -34,6 +34,7 @@ class AssistantStatusTest {
             AssistantCredentials.of(raw),
             FakeCatalog(emptyList()),
             FakeJams(emptyList()),
+            fixedCalendar(),
             AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
             AssistantStatusProbe(baseUrl, OkHttpClient()),
         )

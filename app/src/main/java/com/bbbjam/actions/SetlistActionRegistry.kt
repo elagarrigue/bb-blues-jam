@@ -3,6 +3,7 @@ package com.bbbjam.actions
 import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.AssignSlotOutcome
 import com.bbbjam.core.data.setlist.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.CreateJamOutcome
 import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.PublishOutcome
@@ -16,6 +17,7 @@ import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
+import java.time.LocalTime
 
 enum class SetlistMutation {
     ADD_SONG,
@@ -28,6 +30,7 @@ enum class SetlistMutation {
     REMOVE_EXTRA_PARTICIPANT,
     MOVE_SONG,
     PUBLISH_SETLIST,
+    CREATE_JAM,
 }
 
 sealed interface SetlistAction {
@@ -97,6 +100,10 @@ sealed interface SetlistAction {
         override val mutation = SetlistMutation.PUBLISH_SETLIST
     }
 
+    data class CreateJam(val date: LocalDate, val startTime: LocalTime, val venue: String) : SetlistAction {
+        override val mutation = SetlistMutation.CREATE_JAM
+    }
+
     companion object {
         private val DATE = LocalDate.of(2026, 10, 31)
         private val SONG = SongId("red-house")
@@ -115,6 +122,7 @@ sealed interface SetlistAction {
             RemoveExtraParticipant(DATE, SONG, 1, NAME.value, "saxo"),
             MoveSong(DATE, SONG, 2),
             PublishSetlist(DATE),
+            CreateJam(DATE, LocalTime.of(21, 0), "La Macanuda"),
         )
     }
 }
@@ -130,6 +138,7 @@ sealed interface SetlistActionResult {
     data class ExtraParticipantRemoved(val outcome: ExtraParticipantOutcome) : SetlistActionResult
     data class SongMoved(val outcome: MoveSongOutcome) : SetlistActionResult
     data class SetlistPublished(val outcome: PublishOutcome) : SetlistActionResult
+    data class JamCreated(val outcome: CreateJamOutcome) : SetlistActionResult
 }
 
 class SetlistActionRegistry(private val repository: SetlistRepository) {
@@ -186,6 +195,10 @@ class SetlistActionRegistry(private val repository: SetlistRepository) {
 
         is SetlistAction.PublishSetlist -> SetlistActionResult.SetlistPublished(
             repository.publishSetlist(action.jamDate),
+        )
+
+        is SetlistAction.CreateJam -> SetlistActionResult.JamCreated(
+            repository.createJam(action.date, action.startTime, action.venue),
         )
     }
 }

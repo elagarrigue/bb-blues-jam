@@ -99,6 +99,11 @@ validated, catalog-only ordered list of songs (each with the catalog's title, ar
 short reason), a closing message, follow-up questions and the ids it had to reject. A Proposal changes
 nothing; loading it into the setlist is a separate, confirmed step through the action contract.
 
+### Jam en espera
+A future jam that exists in the Sheet while an earlier jam is still the upcoming one. It is not shown as the
+next jam until the earlier one passes. The app creates a jam only as a draft (`BORRADOR`, D-25) and says
+when the new jam will be "en espera".
+
 ### Action Contract
 The rule that every mutation is reachable as a repository function or deeplink, so the Assistant can
 perform anything the admin can do by hand without modifying feature modules.

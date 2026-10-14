@@ -29,7 +29,7 @@ class ApplyPresenterTest {
     private fun TestScope.chat() = AssistantChat(assistant, ChatScope(testScheduler).scope)
 
     private fun flow(chat: AssistantChat) =
-        moleculeFlow(RecompositionMode.Immediate) { AssistantPresenter(chat, applier, jams).present(Unit) }
+        moleculeFlow(RecompositionMode.Immediate) { testPresenter(chat, applier, jams).present(Unit) }
 
     private fun AssistantChat.ask(request: String, reply: com.bbbjam.core.data.assistant.AssistantReply) {
         val deferred = assistant.expectReply()
@@ -241,7 +241,7 @@ class ApplyPresenterTest {
     @Test
     fun `blocked states draw a note and no button, and an unread snapshot draws nothing`() = runTest {
         val cases = listOf(
-            snapshot(upcoming = null) to "No hay una próxima jam cargada. Creala en la planilla y volvé a intentar.",
+            snapshot(upcoming = null) to "No hay una próxima jam. Pedime que la cree o creala en la planilla.",
             snapshot(jam(JamStatus.DRAFT, com.bbbjam.core.model.Setlist.Withheld)) to
                 "No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé.",
             snapshot(jam(setlist = listed(1, 2))) to "Todos estos temas ya están en la lista de la próxima jam.",
@@ -251,7 +251,7 @@ class ApplyPresenterTest {
             val chat = chat()
             chat.ask("dos", proposal(songs = 2))
             moleculeFlow(RecompositionMode.Immediate) {
-                AssistantPresenter(chat, applier, blockedJams).present(Unit)
+                testPresenter(chat, applier, blockedJams).present(Unit)
             }.test {
                 assertEquals(ApplyUiModel.Blocked(note), awaitProposal { it.apply != ApplyUiModel.None }.apply)
             }
@@ -260,7 +260,7 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("dos", proposal(songs = 2))
         moleculeFlow(RecompositionMode.Immediate) {
-            AssistantPresenter(chat, applier, unread).present(Unit)
+            testPresenter(chat, applier, unread).present(Unit)
         }.test {
             assertFalse(awaitProposal().apply is ApplyUiModel.Blocked)
             assertEquals(ApplyUiModel.None, awaitProposal().apply)

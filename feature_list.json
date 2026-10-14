@@ -1467,7 +1467,7 @@
     "depends_on": [
       "assistant-apply-proposal"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Apps Script gains createJam(fecha, hora, lugar) behind the existing passphrase guard and lock: validates YYYY-MM-DD and HH:MM, non-empty venue, date not in the past (Buenos Aires), refuses a duplicate fecha; appends the Jams row with estado BORRADOR and creates no setlist tab (addSong still does); node tests cover each refusal and the write, shown failing first",
       "A new repository function and a SetlistActionRegistry entry (D-13); the registry completeness test is updated; the assistant feature reaches it through a narrow contract like SetlistSongAdder, never SetlistRepository/AdminWriter (Konsist rules intact)",
@@ -1475,6 +1475,15 @@
       "If another future jam exists, creation is allowed (user decision) and the UI/agent say the new one stays held back while the earlier one is upcoming",
       "Docs: apps-script-api, sheet-schema, domain-model authority table, D-25 in the bitácora, a migration guide for the user to paste the new Post.gs and redeploy with a check string",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (no stored passphrase + demo jam, or stop at the confirmation dialog)"
+    ],
+    "evidence": [
+      "Node: node --test backend/apps-script/test/*.test.js: 192 tests pass (183 before); failing run first in docs/evidence/assistant-create-jam/node-failing-run.txt (12 failures), final in node-final.txt. createJam/checkCreateJam: every refusal before any write, four plain-text cells, no tab, read-back, today allowed across Buenos Aires midnight, earlier and later future jams allowed.",
+      "Registry: SetlistActionRegistryTest and RegistryJamCreatorTest shown failing first (registry-failing-run.txt: unresolved CreateJam, JamCreated, CREATE_JAM, RegistryJamCreator), then green with 11 mutations; JamCreator bound in appModule; Konsist rules 18 and 19 unchanged and green.",
+      "Gate: CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 866 unit tests (821 before), 0 failures (gate-final.txt).",
+      "Agent: jamSchedule tool, ProposalDto.jam, prompt rules, JamProposalValidator; the live reply on the Pixel carried a valid jam proposal (2026-11-28 21:00 La Macanuda) with the held-back note (device-check.md).",
+      "Amendment: a date earlier than the upcoming jam is Blocked(EARLIER) in the app; the agent prompt forbids proposing it.",
+      "Device: stopped at the confirmation dialog (stored passphrase and real jam); Cancelar; no write, no createJam in logcat. Creation itself not exercised on a device. The Apps Script redeploy (docs/migrations/assistant-create-jam-script-update.md) is owed by the user.",
+      "Independent validator accepted on 14 October 2026 after CI=true ./init.sh and a forced ./gradlew check --rerun-tasks (866 tests, 0 failures) and node --test (192 pass), with a security review of createJam (guard + lock, every check before any write, venue formula guard, plain-text write and read-back, checkCreateJam cleanup). The user redeployed the script; deployProbe lists createJam and checkCreateJam (docs/evidence/assistant-create-jam/deploy-probe.md). Not exercised on a device: the creation itself (the Pixel has a stored passphrase and the real 2026-10-31 jam). Low note left open: checkCreateJam_ writes the temp tab header before its try block; a leftover is deleted by the next run."
     ]
   }
 ]

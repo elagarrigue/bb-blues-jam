@@ -75,6 +75,7 @@ class AssistantLiveCallTest {
             AssistantCredentials.of(key),
             FakeCatalog(songs),
             FakeJams(past = listOf(juanJam) + seeded),
+            fixedCalendar(),
             AssistantHttp.executorFactory(AssistantModel.BASE_URL, client),
         )
 

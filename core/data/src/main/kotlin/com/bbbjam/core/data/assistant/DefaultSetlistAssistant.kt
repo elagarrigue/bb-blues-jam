@@ -13,6 +13,7 @@ import ai.koog.prompt.structure.StructuredRequest
 import ai.koog.prompt.structure.StructuredRequestConfig
 import ai.koog.prompt.structure.json.JsonStructure
 import com.bbbjam.core.data.catalog.CatalogRepository
+import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
@@ -24,13 +25,14 @@ import kotlinx.serialization.json.Json
 
 /**
  * The [SetlistAssistant] over a Koog agent. Its only data access is [catalog] and [jams], read through
- * the two read-only tools (D-24); it holds no writer. The executor is built on the first request that
+ * the three read-only tools (D-24); it holds no writer. The executor is built on the first request that
  * has a key, once. A conversation runs one agent per turn and keeps answered turns in memory.
  */
 internal class DefaultSetlistAssistant(
     private val credentials: AssistantCredentials,
     private val catalog: CatalogRepository,
     private val jams: JamsRepository,
+    private val calendar: JamCalendar,
     private val executorFactory: AssistantExecutorFactory,
     private val statusProbe: AssistantStatusProbe = AssistantStatusProbe(),
 ) : SetlistAssistant {
@@ -55,7 +57,7 @@ internal class DefaultSetlistAssistant(
                 if (songs.isEmpty()) return@withLock AssistantReply.Failed(AssistantFailure.CatalogEmpty)
                 try {
                     val dto = runAgent(request.trim())
-                    val proposal = ProposalValidator.validate(dto, songs)
+                    val proposal = withJam(ProposalValidator.validate(dto, songs), dto.jam)
                     history += AssistantPrompt.Turn(
                         request.trim(),
                         Json.encodeToString(ProposalDto.serializer(), ProposalValidator.toDto(proposal)),
@@ -79,6 +81,13 @@ internal class DefaultSetlistAssistant(
             }
         }
 
+        private fun withJam(proposal: AssistantReply.Proposal, jam: JamProposalDto?): AssistantReply.Proposal =
+            when (val checked = jam?.let { JamProposalValidator.validate(it, calendar.today()) }) {
+                null -> proposal
+                is JamValidation.Valid -> proposal.copy(jam = checked.jam)
+                is JamValidation.Rejected -> proposal.copy(jamRejection = checked.reason)
+            }
+
         private fun failed(error: Throwable): AssistantReply = AssistantReply.Failed(AssistantErrors.failureOf(error))
 
         private suspend fun runAgent(request: String): ProposalDto {
@@ -100,6 +109,7 @@ internal class DefaultSetlistAssistant(
                 toolRegistry = ToolRegistry {
                     tool(CatalogTool(catalog))
                     tool(PastJamsTool(jams))
+                    tool(JamScheduleTool(jams, calendar))
                 },
             )
             return agent.run(request)

@@ -191,6 +191,10 @@ class FakeSetlistRepository : SetlistRepository {
 
     override fun observeMoves(): Flow<List<SetlistMove>> = moves
 
+    // Creating a jam belongs to the assistant (assistant-create-jam); this screen never calls it.
+    override suspend fun createJam(date: LocalDate, startTime: java.time.LocalTime, venue: String) =
+        com.bbbjam.core.data.setlist.CreateJamOutcome.NotCreated(com.bbbjam.core.data.admin.WriteOutcome.Unavailable)
+
     override suspend fun publishSetlist(jamDate: LocalDate): PublishOutcome {
         publishCalls += jamDate
         publishes.value = publishes.value + SetlistPublish(900, jamDate, SetlistPublish.State.Sending)

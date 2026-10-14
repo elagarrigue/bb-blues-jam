@@ -727,6 +727,22 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
 - Amber on this screen: only `Enviar` and the keys (Konsist allowlist `feature/assistant`).
 - Not configured and the intro use `EmptyStateBlock`.
 
+### Crear la jam (`assistant-create-jam`)
+
+- **Card** under the author caption of a proposal that carries a jam: `surfaceRaised`, `shapes.md`. Heading `NUEVA JAM`
+  (`caption`, `textMuted`, heading), date in words `Sábado 28 de noviembre de 2026` (`songTitle`, `text`),
+  `21:00 · La Macanuda` (`body`, `text`), the held-back note (`body`, `textMuted`): `Queda en espera: la próxima jam
+  sigue siendo la del sábado 31 de octubre.`
+- **Button** `Crear la jam` (`Reintentar` after a failure): full-width, `surface` fill so it shows on the raised card,
+  `text` content, `shapes.md`, 48dp; disabled `surface`/`textMuted`. **Not amber**; the allowlist is unchanged. Only the
+  latest turn with a valid jam, and not while a turn is pending; older turns show the jam as text.
+- **Blocked** (no button): a date earlier than the upcoming jam (`... la dejaría en espera. Si de verdad querés eso,
+  agregala en la planilla.`), a date already taken, a past date; `body`, `textMuted`. A rejected jam shows only a muted note.
+- **Dialog** (`ApplyDefaults.applyDialog()`, `surfaceRaised`, `text` actions, no amber, no `error`): `¿Crear la jam?`, lines
+  `Fecha:`, `Hora:`, `Lugar:`, the draft line and, when a jam is upcoming, the held-back line; `Crear la jam` / `Cancelar`.
+- **Result**: one polite live region under the card (`Creando la jam…`, `Jam creada como borrador.`, or
+  `No se pudo crear: ...` in `error`). `Usar esta lista` on a jam turn stays blocked until the jam is the upcoming one.
+
 ## Open Design Questions
 
 - `textMuted`, `slotFilled`, `archive` and `error` are still derived rather than measured: the

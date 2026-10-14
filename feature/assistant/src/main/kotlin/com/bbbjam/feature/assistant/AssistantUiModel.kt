@@ -62,6 +62,8 @@ sealed interface ReplyUiModel : UiModel {
         val discardedNote: String?,
         val apply: ApplyUiModel = ApplyUiModel.None,
         val summary: ApplySummaryUiModel? = null,
+        val jam: JamCardUiModel? = null,
+        val jamNote: String? = null,
     ) : ReplyUiModel
 
     data class Failed(val message: String, val retry: RetryUiModel?) : ReplyUiModel

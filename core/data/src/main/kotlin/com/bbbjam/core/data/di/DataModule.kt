@@ -56,5 +56,5 @@ val dataModule = module {
     single<WriteFailureLog> { WriteFailureLog { line -> Log.w(LOG_TAG, line) } }
     single { get<BluesJamDatabase>().setlistDao() }
     single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), failureLog = get()) }
-    single<SetlistAssistant> { DefaultSetlistAssistant(get(), get(), get(), AssistantHttp.executorFactory()) }
+    single<SetlistAssistant> { DefaultSetlistAssistant(get(), get(), get(), get(), AssistantHttp.executorFactory()) }
 }

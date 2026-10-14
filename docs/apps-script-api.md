@@ -7,7 +7,7 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
 (`apps-script-jams-read-endpoint`), and fifteen POST actions in local source: `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
-`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist` and `checkPublish`. Every POST
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam` and `checkCreateJam`. Every POST
 action passes the passphrase guard in the router. Earlier actions have the deployment history below;
 the latest local mutations are not live-verified. The user deferred one shared deployment and live
 checks until app implementation is complete.
@@ -239,7 +239,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -278,7 +278,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -710,6 +710,26 @@ shared deployment means this is local behavior and has not been live-verified ye
 `publishSetlist` is a guarded, locked write with `{date}`. It rejects invalid, unknown, duplicate or non-upcoming jams before writing; a retry for an already `PUBLICADA` jam succeeds idempotently. A draft must have a valid Jams row and at least one setlist row. The server writes only that row's `estado` cell, flushes, and reads back `PUBLICADA` before returning `{ok:true, alreadyPublished:false}`; a retry returns `alreadyPublished:true` without writing. Missing tabs or no songs return `empty_setlist`. `checkPublish` exercises the same write/read-back against its temporary `_prueba_publicar` Jams tab and always removes that tab; it never changes a real jam. The action is in local source; deployment and live checks are deferred to the user's shared four-feature deployment.
 
 The public `SetlistRepository.publishSetlist(jamDate)` mutation returns `PublishOutcome.Published(alreadyPublished)` only when the server confirms its result. Room changes only after confirmation and only for a cached `DRAFT` jam with an `AVAILABLE` setlist. It queues with other writes and exposes `SetlistPublish` Sending/Failed state for the admin status block; failure logs one safe `BluesJam` line and never optimistically marks the jam published.
+
+### `createJam` and `checkCreateJam` (`assistant-create-jam`, D-25)
+
+`createJam` is a guarded, locked write with `{date, time, venue}`: the one place the app appends a `Jams` row. It
+refuses, before any write and in this order: `invalid_date` (not a YYYY-MM-DD calendar day), `past_date` (before
+today in the spreadsheet zone, Buenos Aires; today is allowed), `invalid_time` (not exactly `HH:MM`),
+`invalid_venue` (not a string, a control character, empty after trimming, over 80 characters, or starting with
+`=`, `+`, `-` or `@`; trimmed with inner whitespace collapsed), `missing_tab`, `missing_header`/`duplicate_header`,
+`jam_exists` (any `Jams` row with that fecha, whatever its `estado`) and `tab_exists` (a tab already named like the
+date). Another future jam is **not** a refusal. It writes only the four mapped cells at `getLastRow() + 1` as plain
+text (format set first), `estado` = `BORRADOR`, flushes and reads them back (a difference is `internal_error`), and
+answers `{ok:true, date, time, venue, status:'BORRADOR'}` with the normalized venue. It creates **no** setlist tab:
+`addSong` still creates it with the first song. `checkCreateJam` is the self-cleaning deploy check: it appends a row
+on the temporary tab `_prueba_crear_jam` (a leftover is deleted first), reads it back with the Jams reader and
+deletes the tab in a `finally`; it never touches the real `Jams`.
+
+`SetlistJamCreationRepository.createJam(date, startTime, venue)` (part of `SetlistRepository`) returns
+`CreateJamOutcome.Created` only when the answer echoes date, time and `BORRADOR`, and then mirrors the jam in Room
+(`DRAFT`, setlist `AVAILABLE`, empty, ignored if a refresh already brought the row). `NotCreated(reason)` carries the
+write outcome; `ScriptOutdated` is the answer `unknown_action` of a script that was not updated yet.
 
 ### `addExtraParticipant` and `removeExtraParticipant` (`admin-edit-extra-participants`)
 

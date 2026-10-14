@@ -17,7 +17,7 @@ class AssistantPresenterTest {
     private val assistant = FakeSetlistAssistant()
 
     private fun flow(chat: AssistantChat) = moleculeFlow(RecompositionMode.Immediate) {
-        AssistantPresenter(
+        testPresenter(
             chat,
             ProposalApplier(
                 FakeSetlistSongAdder(),

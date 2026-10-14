@@ -42,6 +42,7 @@ internal class DefaultSetlistRepository(
     SetlistSlotClearRepository by slotClears,
     SetlistMoveRepository by moves,
     SetlistExtraParticipantRepository by extraChanges,
+    SetlistJamCreationRepository by SetlistJamCreations(writer, setlistDao, scope, queue, failureLog),
     SetlistPublishRepository by SetlistPublishes(
         writer,
         setlistDao,

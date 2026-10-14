@@ -12,7 +12,7 @@ internal object ApplyCopy {
     const val APPLY_STOP = "Detener"
     const val APPLY_PUBLISHED =
         "La lista ya está publicada: los músicos van a ver los temas apenas se agreguen."
-    const val BLOCKED_NO_UPCOMING = "No hay una próxima jam cargada. Creala en la planilla y volvé a intentar."
+    const val BLOCKED_NO_UPCOMING = "No hay una próxima jam. Pedime que la cree o creala en la planilla."
     const val BLOCKED_UNREADABLE =
         "No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé."
     const val BLOCKED_ALL_PRESENT = "Todos estos temas ya están en la lista de la próxima jam."

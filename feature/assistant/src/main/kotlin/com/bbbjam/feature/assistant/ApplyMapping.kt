@@ -1,16 +1,21 @@
 package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.data.assistant.ProposedJam
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
+import java.time.LocalDate
 
 /** What the mapping needs to draw the apply parts: the runs, the jams snapshot and the open dialog's turn. */
 internal data class ApplyInputs(
     val runs: Map<Long, ApplyRun> = emptyMap(),
     val snapshot: JamsSnapshot? = null,
     val confirmingTurnId: Long? = null,
+    val creations: Map<Long, JamCreation> = emptyMap(),
+    val today: LocalDate? = null,
+    val confirmingJamTurnId: Long? = null,
 )
 
 /**
@@ -40,7 +45,8 @@ internal fun applyParts(
     handlers: AssistantHandlers,
 ): ApplyParts {
     val run = inputs.runs[turnId]
-    val anyRunning = inputs.runs.values.any { it.state == ApplyRun.State.Running }
+    val anyRunning = inputs.runs.values.any { it.state == ApplyRun.State.Running } ||
+        inputs.creations.values.any { it == JamCreation.Creating }
     val statuses = run?.songs.orEmpty().mapNotNull { apply -> apply.status()?.let { apply.song.songId to it } }.toMap()
     val apply = if (!isApplicable || run?.isSuccess == true || run?.state == ApplyRun.State.Running) {
         ApplyUiModel.None
@@ -58,6 +64,50 @@ private fun actionFor(
     inputs: ApplyInputs,
     handlers: AssistantHandlers,
 ): ApplyUiModel = when (val plan = applyPlan(proposal.songs, inputs.snapshot)) {
+    ApplyPlan.Unknown -> ApplyUiModel.None
+
+    // A proposal that also carries a jam loads its list only into that jam (assistant-create-jam, D3).
+    is ApplyPlan.Ready, is ApplyPlan.Blocked -> {
+        val jam = proposal.jam
+        if (jam != null && inputs.snapshot != null) {
+            jamListGate(turnId, jam, plan, run, anyRunning, inputs, handlers)
+        } else {
+            planAction(turnId, plan, run, anyRunning, inputs, handlers)
+        }
+    }
+}
+
+private fun jamListGate(
+    turnId: Long,
+    jam: ProposedJam,
+    plan: ApplyPlan,
+    run: ApplyRun?,
+    anyRunning: Boolean,
+    inputs: ApplyInputs,
+    handlers: AssistantHandlers,
+): ApplyUiModel {
+    val upcoming = inputs.snapshot?.upcoming
+    val creation = inputs.creations[turnId]
+    return when {
+        upcoming?.date == jam.date -> planAction(turnId, plan, run, anyRunning, inputs, handlers)
+
+        creation == JamCreation.Creating -> ApplyUiModel.None
+
+        creation == JamCreation.Created && upcoming != null ->
+            ApplyUiModel.Blocked(JamCopy.listHeldBack(upcoming.date))
+
+        else -> ApplyUiModel.Blocked(JamCopy.LIST_AFTER_CREATE)
+    }
+}
+
+private fun planAction(
+    turnId: Long,
+    plan: ApplyPlan,
+    run: ApplyRun?,
+    anyRunning: Boolean,
+    inputs: ApplyInputs,
+    handlers: AssistantHandlers,
+): ApplyUiModel = when (plan) {
     ApplyPlan.Unknown -> ApplyUiModel.None
 
     is ApplyPlan.Blocked -> ApplyUiModel.Blocked(

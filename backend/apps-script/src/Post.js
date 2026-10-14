@@ -34,6 +34,9 @@
  * batches without moving Sheet rows or ever exposing duplicate positions.
  * admin-publish-setlist adds `publishSetlist` and `checkPublish`; publication writes and reads back
  * only the `estado` cell of the upcoming jam's Jams row.
+ * assistant-create-jam adds `createJam` and `checkCreateJam` (D-25): the one place the app appends a
+ * Jams row, as BORRADOR, with no setlist tab (addSong still creates it with the first song). Every
+ * refusal happens before any write; another future jam does not block it.
  *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -67,6 +70,9 @@ var SETLIST_CHECK_TAB = '_prueba_lista';
 
 /** The transient Jams tab checkPublish creates and deletes within one request. Never served. */
 var PUBLISH_CHECK_TAB = '_prueba_publicar';
+
+/** The transient Jams tab checkCreateJam creates and deletes within one request. Never served. */
+var CREATE_JAM_CHECK_TAB = '_prueba_crear_jam';
 
 /** The status of a jam whose setlist only the admin reads. */
 var DRAFT_STATUS = 'BORRADOR';
@@ -129,6 +135,8 @@ var ACTIONS = {
   checkSetlistMove: { write: true, run: checkSetlistMove_ },
   publishSetlist: { write: true, run: publishSetlist_ },
   checkPublish: { write: true, run: checkPublish_ },
+  createJam: { write: true, run: createJam_ },
+  checkCreateJam: { write: true, run: checkCreateJam_ },
 };
 
 /**
@@ -749,6 +757,111 @@ function checkPublish_(request, spreadsheet, services) {
   }
   if (!published || published.length !== 2 || published[0].status !== PUBLISHED_STATUS || published[1].status !== DRAFT_STATUS) {
     throw new Error('The publish check read back a different status');
+  }
+  return { ok: true };
+}
+
+/** A time of day as HH:MM, 24 hours. */
+var POST_TIME_ = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Longest venue name createJam accepts (UTF-16 units). */
+var MAX_VENUE_LENGTH_ = 80;
+
+/** Validates and normalizes a venue: plain text, trimmed, inner whitespace collapsed. */
+function normalizeVenue_(value) {
+  if (typeof value !== 'string' || /[\u0000-\u001f\u007f-\u009f]/.test(value)) {
+    throw new ContractError('invalid_venue', 'venue must be plain text');
+  }
+  const venue = value.trim().replace(/\s+/g, ' ');
+  if (venue.length === 0 || venue.length > MAX_VENUE_LENGTH_ || /^[=+\-@]/.test(venue)) {
+    throw new ContractError('invalid_venue', 'venue must be a plain name of at most ' + MAX_VENUE_LENGTH_ + ' characters');
+  }
+  return venue;
+}
+
+/**
+ * Appends the next jam to Jams as BORRADOR (D-25). Refuses, before any write and in this order: a
+ * date that is not a calendar day, a past date (spreadsheet zone), a time that is not HH:MM, a bad
+ * venue, a missing Jams tab or header, a Jams row that already has the date (any estado) and a tab
+ * already named like the date. Creates no tab.
+ */
+function createJam_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  if (date < todayIso_(spreadsheet, services)) {
+    throw new ContractError('past_date', 'The date ' + date + ' is in the past');
+  }
+  if (typeof request.time !== 'string' || !POST_TIME_.test(request.time)) {
+    throw new ContractError('invalid_time', 'time must be HH:MM');
+  }
+  const venue = normalizeVenue_(request.venue);
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  if (!sheet) {
+    throw new ContractError('missing_tab', 'The tab ' + JAMS_TAB + ' does not exist');
+  }
+  const range = sheet.getDataRange();
+  const display = range.getDisplayValues();
+  const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, display[0] || []);
+  const timeZone = spreadsheet.getSpreadsheetTimeZone();
+  const jams = buildJams(display, range.getValues(), function () { return null; }, function (value, pattern) {
+    return Utilities.formatDate(value, timeZone, pattern);
+  }).jams;
+  if (jams.some(function (jam) { return jam.date === date; })) {
+    throw new ContractError('jam_exists', 'Jams already has a row with the fecha ' + date);
+  }
+  if (spreadsheet.getSheetByName(date)) {
+    throw new ContractError('tab_exists', 'A tab named ' + date + ' already exists');
+  }
+  const jam = { date: date, time: request.time, venue: venue };
+  appendJamRow_(sheet, columns, jam, services);
+  return { ok: true, date: date, time: jam.time, venue: venue, status: DRAFT_STATUS };
+}
+
+/**
+ * Writes one BORRADOR row after the last row: the four mapped cells only, plain text set first, then
+ * read back; a difference is an Error (internal_error).
+ */
+function appendJamRow_(sheet, columns, jam, services) {
+  const row = sheet.getLastRow() + 1;
+  const wanted = [
+    [columns.date, jam.date],
+    [columns.startTime, jam.time],
+    [columns.venue, jam.venue],
+    [columns.status, DRAFT_STATUS],
+  ];
+  wanted.forEach(function (item) { sheet.getRange(row, item[0] + 1).setNumberFormat(PLAIN_TEXT_FORMAT); });
+  wanted.forEach(function (item) { sheet.getRange(row, item[0] + 1).setValue(item[1]); });
+  services.flush();
+  wanted.forEach(function (item) {
+    if (sheet.getRange(row, item[0] + 1).getDisplayValues()[0][0] !== item[1]) {
+      throw new Error('The new Jams row did not read back');
+    }
+  });
+}
+
+/** Self-cleaning proof that a Jams row can be appended and read back, on a temporary tab only. */
+function checkCreateJam_(request, spreadsheet, services) {
+  const leftover = spreadsheet.getSheetByName(CREATE_JAM_CHECK_TAB);
+  if (leftover) spreadsheet.deleteSheet(leftover);
+  const sheet = spreadsheet.insertSheet(CREATE_JAM_CHECK_TAB);
+  const header = ['fecha', 'hora', 'lugar', 'estado'];
+  sheet.getRange(1, 1, 2, 4).setValues([header, ['2099-01-01', '21:00', 'Prueba', DRAFT_STATUS]]);
+  const columns = mapColumns(CREATE_JAM_CHECK_TAB, JAMS_FIELDS, header);
+  let jams;
+  try {
+    appendJamRow_(sheet, columns, { date: '2099-01-02', time: '20:30', venue: 'Prueba' }, services);
+    const range = sheet.getDataRange();
+    jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+      return Utilities.formatDate(value, spreadsheet.getSpreadsheetTimeZone(), pattern);
+    }).jams;
+  } finally {
+    spreadsheet.deleteSheet(sheet);
+  }
+  const added = jams && jams.length === 2 ? jams[1] : null;
+  if (!added || added.date !== '2099-01-02' || added.startTime !== '20:30' || added.venue !== 'Prueba' || added.status !== DRAFT_STATUS) {
+    throw new Error('The create jam check read back a different row');
   }
   return { ok: true };
 }
@@ -1410,6 +1523,7 @@ function notSet_() {
 if (typeof module !== 'undefined') {
   module.exports = {
     ACTIONS,
+    CREATE_JAM_CHECK_TAB,
     PUBLISH_CHECK_TAB,
     SETLIST_CHECK_TAB,
     WRITE_CHECK_TAB,

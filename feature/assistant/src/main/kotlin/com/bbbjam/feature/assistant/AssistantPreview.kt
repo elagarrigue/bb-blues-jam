@@ -20,6 +20,8 @@ private val previewHandlers = AssistantHandlers(
     apply = { id -> EventHandler(id) {} },
     confirmation = { id -> EventHandler(id) {} },
     stop = { id -> EventHandler(id) {} },
+    jam = { id -> EventHandler(id) {} },
+    jamConfirmation = { id -> EventHandler(id) {} },
 )
 
 private val previewProposal = AssistantReply.Proposal(

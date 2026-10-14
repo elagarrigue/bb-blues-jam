@@ -5,6 +5,7 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.catalog.RefreshOutcome
+import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRefreshOutcome
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
@@ -20,12 +21,19 @@ import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.Song
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.model.Tempo
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 private val FRESH = Freshness(fetchedAt = null, lastFailure = null, isRefreshing = false)
+
+/** A calendar fixed on 2026-10-14 (Buenos Aires). */
+internal fun fixedCalendar(): JamCalendar =
+    JamCalendar(Clock.fixed(Instant.parse("2026-10-14T15:00:00Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
 
 /** A catalog song; the slug is the title with hyphens unless given. */
 internal fun song(id: String, title: String, artist: String, key: String = "A", tempo: Tempo? = null): Song =

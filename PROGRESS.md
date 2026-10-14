@@ -1,8 +1,24 @@
+## 14 October 2026 - assistant-create-jam passing (awaiting validation)
+
+The assistant can propose creating the next jam (D-25). **Server:** `Post.js` `createJam` (refusals `invalid_date`, `past_date`, `invalid_time`, `invalid_venue`, `missing_tab`, `missing_header`/`duplicate_header`, `jam_exists`, `tab_exists`, all before any write; four plain-text cells as `BORRADOR`; no tab; read-back) and `checkCreateJam`; node tests written first (12 failing, saved), now 192 pass. **`:core:data`:** `SetlistJamCreationRepository`/`CreateJamOutcome` (incl. `ScriptOutdated`), Room mirror only on an echoed `Created`. **`:app`:** registry `CREATE_JAM` (11, test shown failing first), `JamCreator` bound to `RegistryJamCreator`. **Agent:** `jamSchedule` read-only tool, optional `ProposalDto.jam`, prompt rules, `JamProposalValidator`. **`:feature:assistant`:** `jamPlan`, `JamCreationRunner`, `JamHandlers`, card and dialog (no amber), copy; `Usar esta lista` on a jam turn waits until the jam is the upcoming one.
+
+**Orchestrator amendment recorded (also in the spec's Implementation Notes):** a date EARLIER than the upcoming jam is `Blocked(EARLIER)` in the app with a vos note (it would put the existing jam on hold; it can be added in the Sheet); the prompt also forbids proposing it. Later dates stay allowed with the "queda en espera" note; the server accepts either.
+
+Verification: baseline `CI=true ./init.sh` exit 0; final exit 0, konsist/detekt/ktlint wired, 866 tests (821 before), 0 failures; node 192 pass. Narrow supporting fix: `FakeSetlistRepository` in `:feature:next-jam` tests gained a `createJam` stub (interface grew). No rule loosened.
+
+**Device (Pixel 5):** preconditions failed (stored passphrase, real 2026-10-31 jam), so it stopped at the dialog. One real request returned a VALID jam proposal (2026-11-28, 21:00, La Macanuda from the last jam, held-back note) plus an unrequested 18-song list; dialog verified (screenshot, dump), `Cancelar`, no write, no `createJam` in logcat. The creation itself is covered by JVM tests only. `local.properties` md5 unchanged. Evidence in `docs/evidence/assistant-create-jam/`.
+
+**Owed by the user:** paste `Post.gs` and deploy a new version (`docs/migrations/assistant-create-jam-script-update.md`); until then the app shows the `ScriptOutdated` copy. Then the orchestrator runs the passphrase-free `deployProbe` check.
+
 ## 12 October 2026 - strip-extra-chip-filled accepted
 
 The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no glyph, never amber); the panel line is unchanged and differs from the strip chip only by the check. Changed: `InstrumentStripDefaults`, KDoc in `LineupPanelDefaults` and `InstrumentChipUiModel`, three test files, DESIGN.md, architecture SKILL. `CI=true ./init.sh` exit 0 with konsist, detekt and ktlint wired. Device (Pixel 5, demo jam, no writes): before.png and after.png in `docs/evidence/strip-extra-chip-filled/`; the before shot shows row 06's extra, the after shot row 04 `+ saxo: Valeria` (scroll positions differ). Independent validator accepted on 12 October 2026 after rerunning the gate.
 
 # Progress Log
+
+## 14 October 2026 - assistant-create-jam accepted, script redeployed
+
+Independent validator accepted (866 JVM tests, 192 node tests). The user redeployed Post.gs; the no-write deployProbe lists createJam and checkCreateJam. Creating a jam from the app now writes a real BORRADOR row. Open from phase 2: the on-device apply and create runs were stopped at their dialogs on the Pixel (stored passphrase, real jam); they are covered by JVM and node tests.
 
 ## 14 October 2026 - assistant-apply-proposal accepted (device run pending)
 

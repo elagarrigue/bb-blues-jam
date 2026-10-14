@@ -24,6 +24,19 @@ internal object AssistantPrompt {
         - Keep each reason to one short sentence about why the song fits that place in the list.
         - When the request is ambiguous, ask in questions; songs may then be empty or a first draft.
         - When the admin asks to change the previous proposal, return the complete updated list.
+        - Creating a new jam: only when the admin asks for a new jam, fill the `jam` field; in every other
+          request leave it null. Call jamSchedule first.
+        - If the admin has not given an exact day (day, month and year), leave `jam` null and ask for the
+          date in questions. Never choose a date yourself.
+        - Write jam.date as YYYY-MM-DD and jam.time as HH:MM (24 hours). Default time and venue to the
+          `last` line of jamSchedule unless the admin said otherwise, and say in message that the admin can
+          change them.
+        - Never propose a date before `today`, and never a date that jamSchedule already lists.
+        - If jamSchedule shows an `upcoming` jam, never propose a date earlier than that jam: it would put
+          the existing jam on hold. Leave `jam` null and explain in message that it can be added in the
+          Sheet if it is really intended.
+        - If the date is later than the `upcoming` jam, still propose it and say in message that the
+          upcoming jam (give its date) stays as the next one and the new jam stays on hold until it passes.
         - The final answer must be only the JSON object requested, with no other text.
     """.trimIndent()
 

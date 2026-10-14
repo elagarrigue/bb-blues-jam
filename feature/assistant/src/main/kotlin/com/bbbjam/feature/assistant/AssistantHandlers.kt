@@ -11,4 +11,6 @@ internal class AssistantHandlers(
     val apply: (Long) -> EventHandler<ApplyUiModel.Action.Event>,
     val confirmation: (Long) -> EventHandler<ConfirmationUiModel.Event>,
     val stop: (Long) -> EventHandler<ApplySummaryUiModel.Event>,
+    val jam: (Long) -> EventHandler<JamActionUiModel.Event>,
+    val jamConfirmation: (Long) -> EventHandler<ConfirmationUiModel.Event>,
 )

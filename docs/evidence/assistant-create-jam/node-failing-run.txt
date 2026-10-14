@@ -1,0 +1,517 @@
+✔ the seed Catalogo builds exactly docs/api-samples/catalog-seed.json (2.0112ms)
+✔ every seed song has the 8 keys in order and its 4 optional fields null (0.4202ms)
+✔ the edge input builds exactly docs/api-samples/catalog-edge.json (0.2472ms)
+✔ typed and messy cells: raw integer, trimmed text, blank rows skipped, extra column ignored (0.2066ms)
+✔ values stay in Sheet vocabulary: no enum, key or id validation in the script (0.1524ms)
+✔ a missing optional column gives null for its field (0.1301ms)
+✔ a short row reads its missing cells as empty (0.1132ms)
+✔ a tab with only the header row gives an empty song list (0.1ms)
+✔ a missing required header is missing_header and names it (0.4975ms)
+✔ a header that differs in case or accent does not match (0.201ms)
+✔ an empty tab is missing_header (0.1531ms)
+✔ a mapped header twice, even with padding, is duplicate_header; an unmapped one twice is fine (0.1301ms)
+✔ checkCatalogResponse accepts both committed samples (0.552ms)
+✔ checkCatalogResponse rejects a missing key, a number, an empty string, an extra field and an error body (0.342ms)
+✔ the seed Jams and 2026-07-25 tabs build exactly docs/api-samples/jams-seed.json (2.98ms)
+✔ the seed jam is PUBLICADA with 13 rows, every slot and extraParticipants null (1.6174ms)
+✔ the edge input builds exactly docs/api-samples/jams-edge.json (1.0761ms)
+✔ a non-PUBLICADA jam is withheld: its tab is never requested and its content never serialized (0.7152ms)
+✔ a withheld jam still carries its date, time, venue and status (0.5907ms)
+✔ fail closed: any status other than exactly PUBLICADA (after trimming) withholds the setlist (0.3701ms)
+✔ typed cells: fecha, hora and posicion come back as YYYY-MM-DD, HH:MM and integer text (1.3465ms)
+✔ each per-jam error code, and every other jam still served (0.7473ms)
+✔ a duplicate mapped header in a jam tab is a per-jam duplicate_header (0.222ms)
+✔ an empty or header-less jam tab is a per-jam missing_header; a header-only tab is an empty setlist (0.3157ms)
+✔ fecha Config or Catalogo with PUBLICADA is invalid_date and never names a tab (0.2352ms)
+✔ a fecha with extra characters around an ISO date is invalid_date and names no tab (0.1568ms)
+✔ a date on two rows is duplicate_date for the PUBLICADA one, and its tab is never read (0.1123ms)
+✔ a missing Otros column gives extraParticipants null; the cell is passed through raw (0.198ms)
+✔ the jam, the row and the slots keep their documented key order (0.5167ms)
+✔ slots map the seven headers by name, "-" passes through, rows stay in tab order (0.4821ms)
+✔ blank Jams rows and blank setlist rows are skipped (0.152ms)
+✔ the Jams tab itself: a missing header is missing_header, a duplicate is duplicate_header, empty is missing_header (0.4647ms)
+✔ an unexpected exception from a tab read is not turned into a per-jam error (0.1337ms)
+✔ checkJamsResponse accepts both samples; strict rejects the edge sample only (1.9002ms)
+✔ checkJamsResponse enforces the draft rule and the shapes (0.4142ms)
+✔ check-response.js dispatches on jams or songs and honors --strict (178.4678ms)
+✔ textCell trims surrounding whitespace, including NBSP and tabs (0.8941ms)
+✔ textCell keeps inner whitespace and Sheet vocabulary untouched (0.1173ms)
+✔ textCell turns empty, whitespace-only, null and undefined into null (0.1266ms)
+✔ integerTextCell writes an integral number as its decimal string (0.1502ms)
+✔ integerTextCell writes a non-integral number with String(n), for the mapper to reject (0.1311ms)
+✔ integerTextCell trims a string and passes it through (0.0951ms)
+✔ integerTextCell turns empty, null and undefined into null (0.1112ms)
+✔ isBlank is true only for null, undefined and whitespace-only strings (0.0956ms)
+✔ isoDateCell formats a typed date in the given zone (16.5879ms)
+✔ isoDateCell round-trips a date built in another zone when formatted in that zone (0.6402ms)
+✔ isoDateCell passes a text date through, trimmed, and blank as null (0.1045ms)
+✔ timeCell pads and trims a text time, and drops :00 seconds (1.1276ms)
+✔ timeCell reads the display first, so a typed time on the 1899 epoch keeps its minutes (0.6348ms)
+✔ timeCell passes an out-of-range or non-:00-seconds text time through for the mapper (0.1301ms)
+✔ posicion uses integerTextCell: the number 3 gives "3", 2.5 gives "2.5" (0.1242ms)
+✔ isDateValue recognizes a Date from another realm and rejects an invalid one or text (0.684ms)
+✔ mapColumns matches trimmed exact headers, reports missing and duplicate ones (1.1382ms)
+✔ timeCell prefers a plain display time over the raw Date, even when the Date formats differently (0.237ms)
+✖ the action table: checkPassphrase and readJams read, every other action writes (2.303ms)
+✔ the guard is called by the router only: no action calls it itself (0.5396ms)
+✔ every action: a missing or non-string passphrase is invalid_passphrase; the action never runs, no lock, only Config read (3.47ms)
+✔ every action: a wrong passphrase is invalid_passphrase and the action never runs (1.84ms)
+✔ every action: the right passphrase runs it once; a write action runs holding the lock, which is released (0.6395ms)
+✔ every action: an unset passphrase is passphrase_not_set, the action never runs and no failure is counted (4.528ms)
+✔ rotation: Config is read on every request, so the old passphrase is rejected as soon as it changes (0.8419ms)
+✔ rate limit: the 10th failure in a window locks every action, the right passphrase included, without reading Config (1.6557ms)
+✔ rate limit fails open: a cache that throws or is missing is ignored, and the passphrase check still runs (4.4388ms)
+✔ a non-numeric count in the cache reads as zero (0.3205ms)
+✔ the guard itself throws the contract errors (exported for the tests) (0.8109ms)
+✔ busy: a write that cannot take the lock in 10 s is busy, never runs and releases nothing (0.1946ms)
+✔ a write that throws still releases the lock and answers internal_error (0.2254ms)
+✔ checkWriteAccess creates the check tab, writes and reads back A1, deletes the tab and touches nothing else (1.0567ms)
+✔ checkWriteAccess deletes a leftover check tab first (0.1714ms)
+✔ checkWriteAccess with a read-back mismatch is internal_error and still deletes the tab (0.1354ms)
+✔ the stored value is trimmed and found among other rows and extra columns (0.1339ms)
+✔ checkPassphrase: the right passphrase is ok and reads only Config (0.0994ms)
+✔ an unset passphrase rejects every attempt, blank included, as passphrase_not_set (1.0951ms)
+✔ a body that is not a JSON object is invalid_request and touches nothing (0.1164ms)
+✖ a missing or unknown action is unknown_action, lists the known actions and touches nothing (0.1941ms)
+✔ an unexpected exception is internal_error (0.1021ms)
+✔ no response, message, cache key or cache value contains the stored or the submitted passphrase (23.4975ms)
+✔ the GET routes still never open Config (0.4271ms)
+✖ doPost parses the JSON body and serializes handlePost with the active spreadsheet, script cache and script lock (4.4542ms)
+✔ Post.js runs as Apps Script does: one shared scope with the other files, no module object (3.9698ms)
+✔ Post.js holds the lines the README tells the user to look for after pasting (0.3147ms)
+✔ the route table is exactly { catalog, jams } (1.3159ms)
+✔ resource=catalog returns the catalog and reads only Catalogo (0.8359ms)
+✔ the passphrase tab, a missing resource and a wrong-case resource are unknown_resource (0.3535ms)
+✔ a missing Catalogo tab is missing_tab (0.1658ms)
+✔ a structural error in the tab travels as its code (0.221ms)
+✔ an unexpected exception is internal_error with its message (0.1424ms)
+✔ no request ever opens the passphrase tab, and no serialized body contains its value (2.0456ms)
+✔ resource=jams reads Jams and the published date only, through two spreadsheet methods (1.0378ms)
+✔ a fecha naming the passphrase tab or Catalogo, a draft and an orphan tab are never requested (0.3924ms)
+✔ a passphrase query parameter changes nothing: same body, no draft, no secret (0.7853ms)
+✔ a missing Jams tab is missing_tab and nothing else is touched (0.2219ms)
+✔ a structural error in the Jams tab travels as its code (0.3099ms)
+✔ no file in src/ but Post.js names the passphrase tab, and none but Post.js defines doPost (0.7134ms)
+✔ doGet serializes handleGet as JSON with the active spreadsheet (0.3591ms)
+✔ the src files run as Apps Script does: one shared scope, no module object (4.9289ms)
+✔ the manifest grants the bound Sheet only and serves anonymously as the owner (0.7867ms)
+✔ publishSetlist writes only the upcoming Jams status cell and confirms its read-back (22.4527ms)
+✔ publishSetlist refuses bad, non-upcoming, tab-less, and empty drafts before any write (1.6922ms)
+✔ publishSetlist retries idempotently and checkPublish cleans up and verifies its marker rows (1.1724ms)
+✖ createJam appends one BORRADOR row after the last row, plain text first, and creates no tab (1.1752ms)
+✖ createJam writes in the tab own column order and leaves an extra column untouched (0.3261ms)
+✖ createJam refuses bad input and conflicts before any write (0.4155ms)
+✖ createJam refuses a PUBLICADA, a BORRADOR and a typed-date row on the same date (0.2431ms)
+✖ createJam: today is allowed and yesterday is refused across Buenos Aires midnight (0.2159ms)
+✖ createJam allows a later and an earlier future jam than the upcoming one (0.2381ms)
+✖ createJam: a cell that does not read back is internal_error (0.3072ms)
+✖ checkCreateJam cleans a leftover, never writes Jams, and deletes its tab even on failure (0.4411ms)
+✖ createJam and checkCreateJam need the passphrase (0.2461ms)
+✔ readJams: the GET jams plus the songs of every current or future draft, read only, no lock (0.8154ms)
+✔ readJams: a draft for today is current; the GET still withholds every draft (0.7475ms)
+✔ readJams: duplicate draft dates and broken draft tabs are per-jam errors; a non-exact status is not a draft (0.3864ms)
+✔ addSong appends the catalog song at max + 1 with the request key, seven open slots, plain-text cells (1.9694ms)
+✔ addSong writes into the tab's own column order and leaves unmapped columns alone (0.5963ms)
+✔ addSong keeps a title such as 7/4 as text because the format is set first (0.5366ms)
+✔ addSong to a jam with no tab creates it with the header in documented order and appends at 1 (0.8078ms)
+✔ two adds in a row get consecutive positions, each under the lock (0.7945ms)
+✔ addSong validates in order and writes nothing on any failure (4.3055ms)
+✔ an unknown estado earlier than the upcoming jam does not block it (0.8113ms)
+✔ a published upcoming jam is editable too (0.3436ms)
+✔ the server never reads tono_default: the stored key is the request's for every song (0.5343ms)
+✔ checkSetlistWrite creates the check tab, appends the marker, reads it back and deletes the tab (1.8066ms)
+✔ checkSetlistWrite deletes a leftover first (0.7095ms)
+✔ checkSetlistWrite with a Sheet that converts 7/4 is internal_error and still deletes the tab (0.3827ms)
+✔ the new actions need the passphrase like every other (0.3211ms)
+✔ moveSong writes one contiguous block, changes positions only, and keeps the result contiguous (0.9879ms)
+✔ moveSong down, clamps, no-ops, and closes gaps (1.1457ms)
+✔ moveSong park path never duplicates any whole position after an individual write (0.4896ms)
+✔ moveSong validates date, id, JSON integer, jam, headers, row and ordering before any write (1.1271ms)
+✔ checkSetlistMove exercises contiguous and park paths, then removes its temporary tab (0.524ms)
+✔ removeSong deletes the row found by id_tema and renumbers the later positions 1..n, as plain text (0.9911ms)
+✔ removeSong on an app-built tab renumbers with one format call and one setValues for the whole run (0.8711ms)
+✔ removeSong renumbers in ascending position order even when the tab order is shuffled (0.5129ms)
+✔ removeSong never deletes the grid's last row directly, and a spare row avoids the insert (0.6532ms)
+✔ removeSong matches a trimmed id_tema, reads typed positions, and renumbers nothing after an invalid one (0.5865ms)
+✔ removes and adds in a row keep the tab numbered 1..n (0.7853ms)
+✔ removeSong validates in order and writes nothing on any failure (2.554ms)
+✔ a published upcoming jam allows removal too (0.2564ms)
+✔ checkSetlistRemove appends three markers, removes the second, reads back 1 and 2, and deletes the tab (0.4755ms)
+✔ checkSetlistRemove deletes a leftover first (0.2536ms)
+✔ checkSetlistRemove with a Sheet whose deleteRow does nothing is internal_error and still deletes the tab (0.2616ms)
+✔ setKey writes only the tono cell of the row found by id_tema, as plain text, format first (0.7301ms)
+✔ setKey keeps the admin spelling and finds the cell in the tab own column order (1.246ms)
+✔ setKey on a published upcoming jam is what the musicians GET returns next (0.4393ms)
+✔ setKey after another admin removed an earlier song still hits the right row (0.4712ms)
+✔ setKey validates in order and writes nothing on any failure (2.5566ms)
+✔ setKey needs the passphrase like every other action (0.1359ms)
+✔ checkSetlistWrite changes the marker key with the setKey finder and cell writer before reading it back (0.4679ms)
+✔ checkSetlistWrite with a Sheet that drops the key write is internal_error and still deletes the tab (0.406ms)
+✔ addExtraParticipant normalizes and appends under Otros, writing only that plain-text cell (0.6197ms)
+✔ removeExtraParticipant removes only a matching ordinal and stale values write nothing (0.5524ms)
+✔ extra participant bounds and safe text are validated before the cell write (0.4471ms)
+✔ setSlotCount last open guitar removed, only the changed cell as plain text (0.4822ms)
+✔ setSlotCount filled first guitar stays, only the changed cell as plain text (0.666ms)
+✔ setSlotCount filled second guitar stays, only the changed cell as plain text (0.2463ms)
+✔ setSlotCount first absent guitar restored, only the changed cell as plain text (0.2471ms)
+✔ setSlotCount second absent guitar restored, only the changed cell as plain text (0.2384ms)
+✔ setSlotCount restore before second filled guitar, only the changed cell as plain text (0.2579ms)
+✔ setSlotCount filled slots refused without any partial writes (0.4563ms)
+✔ setSlotCount remove and restore every default instrument; same count is no-op (2.9424ms)
+✔ setSlotCount validates in order and writes nothing on failures (2.189ms)
+✔ setSlotCount uses mapped headers and id after removal renumber, GET mirrors published slots (0.9121ms)
+✔ checkSetlistWrite exercises guitar removal and harmonica removal then restore (0.3431ms)
+✔ checkSetlistWrite catches a dropped slot write and cleans up (0.1859ms)
+✔ setSlotCount rereads trimmed display cells including names assigned during the write (0.397ms)
+✔ assignSlot resolves ordinal among active U1 columns and writes one normalized plain-text cell (0.4937ms)
+✔ assignSlot refuses occupied, missing active ordinal and invalid names without writes (1.0717ms)
+✔ assignSlot validates inputs in deterministic order before jam or tab access (1.509ms)
+✔ assignSlot uses mapped headers and does not overwrite occupied cells (0.2894ms)
+✔ assignSlot is an authenticated locked write and checkSetlistWrite proves assignment on its temporary tab (0.4736ms)
+✔ checkSetlistWrite detects a dropped assignment and still cleans up its temporary tab (0.2499ms)
+✔ clearSlot compare-and-clears only its occupied U1 cell and returns canonical slots (0.4095ms)
+✔ clearSlot respects active ordinal after removed guitar column and reordered headers (0.3135ms)
+✔ clearSlot leaves empty, changed, absent, malformed, and invalid targets untouched (0.7261ms)
+✔ clearSlot validates inputs before accessing jam tabs and is authenticated under lock (1.1212ms)
+✔ checkSetlistWrite proves clearSlot and always deletes the temporary tab (0.5711ms)
+✔ setSlotCount needs passphrase and write lock; neither refusal writes (0.1682ms)
+✔ growing any instrument to its ceiling on a wide tab writes only the changed cells and moves no name (1.5608ms)
+✔ growing one instrument by one writes exactly one cell (0.2681ms)
+✔ count 4 is invalid_count for every instrument on either layout, before any write (0.4779ms)
+✔ a filled third slot at the new ceiling still blocks removal with slot_filled (0.3152ms)
+✔ growing past the columns an old seven-column tab has is instrument_not_expandable, before any write (1.0615ms)
+✔ an old tab still shrinks and restores inside its own columns, and its missing columns read as "-" (0.4289ms)
+✔ either spelling of the first column is read; both in one tab is duplicate_header (0.5198ms)
+✔ a new song on a wide tab starts with the seven default slots open and eleven "-" cells (0.3635ms)
+✔ a new song on an old tab has no cell for the eleven extra columns (0.2543ms)
+✔ assignSlot and clearSlot reach a grown third slot (0.848ms)
+✔ every slots object carries the five legacy keys equal to the first-column keys (1.0704ms)
+✔ drums and keyboards cannot pass one: invalid_count before any Sheet read or write (0.4063ms)
+✔ guitar, bass, vocals and harmonica reach three on a wide tab; bass 3 on a seven-column tab is not expandable (0.9007ms)
+✔ a new jam tab is created with 14 slot headers and no Batería 2/3 or Teclados 2/3 (0.3159ms)
+✔ a tab that has Batería 2 reads it, shrinks it when open, and refuses a count of 2 (0.3401ms)
+ℹ tests 192
+ℹ suites 0
+ℹ pass 180
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 291.6891
+
+✖ failing tests:
+
+test at backend\apps-script\test\post.test.js:192:1
+✖ the action table: checkPassphrase and readJams read, every other action writes (2.303ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      'checkPassphrase',
+      'checkWriteAccess',
+      'readJams',
+      'addSong',
+  ...
+      'checkPublish',
+  -   'createJam',
+  -   'checkCreateJam'
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\post.test.js:193:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.start (node:internal/test_runner/test:1000:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish' ],
+    expected: [
+      'checkPassphrase',        'checkWriteAccess',
+      'readJams',               'addSong',
+      'checkSetlistWrite',      'removeSong',
+      'checkSetlistRemove',     'setKey',
+      'setSlotCount',           'assignSlot',
+      'clearSlot',              'addExtraParticipant',
+      'removeExtraParticipant', 'moveSong',
+      'checkSetlistMove',       'publishSetlist',
+      'checkPublish',           'createJam',
+      'checkCreateJam'
+    ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\post.test.js:486:1
+✖ a missing or unknown action is unknown_action, lists the known actions and touches nothing (0.1941ms)
+  AssertionError [ERR_ASSERTION]: Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\post.test.js:492:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\post.test.js:567:1
+✖ doPost parses the JSON body and serializes handlePost with the active spreadsheet, script cache and script lock (4.4542ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam'))
+  
+      at C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\post.test.js:597:10
+      at withAppsScript (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\post.test.js:558:5)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\post.test.js:569:3)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:330:1
+✖ createJam appends one BORRADOR row after the last row, plain text first, and creates no tab (1.1752ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: {
+  +     code: 'unknown_action',
+  +     message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish'
+  +   },
+  -   date: '2026-12-12',
+  -   ok: true,
+      schemaVersion: 1,
+  -   status: 'BORRADOR',
+  -   time: '21:30',
+  -   venue: 'La Macanuda'
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:334:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { schemaVersion: 1, error: { code: 'unknown_action', message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish' } },
+    expected: { schemaVersion: 1, ok: true, date: '2026-12-12', time: '21:30', venue: 'La Macanuda', status: 'BORRADOR' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:353:1
+✖ createJam writes in the tab own column order and leaves an extra column untouched (0.3261ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - [
+  -   '',
+  -   'BORRADOR',
+  -   'Bar',
+  -   '20:00',
+  -   '2026-12-12'
+  - ]
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:360:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [ '', 'BORRADOR', 'Bar', '20:00', '2026-12-12' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:364:1
+✖ createJam refuses bad input and conflicts before any write (0.4155ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'invalid_date'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:256:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:388:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'invalid_date',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:393:1
+✖ createJam refuses a PUBLICADA, a BORRADOR and a typed-date row on the same date (0.2431ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'jam_exists'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:256:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:403:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'jam_exists',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:408:1
+✖ createJam: today is allowed and yesterday is refused across Buenos Aires midnight (0.2159ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - true
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:413:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:418:1
+✖ createJam allows a later and an earlier future jam than the upcoming one (0.2381ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'BORRADOR'
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:421:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'BORRADOR',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:425:1
+✖ createJam: a cell that does not read back is internal_error (0.3072ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'internal_error'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:256:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:427:3)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'internal_error',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:430:1
+✖ checkCreateJam cleans a leftover, never writes Jams, and deletes its tab even on failure (0.4411ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: {
+  +     code: 'unknown_action',
+  +     message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish'
+  +   },
+  -   ok: true,
+      schemaVersion: 1
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:432:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { schemaVersion: 1, error: { code: 'unknown_action', message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish' } },
+    expected: { schemaVersion: 1, ok: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at backend\apps-script\test\setlist.test.js:442:1
+✖ createJam and checkCreateJam need the passphrase (0.2461ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'invalid_passphrase'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:256:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:446:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'invalid_passphrase',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

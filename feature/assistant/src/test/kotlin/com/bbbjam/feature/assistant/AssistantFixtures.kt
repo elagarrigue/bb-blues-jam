@@ -3,6 +3,7 @@ package com.bbbjam.feature.assistant
 import com.bbbjam.core.data.assistant.AssistantFailure
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.ProposedSong
+import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -40,4 +41,17 @@ internal fun testHandlers() = AssistantHandlers(
     apply = { id -> EventHandler(id) {} },
     confirmation = { id -> EventHandler(id) {} },
     stop = { id -> EventHandler(id) {} },
+    jam = { id -> EventHandler(id) {} },
+    jamConfirmation = { id -> EventHandler(id) {} },
 )
+
+internal fun testPresenter(
+    chat: AssistantChat,
+    applier: ProposalApplier,
+    jams: JamsRepository,
+    runner: JamCreationRunner = JamCreationRunner(
+        FakeJamCreator(),
+        jams,
+        CoroutineScope(SupervisorJob() + kotlinx.coroutines.Dispatchers.Unconfined),
+    ),
+) = AssistantPresenter(chat, applier, jams, runner, testCalendar())

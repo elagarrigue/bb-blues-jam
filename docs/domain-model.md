@@ -239,11 +239,19 @@ deliberate choice.
 
 `SetlistRepository.publishSetlist(date)` is the public D-13 mutation that moves the upcoming jam from `DRAFT` to `PUBLISHED`. Apps Script validates that the jam is upcoming and its available tab contains at least one song, then writes and reads back only the Jams status cell. `Published` is returned only after server confirmation; no optimistic status exists. The confirmed Room mirror updates only a cached `DRAFT` jam whose setlist is `AVAILABLE`, so an offline or withheld cache remains safe until refresh. Publishing is idempotent, and there is no unpublish operation in the MVP.
 
+### Creating the next jam (`assistant-create-jam`, D-25)
+
+The admin asks the Asistente for a new jam and gives the day; the agent fills the time and venue of the last jam
+and the admin confirms in a dialog. The app appends the `Jams` row once, as `BORRADOR`, through `createJam`; later
+edits happen in the Sheet. A date earlier than the upcoming jam is blocked in the app (it would put the existing
+jam on hold; it can be added in the Sheet). A later date is allowed and the new jam is "en espera": it is not the
+upcoming jam until the earlier one passes. The list proposal can be loaded only into the upcoming jam.
+
 ### Complete setlist mutation inventory (D-13)
 
-The app-owned `SetlistActionRegistry` exposes exactly these ten repository-callable mutations:
+The app-owned `SetlistActionRegistry` exposes exactly these eleven repository-callable mutations:
 add song, remove song, set key, adjust lineup slot count, assign musician, clear slot, add extra
-participant under `Otros`, remove extra participant under `Otros`, reorder song, and publish setlist.
+participant under `Otros`, remove extra participant under `Otros`, reorder song, publish setlist, and create the next jam (a `BORRADOR` `Jams` row, D-25).
 Each delegates to the corresponding `SetlistRepository` function and preserves its specific typed
 outcome. Read-only refresh/observe operations, failure dismissal and admin login are not setlist
 mutations. Apps Script remains the write authority; the registry is not a credential or protocol

@@ -72,6 +72,8 @@ Only the admin. Musicians never see the assistant.
    catalog validation, key wiring.
 3. `assistant-admin-tab` — `:feature:assistant` chat screen and the admin-only tab.
 4. `assistant-apply-proposal` — "Usar esta lista" through the action contract.
+5. `assistant-create-jam` — the agent proposes the next jam (fecha, hora, lugar); the admin confirms
+   and the app creates it as BORRADOR through the action contract (D-25).
 
 ## Open risks
 

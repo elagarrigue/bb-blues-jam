@@ -12,7 +12,7 @@ const assert = require('node:assert/strict');
 const { loadScript } = require('./helpers/load.js');
 const { Utilities, BUENOS_AIRES } = require('./helpers/format.js');
 
-const { handlePost, handleGet, ACTIONS, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
+const { handlePost, handleGet, ACTIONS, CREATE_JAM_CHECK_TAB, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
 
 // The actions read today's date and typed cells with Apps Script's Utilities global.
 globalThis.Utilities = Utilities;
@@ -180,7 +180,7 @@ function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlw
   const requested = [];
   const all = {
     Config: gridSheet('Config', [['clave', 'valor'], ['passphrase', STORED]], log),
-    Jams: gridSheet('Jams', jams, log),
+    Jams: gridSheet('Jams', jams, log, false, false, [], -1, lostCells),
     Catalogo: gridSheet('Catalogo', catalog, log),
     [PAST]: gridSheet(PAST, PAST_TAB, log),
     [PAST_DRAFT]: gridSheet(PAST_DRAFT, PAST_DRAFT_TAB, log),
@@ -318,6 +318,134 @@ test('publishSetlist retries idempotently and checkPublish cleans up and verifie
   const dropped = fakeSpreadsheet({ lostCells: [{ sheet: PUBLISH_CHECK_TAB, row: 2, column: 4, value: 'PUBLICADA' }] });
   assertError(call(dropped, 'checkPublish'), 'internal_error');
   assert.equal(dropped.tabs[PUBLISH_CHECK_TAB], undefined);
+});
+
+// ---- assistant-create-jam ----
+const NEW_JAM = '2026-12-12';
+
+function jamsGrid(fake) {
+  return fake.tabs.Jams.getDataRange().getDisplayValues();
+}
+
+test('createJam appends one BORRADOR row after the last row, plain text first, and creates no tab', () => {
+  const fake = fakeSpreadsheet();
+  const svc = services();
+  const result = call(fake, 'createJam', { date: NEW_JAM, time: '21:30', venue: '  La   Macanuda  ' }, svc);
+  assert.deepStrictEqual(result, { schemaVersion: 1, ok: true, date: NEW_JAM, time: '21:30', venue: 'La Macanuda', status: 'BORRADOR' });
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', 'Jams', 6, 1, '@'],
+    ['setNumberFormat', 'Jams', 6, 2, '@'],
+    ['setNumberFormat', 'Jams', 6, 3, '@'],
+    ['setNumberFormat', 'Jams', 6, 4, '@'],
+    ['setValue', 'Jams', 6, 1, NEW_JAM],
+    ['setValue', 'Jams', 6, 2, '21:30'],
+    ['setValue', 'Jams', 6, 3, 'La Macanuda'],
+    ['setValue', 'Jams', 6, 4, 'BORRADOR'],
+  ]);
+  assert.deepStrictEqual(jamsGrid(fake)[5], [NEW_JAM, '21:30', 'La Macanuda', 'BORRADOR']);
+  assert.equal(fake.tabs[NEW_JAM], undefined);
+  assert.equal(svc.lock.tries, 1);
+  assert.equal(svc.lock.releases, 1);
+  const served = handleGet({ resource: 'jams' }, fake.spreadsheet).jams.find((item) => item.date === NEW_JAM);
+  assert.equal(served.setlist, null, 'the new draft has no tab yet');
+});
+
+test('createJam writes in the tab own column order and leaves an extra column untouched', () => {
+  const jams = [
+    ['nota', 'estado', 'lugar', 'hora', 'fecha'],
+    ['x', 'PUBLICADA', 'La Macanuda', '21:00', PAST],
+  ];
+  const fake = fakeSpreadsheet({ jams });
+  call(fake, 'createJam', { date: NEW_JAM, time: '20:00', venue: 'Bar' });
+  assert.deepStrictEqual(jamsGrid(fake)[2], ['', 'BORRADOR', 'Bar', '20:00', NEW_JAM]);
+  assert.ok(writes(fake.log).every((op) => op[3] !== 1), 'column nota is never written');
+});
+
+test('createJam refuses bad input and conflicts before any write', () => {
+  const cases = [
+    [{ date: '2026-02-30', time: '21:00', venue: 'Bar' }, 'invalid_date'],
+    [{ date: 20261212, time: '21:00', venue: 'Bar' }, 'invalid_date'],
+    [{ date: '2026-10-05', time: '21:00', venue: 'Bar' }, 'past_date'],
+    [{ date: NEW_JAM, time: '9:00', venue: 'Bar' }, 'invalid_time'],
+    [{ date: NEW_JAM, time: '24:00', venue: 'Bar' }, 'invalid_time'],
+    [{ date: NEW_JAM, time: '21:60', venue: 'Bar' }, 'invalid_time'],
+    [{ date: NEW_JAM, time: 2100, venue: 'Bar' }, 'invalid_time'],
+    [{ date: NEW_JAM, time: '21:00', venue: '   ' }, 'invalid_venue'],
+    [{ date: NEW_JAM, time: '21:00', venue: 'x'.repeat(81) }, 'invalid_venue'],
+    [{ date: NEW_JAM, time: '21:00', venue: '=SUM(1)' }, 'invalid_venue'],
+    [{ date: NEW_JAM, time: '21:00', venue: '@bar' }, 'invalid_venue'],
+    [{ date: NEW_JAM, time: '21:00', venue: 'Bar\u0007' }, 'invalid_venue'],
+    [{ date: NEW_JAM, time: '21:00', venue: 42 }, 'invalid_venue'],
+    [{ date: UPCOMING, time: '21:00', venue: 'Bar' }, 'jam_exists'],
+    [{ date: PAST, time: '21:00', venue: 'Bar' }, 'past_date'],
+    [{ date: NEW_JAM, time: '21:00', venue: 'Bar' }, 'tab_exists', { tabs: { [NEW_JAM]: [TAB_HEADER] } }],
+    [{ date: NEW_JAM, time: '21:00', venue: 'Bar' }, 'missing_tab', { tabs: { Jams: null } }],
+    [{ date: NEW_JAM, time: '21:00', venue: 'Bar' }, 'missing_header', { jams: [['fecha', 'hora', 'lugar'], [UPCOMING, '21:00', 'Lugar']] }],
+    [{ date: NEW_JAM, time: '21:00', venue: 'Bar' }, 'duplicate_header', { jams: [['fecha', 'hora', 'lugar', 'estado', 'estado']] }],
+  ];
+  for (const [fields, code, options = {}] of cases) {
+    const fake = fakeSpreadsheet(options);
+    assertError(call(fake, 'createJam', fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+});
+
+test('createJam refuses a PUBLICADA, a BORRADOR and a typed-date row on the same date', () => {
+  const typed = JAMS.map((r) => r.slice());
+  typed.push([new Date(Date.UTC(2026, 11, 12, 12)), '21:00', 'Bar', 'BORRADOR']);
+  const cases = [
+    [UPCOMING, undefined],
+    [NEW_JAM, { jams: JAMS.concat([[NEW_JAM, '21:00', 'Bar', 'PUBLICADA']]) }],
+    [NEW_JAM, { jams: typed }],
+  ];
+  for (const [date, options] of cases) {
+    const fake = fakeSpreadsheet(options);
+    assertError(call(fake, 'createJam', { date, time: '21:00', venue: 'Bar' }), 'jam_exists');
+    assert.deepStrictEqual(writes(fake.log), []);
+  }
+});
+
+test('createJam: today is allowed and yesterday is refused across Buenos Aires midnight', () => {
+  const lateNight = Date.UTC(2026, 9, 7, 2, 30, 0); // 23:30 on 6 October in Buenos Aires
+  const afterMidnight = Date.UTC(2026, 9, 7, 3, 30, 0); // 00:30 on 7 October
+  const jams = [JAMS[0]];
+  const fields = { date: '2026-10-06', time: '21:00', venue: 'Bar' };
+  assert.equal(call(fakeSpreadsheet({ jams }), 'createJam', fields, services(lateNight)).ok, true);
+  assertError(call(fakeSpreadsheet({ jams }), 'createJam', fields, services(afterMidnight)), 'past_date');
+  assertError(call(fakeSpreadsheet({ jams }), 'createJam', { ...fields, date: '2026-10-05' }, services(lateNight)), 'past_date');
+});
+
+test('createJam allows a later and an earlier future jam than the upcoming one', () => {
+  for (const date of ['2026-12-12', '2026-10-20']) {
+    const fake = fakeSpreadsheet();
+    assert.equal(call(fake, 'createJam', { date, time: '21:00', venue: 'Bar' }).status, 'BORRADOR');
+  }
+});
+
+test('createJam: a cell that does not read back is internal_error', () => {
+  const fake = fakeSpreadsheet({ lostCells: [{ sheet: 'Jams', row: 6, column: 4, value: 'BORRADOR' }] });
+  assertError(call(fake, 'createJam', { date: NEW_JAM, time: '21:00', venue: 'Bar' }), 'internal_error');
+});
+
+test('checkCreateJam cleans a leftover, never writes Jams, and deletes its tab even on failure', () => {
+  const fake = fakeSpreadsheet({ tabs: { [CREATE_JAM_CHECK_TAB]: [['sobra']] } });
+  assert.deepStrictEqual(call(fake, 'checkCreateJam'), { schemaVersion: 1, ok: true });
+  assert.equal(fake.tabs[CREATE_JAM_CHECK_TAB], undefined);
+  assert.ok(fake.log.every((op) => !WRITE_OPS.includes(op[0]) || op[1] === CREATE_JAM_CHECK_TAB));
+  assert.ok(fake.log.some((op) => op[0] === 'setValue' && op[1] === CREATE_JAM_CHECK_TAB && op[4] === 'BORRADOR'));
+
+  const dropped = fakeSpreadsheet({ lostCells: [{ sheet: CREATE_JAM_CHECK_TAB, row: 3, column: 4, value: 'BORRADOR' }] });
+  assertError(call(dropped, 'checkCreateJam'), 'internal_error');
+  assert.equal(dropped.tabs[CREATE_JAM_CHECK_TAB], undefined);
+});
+
+test('createJam and checkCreateJam need the passphrase', () => {
+  for (const action of ['createJam', 'checkCreateJam']) {
+    const fake = fakeSpreadsheet();
+    const body = handlePost({ action, passphrase: 'wrong', date: NEW_JAM, time: '21:00', venue: 'Bar' }, fake.spreadsheet, services());
+    assertError(body, 'invalid_passphrase');
+    assert.deepStrictEqual(writes(fake.log), []);
+  }
 });
 
 // ---- readJams ----

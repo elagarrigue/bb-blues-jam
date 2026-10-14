@@ -1,11 +1,15 @@
 package com.bbbjam.feature.assistant
 
+import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRefreshOutcome
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.AddSongOutcome
+import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.JamCreator
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
@@ -15,9 +19,11 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,5 +75,32 @@ internal class FakeJamsRepository(initial: JamsSnapshot? = snapshot()) : JamsRep
         state.collect { value -> if (value != null) emit(value) }
     }
 
-    override suspend fun refresh(): JamsRefreshOutcome = error("The assistant never refreshes the jams")
+    var refreshes = 0
+        private set
+
+    override suspend fun refresh(): JamsRefreshOutcome {
+        refreshes++
+        return JamsRefreshOutcome.Failed(DataFailure.Offline)
+    }
+}
+
+/** Today in the tests: 2026-10-14, 17 days before [JAM_DATE]. */
+internal val TODAY: LocalDate = LocalDate.of(2026, 10, 14)
+
+internal fun testCalendar() =
+    JamCalendar(Clock.fixed(Instant.parse("2026-10-14T15:00:00Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
+
+internal data class CreateCall(val date: LocalDate, val time: LocalTime, val venue: String)
+
+/** A [JamCreator] with a scripted outcome (default: Created as asked) and an optional gate. */
+internal class FakeJamCreator : JamCreator {
+    val calls = mutableListOf<CreateCall>()
+    var outcome: CreateJamOutcome? = null
+    var gate: CompletableDeferred<Unit>? = null
+
+    override suspend fun createJam(date: LocalDate, startTime: LocalTime, venue: String): CreateJamOutcome {
+        calls += CreateCall(date, startTime, venue)
+        gate?.await()
+        return outcome ?: CreateJamOutcome.Created(date, startTime, venue)
+    }
 }

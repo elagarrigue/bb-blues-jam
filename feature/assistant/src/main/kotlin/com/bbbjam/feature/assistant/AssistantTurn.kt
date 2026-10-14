@@ -98,6 +98,8 @@ private fun ProposalContent(reply: ReplyUiModel.Proposal, card: AssistantDefault
     val typography = BluesJamTheme.typography
     val spacing = BluesJamTheme.spacing
     Caption(reply.authorLabel, card.caption)
+    reply.jam?.let { JamCard(it) }
+    reply.jamNote?.let { Text(text = it, style = typography.body, color = JamDefaults.rejectionNote()) }
     reply.heading?.let { headingText ->
         Caption(headingText, card.caption, Modifier.semantics { heading() })
         Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {

@@ -1,10 +1,12 @@
 package com.bbbjam.di
 
 import com.bbbjam.BuildConfig
+import com.bbbjam.actions.RegistryJamCreator
 import com.bbbjam.actions.RegistrySongAdder
 import com.bbbjam.actions.SetlistActionRegistry
 import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.assistant.AssistantCredentials
+import com.bbbjam.core.data.setlist.JamCreator
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.core.ui.link.ExternalLinkOpener
@@ -22,4 +24,5 @@ val appModule = module {
     single { AssistantCredentials.of(BuildConfig.DEVEXPERT_KEY) }
     single { SetlistActionRegistry(get<SetlistRepository>()) }
     single<SetlistSongAdder> { RegistrySongAdder(get()) }
+    single<JamCreator> { RegistryJamCreator(get()) }
 }

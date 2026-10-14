@@ -3,6 +3,8 @@ package com.bbbjam.core.data.assistant
 import com.bbbjam.core.model.Instrument
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +77,7 @@ class DefaultSetlistAssistantTest {
         AssistantCredentials.of(raw),
         songs,
         jams,
+        fixedCalendar(),
         AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
     )
 
@@ -149,6 +152,9 @@ class DefaultSetlistAssistantTest {
         return """{"songs":[$songs],"message":"$message","questions":$questions}"""
     }
 
+    private fun jamAnswer(date: String, time: String = "21:00", venue: String = "La Macanuda"): String =
+        """{"songs":[],"message":"Listo","questions":[],"jam":{"date":"$date","time":"$time","venue":"$venue"}}"""
+
     private fun body(request: RecordedRequest): JsonObject =
         Json.parseToJsonElement(requireNotNull(request.body).utf8()).jsonObject
 
@@ -209,7 +215,7 @@ class DefaultSetlistAssistantTest {
             val toolNames = body(first).getValue("tools").jsonArray.map {
                 it.jsonObject.getValue("function").jsonObject.getValue("name").jsonPrimitive.content
             }
-            assertEquals(setOf("searchCatalog", "pastJams"), toolNames.toSet())
+            assertEquals(setOf("searchCatalog", "pastJams", "jamSchedule"), toolNames.toSet())
             // The gateway's models skip the tools when `response_format` is sent (live call, 13 October
             // 2026), so the schema travels in the prompt (StructuredRequest.Manual) and no response_format.
             assertFalse("response_format" in body(first))
@@ -226,6 +232,52 @@ class DefaultSetlistAssistantTest {
             assertTrue(results.contains("sweet-little-angel | Sweet Little Angel | B.B. King | Bm"))
             assertTrue(results.contains("pappo-blues | Pappo's Blues | Pappo | E | players: Juan (guitar)"))
         }
+
+    @Test
+    fun `a valid jam is validated against today and kept beside the proposal`() = runBlocking<Unit> {
+        server.enqueue(toolCalls("jamSchedule" to """{"note":""}"""))
+        server.enqueue(answer(jamAnswer("2026-11-28", venue = "  La   Macanuda ")))
+
+        val reply = assistant().startConversation().send("creá la jam del 28 de noviembre") as AssistantReply.Proposal
+
+        assertEquals(ProposedJam(LocalDate.of(2026, 11, 28), LocalTime.of(21, 0), "La Macanuda"), reply.jam)
+        assertEquals(null, reply.jamRejection)
+        server.takeRequest()
+        val toolResult = messages(server.takeRequest()).map { it.jsonObject }.single {
+            it.getValue("role").jsonPrimitive.content == "tool"
+        }
+        assertTrue(contentOf(toolResult).contains("today 2026-10-14 (Buenos Aires)"))
+    }
+
+    @Test
+    fun `an answer without the jam key parses and carries no jam`() = runBlocking<Unit> {
+        server.enqueue(answer(proposalJson("crossroads")))
+
+        val reply = assistant().startConversation().send("armame una jam") as AssistantReply.Proposal
+
+        assertEquals(null, reply.jam)
+        assertEquals(null, reply.jamRejection)
+    }
+
+    @Test
+    fun `an unusable jam becomes a rejection and the history keeps only a valid one`() = runBlocking<Unit> {
+        server.enqueue(answer(jamAnswer("2026-10-01")))
+        server.enqueue(answer(jamAnswer("2026-11-28")))
+        server.enqueue(answer(proposalJson("crossroads")))
+        val conversation = assistant().startConversation()
+
+        val past = conversation.send("creá la jam del 1 de octubre") as AssistantReply.Proposal
+        assertEquals(null, past.jam)
+        assertEquals(JamRejection.PAST_DATE, past.jamRejection)
+        conversation.send("mejor el 28 de noviembre")
+        conversation.send("ahora sí armame una lista")
+
+        server.takeRequest()
+        server.takeRequest()
+        val third = messages(server.takeRequest()).map { contentOf(it) }
+        assertFalse(third.any { it.contains("2026-10-01") })
+        assertTrue(third.any { it.contains("jam") && it.contains("2026-11-28") && it.contains("La Macanuda") })
+    }
 
     @Test
     fun `unknown, malformed and repeated ids are rejected and catalog fields win`() = runBlocking<Unit> {

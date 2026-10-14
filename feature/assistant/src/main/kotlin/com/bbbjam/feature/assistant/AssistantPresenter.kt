@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
@@ -24,11 +25,16 @@ import com.bbbjam.core.ui.presenter.Presenter
  * Loading a proposal (`assistant-apply-proposal`): the presenter also holds which turn's confirmation
  * dialog is open (one saveable `Long?`). The run itself belongs to [ProposalApplier]; a write starts
  * only from the dialog's Confirm event, which re-plans from the latest jams snapshot (D-24).
+ *
+ * Creating a proposed jam (`assistant-create-jam`) works the same way with its own saveable `Long?` for
+ * the open dialog and [JamCreationRunner]; "today" is read once per snapshot from [calendar].
  */
 class AssistantPresenter(
     private val chat: AssistantChat,
     private val applier: ProposalApplier,
     private val jams: JamsRepository,
+    private val creator: JamCreationRunner,
+    private val calendar: JamCalendar,
 ) : Presenter<AssistantUiModel, Unit> {
 
     @Composable
@@ -43,6 +49,13 @@ class AssistantPresenter(
         val latestSnapshot by rememberUpdatedState(snapshot)
         val confirming = rememberSaveable { mutableStateOf<Long?>(null) }
         val applyHandlers = remember { ApplyHandlers(chat, applier, confirming) { latestSnapshot } }
+        val creations by creator.creations.collectAsState()
+        val today = remember(snapshot) { calendar.today() }
+        val latestToday by rememberUpdatedState(today)
+        val confirmingJam = rememberSaveable { mutableStateOf<Long?>(null) }
+        val jamHandlers = remember {
+            JamHandlers(chat, creator, confirmingJam, { latestSnapshot }, { latestToday })
+        }
         val handlers = remember {
             AssistantHandlers(
                 cancel = { id -> EventHandler(id) { chat.cancel(id) } },
@@ -66,6 +79,8 @@ class AssistantPresenter(
                 apply = applyHandlers.apply,
                 confirmation = applyHandlers.confirmation,
                 stop = applyHandlers.stop,
+                jam = jamHandlers.request,
+                jamConfirmation = jamHandlers.confirmation,
             )
         }
         return assistantModel(
@@ -74,7 +89,7 @@ class AssistantPresenter(
             service,
             draft.value,
             handlers,
-            ApplyInputs(runs, snapshot, confirming.value),
+            ApplyInputs(runs, snapshot, confirming.value, creations, today, confirmingJam.value),
         )
     }
 }

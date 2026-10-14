@@ -443,6 +443,19 @@ success). `ApplyHandlers` is the only caller of `apply`, from the dialog's Confi
 `AssistantPresenter(chat, applier, jams)` keeps the open dialog's turn in one saveable `Long?`. Copy in `ApplyCopy` and
 `ApplyOutcomeCopy`, colours in `ApplyDefaults` (no amber), views in `ApplyViews` and `ApplyConfirmationDialog`.
 
+As built by `assistant-create-jam` (14 October 2026; D-25; orchestrator amendment: a date earlier than the upcoming
+jam is blocked in the app, the server stays generic): the agent can propose creating the next jam. **Server:**
+`Post.js` `createJam` (appends one `BORRADOR` row, refusals before any write, no tab) and `checkCreateJam`.
+**`:core:data`:** `SetlistJamCreationRepository.createJam` (part of `SetlistRepository`, implemented by the internal
+`SetlistJamCreations`, queued with the other writes), `CreateJamOutcome` (`Created`, `NotCreated`, `ScriptOutdated`),
+the Room mirror `SetlistJamDao.insertCreatedJam` (extended by `SetlistDao`), and the narrow contract `JamCreator`
+(`fun interface`, no binding there). **`:app`:** `SetlistMutation.CREATE_JAM` (11 mutations), `SetlistAction.CreateJam`,
+`RegistryJamCreator` bound as `single<JamCreator>`. **Agent (still read-only):** the `jamSchedule` tool, an optional
+`ProposalDto.jam`, `JamProposalValidator` (the server's rules) and `AssistantReply.Proposal.jam`/`jamRejection`.
+**`:feature:assistant`:** pure `jamPlan` (`Blocked` PAST/EXISTS/EARLIER, `Ready` with `NewWaits`), `JamCreationRunner`
+(Koin `single`), `JamHandlers` (the only caller of `create`, from the dialog's Confirm), `JamCopy`, `JamDefaults`,
+`JamViews`; `Usar esta lista` on a jam turn waits until the jam is the upcoming one. Konsist unchanged (19 rules).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.

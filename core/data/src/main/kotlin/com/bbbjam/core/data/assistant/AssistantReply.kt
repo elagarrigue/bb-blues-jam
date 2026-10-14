@@ -12,12 +12,16 @@ sealed interface AssistantReply {
      * A catalog-validated proposal (D-14). [songs] are in the model's order and only catalog songs, with
      * the catalog's title, artist and key; [rejectedSongIds] lists, in order, every id the model gave
      * that was not a catalog song, malformed, or a repeat. [questions] may be non-empty with [songs] empty.
+     * [jam] is a new jam the agent proposes to create (`assistant-create-jam`), already checked; when the
+     * model gave one that was not usable, [jamRejection] says why. Neither is ever created by the agent.
      */
     data class Proposal(
         val songs: List<ProposedSong>,
         val message: String,
         val questions: List<String>,
         val rejectedSongIds: List<String>,
+        val jam: ProposedJam? = null,
+        val jamRejection: JamRejection? = null,
     ) : AssistantReply
 
     /** The request did not produce a proposal. */

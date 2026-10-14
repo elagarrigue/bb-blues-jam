@@ -2,6 +2,7 @@ package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.SetlistAssistant
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.setlist.JamCreator
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.feature.assistant.di.assistantModule
 import org.junit.Assert.assertNotSame
@@ -16,6 +17,8 @@ class AssistantModuleTest {
         val dataBindings = module {
             single<SetlistAssistant> { FakeSetlistAssistant() }
             single<SetlistSongAdder> { FakeSetlistSongAdder() }
+            single<JamCreator> { FakeJamCreator() }
+            single { testCalendar() }
             single<JamsRepository> { FakeJamsRepository() }
         }
         val app = koinApplication { modules(assistantModule, dataBindings) }
@@ -23,6 +26,7 @@ class AssistantModuleTest {
             assertSame(app.koin.get<AssistantChat>(), app.koin.get<AssistantChat>())
             assertNotSame(app.koin.get<AssistantPresenter>(), app.koin.get<AssistantPresenter>())
             assertSame(app.koin.get<ProposalApplier>(), app.koin.get<ProposalApplier>())
+            assertSame(app.koin.get<JamCreationRunner>(), app.koin.get<JamCreationRunner>())
         } finally {
             app.close()
         }

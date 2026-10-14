@@ -430,3 +430,9 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
 ### Publishing a setlist
 
 `admin-publish-setlist` changes only `Jams.estado` from `BORRADOR` to `PUBLICADA`. Apps Script resolves one upcoming jam row, refuses a missing setlist tab or one with no valid song rows, writes the status cell as plain text, flushes, and confirms the displayed value. It creates no Jams row and does not write the jam's song tab or `Catalogo`. A repeated request for an already-published upcoming jam is idempotent and performs no write. Its self-check writes only to the temporary `_prueba_publicar` tab and deletes it in `finally`.
+
+## Rows the app creates (`assistant-create-jam`, D-25)
+
+The app appends one `Jams` row per created jam, with `fecha`, `hora`, `lugar` as plain text and `estado` =
+`BORRADOR`; other columns are left empty. It creates no jam tab (`addSong` does, with the first song). Every
+later change to the row is made in the Sheet.

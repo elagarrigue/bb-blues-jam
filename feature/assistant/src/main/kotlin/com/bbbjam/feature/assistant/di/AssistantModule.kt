@@ -3,6 +3,7 @@ package com.bbbjam.feature.assistant.di
 import android.util.Log
 import com.bbbjam.feature.assistant.AssistantChat
 import com.bbbjam.feature.assistant.AssistantPresenter
+import com.bbbjam.feature.assistant.JamCreationRunner
 import com.bbbjam.feature.assistant.ProposalApplier
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -39,5 +40,17 @@ val assistantModule = module {
             ),
         )
     }
-    factory { AssistantPresenter(get(), get(), get()) }
+    // Creating a jam outlives the tab too; `JamCreator` is bound in `:app` to the action registry.
+    single {
+        JamCreationRunner(
+            creator = get(),
+            jams = get(),
+            scope = CoroutineScope(
+                SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+                    Log.e(LOG_TAG, "assistant create jam failed: ${error::class.java.name}")
+                },
+            ),
+        )
+    }
+    factory { AssistantPresenter(get(), get(), get(), get(), get()) }
 }
