@@ -6,7 +6,7 @@ states, and the rules that govern transitions.
 ## Core Concepts
 
 ```
-Jam(date, startTime, venue, status: DRAFT | PUBLISHED, setlist: Setlist)   // date is the identity
+Jam(date, startTime, venue, status: DRAFT | CREATED | PUBLISHED, setlist: Setlist)   // date is the identity
 Setlist = Available(songs: List<JamSong>, droppedRows) | Withheld | Unavailable(problem)
 SetlistProblem = MISSING_TAB | INVALID_TAB | INVALID_ROWS | UNKNOWN
 JamSong(position, songId, title, artist, key, lineup: Lineup,
@@ -96,14 +96,25 @@ Without a declared lineup, "open slot" has no definition and the app's primary f
 ### Jam status
 
 ```
-DRAFT ──publish──> PUBLISHED ──(date passes)──> archived (implicit)
+DRAFT (BORRADOR) ──publish──> PUBLISHED (PUBLICADA) ──(date passes)──> archived (implicit)
+CREATED (CREADA) ──publish──> PUBLISHED
 ```
 
-- **DRAFT.** The admin is building the setlist. Musicians see the date and venue, and a message
-  saying the list is being assembled — not an empty list, which would be misread as "no songs".
-  Every musician screen reads `Jam.setlistForMusicians()` (`unpublished-setlist-state`), which is
-  `Withheld` for any DRAFT jam whatever setlist the read returned; only the admin slices will read
-  `Jam.setlist` directly, behind the admin flag.
+Three states (D-26, `jam-status-created`, which amends D-04 and D-25):
+
+- **DRAFT (`BORRADOR`).** The jam does not exist for musicians: no date, no list, not in Próxima jam
+  and not in Anteriores, for a future or a past jam. The admin sees and edits it with a `BORRADOR`
+  badge. `createJam` (D-25) still writes this state. Hidden in three places: Apps Script (the anonymous
+  GET omits the row, an empty or misspelled `estado` too), the mapper (an anonymous read drops a valid
+  BORRADOR row, `MappedJams.hiddenDrafts`) and the musician screens (`JamsSnapshot.forMusicians()`).
+  When the earliest future jam is a draft and a later one is CREATED or PUBLISHED, a musician sees the
+  later one as the upcoming jam; the admin still sees the draft as upcoming, because writes target it.
+- **CREATED (`CREADA`).** Musicians see the date, time and venue, and a message saying the list is
+  being assembled — not an empty list, which would be misread as "no songs". Every musician screen
+  reads `Jam.setlistForMusicians()` (`unpublished-setlist-state`), which is `Withheld` for any jam that
+  is not PUBLISHED whatever setlist the read returned; only the admin slices read `Jam.setlist`
+  directly, behind the admin flag. The admin sees the songs, with a `CREADA` badge. A past CREATED jam
+  is listed in Anteriores with "La lista de esta jam no se publicó."
 - **PUBLISHED.** The setlist is visible to musicians. The admin may still edit; edits to a published
   jam are visible immediately. There is no republish step and no unpublish in the MVP.
 - **Archived** is not a stored status. A jam is historical when its date has passed; past jams are
@@ -114,7 +125,7 @@ DRAFT ──publish──> PUBLISHED ──(date passes)──> archived (implic
 - **More than one future jam.** The earliest one is the upcoming jam; later ones are held back
   (shown in neither list) and reported in the refresh log.
 
-The transition DRAFT → PUBLISHED is admin-initiated and writes through to the Sheet.
+The transition DRAFT or CREATED → PUBLISHED is admin-initiated and writes through to the Sheet. Until `admin-set-jam-status`, publishing is the only status change made from the app; the others are made in the Sheet.
 
 ### Slot state
 
@@ -237,7 +248,7 @@ deliberate choice.
 
 ### Publishing a setlist
 
-`SetlistRepository.publishSetlist(date)` is the public D-13 mutation that moves the upcoming jam from `DRAFT` to `PUBLISHED`. Apps Script validates that the jam is upcoming and its available tab contains at least one song, then writes and reads back only the Jams status cell. `Published` is returned only after server confirmation; no optimistic status exists. The confirmed Room mirror updates only a cached `DRAFT` jam whose setlist is `AVAILABLE`, so an offline or withheld cache remains safe until refresh. Publishing is idempotent, and there is no unpublish operation in the MVP.
+`SetlistRepository.publishSetlist(date)` is the public D-13 mutation that moves the upcoming jam from `DRAFT` or `CREATED` to `PUBLISHED`. Apps Script validates that the jam is upcoming and its available tab contains at least one song, then writes and reads back only the Jams status cell. `Published` is returned only after server confirmation; no optimistic status exists. The confirmed Room mirror updates only a cached `DRAFT` or `CREATED` jam whose setlist is `AVAILABLE`, so an offline or withheld cache remains safe until refresh. Publishing is idempotent, and there is no unpublish operation in the MVP.
 
 ### Creating the next jam (`assistant-create-jam`, D-25)
 

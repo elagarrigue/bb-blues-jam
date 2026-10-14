@@ -49,6 +49,10 @@ internal class JamScheduleTool(private val jams: JamsRepository, private val cal
 
         private fun line(jam: Jam) = "${jam.date} ${jam.startTime} | ${jam.venue}"
 
-        private fun statusText(jam: Jam) = if (jam.status == JamStatus.DRAFT) "BORRADOR" else "PUBLICADA"
+        private fun statusText(jam: Jam) = when (jam.status) {
+            JamStatus.DRAFT -> "BORRADOR"
+            JamStatus.CREATED -> "CREADA"
+            JamStatus.PUBLISHED -> "PUBLICADA"
+        }
     }
 }

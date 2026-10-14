@@ -81,13 +81,21 @@ internal fun removalKey(date: LocalDate, songId: SongId): String = "$date|${song
  */
 internal fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
     val mine = adds.filter { it.jamDate == jam.date }
-    val isDraft = jam.status == JamStatus.DRAFT
+    val isPublished = jam.status == JamStatus.PUBLISHED
     return NextJamAdminUiModel(
         status = AdminStatusUiModel(
-            badge = if (isDraft) NextJamCopy.DRAFT_BADGE else NextJamCopy.PUBLISHED_BADGE,
-            isPublished = !isDraft,
-            note = if (isDraft) NextJamCopy.DRAFT_NOTE else NextJamCopy.PUBLISHED_NOTE,
-            publish = if (isDraft) publishUiModel(jam) else null,
+            badge = when (jam.status) {
+                JamStatus.DRAFT -> NextJamCopy.DRAFT_BADGE
+                JamStatus.CREATED -> NextJamCopy.CREATED_BADGE
+                JamStatus.PUBLISHED -> NextJamCopy.PUBLISHED_BADGE
+            },
+            isPublished = isPublished,
+            note = when (jam.status) {
+                JamStatus.DRAFT -> NextJamCopy.DRAFT_NOTE
+                JamStatus.CREATED -> NextJamCopy.CREATED_NOTE
+                JamStatus.PUBLISHED -> NextJamCopy.PUBLISHED_NOTE
+            },
+            publish = if (isPublished) null else publishUiModel(jam),
         ),
         pending = mine.filter { it.state == SetlistAdd.State.Sending }
             .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },

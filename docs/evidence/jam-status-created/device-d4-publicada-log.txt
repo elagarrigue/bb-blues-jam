@@ -1,0 +1,4 @@
+10-14 14:48:08.111  4313  4355 I BluesJam: demo jams refresh: Updated at 2026-10-14T17:48:08.111Z
+10-14 14:48:08.112  4313  4355 I BluesJam: jams refresh: updated 3 jams, 0 rejected, 0 setlist issues, 1 held back, 0 hidden drafts; held back 2026-11-13 (admin read)
+10-14 14:48:08.112  4313  4313 I BluesJam: demo jams refresh: Updated at 2026-10-14T17:48:08.112Z
+10-14 14:48:08.319  4313  4363 I BluesJam: jams cache: upcoming 2026-10-14 (demo), past 1, songs 21 (21 from catalog) admin (debug)

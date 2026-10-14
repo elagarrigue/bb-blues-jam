@@ -159,13 +159,13 @@ test('resource=jams reads Jams and the published date only, through two spreadsh
   assert.deepStrictEqual([...new Set(fake.accessed)].sort(), ['getSheetByName', 'getSpreadsheetTimeZone']);
   assert.deepStrictEqual(body.jams.map((j) => [j.date, j.startTime, j.status]), [
     [PUBLISHED_DATE, '21:00', 'PUBLICADA'],
-    [DRAFT_DATE, '21:00', 'BORRADOR'],
     [PASSPHRASE_TAB, '21:00', 'PUBLICADA'],
     ['Catalogo', '21:00', 'PUBLICADA'],
   ]);
   assert.equal(body.jams[0].setlist[0].slots.guitar1, 'Pedro');
-  assert.equal(body.jams[1].setlist, null);
-  assert.deepStrictEqual([body.jams[2].setlistError.code, body.jams[3].setlistError.code], ['invalid_date', 'invalid_date']);
+  // D-26: the BORRADOR row is omitted entirely, not served with a null setlist.
+  assert.ok(!body.jams.some((j) => j.date === DRAFT_DATE));
+  assert.deepStrictEqual([body.jams[1].setlistError.code, body.jams[2].setlistError.code], ['invalid_date', 'invalid_date']);
 });
 
 test('a fecha naming the passphrase tab or Catalogo, a draft and an orphan tab are never requested', () => {

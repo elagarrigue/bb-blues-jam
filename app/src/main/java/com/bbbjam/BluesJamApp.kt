@@ -74,15 +74,20 @@ class BluesJamApp : Application() {
         /**
          * `jams cache: upcoming <date|none>[ draft][ (demo)], past N, songs S (C from catalog)`
          * (plus ` admin (debug)` from the caller in a forced-admin debug build): counts
-         * and dates only. `draft` marks an upcoming jam whose status is DRAFT (`unpublished-setlist-state`);
+         * and dates only. `draft` and `created` mark an upcoming jam whose status is DRAFT or CREATED
+         * (`unpublished-setlist-state`, `jam-status-created`);
          * `(demo)` marks the debug-only demo jam, so evidence never mistakes it for real data.
          */
         fun JamsSnapshot.toCacheLine(inCatalog: (SongId) -> Boolean): String {
             val songs = (listOfNotNull(upcoming) + past).flatMap { (it.setlist as? Setlist.Available)?.songs.orEmpty() }
             val upcomingText = upcoming?.let { jam ->
-                val draft = if (jam.status == JamStatus.DRAFT) " draft" else ""
+                val status = when (jam.status) {
+                    JamStatus.DRAFT -> " draft"
+                    JamStatus.CREATED -> " created"
+                    JamStatus.PUBLISHED -> ""
+                }
                 val demo = if (jam.isDemo()) " (demo)" else ""
-                "${jam.date}$draft$demo"
+                "${jam.date}$status$demo"
             } ?: "none"
             return "jams cache: upcoming $upcomingText, past ${past.size}, " +
                 "songs ${songs.size} (${songs.count { inCatalog(it.songId) }} from catalog)"

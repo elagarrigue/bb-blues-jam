@@ -30,9 +30,11 @@ internal class OkHttpAppsScriptTransport(
 ) : AppsScriptTransport,
     AppsScriptPostTransport {
 
-    override suspend fun get(resource: String): TransportResult {
+    override suspend fun get(resource: String, parameters: Map<String, String>): TransportResult {
         val base = baseUrl ?: return TransportResult.Failed(DataFailure.NotConfigured)
-        val url = base.toHttpUrl().newBuilder().addQueryParameter(RESOURCE_PARAMETER, resource).build()
+        val builder = base.toHttpUrl().newBuilder().addQueryParameter(RESOURCE_PARAMETER, resource)
+        parameters.forEach { (name, value) -> builder.addQueryParameter(name, value) }
+        val url = builder.build()
         return execute(Request.Builder().url(url).get().build())
     }
 

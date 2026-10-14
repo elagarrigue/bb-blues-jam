@@ -168,13 +168,13 @@ class NextJamStatesTest {
         val fresh = Freshness(threeHoursAgo, null, isRefreshing = false)
         val failing = Freshness(threeHoursAgo, DataFailure.Offline, isRefreshing = false)
         listOf(Setlist.Withheld, Setlist.Available(listOf(song))).forEach { setlist ->
-            val draft = model(jam(setlist, JamStatus.DRAFT), fresh)
+            val draft = model(jam(setlist, JamStatus.CREATED), fresh)
             assertEquals(NextJamUiModel.Jam(header, draftCard, staleness = null), draft)
             assertFalse("a song leaked: $draft", draft.toString().contains("Sweet Little Angel"))
             // Scenario 6: offline with a cached draft, the notice above the header, then the card.
             assertEquals(
                 NextJamUiModel.Jam(header, draftCard, notice("Sin conexión")),
-                model(jam(setlist, JamStatus.DRAFT), failing),
+                model(jam(setlist, JamStatus.CREATED), failing),
             )
         }
     }
@@ -183,7 +183,7 @@ class NextJamStatesTest {
     fun `scenario 3, the draft card is not the empty block and shares no sentence with it`() {
         val fresh = Freshness(threeHoursAgo, null, isRefreshing = false)
         val empty = model(jam(Setlist.Available(emptyList())), fresh) as NextJamUiModel.Jam
-        val draft = model(jam(Setlist.Withheld, JamStatus.DRAFT), fresh) as NextJamUiModel.Jam
+        val draft = model(jam(Setlist.Withheld, JamStatus.CREATED), fresh) as NextJamUiModel.Jam
         assertEquals(emptySetlist, empty.setlist)
         assertEquals(draftCard, draft.setlist)
         val emptyText = emptySetlist.empty.title + " " + emptySetlist.empty.message

@@ -35,8 +35,11 @@ internal data class LiveJam(val date: LocalDate, val startTime: LocalTime)
  * turns historical at 00:00 but its window runs to start + 4 h (L4). Only date and start time, so a
  * new snapshot of the same jams gives an equal list.
  */
-internal fun JamsSnapshot.liveJams(): List<LiveJam> =
-    listOfNotNull(upcoming, past.firstOrNull()).map { LiveJam(it.date, it.startTime) }
+internal fun JamsSnapshot.liveJams(admin: Boolean = true): List<LiveJam> {
+    // A musician polls for the jams they can see (D-26): the projection, not the raw cache.
+    val shown = if (admin) this else forMusicians()
+    return listOfNotNull(shown.upcoming, shown.past.firstOrNull()).map { LiveJam(it.date, it.startTime) }
+}
 
 /** `[start − 30 min, start + 4 h)` of [jam] in [zone]: start inclusive, end exclusive. */
 internal fun liveWindow(jam: Jam, zone: ZoneId): OpenEndRange<Instant> =

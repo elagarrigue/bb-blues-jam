@@ -1,0 +1,423 @@
+✔ the seed Catalogo builds exactly docs/api-samples/catalog-seed.json (2.1184ms)
+✔ every seed song has the 8 keys in order and its 4 optional fields null (0.3922ms)
+✔ the edge input builds exactly docs/api-samples/catalog-edge.json (0.247ms)
+✔ typed and messy cells: raw integer, trimmed text, blank rows skipped, extra column ignored (0.2142ms)
+✔ values stay in Sheet vocabulary: no enum, key or id validation in the script (0.1635ms)
+✔ a missing optional column gives null for its field (0.1299ms)
+✔ a short row reads its missing cells as empty (0.7418ms)
+✔ a tab with only the header row gives an empty song list (0.1172ms)
+✔ a missing required header is missing_header and names it (0.5902ms)
+✔ a header that differs in case or accent does not match (0.2624ms)
+✔ an empty tab is missing_header (0.1576ms)
+✔ a mapped header twice, even with padding, is duplicate_header; an unmapped one twice is fine (0.1767ms)
+✔ checkCatalogResponse accepts both committed samples (0.5576ms)
+✔ checkCatalogResponse rejects a missing key, a number, an empty string, an extra field and an error body (0.3964ms)
+✔ the seed Jams and 2026-07-25 tabs build exactly docs/api-samples/jams-seed.json (2.8814ms)
+✔ the seed jam is PUBLICADA with 13 rows, every slot and extraParticipants null (0.8663ms)
+✔ the edge input builds exactly docs/api-samples/jams-edge.json (0.9626ms)
+✔ a non-PUBLICADA jam is withheld: its tab is never requested and its content never serialized (0.7111ms)
+✔ a withheld jam still carries its date, time, venue and status (0.6461ms)
+✔ fail closed: any status other than exactly PUBLICADA (after trimming) withholds the setlist (0.3416ms)
+✔ typed cells: fecha, hora and posicion come back as YYYY-MM-DD, HH:MM and integer text (1.3706ms)
+✔ each per-jam error code, and every other jam still served (0.7745ms)
+✔ a duplicate mapped header in a jam tab is a per-jam duplicate_header (0.2484ms)
+✔ an empty or header-less jam tab is a per-jam missing_header; a header-only tab is an empty setlist (0.2487ms)
+✔ fecha Config or Catalogo with PUBLICADA is invalid_date and never names a tab (0.1877ms)
+✔ a fecha with extra characters around an ISO date is invalid_date and names no tab (0.1469ms)
+✔ a date on two rows is duplicate_date for the PUBLICADA one, and its tab is never read (0.1064ms)
+✔ a missing Otros column gives extraParticipants null; the cell is passed through raw (0.1462ms)
+✔ the jam, the row and the slots keep their documented key order (0.643ms)
+✔ slots map the seven headers by name, "-" passes through, rows stay in tab order (0.4754ms)
+✔ blank Jams rows and blank setlist rows are skipped (0.1467ms)
+✔ the Jams tab itself: a missing header is missing_header, a duplicate is duplicate_header, empty is missing_header (0.4433ms)
+✔ an unexpected exception from a tab read is not turned into a per-jam error (0.1374ms)
+✔ checkJamsResponse accepts both samples; strict rejects the edge sample only (1.8425ms)
+✔ checkJamsResponse enforces the draft rule and the shapes (0.4034ms)
+✔ check-response.js dispatches on jams or songs and honors --strict (174.4474ms)
+✔ textCell trims surrounding whitespace, including NBSP and tabs (0.9505ms)
+✔ textCell keeps inner whitespace and Sheet vocabulary untouched (0.124ms)
+✔ textCell turns empty, whitespace-only, null and undefined into null (0.1337ms)
+✔ integerTextCell writes an integral number as its decimal string (0.1712ms)
+✔ integerTextCell writes a non-integral number with String(n), for the mapper to reject (0.114ms)
+✔ integerTextCell trims a string and passes it through (0.0964ms)
+✔ integerTextCell turns empty, null and undefined into null (0.1666ms)
+✔ isBlank is true only for null, undefined and whitespace-only strings (0.1715ms)
+✔ isoDateCell formats a typed date in the given zone (18.9959ms)
+✔ isoDateCell round-trips a date built in another zone when formatted in that zone (0.6935ms)
+✔ isoDateCell passes a text date through, trimmed, and blank as null (0.1125ms)
+✔ timeCell pads and trims a text time, and drops :00 seconds (1.0121ms)
+✔ timeCell reads the display first, so a typed time on the 1899 epoch keeps its minutes (0.6088ms)
+✔ timeCell passes an out-of-range or non-:00-seconds text time through for the mapper (0.0847ms)
+✔ posicion uses integerTextCell: the number 3 gives "3", 2.5 gives "2.5" (0.0857ms)
+✔ isDateValue recognizes a Date from another realm and rejects an invalid one or text (0.615ms)
+✔ mapColumns matches trimmed exact headers, reports missing and duplicate ones (1.2208ms)
+✔ timeCell prefers a plain display time over the raw Date, even when the Date formats differently (0.3295ms)
+✔ the action table: checkPassphrase and readJams read, every other action writes (1.8143ms)
+✔ the guard is called by the router only: no action calls it itself (0.4764ms)
+✔ every action: a missing or non-string passphrase is invalid_passphrase; the action never runs, no lock, only Config read (3.9278ms)
+✔ every action: a wrong passphrase is invalid_passphrase and the action never runs (1.7396ms)
+✔ every action: the right passphrase runs it once; a write action runs holding the lock, which is released (0.6619ms)
+✔ every action: an unset passphrase is passphrase_not_set, the action never runs and no failure is counted (5.2234ms)
+✔ rotation: Config is read on every request, so the old passphrase is rejected as soon as it changes (1.1526ms)
+✔ rate limit: the 10th failure in a window locks every action, the right passphrase included, without reading Config (1.4473ms)
+✔ rate limit fails open: a cache that throws or is missing is ignored, and the passphrase check still runs (3.9299ms)
+✔ a non-numeric count in the cache reads as zero (0.2126ms)
+✔ the guard itself throws the contract errors (exported for the tests) (0.4914ms)
+✔ busy: a write that cannot take the lock in 10 s is busy, never runs and releases nothing (0.2488ms)
+✔ a write that throws still releases the lock and answers internal_error (0.2232ms)
+✔ checkWriteAccess creates the check tab, writes and reads back A1, deletes the tab and touches nothing else (1.0616ms)
+✔ checkWriteAccess deletes a leftover check tab first (0.1417ms)
+✔ checkWriteAccess with a read-back mismatch is internal_error and still deletes the tab (0.155ms)
+✔ the stored value is trimmed and found among other rows and extra columns (0.1132ms)
+✔ checkPassphrase: the right passphrase is ok and reads only Config (0.1439ms)
+✔ an unset passphrase rejects every attempt, blank included, as passphrase_not_set (1.0615ms)
+✔ a body that is not a JSON object is invalid_request and touches nothing (0.1061ms)
+✔ a missing or unknown action is unknown_action, lists the known actions and touches nothing (0.1328ms)
+✔ an unexpected exception is internal_error (0.4408ms)
+✔ no response, message, cache key or cache value contains the stored or the submitted passphrase (24.0215ms)
+✔ the GET routes still never open Config (0.3165ms)
+✔ doPost parses the JSON body and serializes handlePost with the active spreadsheet, script cache and script lock (0.6939ms)
+✔ Post.js runs as Apps Script does: one shared scope with the other files, no module object (4.1704ms)
+✔ Post.js holds the lines the README tells the user to look for after pasting (0.3498ms)
+✔ the route table is exactly { catalog, jams } (1.4411ms)
+✔ resource=catalog returns the catalog and reads only Catalogo (0.8222ms)
+✔ the passphrase tab, a missing resource and a wrong-case resource are unknown_resource (0.3425ms)
+✔ a missing Catalogo tab is missing_tab (0.171ms)
+✔ a structural error in the tab travels as its code (0.2235ms)
+✔ an unexpected exception is internal_error with its message (0.1439ms)
+✔ no request ever opens the passphrase tab, and no serialized body contains its value (1.9707ms)
+✔ resource=jams reads Jams and the published date only, through two spreadsheet methods (0.8028ms)
+✔ a fecha naming the passphrase tab or Catalogo, a draft and an orphan tab are never requested (0.38ms)
+✔ a passphrase query parameter changes nothing: same body, no draft, no secret (0.5821ms)
+✔ a missing Jams tab is missing_tab and nothing else is touched (0.135ms)
+✔ a structural error in the Jams tab travels as its code (0.1402ms)
+✔ no file in src/ but Post.js names the passphrase tab, and none but Post.js defines doPost (0.655ms)
+✔ doGet serializes handleGet as JSON with the active spreadsheet (0.336ms)
+✔ the src files run as Apps Script does: one shared scope, no module object (4.6788ms)
+✔ the manifest grants the bound Sheet only and serves anonymously as the owner (0.753ms)
+✔ publishSetlist writes only the upcoming Jams status cell and confirms its read-back (20.8131ms)
+✔ publishSetlist refuses bad, non-upcoming, tab-less, and empty drafts before any write (1.3605ms)
+✔ publishSetlist retries idempotently and checkPublish cleans up and verifies its marker rows (1.0872ms)
+✔ createJam appends one BORRADOR row after the last row, plain text first, and creates no tab (0.817ms)
+✔ createJam writes in the tab own column order and leaves an extra column untouched (0.4324ms)
+✔ createJam refuses bad input and conflicts before any write (2.837ms)
+✔ createJam refuses a PUBLICADA, a BORRADOR and a typed-date row on the same date (1.3429ms)
+✔ createJam: today is allowed and yesterday is refused across Buenos Aires midnight (0.5606ms)
+✔ createJam allows a later and an earlier future jam than the upcoming one (0.4738ms)
+✔ createJam: a cell that does not read back is internal_error (0.3853ms)
+✔ checkCreateJam cleans a leftover, never writes Jams, and deletes its tab even on failure (0.4082ms)
+✔ createJam and checkCreateJam need the passphrase (0.217ms)
+✔ readJams: the GET jams plus the songs of every current or future draft, read only, no lock (0.6213ms)
+✔ readJams: a draft for today is current; the GET still withholds every draft (0.6403ms)
+✔ readJams: duplicate draft dates and broken draft tabs are per-jam errors; a non-exact status is not a draft (0.3528ms)
+✔ addSong appends the catalog song at max + 1 with the request key, seven open slots, plain-text cells (1.3037ms)
+✔ addSong writes into the tab's own column order and leaves unmapped columns alone (0.4553ms)
+✔ addSong keeps a title such as 7/4 as text because the format is set first (0.4136ms)
+✔ addSong to a jam with no tab creates it with the header in documented order and appends at 1 (0.7852ms)
+✔ two adds in a row get consecutive positions, each under the lock (0.5618ms)
+✔ addSong validates in order and writes nothing on any failure (4.0945ms)
+✔ an unknown estado earlier than the upcoming jam does not block it (0.3368ms)
+✔ a published upcoming jam is editable too (0.314ms)
+✔ the server never reads tono_default: the stored key is the request's for every song (0.5297ms)
+✔ checkSetlistWrite creates the check tab, appends the marker, reads it back and deletes the tab (1.7833ms)
+✔ checkSetlistWrite deletes a leftover first (0.6035ms)
+✔ checkSetlistWrite with a Sheet that converts 7/4 is internal_error and still deletes the tab (0.3577ms)
+✔ the new actions need the passphrase like every other (0.271ms)
+✔ moveSong writes one contiguous block, changes positions only, and keeps the result contiguous (1.016ms)
+✔ moveSong down, clamps, no-ops, and closes gaps (1.7184ms)
+✔ moveSong park path never duplicates any whole position after an individual write (0.5188ms)
+✔ moveSong validates date, id, JSON integer, jam, headers, row and ordering before any write (1.0556ms)
+✔ checkSetlistMove exercises contiguous and park paths, then removes its temporary tab (0.5089ms)
+✔ removeSong deletes the row found by id_tema and renumbers the later positions 1..n, as plain text (1.0137ms)
+✔ removeSong on an app-built tab renumbers with one format call and one setValues for the whole run (0.4337ms)
+✔ removeSong renumbers in ascending position order even when the tab order is shuffled (0.4281ms)
+✔ removeSong never deletes the grid's last row directly, and a spare row avoids the insert (0.6616ms)
+✔ removeSong matches a trimmed id_tema, reads typed positions, and renumbers nothing after an invalid one (0.633ms)
+✔ removes and adds in a row keep the tab numbered 1..n (0.6992ms)
+✔ removeSong validates in order and writes nothing on any failure (2.8456ms)
+✔ a published upcoming jam allows removal too (0.2537ms)
+✔ checkSetlistRemove appends three markers, removes the second, reads back 1 and 2, and deletes the tab (0.4673ms)
+✔ checkSetlistRemove deletes a leftover first (0.2413ms)
+✔ checkSetlistRemove with a Sheet whose deleteRow does nothing is internal_error and still deletes the tab (0.2464ms)
+✔ setKey writes only the tono cell of the row found by id_tema, as plain text, format first (0.6822ms)
+✔ setKey keeps the admin spelling and finds the cell in the tab own column order (0.9123ms)
+✔ setKey on a published upcoming jam is what the musicians GET returns next (0.4229ms)
+✔ setKey after another admin removed an earlier song still hits the right row (0.4905ms)
+✔ setKey validates in order and writes nothing on any failure (2.8628ms)
+✔ setKey needs the passphrase like every other action (0.1224ms)
+✔ checkSetlistWrite changes the marker key with the setKey finder and cell writer before reading it back (0.4364ms)
+✔ checkSetlistWrite with a Sheet that drops the key write is internal_error and still deletes the tab (0.4044ms)
+✔ addExtraParticipant normalizes and appends under Otros, writing only that plain-text cell (0.6304ms)
+✔ removeExtraParticipant removes only a matching ordinal and stale values write nothing (0.5591ms)
+✔ extra participant bounds and safe text are validated before the cell write (0.4532ms)
+✔ setSlotCount last open guitar removed, only the changed cell as plain text (0.4605ms)
+✔ setSlotCount filled first guitar stays, only the changed cell as plain text (0.2401ms)
+✔ setSlotCount filled second guitar stays, only the changed cell as plain text (0.2359ms)
+✔ setSlotCount first absent guitar restored, only the changed cell as plain text (0.2331ms)
+✔ setSlotCount second absent guitar restored, only the changed cell as plain text (0.2461ms)
+✔ setSlotCount restore before second filled guitar, only the changed cell as plain text (0.2655ms)
+✔ setSlotCount filled slots refused without any partial writes (0.4422ms)
+✔ setSlotCount remove and restore every default instrument; same count is no-op (2.8835ms)
+✔ setSlotCount validates in order and writes nothing on failures (2.174ms)
+✔ setSlotCount uses mapped headers and id after removal renumber, GET mirrors published slots (0.5964ms)
+✔ checkSetlistWrite exercises guitar removal and harmonica removal then restore (0.3609ms)
+✔ checkSetlistWrite catches a dropped slot write and cleans up (0.1826ms)
+✔ setSlotCount rereads trimmed display cells including names assigned during the write (0.321ms)
+✔ assignSlot resolves ordinal among active U1 columns and writes one normalized plain-text cell (0.4482ms)
+✔ assignSlot refuses occupied, missing active ordinal and invalid names without writes (0.9367ms)
+✔ assignSlot validates inputs in deterministic order before jam or tab access (2.0235ms)
+✔ assignSlot uses mapped headers and does not overwrite occupied cells (0.289ms)
+✔ assignSlot is an authenticated locked write and checkSetlistWrite proves assignment on its temporary tab (0.442ms)
+✔ checkSetlistWrite detects a dropped assignment and still cleans up its temporary tab (0.2499ms)
+✔ clearSlot compare-and-clears only its occupied U1 cell and returns canonical slots (0.4106ms)
+✔ clearSlot respects active ordinal after removed guitar column and reordered headers (0.3035ms)
+✔ clearSlot leaves empty, changed, absent, malformed, and invalid targets untouched (0.7182ms)
+✔ clearSlot validates inputs before accessing jam tabs and is authenticated under lock (0.5218ms)
+✔ checkSetlistWrite proves clearSlot and always deletes the temporary tab (0.5506ms)
+✔ setSlotCount needs passphrase and write lock; neither refusal writes (0.1566ms)
+✔ growing any instrument to its ceiling on a wide tab writes only the changed cells and moves no name (1.5431ms)
+✔ growing one instrument by one writes exactly one cell (0.2629ms)
+✔ count 4 is invalid_count for every instrument on either layout, before any write (0.7992ms)
+✔ a filled third slot at the new ceiling still blocks removal with slot_filled (0.2855ms)
+✔ growing past the columns an old seven-column tab has is instrument_not_expandable, before any write (0.9502ms)
+✔ an old tab still shrinks and restores inside its own columns, and its missing columns read as "-" (0.389ms)
+✔ either spelling of the first column is read; both in one tab is duplicate_header (0.4858ms)
+✔ a new song on a wide tab starts with the seven default slots open and eleven "-" cells (0.3605ms)
+✔ a new song on an old tab has no cell for the eleven extra columns (0.2423ms)
+✔ assignSlot and clearSlot reach a grown third slot (0.5106ms)
+✔ every slots object carries the five legacy keys equal to the first-column keys (1.0871ms)
+✔ drums and keyboards cannot pass one: invalid_count before any Sheet read or write (0.3928ms)
+✔ guitar, bass, vocals and harmonica reach three on a wide tab; bass 3 on a seven-column tab is not expandable (0.8955ms)
+✔ a new jam tab is created with 14 slot headers and no Batería 2/3 or Teclados 2/3 (0.3283ms)
+✔ a tab that has Batería 2 reads it, shrinks it when open, and refuses a count of 2 (0.389ms)
+✖ GET jams serves only CREADA and PUBLICADA rows; BORRADOR, typos and empty estado are omitted entirely (1.4004ms)
+✖ GET jams without jamStatuses presents CREADA as BORRADOR with no setlist (an old build) (0.7553ms)
+✖ GET jams with any other jamStatuses is invalid_jam_statuses before the Sheet is opened (0.2592ms)
+✖ readJams returns every row, reads the tabs of future BORRADOR and CREADA jams, never a past one (0.4682ms)
+✖ readJams without jamStatuses presents CREADA as BORRADOR (songs kept); another value is invalid_jam_statuses (0.4515ms)
+✖ a CREADA upcoming jam is editable and publishable; a CREADA earlier jam still blocks a later one (0.3166ms)
+✖ musicianJams_ and presentStatuses_ are pure and keep the input untouched (0.1391ms)
+ℹ tests 199
+ℹ suites 0
+ℹ pass 192
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 290.335
+
+✖ failing tests:
+
+test at test\setlist.test.js:1725:1
+✖ GET jams serves only CREADA and PUBLICADA rows; BORRADOR, typos and empty estado are omitted entirely (1.4004ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      [
+        '2026-07-25',
+        'PUBLICADA'
+      ],
+  ...
+      [
+  +     '2026-10-31',
+  +     'BORRADOR'
+  +   ],
+  +   [
+        '2026-11-28',
+        'CREADA'
+      ],
+  +   [
+  +     '2026-12-19',
+  +     'Borrador'
+  +   ],
+  +   [
+  +     '2026-12-26',
+  +     null
+  +   ]
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1728:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ '2026-07-25', 'PUBLICADA' ], [ '2026-09-26', 'CREADA' ], [ '2026-10-31', 'BORRADOR' ], [ '2026-11-28', 'CREADA' ], [ '2026-12-19', 'Borrador' ], [ '2026-12-26', null ] ],
+    expected: [ [ '2026-07-25', 'PUBLICADA' ], [ '2026-09-26', 'CREADA' ], [ '2026-11-28', 'CREADA' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\setlist.test.js:1737:1
+✖ GET jams without jamStatuses presents CREADA as BORRADOR with no setlist (an old build) (0.7553ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      [
+        '2026-07-25',
+        'PUBLICADA',
+        false
+  ...
+        '2026-09-26',
+  +     'CREADA',
+  +     true
+  +   ],
+  +   [
+  +     '2026-10-31',
+        'BORRADOR',
+        true
+      ],
+      [
+        '2026-11-28',
+  +     'CREADA',
+  -     'BORRADOR',
+        true
+      ],
+  +   [
+  +     '2026-12-19',
+  +     'Borrador',
+  +     true
+  +   ],
+  +   [
+  +     '2026-12-26',
+  +     null,
+  +     true
+  +   ]
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1740:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ '2026-07-25', 'PUBLICADA', false ], [ '2026-09-26', 'CREADA', true ], [ '2026-10-31', 'BORRADOR', true ], [ '2026-11-28', 'CREADA', true ], [ '2026-12-19', 'Borrador', true ], [ '2026-12-26', null, true ] ],
+    expected: [ [ '2026-07-25', 'PUBLICADA', false ], [ '2026-09-26', 'BORRADOR', true ], [ '2026-11-28', 'BORRADOR', true ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\setlist.test.js:1744:1
+✖ GET jams with any other jamStatuses is invalid_jam_statuses before the Sheet is opened (0.2592ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"jams":[{"date":"2026-07-25","startTime":"21:00","venue":"La Macanuda","status":"PUBLICADA","setlist":[{"position":"1","songId":"crossroads","title":"Crossroads","artist":"Eric Clapton","key":"A","slots":{"guitar1":null,"guitar2":null,"guitar3":"-","bass1":null,"bass2":"-","bass3":"-","drums1":null,"drums2":"-","drums3":"-","vocals1":null,"vocals2":"-","vocals3":"-","harmonica1":null,"harmonica2":"-","harmonica3":"-","keyboards1":null,"keyboards2":"-","keyboards3":"-","bass":null,"drums":null,"vocals":null,"harmonica":null,"keyboards":null},"extraParticipants":null}],"setlistError":null},{"date":"2026-09-26","startTime":"21:00","venue":"La Macanuda","status":"CREADA","setlist":null,"setlistError":null},{"date":"2026-10-31","startTime":"21:00","venue":"Lugar secreto","status":"BORRADOR","setlist":null,"setlistError":null},{"date":"2026-11-28","startTime":"21:00","venue":"La Macanuda","status":"CREADA","setlist":null,"setlistError":null},{"date":"2026-12-19","startTime":"21:00","venue":"Typo","status":"Borrador","setlist":null,"setlistError":null},{"date":"2026-12-26","startTime":"21:00","venue":"Vacio","status":null,"setlist":null,"setlistError":null}]}
+  + actual - expected
+  
+    [
+      'schemaVersion',
+  +   'jams'
+  -   'error'
+    ]
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:255:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1747:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'schemaVersion', 'jams' ],
+    expected: [ 'schemaVersion', 'error' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\setlist.test.js:1754:1
+✖ readJams returns every row, reads the tabs of future BORRADOR and CREADA jams, never a past one (0.4682ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      [
+        '2026-07-25',
+        'PUBLICADA'
+      ],
+  ...
+        '2026-12-26',
+  +     null
+  -     ''
+      ]
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1758:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ '2026-07-25', 'PUBLICADA' ], [ '2026-09-26', 'CREADA' ], [ '2026-10-31', 'BORRADOR' ], [ '2026-11-28', 'CREADA' ], [ '2026-12-19', 'Borrador' ], [ '2026-12-26', null ] ],
+    expected: [ [ '2026-07-25', 'PUBLICADA' ], [ '2026-09-26', 'CREADA' ], [ '2026-10-31', 'BORRADOR' ], [ '2026-11-28', 'CREADA' ], [ '2026-12-19', 'Borrador' ], [ '2026-12-26', '' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\setlist.test.js:1768:1
+✖ readJams without jamStatuses presents CREADA as BORRADOR (songs kept); another value is invalid_jam_statuses (0.4515ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'CREADA'
+  - 'BORRADOR'
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1770:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'CREADA',
+    expected: 'BORRADOR',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\setlist.test.js:1778:1
+✖ a CREADA upcoming jam is editable and publishable; a CREADA earlier jam still blocks a later one (0.3166ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  undefined !== 4
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1780:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\setlist.test.js:1791:1
+✖ musicianJams_ and presentStatuses_ are pure and keep the input untouched (0.1391ms)
+  TypeError: musicianJams_ is not a function
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\setlist.test.js:1794:26)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7)

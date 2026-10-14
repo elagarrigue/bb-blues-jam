@@ -52,15 +52,23 @@ transfer and no per-record access rules.
 
 - **Unauthenticated access is the default and the majority case.** The app opens straight to the
   next jam with no login wall. Authentication exists only to reveal editing controls.
-- **Draft setlists are hidden from musicians**, who see the date, the venue, and a message that the
-  list is being assembled. The data should not be delivered to an unauthenticated client at all,
-  rather than being delivered and hidden in the UI. The Apps Script `jams` route enforces this
-  server-side: it serves a setlist only for an `estado` of exactly `PUBLICADA` and fails closed on
-  any other value, a typo included (`apps-script-api.md`). The app adds two more layers:
-  `JamsMapper` turns every DRAFT into `Setlist.Withheld` and ignores any setlist sent with one, and
-  the musician screens decide from the jam's status through `Jam.setlistForMusicians()`
-  (`unpublished-setlist-state`), so a draft whose songs reached the app (the admin read, below) still
-  shows no song on Próxima jam or in the song detail.
+- **A draft jam does not exist for musicians, and a created jam shows only its date** (D-26,
+  `jam-status-created`). A `BORRADOR` jam has no date, no list and no place in Próxima jam or
+  Anteriores; a `CREADA` jam shows the date, time, venue and a message that the list is being
+  assembled; a `PUBLICADA` jam shows the list too. The data should not be delivered to an
+  unauthenticated client at all, rather than being delivered and hidden in the UI. Three layers
+  enforce it, and the admin flag only decides what is drawn:
+  1. Apps Script: the anonymous `jams` route serves only rows whose `estado` is exactly `CREADA` or
+     `PUBLICADA` (a `BORRADOR`, a typo or an empty value is omitted entirely, not even the date or the
+     venue goes out), and a setlist only for `PUBLICADA` (`apps-script-api.md`).
+  2. The mapper: an anonymous read drops a valid `BORRADOR` row (`MappedJams.hiddenDrafts`, never
+     stored) and turns a `CREADA` into `Setlist.Withheld`, ignoring any setlist sent with it.
+  3. The musician screens: they read `JamsSnapshot.forMusicians()` and decide the songs through
+     `Jam.setlistForMusicians()`, so a draft or created jam whose songs reached the app (the admin
+     read, below, or a cache left after a logout) still shows no song, and a draft no date.
+  **Old app builds:** an app that predates `CREADA` does not send `jamStatuses=3`, so the script
+  presents a `CREADA` jam as `BORRADOR`, which that build draws as the draft card. A `BORRADOR` row is
+  omitted for every version.
 - **Admin state is local.** A flag in DataStore after the passphrase validates against the Sheet
   through Apps Script. As built (`admin-passphrase-login`, 5 October 2026): the login on Info POSTs
   the trimmed passphrase to the `checkPassphrase` action (`docs/apps-script-api.md`), and only an
@@ -149,4 +157,4 @@ transfer and no per-record access rules.
 
 ## Publish the setlist
 
-The admin flag only draws `Publicar lista`; Apps Script's passphrase guard authorizes `publishSetlist`. The admin must confirm the irreversible transition. While sending, the app keeps the cached `BORRADOR` badge; it shows `PUBLICADA` only after the server writes and reads back that status. A timeout can follow a completed server write, so retry is safe and the server answers `alreadyPublished`. Empty and tab-less drafts are refused server-side and have no publish action in the app. Musicians see the published setlist on their next refresh. Deployment and live checks remain deferred to the shared app-complete deployment batch.
+The admin flag only draws `Publicar lista` (for a `BORRADOR` or a `CREADA` jam); Apps Script's passphrase guard authorizes `publishSetlist`. The admin must confirm the irreversible transition. While sending, the app keeps the cached `BORRADOR` badge; it shows `PUBLICADA` only after the server writes and reads back that status. A timeout can follow a completed server write, so retry is safe and the server answers `alreadyPublished`. Empty and tab-less drafts are refused server-side and have no publish action in the app. Musicians see the published setlist on their next refresh. Deployment and live checks remain deferred to the shared app-complete deployment batch.

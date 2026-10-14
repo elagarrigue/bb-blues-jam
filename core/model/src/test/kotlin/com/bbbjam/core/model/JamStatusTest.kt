@@ -6,7 +6,7 @@ import org.junit.Test
 class JamStatusTest {
 
     @Test
-    fun `a jam is only draft or published`() {
-        assertEquals(listOf(JamStatus.DRAFT, JamStatus.PUBLISHED), JamStatus.entries)
+    fun `a jam is draft, created or published, in that order`() {
+        assertEquals(listOf(JamStatus.DRAFT, JamStatus.CREATED, JamStatus.PUBLISHED), JamStatus.entries)
     }
 }

@@ -456,6 +456,27 @@ the Room mirror `SetlistJamDao.insertCreatedJam` (extended by `SetlistDao`), and
 (Koin `single`), `JamHandlers` (the only caller of `create`, from the dialog's Confirm), `JamCopy`, `JamDefaults`,
 `JamViews`; `Usar esta lista` on a jam turn waits until the jam is the upcoming one. Konsist unchanged (19 rules).
 
+As built by `jam-status-created` (14 October 2026; D-26, amends D-04 and D-25): `JamStatus` has three values,
+`DRAFT` (`BORRADOR`, does not exist for musicians), `CREATED` (`CREADA`, date only) and `PUBLISHED`. `Jam`
+gains `isVisibleToMusicians` (`status != DRAFT`); `setlistForMusicians()` returns the setlist only for
+PUBLISHED. `JamsSnapshot` gains `heldBack: List<Jam>` (the future jams after `upcoming`, in date order, the
+last parameter with a default) and the pure, idempotent `forMusicians()`, which drops every DRAFT jam from
+upcoming, held back and past and re-splits, so a later CREATED/PUBLISHED jam becomes the musician's
+upcoming one while the admin keeps the draft. **Musician screens** (`NextJamPresenter` without admin,
+`PastJamsPresenter`, `PastJamDetailPresenter`) start from `forMusicians()`; the admin pickers and the
+assistant keep the raw snapshot. Hidden in three layers: Apps Script (`Jams.js` `musicianJams_` in the GET route
+only, `buildJams` and `readAllJams_` unfiltered; `presentStatuses_` presents CREADA as BORRADOR without
+`jamStatuses=3`; any other value is `invalid_jam_statuses`), the mapper (`JamsMapper.map(rows,
+includeDrafts = false)` drops a valid BORRADOR into `MappedJams.hiddenDrafts`, and
+`JamsRefreshOutcome.Updated.hiddenDrafts` is logged as dates only) and the screens. `AppsScriptTransport.get`
+takes `parameters: Map<String, String>` (no default; the jams GET sends `jamStatuses=3`, the catalog
+`emptyMap()`), and the `readJams` body carries `"jamStatuses": 3`. `SetlistDao.markPublished` mirrors from
+`DRAFT` and `CREATED`; `publishSetlist` is offered for `status != PUBLISHED`. No Room schema change (status
+is TEXT, still version 2). Debug: `bluesjam.demoUpcomingJamCreated` (`BuildConfig.DEMO_UPCOMING_JAM_CREATED`,
+release `false`; the draft flag wins); `DemoUpcomingJam.on/startingAt` and `DemoUpcomingJamRepository` take a
+`JamStatus`, and live mode moves the replaced real upcoming jam to the front of `heldBack`. Konsist unchanged
+(19 rules).
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -492,6 +513,8 @@ the Room mirror `SetlistJamDao.insertCreatedJam` (extended by `SetlistDao`), and
   (`unpublished-setlist-state`), never `jam.setlist`: it is `Withheld` for every DRAFT jam, whatever
   the read returned. `NextJamPresenter`, the song detail lookup, the Anteriores row summary and the past jam
   detail (`past-jam-detail`) do so. The admin slices read `jam.setlist` behind the admin flag.
+  Since `jam-status-created` it is `Withheld` for every jam that is not PUBLISHED, and the snapshot
+  goes through `JamsSnapshot.forMusicians()` first (see "As built by `jam-status-created`").
   On Próxima jam a draft is `SetlistUiModel.Withheld(DraftSetlistUiModel)` (the draft card, colours
   in `DraftSetlistDefaults`, no amber) and an unreadable setlist is `SetlistUiModel.Unavailable`.
 - "Today" in a screen → `JamCalendar.today()` (Buenos Aires), read once per snapshot as

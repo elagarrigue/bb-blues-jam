@@ -24,7 +24,8 @@ internal interface SetlistDao :
 
     /** Publish only an available cached draft after the server confirmed publication. */
     @Query(
-        "UPDATE jam SET status = 'PUBLISHED' WHERE date = :date AND status = 'DRAFT' AND setlist_state = 'AVAILABLE'",
+        "UPDATE jam SET status = 'PUBLISHED' WHERE date = :date AND status IN ('DRAFT', 'CREATED') " +
+            "AND setlist_state = 'AVAILABLE'",
     )
     suspend fun markPublished(date: String): Int
 

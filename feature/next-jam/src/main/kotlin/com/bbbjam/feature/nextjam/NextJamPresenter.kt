@@ -140,7 +140,8 @@ class NextJamPresenter(
             onMove = moveControls.onMove,
             onAddSong = { date -> currentOnAddSong(date) },
         )
-        val refreshes = rememberNextJamRefreshes(jams, calendar, random, params.isResumed, snapshot) { subscription++ }
+        val refreshes =
+            rememberNextJamRefreshes(jams, calendar, random, params.isResumed, isAdmin, snapshot) { subscription++ }
         val today = remember(snapshot) { calendar.today() }
         val now = remember(snapshot) { calendar.now() }
         var filter by rememberSaveable(stateSaver = InstrumentFilterSaver) { mutableStateOf(emptySet<Instrument>()) }
@@ -187,7 +188,8 @@ internal fun JamsSnapshot.toUiModel(
     onOpenSong: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
     admin: AdminState? = null,
 ): NextJamUiModel {
-    val jam = upcoming
+    // A draft does not exist for a musician (D-26): musicians read the projection, the admin the raw view.
+    val jam = (if (admin == null) forMusicians() else this).upcoming
     val fetchedAt = freshness.fetchedAt
     val failure = freshness.lastFailure
     // The kind of failure never reaches the musician: only offline or not (Decision 5).

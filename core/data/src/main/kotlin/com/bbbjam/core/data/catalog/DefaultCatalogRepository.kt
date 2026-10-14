@@ -70,7 +70,7 @@ internal class DefaultCatalogRepository(
     private suspend fun fetchAndStore(): RefreshOutcome {
         refreshing.value = true
         try {
-            val result = transport.get(Resources.CATALOG)
+            val result = transport.get(Resources.CATALOG, emptyMap())
             val now = clock.instant().toEpochMilli()
             val decoded = when (result) {
                 is TransportResult.Failed -> Decoded.Failed(result.failure)

@@ -2,9 +2,13 @@ package com.bbbjam.core.data.remote
 
 import com.bbbjam.core.data.DataFailure
 
-/** One `GET <url>?resource=<resource>` against the Apps Script web app. */
+/**
+ * One `GET <url>?resource=<resource>` against the Apps Script web app, plus [parameters] as extra
+ * query parameters (the jams read sends `jamStatuses=3`; the catalog sends none). No default, so a
+ * caller says what it sends.
+ */
 internal fun interface AppsScriptTransport {
-    suspend fun get(resource: String): TransportResult
+    suspend fun get(resource: String, parameters: Map<String, String>): TransportResult
 }
 
 /**

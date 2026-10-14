@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Cache-first [JamsRepository]: Room is the source of every emission, the network only replaces it.
@@ -113,7 +114,7 @@ internal class DefaultJamsRepository(
     private suspend fun adminRead(): JamsRefreshOutcome? {
         val passphrase = store.passphrase()
         if (passphrase == null || passphrase == refusedPassphrase) return null
-        val answer = writer.send(READ_JAMS)
+        val answer = writer.send(READ_JAMS, mapOf(JAM_STATUSES to JsonPrimitive(JAM_STATUSES_VERSION)))
         val now = calendar.now().toEpochMilli()
         return when (answer) {
             is AdminAnswer.Ok -> when (val decoded = decodeJams(answer.body.toString())) {
@@ -132,7 +133,7 @@ internal class DefaultJamsRepository(
     }
 
     private suspend fun anonymousRead(): JamsRefreshOutcome {
-        val result = transport.get(Resources.JAMS)
+        val result = transport.get(Resources.JAMS, mapOf(JAM_STATUSES to JAM_STATUSES_VERSION.toString()))
         val now = calendar.now().toEpochMilli()
         val decoded = when (result) {
             is TransportResult.Failed -> Decoded.Failed(result.failure)
@@ -166,6 +167,7 @@ internal class DefaultJamsRepository(
                 mapped.issues,
                 heldBack(jams, calendar.today()),
                 adminRead,
+                mapped.hiddenDrafts,
             )
         } catch (e: SQLException) {
             failed(now, e.toStorageFailure(), adminRead)
@@ -178,8 +180,10 @@ internal class DefaultJamsRepository(
     private class CachedJams(val jams: List<JamWithChildren>, val state: SyncStateEntity?, val isRefreshing: Boolean) {
         fun toSnapshot(today: LocalDate): JamsSnapshot {
             val (past, current) = jams.map { it.toDomain() }.partition { it.isHistorical(today) }
+            val future = current.sortedBy { it.date }
             return JamsSnapshot(
-                upcoming = current.minByOrNull { it.date },
+                upcoming = future.firstOrNull(),
+                heldBack = future.drop(1),
                 past = past.sortedByDescending { it.date }.map { it.withoutUnrecordedSlots() },
                 freshness = state.toFreshness(isRefreshing),
             )
@@ -189,6 +193,10 @@ internal class DefaultJamsRepository(
     private companion object {
         const val JAMS = "jams"
         const val READ_JAMS = "readJams"
+
+        /** Tells the script this build knows the three jam states (`docs/apps-script-api.md`). */
+        const val JAM_STATUSES = "jamStatuses"
+        const val JAM_STATUSES_VERSION = 3
 
         /** The future jams after the upcoming one, in date order (user approval P5). */
         fun heldBack(jams: List<Jam>, today: LocalDate): List<LocalDate> =

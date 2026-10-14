@@ -6,6 +6,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.model.Jam
+import com.bbbjam.core.model.JamStatus
 import org.koin.core.Koin
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -17,6 +18,7 @@ import org.koin.dsl.module
 internal data class DebugFlags(
     val demoUpcomingJam: Boolean = false,
     val demoUpcomingJamDraft: Boolean = false,
+    val demoUpcomingJamCreated: Boolean = false,
     val debugAdmin: Boolean = false,
     val demoUpcomingJamLive: Boolean = false,
 ) {
@@ -25,6 +27,7 @@ internal data class DebugFlags(
         val fromBuildConfig = DebugFlags(
             demoUpcomingJam = BuildConfig.DEMO_UPCOMING_JAM,
             demoUpcomingJamDraft = BuildConfig.DEMO_UPCOMING_JAM_DRAFT,
+            demoUpcomingJamCreated = BuildConfig.DEMO_UPCOMING_JAM_CREATED,
             debugAdmin = BuildConfig.DEBUG_ADMIN,
             demoUpcomingJamLive = BuildConfig.DEMO_UPCOMING_JAM_LIVE,
         )
@@ -36,7 +39,9 @@ internal data class DebugFlags(
  * independent of the others:
  * - `bluesjam.demoUpcomingJam=true` ([BuildConfig.DEMO_UPCOMING_JAM]) rebinds [JamsRepository] to
  *   [DemoUpcomingJamRepository] around the real one; with `bluesjam.demoUpcomingJamDraft=true` as
- *   well ([BuildConfig.DEMO_UPCOMING_JAM_DRAFT], `unpublished-setlist-state`) the demo jam is a draft.
+ *   well ([BuildConfig.DEMO_UPCOMING_JAM_DRAFT], `unpublished-setlist-state`) the demo jam is a draft;
+ *   with `bluesjam.demoUpcomingJamCreated=true` ([BuildConfig.DEMO_UPCOMING_JAM_CREATED],
+ *   `jam-status-created`) it is a CREADA jam (the draft flag wins if both are on).
  * - `bluesjam.debugAdmin=true` ([BuildConfig.DEBUG_ADMIN], `debug-admin-session`) rebinds
  *   [AdminSession] to [DebugAdminSession] around the real one.
  * - `bluesjam.demoUpcomingJamLive=true` ([BuildConfig.DEMO_UPCOMING_JAM_LIVE], `live-refresh-during-jam`)
@@ -63,7 +68,7 @@ internal fun Koin.debugOverrides(
                     DemoUpcomingJamRepository(
                         real,
                         calendar,
-                        draft = flags.demoUpcomingJamDraft,
+                        status = flags.demoStatus(),
                         live = flags.demoUpcomingJamLive,
                         log = log,
                     )
@@ -75,6 +80,13 @@ internal fun Koin.debugOverrides(
         val real = get<AdminSession>()
         add(module { single<AdminSession> { DebugAdminSession(real) } })
     }
+}
+
+/** The demo jam's status for these flags: the draft flag wins over the created one. */
+internal fun DebugFlags.demoStatus(): JamStatus = when {
+    demoUpcomingJamDraft -> JamStatus.DRAFT
+    demoUpcomingJamCreated -> JamStatus.CREATED
+    else -> JamStatus.PUBLISHED
 }
 
 /** True for the demo jam, so the startup log can mark it `(demo)`. Always false in release. */

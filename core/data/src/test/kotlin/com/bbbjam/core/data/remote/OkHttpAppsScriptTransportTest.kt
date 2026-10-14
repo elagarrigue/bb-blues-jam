@@ -34,13 +34,28 @@ class OkHttpAppsScriptTransportTest {
     fun `the request is a GET with the resource in the query`() = runTest {
         server.enqueue(MockResponse.Builder().body(Fixtures.sample("catalog-seed.json")).build())
 
-        val result = transport(server.url("/macros/s/abc/exec").toString()).get(Resources.CATALOG)
+        val result = transport(server.url("/macros/s/abc/exec").toString()).get(Resources.CATALOG, emptyMap())
 
         assertEquals(TransportResult.Body(Fixtures.sample("catalog-seed.json")), result)
         val request = server.takeRequest()
         assertEquals("GET", request.method)
         assertEquals("/macros/s/abc/exec", request.url.encodedPath)
         assertEquals("catalog", request.url.queryParameter("resource"))
+    }
+
+    @Test
+    fun `extra parameters travel in the query and an empty map adds none`() = runTest {
+        server.enqueue(MockResponse.Builder().body("{}").build())
+        server.enqueue(MockResponse.Builder().body("{}").build())
+
+        transport(server.url("/exec").toString()).get(Resources.JAMS, mapOf("jamStatuses" to "3"))
+        transport(server.url("/exec").toString()).get(Resources.CATALOG, emptyMap())
+
+        val withParameter = server.takeRequest()
+        assertEquals("jams", withParameter.url.queryParameter("resource"))
+        assertEquals("3", withParameter.url.queryParameter("jamStatuses"))
+        val without = server.takeRequest()
+        assertEquals(setOf("resource"), without.url.queryParameterNames)
     }
 
     @Test
@@ -54,7 +69,7 @@ class OkHttpAppsScriptTransportTest {
                 .build(),
         )
 
-        val result = transport(server.url("/exec").toString()).get(Resources.CATALOG)
+        val result = transport(server.url("/exec").toString()).get(Resources.CATALOG, emptyMap())
 
         assertEquals(TransportResult.Body(body), result)
         assertEquals(1, server.requestCount)
@@ -70,7 +85,7 @@ class OkHttpAppsScriptTransportTest {
                 .build(),
         )
 
-        val result = transport(server.url("/exec").toString()).get(Resources.CATALOG)
+        val result = transport(server.url("/exec").toString()).get(Resources.CATALOG, emptyMap())
 
         assertEquals(TransportResult.Body("""{"title":"Café Madrid","tempo":"rápido"}"""), result)
     }
@@ -79,7 +94,7 @@ class OkHttpAppsScriptTransportTest {
     fun `a non-2xx status is an invalid response`() = runTest {
         server.enqueue(MockResponse.Builder().code(500).body("<html>error</html>").build())
 
-        val result = transport(server.url("/exec").toString()).get(Resources.CATALOG)
+        val result = transport(server.url("/exec").toString()).get(Resources.CATALOG, emptyMap())
 
         assertEquals(TransportResult.Failed(DataFailure.InvalidResponse("HTTP 500")), result)
     }
@@ -89,14 +104,14 @@ class OkHttpAppsScriptTransportTest {
         val url = server.url("/exec").toString()
         server.close()
 
-        val result = transport(url).get(Resources.CATALOG)
+        val result = transport(url).get(Resources.CATALOG, emptyMap())
 
         assertEquals(TransportResult.Failed(DataFailure.Offline), result)
     }
 
     @Test
     fun `no URL means not configured and no request`() = runTest {
-        val result = transport(null).get(Resources.CATALOG)
+        val result = transport(null).get(Resources.CATALOG, emptyMap())
 
         assertEquals(TransportResult.Failed(DataFailure.NotConfigured), result)
         assertEquals(0, server.requestCount)

@@ -48,12 +48,19 @@ class SetlistDaoTest {
         }
 
     @Test
-    fun `markPublished changes only an available cached draft`() = runTest {
+    fun `markPublished changes only an available cached draft or created jam`() = runTest {
         val draft = JamEntity(UPCOMING, 1, "21:00", "Lugar", "DRAFT", "AVAILABLE", null, 0)
         val withheld = JamEntity(LATER, 2, "21:00", "Lugar", "DRAFT", "WITHHELD", null, 0)
         val published = JamEntity("2026-12-19", 3, "21:00", "Lugar", "PUBLISHED", "AVAILABLE", null, 0)
+        val created = JamEntity("2027-01-16", 4, "21:00", "Lugar", "CREATED", "AVAILABLE", null, 0)
+        val createdWithheld = JamEntity("2027-02-13", 5, "21:00", "Lugar", "CREATED", "WITHHELD", null, 0)
         jamsDao.replaceJams(
-            JamRows(listOf(draft, withheld, published), emptyList(), emptyList(), emptyList()),
+            JamRows(
+                listOf(draft, withheld, published, created, createdWithheld),
+                emptyList(),
+                emptyList(),
+                emptyList(),
+            ),
             SyncStateEntity("jams", 1, 1, null),
         )
 
@@ -61,8 +68,10 @@ class SetlistDaoTest {
         assertEquals(0, dao.markPublished(LATER))
         assertEquals(0, dao.markPublished("2026-12-19"))
         assertEquals(0, dao.markPublished("1999-01-01"))
+        assertEquals(1, dao.markPublished("2027-01-16"))
+        assertEquals(0, dao.markPublished("2027-02-13"))
         assertEquals(
-            listOf("PUBLISHED", "DRAFT", "PUBLISHED"),
+            listOf("PUBLISHED", "DRAFT", "PUBLISHED", "PUBLISHED", "CREATED"),
             jamsDao.observeJams().first().sortedBy { it.jam.sheetOrder }.map { it.jam.status },
         )
     }

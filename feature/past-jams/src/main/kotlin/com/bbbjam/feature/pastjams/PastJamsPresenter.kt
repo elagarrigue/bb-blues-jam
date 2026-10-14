@@ -110,10 +110,12 @@ internal fun JamsSnapshot.toUiModel(
         null
     }
     val title = PastJamsCopy.TITLE
+    // A past BORRADOR jam is hidden for everyone (D-26): Anteriores has no admin view.
+    val visiblePast = forMusicians().past
     return when {
-        past.isNotEmpty() -> PastJamsUiModel.Jams(
+        visiblePast.isNotEmpty() -> PastJamsUiModel.Jams(
             title = title,
-            rows = past.sortedByDescending { it.date }.map { it.toRow(onOpenJam) },
+            rows = visiblePast.sortedByDescending { it.date }.map { it.toRow(onOpenJam) },
             staleness = staleness,
         )
 
@@ -171,7 +173,7 @@ private fun Setlist.toSummary(): PastJamSummary = when (this) {
         )
     }
 
-    // A past draft (P1): the jam happened, so it is listed with its line.
+    // A past created jam (P1, D-26): the jam happened, so it is listed with its line.
     Setlist.Withheld -> PastJamSummary.NotShown(PastJamsCopy.SETLIST_NOT_PUBLISHED)
 
     // The problem is for logs and the admin, not for musicians.

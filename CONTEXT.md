@@ -64,11 +64,16 @@ The musical key a song is played in on a given night. Set by the admin per JamSo
 from an external API. The most-sought datum after open Slots.
 
 ### Published
-The state in which a Jam's Setlist is visible to musicians. Before publishing, the Setlist is a
-Draft and musicians see the date and venue but not the songs.
+The state in which a Jam's Setlist is visible to musicians (`PUBLICADA` in the Sheet). Before it, the
+Jam is a Draft or Created.
 
 ### Draft
-The state in which the admin is still building the Setlist. Only the admin can see the songs.
+The state (`BORRADOR`, D-26) in which the Jam does not exist for musicians: no date, no list. Only the
+admin sees it. The app creates every new Jam as a Draft (D-25).
+
+### Created
+The state (`CREADA`, D-26) in which musicians see the date, time and venue of the Jam and that the
+Setlist is being assembled, but not the songs. The admin sees and edits the songs.
 
 ### Venue
 Where a Jam happens. Currently La Macanuda, Moreno 223, Bahía Blanca, but it can change, so it is
@@ -101,7 +106,7 @@ nothing; loading it into the setlist is a separate, confirmed step through the a
 
 ### Jam en espera
 A future jam that exists in the Sheet while an earlier jam is still the upcoming one. It is not shown as the
-next jam until the earlier one passes. The app creates a jam only as a draft (`BORRADOR`, D-25) and says
+next jam until the earlier one passes. The app creates a jam only as a draft (`BORRADOR`, D-25, hidden from musicians until it is created or published, D-26) and says
 when the new jam will be "en espera".
 
 ### Action Contract
@@ -133,4 +138,4 @@ Avoid. It suggests bidirectional reconciliation, which the project deliberately 
 entity has a single authority and one direction of travel (D-04).
 
 ### Status
-Too vague alone. Say `Jam status` (DRAFT or PUBLISHED) or `Slot state` (open or filled).
+Too vague alone. Say `Jam status` (DRAFT, CREATED or PUBLISHED) or `Slot state` (open or filled).

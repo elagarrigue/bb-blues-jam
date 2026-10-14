@@ -342,8 +342,20 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
   `admin-add-song-to-setlist`: the guarded POST action `readJams` (passphrase in the body, never a
   URL) adds the songs of current and future `BORRADOR` jams, and with a passphrase stored the jams
   refresh **is** that read (`apps-script-api.md`). Consequence of the rule (user approval A1): a
-  past jam left in `BORRADOR` shows no setlist until the admin marks it `PUBLICADA`; `readJams`
-  does not release it either.
+  past jam left in `CREADA` shows no setlist until the admin marks it `PUBLICADA`; `readJams`
+  does not release it either. **Amended by `jam-status-created` (D-26):** the anonymous GET now omits
+  a `BORRADOR` row entirely (and a typo or empty `estado`), the mapper drops it, and the musician
+  screens project it away (`forMusicians()`).
+- **Old builds and the script redeploy ordering (`jam-status-created`).** The script changes (Code,
+  Jams, Post) go out in **one** redeploy together with `admin-set-jam-status` (owed, see
+  `docs/migrations/jam-status-script-update.md`). Until then new builds hide a `BORRADOR` jam on the
+  client, but the old script still serves a `BORRADOR` row's date and venue (never its songs) to every
+  build, which is today's behaviour. Nobody may type `CREADA` in the Sheet before the redeploy: the old
+  script treats it as unknown (the jam is not editable, an old app hides it). After the redeploy, an old
+  build sees a `CREADA` jam as `BORRADOR` (the script presents it so without `jamStatuses=3`), which it
+  draws as the draft card; an old admin build still sees its songs and can publish it. A `BORRADOR`
+  row is omitted for every version; the real Sheet's past rows may be `BORRADOR` and would vanish from
+  Anteriores until they are changed to `CREADA` or `PUBLICADA`.
 
 ## Later / Not MVP
 

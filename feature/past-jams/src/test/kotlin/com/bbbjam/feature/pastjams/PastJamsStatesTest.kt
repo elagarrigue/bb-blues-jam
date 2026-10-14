@@ -21,6 +21,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -145,8 +146,8 @@ class PastJamsStatesTest {
     }
 
     @Test
-    fun `a past draft, an unreadable list and an empty list each get a row with one line, never 0 temas`() {
-        val draft = onlyRow(jam("2026-08-29", Setlist.Withheld, JamStatus.DRAFT, venue = "La Macanuda"))
+    fun `a past created jam, an unreadable list and an empty list each get a row with one line, never 0 temas`() {
+        val draft = onlyRow(jam("2026-08-29", Setlist.Withheld, JamStatus.CREATED, venue = "La Macanuda"))
         assertEquals(
             PastJamRowUiModel(
                 LocalDate.of(2026, 8, 29),
@@ -235,7 +236,7 @@ class PastJamsStatesTest {
             jam("2026-07-25"),
             jam("2026-06-27", Setlist.Unavailable(SetlistProblem.MISSING_TAB)),
             jam("2026-05-30", Setlist.Available(emptyList())),
-            jam("2026-04-25", Setlist.Withheld, JamStatus.DRAFT),
+            jam("2026-04-25", Setlist.Withheld, JamStatus.CREATED),
         )
         val rows = (
             JamsSnapshot(null, past, fetched).toUiModel(now, onOpenJam = {
@@ -249,8 +250,19 @@ class PastJamsStatesTest {
     }
 
     @Test
-    fun `a past draft whose songs reached the app is still the not-published line and does not open`() {
-        val row = onlyRow(jam("2026-08-29", Setlist.Available(songs(3)), JamStatus.DRAFT))
+    fun `a past BORRADOR jam is in neither the rows nor the empty state, whatever its songs`() {
+        val hidden = jam("2026-08-29", Setlist.Available(songs(3)), JamStatus.DRAFT)
+        val shown = jam("2026-07-25")
+
+        val rows = (model(listOf(hidden, shown)) as PastJamsUiModel.Jams).rows
+
+        assertEquals(1, rows.size)
+        assertTrue(model(listOf(hidden)) is PastJamsUiModel.Empty)
+    }
+
+    @Test
+    fun `a past created jam whose songs reached the app is still the not-published line and does not open`() {
+        val row = onlyRow(jam("2026-08-29", Setlist.Available(songs(3)), JamStatus.CREATED))
         assertEquals(PastJamSummary.NotShown("La lista de esta jam no se publicó."), row.summary)
         assertNull(row.openLabel)
     }

@@ -56,6 +56,7 @@ internal fun rememberNextJamRefreshes(
     calendar: JamCalendar,
     random: Random,
     isResumed: Boolean,
+    isAdmin: Boolean,
     snapshot: JamsSnapshot?,
     resubscribe: () -> Unit,
 ): NextJamRefreshes {
@@ -64,7 +65,7 @@ internal fun rememberNextJamRefreshes(
     var userRefreshes by remember { mutableIntStateOf(0) }
     var pulling by remember { mutableStateOf(false) }
     val latest by rememberUpdatedState(snapshot)
-    val liveJams = snapshot?.liveJams().orEmpty()
+    val liveJams = snapshot?.liveJams(isAdmin).orEmpty()
     LaunchedEffect(isResumed, liveJams) {
         if (!isResumed || liveJams.isEmpty()) return@LaunchedEffect
         runLiveRefresh(

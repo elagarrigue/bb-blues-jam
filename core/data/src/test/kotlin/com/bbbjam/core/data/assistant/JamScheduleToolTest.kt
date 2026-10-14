@@ -62,6 +62,15 @@ class JamScheduleToolTest {
     }
 
     @Test
+    fun `a created upcoming jam says CREADA`() {
+        val created = upcoming.copy(status = JamStatus.CREATED)
+        assertEquals(
+            "upcoming 2026-10-31 21:30 | La Macanuda | CREADA",
+            JamScheduleTool.render(JamsSnapshot(created, emptyList(), fresh), today).lines()[1],
+        )
+    }
+
+    @Test
     fun `the tool reads the repository and the calendar`() = runBlocking {
         val tool = JamScheduleTool(FakeJams(listOf(past), upcoming), fixedCalendar())
 

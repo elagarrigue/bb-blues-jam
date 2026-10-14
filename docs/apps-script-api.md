@@ -68,6 +68,7 @@ Error:
 | `missing_tab` | The route's tab does not exist (`Catalogo`, `Jams`) |
 | `missing_header` | A required header is missing, or the tab is empty |
 | `duplicate_header` | A mapped header appears twice (after trimming) |
+| `invalid_jam_statuses` | `jamStatuses` is present and not `3` (`jams` GET and `readJams`; D-26) |
 | `internal_error` | Any other exception; `message` is the exception message |
 
 `message` is English and for logs only. The app maps `code` to Spanish copy; it never shows
@@ -125,19 +126,38 @@ valid). It checks shape only, like the samples' test.
 
 ## `GET ?resource=jams`
 
-Every row of the `Jams` tab, in Sheet row order, each with its setlist read from the tab named by
-its date. Body: `{"schemaVersion":1,"jams":[ … ]}`. Rows whose four mapped cells are all empty are
-skipped. The script does not split jams into upcoming and past: that is `Jam.isHistorical(today)`
-in the app, with today from the caller.
+The `Jams` rows that musicians may see, in Sheet row order: only a row whose `estado`, trimmed, is
+exactly `CREADA` or `PUBLICADA` (D-26, **The jam status rule**), each with its setlist read from the
+tab named by its date when it is `PUBLICADA`. Body: `{"schemaVersion":1,"jams":[ … ]}`. Rows whose
+four mapped cells are all empty are skipped. The script does not split jams into upcoming and past:
+that is `Jam.isHistorical(today)` in the app, with today from the caller.
+
+### The jam status rule (`jam-status-created`, D-26)
+
+A jam has three states in the `estado` column: `BORRADOR` (the jam does not exist for musicians),
+`CREADA` (musicians see the date, time and venue) and `PUBLICADA` (they see the list too).
+
+- **The GET serves only `CREADA` and `PUBLICADA` rows.** `BORRADOR`, any typo (`Borrador`) and an empty
+  `estado` are **omitted entirely**, so not even the date or the venue goes out. Fail closed. The filter
+  is applied by the GET route only: `buildJams` is unfiltered, because the admin read, the writes and
+  the checks use it. Duplicate-date detection still runs on the full table.
+- **`jamStatuses`** (query parameter, `"jamStatuses": 3` in the `readJams` body) tells the script the
+  client knows the three states. The current app always sends `3`. **Without it** (an app that predates
+  `CREADA`) a `CREADA` row is presented as `BORRADOR`, which that build already draws as "la lista se
+  está armando". With any other value (`String(v) !== '3'`) the answer is the error
+  `invalid_jam_statuses`, checked before the Sheet is opened. The current client never sends it, so it
+  doubles as the **deploy proof** (`GET ?resource=jams&jamStatuses=9`, no passphrase, no write).
+- `docs/api-samples/*` stay the unfiltered `buildJams` output (they still show a `BORRADOR` row);
+  they are not a GET response of the new script.
 
 ### The draft rule
 
 **A setlist is served only for a jam whose `estado`, trimmed, is exactly `PUBLICADA`.** For any
-other value (`BORRADOR`, `Publicada`, a typo, empty) the jam is served with `setlist: null` and
-`setlistError: null`, and its tab is never even requested. This is the one value the script
-interprets: withholding a draft cannot be left to the client. Failing closed is deliberate, so a
-past jam left in `BORRADOR` shows no setlist until the admin marks it `PUBLICADA` (user approval
-A1). No query parameter changes this: `?resource=jams&passphrase=…` gives the same body as
+other value the jam is served with `setlist: null` and `setlistError: null` (`CREADA`) or, since
+D-26, not at all (`BORRADOR`, a typo, empty: see **The jam status rule**), and its tab is never even
+requested. This is the one value the script interprets: withholding a draft cannot be left to the
+client. Failing closed is deliberate, so a past jam left in `CREADA` shows no setlist until the admin
+marks it `PUBLICADA` (user approval A1). No query parameter changes this: `?resource=jams&passphrase=…` gives the same body as
 `?resource=jams`. The admin reads a draft through the POST action `readJams` (below), with the
 passphrase in the body; this route never changes for it.
 
@@ -316,13 +336,17 @@ delete a tab with the owner's authorization.
 
 Request: `{"action":"readJams","passphrase":"…"}`. A read action: no lock. The answer is
 `{"schemaVersion":1,"ok":true,"jams":[…]}`, the `jams` array in exactly the GET's shape (**Jam**,
-**Setlist row**), built by the same route function (`ROUTES.jams`, so the `Jams` tab errors are
-the GET's), with one difference: every jam whose `status` is exactly `BORRADOR` **and** whose
+**Setlist row**), built by the same unfiltered build as the GET (`readAllJams_`, so the `Jams` tab
+errors are the GET's), with two differences. It returns **every row**, `BORRADOR` included (D-26,
+`jam-status-created`), and every jam whose `status` is exactly `BORRADOR` or `CREADA` **and** whose
 `date` is `YYYY-MM-DD` and today or later in the spreadsheet's time zone (`todayIso_`, from
 `services.now`) also carries its tab's rows, with the GET's per-jam guards: `duplicate_date`,
 `missing_tab`, and `buildSetlist`'s `missing_header`/`duplicate_header`, all in `setlistError`.
-Every other jam is left exactly as the GET built it: a past draft, a `Publicada` typo or a draft
-whose `fecha` is not a date never has its tab opened. Only the admin's device receives draft songs.
+Every other jam is left exactly as the unfiltered build made it: a past draft or created jam, a
+`Publicada` typo or a draft whose `fecha` is not a date never has its tab opened. The `jamStatuses`
+rule applies last (`"jamStatuses": 3`; without it a `CREADA` jam is presented as `BORRADOR`, songs
+kept, for an old admin build; another value is `invalid_jam_statuses`). Only the admin's device
+receives draft songs.
 
 ### `addSong` (`admin-add-song-to-setlist`)
 
@@ -335,7 +359,7 @@ A write action, under the lock. Every check runs **before anything is written**,
 | 2 | `songId` is a string matching `^[a-z0-9]+(-[a-z0-9]+)*$` | `invalid_song` |
 | 3 | `key` is a string matching `^[A-G][#b]?m?$` | `invalid_key` |
 | 4 | the `Jams` tab has exactly one row with that `fecha` (dates normalized as the reads do) | `unknown_jam`, `duplicate_date` (and the `Jams` tab's own `missing_tab`/`missing_header`) |
-| 5 | that jam's `estado` is `BORRADOR` or `PUBLICADA`, its date is today or later, and no jam with a known `estado` falls between today and it (it is the upcoming jam) | `jam_not_editable` |
+| 5 | that jam's `estado` is `BORRADOR`, `CREADA` or `PUBLICADA`, its date is today or later, and no jam with a known `estado` falls between today and it (it is the upcoming jam) | `jam_not_editable` |
 | 6 | `songId` is on exactly one `Catalogo` row (trimmed `id`), with a non-blank `titulo` and `artista` | `unknown_song` (and `Catalogo`'s own `missing_tab`/`missing_header`) |
 | 7 | the jam's tab, when it exists, has every required header once | `missing_header`, `duplicate_header` |
 | 8 | `songId` is not already in the tab (user approval J1) | `song_already_in_setlist` |
@@ -564,6 +588,7 @@ POSTs `readJams` through `AdminWriter.send` and stores the answer in place of th
 with `JamsMapper.map(rows, includeDrafts = true)`: a draft's setlist and `setlistError` are mapped
 like a published jam's, and a draft with `missing_tab` is an empty available setlist (no song
 added yet). A separate draft read would be wiped by the next GET, which replaces the whole cache.
+Both reads send `jamStatuses=3` (`jam-status-created`): the GET as a query parameter, `readJams` as a body field. The anonymous mapping (`includeDrafts = false`) drops a valid `BORRADOR` row into `MappedJams.hiddenDrafts`, which is never stored and is logged only as `; hidden draft <date>`; the admin read stores drafts, and only `JamsSnapshot.forMusicians()` keeps them out of musician views.
 
 | Admin read answer | Refresh |
 |---|---|
@@ -707,9 +732,9 @@ shared deployment means this is local behavior and has not been live-verified ye
 
 ### `publishSetlist` and `checkPublish` (`admin-publish-setlist`)
 
-`publishSetlist` is a guarded, locked write with `{date}`. It rejects invalid, unknown, duplicate or non-upcoming jams before writing; a retry for an already `PUBLICADA` jam succeeds idempotently. A draft must have a valid Jams row and at least one setlist row. The server writes only that row's `estado` cell, flushes, and reads back `PUBLICADA` before returning `{ok:true, alreadyPublished:false}`; a retry returns `alreadyPublished:true` without writing. Missing tabs or no songs return `empty_setlist`. `checkPublish` exercises the same write/read-back against its temporary `_prueba_publicar` Jams tab and always removes that tab; it never changes a real jam. The action is in local source; deployment and live checks are deferred to the user's shared four-feature deployment.
+`publishSetlist` is a guarded, locked write with `{date}`. It rejects invalid, unknown, duplicate or non-upcoming jams before writing; a retry for an already `PUBLICADA` jam succeeds idempotently. Since `jam-status-created` (D-26) it publishes from `BORRADOR` **and** from `CREADA`; an `estado` it does not know is still `jam_not_editable`. A draft or created jam must have a valid Jams row and at least one setlist row. The server writes only that row's `estado` cell, flushes, and reads back `PUBLICADA` before returning `{ok:true, alreadyPublished:false}`; a retry returns `alreadyPublished:true` without writing. Missing tabs or no songs return `empty_setlist`. `checkPublish` exercises the same write/read-back against its temporary `_prueba_publicar` Jams tab and always removes that tab; it never changes a real jam. The action is in local source; deployment and live checks are deferred to the user's shared four-feature deployment.
 
-The public `SetlistRepository.publishSetlist(jamDate)` mutation returns `PublishOutcome.Published(alreadyPublished)` only when the server confirms its result. Room changes only after confirmation and only for a cached `DRAFT` jam with an `AVAILABLE` setlist. It queues with other writes and exposes `SetlistPublish` Sending/Failed state for the admin status block; failure logs one safe `BluesJam` line and never optimistically marks the jam published.
+The public `SetlistRepository.publishSetlist(jamDate)` mutation returns `PublishOutcome.Published(alreadyPublished)` only when the server confirms its result. Room changes only after confirmation and only for a cached `DRAFT` or `CREATED` jam with an `AVAILABLE` setlist. It queues with other writes and exposes `SetlistPublish` Sending/Failed state for the admin status block; failure logs one safe `BluesJam` line and never optimistically marks the jam published.
 
 ### `createJam` and `checkCreateJam` (`assistant-create-jam`, D-25)
 

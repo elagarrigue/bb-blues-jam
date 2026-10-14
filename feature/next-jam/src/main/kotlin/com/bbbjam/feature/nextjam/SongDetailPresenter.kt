@@ -102,9 +102,11 @@ class SongDetailPresenter(
 
 /**
  * Decision 2 of `song-detail-screen`: the jam is looked up by date among the upcoming and the past
- * jams, then the song by id in an available setlist ([findSong]). Anything else (no such jam or
- * song, a draft jam for a musician, a withheld or unavailable setlist, an empty snapshot after a
- * failed cache read) is not found. With [admin], a song of the upcoming jam is looked up in
+ * jams, then the song by id in an available setlist ([findSong]). A musician looks it up in the
+ * [forMusicians] projection (D-26, S1), so the song of a PUBLISHED jam behind a BORRADOR upcoming
+ * jam is found, as Próxima jam shows it, and a BORRADOR jam's song, past or future, is not. Anything
+ * else (no such jam or song, a draft jam for a musician, a withheld or unavailable setlist, an empty
+ * snapshot after a failed cache read) is not found. With [admin], a song of the upcoming jam is looked up in
  * `jam.setlist` (drafts included) and carries the admin's controls; any other song (a past jam's)
  * is the musician's read-only detail.
  */
@@ -120,7 +122,8 @@ internal fun JamsSnapshot.toSongDetail(
         val jam = upcoming?.takeIf { it.date == jamDate }
         (jam?.setlist as? Setlist.Available)?.songs?.findSong(songId, position)
     }
-    val jam = (listOfNotNull(upcoming) + past).firstOrNull { it.date == jamDate }
+    val visible = forMusicians()
+    val jam = (listOfNotNull(visible.upcoming) + visible.past).firstOrNull { it.date == jamDate }
     // A draft's songs are never shown to a musician, even when they reached the app.
     val song = (jam?.setlistForMusicians() as? Setlist.Available)?.songs?.findSong(songId, position)
     return when {

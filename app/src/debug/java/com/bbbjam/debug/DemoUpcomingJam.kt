@@ -34,15 +34,15 @@ internal object DemoUpcomingJam {
     private const val START_TIME = "21:00"
 
     /**
-     * The demo jam dated [DAYS_AHEAD] days after [today]. With [draft] it is a `DRAFT` holding the
-     * same available songs (`unpublished-setlist-state`): the strongest case, because the songs are
-     * in the data and the musician screens must still hide them.
+     * The demo jam dated [DAYS_AHEAD] days after [today]. With a `DRAFT` or `CREATED` [status] it
+     * holds the same available songs (`unpublished-setlist-state`, `jam-status-created`): the
+     * strongest case, because the songs are in the data and the musician screens must still hide them.
      */
-    fun on(today: LocalDate, draft: Boolean = false): Jam = Jam(
+    fun on(today: LocalDate, status: JamStatus = JamStatus.PUBLISHED): Jam = Jam(
         date = today.plusDays(DAYS_AHEAD),
         startTime = LocalTime.parse(START_TIME),
         venue = VENUE,
-        status = if (draft) JamStatus.DRAFT else JamStatus.PUBLISHED,
+        status = status,
         setlist = Setlist.Available(SONGS.mapIndexed { index, song -> song.toJamSong(position = index + 1) }),
     )
 
@@ -50,8 +50,8 @@ internal object DemoUpcomingJam {
     val LIVE_START_AFTER: Duration = Duration.ofMinutes(10)
 
     /** The demo jam starting at [start] (Buenos Aires local date and time), for the live demo. */
-    fun startingAt(start: LocalDateTime, draft: Boolean = false): Jam =
-        on(start.toLocalDate(), draft).copy(date = start.toLocalDate(), startTime = start.toLocalTime())
+    fun startingAt(start: LocalDateTime, status: JamStatus = JamStatus.PUBLISHED): Jam =
+        on(start.toLocalDate(), status).copy(date = start.toLocalDate(), startTime = start.toLocalTime())
 
     private class DemoSong(
         val id: String,

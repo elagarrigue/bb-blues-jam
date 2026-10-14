@@ -91,7 +91,7 @@ class NextJamAdminTest {
     private fun NextJamUiModel.asJam() = this as NextJamUiModel.Jam
 
     @Test
-    fun `the admin sees a draft's songs with the badge, the note and Agregar tema, a musician sees the card`() {
+    fun `the admin sees a draft's songs with the badge, the note and Agregar tema, a musician sees no jam`() {
         val draft = snapshot(jam(Setlist.Available(listOf(redHouse, boogie))))
 
         val model = draft.toUiModel(today, admin = adminState()).asJam()
@@ -99,15 +99,14 @@ class NextJamAdminTest {
         assertEquals(listOf("Red House", "Boogie"), (model.setlist as SetlistUiModel.Songs).rows.map { it.title })
         val admin = checkNotNull(model.admin)
         assertEquals("Borrador", admin.status.badge)
-        assertEquals("Los músicos todavía no ven esta lista.", admin.status.note)
+        assertEquals("Los músicos todavía no ven esta jam.", admin.status.note)
         assertEquals(NextJamCopy.PUBLISH, (admin.status.publish as PublishUiModel.Idle).label)
         assertEquals("Agregar tema", admin.addSong?.label)
         assertEquals(emptyList<PendingRowUiModel>(), admin.pending)
         assertEquals(emptyList<AddFailureUiModel>(), admin.failures)
 
-        val musician = draft.toUiModel(today).asJam()
-        assertEquals(SetlistUiModel.Withheld::class, musician.setlist::class)
-        assertNull(musician.admin)
+        // D-26: a BORRADOR jam does not exist for a musician.
+        assertTrue(draft.toUiModel(today) is NextJamUiModel.NoUpcomingJam)
     }
 
     @Test
@@ -328,11 +327,9 @@ class NextJamAdminTest {
                 assertEquals(listOf(4L), setlist.dismissed)
                 assertEquals(listOf(jamDate), opened)
 
-                // Logging out turns the same cache back into the musician's draft card.
+                // Logging out hides the BORRADOR jam from the same cache altogether (D-26).
                 session.isAdmin.value = false
-                model = awaitItem().asJam()
-                assertNull(model.admin)
-                assertEquals(SetlistUiModel.Withheld::class, model.setlist::class)
+                assertTrue(awaitItem() is NextJamUiModel.NoUpcomingJam)
                 cancelAndIgnoreRemainingEvents()
             }
         }

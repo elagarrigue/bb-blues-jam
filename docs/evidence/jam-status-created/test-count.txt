@@ -1,0 +1,1 @@
+tests: 892 (815 testDebugUnitTest + 77 JVM modules), 0 failures; CI=true ./init.sh exit 0, konsist/detekt/ktlint wired (after validator REVISE repair)

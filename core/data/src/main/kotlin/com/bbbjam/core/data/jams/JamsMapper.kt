@@ -14,6 +14,8 @@ internal data class MappedJams(
     val jams: List<MappedJam>,
     val rejected: List<RejectedJam>,
     val issues: List<SetlistIssue>,
+    /** Dates of valid BORRADOR rows an anonymous read dropped (D-26); never stored. */
+    val hiddenDrafts: List<LocalDate> = emptyList(),
 )
 
 /**
@@ -37,7 +39,11 @@ internal object JamsMapper {
     private val DATE = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
     private val TIME = Regex("([01][0-9]|2[0-3]):([0-5][0-9])")
     private const val MISSING_TAB = "missing_tab"
-    private val STATUSES = mapOf("BORRADOR" to JamStatus.DRAFT, "PUBLICADA" to JamStatus.PUBLISHED)
+    private val STATUSES = mapOf(
+        "BORRADOR" to JamStatus.DRAFT,
+        "CREADA" to JamStatus.CREATED,
+        "PUBLICADA" to JamStatus.PUBLISHED,
+    )
 
     /** `setlistError` codes of `docs/apps-script-api.md`; any other code reads as [SetlistProblem.UNKNOWN]. */
     private val PROBLEMS = mapOf(
@@ -47,10 +53,12 @@ internal object JamsMapper {
     )
 
     /**
-     * With [includeDrafts] (the admin read, `admin-add-song-to-setlist`), a draft's setlist and
-     * error are mapped like a published jam's, except that a draft with `missing_tab` has an empty
-     * available setlist: the admin has not added a song yet. A published jam maps identically
-     * either way. Musicians' reads always use the default, `false`.
+     * With [includeDrafts] (the admin read, `admin-add-song-to-setlist`), the setlist and error of a
+     * draft or created jam are mapped like a published jam's, except that one with `missing_tab` has
+     * an empty available setlist: the admin has not added a song yet. A published jam maps
+     * identically either way. Without it (every anonymous read, the default), a valid BORRADOR row
+     * does not exist for musicians (D-26): it is left out and listed in [MappedJams.hiddenDrafts],
+     * and a created jam is always withheld.
      */
     fun map(rows: List<JamDto>, includeDrafts: Boolean = false): MappedJams {
         val checked = rows.mapIndexed { position, row -> checkRow(position + 1, row) }
@@ -58,10 +66,13 @@ internal object JamsMapper {
         val jams = mutableListOf<MappedJam>()
         val rejected = mutableListOf<RejectedJam>()
         val issues = mutableListOf<SetlistIssue>()
+        val hiddenDrafts = mutableListOf<LocalDate>()
         checked.forEach { row ->
             val shared = row.date != null && dateCounts.getValue(row.date) > 1
             val rowIssues = if (shared) row.issues + JamIssue.DuplicateDate else row.issues
-            if (rowIssues.isEmpty()) {
+            if (rowIssues.isEmpty() && row.status == JamStatus.DRAFT && !includeDrafts) {
+                hiddenDrafts += checkNotNull(row.date)
+            } else if (rowIssues.isEmpty()) {
                 val setlist = mapSetlist(row, includeDrafts)
                 jams += MappedJam(
                     Jam(
@@ -78,7 +89,7 @@ internal object JamsMapper {
                 rejected += RejectedJam(row.index, row.rawDate, rowIssues)
             }
         }
-        return MappedJams(jams, rejected, issues)
+        return MappedJams(jams, rejected, issues, hiddenDrafts)
     }
 
     /** One `Jams` row after the per-row checks; a field is null exactly when it recorded an issue. */
@@ -121,7 +132,7 @@ internal object JamsMapper {
     }
 
     /**
-     * Without [includeDrafts] a draft is always [Setlist.Withheld]; a setlist or error sent with it
+     * Without [includeDrafts] a created jam is always [Setlist.Withheld]; a setlist or error sent with it
      * breaks the contract and is ignored (fail closed). A published jam's `setlistError` makes it
      * [Setlist.Unavailable]; with neither a setlist nor an error it is unavailable for an unknown
      * reason.
@@ -130,7 +141,7 @@ internal object JamsMapper {
         val date = checkNotNull(row.date)
         val error = row.dto.setlistError
         val rows = row.dto.setlist
-        val draft = row.status == JamStatus.DRAFT
+        val draft = row.status != JamStatus.PUBLISHED
         return when {
             draft && !includeDrafts -> MappedSetlist(
                 Setlist.Withheld,

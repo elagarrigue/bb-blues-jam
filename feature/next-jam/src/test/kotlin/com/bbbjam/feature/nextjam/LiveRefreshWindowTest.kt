@@ -86,6 +86,16 @@ class LiveRefreshWindowTest {
     }
 
     @Test
+    fun `a musician's candidate jams skip a BORRADOR upcoming jam, the admin's keep it`() {
+        val draft = jam.copy(date = LocalDate.of(2026, 11, 7), status = JamStatus.DRAFT)
+        val later = jam.copy(date = LocalDate.of(2026, 11, 28))
+        val snapshot = JamsSnapshot(draft, emptyList(), Freshness(null, null, isRefreshing = false), listOf(later))
+
+        assertEquals(listOf(LiveJam(later.date, later.startTime)), snapshot.liveJams(admin = false))
+        assertEquals(listOf(LiveJam(draft.date, draft.startTime)), snapshot.liveJams(admin = true))
+    }
+
+    @Test
     fun `the constants are the approved ones and the jitter stays under one interval`() {
         assertEquals(Duration.ofMinutes(30), LiveRefresh.OPENS_BEFORE)
         assertEquals(Duration.ofHours(4), LiveRefresh.CLOSES_AFTER)

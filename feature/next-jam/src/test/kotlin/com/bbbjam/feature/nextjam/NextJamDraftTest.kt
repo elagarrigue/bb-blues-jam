@@ -89,18 +89,18 @@ class NextJamDraftTest {
 
     @Test
     fun `scenario 1, a withheld draft is the header and the draft card, no rows and no bar`() = runTest {
-        assertEquals(withheldDraft, snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)).toUiModel(today))
+        assertEquals(withheldDraft, snapshot(jam(Setlist.Withheld, JamStatus.CREATED)).toUiModel(today))
 
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)))
+            repository.snapshots.emit(snapshot(jam(Setlist.Withheld, JamStatus.CREATED)))
             assertEquals(withheldDraft, awaitItem())
         }
     }
 
     @Test
     fun `scenario 2, a draft with available songs exposes none of them`() = runTest {
-        val draft = jam(Setlist.Available(listOf(secretSong, otherSong)), JamStatus.DRAFT)
+        val draft = jam(Setlist.Available(listOf(secretSong, otherSong)), JamStatus.CREATED)
         val model = snapshot(draft).toUiModel(today)
         assertEquals(withheldDraft, model)
         model.assertNoSecret()
@@ -133,7 +133,7 @@ class NextJamDraftTest {
             )
 
             // The same jam turns into a draft: the card, nothing else.
-            val draftJam = jam(Setlist.Available(listOf(secretSong, otherSong)), JamStatus.DRAFT)
+            val draftJam = jam(Setlist.Available(listOf(secretSong, otherSong)), JamStatus.CREATED)
             repository.snapshots.emit(snapshot(draftJam))
             val draft = awaitItem()
             assertEquals(withheldDraft, draft)
@@ -164,7 +164,7 @@ class NextJamDraftTest {
 
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             assertEquals(loading, awaitItem())
-            repository.snapshots.emit(snapshot(jam(Setlist.Withheld, JamStatus.DRAFT)))
+            repository.snapshots.emit(snapshot(jam(Setlist.Withheld, JamStatus.CREATED)))
             assertEquals(withheldDraft, awaitItem())
             repository.snapshots.emit(
                 snapshot(jam(Setlist.Unavailable(SetlistProblem.MISSING_TAB), JamStatus.PUBLISHED)),

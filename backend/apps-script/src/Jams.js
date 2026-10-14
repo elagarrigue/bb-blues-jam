@@ -2,9 +2,10 @@
  * The Jams tab and the published jams' setlist tabs as the jams response (docs/apps-script-api.md).
  *
  * The script transports and the Kotlin mapper interprets, as for the catalog. The one value read
- * here is `estado`: a setlist is served only when it is exactly PUBLICADA after trimming. Any
- * other status, a typo included, withholds the setlist and its tab is never requested, so a draft
- * cannot reach an anonymous reader.
+ * here is `estado` (D-26): a setlist is served only when it is exactly PUBLICADA after trimming,
+ * and the anonymous GET serves a row only when it is CREADA or PUBLICADA (`musicianJams_`, applied
+ * by the GET route, not by buildJams). Any other status, a typo included, withholds the row and
+ * its tab is never requested, so a draft cannot reach an anonymous reader.
  *
  * A tab is requested only by a date that is YYYY-MM-DD, so no `fecha` can name another tab.
  *
@@ -16,6 +17,50 @@ var JAMS_TAB = 'Jams';
 
 /** The only status that releases a setlist. */
 var PUBLISHED_STATUS = 'PUBLICADA';
+
+/** A jam only the admin sees (D-26): the anonymous GET omits its row entirely. */
+var DRAFT_STATUS = 'BORRADOR';
+
+/** A jam whose date, time and venue musicians see but not its list (D-26). */
+var CREATED_STATUS = 'CREADA';
+
+/** The only statuses the anonymous GET serves (D-26). Anything else, a typo included, is omitted. */
+var MUSICIAN_STATUSES_ = [CREATED_STATUS, PUBLISHED_STATUS];
+
+/** The `jamStatuses` value a client sends to say it knows the three states. */
+var JAM_STATUSES_VERSION_ = '3';
+
+/** The jams a musician may see: exactly CREADA or PUBLICADA after trimming. Pure; returns a new array. */
+function musicianJams_(jams) {
+  return jams.filter(function (jam) {
+    return MUSICIAN_STATUSES_.indexOf(jam.status) !== -1;
+  });
+}
+
+/**
+ * Throws `invalid_jam_statuses` when `jamStatuses` is present and is not exactly 3. Called before a
+ * Sheet is opened; the current client never sends another value, so the error also proves the deploy.
+ */
+function requireJamStatuses_(jamStatuses) {
+  if (jamStatuses !== undefined && String(jamStatuses) !== JAM_STATUSES_VERSION_) {
+    throw new ContractError('invalid_jam_statuses', 'jamStatuses must be 3 when present');
+  }
+}
+
+/**
+ * Presents the jams to a client. Without `jamStatuses` (a build that predates CREADA) a CREADA jam
+ * is presented as BORRADOR, which that build already draws as "la lista se está armando". Returns
+ * new objects for the changed jams.
+ */
+function presentStatuses_(jams, jamStatuses) {
+  requireJamStatuses_(jamStatuses);
+  if (jamStatuses !== undefined) {
+    return jams;
+  }
+  return jams.map(function (jam) {
+    return jam.status === CREATED_STATUS ? Object.assign({}, jam, { status: DRAFT_STATUS }) : jam;
+  });
+}
 
 /** Jams header to field, in response order. */
 var JAMS_FIELDS = [
@@ -199,5 +244,5 @@ function setlistError_(code, message) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { JAMS_TAB, PUBLISHED_STATUS, JAMS_FIELDS, SETLIST_FIELDS, NOT_IN_LINEUP_, LEGACY_SLOT_KEYS_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildSetlist, buildJams };
+  module.exports = { JAMS_TAB, PUBLISHED_STATUS, DRAFT_STATUS, CREATED_STATUS, MUSICIAN_STATUSES_, musicianJams_, requireJamStatuses_, presentStatuses_, JAMS_FIELDS, SETLIST_FIELDS, NOT_IN_LINEUP_, LEGACY_SLOT_KEYS_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildSetlist, buildJams };
 }

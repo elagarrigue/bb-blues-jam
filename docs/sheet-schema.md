@@ -87,7 +87,7 @@ MusicBrainz, Deezer and Last.fm enrichment (`mbid`, `artistArea`, `deezerTrackId
 | `fecha` | `date` | yes | `YYYY-MM-DD`, unique; also the name of the jam's tab |
 | `hora` | `startTime` | yes | `HH:MM`, 24 hours |
 | `lugar` | `venue` | yes | Free text |
-| `estado` | `status` | yes | `BORRADOR` → `DRAFT`, `PUBLICADA` → `PUBLISHED` |
+| `estado` | `status` | yes | `BORRADOR` → `DRAFT` (hidden from musicians), `CREADA` → `CREATED` (date only), `PUBLICADA` → `PUBLISHED` (D-26) |
 | — | `setlist` | — | Derived: the rows of the tab named `fecha`, sorted by `posicion` (see **Mapper rules** for withheld and unavailable setlists) |
 
 A jam is historical when `fecha` is before today; on its own date a jam is not historical, and there
@@ -120,7 +120,7 @@ as plain text rather than a lookup formula, or the fallback breaks exactly when 
 edits an existing row; `removeSong` deletes one row and rewrites later `posicion` cells (below).
 Only the
 upcoming jam's tab is written (its `Jams` row is the earliest with a known `estado` that is today or
-later, `BORRADOR` or `PUBLICADA`); a past jam's tab never (D-04). When the tab does not exist yet it
+later, `BORRADOR`, `CREADA` or `PUBLICADA`); a past jam's tab never (D-04). When the tab does not exist yet it
 is created with the header row above, in that order. The new row goes after the last row, at
 `posicion` = 1 + the largest whole-number `posicion` (invalid cells ignored), into the mapped
 columns only (found by header, so an extra column the admin added is left alone), with every
@@ -304,8 +304,8 @@ the mapper or the type; "enrichment" fields are never in the Sheet.
 | `Jam.date: LocalDate` | `Jams.fecha`, also the tab name |
 | `Jam.startTime: LocalTime` | `Jams.hora` |
 | `Jam.venue` | `Jams.lugar` |
-| `Jam.status: JamStatus` | `Jams.estado`: `BORRADOR`, `PUBLICADA` → `DRAFT`, `PUBLISHED` |
-| `Jam.setlist: Setlist` | Derived. `Available`: the valid rows of the tab named `fecha`, sorted by `posicion`, with the count of dropped rows; `Withheld`: a `BORRADOR` jam; `Unavailable(problem)`: a `PUBLICADA` jam whose tab is missing or invalid, or whose rows are all invalid |
+| `Jam.status: JamStatus` | `Jams.estado`: `BORRADOR`, `CREADA`, `PUBLICADA` → `DRAFT`, `CREATED`, `PUBLISHED` |
+| `Jam.setlist: Setlist` | Derived. `Available`: the valid rows of the tab named `fecha`, sorted by `posicion`, with the count of dropped rows; `Withheld`: a `BORRADOR` or `CREADA` jam; `Unavailable(problem)`: a `PUBLICADA` jam whose tab is missing or invalid, or whose rows are all invalid |
 | `Jam.isHistorical(today)` | Derived from `fecha`; today comes from the caller |
 | `JamSong.position` | `posicion` |
 | `JamSong.songId: SongId` | `id_tema` |
@@ -378,7 +378,7 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
 | `fecha` unique | a `fecha` that parses and is on more than one row rejects every such row, valid or not (P2) | every such row is rejected |
 | `hora` | required; `HH:MM`, 24 hours, zero-padded (`9:00`, `24:00` are not) | the jam is rejected (P8) |
 | `lugar` | required | the jam is rejected (P8) |
-| `estado` | exactly `BORRADOR` or `PUBLICADA` (`Publicada` is not) | the jam is rejected |
+| `estado` | exactly `BORRADOR`, `CREADA` or `PUBLICADA` (`Publicada` is not) | the jam is rejected |
 | `posicion` | required; digits only, at least 1 (`2.5`, `0`, `-1` are not) | the row is dropped |
 | `posicion` unique | a `posicion` that parses and is on more than one row drops every such row, valid or not | every such row is dropped |
 | `id_tema` | required; the **Identifiers** alphabet | the row is dropped |
@@ -394,32 +394,40 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
   can say it is incomplete. A setlist whose rows are all invalid is **unavailable**
   (`INVALID_ROWS`), never an empty list. The Sheet itself should still number 1..n; `removeSong`
   keeps it so.
-- **The setlist state.** A `BORRADOR` jam is always **withheld**; a setlist or error that arrives
-  with one breaks the contract, is ignored (fail closed) and is reported. A `PUBLICADA` jam with a
+- **The setlist state.** An anonymous read (`includeDrafts = false`) drops a valid `BORRADOR` row
+  (D-26; its date goes to `MappedJams.hiddenDrafts` and is never stored), and a `CREADA` jam is always
+  **withheld**; a setlist or error that arrives with one breaks the contract, is ignored (fail closed)
+  and is reported. The admin read keeps both (`includeDrafts = true`), and only
+  `JamsSnapshot.forMusicians()` keeps a draft out of musician views. A `PUBLICADA` jam with a
   `setlistError` is **unavailable** (P3): `missing_tab` → `MISSING_TAB`, `missing_header` and
   `duplicate_header` → `INVALID_TAB` (so duplicate slot headers are settled by the endpoint; the
   mapper never sees them), any other code → `UNKNOWN`. A `PUBLICADA` jam with neither a setlist nor
   an error is unavailable (`UNKNOWN`). A published jam is never withheld. A published tab with
   headers and no rows is an empty available setlist.
 - **At most one upcoming jam** (P5). With today's date in Buenos Aires (P7), the earliest jam that
-  is not historical is the upcoming one; later future jams are held back, shown in neither list,
-  and reported in the refresh log. Past jams are listed newest first.
+  is not historical is the upcoming one; later future jams are held back (`JamsSnapshot.heldBack`),
+  shown in neither list, and reported in the refresh log. For a musician the upcoming jam is the
+  earliest future jam that is not `BORRADOR` (`forMusicians()`, S1); the admin still sees the draft. Past jams are listed newest first.
 - **Catalog resolution.** Every `id_tema` is resolved in the cached `Catalogo` when the jams are
   read (a Room view), so a later catalog fix shows without refetching the jams; when it is not
   there, the tab's `titulo` / `artista` copy is the fallback.
 - **Past slots.** An empty slot cell in a past jam means "not recorded" and is dropped from the
   lineup, so no past jam ever shows an open slot (P6).
-- **The endpoint's half.** Only a `PUBLICADA` jam's setlist is served: the jams endpoint reads a
-  jam tab only when the trimmed `estado` is exactly `PUBLICADA`; any other value, a typo or wrong
-  case included, gives `setlist: null` with no error and the tab is never opened. A tab is looked up
+- **The endpoint's half.** The anonymous jams endpoint serves a row only when the trimmed `estado` is
+  exactly `CREADA` or `PUBLICADA`; `BORRADOR`, a typo (`Borrador`) and an empty value are **omitted
+  entirely**, not even the date or the venue goes out (D-26). Only a `PUBLICADA` jam's setlist is
+  served: a jam tab is read only when the trimmed `estado` is exactly `PUBLICADA`; a `CREADA` row
+  gives `setlist: null` with no error and the tab is never opened. Without the `jamStatuses=3` query
+  parameter a `CREADA` row is presented as `BORRADOR` (an old build); another value is
+  `invalid_jam_statuses`. A tab is looked up
   only by a `fecha` that is `YYYY-MM-DD` (else `invalid_date`) and that appears on one row only
   (else `duplicate_date`); a `PUBLICADA` row with no tab arrives with `missing_tab`, a tab missing
   a slot header with `missing_header`; a tab with no `Jams` row is ignored. A per-jam error never
   fails the whole response. Enforced by the endpoint. The guarded POST `readJams`
-  (`admin-add-song-to-setlist`) additionally reads the tab of every jam whose `estado` is exactly
-  `BORRADOR` and whose `fecha` is today or later, with the same guards; only a device holding the
+  (`admin-add-song-to-setlist`) returns every row and additionally reads the tab of every jam whose
+  `estado` is exactly `BORRADOR` or `CREADA` and whose `fecha` is today or later, with the same guards; only a device holding the
   passphrase receives it, and the app maps it with `includeDrafts`, where a draft with no tab yet
-  is an empty setlist. Musician screens still withhold every draft (`setlistForMusicians()`).
+  is an empty setlist. Musician screens still withhold every draft and created jam's songs (`setlistForMusicians()`) and hide a draft (`forMusicians()`).
 - Every rejected row, dropped row, malformed `Otros` entry, ignored draft setlist, `setlistError`
   and held-back jam is reported in the refresh outcome and the startup log line
   (`jams refresh: …`), by index and date, never with a musician's name. Nothing is persisted, and no
@@ -429,7 +437,15 @@ decisions P1–P8 of 2 October 2026 are recorded in `docs/specs/jams-repository-
 
 ### Publishing a setlist
 
-`admin-publish-setlist` changes only `Jams.estado` from `BORRADOR` to `PUBLICADA`. Apps Script resolves one upcoming jam row, refuses a missing setlist tab or one with no valid song rows, writes the status cell as plain text, flushes, and confirms the displayed value. It creates no Jams row and does not write the jam's song tab or `Catalogo`. A repeated request for an already-published upcoming jam is idempotent and performs no write. Its self-check writes only to the temporary `_prueba_publicar` tab and deletes it in `finally`.
+`admin-publish-setlist` changes only `Jams.estado` from `BORRADOR` (or, since `jam-status-created`, `CREADA`) to `PUBLICADA`. Apps Script resolves one upcoming jam row, refuses a missing setlist tab or one with no valid song rows, writes the status cell as plain text, flushes, and confirms the displayed value. It creates no Jams row and does not write the jam's song tab or `Catalogo`. A repeated request for an already-published upcoming jam is idempotent and performs no write. Its self-check writes only to the temporary `_prueba_publicar` tab and deletes it in `finally`.
+
+## Existing rows after `jam-status-created` (D-26)
+
+After the script redeploy (`docs/migrations/jam-status-script-update.md`) every `BORRADOR` row, past or
+future, disappears for musicians, and a row with an empty or misspelled `estado` too. To keep the old
+"fecha + la lista se está armando" behaviour, change the `estado` to `CREADA`, **only after** the
+redeploy: an old script treats `CREADA` as an unknown status, so the jam would not be editable. A past jam
+that should be listed in Anteriores needs `CREADA` or `PUBLICADA`.
 
 ## Rows the app creates (`assistant-create-jam`, D-25)
 

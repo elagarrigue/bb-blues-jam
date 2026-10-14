@@ -44,11 +44,12 @@ class PastJamDetailPresenter(private val jams: JamsRepository) :
 /**
  * The state table of `docs/specs/past-jam-detail.md` (Technical Approach 2). The jam is looked up
  * by date among the past jams only, never the upcoming one, and its songs are read through
- * `setlistForMusicians()`, so a draft is never shown. `lineup` and `extraParticipants` are never read.
+ * `setlistForMusicians()`, so a draft is never shown. A past BORRADOR jam is not found (D-26).
+ * `lineup` and `extraParticipants` are never read.
  */
 internal fun JamsSnapshot.toPastJamDetail(jamDate: LocalDate, onBack: () -> Unit = {}): PastJamDetailUiModel {
     val back = backUiModel(onBack)
-    val jam = past.firstOrNull { it.date == jamDate }
+    val jam = forMusicians().past.firstOrNull { it.date == jamDate }
         ?: return PastJamDetailUiModel.NotFound(
             EmptyStateUiModel(PastJamsCopy.NOT_FOUND_TITLE, PastJamsCopy.NOT_FOUND_MESSAGE),
             back,

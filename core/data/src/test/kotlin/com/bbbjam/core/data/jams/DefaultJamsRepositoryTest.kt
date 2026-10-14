@@ -164,21 +164,22 @@ class DefaultJamsRepositoryTest {
 
         val outcome = repository.refresh() as JamsRefreshOutcome.Updated
 
-        assertEquals(5, outcome.jamCount)
+        // D-26: the BORRADOR row (2026-09-26) is hidden from an anonymous read, so it is not stored.
+        assertEquals(4, outcome.jamCount)
+        assertEquals(listOf(LocalDate.of(2026, 9, 26)), outcome.hiddenDrafts)
         assertEquals(listOf(3, 6, 7, 8), outcome.rejected.map { it.index })
         assertEquals(2, outcome.issues.size)
         assertEquals(emptyList<LocalDate>(), outcome.heldBack)
         val snapshot = repository.observeJams().first()
         assertNull(snapshot.upcoming)
         assertEquals(
-            listOf("2026-09-26", "2026-08-29", "2026-05-30", "2026-04-25", "2026-02-28"),
+            listOf("2026-08-29", "2026-05-30", "2026-04-25", "2026-02-28"),
             snapshot.past.map { it.date.toString() },
         )
-        assertEquals(Setlist.Withheld, snapshot.past[0].setlist)
-        assertEquals(Setlist.Unavailable(SetlistProblem.MISSING_TAB), snapshot.past[2].setlist)
-        assertEquals(Setlist.Unavailable(SetlistProblem.INVALID_TAB), snapshot.past[3].setlist)
-        assertTrue(snapshot.past[1].setlist is Setlist.Available)
-        assertTrue(snapshot.past[4].setlist is Setlist.Available)
+        assertEquals(Setlist.Unavailable(SetlistProblem.MISSING_TAB), snapshot.past[1].setlist)
+        assertEquals(Setlist.Unavailable(SetlistProblem.INVALID_TAB), snapshot.past[2].setlist)
+        assertTrue(snapshot.past[0].setlist is Setlist.Available)
+        assertTrue(snapshot.past[3].setlist is Setlist.Available)
     }
 
     @Test
@@ -192,7 +193,7 @@ class DefaultJamsRepositoryTest {
 
         val songs = past.flatMap { (it.setlist as? Setlist.Available)?.songs.orEmpty() }
         assertTrue(songs.none { it.lineup.openSlots.isNotEmpty() })
-        val august = (past[1].setlist as Setlist.Available).songs
+        val august = (past[0].setlist as Setlist.Available).songs
         assertEquals(
             listOf("Ana", "Luis", "Marta", "Diego", "Sofía"),
             august[0].lineup.slots.map { it.musicianName },
@@ -210,8 +211,11 @@ class DefaultJamsRepositoryTest {
 
         val outcome = repository.refresh() as JamsRefreshOutcome.Updated
 
-        assertEquals(listOf(LocalDate.of(2026, 9, 26)), outcome.heldBack)
+        // The later jam is a BORRADOR row, hidden from an anonymous read (D-26): nothing is held back.
+        assertEquals(emptyList<LocalDate>(), outcome.heldBack)
+        assertEquals(listOf(LocalDate.of(2026, 9, 26)), outcome.hiddenDrafts)
         val snapshot = repository.observeJams().first()
+        assertEquals(emptyList<Jam>(), snapshot.heldBack)
         val upcoming = checkNotNull(snapshot.upcoming)
         assertEquals(LocalDate.of(2026, 8, 29), upcoming.date)
         // The upcoming jam keeps its open slots: that is where a musician can play.
@@ -304,7 +308,7 @@ class DefaultJamsRepositoryTest {
             val repository = repository()
             repository.refresh()
 
-            val august = repository.observeJams().first().past[1].songs()
+            val august = repository.observeJams().first().past[0].songs()
             assertEquals(
                 listOf("The Thrill Is Gone", "Crossroads (catálogo)", "Got My Mojo Working"),
                 august.map {
@@ -314,7 +318,7 @@ class DefaultJamsRepositoryTest {
             assertEquals(Key("A"), august[1].key)
 
             catalogDao.replaceCatalog(listOf(catalogSong("the-thrill-is-gone", "Thrill (catálogo)")), catalogState())
-            val after = repository.observeJams().first().past[1].songs()
+            val after = repository.observeJams().first().past[0].songs()
             assertEquals(listOf("Thrill (catálogo)", "Crossroads", "Got My Mojo Working"), after.map { it.title })
             assertEquals(Key("Bm"), after[0].key)
             assertEquals(1, transport.calls)
@@ -506,6 +510,67 @@ class DefaultJamsRepositoryTest {
     }
 
     @Test
+    fun `the admin read sends jamStatuses 3 and the anonymous GET sends it as a query parameter`() = runTest {
+        val repository = repository()
+        repository.refresh()
+        assertEquals(listOf(mapOf("jamStatuses" to "3")), transport.queries)
+
+        adminStore().save(TEST_VALUE)
+        post.answer = adminBody(jamJson("2026-07-25", "BORRADOR", "[${rowJson(1, "crossroads")}]"))
+        repository.refresh()
+
+        assertTrue(post.bodies.single().contains("\"jamStatuses\":3"))
+        assertEquals(1, transport.calls)
+    }
+
+    @Test
+    fun `an admin read keeps a draft and a created jam, and heldBack holds the later future jams in order`() = runTest {
+        val repository = repository()
+        adminStore().save(TEST_VALUE)
+        post.answer = adminBody(
+            jamJson("2026-11-28", "CREADA", "[${rowJson(1, "crossroads")}]"),
+            jamJson("2026-12-19", "PUBLICADA", "[${rowJson(1, "crossroads")}]"),
+            jamJson("2026-07-25", "PUBLICADA", "[${rowJson(1, "crossroads")}]"),
+            jamJson("2026-10-31", "BORRADOR", "[${rowJson(1, "crossroads")}]"),
+        )
+        clock.instant = OCTOBER_2
+
+        val outcome = repository.refresh() as JamsRefreshOutcome.Updated
+
+        assertEquals(emptyList<LocalDate>(), outcome.hiddenDrafts)
+        val raw = repository.observeJams().first()
+        assertEquals(LocalDate.of(2026, 10, 31), raw.upcoming?.date)
+        assertEquals(listOf("2026-11-28", "2026-12-19"), raw.heldBack.map { it.date.toString() })
+        assertEquals(JamStatus.CREATED, raw.heldBack[0].status)
+        // The musician projection falls through the draft to the created jam (S1).
+        val musicians = raw.forMusicians()
+        assertEquals(LocalDate.of(2026, 11, 28), musicians.upcoming?.date)
+        assertEquals(listOf("2026-12-19"), musicians.heldBack.map { it.date.toString() })
+        assertEquals(Setlist.Withheld, musicians.upcoming?.setlistForMusicians())
+    }
+
+    @Test
+    fun `an anonymous read hides BORRADOR rows, maps CREADA to a withheld jam, and logs only dates`() = runTest {
+        transport.result = TransportResult.Body(
+            "{\"schemaVersion\":1,\"jams\":[" + jamJson("2026-07-25", "CREADA", null) + "," +
+                jamJson("2026-08-29", "BORRADOR", null) + "]}",
+        )
+        val repository = repository()
+
+        val outcome = repository.refresh() as JamsRefreshOutcome.Updated
+
+        assertEquals(1, outcome.jamCount)
+        assertEquals(listOf(LocalDate.of(2026, 8, 29)), outcome.hiddenDrafts)
+        val line = outcome.toLogLine()
+        assertTrue(line, line.contains("1 hidden drafts; hidden draft 2026-08-29"))
+        assertFalse(line.contains("La Macanuda"))
+        val upcoming = checkNotNull(repository.observeJams().first().upcoming)
+        assertEquals(JamStatus.CREATED, upcoming.status)
+        assertEquals(Setlist.Withheld, upcoming.setlist)
+        assertEquals(emptyList<Jam>(), repository.observeJams().first().heldBack)
+    }
+
+    @Test
     fun `for the admin a draft with no tab yet is an empty available setlist`() = runTest {
         val repository = repository()
         adminStore().save(TEST_VALUE)
@@ -643,11 +708,13 @@ class DefaultJamsRepositoryTest {
     private class FakeTransport(var result: TransportResult) : AppsScriptTransport {
         var calls = 0
         val resources = mutableListOf<String>()
+        val queries = mutableListOf<Map<String, String>>()
         var gate: CompletableDeferred<Unit>? = null
 
-        override suspend fun get(resource: String): TransportResult {
+        override suspend fun get(resource: String, parameters: Map<String, String>): TransportResult {
             calls++
             resources += resource
+            queries += parameters
             gate?.await()
             return result
         }

@@ -38,7 +38,8 @@
  * Jams row, as BORRADOR, with no setlist tab (addSong still creates it with the first song). Every
  * refusal happens before any write; another future jam does not block it.
  *
- * Uses SCHEMA_VERSION and ROUTES from Code.js, PUBLISHED_STATUS, JAMS_TAB, SETLIST_FIELDS,
+ * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
+ * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
  * from Catalog.js, and ContractError, mapColumns and textCell from Normalize.js (shared global scope
  * in Apps Script). This file is the only one that opens the Config tab, and no response, message or
@@ -73,9 +74,6 @@ var PUBLISH_CHECK_TAB = '_prueba_publicar';
 
 /** The transient Jams tab checkCreateJam creates and deletes within one request. Never served. */
 var CREATE_JAM_CHECK_TAB = '_prueba_crear_jam';
-
-/** The status of a jam whose setlist only the admin reads. */
-var DRAFT_STATUS = 'BORRADOR';
 
 /** Request formats for addSong (docs/sheet-schema.md, Identifiers and Keys). */
 var POST_ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
@@ -291,15 +289,16 @@ function checkWriteAccess_(request, spreadsheet, services) {
 }
 
 /**
- * The admin read (`readJams`, a read action: no lock), answering `{ ok, jams }`: the GET's jams,
- * built by the same route function, plus the setlist of every jam whose status is exactly BORRADOR
+ * The admin read (`readJams`, a read action: no lock), answering `{ ok, jams }`: every Jams row,
+ * unfiltered (`readAllJams_`), plus the setlist of every jam whose status is exactly BORRADOR or CREADA
  * and whose date is today or later in the spreadsheet's zone, with the GET's per-jam guards
  * (`duplicate_date`, `missing_tab`, and buildSetlist's header errors). Every other jam is left
  * exactly as the GET built it: a past draft's songs are never served, and a draft whose date is not
  * YYYY-MM-DD is untouched.
  */
 function readJamsAsAdmin_(request, spreadsheet, services) {
-  const result = ROUTES.jams(spreadsheet);
+  requireJamStatuses_(request.jamStatuses);
+  const result = readAllJams_(spreadsheet);
   const today = todayIso_(spreadsheet, services);
   const dateCount = {};
   result.jams.forEach(function (jam) {
@@ -308,7 +307,7 @@ function readJamsAsAdmin_(request, spreadsheet, services) {
     }
   });
   result.jams.forEach(function (jam) {
-    if (jam.status !== DRAFT_STATUS || jam.date === null || !POST_ISO_DATE_.test(jam.date) || jam.date < today) {
+    if ((jam.status !== DRAFT_STATUS && jam.status !== CREATED_STATUS) || jam.date === null || !POST_ISO_DATE_.test(jam.date) || jam.date < today) {
       return;
     }
     if (dateCount[jam.date] > 1) {
@@ -330,7 +329,7 @@ function readJamsAsAdmin_(request, spreadsheet, services) {
       jam.setlistError = adminSetlistError_(err.code, err.message);
     }
   });
-  return { ok: true, jams: result.jams };
+  return { ok: true, jams: presentStatuses_(result.jams, request.jamStatuses) };
 }
 
 /**
@@ -1349,7 +1348,7 @@ function requireEditableJam_(spreadsheet, services, date) {
   }
   const today = todayIso_(spreadsheet, services);
   const known = function (jam) {
-    return jam.status === DRAFT_STATUS || jam.status === PUBLISHED_STATUS;
+    return jam.status === DRAFT_STATUS || jam.status === CREATED_STATUS || jam.status === PUBLISHED_STATUS;
   };
   const earlier = jams.some(function (jam) {
     return known(jam) && jam.date !== null && POST_ISO_DATE_.test(jam.date) && jam.date >= today && jam.date < date;

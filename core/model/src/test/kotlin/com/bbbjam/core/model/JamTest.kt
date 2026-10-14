@@ -76,6 +76,21 @@ class JamTest {
     }
 
     @Test
+    fun `a created jam with an available setlist is withheld for musicians`() {
+        val created = jam(JamStatus.CREATED, Setlist.Available(listOf(jamSong(1))))
+
+        assertEquals(Setlist.Withheld, created.setlistForMusicians())
+        assertEquals(Setlist.Withheld, jam(JamStatus.CREATED, Setlist.Withheld).setlistForMusicians())
+    }
+
+    @Test
+    fun `only a draft is hidden from musicians`() {
+        assertFalse(jam(JamStatus.DRAFT, Setlist.Withheld).isVisibleToMusicians)
+        assertTrue(jam(JamStatus.CREATED, Setlist.Withheld).isVisibleToMusicians)
+        assertTrue(jam(JamStatus.PUBLISHED, Setlist.Available(emptyList())).isVisibleToMusicians)
+    }
+
+    @Test
     fun `a published available setlist is returned as the same instance`() {
         val available = Setlist.Available(listOf(jamSong(1)))
 

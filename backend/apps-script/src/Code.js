@@ -1,8 +1,8 @@
 /**
  * Web app entry point (docs/apps-script-api.md). GET only: this slice serves no POST.
  *
- * Uses ContractError from Normalize.js, CATALOG_TAB and buildCatalog from Catalog.js, and JAMS_TAB
- * and buildJams from Jams.js (shared global scope in Apps Script).
+ * Uses ContractError from Normalize.js, CATALOG_TAB and buildCatalog from Catalog.js, and JAMS_TAB,
+ * buildJams, musicianJams_, presentStatuses_ and requireJamStatuses_ from Jams.js (shared global scope in Apps Script).
  */
 
 var SCHEMA_VERSION = 1;
@@ -37,7 +37,7 @@ function handleGet(params, spreadsheet) {
     return errorBody_('unknown_resource', 'Unknown or missing resource. Known: ' + Object.keys(ROUTES).join(', '));
   }
   try {
-    const result = ROUTES[resource](spreadsheet);
+    const result = ROUTES[resource](spreadsheet, params);
     const body = { schemaVersion: SCHEMA_VERSION };
     Object.keys(result).forEach(function (key) {
       body[key] = result[key];
@@ -61,10 +61,22 @@ function readCatalog_(spreadsheet) {
 }
 
 /**
- * The Jams tab plus the tab of each published jam. Dates are formatted in the spreadsheet's own
+ * The anonymous jams: only CREADA and PUBLICADA rows (D-26), CREADA presented as BORRADOR unless the
+ * client sends `jamStatuses=3`. The parameter is validated before the Sheet is opened.
+ */
+function readJams_(spreadsheet, params) {
+  const jamStatuses = params ? params.jamStatuses : undefined;
+  requireJamStatuses_(jamStatuses);
+  const result = readAllJams_(spreadsheet);
+  return { jams: presentStatuses_(musicianJams_(result.jams), jamStatuses) };
+}
+
+/**
+ * Every Jams row plus the tab of each published jam, unfiltered. The admin read, the writes and
+ * the checks build on it; only the GET route filters. Dates are formatted in the spreadsheet's own
  * time zone, the one Sheets used to build the typed cells, so they round-trip what the admin sees.
  */
-function readJams_(spreadsheet) {
+function readAllJams_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName(JAMS_TAB);
   if (!sheet) {
     throw new ContractError('missing_tab', 'The tab ' + JAMS_TAB + ' does not exist');
@@ -97,5 +109,5 @@ function errorMessage_(err) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { SCHEMA_VERSION, ROUTES, doGet, handleGet };
+  module.exports = { SCHEMA_VERSION, ROUTES, doGet, handleGet, readAllJams_ };
 }

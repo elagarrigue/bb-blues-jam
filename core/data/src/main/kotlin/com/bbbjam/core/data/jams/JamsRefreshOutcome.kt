@@ -10,7 +10,8 @@ sealed interface JamsRefreshOutcome {
      * jams' setlists (dropped rows, ignored draft setlists, script errors); [heldBack] are future
      * jams after the upcoming one, not shown (user approval P5). None of the lists is persisted.
      * [adminRead] is true when the jams came from the admin read, drafts' songs included
-     * (`admin-add-song-to-setlist`).
+     * (`admin-add-song-to-setlist`). [hiddenDrafts] are the dates of BORRADOR rows an anonymous read
+     * left out (D-26).
      */
     data class Updated(
         val jamCount: Int,
@@ -18,6 +19,7 @@ sealed interface JamsRefreshOutcome {
         val issues: List<SetlistIssue>,
         val heldBack: List<LocalDate>,
         val adminRead: Boolean = false,
+        val hiddenDrafts: List<LocalDate> = emptyList(),
     ) : JamsRefreshOutcome
 
     /** Nothing was stored; the cached jams are untouched. [adminRead] as in [Updated]. */
@@ -33,11 +35,12 @@ fun JamsRefreshOutcome.toLogLine(): String = when (this) {
     is JamsRefreshOutcome.Updated -> buildString {
         append(
             "jams refresh: updated $jamCount jams, ${rejected.size} rejected, ${issues.size} setlist issues, " +
-                "${heldBack.size} held back",
+                "${heldBack.size} held back, ${hiddenDrafts.size} hidden drafts",
         )
         rejected.forEach { append("; rejected #${it.index} ${it.date ?: "(no date)"}: ${it.issues.joinToString()}") }
         issues.forEach { append("; ").append(it.describe()) }
         heldBack.forEach { append("; held back $it") }
+        hiddenDrafts.forEach { append("; hidden draft $it") }
         if (adminRead) append(ADMIN_READ)
     }
 

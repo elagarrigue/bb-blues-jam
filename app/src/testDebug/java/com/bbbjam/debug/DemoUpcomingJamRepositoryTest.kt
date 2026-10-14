@@ -56,8 +56,58 @@ class DemoUpcomingJamRepositoryTest {
         }
     }
 
-    private fun observe(vararg snapshots: JamsSnapshot, draft: Boolean = false): List<JamsSnapshot> = runBlocking {
-        DemoUpcomingJamRepository(FakeJams(*snapshots), calendar, draft).observeJams().toList()
+    private fun observe(
+        vararg snapshots: JamsSnapshot,
+        draft: Boolean = false,
+        created: Boolean = false,
+    ): List<JamsSnapshot> = runBlocking {
+        val status = when {
+            draft -> JamStatus.DRAFT
+            created -> JamStatus.CREATED
+            else -> JamStatus.PUBLISHED
+        }
+        DemoUpcomingJamRepository(FakeJams(*snapshots), calendar, status).observeJams().toList()
+    }
+
+    @Test
+    fun createdDemoFillsAnEmptyUpcomingWithTheSameSongsAndStatusCreated() {
+        val upcoming = observe(JamsSnapshot(null, listOf(pastJam), freshness), created = true).single().upcoming!!
+
+        assertEquals(JamStatus.CREATED, upcoming.status)
+        assertTrue(upcoming.isDemo())
+        assertEquals(DemoUpcomingJam.on(today).copy(status = JamStatus.CREATED), upcoming)
+    }
+
+    @Test
+    fun theDraftFlagWinsOverTheCreatedFlag() {
+        assertEquals(
+            JamStatus.DRAFT,
+            DebugFlags(demoUpcomingJamDraft = true, demoUpcomingJamCreated = true).demoStatus(),
+        )
+        assertEquals(JamStatus.CREATED, DebugFlags(demoUpcomingJamCreated = true).demoStatus())
+        assertEquals(JamStatus.PUBLISHED, DebugFlags().demoStatus())
+    }
+
+    @Test
+    fun liveDemoMovesTheReplacedRealUpcomingJamToTheFrontOfHeldBack() = runBlocking {
+        val later = realUpcoming.copy(date = LocalDate.parse("2026-11-28"))
+        val real = JamsSnapshot(realUpcoming, listOf(pastJam), freshness, heldBack = listOf(later))
+
+        val emitted = DemoUpcomingJamRepository(FakeJams(real), calendar, JamStatus.DRAFT, live = true)
+            .observeJams().toList().single()
+
+        assertEquals(JamStatus.DRAFT, emitted.upcoming!!.status)
+        assertEquals(listOf(realUpcoming, later), emitted.heldBack)
+        // A musician falls through the demo BORRADOR jam to the real one (jam-status-created, S1).
+        assertEquals(realUpcoming, emitted.forMusicians().upcoming)
+        // A real jam on the demo's own date is replaced, not duplicated.
+        val sameDay = real.copy(upcoming = realUpcoming.copy(date = today), heldBack = emptyList())
+        val replaced = DemoUpcomingJamRepository(
+            FakeJams(sameDay),
+            calendar,
+            live = true,
+        ).observeJams().toList().single()
+        assertEquals(emptyList<Jam>(), replaced.heldBack)
     }
 
     @Test

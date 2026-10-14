@@ -1,5 +1,6 @@
 package com.bbbjam.feature.nextjam
 
+import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
@@ -84,6 +85,25 @@ class SongDetailMappingTest {
         val draft = jam(upcomingDate, Setlist.Available(listOf(song(1), song(2))), JamStatus.DRAFT)
         assertEquals(notFound, snapshot(draft).toSongDetail(upcomingDate, id(1), 1) {})
         assertEquals(notFound, snapshot(draft).toSongDetail(upcomingDate, id(2), 2) {})
+    }
+
+    @Test
+    fun `a song of a published jam behind a BORRADOR upcoming jam is found for a musician (D-26, S1)`() {
+        val draft = jam(upcomingDate, Setlist.Available(listOf(song(1), song(2))), JamStatus.DRAFT)
+        val laterDate = upcomingDate.plusDays(28)
+        val later = jam(laterDate, Setlist.Available(listOf(song(1), song(2), song(3))))
+        val cached = JamsSnapshot(draft, emptyList(), SongDetailFixtures.fetched, listOf(later))
+
+        assertEquals(songModel(), cached.toSongDetail(laterDate, id(2), 2) {})
+        // The draft's own song stays hidden, whatever its position.
+        assertEquals(notFound, cached.toSongDetail(upcomingDate, id(2), 2) {})
+    }
+
+    @Test
+    fun `a song of a past BORRADOR jam is not found`() {
+        val past = jam(pastDate, Setlist.Available(listOf(song(1), song(2), song(3))), JamStatus.DRAFT)
+
+        assertEquals(notFound, snapshot(null, past = listOf(past)).toSongDetail(pastDate, id(3), 3) {})
     }
 
     @Test

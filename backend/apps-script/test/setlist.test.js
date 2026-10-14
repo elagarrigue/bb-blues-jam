@@ -346,7 +346,8 @@ test('createJam appends one BORRADOR row after the last row, plain text first, a
   assert.equal(fake.tabs[NEW_JAM], undefined);
   assert.equal(svc.lock.tries, 1);
   assert.equal(svc.lock.releases, 1);
-  const served = handleGet({ resource: 'jams' }, fake.spreadsheet).jams.find((item) => item.date === NEW_JAM);
+  assert.equal(handleGet({ resource: 'jams', jamStatuses: '3' }, fake.spreadsheet).jams.find((item) => item.date === NEW_JAM), undefined, 'the GET omits the new BORRADOR row (D-26)');
+  const served = call(fake, 'readJams', { jamStatuses: 3 }).jams.find((item) => item.date === NEW_JAM);
   assert.equal(served.setlist, null, 'the new draft has no tab yet');
 });
 
@@ -459,8 +460,10 @@ test('readJams: the GET jams plus the songs of every current or future draft, re
   assert.equal(body.ok, true);
   assert.equal(body.jams.length, 4);
   // The published jam and the past draft are exactly as the GET built them.
+  // D-26: the GET omits the BORRADOR rows, so the past draft is compared with the unfiltered build.
   assert.deepStrictEqual(body.jams[0], get.jams[0]);
-  assert.deepStrictEqual(body.jams[1], get.jams[1]);
+  assert.deepStrictEqual(body.jams[1], loadScript().readAllJams_(fakeSpreadsheet().spreadsheet).jams[1]);
+  assert.equal(get.jams.length, 1);
   assert.equal(body.jams[1].setlist, null);
   assert.ok(!JSON.stringify(body).includes(DRAFT_MARKER), 'a past draft leaked');
   // The upcoming draft carries its tab, the later draft a missing_tab error.
@@ -474,15 +477,14 @@ test('readJams: the GET jams plus the songs of every current or future draft, re
   assert.ok(!fake.requested.includes(PAST_DRAFT), 'the past draft tab was opened');
 });
 
-test('readJams: a draft for today is current; the GET still withholds every draft', () => {
+test('readJams: a draft for today is current; the GET omits every draft', () => {
   const today = '2026-10-06';
   const jams = [JAMS[0], [today, '21:00', 'Lugar', 'BORRADOR']];
   const tabs = { [today]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric Clapton', 'A')] };
   const body = call(fakeSpreadsheet({ jams, tabs }), 'readJams');
   assert.equal(body.jams[0].setlist.length, 1);
-  const get = handleGet({ resource: 'jams' }, fakeSpreadsheet({ jams, tabs }).spreadsheet);
-  assert.equal(get.jams[0].setlist, null);
-  assert.equal(get.jams[0].setlistError, null);
+  // D-26: the GET omits a BORRADOR row altogether, whatever its date.
+  assert.deepStrictEqual(handleGet({ resource: 'jams' }, fakeSpreadsheet({ jams, tabs }).spreadsheet).jams, []);
   // One millisecond before midnight of the next day it is still today; at midnight it is past.
   const nextMidnightBA = Date.UTC(2026, 9, 7, 3, 0, 0);
   assert.equal(call(fakeSpreadsheet({ jams, tabs }), 'readJams', {}, services(nextMidnightBA - 1)).jams[0].setlist.length, 1);
@@ -1708,4 +1710,92 @@ test('a tab that has Batería 2 reads it, shrinks it when open, and refuses a co
   const shrink = fakeSpreadsheet({ tabs: wideTab(open) });
   assert.equal(setSlotCount(shrink, { instrument: 'drums', count: 1 }).slots.drums2, '-');
   assertError(setSlotCount(fakeSpreadsheet({ tabs: wideTab(open) }), { instrument: 'drums', count: 2 }), 'invalid_count');
+});
+
+// ---- jam-status-created (D-26): BORRADOR hidden, CREADA date only, PUBLICADA full ----
+const THREE_STATUSES = [
+  JAMS[0],
+  [PAST, '21:00', 'La Macanuda', 'PUBLICADA'],
+  [PAST_DRAFT, '21:00', 'La Macanuda', 'CREADA'],
+  [UPCOMING, '21:00', 'Lugar secreto', 'BORRADOR'],
+  [LATER, '21:00', 'La Macanuda', 'CREADA'],
+  ['2026-12-19', '21:00', 'Typo', 'Borrador'],
+  ['2026-12-26', '21:00', 'Vacio', ''],
+];
+const LATER_TAB = [TAB_HEADER, row('1', DRAFT_MARKER, 'ZZ CREADA NO DEBE SALIR', 'Prueba', 'A')];
+
+test('GET jams serves only CREADA and PUBLICADA rows; BORRADOR, typos and empty estado are omitted entirely', () => {
+  const fake = fakeSpreadsheet({ jams: THREE_STATUSES, tabs: { [LATER]: LATER_TAB } });
+  const body = handleGet({ resource: 'jams', jamStatuses: '3' }, fake.spreadsheet);
+  assert.deepStrictEqual(body.jams.map((j) => [j.date, j.status]), [[PAST, 'PUBLICADA'], [PAST_DRAFT, 'CREADA'], [LATER, 'CREADA']]);
+  assert.deepStrictEqual(body.jams.map((j) => j.setlist), [body.jams[0].setlist, null, null]);
+  const text = JSON.stringify(body);
+  assert.ok(!text.includes('Lugar secreto') && !text.includes('Typo') && !text.includes('Vacio'), 'an omitted row leaked its venue');
+  assert.ok(!text.includes(DRAFT_MARKER));
+  // The tab of a BORRADOR or CREADA jam is never requested.
+  assert.ok(!fake.requested.includes(UPCOMING) && !fake.requested.includes(LATER) && !fake.requested.includes(PAST_DRAFT), `requested ${fake.requested}`);
+});
+
+test('GET jams without jamStatuses presents CREADA as BORRADOR with no setlist (an old build)', () => {
+  const fake = fakeSpreadsheet({ jams: THREE_STATUSES, tabs: { [LATER]: LATER_TAB } });
+  const body = handleGet({ resource: 'jams' }, fake.spreadsheet);
+  assert.deepStrictEqual(body.jams.map((j) => [j.date, j.status, j.setlist === null]), [[PAST, 'PUBLICADA', false], [PAST_DRAFT, 'BORRADOR', true], [LATER, 'BORRADOR', true]]);
+  assert.ok(!JSON.stringify(body).includes('Lugar secreto'));
+});
+
+test('GET jams with any other jamStatuses is invalid_jam_statuses before the Sheet is opened', () => {
+  for (const value of ['9', '', '03', '3 ', 'x', 4]) {
+    const fake = fakeSpreadsheet({ jams: THREE_STATUSES });
+    assertError(handleGet({ resource: 'jams', jamStatuses: value }, fake.spreadsheet), 'invalid_jam_statuses');
+    assert.deepStrictEqual(fake.requested, [], `opened ${fake.requested} for ${JSON.stringify(value)}`);
+  }
+  // The catalog route ignores the parameter.
+  assert.equal(handleGet({ resource: 'catalog', jamStatuses: '9' }, fakeSpreadsheet().spreadsheet).error, undefined);
+});
+
+test('readJams returns every row, reads the tabs of future BORRADOR and CREADA jams, never a past one', () => {
+  const tabs = { [LATER]: LATER_TAB };
+  const fake = fakeSpreadsheet({ jams: THREE_STATUSES, tabs });
+  const body = call(fake, 'readJams', { jamStatuses: 3 });
+  assert.deepStrictEqual(body.jams.map((j) => [j.date, j.status]), [
+    [PAST, 'PUBLICADA'], [PAST_DRAFT, 'CREADA'], [UPCOMING, 'BORRADOR'], [LATER, 'CREADA'], ['2026-12-19', 'Borrador'], ['2026-12-26', null],
+  ]);
+  assert.equal(body.jams[2].setlist.length, 3);
+  assert.equal(body.jams[3].setlist[0].songId, DRAFT_MARKER);
+  assert.equal(body.jams[1].setlist, null);
+  assert.ok(!fake.requested.includes(PAST_DRAFT), 'a past CREADA tab was opened');
+  assert.deepStrictEqual(writes(fake.log), []);
+});
+
+test('readJams without jamStatuses presents CREADA as BORRADOR (songs kept); another value is invalid_jam_statuses', () => {
+  const old = call(fakeSpreadsheet({ jams: THREE_STATUSES, tabs: { [LATER]: LATER_TAB } }), 'readJams');
+  assert.equal(old.jams[3].status, 'BORRADOR');
+  assert.equal(old.jams[1].status, 'BORRADOR');
+  assert.equal(old.jams[3].setlist.length, 1);
+  const fake = fakeSpreadsheet({ jams: THREE_STATUSES });
+  assertError(call(fake, 'readJams', { jamStatuses: 9 }), 'invalid_jam_statuses');
+  assert.deepStrictEqual(writes(fake.log), []);
+});
+
+test('a CREADA upcoming jam is editable and publishable; a CREADA earlier jam still blocks a later one', () => {
+  const created = [JAMS[0], [UPCOMING, '21:00', 'La Macanuda', 'CREADA'], [LATER, '21:00', 'La Macanuda', 'BORRADOR']];
+  assert.equal(addSong(fakeSpreadsheet({ jams: created }), {}).position, 4);
+  const blocked = fakeSpreadsheet({ jams: created });
+  assertError(addSong(blocked, { date: LATER }), 'jam_not_editable');
+  assert.deepStrictEqual(writes(blocked.log), []);
+
+  const fake = fakeSpreadsheet({ jams: created });
+  assert.deepStrictEqual(call(fake, 'publishSetlist', { date: UPCOMING }), { schemaVersion: 1, ok: true, alreadyPublished: false });
+  assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', 'Jams', 2, 4, '@'], ['setValue', 'Jams', 2, 4, 'PUBLICADA']]);
+  assert.equal(jamsGrid(fake)[1][3], 'PUBLICADA');
+});
+
+test('musicianJams_ and presentStatuses_ are pure and keep the input untouched', () => {
+  const { musicianJams_, presentStatuses_ } = loadScript();
+  const jams = [{ status: 'BORRADOR' }, { status: ' CREADA ' }, { status: 'CREADA' }, { status: 'PUBLICADA' }, { status: null }];
+  assert.deepStrictEqual(musicianJams_(jams).map((j) => j.status), ['CREADA', 'PUBLICADA']);
+  assert.equal(jams.length, 5);
+  assert.deepStrictEqual(presentStatuses_([{ status: 'CREADA', setlist: null }], undefined)[0].status, 'BORRADOR');
+  assert.deepStrictEqual(presentStatuses_([{ status: 'CREADA' }], '3')[0].status, 'CREADA');
+  assert.throws(() => presentStatuses_([], '9'), (err) => err.code === 'invalid_jam_statuses');
 });

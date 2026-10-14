@@ -6,7 +6,8 @@ import java.time.LocalTime
 /**
  * One monthly session. Its [date] is its identity (`Jams.fecha`). Its [setlist] is a state, not a
  * bare list: [Setlist.Available], [Setlist.Withheld] or [Setlist.Unavailable]. A published jam is
- * never withheld; a draft may be withheld (a musician's read) or available (the admin's).
+ * never withheld; a draft or created jam may be withheld (a musician's read) or available (the
+ * admin's).
  */
 data class Jam(
     val date: LocalDate,
@@ -27,11 +28,15 @@ data class Jam(
      */
     fun isHistorical(today: LocalDate): Boolean = date.isBefore(today)
 
+    /** False only for a [JamStatus.DRAFT] jam, which does not exist for musicians (D-26). */
+    val isVisibleToMusicians: Boolean
+        get() = status != JamStatus.DRAFT
+
     /**
-     * The setlist a musician may see: a draft is never shown to a musician, whatever the reader
-     * received, so a [JamStatus.DRAFT] jam is always [Setlist.Withheld] here, even when its
-     * [setlist] is available (an admin's read). Every other jam returns [setlist] itself. Musician
-     * screens read this, never [setlist]; the admin slices read [setlist] behind the admin flag.
+     * The setlist a musician may see: only a [JamStatus.PUBLISHED] jam's [setlist], itself. A draft
+     * or created jam is always [Setlist.Withheld] here, even when its [setlist] is available (an
+     * admin's read). Musician screens read this, never [setlist]; the admin slices read [setlist]
+     * behind the admin flag.
      */
-    fun setlistForMusicians(): Setlist = if (status == JamStatus.DRAFT) Setlist.Withheld else setlist
+    fun setlistForMusicians(): Setlist = if (status == JamStatus.PUBLISHED) setlist else Setlist.Withheld
 }

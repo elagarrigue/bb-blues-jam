@@ -49,20 +49,20 @@ class JamsMapperTest {
     }
 
     @Test
-    fun `the edge sample keeps five jams with their setlist states and rejects four rows`() {
+    fun `the edge sample keeps four jams with their setlist states and rejects four rows`() {
+        // The edge sample holds a BORRADOR jam (2026-09-26); an anonymous read hides it (D-26).
         val mapped = JamsMapper.map(Fixtures.sampleJams("jams-edge.json"))
 
         val states = mapped.jams.associate { it.jam.date.toString() to it.jam.setlist }
         assertEquals(
-            listOf("2026-08-29", "2026-09-26", "2026-05-30", "2026-04-25", "2026-02-28"),
+            listOf("2026-08-29", "2026-05-30", "2026-04-25", "2026-02-28"),
             states.keys.toList(),
         )
         assertTrue(states.getValue("2026-08-29") is Setlist.Available)
-        assertEquals(Setlist.Withheld, states.getValue("2026-09-26"))
         assertEquals(Setlist.Unavailable(SetlistProblem.MISSING_TAB), states.getValue("2026-05-30"))
         assertEquals(Setlist.Unavailable(SetlistProblem.INVALID_TAB), states.getValue("2026-04-25"))
         assertTrue(states.getValue("2026-02-28") is Setlist.Available)
-        assertEquals(JamStatus.DRAFT, mapped.jams[1].jam.status)
+        assertEquals(listOf(LocalDate.of(2026, 9, 26)), mapped.hiddenDrafts)
         assertEquals(
             listOf(
                 RejectedJam(3, "2026-06-27", listOf(JamIssue.InvalidStatus)),
@@ -158,16 +158,47 @@ class JamsMapperTest {
     }
 
     @Test
-    fun `a valid time and both statuses are read exactly`() {
+    fun `a valid time and all three statuses are read exactly`() {
         val mapped = JamsMapper.map(
             listOf(
                 jam(date = "2026-07-25", startTime = "09:30"),
                 jam(date = "2026-08-29", status = "BORRADOR", setlist = null),
+                jam(date = "2026-09-26", status = "CREADA", setlist = null),
             ),
+            includeDrafts = true,
         )
 
         assertEquals(LocalTime.of(9, 30), mapped.jams[0].jam.startTime)
-        assertEquals(listOf(JamStatus.PUBLISHED, JamStatus.DRAFT), mapped.jams.map { it.jam.status })
+        assertEquals(
+            listOf(JamStatus.PUBLISHED, JamStatus.DRAFT, JamStatus.CREATED),
+            mapped.jams.map { it.jam.status },
+        )
+    }
+
+    @Test
+    fun `an anonymous read drops a valid BORRADOR row into hiddenDrafts and keeps CREADA withheld`() {
+        val mapped = JamsMapper.map(
+            listOf(
+                jam(date = "2026-07-25", status = "BORRADOR", setlist = listOf(row())),
+                jam(date = "2026-08-29", status = "CREADA", setlist = null),
+                jam(date = "2026-09-26"),
+                jam(date = "2026-10-31", status = "Borrador", setlist = null),
+            ),
+        )
+
+        assertEquals(listOf(LocalDate.of(2026, 7, 25)), mapped.hiddenDrafts)
+        assertEquals(listOf(LocalDate.of(2026, 8, 29), LocalDate.of(2026, 9, 26)), mapped.jams.map { it.jam.date })
+        assertEquals(JamStatus.CREATED, mapped.jams[0].jam.status)
+        assertEquals(Setlist.Withheld, mapped.jams[0].jam.setlist)
+        // A typo is rejected, never hidden as a draft.
+        assertEquals(listOf(RejectedJam(4, "2026-10-31", listOf(JamIssue.InvalidStatus))), mapped.rejected)
+        assertEquals(
+            emptyList<LocalDate>(),
+            JamsMapper.map(
+                listOf(jam(date = "2026-07-25", status = "BORRADOR", setlist = null)),
+                includeDrafts = true,
+            ).hiddenDrafts,
+        )
     }
 
     @Test
@@ -193,14 +224,14 @@ class JamsMapperTest {
     }
 
     @Test
-    fun `a draft is always withheld, and a setlist sent with it is ignored and reported`() {
+    fun `a created jam is always withheld, and a setlist sent with it is ignored and reported`() {
         val mapped = JamsMapper.map(
             listOf(
-                jam(date = "2026-07-25", status = "BORRADOR", setlist = listOf(row())),
-                jam(date = "2026-08-29", status = "BORRADOR", setlist = null),
+                jam(date = "2026-07-25", status = "CREADA", setlist = listOf(row())),
+                jam(date = "2026-08-29", status = "CREADA", setlist = null),
                 jam(
                     date = "2026-09-26",
-                    status = "BORRADOR",
+                    status = "CREADA",
                     setlist = null,
                     error = SetlistErrorDto("missing_tab", "m"),
                 ),
@@ -251,17 +282,19 @@ class JamsMapperTest {
     }
 
     @Test
-    fun `with drafts included, a draft with no tab yet is an empty available setlist, a published one is not`() {
+    fun `with drafts included, a draft or created jam with no tab yet is an empty available setlist`() {
         val missing = SetlistErrorDto("missing_tab", "m")
         val rows = listOf(
             jam(date = "2026-07-25", status = "BORRADOR", setlist = null, error = missing),
             jam(date = "2026-08-29", status = "PUBLICADA", setlist = null, error = missing),
+            jam(date = "2026-09-26", status = "CREADA", setlist = null, error = missing),
         )
 
         val mapped = JamsMapper.map(rows, includeDrafts = true)
 
         assertEquals(Setlist.Available(emptyList()), mapped.jams[0].jam.setlist)
         assertEquals(Setlist.Unavailable(SetlistProblem.MISSING_TAB), mapped.jams[1].jam.setlist)
+        assertEquals(Setlist.Available(emptyList()), mapped.jams[2].jam.setlist)
         assertEquals(listOf(SetlistIssue.SetlistError(LocalDate.of(2026, 8, 29), "missing_tab")), mapped.issues)
     }
 
@@ -273,12 +306,8 @@ class JamsMapperTest {
         val withDrafts = JamsMapper.map(samples, includeDrafts = true)
         val published = { m: MappedJams -> m.jams.filter { it.jam.status == JamStatus.PUBLISHED } }
         assertEquals(published(JamsMapper.map(samples)), published(withDrafts))
-        assertTrue(
-            JamsMapper.map(samples).jams.filter { it.jam.status == JamStatus.DRAFT }.all {
-                it.jam.setlist ==
-                    Setlist.Withheld
-            },
-        )
+        assertTrue(JamsMapper.map(samples).jams.none { it.jam.status == JamStatus.DRAFT })
+        assertEquals(listOf(LocalDate.of(2026, 9, 26)), JamsMapper.map(samples).hiddenDrafts)
     }
 
     @Test

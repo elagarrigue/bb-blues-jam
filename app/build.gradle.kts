@@ -30,6 +30,13 @@ val demoUpcomingJam: Boolean = localProperties.getProperty("bluesjam.demoUpcomin
 val demoUpcomingJamDraft: Boolean =
     localProperties.getProperty("bluesjam.demoUpcomingJamDraft", "").trim() == "true"
 
+// Created variant (jam-status-created, D-26): bluesjam.demoUpcomingJamCreated=true makes the demo jam a
+// CREADA with the same songs, so a device check can see the date-only musician view. Effective only
+// with the demo flag (or the live flag) on; the draft flag wins if both are on. Absent means false;
+// release is always false.
+val demoUpcomingJamCreated: Boolean =
+    localProperties.getProperty("bluesjam.demoUpcomingJamCreated", "").trim() == "true"
+
 // Debug-only admin session (debug-admin-session): bluesjam.debugAdmin=true starts a debug build in
 // admin mode without a login, so device checks of admin controls need no passphrase typed. It draws
 // controls only and authorizes nothing (Apps Script checks every write). Absent means false; release
@@ -62,12 +69,14 @@ android {
         debug {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", demoUpcomingJam.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", demoUpcomingJamDraft.toString())
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM_CREATED", demoUpcomingJamCreated.toString())
             buildConfigField("boolean", "DEBUG_ADMIN", debugAdmin.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_LIVE", demoUpcomingJamLive.toString())
         }
         release {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", "false")
+            buildConfigField("boolean", "DEMO_UPCOMING_JAM_CREATED", "false")
             buildConfigField("boolean", "DEBUG_ADMIN", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_LIVE", "false")
             optimization {

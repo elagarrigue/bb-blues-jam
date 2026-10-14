@@ -80,7 +80,7 @@ class PastJamDetailMappingTest {
                 PastSetlistUiModel.NotShown("La lista de esta jam no se publicó."),
                 back,
             ),
-            detail(jam(setlist = Setlist.Withheld, status = JamStatus.DRAFT)),
+            detail(jam(setlist = Setlist.Withheld, status = JamStatus.CREATED)),
         )
         assertEquals(
             PastJamDetailUiModel.Jam(
@@ -101,14 +101,19 @@ class PastJamDetailMappingTest {
     }
 
     @Test
-    fun `a draft whose songs reached the app is never shown`() {
+    fun `a past BORRADOR jam is not found even by its own date`() {
+        assertEquals(notFound, detail(jam(setlist = Setlist.Available(listOf(song(1))), status = JamStatus.DRAFT)))
+    }
+
+    @Test
+    fun `a created jam whose songs reached the app is never shown`() {
         assertEquals(
             PastJamDetailUiModel.Jam(
                 header(null),
                 PastSetlistUiModel.NotShown("La lista de esta jam no se publicó."),
                 back,
             ),
-            detail(jam(setlist = Setlist.Available(listOf(song(1))), status = JamStatus.DRAFT)),
+            detail(jam(setlist = Setlist.Available(listOf(song(1))), status = JamStatus.CREATED)),
         )
     }
 

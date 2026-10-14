@@ -20,14 +20,15 @@ class JamsRefreshOutcomeTest {
             mapped.rejected,
             mapped.issues,
             listOf(LocalDate.of(2026, 9, 26)),
+            hiddenDrafts = mapped.hiddenDrafts,
         )
 
         assertEquals(
-            "jams refresh: updated 5 jams, 4 rejected, 2 setlist issues, 1 held back; " +
+            "jams refresh: updated 4 jams, 4 rejected, 2 setlist issues, 1 held back, 1 hidden drafts; " +
                 "rejected #3 2026-06-27: InvalidStatus; rejected #6 2026-03-28: DuplicateDate; " +
                 "rejected #7 2026-03-28: DuplicateDate; rejected #8 Config: InvalidDate; " +
                 "2026-05-30: setlistError missing_tab; 2026-04-25: setlistError missing_header; " +
-                "held back 2026-09-26",
+                "held back 2026-09-26; hidden draft 2026-09-26",
             outcome.toLogLine(),
         )
     }
@@ -52,7 +53,7 @@ class JamsRefreshOutcomeTest {
         val line = JamsRefreshOutcome.Updated(1, mapped.rejected, mapped.issues, emptyList()).toLogLine()
 
         assertEquals(
-            "jams refresh: updated 1 jams, 0 rejected, 2 setlist issues, 0 held back; " +
+            "jams refresh: updated 1 jams, 0 rejected, 2 setlist issues, 0 held back, 0 hidden drafts; " +
                 "2026-07-25 row #1 kept: MalformedExtraParticipant; 2026-07-25 row #2 dropped: InvalidKey",
             line,
         )
@@ -71,7 +72,7 @@ class JamsRefreshOutcomeTest {
     @Test
     fun `an admin read is marked at the end of the line, updated or failed`() {
         assertEquals(
-            "jams refresh: updated 2 jams, 0 rejected, 0 setlist issues, 0 held back (admin read)",
+            "jams refresh: updated 2 jams, 0 rejected, 0 setlist issues, 0 held back, 0 hidden drafts (admin read)",
             JamsRefreshOutcome.Updated(2, emptyList(), emptyList(), emptyList(), adminRead = true).toLogLine(),
         )
         assertEquals(

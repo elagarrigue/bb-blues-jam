@@ -42,7 +42,7 @@ class PastJamDetailPresenterTest {
                     ),
                     awaitItem(),
                 )
-                repository.snapshots.emit(snapshot(listOf(jam(setlist = Setlist.Withheld, status = JamStatus.DRAFT))))
+                repository.snapshots.emit(snapshot(listOf(jam(setlist = Setlist.Withheld, status = JamStatus.CREATED))))
                 assertEquals(
                     PastJamDetailUiModel.Jam(
                         header(null),

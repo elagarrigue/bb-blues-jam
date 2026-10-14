@@ -78,7 +78,7 @@ class JamsDaoTest {
 
     @Test
     fun `a replace is one emission, and deleting a jam cascades to its songs, slots and extras`() = runTest {
-        val edge = JamsMapper.map(Fixtures.sampleJams("jams-edge.json")).jams
+        val edge = JamsMapper.map(Fixtures.sampleJams("jams-edge.json"), includeDrafts = true).jams
         val published = edge.first()
         val asDraft = published.jam.copy(status = JamStatus.DRAFT, setlist = Setlist.Withheld)
 

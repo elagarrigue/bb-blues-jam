@@ -413,8 +413,12 @@ As built (`admin-add-song-to-setlist`, 6 October 2026, V1 and C1 approved by the
 through `AdminControlsDefaults`, **no amber**:
 
 - **Draft badge**: under the header, the muted `badge-draft` `BORRADOR` (`caption`, `textMuted` on
-  `surfaceRaised`, `shapes.sm`) and the note `Los músicos todavía no ven esta lista.` (`caption`,
-  `textMuted`). Only for a draft jam.
+  `surfaceRaised`, `shapes.sm`) and the note `Los músicos todavía no ven esta jam.` (`caption`,
+  `textMuted`). Only for a draft jam (D-26: musicians do not see it at all).
+- **Created badge** (`jam-status-created`): the same muted `badge-draft` style, text `CREADA`, with the
+  note `Los músicos ven la fecha, pero todavía no la lista.` No amber. Only for a created jam; the
+  musician sees the draft card ("La lista se está armando") for it. A past draft jam is not listed in
+  Anteriores for anyone, and its detail is the "ya no está en el archivo" state.
 - After the rows, in this order: **pending rows** (a `surface` card, `shapes.md`, at least 48dp,
   title `songTitle` and `Agregando…` `body`, all `textMuted`, read politely), **failure cards** (a
   `surface` card: `No se pudo agregar «…»` in `error`, the reason in `textMuted`, and an underlined
@@ -754,7 +758,7 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
 
 ### Publishing (`admin-publish-setlist`, as built locally)
 
-The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta lista.` for a draft; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Desde la app no se puede volver a borrador.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
+The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Desde la app no se puede volver a borrador.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
 
 ### Extra participants (`admin-edit-extra-participants`)
 
