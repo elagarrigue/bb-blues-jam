@@ -134,6 +134,7 @@ from the project entirely (D-04).
 |---|---|---|
 | Song catalog | Sheet | Sheet → app, read-only |
 | Past jams | Sheet | Sheet → app, read-only |
+| Upcoming jam row (creation only, D-25) | App | app → Sheet via Apps Script; later edits in the Sheet |
 | Upcoming setlist | App | app → Sheet via Apps Script |
 | Published status | App | app → Sheet |
 

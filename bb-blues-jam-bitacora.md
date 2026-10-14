@@ -438,6 +438,17 @@ mensaje de cierre y preguntas. Antes de mostrar la lista, cada tema se valida co
 (D-14). El agente nunca escribe. Cargar la propuesta en la próxima jam es una acción explícita del
 admin y pasa por el contrato de acciones (D-13); Apps Script sigue siendo la autoridad de escritura.
 
+### D-25 — La app crea la fila de la próxima jam (enmienda a D-04)
+El organizador pidió que el asistente pueda crear la fecha nueva, pidiendo los datos que falten.
+Hasta ahora la fila de `Jams` se cargaba a mano en el Sheet. Se suma una mutación `createJam(fecha,
+hora, lugar)` en Apps Script, validada en el servidor, que agrega la fila en `BORRADOR`. El tab de la
+fecha lo sigue creando `addSong` con el primer tema. La app crea la fila una sola vez; editarla
+después sigue siendo cosa del Sheet, así que no hay dos escritores sobre el mismo dato al mismo
+tiempo. El agente siempre pide la fecha y propone la hora y el lugar de la última jam. Como toda
+escritura del asistente, la crea el admin al confirmar, nunca el agente (D-24), y pasa por el
+contrato de acciones (D-13). Si ya hay otra jam futura, se crea igual: la app sigue mostrando la más
+cercana y la nueva queda en espera, y el agente lo avisa. Decidido el 14 de octubre de 2026.
+
 ---
 
 # Parte III — Harness y seguimiento

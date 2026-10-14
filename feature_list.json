@@ -1458,5 +1458,23 @@
       "Device (Pixel 5): proposal action and confirmation dialog verified, Cancelar writes nothing; final confirm NOT tapped because the safety preconditions failed (stored passphrase, real upcoming jam); the run itself is JVM-tested only. See device-check.md",
       "Independent validator accepted on 14 October 2026: CI=true ./init.sh exit 0 (three tools wired, 821 tests), forced rerun of touched modules green, Konsist rule 19 shown failing then green, D-13/D-17/D-24 checked, dialog verified on device (02-dialog.png). Open gap (user decision pending): the apply run itself was not exercised on a device because the Pixel holds a stored passphrase and the upcoming jam is the real published 2026-10-31 jam; covered by JVM tests only. Orchestrator removed an unused import and fixed a KDoc reference."
     ]
+  },
+  {
+    "id": "assistant-create-jam",
+    "area": "assistant",
+    "title": "The assistant proposes creating the next jam (date, time, venue)",
+    "user_visible_behavior": "In the Asistente chat the admin can ask for a new jam date. The agent asks for the date when missing and proposes the time and venue of the last jam, then answers with a 'Crear la jam' proposal (fecha, hora, lugar). The admin confirms in a dialog and the jam row is created in the Sheet as BORRADOR; a list proposal can then be loaded into it with Usar esta lista.",
+    "depends_on": [
+      "assistant-apply-proposal"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Apps Script gains createJam(fecha, hora, lugar) behind the existing passphrase guard and lock: validates YYYY-MM-DD and HH:MM, non-empty venue, date not in the past (Buenos Aires), refuses a duplicate fecha; appends the Jams row with estado BORRADOR and creates no setlist tab (addSong still does); node tests cover each refusal and the write, shown failing first",
+      "A new repository function and a SetlistActionRegistry entry (D-13); the registry completeness test is updated; the assistant feature reaches it through a narrow contract like SetlistSongAdder, never SetlistRepository/AdminWriter (Konsist rules intact)",
+      "The agent's structured response can carry a jam proposal (date, time, venue); defaults come from the last jam via a read-only tool; the agent package stays read-only (D-24); the date must be confirmed by the admin, never invented",
+      "If another future jam exists, creation is allowed (user decision) and the UI/agent say the new one stays held back while the earlier one is upcoming",
+      "Docs: apps-script-api, sheet-schema, domain-model authority table, D-25 in the bitácora, a migration guide for the user to paste the new Post.gs and redeploy with a check string",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (no stored passphrase + demo jam, or stop at the confirmation dialog)"
+    ]
   }
 ]
