@@ -254,4 +254,36 @@ class AssistantMappingTest {
         val checking = chat(turns, service = ServiceState.Checking)
         assertNull((checking.turns.single().reply as ReplyUiModel.Failed).retry)
     }
+
+    @Test
+    fun `the apply copy is written out for singular and plural`() {
+        val date = java.time.LocalDate.of(2026, 10, 31)
+        assertEquals(
+            "Listo: se agregaron 11 temas a la jam del sábado 31 de octubre. 1 ya estaba en la lista.",
+            ApplyOutcomeCopy.success(11, 1, date),
+        )
+        assertEquals("Listo: se agregó 1 tema a la jam del sábado 31 de octubre.", ApplyOutcomeCopy.success(1, 0, date))
+        assertEquals(
+            "No se agregó ningún tema a la jam del sábado 31 de octubre. 2 ya estaban en la lista.",
+            ApplyOutcomeCopy.success(0, 2, date),
+        )
+        assertEquals("Se agregaron 10 de 11 temas. 1 no se agregó.", ApplyOutcomeCopy.partial(10, 11, 1))
+        assertEquals("Se agregaron 8 de 11 temas. 3 no se agregaron.", ApplyOutcomeCopy.partial(8, 11, 3))
+        assertEquals("Detuviste la carga: se agregaron 4 de 11 temas.", ApplyOutcomeCopy.stopped(4, 11))
+        assertEquals("Agregar 1 tema", ApplyCopy.applyConfirm(1))
+        assertEquals(
+            "3 ya están en la lista y no se agregan: A, B, C.",
+            ApplyCopy.applySkipped(listOf("A", "B", "C")),
+        )
+    }
+
+    @Test
+    fun `a success shows no action and no pending run draws the summary only`() {
+        val turns = listOf(answered(1, proposal(songs = 2)))
+        val ready = ApplyInputs(snapshot = snapshot())
+        val action = (chat(turns).turns.single().reply as ReplyUiModel.Proposal).apply
+        assertEquals(ApplyUiModel.None, action)
+        val withSnapshot = assistantModel(true, turns, available, "", handlers, ready) as AssistantUiModel.Chat
+        assertTrue((withSnapshot.turns.single().reply as ReplyUiModel.Proposal).apply is ApplyUiModel.Action)
+    }
 }

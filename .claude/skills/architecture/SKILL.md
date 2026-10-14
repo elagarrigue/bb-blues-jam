@@ -427,6 +427,22 @@ visible; the activity declares `windowSoftInputMode="adjustResize"` (without it 
 `TabIcon.ASSISTANT` maps to `Icons.Filled.Star`. Service status amendment: `SetlistAssistant.checkStatus()` (`AssistantStatus`, a token-free `GET /v1/models` in `AssistantStatusProbe`) feeds `AssistantChat.service`; the tab shows a banner and disables `Enviar` unless Available; `AssistantHttp` timeouts are 60 s. Konsist: `AMBER_ROLE_ALLOWLIST["feature/assistant"] = {key, primaryAction,
 onPrimaryAction}` (shown failing first).
 
+As built by `assistant-apply-proposal` (14 October 2026; phase 2): **loading a proposal goes through a narrow contract, not
+the repository.** `:core:data` `setlist/SetlistSongAdder` is a `fun interface` (`suspend addSong(jamDate, songId, key):
+AddSongOutcome`) with no implementation there and no `dataModule` binding; `:app` binds it with `single<SetlistSongAdder> {
+RegistrySongAdder(get()) }`, which dispatches `SetlistAction.AddSong` through the `SetlistActionRegistry` (D-13) and
+returns the original outcome. `:feature:assistant` gets only that mutation (no remove, publish or clear). Konsist rule 19,
+`assistant-feature-applies-through-contract`: no reference, import included, to `core.data.setlist.SetlistRepository`,
+`core.data.admin.AdminWriter` or their wildcards in that feature's main or test sources (shown failing first,
+`docs/evidence/assistant-apply-proposal/konsist-failing-run.txt`); `assistant-reads-only` is unchanged. In the feature:
+pure `applyPlan(songs, snapshot)` (`Unknown`, `Blocked(reason)`, `Ready`: append only, duplicates by song id skipped),
+`ProposalApplier(adder, scope)` a Koin `single` (`runs: StateFlow<Map<turnId, ApplyRun>>`, `apply` false while any run
+runs, `stop`), one add at a time in proposal order; per-song refusals (`unknown_song`, `invalid_song`, `invalid_key`)
+continue, a server duplicate is Skipped, every other outcome aborts the run, a cancelled scope marks it Interrupted (never a
+success). `ApplyHandlers` is the only caller of `apply`, from the dialog's Confirm, re-planning from the latest snapshot.
+`AssistantPresenter(chat, applier, jams)` keeps the open dialog's turn in one saveable `Long?`. Copy in `ApplyCopy` and
+`ApplyOutcomeCopy`, colours in `ApplyDefaults` (no amber), views in `ApplyViews` and `ApplyConfirmationDialog`.
+
 ## Where Each Piece Goes
 
 - A new domain type or rule → `:core:model`, with a unit test.
@@ -619,14 +635,14 @@ constant escapes, and literals inside `:core:ui` components are not checked. All
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 18 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 19 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
 `jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
 `amber-roles-allowlisted`, with `next-jam-read-only-list`; the 16th,
 `no-dp-literal-outside-core-ui`, with `list-states`; the 17th, `navigation-only-in-app` (outside
 `:app` and `:konsist-test`, no import of `androidx.navigation.`; an import text match, a fully
 qualified use escapes but would not compile, because only `:app` declares the library), with
-`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below); the
+`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below); the
 two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able

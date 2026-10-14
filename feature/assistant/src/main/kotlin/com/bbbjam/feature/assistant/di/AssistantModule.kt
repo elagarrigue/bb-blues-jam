@@ -3,6 +3,7 @@ package com.bbbjam.feature.assistant.di
 import android.util.Log
 import com.bbbjam.feature.assistant.AssistantChat
 import com.bbbjam.feature.assistant.AssistantPresenter
+import com.bbbjam.feature.assistant.ProposalApplier
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,5 +28,16 @@ val assistantModule = module {
             ),
         )
     }
-    factory { AssistantPresenter(get()) }
+    // The load of a proposal outlives the tab too; `SetlistSongAdder` is bound in `:app` to the action registry.
+    single {
+        ProposalApplier(
+            adder = get(),
+            scope = CoroutineScope(
+                SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+                    Log.e(LOG_TAG, "assistant apply failed: ${error::class.java.name}")
+                },
+            ),
+        )
+    }
+    factory { AssistantPresenter(get(), get(), get()) }
 }

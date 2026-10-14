@@ -16,8 +16,16 @@ import org.junit.Test
 class AssistantPresenterTest {
     private val assistant = FakeSetlistAssistant()
 
-    private fun flow(chat: AssistantChat) =
-        moleculeFlow(RecompositionMode.Immediate) { AssistantPresenter(chat).present(Unit) }
+    private fun flow(chat: AssistantChat) = moleculeFlow(RecompositionMode.Immediate) {
+        AssistantPresenter(
+            chat,
+            ProposalApplier(
+                FakeSetlistSongAdder(),
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
+            ),
+            FakeJamsRepository(),
+        ).present(Unit)
+    }
 
     private fun AssistantUiModel.asChat() = this as AssistantUiModel.Chat
 
@@ -41,6 +49,7 @@ class AssistantPresenterTest {
         val chat = AssistantChat(FakeSetlistAssistant(isConfigured = false), ChatScope(testScheduler).scope)
         flow(chat).test {
             assertTrue(awaitItem() is AssistantUiModel.NotConfigured)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -135,6 +144,7 @@ class AssistantPresenterTest {
         flow(chat).test {
             val back = awaitItem().asChat()
             assertTrue(back.turns.single().reply is ReplyUiModel.Proposal)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

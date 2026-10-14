@@ -14,6 +14,7 @@ internal fun assistantModel(
     service: ServiceState,
     draft: String,
     handlers: AssistantHandlers,
+    apply: ApplyInputs = ApplyInputs(),
 ): AssistantUiModel {
     if (!isConfigured) {
         return AssistantUiModel.NotConfigured(
@@ -22,6 +23,7 @@ internal fun assistantModel(
         )
     }
     val pending = turns.any { it.state == ChatTurn.State.Pending }
+    val applicableTurnId = turns.applicableTurnId()
     val available = service == ServiceState.Known(AssistantStatus.Available)
     return AssistantUiModel.Chat(
         title = AssistantCopy.TITLE,
@@ -36,7 +38,13 @@ internal fun assistantModel(
                 id = turn.id,
                 authorLabel = AssistantCopy.AUTHOR_YOU,
                 request = turn.request,
-                reply = turn.state.toReply(turn.id, isLast = index == turns.lastIndex && available, handlers),
+                reply = turn.state.toReply(
+                    turn.id,
+                    isLast = index == turns.lastIndex && available,
+                    handlers,
+                    apply,
+                    isApplicable = turn.id == applicableTurnId,
+                ),
             )
         },
         composer = ComposerUiModel(
@@ -65,7 +73,13 @@ private fun ServiceState.toStatus(handlers: AssistantHandlers): StatusUiModel = 
 private fun banner(message: String, handlers: AssistantHandlers) =
     StatusUiModel.Banner(message, AssistantCopy.RETRY, handlers.status)
 
-private fun ChatTurn.State.toReply(id: Long, isLast: Boolean, handlers: AssistantHandlers): ReplyUiModel {
+private fun ChatTurn.State.toReply(
+    id: Long,
+    isLast: Boolean,
+    handlers: AssistantHandlers,
+    apply: ApplyInputs,
+    isApplicable: Boolean,
+): ReplyUiModel {
     fun retry() = if (isLast) RetryUiModel(AssistantCopy.RETRY, handlers.retry(id)) else null
     return when (this) {
         ChatTurn.State.Pending -> ReplyUiModel.Pending(
@@ -76,7 +90,7 @@ private fun ChatTurn.State.toReply(id: Long, isLast: Boolean, handlers: Assistan
         )
 
         is ChatTurn.State.Answered -> when (val answer = reply) {
-            is AssistantReply.Proposal -> answer.toModel()
+            is AssistantReply.Proposal -> answer.toModel(applyParts(id, answer, isApplicable, apply, handlers))
             is AssistantReply.Failed -> ReplyUiModel.Failed(answer.failure.message(), retry())
             AssistantReply.NotConfigured -> ReplyUiModel.Failed(AssistantCopy.NOT_CONFIGURED_MESSAGE, null)
         }
@@ -87,7 +101,7 @@ private fun ChatTurn.State.toReply(id: Long, isLast: Boolean, handlers: Assistan
     }
 }
 
-private fun AssistantReply.Proposal.toModel() = ReplyUiModel.Proposal(
+private fun AssistantReply.Proposal.toModel(parts: ApplyParts) = ReplyUiModel.Proposal(
     authorLabel = AssistantCopy.AUTHOR_ASSISTANT,
     heading = if (songs.isEmpty()) null else AssistantCopy.proposalHeading(songs.size),
     songs = songs.mapIndexed { index, song ->
@@ -98,12 +112,15 @@ private fun AssistantReply.Proposal.toModel() = ReplyUiModel.Proposal(
             key = song.key.value,
             keyDescription = SongListText.keyDescription(song.key.value),
             reason = song.reason,
+            applyStatus = parts.statuses[song.songId],
         )
     },
     message = message,
     questionsHeading = if (questions.isEmpty()) null else AssistantCopy.QUESTIONS_HEADING,
     questions = questions,
     discardedNote = if (rejectedSongIds.isEmpty()) null else AssistantCopy.discarded(rejectedSongIds.size),
+    apply = parts.apply,
+    summary = parts.summary,
 )
 
 // The status code of Unavailable is never shown.

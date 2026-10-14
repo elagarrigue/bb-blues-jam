@@ -1444,13 +1444,19 @@
     "depends_on": [
       "assistant-admin-tab"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The apply path goes only through the action contract (D-13) and repository functions; the feature module does not import :app",
       "Explicit confirmation before any write; the agent never triggers a write (D-24)",
       "Partial failures are reported per song and never reported as success",
       "Unit tests cover ordering, duplicates already in the setlist, and failures",
       "Device check against the debug demo jam only, never the real Sheet"
+    ],
+    "evidence": [
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 821 tests, 0 failures (baseline 789); docs/evidence/assistant-apply-proposal/gate-final.txt",
+      "Konsist rule 19 assistant-feature-applies-through-contract shown failing first (konsist-failing-run.txt), then green; assistant-reads-only untouched",
+      "Device (Pixel 5): proposal action and confirmation dialog verified, Cancelar writes nothing; final confirm NOT tapped because the safety preconditions failed (stored passphrase, real upcoming jam); the run itself is JVM-tested only. See device-check.md",
+      "Independent validator accepted on 14 October 2026: CI=true ./init.sh exit 0 (three tools wired, 821 tests), forced rerun of touched modules green, Konsist rule 19 shown failing then green, D-13/D-17/D-24 checked, dialog verified on device (02-dialog.png). Open gap (user decision pending): the apply run itself was not exercised on a device because the Pixel holds a stored passphrase and the upcoming jam is the real published 2026-10-31 jam; covered by JVM tests only. Orchestrator removed an unused import and fixed a KDoc reference."
     ]
   }
 ]

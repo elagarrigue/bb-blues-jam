@@ -60,6 +60,8 @@ sealed interface ReplyUiModel : UiModel {
         val questionsHeading: String?,
         val questions: List<String>,
         val discardedNote: String?,
+        val apply: ApplyUiModel = ApplyUiModel.None,
+        val summary: ApplySummaryUiModel? = null,
     ) : ReplyUiModel
 
     data class Failed(val message: String, val retry: RetryUiModel?) : ReplyUiModel
@@ -81,6 +83,7 @@ data class ProposedSongUiModel(
     val key: String,
     val keyDescription: String,
     val reason: String,
+    val applyStatus: ApplyStatusUiModel? = null,
 )
 
 /** The field and the "Enviar" button. */

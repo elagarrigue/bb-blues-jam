@@ -66,4 +66,38 @@ class AssistantDefaultsTest {
         assertEquals(colors.text, banner.action)
         assertEquals(colors.textMuted, banner.checking)
     }
+
+    @Test
+    fun `the apply button and dialog are secondary and never amber`() {
+        val enabled = ApplyDefaults.applyButton(enabled = true)
+        assertEquals(colors.surfaceRaised, enabled.fill)
+        assertEquals(colors.text, enabled.content)
+        val disabled = ApplyDefaults.applyButton(enabled = false)
+        assertEquals(colors.surface, disabled.fill)
+        assertEquals(colors.textMuted, disabled.content)
+        val dialog = ApplyDefaults.applyDialog()
+        assertEquals(colors.surfaceRaised, dialog.container)
+        assertEquals(colors.text, dialog.title)
+        assertEquals(colors.textMuted, dialog.lines)
+        assertEquals(colors.text, dialog.confirm)
+        assertEquals(colors.text, dialog.cancel)
+        assertEquals(colors.textMuted, ApplyDefaults.applyNote())
+    }
+
+    @Test
+    fun `the summary and status colours follow the tone`() {
+        assertEquals(colors.text, ApplyDefaults.summary(ApplyTone.NEUTRAL))
+        assertEquals(colors.text, ApplyDefaults.summary(ApplyTone.SUCCESS))
+        assertEquals(colors.error, ApplyDefaults.summary(ApplyTone.FAILURE))
+        assertEquals(colors.textMuted, ApplyDefaults.summary(ApplyTone.MUTED))
+        assertEquals(colors.error, ApplyDefaults.status(ApplyStatusKind.FAILED))
+        for (kind in listOf(
+            ApplyStatusKind.PROGRESS,
+            ApplyStatusKind.DONE,
+            ApplyStatusKind.SKIPPED,
+            ApplyStatusKind.NOT_ATTEMPTED,
+        )) {
+            assertEquals(colors.textMuted, ApplyDefaults.status(kind))
+        }
+    }
 }

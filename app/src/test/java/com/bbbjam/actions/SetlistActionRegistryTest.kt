@@ -116,9 +116,10 @@ class SetlistActionRegistryTest {
     }
 }
 
-private data class RecordedCall(val mutation: SetlistMutation, val arguments: List<Any?>)
+internal data class RecordedCall(val mutation: SetlistMutation, val arguments: List<Any?>)
 
-private class RecordingSetlistRepository : SetlistRepository {
+internal class RecordingSetlistRepository : SetlistRepository {
+    var addOutcome: AddSongOutcome = AddSongOutcome.Added(7)
     val calls = mutableListOf<RecordedCall>()
 
     private fun record(mutation: SetlistMutation, vararg args: Any?) {
@@ -127,7 +128,7 @@ private class RecordingSetlistRepository : SetlistRepository {
 
     override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         record(SetlistMutation.ADD_SONG, jamDate, songId, key)
-        return AddSongOutcome.Added(7)
+        return addOutcome
     }
 
     override fun observeAdds() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistAdd>>()

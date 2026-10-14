@@ -37,4 +37,7 @@ internal fun testHandlers() = AssistantHandlers(
     retry = { id -> EventHandler(id) {} },
     composer = EventHandler {},
     status = EventHandler {},
+    apply = { id -> EventHandler(id) {} },
+    confirmation = { id -> EventHandler(id) {} },
+    stop = { id -> EventHandler(id) {} },
 )

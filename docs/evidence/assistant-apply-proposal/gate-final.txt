@@ -1,0 +1,16 @@
+Repository: /c/Users/Emmanuel/AndroidStudioProjects/BBBluesJam
+
+== Build ==
+Wrote HTML report to file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/app/build/reports/lint-results-debug.html
+Wrote SARIF report to file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/app/build/reports/lint-results-debug.sarif
+
+== Check ==
+
+== Verification tools status ==
+  konsist: wired
+  detekt: wired
+  ktlint: wired
+
+Baseline OK.
+Startup command: ./gradlew :app:installDebug   (requires a connected device or emulator)
+exit 0

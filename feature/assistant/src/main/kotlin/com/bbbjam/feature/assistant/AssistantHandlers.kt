@@ -8,4 +8,7 @@ internal class AssistantHandlers(
     val retry: (Long) -> EventHandler<RetryUiModel.Event>,
     val composer: EventHandler<ComposerUiModel.Event>,
     val status: EventHandler<StatusUiModel.Banner.Event>,
+    val apply: (Long) -> EventHandler<ApplyUiModel.Action.Event>,
+    val confirmation: (Long) -> EventHandler<ConfirmationUiModel.Event>,
+    val stop: (Long) -> EventHandler<ApplySummaryUiModel.Event>,
 )

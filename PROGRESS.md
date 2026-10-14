@@ -4,6 +4,18 @@ The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no
 
 # Progress Log
 
+## 14 October 2026 - assistant-apply-proposal accepted (device run pending)
+
+Independent validator accepted (821 tests). The on-device apply run is still open: on the Pixel a confirm would write to the real published 2026-10-31 jam, so it was not tapped; closing it needs a device with no stored passphrase and the demo draft jam, or the user running it on the real jam. Next: assistant-create-jam (D-25).
+
+## 14 October 2026 - assistant-apply-proposal passing (awaiting validation)
+
+Implemented the load of the assistant's proposal into the upcoming setlist. `:core:data` `SetlistSongAdder` (fun interface, no binding there); `:app` `RegistrySongAdder` over `SetlistActionRegistry`, bound in `appModule`. `:feature:assistant`: pure `applyPlan` (append only, duplicates skipped, blocked states), `ProposalApplier` (Koin single, sequential, per-song refusals continue, other outcomes abort, `Detener`, Interrupted on cancellation), `ApplyHandlers` (the only caller of `apply`, from the dialog's Confirm), confirmation `AlertDialog` (no amber), per-song captions, summary live region, `Reintentar los que faltan`. Konsist rule 19 `assistant-feature-applies-through-contract` shown failing first. Docs: DESIGN.md, architecture skill.
+
+Verification: baseline `CI=true ./init.sh` exit 0 (789 tests); final exit 0, konsist/detekt/ktlint wired, 821 tests, 0 failures. First gate runs failed detekt (ReturnCount, TooManyFunctions, LongMethod, MaxLineLength, loop jumps) and were fixed by splitting files, no rule changed.
+
+**Device: the final confirm was NOT tapped.** The safety preconditions failed: `admin_session.preferences_pb` exists (a stored passphrase) and the startup log showed the REAL upcoming jam 2026-10-31 (no `(demo)`), so a confirm would have written to the real Sheet. Verified on the device: one real request (proposal in under 12 s), `Usar esta lista`, the dialog (10 to add, list has 12, 2 skipped, published warning) and `Cancelar` with no write. The run itself (progress, abort, Detener, retry) is covered only by JVM tests. `local.properties` md5 restored (569913ae...). Evidence in `docs/evidence/assistant-apply-proposal/`.
+
 ## 14 October 2026 - assistant-admin-tab accepted
 
 Independent validator accepted (gate rerun, 789 tests). D3 passed on the Pixel 5 after the DevExpert outage of 13 October: one real request returned a validated 12-song proposal, so the Jackson-excluded Koog path works on Android. Non-blocking notes fixed by the orchestrator (unused imports, stale evidence references). Next: assistant-apply-proposal.

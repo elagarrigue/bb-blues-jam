@@ -702,7 +702,7 @@ instrument strip can grow.
 ## Asistente (phase 2, `assistant-admin-tab`)
 
 An admin-only fourth tab, **Asistente**, a chat over the setlist assistant. It follows the admin palette
-automatically and writes nothing (D-24); "Usar esta lista" is a later slice.
+automatically and writes nothing by itself (D-24); loading a proposal is the admin's confirmed action (see "Cargar la propuesta").
 
 - Column: title `Asistente` (`h1`, `text`, heading), a `LazyColumn` of turns (`md` apart), the composer pinned at the
   bottom above the keyboard (`imePadding`; the bar is not drawn while the keyboard is up). The list scrolls to the
@@ -743,3 +743,20 @@ The admin status block sits directly beneath the Próxima jam header. It always 
 ### Extra participants (`admin-edit-extra-participants`)
 
 On the admin's song detail (an admin song row until `song-detail-replaces-row-expansion`), each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). After `Cambiar formación`, `Agregar a Otros` opens a modal `AlertDialog` (12 October 2026, `extras-dialog-and-lines`; `surfaceRaised` container, `text` title/`Agregar`/`Cancelar`, muted disabled `Agregar`, colours from `AdminControlsDefaults.extraDialog()`, no amber) drawn beside the list, not as a list item, with two labelled outlined fields (`Nombre`, `Instrumento`; `AdminControlsDefaults.extraField()`). Back and a tap outside act as `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.
+
+### Cargar la propuesta (`assistant-apply-proposal`)
+
+- **Action** under the latest proposal with songs (never while a turn is pending): full-width secondary button
+  `Usar esta lista` (`Reintentar los que faltan` after a run that failed, stopped or aborted), `surfaceRaised` fill,
+  `text` content, `shapes.md`, 48dp; disabled `surface`/`textMuted`. **Not amber**: `Enviar` stays the only primary
+  action; the allowlist `feature/assistant = {key, primaryAction, onPrimaryAction}` is unchanged.
+- **Blocked note** instead of the button (no upcoming jam, unreadable list, every song already listed): `body`, `textMuted`.
+- **Confirmation dialog**: Material 3 `AlertDialog`, `surfaceRaised` container, title `text`, lines `textMuted`,
+  confirm (`Agregar N temas`) and `Cancelar` in `text` (it adds, it does not destroy: not `error`, not amber).
+  Lines: what is added and where, existing count, songs skipped as duplicates, and the published-list warning.
+  Colours in `ApplyDefaults.applyDialog()`. Back, outside tap and `Cancelar` write nothing.
+- **Progress**: per-song caption (`caption`) under the reason, part of the song's merged node: `Agregando…`, `Agregado`,
+  `Ya estaba en la lista`, `Sin intentar` in `textMuted`; `No se agregó: ...` in `error`. One polite live region
+  summary (`body`): `text` while running and for `Listo`, `error` for partial or cut runs, `textMuted` when stopped;
+  `Detener` is an underlined 48dp text action in `text` while running. Never `Listo` when any song failed.
+

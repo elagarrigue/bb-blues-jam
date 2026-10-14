@@ -155,6 +155,15 @@ class ModuleIsolationTest {
     }
 
     @Test
+    fun `the assistant feature applies a proposal only through the song adder contract`() {
+        scope.files
+            .filter { it.modulePath == FEATURE_ASSISTANT }
+            .assertFalse(testName = "assistant-feature-applies-through-contract") { file ->
+                ASSISTANT_FEATURE_FORBIDDEN.containsMatchIn(file.text)
+            }
+    }
+
+    @Test
     fun `only the app imports the navigation library`() {
         scope.files
             .filter { it.modulePath != APP && it.modulePath != KONSIST_TEST }
@@ -356,6 +365,12 @@ class ModuleIsolationTest {
             .map { "com.bbbjam.core.data.$it" }
         val ASSISTANT_FORBIDDEN_QUALIFIED =
             Regex("""\bcom\.bbbjam\.core\.data\.(setlist|admin|remote|cache)\b""")
+
+        const val FEATURE_ASSISTANT = "feature/assistant"
+
+        /** The repository and the writer the assistant feature must never reach (D-13, D-24): imports included. */
+        val ASSISTANT_FEATURE_FORBIDDEN =
+            Regex("""\bcom\.bbbjam\.core\.data\.(setlist\.(SetlistRepository|\*)|admin\.(AdminWriter|\*))""")
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")

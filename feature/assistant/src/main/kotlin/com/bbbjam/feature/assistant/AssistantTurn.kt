@@ -114,6 +114,7 @@ private fun ProposalContent(reply: ReplyUiModel.Proposal, card: AssistantDefault
     reply.discardedNote?.let { note ->
         Text(text = note, style = typography.caption, color = AssistantDefaults.notice().caption)
     }
+    ApplyContent(reply.apply, reply.summary)
 }
 
 /** One proposed song: one merged, non-clickable node read in visual order. */
@@ -149,6 +150,9 @@ private fun SongRow(song: ProposedSongUiModel) {
         }
         Text(text = song.artist, style = typography.body, color = style.artist)
         Text(text = song.reason, style = typography.body, color = style.reason)
+        song.applyStatus?.let { status ->
+            Text(text = status.text, style = typography.caption, color = ApplyDefaults.status(status.kind))
+        }
     }
 }
 
@@ -156,7 +160,7 @@ private const val TITLE_MAX_LINES = 2
 
 /** An underlined text action with a 48dp target, in `text` (the primary action is "Enviar"). */
 @Composable
-private fun TextAction(label: String, color: Color, onClick: () -> Unit) {
+internal fun TextAction(label: String, color: Color, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
