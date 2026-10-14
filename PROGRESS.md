@@ -28,6 +28,10 @@ The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no
 
 # Progress Log
 
+## 14 October 2026 - jam-status-created accepted (redeploy deferred)
+
+Independent validator accepted on revalidation (892 JVM, 199 node). Redeploy of Code/Jams/Post owed, combined with admin-set-jam-status. Next: admin-set-jam-status.
+
 ## 14 October 2026 - assistant-create-jam accepted, script redeployed
 
 Independent validator accepted (866 JVM tests, 192 node tests). The user redeployed Post.gs; the no-write deployProbe lists createJam and checkCreateJam. Creating a jam from the app now writes a real BORRADOR row. Open from phase 2: the on-device apply and create runs were stopped at their dialogs on the Pixel (stored passphrase, real jam); they are covered by JVM and node tests.
