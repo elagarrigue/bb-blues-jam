@@ -36,6 +36,10 @@ The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no
 
 # Progress Log
 
+## 14 October 2026 - D-26 script redeployed and verified
+
+The user published the combined Code/Jams/Post redeploy. No-write checks passed (docs/evidence/admin-set-jam-status/deploy-check.md): invalid_jam_statuses for jamStatuses=9, deployProbe lists setJamStatus, and 2026-10-31 is still PUBLICADA with 12 songs. CREADA may now be used in the Sheet and from the app.
+
 ## 14 October 2026 - admin-set-jam-status accepted (combined redeploy owed)
 
 Independent validator accepted on revalidation (910 JVM, 207 node). The user owes the single redeploy of Code/Jams/Post for jam-status-created and admin-set-jam-status; then the orchestrator runs the no-write deploy checks. Nobody types CREADA in the Sheet before it.
