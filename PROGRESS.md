@@ -36,6 +36,10 @@ The Proxima jam strip's extra chip now uses the `slotFilled` fill (textMuted, no
 
 # Progress Log
 
+## 14 October 2026 - fix: NetworkOnMainThreadException on admin writes
+
+The user tapped "Pasar a creada" (then confirmed the unpublish dialog) on the Pixel and the app crashed with `NetworkOnMainThreadException` (`docs/evidence/fix-network-on-main-thread/device-crash.txt`). Cause: every `DataScope` write path starts with `CoroutineStart.UNDISPATCHED` in a scope whose dispatcher is `Dispatchers.IO`, so it runs on the caller's (main) thread while its context already says IO; `OkHttpAppsScriptTransport.execute`'s `withContext(Dispatchers.IO)` then does not switch. Writes only worked when something suspended first (usually the DataStore passphrase read). Fix: `yield()` inside the transport's `withContext`, which always dispatches to the IO pool. Regression test `OkHttpAppsScriptTransportTest` reproduces the DataScope pattern; shown failing without the fix (`regression-test-failing-run.txt`) and passing with it. `CI=true ./init.sh` exit 0, three tools wired (`gate.txt`). The read-only GET after the crash shows 2026-10-31 still PUBLICADA (the request never completed). Fixed build installed on the Pixel; the user retries the status change.
+
 ## 14 October 2026 - D-26 script redeployed and verified
 
 The user published the combined Code/Jams/Post redeploy. No-write checks passed (docs/evidence/admin-set-jam-status/deploy-check.md): invalid_jam_statuses for jamStatuses=9, deployProbe lists setJamStatus, and 2026-10-31 is still PUBLICADA with 12 songs. CREADA may now be used in the Sheet and from the app.

@@ -2,7 +2,15 @@ package com.bbbjam.core.data.remote
 
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Fixtures
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -168,9 +176,38 @@ class OkHttpAppsScriptTransportTest {
         assertEquals(TransportResult.Failed(DataFailure.Offline), transport(url).post("{}"))
     }
 
+    @Test
+    fun `an undispatched caller already in the IO context never runs the request on its own thread`() {
+        server.enqueue(MockResponse.Builder().body("{}").build())
+        val requestThread = AtomicReference<String>()
+        val client = OkHttpAppsScriptTransport.client().newBuilder()
+            .addInterceptor { chain ->
+                requestThread.set(Thread.currentThread().name)
+                chain.proceed(chain.request())
+            }
+            .build()
+        val transport = OkHttpAppsScriptTransport(client, server.url("/exec").toString())
+        val caller = Executors.newSingleThreadExecutor { Thread(it, CALLER_THREAD) }
+        try {
+            runBlocking(caller.asCoroutineDispatcher()) {
+                // The DataScope write pattern: an IO scope, started undispatched on the caller's thread.
+                CoroutineScope(Dispatchers.IO).async(start = CoroutineStart.UNDISPATCHED) {
+                    transport.post("{}")
+                }.await()
+            }
+        } finally {
+            caller.shutdown()
+        }
+
+        // Debug builds of kotlinx-coroutines append " @coroutine#n" to the thread name.
+        val thread = requestThread.get()
+        assertFalse("request ran on $thread", thread.startsWith(CALLER_THREAD))
+    }
+
     private fun transport(url: String?) = OkHttpAppsScriptTransport(OkHttpAppsScriptTransport.client(), url)
 
     private companion object {
+        const val CALLER_THREAD = "caller"
         const val TEST_VALUE = "not-a-real-passphrase"
         const val OK = """{"schemaVersion":1,"ok":true}"""
     }

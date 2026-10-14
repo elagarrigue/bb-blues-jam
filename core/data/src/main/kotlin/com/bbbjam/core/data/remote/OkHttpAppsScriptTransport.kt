@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -45,7 +46,15 @@ internal class OkHttpAppsScriptTransport(
         return execute(request)
     }
 
+    /**
+     * Runs the blocking call on [ioDispatcher]'s threads. The [yield] matters: a caller started with
+     * `CoroutineStart.UNDISPATCHED` in a scope whose dispatcher is already [ioDispatcher] (every
+     * `DataScope` write path) runs on the caller's thread while its context says IO, so
+     * `withContext` alone would not switch and the request would leave from the main thread
+     * (`NetworkOnMainThreadException`, found on device by `admin-set-jam-status`).
+     */
     private suspend fun execute(request: Request): TransportResult = withContext(ioDispatcher) {
+        yield()
         try {
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
