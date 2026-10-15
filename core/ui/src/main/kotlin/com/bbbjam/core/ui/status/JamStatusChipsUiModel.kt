@@ -24,23 +24,36 @@ data class JamStatusChipUiModel(
     val selected: Boolean,
     val enabled: Boolean,
     val isPublished: Boolean,
+    val pending: Boolean = false,
 ) : UiModel
 
-/** The chips for a jam whose confirmed status is [current]; only the statuses in [enabled] can be tapped. Pure. */
+/**
+ * The chip whose status is being applied (`jam-status-chip-loading`): it is drawn with a pulsing outline and
+ * announced with [description] ("Cambiando el estado a Creada…") instead of "Estado: Creada".
+ */
+data class PendingChip(val status: JamStatus, val description: String)
+
+/**
+ * The chips for a jam whose confirmed status is [current]; only the statuses in [enabled] can be tapped. The
+ * [pending] chip, if any, is never enabled and carries its own description. Pure.
+ */
 fun jamStatusChips(
     current: JamStatus,
     enabled: Set<JamStatus>,
     events: EventHandler<JamStatusChipsUiModel.Event>,
+    pending: PendingChip? = null,
 ): JamStatusChipsUiModel = JamStatusChipsUiModel(
     chips = listOf(JamStatus.DRAFT, JamStatus.CREATED, JamStatus.PUBLISHED).map { status ->
         val label = jamStatusBadge(status).label
+        val isPending = pending?.status == status
         JamStatusChipUiModel(
             status = status,
             label = label,
-            description = "Estado: $label",
+            description = if (isPending) pending.description else "Estado: $label",
             selected = status == current,
-            enabled = status in enabled,
+            enabled = status in enabled && !isPending,
             isPublished = status == JamStatus.PUBLISHED,
+            pending = isPending,
         )
     },
     events = events,

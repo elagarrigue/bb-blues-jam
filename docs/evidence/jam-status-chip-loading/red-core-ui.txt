@@ -1,0 +1,63 @@
+Calculating task graph as no cached configuration is available for tasks: :core:ui:testDebugUnitTest --tests *JamStatusChipsTest
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :core:ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :core:ui:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugJavaRes UP-TO-DATE
+> Task :core:ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core:ui:compileDebugUnitTestKotlin FAILED
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:122:13 No parameter with name 'pending' found.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:122:23 Unresolved reference 'PendingChip'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:125:47 Unresolved reference 'pending'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:130:94 Unresolved reference 'pending'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:131:42 Unresolved reference 'pending'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:136:100 Unresolved reference 'pending'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:143:111 No parameter with name 'pending' found.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:149:38 Unresolved reference 'outlineWidth'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:152:83 Unresolved reference 'outlineWidth'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:158:25 Unresolved reference 'pendingOutlineAlpha'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:160:33 Unresolved reference 'pendingOutlineAlpha'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:162:26 Unresolved reference 'pendingOutlineAlpha'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:163:28 Unresolved reference 'pendingOutlineAlpha'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:169:32 Unresolved reference 'pendingOutlineAlpha'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:ui:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s
+19 actionable tasks: 1 executed, 18 up-to-date
+Configuration cache entry stored.

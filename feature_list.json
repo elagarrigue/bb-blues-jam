@@ -1659,5 +1659,30 @@
       "Molecule presenter tests (D-02) for each transition, the unpublish and publish confirmations, held-back Publicada disabled, in-flight disabling and failure; tests asserting the old Pasar a… actions are amended",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (no chip tap that writes; open and cancel the confirmations only)"
     ]
+  },
+  {
+    "id": "jam-status-chip-loading",
+    "area": "feature-past-jams",
+    "title": "Animated chip border instead of the 'cambiando el estado' text while a status change sends",
+    "user_visible_behavior": "While a status change or a publish sends from the Jams tab chips, the 'Cambiando el estado…' / 'Publicando…' text line is gone: the chips are disabled and the border of the chip being applied animates (a pulsing or travelling outline) until the server answers; then the selection moves as today. With reduced motion the border is drawn static in the pending style. TalkBack still announces that the change is in progress.",
+    "depends_on": [
+      "jam-status-chips"
+    ],
+    "status": "accepted",
+    "evidence": [
+      "Red first: docs/evidence/jam-status-chip-loading/red-core-ui.txt (compile failure, pendingOutlineAlpha/PendingChip missing) and red-presenter.txt (3 presenter tests failing); green-core-ui.txt, green-presenter.txt after the code",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired (gate.txt); 1127 testcases from */build/test-results, 0 failures (1121 before)",
+      "Device (Pixel, debug admin, real Sheet, no write, idle only): installDebug, Jams tab opened by one tab tap, no chip tapped; dump and screenshot show the three chips unchanged (Borrador selected with check on 31/10, Creada on 13/11, held-back Publicada disabled with its reason) and no Cambiando/Publicando text; startup jams lines identical to the lines at the first launch; local.properties md5 569913ae unchanged. The pending state and the animation were NOT seen on device (JVM tests only); previews SendingPreview and PublishingPreview in JamStatusChips.kt not rendered here",
+      "Deviations: jamStatusChips takes pending as the last parameter (after events) so existing positional callers and tests stay unchanged; DESIGN.md chip-status token note is a YAML comment",
+      "Independent validator accepted on 15 October 2026: CI=true ./init.sh exit 0, three tools wired; core/ui 147 and past-jams 100 testcases, 0 failures; no rule weakened, no backend change. The pending outline, TalkBack and animator scale 0 are covered by JVM tests and two previews only (showing them on the device needs a real write)."
+    ],
+    "last_verified": "2026-10-15",
+    "verification": [
+      "Pending chip is the requested status; animation uses BluesJamTheme tokens (D-17, amber only by role), stops on answer, success, failure or leaving the screen; static under animator scale 0",
+      "No visible sending text; a polite live-region announcement in vos replaces it for TalkBack; failure cards unchanged",
+      "DESIGN.md motion exception extended to this chip state (the user asked for it), with the reasoning",
+      "Molecule tests for pending chip identity, disabled chips while sending, cleared on answer and failure; pure tests for the animation/reduced-motion helpers",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (the pending state is shown by JVM tests or a debug preview, not by a real write)"
+    ]
   }
 ]

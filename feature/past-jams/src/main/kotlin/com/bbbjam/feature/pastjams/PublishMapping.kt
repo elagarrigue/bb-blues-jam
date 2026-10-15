@@ -12,12 +12,12 @@ internal fun JamsAdminState.publishUiModel(jam: Jam): PublishUiModel? {
     val songCount = (jam.setlist as? Setlist.Available)?.songs?.size ?: 0
     val changing = statusChanges.any { it.jamDate == jam.date && it.state == JamStatusChange.State.Sending }
     val editing = edits.any { it.jamDate == jam.date && it.state == JamEdit.State.Sending }
-    if (songCount == 0 || changing || editing) return null
     val entries = publishes.filter { it.jamDate == jam.date }
-    val sending = entries.lastOrNull { it.state == SetlistPublish.State.Sending }
+    val publishing = entries.any { it.state == SetlistPublish.State.Sending }
+    val writing = changing || editing || publishing
+    if (songCount == 0 || writing) return null
     val failed = entries.lastOrNull { it.state is SetlistPublish.State.Failed }
     return when {
-        sending != null -> PublishUiModel.Publishing(PastJamsCopy.PUBLISHING)
         failed != null -> toPublishFailure(jam.date, failed)
         publish.confirming == jam.date.toString() -> confirmingPublish(jam.date, songCount)
         else -> null

@@ -1130,9 +1130,10 @@ The assistant's answer streams (15 October 2026). The final parse stays the sour
   `ApplyMapping` and `JamMapping` look only at `Answered(Proposal)` turns, so an incomplete answer never offers a target.
   `Incomplete` is not an outage: it does not trigger the service re-check. The screen follows a growing stream only when
   the list was already at the end (`shouldFollow`).
-- **UI (`:core:ui`).** `LoadingDots` (`state`) is the only moving element in the app (DESIGN.md M1): `loadingDotAlpha` is
+- **UI (`:core:ui`).** `LoadingDots` (`state`) and the pending status chip's outline (`status`, `jam-status-chip-loading`,
+  sharing `rememberDotsClock`) are the only moving elements in the app (DESIGN.md M1): `loadingDotAlpha` is
   pure, `isReducedMotion(scale)` reads `Settings.Global.ANIMATOR_DURATION_SCALE` once per composition, and with scale 0 the dots
-  are static and no transition exists.
+  and the outline are static and no transition exists.
 
 ## As built by `jam-status-chips`
 

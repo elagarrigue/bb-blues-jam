@@ -1,5 +1,7 @@
 package com.bbbjam.core.ui.status
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.theme.BluesJamColors
@@ -110,5 +112,71 @@ class JamStatusChipsTest {
             JamStatusChipDefaults.style(selected = true, published = true, enabled = true),
             JamStatusChipDefaults.style(selected = true, published = true, enabled = false),
         )
+    }
+
+    @Test
+    fun `a pending chip carries the announcement, is disabled and is the only pending one`() {
+        val model = jamStatusChips(
+            JamStatus.CREATED,
+            enabled = JamStatus.entries.toSet(),
+            pending = PendingChip(JamStatus.DRAFT, "Cambiando el estado a Borrador…"),
+            events = none,
+        )
+        val pending = model.chips.filter { it.pending }
+        assertEquals(listOf(JamStatus.DRAFT), pending.map { it.status })
+        assertEquals("Cambiando el estado a Borrador…", pending.single().description)
+        assertFalse(pending.single().enabled)
+        assertFalse(pending.single().selected)
+        assertEquals(
+            listOf("Estado: Creada", "Estado: Publicada"),
+            model.chips.filter {
+                !it.pending
+            }.map { it.description },
+        )
+        assertTrue(model.chips.none { it.pending && it.selected })
+    }
+
+    @Test
+    fun `without a pending chip none is pending`() {
+        assertTrue(jamStatusChips(JamStatus.DRAFT, setOf(JamStatus.CREATED), none).chips.none { it.pending })
+    }
+
+    @Test
+    fun `the pending style is a muted two dp outline on a raised fill, never amber`() {
+        val colors = BluesJamColors
+        for (published in listOf(true, false)) {
+            val style = JamStatusChipDefaults.style(
+                selected = false,
+                published = published,
+                enabled = false,
+                pending = true,
+            )
+            assertEquals(colors.surfaceRaised, style.fill)
+            assertEquals(colors.textMuted, style.outline)
+            assertEquals(colors.textMuted, style.label)
+            assertNotEquals(colors.published, style.fill)
+            assertNotEquals(colors.published, style.outline)
+            assertEquals(2.dp, style.outlineWidth)
+            assertFalse(style.showGlyph)
+        }
+        assertEquals(Dp.Hairline, JamStatusChipDefaults.style(false, false, true).outlineWidth)
+    }
+
+    @Test
+    fun `the pending outline alpha stays between the dots bounds and repeats each period`() {
+        for (t in 0L..2400L step 50L) {
+            val alpha = pendingOutlineAlpha(t, reduced = false)
+            assertTrue("t=$t alpha=$alpha", alpha in 0.3f..1f)
+            assertEquals(alpha, pendingOutlineAlpha(t + 1200L, reduced = false), 0.0001f)
+        }
+        assertEquals(1f, pendingOutlineAlpha(0L, reduced = false), 0.0001f)
+        assertEquals(0.3f, pendingOutlineAlpha(600L, reduced = false), 0.0001f)
+    }
+
+    @Test
+    fun `reduced motion draws a constant outline`() {
+        for (t in listOf(0L, 300L, 600L, 1199L)) {
+            assertEquals(0.6f, pendingOutlineAlpha(t, reduced = true), 0f)
+        }
     }
 }

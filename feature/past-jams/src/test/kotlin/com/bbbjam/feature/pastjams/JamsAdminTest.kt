@@ -84,6 +84,9 @@ class JamsAdminTest {
 
     private fun JamStatusUiModel.allDisabled() = chips.chips.none { it.enabled }
 
+    /** The chip drawn with the pulsing outline: the status being applied. */
+    private fun JamStatusUiModel.pending() = chips.chips.filter { it.pending }.map { it.label }
+
     private fun entry(id: Long, target: JamStatus, state: com.bbbjam.core.data.setlist.JamStatusChange.State) =
         com.bbbjam.core.data.setlist.JamStatusChange(id, upcomingDate, target, state)
 
@@ -263,30 +266,36 @@ class JamsAdminTest {
     }
 
     @Test
-    fun `sending shows one line, all chips disabled and the selection stays the confirmed one`() = runTest {
-        statuses.changes.value =
-            listOf(entry(7, JamStatus.DRAFT, com.bbbjam.core.data.setlist.JamStatusChange.State.Sending))
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
-            repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
-            val sending = expectMostRecentItem()
-            assertEquals("Publicada", sending.controls().status.selected())
-            val change = sending.controls().status
-            assertEquals("Cambiando el estado…", change.sending)
-            assertTrue(change.allDisabled())
-            assertNull(sending.controls().publish)
+    fun `a sending change marks the requested chip pending, all chips disabled, no text, selection unchanged`() =
+        runTest {
+            statuses.changes.value =
+                listOf(entry(7, JamStatus.DRAFT, com.bbbjam.core.data.setlist.JamStatusChange.State.Sending))
+            moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+                repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
+                val sending = expectMostRecentItem()
+                assertEquals("Publicada", sending.controls().status.selected())
+                val change = sending.controls().status
+                assertEquals(listOf("Borrador"), change.pending())
+                assertEquals(
+                    "Cambiando el estado a Borrador…",
+                    change.chips.chips.single { it.pending }.description,
+                )
+                assertTrue(change.allDisabled())
+                assertFalse(sending.toString().contains("Cambiando el estado…"))
+                assertNull(sending.controls().publish)
 
-            statuses.changes.value = emptyList()
-            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
-            val done = expectMostRecentItem()
-            assertEquals("Borrador", done.controls().status.selected())
-            assertEquals(listOf("Creada", "Publicada"), done.controls().status.labels())
-            assertNull(done.controls().status.sending)
-            cancelAndIgnoreRemainingEvents()
+                statuses.changes.value = emptyList()
+                repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
+                val done = expectMostRecentItem()
+                assertEquals("Borrador", done.controls().status.selected())
+                assertEquals(listOf("Creada", "Publicada"), done.controls().status.labels())
+                assertEquals(emptyList<String>(), done.controls().status.pending())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 
     @Test
-    fun `a sending publication disables the status chips`() = runTest {
+    fun `a sending publication marks Publicada pending, disables the chips and draws no text`() = runTest {
         publishes.entries.value =
             listOf(
                 com.bbbjam.core.data.setlist.SetlistPublish(
@@ -300,8 +309,9 @@ class JamsAdminTest {
             val controls = expectMostRecentItem().controls()
             assertTrue(controls.status.allDisabled())
             assertEquals("Creada", controls.status.selected())
-            assertNull(controls.status.sending)
-            assertEquals("Publicando…", (controls.publish as PublishUiModel.Publishing).status)
+            assertEquals(listOf("Publicada"), controls.status.pending())
+            assertEquals("Publicando la lista…", controls.status.chips.chips.single { it.pending }.description)
+            assertNull(controls.publish)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -370,7 +380,8 @@ class JamsAdminTest {
             val sending = awaitItem()
             assertEquals(listOf(upcomingDate), publishes.calls)
             assertEquals("Borrador", sending.controls().status.selected())
-            assertEquals("Publicando…", (sending.controls().publish as PublishUiModel.Publishing).status)
+            assertEquals(listOf("Publicada"), sending.controls().status.pending())
+            assertNull(sending.controls().publish)
             hold.complete(Unit)
             cancelAndIgnoreRemainingEvents()
         }
@@ -502,6 +513,26 @@ class JamsAdminTest {
             val status = expectMostRecentItem().controls().status
             assertEquals("Borrador", status.selected())
             assertEquals(listOf("Creada", "Publicada"), status.labels())
+            assertEquals("No se pudo cambiar el estado", checkNotNull(status.failure).title)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a failed change or publication leaves no chip pending`() = runTest {
+        statuses.changes.value = listOf(
+            entry(
+                7,
+                JamStatus.CREATED,
+                com.bbbjam.core.data.setlist.JamStatusChange.State.Failed(
+                    com.bbbjam.core.data.admin.WriteOutcome.Offline,
+                ),
+            ),
+        )
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            val status = expectMostRecentItem().controls().status
+            assertEquals(emptyList<String>(), status.pending())
             assertEquals("No se pudo cambiar el estado", checkNotNull(status.failure).title)
             cancelAndIgnoreRemainingEvents()
         }

@@ -137,16 +137,6 @@ private fun PublishControl(model: PublishUiModel) {
             }
         }
 
-        is PublishUiModel.Publishing -> Text(
-            text = model.status,
-            style = BluesJamTheme.typography.body,
-            color = note,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                .semantics { liveRegion = LiveRegionMode.Polite },
-        )
-
         is PublishUiModel.Failed -> PublishFailureCard(model)
     }
 }

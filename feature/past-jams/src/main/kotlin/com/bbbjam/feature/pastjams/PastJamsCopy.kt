@@ -1,6 +1,8 @@
 package com.bbbjam.feature.pastjams
 
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.ui.jamform.JamFormText
+import com.bbbjam.core.ui.status.jamStatusBadge
 import com.bbbjam.core.ui.text.SpanishDateNames
 import java.time.LocalDate
 import java.time.LocalTime
@@ -51,7 +53,9 @@ internal object PastJamsCopy {
     const val PUBLISH_PROMPT = "¿Publicar la lista?"
     const val PUBLISH_REVERSIBLE = "Después podés volver a cambiar el estado desde acá."
     const val PUBLISH_CONFIRM = "Publicar"
-    const val PUBLISHING = "Publicando…"
+
+    /** Announced to a screen reader on the pending Publicada chip (no visible text). */
+    const val PUBLISHING_ANNOUNCEMENT = "Publicando la lista…"
     const val PUBLISH_FAILED = "No se pudo publicar la lista"
     const val PUBLISH_CONSEQUENCE = "Los músicos siguen sin ver la lista."
     const val PUBLISH_RETRY = "Reintentar"
@@ -60,7 +64,10 @@ internal object PastJamsCopy {
     const val EMPTY_PUBLISH = "La lista no tiene temas. Agregá al menos uno antes de publicar."
     const val TO_CREATED = "Pasar a creada"
     const val TO_DRAFT = "Pasar a borrador"
-    const val STATUS_SAVING = "Cambiando el estado…"
+
+    /** Announced to a screen reader on the pending chip (no visible text): "Cambiando el estado a Creada…". */
+    fun statusChanging(target: JamStatus): String = "Cambiando el estado a ${jamStatusBadge(target).label}…"
+
     const val UNPUBLISH_PROMPT = "¿Dejar de publicar la lista?"
     const val UNPUBLISH_TO_CREATED_BODY =
         "Los músicos van a dejar de ver la lista cuando actualicen la app. Van a seguir viendo la fecha."

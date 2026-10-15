@@ -64,9 +64,12 @@ fun LoadingDots(description: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** A clock in milliseconds that loops over the period; read it inside the draw scope only. */
+/**
+ * A clock in milliseconds that loops over the dots' period; read it inside the draw scope only. Shared with the
+ * pending status chip (`jam-status-chip-loading`), which pulses on the same timing.
+ */
 @Composable
-private fun rememberDotsClock(): () -> Float {
+internal fun rememberDotsClock(): () -> Float {
     val transition = rememberInfiniteTransition(label = "loading-dots")
     val value = transition.animateFloat(
         initialValue = 0f,

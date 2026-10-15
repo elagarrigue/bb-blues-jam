@@ -4,10 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,8 +20,8 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
  * The status change controls under the card's date and venue (`jam-status-chips`): the single-select chips,
- * the note's reason line when Publicada is disabled, the "Cambiando el estado…" line while sending, and the
- * failure card.
+ * the note's reason line when Publicada is disabled and the failure card. While a change sends there is no text:
+ * the pending chip pulses its outline and announces itself (`jam-status-chip-loading`).
  */
 @Composable
 internal fun JamStatusActions(model: JamStatusUiModel) {
@@ -33,17 +31,6 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
     val actionColor = JamStatusDefaults.action().action
     JamStatusChips(model.chips)
     model.publishUnavailable?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = note) }
-    model.sending?.let { line ->
-        Text(
-            text = line,
-            style = BluesJamTheme.typography.body,
-            color = note,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                .semantics { liveRegion = LiveRegionMode.Polite },
-        )
-    }
     model.failure?.let { failure ->
         Surface(
             color = failureStyle.container,

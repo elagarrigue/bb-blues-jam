@@ -360,6 +360,7 @@ class JamEditAdminTest {
                 assertFalse(sending.manage.edit.enabled)
                 assertFalse(checkNotNull(sending.manage.delete).enabled)
                 assertTrue(sending.controls.status.chips.chips.none { it.enabled })
+                assertTrue(sending.controls.status.chips.chips.none { it.pending })
                 assertEquals("Creada", sending.controls.status.chips.chips.single { it.selected }.label)
                 assertNull(checkNotNull(sending.controls).publish)
                 val other = model.card(1)

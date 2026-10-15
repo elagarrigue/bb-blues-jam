@@ -74,6 +74,7 @@ components:
     publishedBackgroundColor: "{colors.published}"
     publishedTextColor: "{colors.onPublished}"
     rounded: "{rounded.lg}"
+    # pending chip (jam-status-chip-loading): surfaceRaised fill, textMuted label, 2dp textMuted outline pulsing 0.3 to 1
     minHeight: 48dp
   chip-filter:
     backgroundColor: "{colors.surfaceRaised}"
@@ -215,8 +216,10 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
   detail; content scrolls below it, never under the clock.
 - **Motion (M1):** tab switch, a 150 ms crossfade; song detail, slides in from the end in 250 ms
   over the tabs (which stay drawn under it) and out to the end on back. No other motion, except the
-  assistant's loading dots (`assistant-streaming`): the only moving element, shown only while a request runs,
-  stopped by `Cancelar`, and drawn static when the system animator scale is 0 (WCAG 2.2.2).
+  assistant's loading dots (`assistant-streaming`), shown only while a request runs, stopped by `Cancelar`, and
+  the pending status chip's outline (`jam-status-chip-loading`, a second exception requested by the user: it
+  replaces a text line, is bounded to one chip while one write runs, stops on the server's answer, uses
+  `textMuted`). Both are drawn static when the system animator scale is 0 (WCAG 2.2.2).
 - **Deeplinks (D1):** none yet; deferred to `action-contract-registry`.
 
 The component is `TabBar` in `:core:ui` (`com.bbbjam.core.ui.nav`); its colors come only from
@@ -425,6 +428,14 @@ hairline `text` outline, a leading check glyph and a `text` label; the selected 
 outline, a `textMuted` label; a disabled selected chip keeps its selected look and loses only the tap. The row has
 `selectableGroup` and each chip is one `Role.RadioButton` node described `Estado: Creada`, so a screen reader announces the
 state and the selection. Tapping the selected chip does nothing.
+
+While a status change or a publication sends (`jam-status-chip-loading`) no text is drawn: all three chips are disabled, the
+selection stays on the confirmed status and the chip being applied (the requested status, `Publicada` for a publication) is
+the pending chip. It is `surfaceRaised` with a 2dp `textMuted` outline (never amber, also for `Publicada`) whose alpha pulses
+from 0.3 to 1 over 1200 ms (the loading dots' timing, drawn in the draw phase), and a `textMuted` label with no glyph; it is the
+only chip with an outline while the others are disabled. At animator scale 0 the outline is constant at alpha 0.6 and no
+transition exists. The pending node is a polite live region described `Cambiando el estado a Creada…` (or `Publicando la
+lista…`) instead of `Estado: Creada`; it is disabled, not selected. The animation stops when the server answers.
 
 ### Admin controls
 
@@ -841,7 +852,7 @@ Publishing and changing the status moved here from Próxima jam, with the same v
 
 ### Publishing (`admin-publish-setlist`, as built locally)
 
-The upcoming jam's card shows its status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song can be published from its `Publicada` chip. Tapping it opens, under the chips, an inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the confirmation is open the selection does not move; choosing `Borrador` or `Creada` instead closes it and applies that chip. While the server writes, the selection stays on the confirmed chip, the chips are drawn disabled and a line says `Publicando…`. Only confirmed server write/read-back flips the cache and the selected chip. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. `Publicada` is disabled, with a `caption`/`textMuted` line under the note, on a held-back card (`Solo la próxima jam se puede publicar.`), an empty list (`Para publicar, agregá al menos un tema en Próxima jam.`) and an unreadable one (`Para publicar, la lista se tiene que poder leer.`). Amber is limited here to the `Publicar` button and the selected `Publicada` chip.
+The upcoming jam's card shows its status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song can be published from its `Publicada` chip. Tapping it opens, under the chips, an inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the confirmation is open the selection does not move; choosing `Borrador` or `Creada` instead closes it and applies that chip. While the server writes, the selection stays on the confirmed chip, the chips are drawn disabled and the `Publicada` chip is the pending one (no text line). Only confirmed server write/read-back flips the cache and the selected chip. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. `Publicada` is disabled, with a `caption`/`textMuted` line under the note, on a held-back card (`Solo la próxima jam se puede publicar.`), an empty list (`Para publicar, agregá al menos un tema en Próxima jam.`) and an unreadable one (`Para publicar, la lista se tiene que poder leer.`). Amber is limited here to the `Publicar` button and the selected `Publicada` chip.
 
 ### Changing the status (`admin-set-jam-status`)
 
@@ -851,8 +862,8 @@ Since `jam-status-chips` the status block is the chip row (see "Status chips"); 
 `AlertDialog` (`surfaceRaised`, `text` title `¿Dejar de publicar la lista?`, `textMuted` body that says what musicians stop
 seeing, `error` confirm `Pasar a creada`/`Pasar a borrador`, `text` `Cancelar`; back or a tap outside is `Cancelar`).
 While a change, a publication or an edit of the jam is sending, the three chips and the two icons are drawn disabled and
-one polite live region says `Cambiando el estado…` (or `Publicando…`); the selected chip stays on the confirmed status until
-the server confirms.
+no text is drawn: the chip being applied is the pending chip (see Status chips) and announces `Cambiando el estado a Creada…`
+(or `Publicando la lista…`); the selected chip stays on the confirmed status until the server confirms.
 A failure is the same assertive card as publishing's (`No se pudo cambiar el estado`, the reason, `La jam sigue como estaba.`,
 `Reintentar`, `Cerrar`); with a script that does not know `setJamStatus` the card says `El script de la planilla todavía no
 sabe cambiar el estado. Actualizalo con la guía y probá de nuevo.` with `Cerrar` only. No new amber role.

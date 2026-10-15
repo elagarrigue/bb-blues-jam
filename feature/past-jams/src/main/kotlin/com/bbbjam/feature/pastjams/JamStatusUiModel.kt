@@ -9,14 +9,13 @@ import com.bbbjam.core.ui.status.JamStatusChipsUiModel
  * Changing a future jam's status (`admin-set-jam-status`, D-26; single-select [chips] by
  * `jam-status-chips`): the selected chip is the confirmed status, every chip is disabled while a change,
  * a publication or an edit is sending, [publishUnavailable] says why PUBLICADA cannot be chosen, the
- * modal [confirming] dialog when leaving PUBLICADA, the [sending] line, a [failure] card and one handler
- * for every event.
+ * modal [confirming] dialog when leaving PUBLICADA, a [failure] card and one handler for every event. The
+ * chip being applied is marked pending inside [chips] (`jam-status-chip-loading`); no sending text.
  */
 data class JamStatusUiModel(
     val chips: JamStatusChipsUiModel,
     val publishUnavailable: String?,
     val confirming: StatusConfirmUiModel?,
-    val sending: String?,
     val failure: StatusFailureUiModel?,
     val events: EventHandler<Event>,
 ) : UiModel {
@@ -45,7 +44,7 @@ data class StatusFailureUiModel(
     val dismissLabel: String,
 ) : UiModel
 
-/** Publishing the upcoming jam: the inline confirmation (opened by the Publicada chip), sending line, failure. */
+/** Publishing the upcoming jam: the inline confirmation (opened by the Publicada chip) and the failure card. */
 sealed interface PublishUiModel : UiModel {
     data class Confirming(
         val prompt: String,
@@ -55,7 +54,6 @@ sealed interface PublishUiModel : UiModel {
         val cancelLabel: String,
         val events: EventHandler<Event>,
     ) : PublishUiModel
-    data class Publishing(val status: String) : PublishUiModel
     data class Failed(
         val id: Long,
         val title: String,

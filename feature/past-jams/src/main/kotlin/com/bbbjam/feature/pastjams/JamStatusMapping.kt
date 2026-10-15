@@ -8,6 +8,7 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.status.JamStatusChipsUiModel
+import com.bbbjam.core.ui.status.PendingChip
 import com.bbbjam.core.ui.status.jamStatusChips
 
 private fun actionLabel(target: JamStatus): String =
@@ -16,12 +17,15 @@ private fun actionLabel(target: JamStatus): String =
 /**
  * The status change layer for the future [jam] (`jam-status-chips`): the three chips with the confirmed status
  * selected (never anticipating the change), all drawn disabled while a change, a publication or an edit of
- * it is sending; PUBLICADA only when the card is the upcoming one, not yet published, with a readable,
- * non-empty list; the confirming dialog only while the jam is PUBLICADA; a failed or outdated entry as a card.
+ * it is sending, the requested chip marked pending while a change or publication sends
+ * (`jam-status-chip-loading`: no text line); PUBLICADA only when the card is the upcoming one, not yet
+ * published, with a readable, non-empty list; the
+ * confirming dialog only while the jam is PUBLICADA; a failed or outdated entry as a card.
  */
 internal fun JamsAdminState.jamStatusUiModel(jam: Jam, isUpcoming: Boolean): JamStatusUiModel {
     val mine = statusChanges.filter { it.jamDate == jam.date }
-    val changeSending = mine.any { it.state == JamStatusChange.State.Sending }
+    val sendingChange = mine.lastOrNull { it.state == JamStatusChange.State.Sending }
+    val changeSending = sendingChange != null
     val publishSending = publishes.any { it.jamDate == jam.date && it.state == SetlistPublish.State.Sending }
     val confirmTarget = statusConfirmTarget(status.confirming, jam.date)
         ?.takeIf { jam.status == JamStatus.PUBLISHED && it != JamStatus.PUBLISHED }
@@ -33,14 +37,24 @@ internal fun JamsAdminState.jamStatusUiModel(jam: Jam, isUpcoming: Boolean): Jam
         chips = jamStatusChips(
             current = jam.status,
             enabled = enabledChips(jam.status, busy, canPublish),
+            pending = pendingChip(sendingChange?.target, publishSending),
             events = chipEvents(jam, busy, canPublish, failed?.id),
         ),
         publishUnavailable = if (busy) null else publishUnavailable(jam, isUpcoming),
         confirming = if (confirmTarget == null || busy) null else confirmation(confirmTarget),
-        sending = if (changeSending) PastJamsCopy.STATUS_SAVING else null,
         failure = failed?.let { toFailure(it) },
         events = statusEvents(jam, failed?.id),
     )
+}
+
+/** The chip being applied: the requested status of a sending change, else Publicada for a sending publication. */
+private fun pendingChip(changeTarget: JamStatus?, publishSending: Boolean): PendingChip? = when {
+    changeTarget == JamStatus.PUBLISHED || (changeTarget == null && publishSending) ->
+        PendingChip(JamStatus.PUBLISHED, PastJamsCopy.PUBLISHING_ANNOUNCEMENT)
+
+    changeTarget != null -> PendingChip(changeTarget, PastJamsCopy.statusChanging(changeTarget))
+
+    else -> null
 }
 
 /**

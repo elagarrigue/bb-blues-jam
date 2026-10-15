@@ -21,15 +21,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.state.rememberDotsClock
+import com.bbbjam.core.ui.state.rememberReducedMotion
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 private val GlyphSize = 18.dp
@@ -58,7 +66,10 @@ fun JamStatusChips(model: JamStatusChipsUiModel, modifier: Modifier = Modifier) 
 private fun StatusChip(chip: JamStatusChipUiModel, onSelect: () -> Unit) {
     val spacing = BluesJamTheme.spacing
     val shape = BluesJamTheme.shapes.lg
-    val style = JamStatusChipDefaults.style(chip.selected, chip.isPublished, chip.enabled)
+    val style = JamStatusChipDefaults.style(chip.selected, chip.isPublished, chip.enabled, chip.pending)
+    val reduced = rememberReducedMotion()
+    // The transition exists only while the chip is pending and motion is on; it leaves with the chip.
+    val clock = if (chip.pending && !reduced) rememberDotsClock() else null
     val target = LocalMinimumInteractiveComponentSize.current
     Row(
         modifier = Modifier
@@ -66,8 +77,17 @@ private fun StatusChip(chip: JamStatusChipUiModel, onSelect: () -> Unit) {
             .widthIn(min = target)
             .clip(shape)
             .background(style.fill, shape)
-            .then(style.outline?.let { Modifier.border(Dp.Hairline, it, shape) } ?: Modifier)
-            .semantics { contentDescription = chip.description }
+            .then(
+                when {
+                    chip.pending -> Modifier.pendingOutline(style, shape, reduced, clock)
+                    style.outline != null -> Modifier.border(style.outlineWidth, style.outline, shape)
+                    else -> Modifier
+                },
+            )
+            .semantics {
+                contentDescription = chip.description
+                if (chip.pending) liveRegion = LiveRegionMode.Polite
+            }
             .selectable(
                 selected = chip.selected,
                 enabled = chip.enabled,
@@ -96,12 +116,32 @@ private fun StatusChip(chip: JamStatusChipUiModel, onSelect: () -> Unit) {
     }
 }
 
+/** Draws the pending outline in the draw phase, so the pulse never recomposes; [clock] is null when static. */
+private fun Modifier.pendingOutline(
+    style: JamStatusChipDefaults.Style,
+    shape: Shape,
+    reduced: Boolean,
+    clock: (() -> Float)?,
+): Modifier = drawWithContent {
+    drawContent()
+    val color = style.outline ?: return@drawWithContent
+    val width = style.outlineWidth.toPx()
+    val alpha = pendingOutlineAlpha(clock?.invoke()?.toLong() ?: 0L, reduced)
+    inset(width / 2f) {
+        drawOutline(
+            outline = shape.createOutline(size, layoutDirection, this),
+            color = color.copy(alpha = alpha),
+            style = Stroke(width),
+        )
+    }
+}
+
 @Composable
-private fun ChipsPreview(current: JamStatus, enabled: Set<JamStatus>) {
+private fun ChipsPreview(current: JamStatus, enabled: Set<JamStatus>, pending: PendingChip? = null) {
     BluesJamTheme {
         Surface(color = BluesJamTheme.colors.surface) {
             JamStatusChips(
-                model = jamStatusChips(current, enabled, EventHandler {}),
+                model = jamStatusChips(current, enabled, EventHandler {}, pending),
                 modifier = Modifier.padding(BluesJamTheme.spacing.md),
             )
         }
@@ -126,4 +166,10 @@ private fun PublishedDisabledPreview() = ChipsPreview(JamStatus.DRAFT, setOf(Jam
 
 @Preview
 @Composable
-private fun SendingPreview() = ChipsPreview(JamStatus.CREATED, emptySet())
+private fun SendingPreview() =
+    ChipsPreview(JamStatus.CREATED, emptySet(), PendingChip(JamStatus.DRAFT, "Cambiando el estado a Borrador…"))
+
+@Preview
+@Composable
+private fun PublishingPreview() =
+    ChipsPreview(JamStatus.CREATED, emptySet(), PendingChip(JamStatus.PUBLISHED, "Publicando la lista…"))
