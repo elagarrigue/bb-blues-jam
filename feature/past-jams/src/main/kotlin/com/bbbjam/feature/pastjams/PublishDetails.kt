@@ -1,4 +1,4 @@
-package com.bbbjam.feature.nextjam
+package com.bbbjam.feature.pastjams
 
 internal fun publishDetails(songCount: Int): String = if (songCount == 1) {
     "Los músicos van a ver el tema cuando abran o actualicen la app."

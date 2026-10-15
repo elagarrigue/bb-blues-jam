@@ -35,7 +35,7 @@ import java.time.LocalDate
 import org.koin.compose.koinInject
 
 /**
- * Anteriores: the past jams, newest first, each a muted archive row (date with the year, venue,
+ * The Jams tab (formerly Anteriores): the past jams, newest first, each a muted archive row (date with the year, venue,
  * song count and the first titles). Loading, error, empty and offline are drawn with the `:core:ui`
  * state components (`list-states`); every state can be pulled to refresh
  * (`live-refresh-during-jam`). Read-only; a row with songs opens its jam (`past-jam-detail`)
@@ -94,12 +94,20 @@ private fun PastJamsList(model: PastJamsUiModel, padding: PaddingValues) {
 
             is PastJamsUiModel.Empty -> {
                 model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+                model.admin?.let { admin ->
+                    adminUpcomingItems(admin)
+                    adminPastHeading(admin)
+                }
                 item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
             }
 
             is PastJamsUiModel.Jams -> {
                 // The notice sits above the rows: on the offline screen the cached data is the content.
                 model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
+                model.admin?.let { admin ->
+                    adminUpcomingItems(admin)
+                    adminPastHeading(admin)
+                }
                 items(model.rows, key = { it.date.toString() }) { row -> PastJamRow(row) }
             }
         }

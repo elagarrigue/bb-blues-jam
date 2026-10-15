@@ -1,4 +1,4 @@
-package com.bbbjam.feature.nextjam
+package com.bbbjam.feature.pastjams
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,13 +26,14 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 @Composable
 internal fun JamStatusActions(model: JamStatusUiModel) {
     val spacing = BluesJamTheme.spacing
-    val status = AdminControlsDefaults.status()
+    val failureStyle = JamsAdminDefaults.failure()
+    val note = JamsAdminDefaults.status()
     val actionColor = JamStatusDefaults.action().action
     model.sending?.let { line ->
         Text(
             text = line,
             style = BluesJamTheme.typography.body,
-            color = status.note,
+            color = note,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = LocalMinimumInteractiveComponentSize.current)
@@ -50,7 +51,7 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
     }
     model.failure?.let { failure ->
         Surface(
-            color = status.failureContainer,
+            color = failureStyle.container,
             shape = BluesJamTheme.shapes.md,
             modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
                 liveRegion = LiveRegionMode.Assertive
@@ -60,12 +61,12 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
                 modifier = Modifier.padding(start = spacing.md, end = spacing.md, top = spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
-                Text(text = failure.title, style = BluesJamTheme.typography.body, color = status.failureTitle)
-                Text(text = failure.message, style = BluesJamTheme.typography.body, color = status.failureMessage)
+                Text(text = failure.title, style = BluesJamTheme.typography.body, color = failureStyle.title)
+                Text(text = failure.message, style = BluesJamTheme.typography.body, color = failureStyle.message)
                 Text(
                     text = failure.consequence,
                     style = BluesJamTheme.typography.caption,
-                    color = status.failureMessage,
+                    color = failureStyle.message,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
                     failure.retryLabel?.let { label ->

@@ -460,6 +460,11 @@ publicado" a "estado de la jam", y se reemplaza la regla de que publicar no ten�
 ocultamiento se hace en Apps Script (el GET anónimo no sirve una jam `BORRADOR`) y otra vez en el
 cliente; el flag de admin solo decide qué se dibuja.
 
+### D-27 — La pestaña Anteriores pasa a ser Jams
+La pestaña Anteriores pasa a ser Jams. El admin maneja ahí las jams que vienen: estado, publicar y crear la
+nueva; Próxima jam queda para armar la lista y solo muestra el estado. Los músicos ven las jams anteriores
+igual que antes. Pedido del organizador del 14 de octubre de 2026.
+
 ---
 
 # Parte III — Harness y seguimiento

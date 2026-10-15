@@ -1,7 +1,11 @@
 package com.bbbjam.feature.pastjams
 
+import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.feature.pastjams.di.pastJamsModule
 import java.time.Clock
 import org.junit.Assert.assertNotSame
@@ -15,6 +19,10 @@ class PastJamsModuleTest {
         val dataBindings = module {
             single<JamsRepository> { FakeJamsRepository() }
             single { JamCalendar(Clock.systemUTC(), JamCalendar.BUENOS_AIRES) }
+            single<AdminSession> { FakeAdminSession() }
+            single<SetlistJamStatusRepository> { FakeJamStatusRepository() }
+            single<SetlistPublishRepository> { FakePublishRepository() }
+            single<JamCreator> { FakeJamCreator() }
         }
         val app = koinApplication { modules(pastJamsModule, dataBindings) }
         try {

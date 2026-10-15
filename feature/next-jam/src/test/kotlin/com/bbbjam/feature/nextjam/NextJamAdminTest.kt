@@ -8,7 +8,6 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
@@ -70,23 +69,7 @@ class NextJamAdminTest {
         adds: List<SetlistAdd> = emptyList(),
         onAdd: (LocalDate) -> Unit = {},
         onDismiss: (Long) -> Unit = {},
-        publishes: List<SetlistPublish> = emptyList(),
-        publishConfirming: String? = null,
-        onRequestPublish: (LocalDate) -> Unit = {},
-        onCancelPublish: (LocalDate) -> Unit = {},
-        onConfirmPublish: (LocalDate) -> Unit = {},
-        onRetryPublish: (LocalDate, Long) -> Unit = { _, _ -> },
-    ) = AdminState(
-        adds,
-        onAdd,
-        onDismiss,
-        publishes = publishes,
-        publishConfirming = publishConfirming,
-        onRequestPublish = onRequestPublish,
-        onCancelPublish = onCancelPublish,
-        onConfirmPublish = onConfirmPublish,
-        onRetryPublish = onRetryPublish,
-    )
+    ) = AdminState(adds, onAdd, onDismiss)
 
     private fun NextJamUiModel.asJam() = this as NextJamUiModel.Jam
 
@@ -98,46 +81,15 @@ class NextJamAdminTest {
 
         assertEquals(listOf("Red House", "Boogie"), (model.setlist as SetlistUiModel.Songs).rows.map { it.title })
         val admin = checkNotNull(model.admin)
-        assertEquals("Borrador", admin.status.badge)
+        assertEquals("Borrador", admin.status.badge.label)
         assertEquals("Los músicos todavía no ven esta jam.", admin.status.note)
-        assertEquals(NextJamCopy.PUBLISH, (admin.status.publish as PublishUiModel.Idle).label)
+        assertEquals("El estado y las fechas se manejan en la pestaña Jams.", admin.status.hint)
         assertEquals("Agregar tema", admin.addSong?.label)
         assertEquals(emptyList<PendingRowUiModel>(), admin.pending)
         assertEquals(emptyList<AddFailureUiModel>(), admin.failures)
 
         // D-26: a BORRADOR jam does not exist for a musician.
         assertTrue(draft.toUiModel(today) is NextJamUiModel.NoUpcomingJam)
-    }
-
-    @Test
-    fun `publish confirmation is explicit and a sending publish keeps the confirmed draft badge`() = runTest {
-        val hold = CompletableDeferred<Unit>().also { setlist.publishHold = it }
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
-            repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(redHouse, boogie)))))
-            val idleJam = expectMostRecentItem() as NextJamUiModel.Jam
-            val idle = idleJam.admin?.status?.publish as PublishUiModel.Idle
-            idle.events(PublishUiModel.Event.Request)
-            val confirmingJam = awaitItem() as NextJamUiModel.Jam
-            val confirmation = confirmingJam.admin?.status?.publish as PublishUiModel.Confirming
-            assertEquals(NextJamCopy.PUBLISH_PROMPT, confirmation.prompt)
-            assertEquals(publishDetails(2), confirmation.details)
-            assertEquals(NextJamCopy.PUBLISH_REVERSIBLE, confirmation.reversibleNote)
-
-            confirmation.events(PublishUiModel.Event.Cancel)
-            val cancelled = awaitItem() as NextJamUiModel.Jam
-            val idleAgain = cancelled.admin?.status?.publish as PublishUiModel.Idle
-            idleAgain.events(PublishUiModel.Event.Request)
-            val secondConfirmation = awaitItem() as NextJamUiModel.Jam
-            val confirm = secondConfirmation.admin?.status?.publish as PublishUiModel.Confirming
-            confirm.events(PublishUiModel.Event.Confirm)
-            confirm.events(PublishUiModel.Event.Confirm)
-            val sending = awaitItem() as NextJamUiModel.Jam
-            assertEquals(1, setlist.publishCalls.size)
-            assertEquals(NextJamCopy.DRAFT_BADGE, sending.admin?.status?.badge)
-            assertEquals(NextJamCopy.PUBLISHING, (sending.admin?.status?.publish as PublishUiModel.Publishing).status)
-            hold.complete(Unit)
-            cancelAndIgnoreRemainingEvents()
-        }
     }
 
     private fun NextJamUiModel.Jam.onlyRow() = (setlist as SetlistUiModel.Songs).rows.single()
@@ -163,53 +115,17 @@ class NextJamAdminTest {
     }
 
     @Test
-    fun `empty drafts hide publish and a failed publish stays in the status block`() {
-        val empty = snapshot(jam(Setlist.Available(emptyList()))).toUiModel(today, admin = adminState()).asJam()
-        assertNull(empty.admin?.status?.publish)
-        val unreadable = snapshot(jam(Setlist.Unavailable(SetlistProblem.INVALID_TAB)))
-            .toUiModel(today, admin = adminState()).asJam()
-        assertNull(unreadable.admin?.status?.publish)
-
-        val dismissed = mutableListOf<Long>()
-        val retries = mutableListOf<Pair<LocalDate, Long>>()
-        val entry = SetlistPublish(51, jamDate, SetlistPublish.State.Failed(WriteOutcome.Offline))
-        val model = snapshot(jam(Setlist.Available(listOf(redHouse))))
-            .toUiModel(
-                today,
-                admin = adminState(
-                    publishes = listOf(entry),
-                    onDismiss = dismissed::add,
-                    onRetryPublish = { date, id -> retries += date to id },
-                ),
-            ).asJam()
-        val failed = model.admin?.status?.publish as PublishUiModel.Failed
-        assertEquals(NextJamCopy.PUBLISH_FAILED, failed.title)
-        assertEquals(NextJamCopy.PUBLISH_OFFLINE, failed.message)
-        assertEquals(NextJamCopy.PUBLISH_CONSEQUENCE, failed.consequence)
-        failed.events(PublishUiModel.Event.Retry)
-        assertEquals(listOf(jamDate to 51L), retries)
-        failed.events(PublishUiModel.Event.Dismiss)
-        assertEquals(listOf(51L), dismissed)
-        assertTrue(model.admin?.failures?.isEmpty() == true)
-
-        val published = snapshot(jam(Setlist.Available(listOf(redHouse)), JamStatus.PUBLISHED))
-            .toUiModel(today, admin = adminState(publishes = listOf(entry))).asJam()
-        assertNull(published.admin?.status?.publish)
-    }
-
-    @Test
-    fun `published jam has no publish action and bad setlists hide it`() {
+    fun `a published jam shows its badge, and bad setlists hide the add button`() {
         val published = snapshot(jam(Setlist.Available(listOf(redHouse)), JamStatus.PUBLISHED))
             .toUiModel(today, admin = adminState()).asJam()
-        assertEquals("Publicada", published.admin?.status?.badge)
-        assertEquals(NextJamCopy.PUBLISHED_NOTE, published.admin?.status?.note)
-        assertNull(published.admin?.status?.publish)
+        assertEquals("Publicada", published.admin?.status?.badge?.label)
+        assertEquals(true, published.admin?.status?.badge?.isPublished)
+        assertEquals("Los músicos ya ven esta lista.", published.admin?.status?.note)
         assertEquals("Agregar tema", published.admin?.addSong?.label)
 
         val withheld = snapshot(jam(Setlist.Withheld)).toUiModel(today, admin = adminState()).asJam()
         assertEquals(SetlistUiModel.Withheld::class, withheld.setlist::class)
-        assertEquals("Borrador", withheld.admin?.status?.badge)
-        assertNull(withheld.admin?.status?.publish)
+        assertEquals("Borrador", withheld.admin?.status?.badge?.label)
         assertNull(withheld.admin?.addSong)
 
         val unreadable = snapshot(jam(Setlist.Unavailable(SetlistProblem.INVALID_TAB)))
@@ -236,11 +152,11 @@ class NextJamAdminTest {
     }
 
     @Test
-    fun `with no upcoming jam the admin gets the Sheet hint and no button, a musician gets no hint`() {
+    fun `with no upcoming jam the admin is sent to the Jams tab and gets no button, a musician gets no hint`() {
         val none = snapshot(null)
 
         val admin = none.toUiModel(today, admin = adminState()) as NextJamUiModel.NoUpcomingJam
-        assertEquals("Para armar la lista, cargá la fecha en la pestaña Jams de la planilla.", admin.adminHint)
+        assertEquals("Para armar la lista, creá la próxima jam en la pestaña Jams.", admin.adminHint)
         assertNull((none.toUiModel(today) as NextJamUiModel.NoUpcomingJam).adminHint)
     }
 
@@ -318,7 +234,7 @@ class NextJamAdminTest {
                         it.title
                     },
                 )
-                assertEquals("Borrador", model.admin?.status?.badge)
+                assertEquals("Borrador", model.admin?.status?.badge?.label)
 
                 setlist.adds.value = listOf(add(4, SetlistAdd.State.Failed(WriteOutcome.Rejected("busy"))))
                 model = awaitItem().asJam()

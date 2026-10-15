@@ -2,7 +2,9 @@ package com.bbbjam.feature.assistant
 
 import androidx.compose.runtime.MutableState
 import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.data.jams.JamPlan
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.jams.jamCreationPlan
 import com.bbbjam.core.ui.presenter.EventHandler
 import java.time.LocalDate
 
@@ -41,6 +43,6 @@ internal class JamHandlers(
         if (turns.creatableTurnId() != turnId) return
         val answered = turns.first { it.id == turnId }.state as ChatTurn.State.Answered
         val jam = (answered.reply as AssistantReply.Proposal).jam ?: return
-        if (jamPlan(jam, snapshot(), today()) is JamPlan.Ready) runner.create(turnId, jam)
+        if (jamCreationPlan(jam.date, snapshot(), today()) is JamPlan.Ready) runner.create(turnId, jam)
     }
 }

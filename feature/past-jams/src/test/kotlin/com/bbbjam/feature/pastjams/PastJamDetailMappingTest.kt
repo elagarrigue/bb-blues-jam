@@ -73,7 +73,7 @@ class PastJamDetailMappingTest {
     }
 
     @Test
-    fun `a withheld, unreadable or empty setlist keeps the header without a count and shows the Anteriores line`() {
+    fun `a withheld, unreadable or empty setlist keeps the header without a count and shows the Jams line`() {
         assertEquals(
             PastJamDetailUiModel.Jam(
                 header(null),

@@ -31,7 +31,7 @@ internal object PastJamDetailFixtures {
     val notFound = PastJamDetailUiModel.NotFound(
         EmptyStateUiModel(
             "Esta jam ya no está en el archivo",
-            "Puede que la organización la haya cambiado. Volvé a Anteriores para ver las jams guardadas.",
+            "Puede que la organización la haya cambiado. Volvé a Jams para ver las jams guardadas.",
         ),
         back,
     )

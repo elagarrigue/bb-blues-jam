@@ -54,7 +54,7 @@ transfer and no per-record access rules.
   next jam with no login wall. Authentication exists only to reveal editing controls.
 - **A draft jam does not exist for musicians, and a created jam shows only its date** (D-26,
   `jam-status-created`). A `BORRADOR` jam has no date, no list and no place in Próxima jam or
-  Anteriores; a `CREADA` jam shows the date, time, venue and a message that the list is being
+  the Jams tab; a `CREADA` jam shows the date, time, venue and a message that the list is being
   assembled; a `PUBLICADA` jam shows the list too. The data should not be delivered to an
   unauthenticated client at all, rather than being delivered and hidden in the UI. Three layers
   enforce it, and the admin flag only decides what is drawn:
@@ -157,4 +157,4 @@ transfer and no per-record access rules.
 
 ## Publish the setlist
 
-The admin flag only draws `Publicar lista` (for a `BORRADOR` or a `CREADA` jam); Apps Script's passphrase guard authorizes `publishSetlist`. The admin can also move the upcoming jam to `CREADA` or `BORRADOR` from the app (`setJamStatus`); the server authorizes it with the same passphrase guard, and leaving `PUBLICADA` asks for a confirmation because musicians stop seeing the list. While sending, the app keeps the cached `BORRADOR` badge; it shows `PUBLICADA` only after the server writes and reads back that status. A timeout can follow a completed server write, so retry is safe and the server answers `alreadyPublished`. Empty and tab-less drafts are refused server-side and have no publish action in the app. Musicians see the published setlist on their next refresh. Deployment and live checks remain deferred to the shared app-complete deployment batch.
+The admin flag only draws `Publicar lista` (for a `BORRADOR` or a `CREADA` jam); Apps Script's passphrase guard authorizes `publishSetlist`. Since `admin-jams-tab` (D-27) the publication, the status changes and the creation of the next jam happen in the Jams tab (Próxima jam shows the status read-only). The admin can also move the upcoming jam to `CREADA` or `BORRADOR` from the app (`setJamStatus`); the server authorizes it with the same passphrase guard, and leaving `PUBLICADA` asks for a confirmation because musicians stop seeing the list. While sending, the app keeps the cached `BORRADOR` badge; it shows `PUBLICADA` only after the server writes and reads back that status. A timeout can follow a completed server write, so retry is safe and the server answers `alreadyPublished`. Empty and tab-less drafts are refused server-side and have no publish action in the app. Musicians see the published setlist on their next refresh. Deployment and live checks remain deferred to the shared app-complete deployment batch.

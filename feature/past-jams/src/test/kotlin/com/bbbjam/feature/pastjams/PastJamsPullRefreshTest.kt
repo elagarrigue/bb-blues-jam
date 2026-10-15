@@ -49,7 +49,15 @@ class PastJamsPullRefreshTest {
     }
 
     private fun TestScope.present(): Screen {
-        val presenter = PastJamsPresenter(repository, calendar)
+        val presenter =
+            PastJamsPresenter(
+                repository,
+                calendar,
+                FakeAdminSession(),
+                FakeJamStatusRepository(),
+                FakePublishRepository(),
+                FakeJamCreator(),
+            )
         val screen = Screen()
         backgroundScope.launch {
             moleculeFlow(RecompositionMode.Immediate) { presenter.present(PastJamsPresenter.Params()) }

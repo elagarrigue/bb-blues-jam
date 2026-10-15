@@ -415,9 +415,12 @@ class ModuleIsolationTest {
          * every amber use is a reviewed decision. A module not listed may read none.
          */
         val AMBER_ROLE_ALLOWLIST: Map<String, Set<String>> = mapOf(
-            "feature/next-jam" to setOf("key", "primaryAction", "onPrimaryAction", "published", "onPublished"),
-            // past-jam-detail: the key of each song as played that night (K3).
-            "feature/past-jams" to setOf("key"),
+            // Publication moved to the Jams tab (`admin-jams-tab`): Próxima jam keeps the key, and
+            // `primaryAction` only for ExtraDialogDefaultsTest's "the dialog is never amber" assertion.
+            "feature/next-jam" to setOf("key", "primaryAction"),
+            // past-jam-detail: the key of each song as played that night (K3). admin-jams-tab: the
+            // "Publicar lista" button (`primaryAction`/`onPrimaryAction`); the PUBLICADA badge is in :core:ui.
+            "feature/past-jams" to setOf("key", "primaryAction", "onPrimaryAction"),
             // admin-passphrase-login (A6): the "Entrar" button of the admin login, `button-primary`.
             "feature/info" to setOf("primaryAction", "onPrimaryAction"),
             // assistant-admin-tab: "Enviar" (`button-primary`) and the key of each proposed song.

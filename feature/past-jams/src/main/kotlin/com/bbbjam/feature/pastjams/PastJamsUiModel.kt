@@ -10,11 +10,12 @@ import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import java.time.LocalDate
 
 /**
- * Everything Anteriores draws, as plain values. Read-only: the Sheet owns past jams (D-04), so
- * there is no event but the states' Retry and the pull to refresh ([pullRefresh],
- * `live-refresh-during-jam`), which are reads, and a row's Open, which navigates.
- * [title] ("Jams anteriores") is screen
- * chrome, drawn in every state.
+ * Everything the Jams tab (formerly Anteriores) draws, as plain values. The past jams are read-only:
+ * the Sheet owns them (D-04), so their only events are the states' Retry and the pull to refresh
+ * ([pullRefresh], `live-refresh-during-jam`), which are reads, and a row's Open, which navigates.
+ * [title] ("Jams anteriores" for a musician, "Jams" for the admin) is screen chrome, drawn in every
+ * state. For the admin the `Jams` and `Empty` states also carry [JamsAdminUiModel] (`admin-jams-tab`),
+ * null for musicians, whose model is exactly what it was.
  */
 sealed interface PastJamsUiModel : UiModel {
     val title: String
@@ -40,6 +41,7 @@ sealed interface PastJamsUiModel : UiModel {
         val empty: EmptyStateUiModel,
         val staleness: StalenessNoticeUiModel?,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
+        val admin: JamsAdminUiModel? = null,
     ) : PastJamsUiModel
 
     /** The past jams, newest first. [staleness] is set exactly when the latest refresh failed. */
@@ -48,6 +50,7 @@ sealed interface PastJamsUiModel : UiModel {
         val rows: List<PastJamRowUiModel>,
         val staleness: StalenessNoticeUiModel?,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
+        val admin: JamsAdminUiModel? = null,
     ) : PastJamsUiModel
 }
 

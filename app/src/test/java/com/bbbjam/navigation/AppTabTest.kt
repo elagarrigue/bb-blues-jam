@@ -15,7 +15,7 @@ class AppTabTest {
     fun `the tabs are in bar order with the approved labels, routes and icons, Asistente last`() {
         val all = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO, AppTab.ASSISTANT)
         assertEquals(all, AppTab.entries.toList())
-        assertEquals(listOf("Próxima jam", "Anteriores", "Info", "Asistente"), AppTab.entries.map { it.label })
+        assertEquals(listOf("Próxima jam", "Jams", "Info", "Asistente"), AppTab.entries.map { it.label })
         assertEquals(
             listOf(AppRoutes.NEXT_JAM, AppRoutes.PAST_JAMS, AppRoutes.INFO, AppRoutes.ASSISTANT),
             AppTab.entries.map { it.route },

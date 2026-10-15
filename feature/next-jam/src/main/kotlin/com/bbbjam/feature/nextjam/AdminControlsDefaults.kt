@@ -5,8 +5,8 @@ import com.bbbjam.core.ui.theme.BluesJamColors
 
 /**
  * The admin controls' colours on Próxima jam (`admin-add-song-to-setlist`, V1), apart from the
- * composables so a JVM test can check them. Publication uses its approved amber roles; all other
- * admin controls stay neutral.
+ * composables so a JVM test can check them. Every admin control here is neutral: publication moved to
+ * the Jams tab (`admin-jams-tab`).
  */
 internal object AdminControlsDefaults {
     data class Fill(val container: Color, val content: Color)
@@ -15,19 +15,8 @@ internal object AdminControlsDefaults {
 
     data class DraftStyle(val badgeFill: Color, val badgeText: Color, val note: Color)
 
-    data class StatusStyle(
-        val draftFill: Color,
-        val draftText: Color,
-        val publishedFill: Color,
-        val publishedText: Color,
-        val note: Color,
-        val publishFill: Color,
-        val publishText: Color,
-        val failureTitle: Color,
-        val failureMessage: Color,
-        val failureAction: Color,
-        val failureContainer: Color,
-    )
+    /** The admin's read-only status block on Próxima jam: the note and the hint are `textMuted`. */
+    data class StatusStyle(val note: Color)
 
     /** "Agregar tema": `surfaceRaised` with `text`. */
     fun addButton(colors: BluesJamColors = BluesJamColors): Fill = Fill(colors.surfaceRaised, colors.text)
@@ -166,18 +155,6 @@ internal object AdminControlsDefaults {
     fun draft(colors: BluesJamColors = BluesJamColors): DraftStyle =
         DraftStyle(badgeFill = colors.surfaceRaised, badgeText = colors.textMuted, note = colors.textMuted)
 
-    /** Status badge and publish action use only the dedicated publication amber roles. */
-    fun status(colors: BluesJamColors = BluesJamColors): StatusStyle = StatusStyle(
-        draftFill = colors.surfaceRaised,
-        draftText = colors.textMuted,
-        publishedFill = colors.published,
-        publishedText = colors.onPublished,
-        note = colors.textMuted,
-        publishFill = colors.primaryAction,
-        publishText = colors.onPrimaryAction,
-        failureTitle = colors.error,
-        failureMessage = colors.textMuted,
-        failureAction = colors.text,
-        failureContainer = colors.surface,
-    )
+    /** The status block's note and hint (the badge itself is `:core:ui`'s). */
+    fun status(colors: BluesJamColors = BluesJamColors): StatusStyle = StatusStyle(note = colors.textMuted)
 }

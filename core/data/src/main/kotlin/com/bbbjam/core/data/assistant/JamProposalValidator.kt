@@ -1,5 +1,7 @@
 package com.bbbjam.core.data.assistant
 
+import com.bbbjam.core.data.jams.isValidTime
+import com.bbbjam.core.data.jams.normalizeVenue
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeParseException
@@ -23,19 +25,14 @@ internal sealed interface JamValidation {
  */
 internal object JamProposalValidator {
     private val DATE = Regex("""\d{4}-\d{2}-\d{2}""")
-    private val TIME = Regex("""([01]\d|2[0-3]):[0-5]\d""")
-    private val CONTROL = Regex("""[\u0000-\u001f\u007f-\u009f]""")
-    private val SPACES = Regex("""\s+""")
-    private const val MAX_VENUE = 80
-    private const val FORMULA_PREFIXES = "=+-@"
 
     fun validate(dto: JamProposalDto, today: LocalDate): JamValidation {
         val date = parseDate(dto.date.trim()) ?: return JamValidation.Rejected(JamRejection.INVALID_DATE)
         val time = dto.time.trim()
-        val venue = venue(dto.venue)
+        val venue = normalizeVenue(dto.venue)
         return when {
             date.isBefore(today) -> JamValidation.Rejected(JamRejection.PAST_DATE)
-            !TIME.matches(time) -> JamValidation.Rejected(JamRejection.INVALID_TIME)
+            !isValidTime(time) -> JamValidation.Rejected(JamRejection.INVALID_TIME)
             venue == null -> JamValidation.Rejected(JamRejection.INVALID_VENUE)
             else -> JamValidation.Valid(ProposedJam(date, LocalTime.parse(time), venue))
         }
@@ -49,12 +46,5 @@ internal object JamProposalValidator {
         }
     } else {
         null
-    }
-
-    private fun venue(raw: String): String? {
-        val text = raw.trim().replace(SPACES, " ")
-        val valid = !CONTROL.containsMatchIn(raw) && text.isNotEmpty() && text.length <= MAX_VENUE &&
-            text.first() !in FORMULA_PREFIXES
-        return if (valid) text else null
     }
 }

@@ -35,7 +35,7 @@ import java.time.LocalDate
  * host with one route per tab above the bottom bar. Its controller, with every tab's saved state
  * (scroll, filter), is saved inside the outer `tabs` entry, so it survives the song
  * detail, rotation and process death. Switching tabs saves the tab left and restores the one
- * entered (`saveState`/`restoreState`); back from Anteriores or Info returns to Próxima jam (the
+ * entered (`saveState`/`restoreState`); back from Jams or Info returns to Próxima jam (the
  * inner host's back handler wins while its stack has more than one entry), and from Próxima jam
  * the activity finishes. The status-bar inset (and, in admin mode, the "MODO ADMIN" banner,
  * `admin-mode-highlight`) is applied once by [AppNavHost]'s shared wrapper outside this shell, so

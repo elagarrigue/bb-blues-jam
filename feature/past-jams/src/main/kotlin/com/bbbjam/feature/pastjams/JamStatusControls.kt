@@ -1,4 +1,4 @@
-package com.bbbjam.feature.nextjam
+package com.bbbjam.feature.pastjams
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -7,7 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
 import com.bbbjam.core.model.JamStatus
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
@@ -38,7 +38,7 @@ internal fun statusConfirmTarget(key: String?, date: LocalDate): JamStatus? {
 }
 
 @Composable
-internal fun rememberJamStatusControls(setlist: SetlistRepository): JamStatusControls {
+internal fun rememberJamStatusControls(statuses: SetlistJamStatusRepository): JamStatusControls {
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
     var inFlight by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -46,7 +46,7 @@ internal fun rememberJamStatusControls(setlist: SetlistRepository): JamStatusCon
         inFlight = true
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                setlist.setJamStatus(date, target)
+                statuses.setJamStatus(date, target)
             } finally {
                 inFlight = false
             }
@@ -73,7 +73,7 @@ internal fun rememberJamStatusControls(setlist: SetlistRepository): JamStatusCon
         },
         onRetry = { date, id, target ->
             if (!inFlight) {
-                setlist.dismissJamStatusChange(id)
+                statuses.dismissJamStatusChange(id)
                 send(date, target)
             }
         },

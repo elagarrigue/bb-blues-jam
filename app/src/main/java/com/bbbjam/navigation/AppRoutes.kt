@@ -27,7 +27,7 @@ internal object AppRoutes {
     /** The inner host's start tab, Próxima jam. */
     const val NEXT_JAM = "next-jam"
 
-    /** The Anteriores tab. */
+    /** The Jams tab (called Anteriores until `admin-jams-tab`). */
     const val PAST_JAMS = "past-jams"
 
     /** The Info tab. */

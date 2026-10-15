@@ -2,6 +2,9 @@ package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.ProposedJam
+import com.bbbjam.core.data.jams.JamHeldBack
+import com.bbbjam.core.data.jams.JamPlan
+import com.bbbjam.core.data.jams.jamCreationPlan
 import com.bbbjam.core.ui.presenter.EventHandler
 
 /**
@@ -27,7 +30,7 @@ internal fun jamCard(
     val jam = proposal.jam ?: return null
     val creation = inputs.creations[turnId]
     val today = inputs.today
-    val plan = if (isCreatable && today != null) jamPlan(jam, inputs.snapshot, today) else JamPlan.Unknown
+    val plan = if (isCreatable && today != null) jamCreationPlan(jam.date, inputs.snapshot, today) else JamPlan.Unknown
     return JamCardUiModel(
         heading = JamCopy.HEADING,
         date = JamCopy.dateInWords(jam.date),

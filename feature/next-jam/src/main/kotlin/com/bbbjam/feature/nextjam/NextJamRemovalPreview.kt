@@ -5,9 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.status.jamStatusBadge
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -45,10 +47,9 @@ private fun NextJamRemovalPreview() {
         staleness = null,
         admin = NextJamAdminUiModel(
             status = AdminStatusUiModel(
-                badge = NextJamCopy.DRAFT_BADGE,
-                isPublished = false,
+                badge = jamStatusBadge(JamStatus.DRAFT),
                 note = NextJamCopy.DRAFT_NOTE,
-                publish = null,
+                hint = NextJamCopy.STATUS_HINT,
             ),
             pending = emptyList(),
             failures = listOf(

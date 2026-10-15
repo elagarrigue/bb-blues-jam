@@ -2,12 +2,10 @@ package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.ExtraParticipantChange
-import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SlotClear
 import com.bbbjam.core.model.Jam as DomainJam
@@ -16,6 +14,7 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.status.jamStatusBadge
 import com.bbbjam.core.ui.text.SongListText
 import java.time.LocalDate
 
@@ -50,18 +49,6 @@ internal class AdminState(
     val moves: List<SetlistMove> = emptyList(),
     val lineupChanges: List<LineupChange> = emptyList(),
     val onMove: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
-    val publishes: List<SetlistPublish> = emptyList(),
-    val publishConfirming: String? = null,
-    val onRequestPublish: (LocalDate) -> Unit = {},
-    val onCancelPublish: (LocalDate) -> Unit = {},
-    val onConfirmPublish: (LocalDate) -> Unit = {},
-    val onRetryPublish: (LocalDate, Long) -> Unit = { _, _ -> },
-    val statusChanges: List<JamStatusChange> = emptyList(),
-    val statusConfirming: String? = null,
-    val onStatusRequest: (LocalDate, JamStatus, JamStatus) -> Unit = { _, _, _ -> },
-    val onStatusCancel: (LocalDate) -> Unit = {},
-    val onStatusConfirm: (LocalDate) -> Unit = {},
-    val onStatusRetry: (LocalDate, Long, JamStatus) -> Unit = { _, _, _ -> },
 ) {
     /** The song-level overlay rule this list shares with the song detail. */
     val overlays: SongOverlays
@@ -88,22 +75,15 @@ internal fun removalKey(date: LocalDate, songId: SongId): String = "$date|${song
  */
 internal fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
     val mine = adds.filter { it.jamDate == jam.date }
-    val isPublished = jam.status == JamStatus.PUBLISHED
     return NextJamAdminUiModel(
         status = AdminStatusUiModel(
-            badge = when (jam.status) {
-                JamStatus.DRAFT -> NextJamCopy.DRAFT_BADGE
-                JamStatus.CREATED -> NextJamCopy.CREATED_BADGE
-                JamStatus.PUBLISHED -> NextJamCopy.PUBLISHED_BADGE
-            },
-            isPublished = isPublished,
+            badge = jamStatusBadge(jam.status),
             note = when (jam.status) {
                 JamStatus.DRAFT -> NextJamCopy.DRAFT_NOTE
                 JamStatus.CREATED -> NextJamCopy.CREATED_NOTE
                 JamStatus.PUBLISHED -> NextJamCopy.PUBLISHED_NOTE
             },
-            publish = if (isPublished) null else publishUiModel(jam),
-            statusChange = jamStatusUiModel(jam),
+            hint = NextJamCopy.STATUS_HINT,
         ),
         pending = mine.filter { it.state == SetlistAdd.State.Sending }
             .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },

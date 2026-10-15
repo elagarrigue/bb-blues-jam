@@ -1,0 +1,2 @@
+FAILED a held-back jam date is blocked as existing too: java.lang.AssertionError: expected:&lt;Blocked(reason=EXISTS, upcomingDate=null)&gt; but was:&lt;Ready(heldBack=NewWaits(upcomingDate=2026-10-31))&gt;
+(./gradlew :core:data:testDebugUnitTest --tests *JamCreationPlanTest* before the fix to EXISTS)

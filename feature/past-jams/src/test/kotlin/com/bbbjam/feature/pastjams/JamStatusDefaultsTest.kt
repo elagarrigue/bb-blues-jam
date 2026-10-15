@@ -1,4 +1,4 @@
-package com.bbbjam.feature.nextjam
+package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals

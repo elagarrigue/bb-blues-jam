@@ -11,7 +11,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
  */
 internal enum class AppTab(val route: String, val label: String, val icon: TabIcon) {
     NEXT_JAM(AppRoutes.NEXT_JAM, "Próxima jam", TabIcon.SETLIST),
-    PAST_JAMS(AppRoutes.PAST_JAMS, "Anteriores", TabIcon.ARCHIVE),
+    PAST_JAMS(AppRoutes.PAST_JAMS, "Jams", TabIcon.ARCHIVE),
     INFO(AppRoutes.INFO, "Info", TabIcon.INFO),
 
     /** Admin only (`assistant-admin-tab`); always last, so the musician tabs never move. */

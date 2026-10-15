@@ -45,42 +45,17 @@ internal object NextJamCopy {
 
     /**
      * The admin's controls on Próxima jam, approved on 5–6 October 2026
-     * (`docs/specs/admin-add-song-to-setlist.md`, C1 and J1). [DRAFT_BADGE] is drawn uppercase.
+     * (`docs/specs/admin-add-song-to-setlist.md`, C1 and J1). [DRAFT_NOTE] is what musicians do not see.
      */
     const val ADD_SONG = "Agregar tema"
     const val ADDING = "Agregando…"
-    const val DRAFT_BADGE = "Borrador"
     const val DRAFT_NOTE = "Los músicos todavía no ven esta jam."
-    const val CREATED_BADGE = "Creada"
     const val CREATED_NOTE = "Los músicos ven la fecha, pero todavía no la lista."
-    const val PUBLISHED_BADGE = "Publicada"
     const val PUBLISHED_NOTE = "Los músicos ya ven esta lista."
-    const val PUBLISH = "Publicar lista"
-    const val PUBLISH_PROMPT = "¿Publicar la lista?"
-    const val PUBLISH_REVERSIBLE = "Después podés volver a cambiar el estado desde acá."
-    const val PUBLISH_CONFIRM = "Publicar"
-    const val PUBLISHING = "Publicando…"
-    const val PUBLISH_FAILED = "No se pudo publicar la lista"
-    const val PUBLISH_CONSEQUENCE = "Los músicos siguen sin ver la lista."
-    const val PUBLISH_RETRY = "Reintentar"
-    const val PUBLISH_OFFLINE =
-        "No pudimos confirmar la publicación: no hay conexión o el servidor tardó. Reintentá; si ya estaba publicada, no pasa nada."
-    const val EMPTY_PUBLISH = "La lista no tiene temas. Agregá al menos uno antes de publicar."
-    const val TO_CREATED = "Pasar a creada"
-    const val TO_DRAFT = "Pasar a borrador"
-    const val STATUS_SAVING = "Cambiando el estado…"
-    const val UNPUBLISH_PROMPT = "¿Dejar de publicar la lista?"
-    const val UNPUBLISH_TO_CREATED_BODY =
-        "Los músicos van a dejar de ver la lista cuando actualicen la app. Van a seguir viendo la fecha."
-    const val UNPUBLISH_TO_DRAFT_BODY =
-        "Los músicos van a dejar de ver esta jam, con su fecha y su lista, cuando actualicen la app."
-    const val STATUS_FAILED = "No se pudo cambiar el estado"
-    const val STATUS_CONSEQUENCE = "La jam sigue como estaba."
-    const val STATUS_SCRIPT_OUTDATED =
-        "El script de la planilla todavía no sabe cambiar el estado. Actualizalo con la guía y probá de nuevo."
     const val ADMIN_EMPTY_TITLE = "Todavía no hay temas"
     const val ADMIN_EMPTY = "Agregá el primero desde el catálogo."
-    const val ADMIN_NO_UPCOMING = "Para armar la lista, cargá la fecha en la pestaña Jams de la planilla."
+    const val ADMIN_NO_UPCOMING = "Para armar la lista, creá la próxima jam en la pestaña Jams."
+    const val STATUS_HINT = "El estado y las fechas se manejan en la pestaña Jams."
     const val CLOSE = "Cerrar"
     const val ACCESS_REFUSED =
         "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar."

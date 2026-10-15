@@ -95,7 +95,14 @@ class PastJamsPresenterTest {
     private fun snapshot(past: List<Jam>, freshness: Freshness = fetched, upcoming: Jam? = null) =
         JamsSnapshot(upcoming, past, freshness)
 
-    private fun presenter() = PastJamsPresenter(repository, calendar)
+    private fun presenter() = PastJamsPresenter(
+        repository,
+        calendar,
+        FakeAdminSession(),
+        FakeJamStatusRepository(),
+        FakePublishRepository(),
+        FakeJamCreator(),
+    )
 
     /** Skips models until one matches: a re-subscription may recompose once with the same model. */
     private suspend fun ReceiveTurbine<PastJamsUiModel>.awaitMatching(

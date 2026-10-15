@@ -7,6 +7,8 @@ import com.bbbjam.actions.SetlistActionRegistry
 import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.assistant.AssistantCredentials
 import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.core.ui.link.ExternalLinkOpener
@@ -25,4 +27,9 @@ val appModule = module {
     single { SetlistActionRegistry(get<SetlistRepository>()) }
     single<SetlistSongAdder> { RegistrySongAdder(get()) }
     single<JamCreator> { RegistryJamCreator(get()) }
+
+    // The Jams tab sees only the narrow contracts (J1), over the same instance as Próxima jam, so the
+    // in-memory sending and failure entries are shared.
+    single<SetlistJamStatusRepository> { get<SetlistRepository>() }
+    single<SetlistPublishRepository> { get<SetlistRepository>() }
 }

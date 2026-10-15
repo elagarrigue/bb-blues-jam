@@ -8,8 +8,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The admin controls' treatment: publication may use the dedicated amber roles; other controls use
- * neutral/error roles. Konsist checks this file's role allowlist.
+ * The admin controls' treatment on Próxima jam: neutral/error roles only (publication and its amber
+ * moved to the Jams tab in `admin-jams-tab`). Konsist checks this file's role allowlist.
  */
 class AdminControlsDefaultsTest {
     private val colors = BluesJamColors
@@ -19,10 +19,6 @@ class AdminControlsDefaultsTest {
         colors.text,
         colors.textMuted,
         colors.error,
-        colors.primaryAction,
-        colors.onPrimaryAction,
-        colors.published,
-        colors.onPublished,
     )
 
     @Test
@@ -43,9 +39,7 @@ class AdminControlsDefaultsTest {
             add.container, add.content, pending.container, pending.content,
             failure.container, failure.title, failure.message, failure.action,
             draft.badgeFill, draft.badgeText, draft.note,
-            status.draftFill, status.draftText, status.publishedFill, status.publishedText, status.note,
-            status.publishFill, status.publishText, status.failureTitle, status.failureMessage,
-            status.failureAction, status.failureContainer,
+            status.note,
         ).forEach { color -> assertTrue("$color is not an allowed role", color in allowed) }
     }
 
@@ -91,22 +85,8 @@ class AdminControlsDefaultsTest {
         val draft = AdminControlsDefaults.draft()
         assertEquals(card.badgeFill, draft.badgeFill)
         assertEquals(card.badgeText, draft.badgeText)
-        assertEquals(
-            AdminControlsDefaults.StatusStyle(
-                draftFill = colors.surfaceRaised,
-                draftText = colors.textMuted,
-                publishedFill = colors.published,
-                publishedText = colors.onPublished,
-                note = colors.textMuted,
-                publishFill = colors.primaryAction,
-                publishText = colors.onPrimaryAction,
-                failureTitle = colors.error,
-                failureMessage = colors.textMuted,
-                failureAction = colors.text,
-                failureContainer = colors.surface,
-            ),
-            AdminControlsDefaults.status(),
-        )
+        // The read-only status block: its note and hint are muted (the badge is `:core:ui`'s).
+        assertEquals(AdminControlsDefaults.StatusStyle(note = colors.textMuted), AdminControlsDefaults.status())
     }
 
     /** Neutral roles only: `BluesJamColorsTest` in `:core:ui` fails if one of these ever becomes amber. */

@@ -1,4 +1,4 @@
-package com.bbbjam.feature.nextjam
+package com.bbbjam.feature.pastjams
 
 import androidx.compose.ui.graphics.Color
 import com.bbbjam.core.ui.theme.BluesJamColors

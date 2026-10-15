@@ -71,7 +71,7 @@ class NextJamCreatedTest {
 
         val admin = snapshot.toUiModel(today, admin = adminState()).asJam()
         assertEquals("Sábado 7 de noviembre · 21:00", admin.header.date)
-        assertEquals("Borrador", admin.admin?.status?.badge)
+        assertEquals("Borrador", admin.admin?.status?.badge?.label)
     }
 
     @Test
@@ -105,21 +105,12 @@ class NextJamCreatedTest {
 
             val admin = checkNotNull(model.admin)
             assertEquals("$status", listOf("Red House"), (model.setlist as SetlistUiModel.Songs).rows.map { it.title })
-            assertEquals("$status", badgeNoteAndPublished.first, admin.status.badge)
+            assertEquals("$status", badgeNoteAndPublished.first, admin.status.badge.label)
             assertEquals("$status", badgeNoteAndPublished.second, admin.status.note)
-            assertEquals("$status", badgeNoteAndPublished.third, admin.status.isPublished)
-            // Publicar lista is offered for BORRADOR and CREADA with a song, never for PUBLICADA.
-            assertEquals("$status", !badgeNoteAndPublished.third, admin.status.publish is PublishUiModel.Idle)
+            assertEquals("$status", badgeNoteAndPublished.third, admin.status.badge.isPublished)
+            // Since `admin-jams-tab` the status is read-only here: the hint points to the Jams tab.
+            assertEquals("$status", "El estado y las fechas se manejan en la pestaña Jams.", admin.status.hint)
         }
-    }
-
-    @Test
-    fun `the admin of a created jam with no song is not offered Publicar lista`() {
-        val empty = jam("2026-10-31", JamStatus.CREATED, emptyList())
-
-        val model = snapshot(empty).toUiModel(today, admin = adminState()).asJam()
-
-        assertNull(model.admin?.status?.publish)
     }
 
     @Test

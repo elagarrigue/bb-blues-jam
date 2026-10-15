@@ -1,12 +1,13 @@
-package com.bbbjam.feature.nextjam
+package com.bbbjam.feature.pastjams
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -20,10 +21,10 @@ internal data class PublishControls(
 )
 
 @Composable
-internal fun rememberPublishControls(setlist: SetlistRepository): PublishControls {
+internal fun rememberPublishControls(publishes: SetlistPublishRepository): PublishControls {
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
     var consumed by remember { mutableStateOf(false) }
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     return PublishControls(
         confirming = confirming,
         onRequest = { date ->
@@ -40,15 +41,15 @@ internal fun rememberPublishControls(setlist: SetlistRepository): PublishControl
             if (confirming == date.toString() && !consumed) {
                 consumed = true
                 scope.launch(start = CoroutineStart.UNDISPATCHED) {
-                    setlist.publishSetlist(date)
+                    publishes.publishSetlist(date)
                     if (confirming == date.toString()) confirming = null
                     consumed = false
                 }
             }
         },
         onRetry = { date, id ->
-            setlist.dismiss(id)
-            scope.launch(start = CoroutineStart.UNDISPATCHED) { setlist.publishSetlist(date) }
+            publishes.dismissPublish(id)
+            scope.launch(start = CoroutineStart.UNDISPATCHED) { publishes.publishSetlist(date) }
         },
     )
 }

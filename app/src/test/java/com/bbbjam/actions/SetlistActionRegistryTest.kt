@@ -11,6 +11,8 @@ import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetJamStatusOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
+import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamStatus
@@ -121,6 +123,21 @@ class SetlistActionRegistryTest {
             assertSame(repository, application.koin.get<SetlistRepository>())
             runBlocking { first.dispatch(SetlistAction.RemoveSong(date, songId)) }
             assertEquals(RecordedCall(SetlistMutation.REMOVE_SONG, listOf(date, songId)), repository.calls.single())
+        } finally {
+            application.close()
+        }
+    }
+
+    @Test
+    fun `app module binds the narrow status and publish contracts to the same SetlistRepository instance`() {
+        val repository = RecordingSetlistRepository()
+        val application = koinApplication {
+            allowOverride(true)
+            modules(appModule, module { single<SetlistRepository> { repository } })
+        }
+        try {
+            assertSame(repository, application.koin.get<SetlistJamStatusRepository>())
+            assertSame(repository, application.koin.get<SetlistPublishRepository>())
         } finally {
             application.close()
         }

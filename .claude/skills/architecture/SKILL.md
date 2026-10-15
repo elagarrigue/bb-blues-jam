@@ -508,11 +508,14 @@ the internal `SetlistJamStatuses` on the shared `SetlistMutationQueue`; Room cha
   colors). A component slice that uses a Material 3 component sets its colors explicitly from
   `BluesJamColors`: Material defaults are mapped from tokens but are not design decisions.
 - Amber in a feature is allowlisted per module (Konsist `amber-roles-allowlisted`,
-  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` may read `key` (and, since
-  `admin-publish-setlist`, `primaryAction`, `onPrimaryAction`, `published`, `onPublished`; the song
+  `AMBER_ROLE_ALLOWLIST` in `ModuleIsolationTest`): `:feature:next-jam` may read `key` (the song
   detail, merged into it by `song-detail-replaces-row-expansion`, reads `key` only, through
-  `SongDetailDefaults`); `:feature:past-jams` may read `key` only since `past-jam-detail` (the detail
-  rows' key, through `PastJamDetailDefaults`; the Anteriores list reads no amber role);
+  `SongDetailDefaults`) and, since `admin-jams-tab`, `primaryAction` only for a test's "never amber"
+  assertion (`admin-publish-setlist` had given it `primaryAction`, `onPrimaryAction`, `published`,
+  `onPublished`; publication moved to the Jams tab); `:feature:past-jams` may read `key` since
+  `past-jam-detail` (the detail rows' key, through `PastJamDetailDefaults`) and, since `admin-jams-tab`,
+  `primaryAction` and `onPrimaryAction` (`Publicar lista`, through `JamsAdminDefaults`; the PUBLICADA badge
+  reads `published` inside `:core:ui`);
   `:feature:info` may read `primaryAction` and `onPrimaryAction` since `admin-passphrase-login`
   (the login's "Entrar", `button-primary`, through `AdminLoginDefaults`; the field reads none). The rule
   also reads test sources, so a test in a module without an entry cannot name an amber role either
@@ -525,7 +528,7 @@ the internal `SetlistJamStatuses` on the shared `SetlistMutationQueue`; Room cha
   panel (`com.bbbjam.core.ui.lineup`) does the same.
 - A musician screen reads a jam's songs through **`Jam.setlistForMusicians()`**
   (`unpublished-setlist-state`), never `jam.setlist`: it is `Withheld` for every DRAFT jam, whatever
-  the read returned. `NextJamPresenter`, the song detail lookup, the Anteriores row summary and the past jam
+  the read returned. `NextJamPresenter`, the song detail lookup, the Jams tab's row summary and the past jam
   detail (`past-jam-detail`) do so. The admin slices read `jam.setlist` behind the admin flag.
   Since `jam-status-created` it is `Withheld` for every jam that is not PUBLISHED, and the snapshot
   goes through `JamsSnapshot.forMusicians()` first (see "As built by `jam-status-created`").
@@ -997,6 +1000,35 @@ feature/<name>/
 ```
 
 Then include the module in `settings.gradle.kts` and add its Koin module to `startKoin` in `:app`.
+
+## As built by `admin-jams-tab`
+
+The middle tab is `Jams` (D-27; the route `AppRoutes.PAST_JAMS`, the module `:feature:past-jams` and the
+package `pastjams` keep their names: renaming would reset saved tab state and touch Konsist paths for no user
+value). For a musician it is exactly the past-jams list; for the admin it also lists the upcoming and
+held-back jams and creates the next one.
+
+- **Narrow contracts (J1).** `PastJamsPresenter(jams, calendar, adminSession, statuses, publishes, creator)`
+  takes `SetlistJamStatusRepository`, `SetlistPublishRepository` and `JamCreator`, never `SetlistRepository`.
+  `:app`'s `appModule` binds the first two to the one `SetlistRepository` instance (so the in-memory entries
+  are shared with Próxima jam) and `JamCreator` stays bound to `RegistryJamCreator` (D-13). The composition
+  root chooses the narrow surface.
+- **Moved, not copied (J4).** The status and publish code (`JamStatusControls/Mapping/Views/Defaults`,
+  `PublishControls/Mapping/Details`, the `JamStatusUiModel` and `PublishUiModel` models and their tests) moved from
+  `:feature:next-jam` to `:feature:past-jams`, rewired to `JamsAdminState`. Nothing status- or
+  publish-related remains in `:feature:next-jam`: Próxima jam's `AdminStatusUiModel(badge, note, hint)` is
+  read-only. The admin section is `JamsAdminUiModel` on the `Jams`/`Empty` states, mapped from the **raw**
+  snapshot (`upcoming` then `heldBack`, BORRADOR included); only the upcoming card has controls (the server's
+  `setJamStatus` accepts only the upcoming jam). Past rows still come from `forMusicians().past`.
+- **Shared pieces (J5, J8).** The status badge is `com.bbbjam.core.ui.status` (`JamStatusBadge`,
+  `jamStatusBadge(status)`), drawn by both features. `jamCreationPlan(date, snapshot, today)` (`JamPlan`,
+  `JamHeldBack`) and the venue and time rules (`normalizeVenue`, `venueProblem`, `isValidTime`,
+  `MAX_VENUE_LENGTH`) live once in `:core:data` `jams/`, used by the assistant and the form; `EXISTS` also
+  checks held-back dates.
+- **Form (J7, J9).** `NewJamForm.kt` is pure (`parseFormDate`, `parseFormTime`, `checkNewJam`, `newJamSeed`);
+  `NewJamControls` holds the saveable fields and the in-flight guard; `Crear la jam` closes the dialog and
+  launches `creator.createJam` undispatched; the card appears from Room after the server echo. If the tab's
+  composition dies mid-call the write finishes in `DataScope` and only the result line is lost.
 
 ## Anti-Patterns
 

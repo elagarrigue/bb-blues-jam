@@ -183,13 +183,13 @@ arm's length on stage. It is the largest style in the app; rows keep `key` (44sp
 
 ## Layout
 
-Three tabs in a bottom navigation bar: **Próxima jam**, **Anteriores**, **Info**. Phase 2 adds a fourth, **Asistente**, drawn only while the admin session is active (last, so the musician tabs never move).
+Three tabs in a bottom navigation bar: **Próxima jam**, **Jams**, **Info**. Phase 2 adds a fourth, **Asistente**, drawn only while the admin session is active (last, so the musician tabs never move).
 
 ### Bottom bar
 
 Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
 
-- **Order and labels:** `Próxima jam`, `Anteriores`, `Info`, left to right, each with icon and
+- **Order and labels:** `Próxima jam`, `Jams` (called `Anteriores` until `admin-jams-tab`, D-27), `Info`, left to right, each with icon and
   label (always shown). Icons from `material-icons-core` (I1): `List` (auto-mirrored), `DateRange`,
   outlined `Info`; the icon has no description, the label names the item.
 - **Colors:** bar container `surface`; selected icon and label `text` on an indicator
@@ -202,7 +202,7 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
   navigation-bar inset itself.
 - **Per-tab state:** each tab keeps its scroll, and Próxima jam its filter, across
   tab switches, the song detail, rotation and process death. Tapping the selected tab does nothing.
-  Back from Anteriores or Info goes to Próxima jam; back from Próxima jam leaves the app.
+  Back from Jams or Info goes to Próxima jam; back from Próxima jam leaves the app.
 - **Status bar:** the status-bar area is a solid `background` band above every tab and the song
   detail; content scrolls below it, never under the clock.
 - **Motion (M1):** tab switch, a 150 ms crossfade; song detail, slides in from the end in 250 ms
@@ -405,7 +405,8 @@ The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter
 
 ### Admin controls
 
-Layered onto the same screens — never a separate app, never a rearranged layout. Controls are added,
+On Próxima jam the admin sees the jam status read-only since `admin-jams-tab`: the shared badge, its note and the hint
+`El estado y las fechas se manejan en la pestaña Jams.` (`caption`, `textMuted`). Layered onto the same screens — never a separate app, never a rearranged layout. Controls are added,
 not substituted: a publish action prominent while in draft, an add-song button, a drag handle per
 row, tappable open slots for assignment, and a clear action on filled slots.
 
@@ -549,7 +550,7 @@ through `AdminControlsDefaults`, **no amber**:
    clickable. States use the shared components: skeleton (`Cargando las jams anteriores`), error
    `No pudimos cargar las jams anteriores`, empty `Todavía no hay jams anteriores` /
    `Después de cada jam, su lista queda guardada acá para que veas qué se tocó.`, and the staleness
-   notice above the rows. Reached through the middle tab, `Anteriores`.
+   notice above the rows. Reached through the middle tab, `Jams` (for the admin the tab also lists the jams to come, see "Jams tab (`admin-jams-tab`)"; a musician sees exactly this list, titled `Jams anteriores`).
 5. **Past jam detail** — read-only, muted archive treatment, amber only on keys, no notion of open
    slots. As built (`past-jam-detail`, 5 October 2026), **the song list only**: the user's direction
    "para las jams pasadas no importa quién tocó, solo la lista de temas" replaced the lineup strip and
@@ -566,7 +567,7 @@ through `AdminControlsDefaults`, **no amber**:
    control. A past draft, an unreadable list or a list with no songs keeps the header (without a
    count) and shows the Anteriores line instead of rows. Loading draws only the back button (screen
    reader: `Cargando la jam`); a jam no longer in the archive shows `Esta jam ya no está en el
-   archivo` / `Puede que la organización la haya cambiado. Volvé a Anteriores para ver las jams
+   archivo` / `Puede que la organización la haya cambiado. Volvé a Jams para ver las jams
    guardadas.` No staleness notice, as in the song detail.
 6. **Info** — who organizes (Bahía Blanca Blues), what the jam is and that it is monthly, the
    Hideaway radio program, social links, how to join, and a discreet admin entry point. No venue:
@@ -756,9 +757,34 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
 - Drag-to-reorder versus explicit move actions, given that 48dp targets and dragging conflict on a
   dense list used one-handed.
 
+### Jams tab (`admin-jams-tab`)
+
+The middle tab (`Jams`, D-27). A musician sees the past jams only, as before (title `Jams anteriores`). The admin sees the
+title `Jams` (`h1`) and two sections: `PRÓXIMAS` and `ANTERIORES` (`caption`, `textMuted`, heading semantics), the second
+with the unchanged past rows. `PRÓXIMAS` starts with a full-width `Nueva jam` button (`surfaceRaised` fill, `text`
+content, 48dp, never amber), then the result of the last creation, then one card per future jam in date order, the upcoming
+jam first, BORRADOR included (D-26); with none, the line `No hay ninguna jam programada.`. A card is on `surface`
+(`shapes.md`): the date `Sábado 31 de octubre · 21:00` (`songTitle`, `text`), the venue and `12 temas` / `1 tema` /
+`Sin temas todavía` / `No se pudo leer la lista` (`body`, `textMuted`), the shared status badge (`:core:ui`, the
+"Status badge" component) and its note (`caption`, `textMuted`). The upcoming card carries the status actions and
+`Publicar lista`, below. A held-back card has the line `En espera: su estado se cambia cuando sea la próxima jam.` and no
+action (the server changes only the upcoming jam's status). Cards are not tappable; the list is edited in Próxima jam.
+
+`Nueva jam` opens a modal `AlertDialog` (`surfaceRaised`): three labelled outlined fields (`Fecha` `DD/MM/AAAA`, `Hora`
+`HH:MM`, `Lugar`; fecha and hora use the numeric keyboard and accept `/`, `-`, `.` and `:`, `.`), field errors in `error`
+`caption`, the notes in `textMuted`, `Crear la jam` and `Cancelar` in `text` (a disabled `Crear la jam` is `textMuted`).
+Hora and lugar open with those of the latest-dated jam (`21:00` and empty with none); fecha opens empty. Blocked dates are
+field errors: past, already a jam (also a held-back one), or before the upcoming jam. A later date shows `Queda en espera:
+la próxima jam sigue siendo la del sábado 31 de octubre.`; every creation says `Se crea como borrador: los músicos no la
+ven hasta que la pases a creada o publiques la lista.` `Crear la jam` closes the dialog and shows `Creando la jam…` (polite),
+then `Jam creada como borrador.`, or an assertive failure card (`No se pudo crear la jam`, the reason, `La jam no se creó.`,
+`Reintentar`, `Cerrar`; with an outdated script, `Cerrar` only). The new card appears only after the server answers.
+
+Publishing and changing the status moved here from Próxima jam, with the same visuals, onto the upcoming card:
+
 ### Publishing (`admin-publish-setlist`, as built locally)
 
-The admin status block sits directly beneath the Próxima jam header. It always shows the jam status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
+The upcoming jam's card shows its status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
 
 ### Changing the status (`admin-set-jam-status`)
 

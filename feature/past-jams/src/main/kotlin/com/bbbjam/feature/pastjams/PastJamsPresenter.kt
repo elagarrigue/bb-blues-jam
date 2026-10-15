@@ -10,9 +10,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.DataFailure
+import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -27,19 +31,29 @@ import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 /**
- * Presents Anteriores: the past jams of [JamsRepository.observeJams], newest first. Read-only (D-04,
- * D-13); it never starts network work on its own (collecting the flow may start the repository's
- * own background refresh), and has no periodic refresh (`live-refresh-during-jam` polls only
- * Próxima jam). The exceptions are the musician's Retry (`list-states`) and the pull to refresh
- * (`live-refresh-during-jam`, one read per pull; a pull while one runs is ignored). Retry
- * re-subscribes to the flow, which recovers from a failed local read, and calls
- * [JamsRepository.refresh], a read. The subscription counter is created once, so an earlier model's
- * Retry handler still works. "Now" comes only from [calendar], read once per snapshot, to age the
- * cached data for the staleness notice. [Params.onOpenJam] is read through `rememberUpdatedState`,
- * so an earlier model's Open handler calls the current callback.
+ * Presents the Jams tab (formerly Anteriores): the past jams of [JamsRepository.observeJams], newest first.
+ * The past jams are read-only (D-04). For the admin (flag from [adminSession], which only decides what is
+ * drawn) the model also carries [JamsAdminUiModel] (`admin-jams-tab`, D-27): the upcoming and held-back
+ * jams with the status actions, the publication and "Nueva jam", which go through [statuses], [publishes]
+ * and [creator] (D-13, D-03: narrow contracts, never `SetlistRepository`). It never starts network work
+ * on its own
+ * (collecting the flow may start the repository's own background refresh), and has no periodic refresh
+ * (`live-refresh-during-jam` polls only Próxima jam). The exceptions are the musician's Retry
+ * (`list-states`) and the pull to refresh (`live-refresh-during-jam`, one read per pull; a pull while one
+ * runs is ignored). Retry re-subscribes to the flow, which recovers from a failed local read, and calls
+ * [JamsRepository.refresh], a read. The subscription counter is created once, so an earlier model's Retry
+ * handler still works. "Now" comes only from [calendar], read once per snapshot, to age the cached data for
+ * the staleness notice. [Params.onOpenJam] is read through `rememberUpdatedState`, so an earlier model's
+ * Open handler calls the current callback.
  */
-class PastJamsPresenter(private val jams: JamsRepository, private val calendar: JamCalendar) :
-    Presenter<PastJamsUiModel, PastJamsPresenter.Params> {
+class PastJamsPresenter(
+    private val jams: JamsRepository,
+    private val calendar: JamCalendar,
+    private val adminSession: AdminSession,
+    private val statuses: SetlistJamStatusRepository,
+    private val publishes: SetlistPublishRepository,
+    private val creator: JamCreator,
+) : Presenter<PastJamsUiModel, PastJamsPresenter.Params> {
 
     /** [onOpenJam] opens a past jam's detail (bound by `:app`). */
     data class Params(val onOpenJam: (jamDate: LocalDate) -> Unit = {})
@@ -47,11 +61,14 @@ class PastJamsPresenter(private val jams: JamsRepository, private val calendar: 
     @Composable
     override fun present(params: Params): PastJamsUiModel {
         val scope = rememberCoroutineScope()
+        val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
         val currentOnOpenJam by rememberUpdatedState(params.onOpenJam)
         val onOpenJam: (LocalDate) -> Unit = { date -> currentOnOpenJam(date) }
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val now = remember(snapshot) { calendar.now() }
+        val today = remember(snapshot) { calendar.today() }
+        val admin = rememberJamsAdminState(statuses, publishes, creator, today, isAdmin)
         val onRetry: () -> Unit = {
             subscription++
             scope.launch { jams.refresh() }
@@ -72,8 +89,9 @@ class PastJamsPresenter(private val jams: JamsRepository, private val calendar: 
             }
         }
         val pullRefresh = PullRefreshUiModel(isRefreshing = pulling, events = EventHandler { onPull() })
-        val model = snapshot?.toUiModel(now, onRetry, onOpenJam)
-            ?: PastJamsUiModel.Loading(PastJamsCopy.TITLE, PastJamsCopy.LOADING)
+        val title = if (isAdmin) PastJamsCopy.TITLE_ADMIN else PastJamsCopy.TITLE
+        val model = snapshot?.toUiModel(now, onRetry, onOpenJam, admin)
+            ?: PastJamsUiModel.Loading(title, PastJamsCopy.LOADING)
         return model.withPullRefresh(pullRefresh)
     }
 }
@@ -99,6 +117,7 @@ internal fun JamsSnapshot.toUiModel(
     now: Instant = freshness.fetchedAt ?: Instant.EPOCH,
     onRetry: () -> Unit = {},
     onOpenJam: (LocalDate) -> Unit = {},
+    admin: JamsAdminState? = null,
 ): PastJamsUiModel {
     val fetchedAt = freshness.fetchedAt
     val failure = freshness.lastFailure
@@ -109,20 +128,24 @@ internal fun JamsSnapshot.toUiModel(
     } else {
         null
     }
-    val title = PastJamsCopy.TITLE
-    // A past BORRADOR jam is hidden for everyone (D-26): Anteriores has no admin view.
+    val title = if (admin == null) PastJamsCopy.TITLE else PastJamsCopy.TITLE_ADMIN
+    // A past BORRADOR jam is hidden for everyone (D-26); the admin's extra section lists only the
+    // jams to come (`admin-jams-tab`), from the raw snapshot.
     val visiblePast = forMusicians().past
+    val adminSection = admin?.let { toJamsAdmin(it) }
     return when {
         visiblePast.isNotEmpty() -> PastJamsUiModel.Jams(
             title = title,
             rows = visiblePast.sortedByDescending { it.date }.map { it.toRow(onOpenJam) },
             staleness = staleness,
+            admin = adminSection,
         )
 
         fetchedAt != null -> PastJamsUiModel.Empty(
             title = title,
             empty = EmptyStateUiModel(PastJamsCopy.EMPTY_TITLE, PastJamsCopy.EMPTY_MESSAGE),
             staleness = staleness,
+            admin = adminSection,
         )
 
         // Nothing was ever read: never claim there is no history. An error only once a read has

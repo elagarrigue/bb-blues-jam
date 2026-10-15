@@ -1,0 +1,3 @@
+FAILED app module binds the narrow status and publish contracts to the same SetlistRepository instance: org.koin.core.error.NoDefinitionFoundException: No definition found for type 'com.bbbjam.core.data.setlist.SetlistJamStatusRepository'. Check your Modules configuration and add missing type and/or qua
+FAILED the tabs are in bar order with the approved labels, routes and icons, Asistente last: java.lang.AssertionError: expected:&lt;[Próxima jam, Jams, Info, Asistente]&gt; but was:&lt;[Próxima jam, Anteriores, Info, Asistente]&gt;
+(./gradlew :app:testDebugUnitTest --tests *SetlistActionRegistryTest* --tests *AppTabTest*: 9 tests completed, 2 failed)

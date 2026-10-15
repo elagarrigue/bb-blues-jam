@@ -64,7 +64,7 @@ private fun TabBarPreview() {
             TabBarUiModel(
                 listOf(
                     TabUiModel("Próxima jam", TabIcon.SETLIST, selected = true, events = EventHandler {}),
-                    TabUiModel("Anteriores", TabIcon.ARCHIVE, selected = false, events = EventHandler {}),
+                    TabUiModel("Jams", TabIcon.ARCHIVE, selected = false, events = EventHandler {}),
                     TabUiModel("Info", TabIcon.INFO, selected = false, events = EventHandler {}),
                 ),
             ),
