@@ -14,7 +14,7 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
-import com.bbbjam.core.ui.status.JamStatusBadgeUiModel
+import com.bbbjam.core.ui.status.JamStatusChipsUiModel
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -75,7 +75,14 @@ class JamsAdminTest {
 
     private fun PastJamsUiModel.controls(): JamControlsUiModel = card().controls
 
-    private fun JamStatusUiModel.labels() = actions.map { it.label }
+    /** The labels of the chips the admin can tap to change the status (the selected one is not a change). */
+    private fun JamStatusUiModel.labels() = chips.chips.filter { it.enabled && !it.selected }.map { it.label }
+
+    private fun JamStatusUiModel.selected() = chips.chips.single { it.selected }.label
+
+    private fun JamStatusUiModel.select(status: JamStatus) = chips.events(JamStatusChipsUiModel.Event.Select(status))
+
+    private fun JamStatusUiModel.allDisabled() = chips.chips.none { it.enabled }
 
     private fun entry(id: Long, target: JamStatus, state: com.bbbjam.core.data.setlist.JamStatusChange.State) =
         com.bbbjam.core.data.setlist.JamStatusChange(id, upcomingDate, target, state)
@@ -123,20 +130,22 @@ class JamsAdminTest {
                 val first = admin.future[0]
                 assertEquals("Sábado 31 de octubre · 21:00", first.dateLabel)
                 assertEquals("La Macanuda", first.venue)
-                assertEquals(JamStatusBadgeUiModel("Creada", isPublished = false), first.badge)
+                assertEquals("Creada", first.controls.status.selected())
                 assertEquals("Los músicos ven la fecha, pero todavía no la lista.", first.note)
                 assertEquals("12 temas", first.songCount)
                 assertNull(first.heldBack)
-                assertEquals(listOf("Pasar a borrador"), first.controls.status.labels())
-                assertEquals("Publicar lista", (first.controls.publish as PublishUiModel.Idle).label)
+                assertEquals(listOf("Borrador", "Publicada"), first.controls.status.labels())
+                assertNull(first.controls.status.publishUnavailable)
+                assertNull(first.controls.publish)
 
                 val second = admin.future[1]
                 assertEquals("Sábado 28 de noviembre · 21:00", second.dateLabel)
-                assertEquals(JamStatusBadgeUiModel("Borrador", isPublished = false), second.badge)
+                assertEquals("Borrador", second.controls.status.selected())
                 assertEquals("Los músicos todavía no ven esta jam.", second.note)
                 assertEquals("Sin temas todavía", second.songCount)
                 assertEquals("En espera: la próxima jam es la del sábado 31 de octubre.", second.heldBack)
-                assertEquals(listOf("Pasar a creada"), second.controls.status.labels())
+                assertEquals(listOf("Creada"), second.controls.status.labels())
+                assertEquals("Solo la próxima jam se puede publicar.", second.controls.status.publishUnavailable)
                 assertNull(second.controls.publish)
 
                 // The past rows are what a musician sees, under ANTERIORES.
@@ -181,21 +190,24 @@ class JamsAdminTest {
     }
 
     @Test
-    fun `each state offers the other actions, publish only before publication`() = runTest {
+    fun `each state offers the other chips, Publicada only before publication and never from the confirm`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
             val draft = expectMostRecentItem().controls()
-            assertEquals(listOf("Pasar a creada"), draft.status.labels())
-            assertTrue(draft.publish is PublishUiModel.Idle)
+            assertEquals(listOf("Creada", "Publicada"), draft.status.labels())
+            assertEquals("Borrador", draft.status.selected())
+            assertNull(draft.publish)
 
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED)))
             val created = expectMostRecentItem().controls()
-            assertEquals(listOf("Pasar a borrador"), created.status.labels())
-            assertTrue(created.publish is PublishUiModel.Idle)
+            assertEquals(listOf("Borrador", "Publicada"), created.status.labels())
+            assertEquals("Creada", created.status.selected())
+            assertNull(created.publish)
 
             repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
             val published = expectMostRecentItem().controls()
-            assertEquals(listOf("Pasar a creada", "Pasar a borrador"), published.status.labels())
+            assertEquals(listOf("Borrador", "Creada"), published.status.labels())
+            assertEquals("Publicada", published.status.selected())
             assertNull(published.publish)
             cancelAndIgnoreRemainingEvents()
         }
@@ -207,8 +219,8 @@ class JamsAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
             val change = expectMostRecentItem().controls().status
-            change.events(JamStatusUiModel.Event.Request(JamStatus.CREATED))
-            change.events(JamStatusUiModel.Event.Request(JamStatus.CREATED))
+            change.select(JamStatus.CREATED)
+            change.select(JamStatus.CREATED)
             assertEquals(listOf(upcomingDate to JamStatus.CREATED), statuses.calls)
             assertNull(change.confirming)
             hold.complete(Unit)
@@ -221,7 +233,7 @@ class JamsAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
             val idle = expectMostRecentItem().controls().status
-            idle.events(JamStatusUiModel.Event.Request(JamStatus.DRAFT))
+            idle.select(JamStatus.DRAFT)
             val asking = awaitItem().controls().status
             assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
             val dialog = checkNotNull(asking.confirming)
@@ -237,7 +249,7 @@ class JamsAdminTest {
             assertNull(awaitItem().controls().status.confirming)
             assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
 
-            asking.events(JamStatusUiModel.Event.Request(JamStatus.CREATED))
+            asking.select(JamStatus.CREATED)
             val toCreated = awaitItem().controls().status
             assertEquals(
                 "Los músicos van a dejar de ver la lista cuando actualicen la app. Van a seguir viendo la fecha.",
@@ -251,30 +263,30 @@ class JamsAdminTest {
     }
 
     @Test
-    fun `sending shows one line and no actions and the badge stays the confirmed one`() = runTest {
+    fun `sending shows one line, all chips disabled and the selection stays the confirmed one`() = runTest {
         statuses.changes.value =
             listOf(entry(7, JamStatus.DRAFT, com.bbbjam.core.data.setlist.JamStatusChange.State.Sending))
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
             val sending = expectMostRecentItem()
-            assertEquals("Publicada", sending.card().badge.label)
+            assertEquals("Publicada", sending.controls().status.selected())
             val change = sending.controls().status
             assertEquals("Cambiando el estado…", change.sending)
-            assertEquals(emptyList<StatusActionUiModel>(), change.actions)
+            assertTrue(change.allDisabled())
             assertNull(sending.controls().publish)
 
             statuses.changes.value = emptyList()
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
             val done = expectMostRecentItem()
-            assertEquals("Borrador", done.card().badge.label)
-            assertEquals(listOf("Pasar a creada"), done.controls().status.labels())
+            assertEquals("Borrador", done.controls().status.selected())
+            assertEquals(listOf("Creada", "Publicada"), done.controls().status.labels())
             assertNull(done.controls().status.sending)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `a sending publication hides the status actions`() = runTest {
+    fun `a sending publication disables the status chips`() = runTest {
         publishes.entries.value =
             listOf(
                 com.bbbjam.core.data.setlist.SetlistPublish(
@@ -286,7 +298,8 @@ class JamsAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED)))
             val controls = expectMostRecentItem().controls()
-            assertEquals(emptyList<StatusActionUiModel>(), controls.status.actions)
+            assertTrue(controls.status.allDisabled())
+            assertEquals("Creada", controls.status.selected())
             assertNull(controls.status.sending)
             assertEquals("Publicando…", (controls.publish as PublishUiModel.Publishing).status)
             cancelAndIgnoreRemainingEvents()
@@ -331,12 +344,14 @@ class JamsAdminTest {
         }
 
     @Test
-    fun `publish confirmation is explicit and a sending publish keeps the confirmed badge`() = runTest {
+    fun `publish confirmation is explicit and a sending publish keeps the confirmed chip`() = runTest {
         val hold = kotlinx.coroutines.CompletableDeferred<Unit>().also { publishes.hold = it }
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
-            val idle = expectMostRecentItem().controls().publish as PublishUiModel.Idle
-            idle.events(PublishUiModel.Event.Request)
+            val idle = expectMostRecentItem().controls()
+            assertNull(idle.publish)
+            idle.status.select(JamStatus.PUBLISHED)
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
             val confirmation = awaitItem().controls().publish as PublishUiModel.Confirming
             assertEquals("¿Publicar la lista?", confirmation.prompt)
             assertEquals("Los músicos van a ver los 2 temas cuando abran o actualicen la app.", confirmation.details)
@@ -345,14 +360,16 @@ class JamsAdminTest {
             assertEquals("Cancelar", confirmation.cancelLabel)
 
             confirmation.events(PublishUiModel.Event.Cancel)
-            val idleAgain = awaitItem().controls().publish as PublishUiModel.Idle
-            idleAgain.events(PublishUiModel.Event.Request)
+            val idleAgain = awaitItem().controls()
+            assertNull(idleAgain.publish)
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
+            idleAgain.status.select(JamStatus.PUBLISHED)
             val confirm = awaitItem().controls().publish as PublishUiModel.Confirming
             confirm.events(PublishUiModel.Event.Confirm)
             confirm.events(PublishUiModel.Event.Confirm)
             val sending = awaitItem()
             assertEquals(listOf(upcomingDate), publishes.calls)
-            assertEquals("Borrador", sending.card().badge.label)
+            assertEquals("Borrador", sending.controls().status.selected())
             assertEquals("Publicando…", (sending.controls().publish as PublishUiModel.Publishing).status)
             hold.complete(Unit)
             cancelAndIgnoreRemainingEvents()
@@ -360,22 +377,35 @@ class JamsAdminTest {
     }
 
     @Test
-    fun `a single song says the song, an empty or unreadable list hides publish, a published jam has none`() = runTest {
+    fun `a single song says the song, an empty or unreadable list disables Publicada with a reason`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED, 1)))
-            val one = expectMostRecentItem().controls().publish as PublishUiModel.Idle
-            one.events(PublishUiModel.Event.Request)
+            expectMostRecentItem().controls().status.select(JamStatus.PUBLISHED)
             val confirming = awaitItem().controls().publish as PublishUiModel.Confirming
             assertEquals("Los músicos van a ver el tema cuando abran o actualicen la app.", confirming.details)
 
             repository.snapshots.emit(snapshot(jam(upcomingDate, JamStatus.DRAFT, Setlist.Available(emptyList()))))
-            assertNull(expectMostRecentItem().controls().publish)
+            val empty = expectMostRecentItem().controls()
+            assertNull(empty.publish)
+            assertEquals(listOf("Creada"), empty.status.labels())
+            assertEquals("Para publicar, agregá al menos un tema en Próxima jam.", empty.status.publishUnavailable)
+            empty.status.select(JamStatus.PUBLISHED)
+            expectNoEvents()
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
             repository.snapshots.emit(
                 snapshot(jam(upcomingDate, JamStatus.DRAFT, Setlist.Unavailable(SetlistProblem.INVALID_TAB))),
             )
-            assertNull(expectMostRecentItem().controls().publish)
+            val unreadable = expectMostRecentItem().controls()
+            assertNull(unreadable.publish)
+            assertEquals(listOf("Creada"), unreadable.status.labels())
+            assertEquals("Para publicar, la lista se tiene que poder leer.", unreadable.status.publishUnavailable)
+            unreadable.status.select(JamStatus.PUBLISHED)
+            expectNoEvents()
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
             repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
-            assertNull(expectMostRecentItem().controls().publish)
+            val published = expectMostRecentItem().controls()
+            assertNull(published.publish)
+            assertNull(published.status.publishUnavailable)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -413,6 +443,85 @@ class JamsAdminTest {
             }
         }
 
+    private val heldDate = LocalDate.of(2026, 11, 28)
+
+    @Test
+    fun `tapping the selected chip writes nothing and Publicada on a held-back card is disabled with its reason`() =
+        runTest {
+            moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+                repository.snapshots.emit(
+                    snapshot(
+                        upcoming = upcoming(JamStatus.CREATED, 2),
+                        heldBack = listOf(jam(heldDate, JamStatus.DRAFT, Setlist.Available(songs(3)))),
+                    ),
+                )
+                val model = expectMostRecentItem()
+                val current = model.controls().status
+                current.select(JamStatus.CREATED)
+                assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
+
+                val held = checkNotNull(model.admin()).future[1].controls.status
+                assertEquals(listOf("Creada"), held.labels())
+                assertEquals("Solo la próxima jam se puede publicar.", held.publishUnavailable)
+                held.select(JamStatus.PUBLISHED)
+                assertEquals(emptyList<LocalDate>(), publishes.calls)
+                assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
+                held.select(JamStatus.CREATED)
+                assertEquals(listOf(heldDate to JamStatus.CREATED), statuses.calls)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `another chip while the publish confirmation is open closes it and applies its rule`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            expectMostRecentItem().controls().status.select(JamStatus.PUBLISHED)
+            val confirming = awaitItem().controls()
+            assertTrue(confirming.publish is PublishUiModel.Confirming)
+            // Publicada again while confirming is a no-op, and the selection has not moved.
+            confirming.status.select(JamStatus.PUBLISHED)
+            expectNoEvents()
+            assertEquals("Borrador", confirming.status.selected())
+            confirming.status.select(JamStatus.CREATED)
+            assertEquals(listOf(upcomingDate to JamStatus.CREATED), statuses.calls)
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
+            assertNull(expectMostRecentItem().controls().publish)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a failed status change keeps the previous chip selected and the failure card`() = runTest {
+        val failed = com.bbbjam.core.data.setlist.JamStatusChange.State.Failed(
+            com.bbbjam.core.data.admin.WriteOutcome.Offline,
+        )
+        statuses.changes.value = listOf(entry(3, JamStatus.CREATED, failed))
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 1)))
+            val status = expectMostRecentItem().controls().status
+            assertEquals("Borrador", status.selected())
+            assertEquals(listOf("Creada", "Publicada"), status.labels())
+            assertEquals("No se pudo cambiar el estado", checkNotNull(status.failure).title)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `while a change is sending a tap on any chip writes nothing`() = runTest {
+        statuses.changes.value =
+            listOf(entry(7, JamStatus.CREATED, com.bbbjam.core.data.setlist.JamStatusChange.State.Sending))
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            val status = expectMostRecentItem().controls().status
+            JamStatus.entries.forEach { status.select(it) }
+            assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
+            assertNull(status.publishUnavailable)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Test
     fun `logging out hides the admin section from the same snapshot`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
@@ -422,7 +531,7 @@ class JamsAdminTest {
             val musician = expectMostRecentItem() as PastJamsUiModel.Jams
             assertNull(musician.admin)
             assertEquals("Jams anteriores", musician.title)
-            assertFalse(musician.toString().contains("Pasar a"))
+            assertFalse(musician.toString().contains("Estado:"))
             cancelAndIgnoreRemainingEvents()
         }
     }

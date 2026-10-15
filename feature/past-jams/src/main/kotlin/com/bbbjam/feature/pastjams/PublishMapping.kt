@@ -18,15 +18,9 @@ internal fun JamsAdminState.publishUiModel(jam: Jam): PublishUiModel? {
     val failed = entries.lastOrNull { it.state is SetlistPublish.State.Failed }
     return when {
         sending != null -> PublishUiModel.Publishing(PastJamsCopy.PUBLISHING)
-
         failed != null -> toPublishFailure(jam.date, failed)
-
         publish.confirming == jam.date.toString() -> confirmingPublish(jam.date, songCount)
-
-        else -> PublishUiModel.Idle(
-            PastJamsCopy.PUBLISH,
-            EventHandler(key = jam.date) { publish.onRequest(jam.date) },
-        )
+        else -> null
     }
 }
 

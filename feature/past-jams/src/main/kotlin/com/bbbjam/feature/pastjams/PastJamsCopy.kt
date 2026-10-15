@@ -45,7 +45,9 @@ internal object PastJamsCopy {
     const val PUBLISHED_NOTE = "Los músicos ya ven esta lista."
 
     /** Publishing and changing the status, moved from Próxima jam (same text). */
-    const val PUBLISH = "Publicar lista"
+    const val PUBLISH_ONLY_UPCOMING = "Solo la próxima jam se puede publicar."
+    const val PUBLISH_NEEDS_SONG = "Para publicar, agregá al menos un tema en Próxima jam."
+    const val PUBLISH_NEEDS_READABLE = "Para publicar, la lista se tiene que poder leer."
     const val PUBLISH_PROMPT = "¿Publicar la lista?"
     const val PUBLISH_REVERSIBLE = "Después podés volver a cambiar el estado desde acá."
     const val PUBLISH_CONFIRM = "Publicar"

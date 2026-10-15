@@ -1,0 +1,74 @@
+Reusing configuration cache.
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:data:preBuild UP-TO-DATE
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :feature:past-jams:preBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :core:data:generateDebugResources UP-TO-DATE
+> Task :feature:past-jams:preDebugBuild UP-TO-DATE
+> Task :core:data:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :core:data:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :feature:past-jams:preDebugUnitTestBuild UP-TO-DATE
+> Task :feature:past-jams:generateDebugResources UP-TO-DATE
+> Task :feature:past-jams:processDebugNavigationResources UP-TO-DATE
+> Task :feature:past-jams:javaPreCompileDebug UP-TO-DATE
+> Task :feature:past-jams:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :core:data:packageDebugResources UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :feature:past-jams:packageDebugResources UP-TO-DATE
+> Task :core:data:parseDebugLocalResources UP-TO-DATE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :feature:past-jams:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:data:generateDebugRFile UP-TO-DATE
+> Task :feature:past-jams:generateDebugRFile UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :feature:past-jams:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:data:kspDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugJavaRes UP-TO-DATE
+> Task :core:ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:data:compileDebugKotlin UP-TO-DATE
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:processDebugJavaRes UP-TO-DATE
+> Task :core:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:past-jams:compileDebugKotlin
+> Task :feature:past-jams:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:past-jams:processDebugJavaRes UP-TO-DATE
+> Task :feature:past-jams:bundleLibRuntimeToJarDebug
+> Task :feature:past-jams:bundleLibCompileToJarDebug
+> Task :feature:past-jams:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :feature:past-jams:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature:past-jams:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :feature:past-jams:testDebugUnitTest FAILED
+
+JamsAdminTest > another chip while the publish confirmation is open closes it and applies its rule FAILED
+    java.lang.AssertionError at channel.kt:59
+        Caused by: java.lang.AssertionError at JamsAdminTest.kt:477
+
+99 tests completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':feature:past-jams:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 2s
+38 actionable tasks: 4 executed, 34 up-to-date
+Configuration cache entry reused.

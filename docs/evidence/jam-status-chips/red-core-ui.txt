@@ -1,0 +1,89 @@
+Calculating task graph as no cached configuration is available for tasks: :core:ui:testDebugUnitTest --tests *JamStatusChipsTest*
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :core:ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :core:ui:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugJavaRes UP-TO-DATE
+> Task :core:ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core:ui:compileDebugUnitTestKotlin FAILED
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:14:37 Unresolved reference 'JamStatusChipsUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:14:66 Argument type mismatch: actual type is '(uninferred E (of class EventHandler<E : UiEvent>)) -> Unit', but '(uninferred E (of class EventHandler<E : UiEvent>)) -> Unit' was expected.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:14:66 Cannot infer type for type parameter 'E'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:18:21 Unresolved reference 'jamStatusChips'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:19:83 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:22:31 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:24:105 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:30:25 Unresolved reference 'jamStatusChips'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:30:59 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:31:64 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:31:84 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:32:76 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:32:99 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:38:21 Unresolved reference 'jamStatusChips'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:39:68 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:40:20 Unresolved reference 'jamStatusChips'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:40:52 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:40:83 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:45:34 Unresolved reference 'JamStatusChipsUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:46:21 Unresolved reference 'jamStatusChips'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:46:79 Cannot infer type for type parameter 'E'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:46:92 Cannot infer type for type parameter 'E'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:47:22 Unresolved reference 'JamStatusChipsUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:48:22 Inapplicable candidate(s): fun <T> listOf(element: T): List<T>
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:48:29 Unresolved reference 'JamStatusChipsUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:48:58 Unresolved reference 'JamStatusChipsUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:54:21 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:62:29 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:69:9 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:69:89 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:69:89 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:69:93 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:70:50 Function invocation 'fill(...)' expected.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:77:21 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:87:21 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:96:21 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:106:13 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:107:13 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:110:13 Unresolved reference 'JamStatusChipDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/status/JamStatusChipsTest.kt:111:13 Unresolved reference 'JamStatusChipDefaults'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:ui:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s
+19 actionable tasks: 1 executed, 18 up-to-date
+Configuration cache entry stored.

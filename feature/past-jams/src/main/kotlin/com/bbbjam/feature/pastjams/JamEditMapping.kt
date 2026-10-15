@@ -23,7 +23,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 /** The song count of a jam whose setlist is readable; null when it is not (delete is then not offered). */
 private fun Jam.knownSongCount(): Int? = (setlist as? Setlist.Available)?.songs?.size
 
-/** The edit and delete actions of one card, hidden while this jam is being written. */
+/** The edit and delete icons of one card, drawn disabled while this jam is being written. */
 internal fun JamsAdminState.manageUiModel(jam: Jam): JamManageUiModel {
     val mine = edits.filter { it.jamDate == jam.date }
     val editSending = mine.lastOrNull { it.state == JamEdit.State.Sending }
@@ -32,8 +32,9 @@ internal fun JamsAdminState.manageUiModel(jam: Jam): JamManageUiModel {
         publishes.any { it.jamDate == jam.date && it.state == SetlistPublish.State.Sending }
     val idle = editSending == null && !statusBusy
     return JamManageUiModel(
-        editLabel = JamEditCopy.EDIT.takeIf { idle },
-        deleteLabel = JamEditCopy.DELETE.takeIf { idle && jam.knownSongCount() != null },
+        edit = IconActionUiModel(JamEditCopy.editDescription(jam.date), enabled = idle),
+        delete = IconActionUiModel(JamEditCopy.deleteDescription(jam.date), enabled = idle)
+            .takeIf { jam.knownSongCount() != null },
         sending = editSending?.let {
             if (it.change is JamEdit.Change.Delete) JamEditCopy.DELETING else JamEditCopy.SAVING
         },

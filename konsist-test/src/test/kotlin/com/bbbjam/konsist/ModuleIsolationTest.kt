@@ -423,7 +423,8 @@ class ModuleIsolationTest {
             // `primaryAction` only for ExtraDialogDefaultsTest's "the dialog is never amber" assertion.
             "feature/next-jam" to setOf("key", "primaryAction"),
             // past-jam-detail: the key of each song as played that night (K3). admin-jams-tab: the
-            // "Publicar lista" button (`primaryAction`/`onPrimaryAction`); the PUBLICADA badge is in :core:ui.
+            // "Publicar" confirmation button (`primaryAction`/`onPrimaryAction`); the PUBLICADA badge and
+            // the selected Publicada chip (jam-status-chips) are in :core:ui.
             "feature/past-jams" to setOf("key", "primaryAction", "onPrimaryAction"),
             // admin-passphrase-login (A6): the "Entrar" button of the admin login, `button-primary`.
             "feature/info" to setOf("primaryAction", "onPrimaryAction"),

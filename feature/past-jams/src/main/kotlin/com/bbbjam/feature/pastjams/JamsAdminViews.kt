@@ -24,7 +24,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import com.bbbjam.core.ui.status.JamStatusBadge
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /** The admin's items above the past jams: the `PRÓXIMAS` heading and cards, then the `ANTERIORES` heading. */
@@ -61,9 +60,9 @@ private fun NoFutureLine(text: String) {
 }
 
 /**
- * One future jam: one card with the date, the venue and count, the badge and its note, the status
- * actions and the edit and delete actions; the upcoming card also carries `Publicar lista`, a held-back
- * card its line. The edit and delete dialogs of [admin] are drawn by the card they are for.
+ * One future jam: one card with the date and the edit and delete icons, the venue and count, the status chips
+ * and their note; the upcoming card also opens the publish confirmation from the Publicada chip, a held-back
+ * card carries its line. The edit and delete dialogs of [admin] are drawn by the card they are for.
  * Colours only from [JamsAdminDefaults].
  */
 @Composable
@@ -76,7 +75,15 @@ private fun FutureJamCard(jam: FutureJamUiModel, admin: JamsAdminUiModel) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.md, vertical = spacing.sm),
             verticalArrangement = Arrangement.spacedBy(spacing.xs),
         ) {
-            Text(text = jam.dateLabel, style = typography.songTitle, color = style.date)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = jam.dateLabel,
+                    style = typography.songTitle,
+                    color = style.date,
+                    modifier = Modifier.weight(1f),
+                )
+                JamManageIcons(jam.manage)
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 Text(
                     text = jam.venue,
@@ -92,7 +99,6 @@ private fun FutureJamCard(jam: FutureJamUiModel, admin: JamsAdminUiModel) {
                 modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
                 verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
-                JamStatusBadge(jam.badge)
                 Text(text = jam.note, style = typography.caption, color = style.note)
                 jam.heldBack?.let { Text(text = it, style = typography.caption, color = style.note) }
                 jam.musicianNote?.let { Text(text = it, style = typography.caption, color = style.note) }
@@ -117,10 +123,6 @@ private fun PublishControl(model: PublishUiModel) {
     val spacing = BluesJamTheme.spacing
     val note = JamsAdminDefaults.status()
     when (model) {
-        is PublishUiModel.Idle -> PrimaryPublishButton(model.label, Modifier.fillMaxWidth()) {
-            model.events(PublishUiModel.Event.Request)
-        }
-
         is PublishUiModel.Confirming -> Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
             Text(text = model.prompt, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
             Text(text = model.details, style = BluesJamTheme.typography.caption, color = note)
@@ -203,7 +205,7 @@ private fun PrimaryPublishButton(label: String, modifier: Modifier = Modifier, o
     }
 }
 
-/** An underlined text action (never amber): the status actions, `Cancelar`, `Reintentar` and `Cerrar`. */
+/** An underlined text action (never amber): `Cancelar`, `Reintentar` and `Cerrar`. */
 @Composable
 internal fun PublishTextAction(
     label: String,

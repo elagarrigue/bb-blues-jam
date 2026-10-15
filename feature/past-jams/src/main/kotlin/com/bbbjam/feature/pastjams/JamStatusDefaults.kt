@@ -5,10 +5,11 @@ import com.bbbjam.core.ui.theme.BluesJamColors
 
 /**
  * The status change controls' colours (`admin-set-jam-status`), apart from the composables so a JVM
- * test can check them. Neutral roles only: amber stays on the publish button and the published badge.
+ * test can check them. Neutral roles only: amber stays on `Publicar` and on the selected Publicada chip
+ * (in `:core:ui`).
  */
 internal object JamStatusDefaults {
-    /** A neutral status action ("Pasar a creada"/"Pasar a borrador"): underlined `text`, never amber. */
+    /** A neutral text action (`Reintentar`, `Cerrar`): underlined `text`, never amber. */
     data class ActionStyle(val action: Color)
 
     fun action(colors: BluesJamColors = BluesJamColors): ActionStyle = ActionStyle(action = colors.text)

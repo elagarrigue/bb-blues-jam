@@ -5,8 +5,8 @@ import com.bbbjam.core.ui.theme.BluesJamColors
 
 /**
  * The admin section's colours on the Jams tab (`admin-jams-tab`), apart from the composables so a JVM
- * test can check them. Neutral roles only, except `Publicar lista` (`primaryAction` / `onPrimaryAction`,
- * the module's one admin amber use besides the badge in `:core:ui`). The unpublish dialog's roles are in
+ * test can check them. Neutral roles only, except `Publicar` (`primaryAction` / `onPrimaryAction`,
+ * the module's one admin amber use besides the Publicada chip in `:core:ui`). The unpublish dialog's roles are in
  * [JamStatusDefaults].
  */
 internal object JamsAdminDefaults {
@@ -21,10 +21,16 @@ internal object JamsAdminDefaults {
         note = colors.textMuted,
     )
 
+    /** The edit and delete icons: `text` and `error`, `textMuted` while disabled. */
+    data class IconStyle(val edit: Color, val delete: Color, val muted: Color)
+
+    fun icons(colors: BluesJamColors = BluesJamColors): IconStyle =
+        IconStyle(edit = colors.text, delete = colors.error, muted = colors.textMuted)
+
     /** `PRÓXIMAS` and `ANTERIORES`: `textMuted` captions. */
     fun heading(colors: BluesJamColors = BluesJamColors): Color = colors.textMuted
 
-    /** `Publicar lista` and `Publicar`: the primary action pair. */
+    /** `Publicar`, the inline confirmation's button: the primary action pair. */
     data class PublishStyle(val fill: Color, val text: Color)
 
     fun publish(colors: BluesJamColors = BluesJamColors): PublishStyle =

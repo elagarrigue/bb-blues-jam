@@ -17,6 +17,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import com.bbbjam.core.ui.action.IconRowAction
+import com.bbbjam.core.ui.action.IconRowActionIcon
 import com.bbbjam.core.ui.jamform.JamFormDialog
 import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
 import com.bbbjam.core.ui.jamform.JamFormUiModel
@@ -24,14 +26,12 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The edit and delete actions under a future card's status block (`admin-edit-delete-jam` C2): two neutral
- * underlined 48dp actions (never amber), one sending line instead of them while the jam is written, and
- * the failure card. Colours only from [JamStatusDefaults] and [JamsAdminDefaults].
+ * What the card shows under its status block for editing and deleting (`admin-edit-delete-jam` C2): the
+ * sending line while the jam is written and the failure card. The edit and delete icons are in the date row
+ * ([JamManageIcons]). Colours only from [JamStatusDefaults] and [JamsAdminDefaults].
  */
 @Composable
 internal fun JamManageActions(model: JamManageUiModel) {
-    val spacing = BluesJamTheme.spacing
-    val actionColor = JamStatusDefaults.action().action
     model.sending?.let { line ->
         Text(
             text = line,
@@ -42,16 +42,6 @@ internal fun JamManageActions(model: JamManageUiModel) {
                 .heightIn(min = LocalMinimumInteractiveComponentSize.current)
                 .semantics { liveRegion = LiveRegionMode.Polite },
         )
-    }
-    if (model.editLabel != null || model.deleteLabel != null) {
-        Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
-            model.editLabel?.let { label ->
-                PublishTextAction(label, color = actionColor) { model.events(JamManageUiModel.Event.Edit) }
-            }
-            model.deleteLabel?.let { label ->
-                PublishTextAction(label, color = actionColor) { model.events(JamManageUiModel.Event.Delete) }
-            }
-        }
     }
     model.failure?.let { failure -> JamEditFailureCard(failure, model.events) }
 }
@@ -145,4 +135,28 @@ internal fun DeleteJamDialog(model: DeleteJamUiModel) {
             }
         },
     )
+}
+
+/** The edit and delete icons at the end of the card's date line: 48dp each, disabled while the jam is sending. */
+@Composable
+internal fun JamManageIcons(model: JamManageUiModel) {
+    val colors = JamsAdminDefaults.icons()
+    Row {
+        IconRowAction(
+            icon = IconRowActionIcon.Edit,
+            contentDescription = model.edit.description,
+            tint = colors.edit,
+            mutedTint = colors.muted,
+            enabled = model.edit.enabled,
+        ) { model.events(JamManageUiModel.Event.Edit) }
+        model.delete?.let { delete ->
+            IconRowAction(
+                icon = IconRowActionIcon.Delete,
+                contentDescription = delete.description,
+                tint = colors.delete,
+                mutedTint = colors.muted,
+                enabled = delete.enabled,
+            ) { model.events(JamManageUiModel.Event.Delete) }
+        }
+    }
 }

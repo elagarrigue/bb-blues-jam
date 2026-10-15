@@ -17,11 +17,13 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.status.JamStatusChips
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The status change controls under the badge and note (`admin-set-jam-status`): neutral underlined
- * actions (never amber), the "Cambiando el estado…" line while sending, and the failure card.
+ * The status change controls under the card's date and venue (`jam-status-chips`): the single-select chips,
+ * the note's reason line when Publicada is disabled, the "Cambiando el estado…" line while sending, and the
+ * failure card.
  */
 @Composable
 internal fun JamStatusActions(model: JamStatusUiModel) {
@@ -29,6 +31,8 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
     val failureStyle = JamsAdminDefaults.failure()
     val note = JamsAdminDefaults.status()
     val actionColor = JamStatusDefaults.action().action
+    JamStatusChips(model.chips)
+    model.publishUnavailable?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = note) }
     model.sending?.let { line ->
         Text(
             text = line,
@@ -39,15 +43,6 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
                 .heightIn(min = LocalMinimumInteractiveComponentSize.current)
                 .semantics { liveRegion = LiveRegionMode.Polite },
         )
-    }
-    if (model.actions.isNotEmpty()) {
-        Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
-            model.actions.forEach { action ->
-                PublishTextAction(action.label, color = actionColor) {
-                    model.events(JamStatusUiModel.Event.Request(action.target))
-                }
-            }
-        }
     }
     model.failure?.let { failure ->
         Surface(

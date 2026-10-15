@@ -67,6 +67,14 @@ components:
     textColor: "{colors.onPrimary}"
     rounded: "{rounded.md}"
     minHeight: 48dp
+  chip-status:
+    backgroundColor: "{colors.surfaceRaised}"
+    textColor: "{colors.textMuted}"
+    selectedTextColor: "{colors.text}"
+    publishedBackgroundColor: "{colors.published}"
+    publishedTextColor: "{colors.onPublished}"
+    rounded: "{rounded.lg}"
+    minHeight: 48dp
   chip-filter:
     backgroundColor: "{colors.surfaceRaised}"
     textColor: "{colors.textMuted}"
@@ -139,7 +147,7 @@ near-black indigo, with slightly lighter surface layers separating content.
 - open slots
 - the key
 - the primary action
-- the published state
+- the published state (the Publicada badge, and the selected Publicada chip of the Jams tab)
 - the active filter chip
 
 Everything else is text, muted text, or surface. If everything glows, nothing stands out — let the
@@ -403,7 +411,20 @@ The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter
 
 ### Status badge
 
-**Borrador**, **Creada** or **Publicada**. Published is amber; draft and created are muted.
+**Borrador**, **Creada** or **Publicada**. Published is amber; draft and created are muted. Próxima jam keeps this
+read-only badge. The Jams tab's cards do not draw it: they draw the status chips below.
+
+### Status chips (`chip-status`, `jam-status-chips`)
+
+One row of three single-select chips, `Borrador` `Creada` `Publicada`, on every future card of the admin's Jams tab. The
+selected chip is the jam's confirmed status. Each chip is at least 48dp tall and wide (`shapes.lg`, `body` label), in a
+wrapping row that never scrolls horizontally. Shape always differs from brightness: an unselected chip is `surfaceRaised`
+with a hairline `border` outline and a `textMuted` label; a selected `Borrador`/`Creada` chip is `surfaceRaised` with a
+hairline `text` outline, a leading check glyph and a `text` label; the selected `Publicada` chip is amber (`published` /
+`onPublished`, the published-state role, no outline) with the check. A disabled chip that is not selected has no fill and no
+outline, a `textMuted` label; a disabled selected chip keeps its selected look and loses only the tap. The row has
+`selectableGroup` and each chip is one `Role.RadioButton` node described `Estado: Creada`, so a screen reader announces the
+state and the selection. Tapping the selected chip does nothing.
 
 ### Admin controls
 
@@ -781,11 +802,11 @@ title `Jams` (`h1`) and two sections: `PRÓXIMAS` and `ANTERIORES` (`caption`, `
 with the unchanged past rows. `PRÓXIMAS` starts with a full-width `Nueva jam` button (`surfaceRaised` fill, `text`
 content, 48dp, never amber), then the result of the last creation, then one card per future jam in date order, the upcoming
 jam first, BORRADOR included (D-26); with none, the line `No hay ninguna jam programada.`. A card is on `surface`
-(`shapes.md`): the date `Sábado 31 de octubre · 21:00` (`songTitle`, `text`), the venue and `12 temas` / `1 tema` /
+(`shapes.md`): the date `Sábado 31 de octubre · 21:00` (`songTitle`, `text`, with the two icons at its end), the venue and `12 temas` / `1 tema` /
 `Sin temas todavía` / `No se pudo leer la lista` (`body`, `textMuted`), the shared status badge (`:core:ui`, the
-"Status badge" component) and its note (`caption`, `textMuted`). The upcoming card carries the status actions and
-`Publicar lista`, below. Every future card carries the status actions (`Pasar a creada` / `Pasar a borrador`) and the
-edit and delete actions (see the next section); `Publicar lista` stays on the upcoming card only. A held-back card has the
+"Status chips" component, below the date line) and the status note (`caption`, `textMuted`). Every future card carries the
+chips and, at the end of its date line, the edit and delete icons (see the next section); only the upcoming card can be
+published. A held-back card has the
 line `En espera: la próxima jam es la del sábado 31 de octubre.` (`caption`, `textMuted`); a held-back CREADA or PUBLICADA
 card behind a BORRADOR upcoming jam adds `Los músicos la ven como la próxima jam, porque la del sábado 31 de octubre está
 en borrador.` Cards are not tappable; the list is edited in Próxima jam.
@@ -802,10 +823,11 @@ then `Jam creada como borrador.`, or an assertive failure card (`No se pudo crea
 
 ### Editing and deleting a jam (admin-edit-delete-jam)
 
-Under the status block of every future card, two neutral underlined 48dp text actions (`text`, `Role.Button`, never amber):
-`Editar la jam` and `Borrar la jam` (the second only when the setlist is readable, so its song count is known). While the
-jam is being written the card shows one polite line (`Guardando los cambios…` / `Borrando la jam…`, `textMuted`) instead of
-every action; edit and delete are also hidden while a status change or publication of that jam is sending. The edit dialog is
+At the end of the date line of every future card, two 48dp icon buttons (`Role.Button`, never amber): edit (`text`) and
+delete (`error`), described `Editar la jam del sábado 31 de octubre` and `Borrar la jam del sábado 31 de octubre`; delete is
+absent when the setlist is not readable, so its song count is unknown. While the jam is being written the card shows one
+polite line (`Guardando los cambios…` / `Borrando la jam…`, `textMuted`) and both icons are drawn disabled (`textMuted`,
+no tap), as they are while a status change or publication of that jam is sending. The edit dialog is
 the `Nueva jam` dialog (`surfaceRaised`, three labelled outlined fields seeded with the jam, `error` `caption` field errors,
 `textMuted` notes `La lista y los músicos anotados pasan a la nueva fecha.` and `Los músicos ven el cambio cuando
 actualicen la app.`, `Guardar` in `text`, `textMuted` when disabled, and `Cancelar` in `text`). An edit may not change which
@@ -819,17 +841,18 @@ Publishing and changing the status moved here from Próxima jam, with the same v
 
 ### Publishing (`admin-publish-setlist`, as built locally)
 
-The upcoming jam's card shows its status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song has a full-width amber `Publicar lista` button. Tapping it opens inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the server writes, the badge remains `BORRADOR` and the controls become `Publicando…`. Only confirmed server write/read-back flips the cache and badge. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. Empty, tab-less, unreadable and already-published setlists have no publish action. Amber is limited here to the publish button and published badge roles.
+The upcoming jam's card shows its status: muted `BORRADOR` with `Los músicos todavía no ven esta jam.` for a draft, muted `CREADA` with `Los músicos ven la fecha, pero todavía no la lista.` for a created jam; amber `PUBLICADA` with `Los músicos ya ven esta lista.` after confirmed publication. An upcoming draft or created jam with at least one song can be published from its `Publicada` chip. Tapping it opens, under the chips, an inline confirmation with the song count, the note `Después podés volver a cambiar el estado desde acá.`, and 48dp `Publicar`/`Cancelar` actions. While the confirmation is open the selection does not move; choosing `Borrador` or `Creada` instead closes it and applies that chip. While the server writes, the selection stays on the confirmed chip, the chips are drawn disabled and a line says `Publicando…`. Only confirmed server write/read-back flips the cache and the selected chip. A persistent assertive failure card remains in this same status block with the reason, `Los músicos siguen sin ver la lista.`, `Reintentar` and `Cerrar`. `Publicada` is disabled, with a `caption`/`textMuted` line under the note, on a held-back card (`Solo la próxima jam se puede publicar.`), an empty list (`Para publicar, agregá al menos un tema en Próxima jam.`) and an unreadable one (`Para publicar, la lista se tiene que poder leer.`). Amber is limited here to the `Publicar` button and the selected `Publicada` chip.
 
 ### Changing the status (`admin-set-jam-status`)
 
-Under the badge and note the status block draws neutral, underlined `text` actions of 48dp with `Role.Button`, **never
-amber**: `Pasar a creada` and `Pasar a borrador` (a BORRADOR jam shows the first, CREADA the second, PUBLICADA both).
-BORRADOR and CREADA change at once, without a dialog (reversible, no list shown). Leaving PUBLICADA opens a modal
+Since `jam-status-chips` the status block is the chip row (see "Status chips"); the `Pasar a…` actions are gone. Choosing
+`Borrador` or `Creada` on a BORRADOR or CREADA jam changes at once, without a dialog (reversible, no list shown). Leaving PUBLICADA
+(choosing either of them) opens a modal
 `AlertDialog` (`surfaceRaised`, `text` title `¿Dejar de publicar la lista?`, `textMuted` body that says what musicians stop
 seeing, `error` confirm `Pasar a creada`/`Pasar a borrador`, `text` `Cancelar`; back or a tap outside is `Cancelar`).
-While a change or a publication of the jam is sending, the actions and the publish button are replaced by one polite
-live region, `Cambiando el estado…` (or `Publicando…`); the badge keeps the confirmed status until the server confirms.
+While a change, a publication or an edit of the jam is sending, the three chips and the two icons are drawn disabled and
+one polite live region says `Cambiando el estado…` (or `Publicando…`); the selected chip stays on the confirmed status until
+the server confirms.
 A failure is the same assertive card as publishing's (`No se pudo cambiar el estado`, the reason, `La jam sigue como estaba.`,
 `Reintentar`, `Cerrar`); with a script that does not know `setJamStatus` the card says `El script de la planilla todavía no
 sabe cambiar el estado. Actualizalo con la guía y probá de nuevo.` with `Cerrar` only. No new amber role.

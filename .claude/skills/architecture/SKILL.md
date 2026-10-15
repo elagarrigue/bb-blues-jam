@@ -543,8 +543,8 @@ with songs draws no button.
   assertion (`admin-publish-setlist` had given it `primaryAction`, `onPrimaryAction`, `published`,
   `onPublished`; publication moved to the Jams tab); `:feature:past-jams` may read `key` since
   `past-jam-detail` (the detail rows' key, through `PastJamDetailDefaults`) and, since `admin-jams-tab`,
-  `primaryAction` and `onPrimaryAction` (`Publicar lista`, through `JamsAdminDefaults`; the PUBLICADA badge
-  reads `published` inside `:core:ui`);
+  `primaryAction` and `onPrimaryAction` (the `Publicar` confirmation, through `JamsAdminDefaults`; the PUBLICADA badge
+  and the selected Publicada chip read `published` inside `:core:ui`);
   `:feature:info` may read `primaryAction` and `onPrimaryAction` since `admin-passphrase-login`
   (the login's "Entrar", `button-primary`, through `AdminLoginDefaults`; the field reads none). The rule
   also reads test sources, so a test in a module without an entry cannot name an amber role either
@@ -1133,3 +1133,20 @@ The assistant's answer streams (15 October 2026). The final parse stays the sour
 - **UI (`:core:ui`).** `LoadingDots` (`state`) is the only moving element in the app (DESIGN.md M1): `loadingDotAlpha` is
   pure, `isReducedMotion(scale)` reads `Settings.Global.ANIMATOR_DURATION_SCALE` once per composition, and with scale 0 the dots
   are static and no transition exists.
+
+## As built by `jam-status-chips`
+
+Single-select status chips and edit/delete icons on the Jams tab cards (15 October 2026). No backend, registry or repository
+change: `setJamStatus` and `publishSetlist` are reached through the same calls (D-13).
+
+- **`:core:ui` `status`.** `JamStatusChips` / `jamStatusChips(current, enabled, events)` (pure) / `JamStatusChipDefaults`
+  (internal, JVM-tested). One `selectableGroup` row of `Role.RadioButton` chips, 48dp, wrapping. The selected Publicada chip
+  reads `published` / `onPublished` here, inside `:core:ui`, so the `feature/past-jams` amber allowlist is unchanged
+  (`key`, `primaryAction`, `onPrimaryAction`). `IconRowActionIcon.Edit` was added.
+- **`:feature:past-jams`.** `JamStatusUiModel` carries `chips` and `publishUnavailable` (the reason Publicada is disabled);
+  `StatusActionUiModel`, `statusTargets`, `PublishUiModel.Idle` and `FutureJamUiModel.badge` are gone. The chips' handler
+  decides (`JamStatusMapping.chipEvents`): the selected chip and every chip while the card is busy do nothing; Publicada opens
+  the publish confirmation only when `canPublish` (upcoming card, not published, readable non-empty list, no failed publish);
+  any other chip first closes an open publish confirmation, then applies today's rule. While idle the selected chip is in the
+  enabled set, so a screen reader does not call the current status disabled. `JamManageUiModel.edit` / `delete`
+  (`IconActionUiModel(description, enabled)`) replace the text labels; the icons sit at the end of the date line.

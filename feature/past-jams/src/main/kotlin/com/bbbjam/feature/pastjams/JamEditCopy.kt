@@ -25,6 +25,10 @@ internal object JamEditCopy {
     const val SCRIPT_OUTDATED =
         "El script de la planilla todavía no sabe editar ni borrar jams. Actualizalo con la guía y probá de nuevo."
 
+    fun editDescription(date: LocalDate): String = "$EDIT del ${PastJamsCopy.sentenceDate(date)}"
+
+    fun deleteDescription(date: LocalDate): String = "$DELETE del ${PastJamsCopy.sentenceDate(date)}"
+
     fun deleteTitle(date: LocalDate): String = "¿Borrar la jam del ${PastJamsCopy.sentenceDate(date)}?"
 
     fun songsLost(count: Int): String = when (count) {

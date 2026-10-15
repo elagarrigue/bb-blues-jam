@@ -1632,5 +1632,32 @@
       "Unit tests with a fake streaming executor cover chunk boundaries inside a song, malformed chunks, unknown ids, cancellation and network failure mid-stream; Molecule presenter tests (D-02)",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check with one live read-only request, no write taps"
     ]
+  },
+  {
+    "id": "jam-status-chips",
+    "area": "feature-past-jams",
+    "title": "Single-select status chips and edit/delete icons on the Jams tab cards",
+    "user_visible_behavior": "On each future jam card in the Jams tab the status is a row of three single-select chips (Borrador, Creada, Publicada) with the current one selected, replacing the Pasar a… actions and the separate Publicar lista action. Tapping another chip changes the status with the same rules as today: BORRADOR<->CREADA applies at once, leaving PUBLICADA asks for confirmation, choosing Publicada keeps the publish confirmation and refusals (empty or tab-less list). Publicada is disabled on held-back jams. While a change is sending the chips are disabled and the selection moves only after the server confirms. The Editar la jam and Borrar la jam text actions become icon buttons (edit and delete) with accessible labels, following the existing admin row icon pattern.",
+    "depends_on": [
+      "assistant-streaming"
+    ],
+    "status": "accepted",
+    "evidence": [
+      "Chips in :core:ui status (JamStatusChips, jamStatusChips, JamStatusChipDefaults, IconRowActionIcon.Edit); failing first: docs/evidence/jam-status-chips/red-core-ui.txt (unresolved references). Presenter and edit tests were amended after the code, so their red is shown by a mutation instead (publish guard and cancel-on-other-chip removed): red-presenter-mutation.txt, 1 of 99 failing (the confirmation-close test); the publish guard mutation is not caught by an observable assertion (a no-op state write), the code guard stays",
+      "Past-jams: JamStatusUiModel.chips + publishUnavailable, chipEvents routing (selected chip and busy do nothing; Publicada opens confirmation only when canPublish; other chip closes an open confirmation then applies the rule), StatusActionUiModel/statusTargets/PublishUiModel.Idle/FutureJamUiModel.badge removed, JamManageUiModel.edit/delete icon models with date descriptions, icons at the end of the date line, all disabled while busy",
+      "Gate: CI=true ./init.sh exit 0, konsist/detekt/ktlint wired (docs/evidence/jam-status-chips/final-gate.txt); 1121 testcases (1108 baseline, baseline-gate.txt), 1 skipped, 0 failures, counted from */build/test-results/**/TEST-*.xml; AMBER_ROLE_ALLOWLIST unchanged, only a comment",
+      "Device (Pixel, debug admin, real Sheet, no write): Jams tab dump and screenshot d2: 31/10 CREADA with three RadioButton chips (Creada checked, 132px = 48dp tall, icons 132px wide, descriptions 'Editar/Borrar la jam del sabado 31 de octubre'), 13/11 held back with Borrador checked and Publicada enabled=false plus the line 'Solo la proxima jam se puede publicar.'. Tapped Publicada on 31/10 only: inline confirmation (d3), Cancelar (d4: no confirmation, Creada still checked). Edit icon: dialog (d5), Cancelar. Delete icon: dialog (d7), Cancelar; d8 final dump back on the cards. No non-selected Borrador/Creada chip, Publicar, Guardar, Borrar or Crear was tapped. Startup jams lines before and after restart identical (31/10 created, 13/11 held back); local.properties md5 569913ae before and after; no setJamStatus/publishSetlist/updateJam/deleteJam in logcat",
+      "Selected state exposure in the uiautomator dump: the selectable node is checkable=true, checked=true for the selected chip and checked=false for others, a child android.widget.RadioButton node, and the 'Estado: X' description on a sibling node (same split the existing filter chips show in dumps); the selected chip reports clickable=false. TalkBack itself was not run",
+      "Deviations: the selected chip is in the presenter's enabled set while idle (so it is not read as disabled) and disabled while busy; Publicada is also disabled with no reason line while a failed publish card is showing; musician view not checked on device; the date line wraps to two lines on the Pixel because the two 48dp icons take room",
+      "Independent validator accepted on 15 October 2026: CI=true ./init.sh exit 0, three tools wired, 1121 testcases, 0 failures; amber allowlist unchanged; no backend/registry/repository change. Notes: the disabled-Publicada guard is real but its tests would pass without it (UI cannot send the event); TalkBack and the musician view not checked on device; the date line wraps on the Pixel."
+    ],
+    "verification": [
+      "Same repository functions and registry entries as today (setJamStatus, publishSetlist; D-13); no backend change, no redeploy",
+      "Chips follow DESIGN.md (BluesJamTheme tokens, D-17; amber only by role, decided in the spec), minimum touch targets, selected state announced to TalkBack, Spanish vos copy",
+      "Edit and delete are icon buttons reusing the admin-row-icon-actions pattern (icons, 48dp targets, contentDescription in vos naming the jam date); delete keeps its confirmation dialog",
+      "Selection reflects the confirmed server state only; failures leave the previous chip selected with the existing failure cards",
+      "Molecule presenter tests (D-02) for each transition, the unpublish and publish confirmations, held-back Publicada disabled, in-flight disabling and failure; tests asserting the old Pasar a… actions are amended",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (no chip tap that writes; open and cancel the confirmations only)"
+    ]
   }
 ]

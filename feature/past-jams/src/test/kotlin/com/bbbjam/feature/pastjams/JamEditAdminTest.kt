@@ -24,6 +24,7 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -86,13 +87,28 @@ class JamEditAdminTest {
             val model = expectMostRecentItem()
             val first = model.card(0)
             val second = model.card(1)
-            assertEquals("Editar la jam", first.manage.editLabel)
-            assertEquals("Borrar la jam", first.manage.deleteLabel)
-            assertEquals("Editar la jam", second.manage.editLabel)
-            assertEquals("Borrar la jam", second.manage.deleteLabel)
-            assertEquals(listOf("Pasar a creada"), checkNotNull(second.controls).status.actions.map { it.label })
-            assertNull(checkNotNull(second.controls).publish)
-            assertTrue(checkNotNull(first.controls).publish is PublishUiModel.Idle)
+            assertEquals(
+                IconActionUiModel("Editar la jam del sábado 31 de octubre", enabled = true),
+                first.manage.edit,
+            )
+            assertEquals(
+                IconActionUiModel("Borrar la jam del sábado 31 de octubre", enabled = true),
+                first.manage.delete,
+            )
+            assertEquals(
+                IconActionUiModel("Editar la jam del viernes 13 de noviembre", enabled = true),
+                second.manage.edit,
+            )
+            assertEquals(
+                IconActionUiModel("Borrar la jam del viernes 13 de noviembre", enabled = true),
+                second.manage.delete,
+            )
+            assertEquals(
+                listOf("Creada"),
+                second.controls.status.chips.chips.filter { it.enabled && !it.selected }.map { it.label },
+            )
+            assertNull(second.controls.publish)
+            assertNull(first.controls.publish)
 
             repository.snapshots.emit(
                 snapshot(
@@ -102,8 +118,8 @@ class JamEditAdminTest {
                 ),
             )
             val unreadable = expectMostRecentItem().card(1)
-            assertEquals("Editar la jam", unreadable.manage.editLabel)
-            assertNull(unreadable.manage.deleteLabel)
+            assertTrue(unreadable.manage.edit.enabled)
+            assertNull(unreadable.manage.delete)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -330,36 +346,38 @@ class JamEditAdminTest {
     }
 
     @Test
-    fun `while an edit is sending its card shows one line and no actions, the other card is unaffected`() = runTest {
-        edits.entries.value = listOf(
-            JamEdit.Change.Update(LocalDate.of(2026, 11, 7), LocalTime.of(20, 0), "Bar")
-                .at(5, upcomingDate, JamEdit.State.Sending),
-        )
-        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
-            repository.snapshots.emit(snapshot(upcoming = upcoming(JamStatus.CREATED)))
-            val model = expectMostRecentItem()
-            val sending = model.card(0)
-            assertEquals("Guardando los cambios…", sending.manage.sending)
-            assertNull(sending.manage.editLabel)
-            assertNull(sending.manage.deleteLabel)
-            assertEquals(emptyList<StatusActionUiModel>(), checkNotNull(sending.controls).status.actions)
-            assertNull(checkNotNull(sending.controls).publish)
-            val other = model.card(1)
-            assertNull(other.manage.sending)
-            assertEquals("Editar la jam", other.manage.editLabel)
-
+    fun `while an edit is sending its card shows one line, disabled chips and icons, the other card is unaffected`() =
+        runTest {
             edits.entries.value = listOf(
-                JamEdit.Change.Delete(0).at(6, heldDate, JamEdit.State.Sending),
+                JamEdit.Change.Update(LocalDate.of(2026, 11, 7), LocalTime.of(20, 0), "Bar")
+                    .at(5, upcomingDate, JamEdit.State.Sending),
             )
-            val deleting = expectMostRecentItem().card(1)
-            assertEquals("Borrando la jam…", deleting.manage.sending)
-            assertNull(deleting.manage.editLabel)
-            cancelAndIgnoreRemainingEvents()
+            moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+                repository.snapshots.emit(snapshot(upcoming = upcoming(JamStatus.CREATED)))
+                val model = expectMostRecentItem()
+                val sending = model.card(0)
+                assertEquals("Guardando los cambios…", sending.manage.sending)
+                assertFalse(sending.manage.edit.enabled)
+                assertFalse(checkNotNull(sending.manage.delete).enabled)
+                assertTrue(sending.controls.status.chips.chips.none { it.enabled })
+                assertEquals("Creada", sending.controls.status.chips.chips.single { it.selected }.label)
+                assertNull(checkNotNull(sending.controls).publish)
+                val other = model.card(1)
+                assertNull(other.manage.sending)
+                assertTrue(other.manage.edit.enabled)
+
+                edits.entries.value = listOf(
+                    JamEdit.Change.Delete(0).at(6, heldDate, JamEdit.State.Sending),
+                )
+                val deleting = expectMostRecentItem().card(1)
+                assertEquals("Borrando la jam…", deleting.manage.sending)
+                assertFalse(deleting.manage.edit.enabled)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 
     @Test
-    fun `a status change sending hides edit and delete of that card`() = runTest {
+    fun `a status change sending disables edit and delete of that card`() = runTest {
         statuses.changes.value = listOf(
             com.bbbjam.core.data.setlist.JamStatusChange(
                 7,
@@ -371,8 +389,9 @@ class JamEditAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot())
             val model = expectMostRecentItem()
-            assertNull(model.card(1).manage.editLabel)
-            assertEquals("Editar la jam", model.card(0).manage.editLabel)
+            assertFalse(model.card(1).manage.edit.enabled)
+            assertFalse(checkNotNull(model.card(1).manage.delete).enabled)
+            assertTrue(model.card(0).manage.edit.enabled)
             cancelAndIgnoreRemainingEvents()
         }
     }

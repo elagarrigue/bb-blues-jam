@@ -4,7 +4,6 @@ import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
-import com.bbbjam.core.ui.status.jamStatusBadge
 
 /**
  * The admin's section of the Jams tab from the **raw** snapshot (D-26 admin view): the upcoming jam,
@@ -33,7 +32,6 @@ private fun Jam.toFutureCard(admin: JamsAdminState, upcoming: Jam, musiciansNext
         date = date,
         dateLabel = jamDateLabel(date, startTime),
         venue = venue,
-        badge = jamStatusBadge(status),
         note = statusNote(status),
         songCount = songCountLabel(setlist),
         heldBack = if (isUpcoming) null else PastJamsCopy.heldBack(upcoming.date),
@@ -43,7 +41,7 @@ private fun Jam.toFutureCard(admin: JamsAdminState, upcoming: Jam, musiciansNext
             null
         },
         controls = JamControlsUiModel(
-            status = admin.jamStatusUiModel(this),
+            status = admin.jamStatusUiModel(this, isUpcoming),
             publish = if (!isUpcoming || status == JamStatus.PUBLISHED) null else admin.publishUiModel(this),
         ),
         manage = admin.manageUiModel(this),

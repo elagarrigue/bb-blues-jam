@@ -1,7 +1,6 @@
 package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.ui.presenter.UiModel
-import com.bbbjam.core.ui.status.JamStatusBadgeUiModel
 import java.time.LocalDate
 
 /**
@@ -29,7 +28,6 @@ data class FutureJamUiModel(
     val date: LocalDate,
     val dateLabel: String,
     val venue: String,
-    val badge: JamStatusBadgeUiModel,
     val note: String,
     val songCount: String?,
     val heldBack: String?,

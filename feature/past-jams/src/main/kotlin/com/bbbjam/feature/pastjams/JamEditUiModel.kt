@@ -6,13 +6,14 @@ import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 
 /**
- * Editing and deleting a future jam (`admin-edit-delete-jam`, D-28) on one card: the two neutral actions
- * ([editLabel], [deleteLabel], null while hidden), the [sending] line, a [failure] card and one handler for
- * every event. [deleteLabel] is null too when the setlist's song count is not known.
+ * Editing and deleting a future jam (`admin-edit-delete-jam`, D-28; icons by `jam-status-chips`) on one card:
+ * the two icon actions ([edit], always present; [delete], null when the setlist's song count is not known),
+ * drawn disabled while this jam is being written, the [sending] line, a [failure] card and one handler for
+ * every event.
  */
 data class JamManageUiModel(
-    val editLabel: String?,
-    val deleteLabel: String?,
+    val edit: IconActionUiModel,
+    val delete: IconActionUiModel?,
     val sending: String?,
     val failure: JamEditFailureUiModel?,
     val events: EventHandler<Event>,
@@ -24,6 +25,9 @@ data class JamManageUiModel(
         data class Dismiss(val id: Long) : Event
     }
 }
+
+/** An icon action: [description] names the jam's date for a screen reader; [enabled] is false while it is sending. */
+data class IconActionUiModel(val description: String, val enabled: Boolean) : UiModel
 
 /** [retryLabel] is null when retrying is pointless (the script is outdated, or the list changed). */
 data class JamEditFailureUiModel(
