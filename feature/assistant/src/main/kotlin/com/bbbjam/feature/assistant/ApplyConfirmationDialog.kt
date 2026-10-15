@@ -10,12 +10,12 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
  * The confirmation before anything is written (D-24): a Material 3 [AlertDialog] with every colour
- * from [ApplyDefaults.applyDialog] (no amber, no `error`). Back, a tap outside and "Cancelar" all
- * send Cancel; only the confirm button sends Confirm, which starts the load.
+ * from [ApplyDefaults.applyDialog] (no amber; `error` only on the confirm of a destructive one). Back,
+ * a tap outside and "Cancelar" all send Cancel; only the confirm button sends Confirm, which starts the load.
  */
 @Composable
 internal fun ApplyConfirmationDialog(model: ConfirmationUiModel) {
-    val style = ApplyDefaults.applyDialog()
+    val style = ApplyDefaults.applyDialog(model.destructive)
     AlertDialog(
         onDismissRequest = { model.events(ConfirmationUiModel.Event.Cancel) },
         containerColor = style.container,

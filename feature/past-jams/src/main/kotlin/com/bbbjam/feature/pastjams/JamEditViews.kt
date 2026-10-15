@@ -17,6 +17,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import com.bbbjam.core.ui.jamform.JamFormDialog
+import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
+import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
@@ -84,44 +87,31 @@ private fun JamEditFailureCard(failure: JamEditFailureUiModel, events: EventHand
 }
 
 /**
- * The edit dialog, the look of `Nueva jam` (`surfaceRaised`, labelled outlined fields, `error` field errors,
- * `textMuted` notes). Back and a tap outside equal `Cancelar`; nothing is written until `Guardar` calls
- * `updateJam` through the presenter (D-13).
+ * The edit dialog: the shared jam form (`core.ui.jamform`, the look of `Nueva jam`). Back and a tap outside
+ * equal `Cancelar`; nothing is written until `Guardar` calls `updateJam` through the presenter (D-13).
  */
 @Composable
 internal fun EditJamDialog(model: EditJamFormUiModel) {
-    val style = JamsAdminDefaults.form()
-    AlertDialog(
-        onDismissRequest = { model.events(EditJamFormUiModel.Event.Cancel) },
-        containerColor = style.container,
-        title = { Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
-                FormField(model.dateLabel, model.date, model.dateHint, model.dateError, KeyboardType.Number, style) {
-                    model.events(EditJamFormUiModel.Event.Edit(NewJamField.DATE, it))
-                }
-                FormField(model.timeLabel, model.time, model.timeHint, model.timeError, KeyboardType.Number, style) {
-                    model.events(EditJamFormUiModel.Event.Edit(NewJamField.TIME, it))
-                }
-                FormField(model.venueLabel, model.venue, null, model.venueError, KeyboardType.Text, style) {
-                    model.events(EditJamFormUiModel.Event.Edit(NewJamField.VENUE, it))
-                }
-                model.dateNote?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.note) }
-                model.visibilityNote?.let {
-                    Text(text = it, style = BluesJamTheme.typography.caption, color = style.note)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(enabled = model.canSave, onClick = { model.events(EditJamFormUiModel.Event.Save) }) {
-                Text(text = model.saveLabel, color = if (model.canSave) style.confirm else style.disabled)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { model.events(EditJamFormUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
-            }
-        },
+    JamFormDialog(
+        JamFormUiModel(
+            title = model.title,
+            date = JamFormFieldUiModel(model.dateLabel, model.date, model.dateHint, model.dateError),
+            time = JamFormFieldUiModel(model.timeLabel, model.time, model.timeHint, model.timeError),
+            venue = JamFormFieldUiModel(model.venueLabel, model.venue, null, model.venueError),
+            notes = listOfNotNull(model.dateNote, model.visibilityNote),
+            submitLabel = model.saveLabel,
+            cancelLabel = model.cancelLabel,
+            canSubmit = model.canSave,
+            events = EventHandler { event ->
+                model.events(
+                    when (event) {
+                        is JamFormUiModel.Event.Edit -> EditJamFormUiModel.Event.Edit(event.field, event.text)
+                        JamFormUiModel.Event.Submit -> EditJamFormUiModel.Event.Save
+                        JamFormUiModel.Event.Cancel -> EditJamFormUiModel.Event.Cancel
+                    },
+                )
+            },
+        ),
     )
 }
 

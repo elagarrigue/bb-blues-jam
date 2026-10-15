@@ -85,6 +85,15 @@ class AssistantDefaultsTest {
     }
 
     @Test
+    fun `a destructive dialog draws only its confirm in error`() {
+        val dialog = ApplyDefaults.applyDialog(destructive = true)
+        assertEquals(colors.error, dialog.confirm)
+        assertEquals(colors.text, dialog.cancel)
+        assertEquals(colors.text, dialog.title)
+        assertEquals(colors.surfaceRaised, dialog.container)
+    }
+
+    @Test
     fun `the summary and status colours follow the tone`() {
         assertEquals(colors.text, ApplyDefaults.summary(ApplyTone.NEUTRAL))
         assertEquals(colors.text, ApplyDefaults.summary(ApplyTone.SUCCESS))

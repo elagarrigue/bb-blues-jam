@@ -1,13 +1,18 @@
 package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.jams.JamFormInput
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.jams.formatFormDate
+import com.bbbjam.core.data.jams.formatFormTime
 import com.bbbjam.core.data.setlist.JamEdit
 import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.ui.jamform.JamFormField
+import com.bbbjam.core.ui.jamform.JamFormText
 import com.bbbjam.core.ui.presenter.EventHandler
 
 /*
@@ -37,7 +42,7 @@ internal fun JamsAdminState.manageUiModel(jam: Jam): JamManageUiModel {
             when (event) {
                 JamManageUiModel.Event.Edit -> editing.onOpenEdit(
                     jam.date,
-                    NewJamInput(formatFormDate(jam.date), formatFormTime(jam.startTime), jam.venue),
+                    JamFormInput(formatFormDate(jam.date), formatFormTime(jam.startTime), jam.venue),
                 )
 
                 JamManageUiModel.Event.Delete -> editing.onRequestDelete(jam.date)
@@ -72,19 +77,19 @@ internal fun JamsSnapshot.toEditForm(admin: JamsAdminState, future: List<Jam>): 
     return EditJamFormUiModel(
         title = JamEditCopy.EDIT,
         jamDate = jam.date,
-        dateLabel = PastJamsCopy.NEW_JAM_DATE,
-        dateHint = PastJamsCopy.NEW_JAM_DATE_HINT,
-        timeLabel = PastJamsCopy.NEW_JAM_TIME,
-        timeHint = PastJamsCopy.NEW_JAM_TIME_HINT,
-        venueLabel = PastJamsCopy.NEW_JAM_VENUE,
+        dateLabel = JamFormText.DATE_LABEL,
+        dateHint = JamFormText.DATE_HINT,
+        timeLabel = JamFormText.TIME_LABEL,
+        timeHint = JamFormText.TIME_HINT,
+        venueLabel = JamFormText.VENUE_LABEL,
         date = input.date,
         time = input.time,
         venue = input.venue,
-        dateError = editDateError(check, shown = input.date.isNotBlank() || controls.isTouched(NewJamField.DATE)),
-        timeError = PastJamsCopy.TIME_ERROR.takeIf {
-            check.timeInvalid && (input.time.isNotBlank() || controls.isTouched(NewJamField.TIME))
+        dateError = editDateError(check, shown = input.date.isNotBlank() || controls.isTouched(JamFormField.DATE)),
+        timeError = JamFormText.TIME_ERROR.takeIf {
+            check.timeInvalid && (input.time.isNotBlank() || controls.isTouched(JamFormField.TIME))
         },
-        venueError = venueError(check.venueProblem, touched = controls.isTouched(NewJamField.VENUE)),
+        venueError = venueError(check.venueProblem, touched = controls.isTouched(JamFormField.VENUE)),
         dateNote = JamEditCopy.DATE_MOVES_NOTE.takeIf { check.dateChanged },
         visibilityNote = JamEditCopy.VISIBLE_NOTE.takeIf { jam.status != JamStatus.DRAFT },
         saveLabel = JamEditCopy.SAVE,
@@ -104,9 +109,9 @@ private fun editDateError(check: JamEditCheck, shown: Boolean): String? {
     val other = check.otherDate
     return when {
         !shown -> null
-        check.dateProblem == JamEditDateProblem.FORMAT -> PastJamsCopy.DATE_FORMAT_ERROR
-        check.dateProblem == JamEditDateProblem.PAST -> PastJamsCopy.DATE_PAST_ERROR
-        check.dateProblem == JamEditDateProblem.EXISTS -> PastJamsCopy.DATE_EXISTS_ERROR
+        check.dateProblem == JamEditDateProblem.FORMAT -> JamFormText.DATE_FORMAT_ERROR
+        check.dateProblem == JamEditDateProblem.PAST -> JamFormText.DATE_PAST_ERROR
+        check.dateProblem == JamEditDateProblem.EXISTS -> JamFormText.DATE_EXISTS_ERROR
         check.dateProblem == JamEditDateProblem.LATER -> other?.let(JamEditCopy::laterError)
         check.dateProblem == JamEditDateProblem.EARLIER -> other?.let(JamEditCopy::earlierThanUpcomingError)
         else -> null

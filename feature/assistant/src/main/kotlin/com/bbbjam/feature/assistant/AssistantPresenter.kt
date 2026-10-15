@@ -23,8 +23,9 @@ import com.bbbjam.core.ui.presenter.Presenter
  * request, so a double tap sends once.
  *
  * Loading a proposal (`assistant-apply-proposal`): the presenter also holds which turn's confirmation
- * dialog is open (one saveable `Long?`). The run itself belongs to [ProposalApplier]; a write starts
- * only from the dialog's Confirm event, which re-plans from the latest jams snapshot (D-24).
+ * dialog is open (one saveable `String?` key, `applyKey`: the turn and the target). The run itself
+ * belongs to [ProposalApplier]; a write starts only
+ * from the dialog's Confirm event, which re-plans from the latest jams snapshot (D-24).
  *
  * Creating a proposed jam (`assistant-create-jam`) works the same way with its own saveable `Long?` for
  * the open dialog and [JamCreationRunner]; "today" is read once per snapshot from [calendar].
@@ -47,11 +48,14 @@ class AssistantPresenter(
         val runs by applier.runs.collectAsState()
         val snapshot by remember { jams.observeJams() }.collectAsState(initial = null)
         val latestSnapshot by rememberUpdatedState(snapshot)
-        val confirming = rememberSaveable { mutableStateOf<Long?>(null) }
-        val applyHandlers = remember { ApplyHandlers(chat, applier, confirming) { latestSnapshot } }
+        val confirming = rememberSaveable { mutableStateOf<String?>(null) }
         val creations by creator.creations.collectAsState()
         val today = remember(snapshot) { calendar.today() }
         val latestToday by rememberUpdatedState(today)
+        val createForm = rememberCreateFormState()
+        val applyHandlers = remember {
+            ApplyHandlers(chat, applier, confirming, createForm, { latestSnapshot }, { latestToday })
+        }
         val confirmingJam = rememberSaveable { mutableStateOf<Long?>(null) }
         val jamHandlers = remember {
             JamHandlers(chat, creator, confirmingJam, { latestSnapshot }, { latestToday })
@@ -78,6 +82,7 @@ class AssistantPresenter(
                 },
                 apply = applyHandlers.apply,
                 confirmation = applyHandlers.confirmation,
+                createForm = applyHandlers.createForm,
                 stop = applyHandlers.stop,
                 jam = jamHandlers.request,
                 jamConfirmation = jamHandlers.confirmation,
@@ -89,7 +94,7 @@ class AssistantPresenter(
             service,
             draft.value,
             handlers,
-            ApplyInputs(runs, snapshot, confirming.value, creations, today, confirmingJam.value),
+            ApplyInputs(runs, snapshot, confirming.value, creations, today, confirmingJam.value, createForm.open),
         )
     }
 }

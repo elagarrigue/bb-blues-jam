@@ -3,6 +3,8 @@ package com.bbbjam.di
 import com.bbbjam.BuildConfig
 import com.bbbjam.actions.RegistryJamCreator
 import com.bbbjam.actions.RegistrySongAdder
+import com.bbbjam.actions.RegistrySongMover
+import com.bbbjam.actions.RegistrySongRemover
 import com.bbbjam.actions.SetlistActionRegistry
 import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.assistant.AssistantCredentials
@@ -12,6 +14,8 @@ import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
 import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SetlistSongAdder
+import com.bbbjam.core.data.setlist.SetlistSongMover
+import com.bbbjam.core.data.setlist.SetlistSongRemover
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.link.IntentLinkOpener
 import org.koin.android.ext.koin.androidContext
@@ -27,6 +31,8 @@ val appModule = module {
     single { AssistantCredentials.of(BuildConfig.DEVEXPERT_KEY) }
     single { SetlistActionRegistry(get<SetlistRepository>()) }
     single<SetlistSongAdder> { RegistrySongAdder(get()) }
+    single<SetlistSongRemover> { RegistrySongRemover(get()) }
+    single<SetlistSongMover> { RegistrySongMover(get()) }
     single<JamCreator> { RegistryJamCreator(get()) }
 
     // The Jams tab sees only the narrow contracts (J1), over the same instance as Próxima jam, so the

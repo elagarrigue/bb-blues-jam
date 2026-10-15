@@ -8,8 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.bbbjam.core.data.jams.JamFormInput
+import com.bbbjam.core.data.jams.JamFormValues
 import com.bbbjam.core.data.setlist.JamEdit
 import com.bbbjam.core.data.setlist.SetlistJamEditRepository
+import com.bbbjam.core.ui.jamform.JamFormField
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -23,13 +26,13 @@ import kotlinx.coroutines.launch
  */
 internal class JamEditControls(
     val editingDate: String?,
-    val input: NewJamInput,
+    val input: JamFormInput,
     private val touchedMask: Int,
     val deletingDate: String?,
-    val onOpenEdit: (jamDate: LocalDate, seed: NewJamInput) -> Unit,
-    val onEdit: (NewJamField, String) -> Unit,
+    val onOpenEdit: (jamDate: LocalDate, seed: JamFormInput) -> Unit,
+    val onEdit: (JamFormField, String) -> Unit,
     val onCancelEdit: () -> Unit,
-    val onSave: (jamDate: LocalDate, values: NewJamValues) -> Unit,
+    val onSave: (jamDate: LocalDate, values: JamFormValues) -> Unit,
     val onRequestDelete: (LocalDate) -> Unit,
     val onCancelDelete: () -> Unit,
     val onConfirmDelete: (jamDate: LocalDate, songs: Int) -> Unit,
@@ -37,7 +40,7 @@ internal class JamEditControls(
     val retain: (Set<LocalDate>) -> Unit,
 ) {
     /** True once the admin typed in [field] since the dialog opened. */
-    fun isTouched(field: NewJamField): Boolean = touchedMask and (1 shl field.ordinal) != 0
+    fun isTouched(field: JamFormField): Boolean = touchedMask and (1 shl field.ordinal) != 0
 }
 
 /** The edit dialog's saveable fields: which jam is being edited, the three texts and the edited-fields mask. */
@@ -49,12 +52,12 @@ internal class EditDialogState(
     private val touched: MutableState<Int>,
 ) {
     val editingDate: String? get() = editing.value
-    val input: NewJamInput get() = NewJamInput(date.value, time.value, venue.value)
+    val input: JamFormInput get() = JamFormInput(date.value, time.value, venue.value)
     val touchedMask: Int get() = touched.value
 
     fun isOpenFor(jamDate: LocalDate): Boolean = editing.value == jamDate.toString()
 
-    fun open(jamDate: LocalDate, seed: NewJamInput) {
+    fun open(jamDate: LocalDate, seed: JamFormInput) {
         date.value = seed.date
         time.value = seed.time
         venue.value = seed.venue
@@ -62,11 +65,11 @@ internal class EditDialogState(
         editing.value = jamDate.toString()
     }
 
-    fun type(field: NewJamField, text: String) {
+    fun type(field: JamFormField, text: String) {
         when (field) {
-            NewJamField.DATE -> date.value = text
-            NewJamField.TIME -> time.value = text
-            NewJamField.VENUE -> venue.value = text
+            JamFormField.DATE -> date.value = text
+            JamFormField.TIME -> time.value = text
+            JamFormField.VENUE -> venue.value = text
         }
         touched.value = touched.value or (1 shl field.ordinal)
     }

@@ -68,10 +68,14 @@ internal object JamCopy {
         JamRejection.INVALID_VENUE -> REJECTED_VENUE
     }
 
-    fun failure(failure: JamFailure): String = when (failure) {
+    fun failure(failure: JamFailure): String =
+        if (failure == JamFailure.ScriptOutdated) SCRIPT_OUTDATED else FAILURE_PREFIX + reason(failure)
+
+    /** Why a jam was not created, as a sentence that follows a colon (the outdated script is a full line). */
+    fun reason(failure: JamFailure): String = when (failure) {
         JamFailure.ScriptOutdated -> SCRIPT_OUTDATED
-        JamFailure.Interrupted -> FAILURE_PREFIX + INTERRUPTED
-        is JamFailure.Write -> FAILURE_PREFIX + writeReason(failure.reason)
+        JamFailure.Interrupted -> INTERRUPTED
+        is JamFailure.Write -> writeReason(failure.reason)
     }
 
     private fun writeReason(reason: WriteOutcome): String = when (reason) {

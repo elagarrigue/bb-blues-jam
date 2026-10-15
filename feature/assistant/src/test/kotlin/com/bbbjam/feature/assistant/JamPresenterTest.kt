@@ -28,7 +28,7 @@ class JamPresenterTest {
     private val adder = FakeSetlistSongAdder()
     private val creator = FakeJamCreator()
     private val jams = FakeJamsRepository()
-    private val applier = ProposalApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
+    private val applier = testApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
     private val runner = JamCreationRunner(creator, jams, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
     private val newDate = LocalDate.of(2026, 11, 28)
     private val newJam = ProposedJam(newDate, LocalTime.of(21, 30), "La Macanuda")
@@ -223,34 +223,23 @@ class JamPresenterTest {
     }
 
     @Test
-    fun `the list of a jam turn is blocked until the jam is created and is the upcoming one`() = runTest {
+    fun `the list targets of a jam turn act on the upcoming jam and do not wait for the new one`() = runTest {
         val chat = chat()
         chat.ask("uno", jamProposal(songs = 2))
         flow(chat).test {
-            val first = awaitProposal { it.apply is ApplyUiModel.Blocked }
+            val reply = awaitProposal { it.apply is ApplyUiModel.Targets }
+            val targets = reply.apply as ApplyUiModel.Targets
             assertEquals(
-                "Primero creá la jam; después podés cargar la lista.",
-                (first.apply as ApplyUiModel.Blocked).note,
+                listOf(
+                    "Agregar a la próxima jam",
+                    "Reemplazar la lista de la próxima jam",
+                    "Crear una jam nueva con esta lista",
+                ),
+                targets.actions.map { it.label },
             )
-
-            first.jam!!.action!!.events(JamActionUiModel.Event.Request)
-            awaitProposal { it.jam?.action?.confirmation != null }.jam!!.action!!.confirmation!!.events(
-                ConfirmationUiModel.Event.Confirm,
-            )
-            val held = awaitProposal {
-                it.jam?.result?.text == "Jam creada como borrador." &&
-                    (it.apply as? ApplyUiModel.Blocked)?.note?.startsWith("La lista iría") == true
-            }
-            assertEquals(
-                "La lista iría a la jam del sábado 31 de octubre, no a la nueva: esta queda en espera. " +
-                    "Cargala cuando sea la próxima.",
-                (held.apply as ApplyUiModel.Blocked).note,
-            )
-
-            jams.snapshot = snapshot(jam(JamStatus.DRAFT).copy(date = newDate))
-            val ready = awaitProposal { it.apply is ApplyUiModel.Action }
-            assertTrue((ready.apply as ApplyUiModel.Action).enabled)
-            assertEquals("Usar esta lista", (ready.apply as ApplyUiModel.Action).label)
+            assertTrue(targets.actions.all { it.enabled })
+            // C5: the card is information; the targets block creates the jam.
+            assertNull(reply.jam!!.action)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -272,7 +261,7 @@ class JamPresenterTest {
         val chat = chat()
         chat.ask("uno", proposal(songs = 2))
         flow(chat).test {
-            val reply = awaitProposal { it.apply is ApplyUiModel.Action }
+            val reply = awaitProposal { it.apply is ApplyUiModel.Targets }
             assertNull(reply.jam)
             assertNotNull(reply.apply)
             cancelAndIgnoreRemainingEvents()
@@ -283,7 +272,7 @@ class JamPresenterTest {
     fun `creating is disabled while a load runs`() = runTest {
         val chat = chat()
         chat.ask("uno", jamProposal(songs = 0))
-        val running = ProposalApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
+        val running = testApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
         adder.gates[com.bbbjam.core.model.SongId("s1")] = kotlinx.coroutines.CompletableDeferred()
         val plan = ApplyPlan.Ready(JAM_DATE, JamStatus.DRAFT, listOf(song(1)), emptyList(), 0)
         running.apply(99, plan)

@@ -71,7 +71,9 @@ Only the admin. Musicians never see the assistant.
 2. `assistant-agent-core` — Koog agent, tools over catalog and past jams, structured response,
    catalog validation, key wiring.
 3. `assistant-admin-tab` — `:feature:assistant` chat screen and the admin-only tab.
-4. `assistant-apply-proposal` — "Usar esta lista" through the action contract.
+4. `assistant-apply-proposal` — "Usar esta lista" through the action contract. `assistant-proposal-targets` renames it
+   `Agregar a la próxima jam` and adds `Reemplazar la lista de la próxima jam` (adds, removes and reorders through the same
+   contract, confirmed, naming what is lost); `Crear una jam nueva con esta lista` follows in its Part C.
 5. `assistant-create-jam` — the agent proposes the next jam (fecha, hora, lugar); the admin confirms
    and the app creates it as BORRADOR through the action contract (D-25).
 

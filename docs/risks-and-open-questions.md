@@ -502,3 +502,17 @@ Stated so they can be challenged rather than silently relied upon.
   - Saved state from an older build holds an `ExpandedRows` entry that is no longer read (harmless),
     and a saved `song/{date}/{position}` back stack fails to parse and pops (the handled branch).
   - TalkBack reading of the row's new action ("ver el detalle del tema") is a human follow-up.
+
+- **Replace the upcoming list is not atomic** (`assistant-proposal-targets`, R1, 15 October 2026): `Reemplazar` is a
+  client-side diff of existing actions run one call at a time (adds, then removes, then moves, each guarded and read back
+  server-side). Every intermediate state is a valid setlist and a cut run never leaves fewer songs than before until every
+  add was tried, but during the few seconds a run takes a second admin editing the same jam would see a mix; the MVP has
+  one admin. `Detener` ends it after the call in flight and `Reintentar el reemplazo` re-plans from the latest snapshot.
+  A replace counts as done only when the latest snapshot lists exactly the proposal in order.
+
+- **Lists loaded into a held-back jam are invisible until that jam is next** (`assistant-proposal-targets`, D-29, 15 October
+  2026): `Crear una jam nueva con esta lista` can create a jam behind the upcoming one and load its songs (`addSong` accepts any
+  future jam). Próxima jam only shows the upcoming jam, so the list is seen only through the Jams tab card's song count until
+  that jam is next; removing, moving or editing those songs there waits for it to be next. Until the script is redeployed
+  (`docs/migrations/assistant-proposal-targets-script-update.md`) a held-back create stops with the outdated-script line and the
+  empty BORRADOR jam stays.

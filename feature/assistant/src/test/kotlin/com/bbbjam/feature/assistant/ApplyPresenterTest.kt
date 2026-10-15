@@ -24,7 +24,7 @@ class ApplyPresenterTest {
     private val assistant = FakeSetlistAssistant()
     private val adder = FakeSetlistSongAdder()
     private val jams = FakeJamsRepository()
-    private val applier = ProposalApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
+    private val applier = testApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
 
     private fun TestScope.chat() = AssistantChat(assistant, ChatScope(testScheduler).scope)
 
@@ -47,7 +47,11 @@ class ApplyPresenterTest {
         }
     }
 
-    private fun ReplyUiModel.Proposal.action() = apply as ApplyUiModel.Action
+    private fun ReplyUiModel.Proposal.targets() = apply as ApplyUiModel.Targets
+
+    private fun ReplyUiModel.Proposal.add() = targets().actions.first { it.target == ApplyMode.ADD }
+
+    private fun ReplyUiModel.Proposal.replace() = targets().actions.first { it.target == ApplyMode.REPLACE }
 
     private suspend fun ReceiveTurbine<AssistantUiModel>.awaitChat(
         predicate: (AssistantUiModel.Chat) -> Boolean,
@@ -65,9 +69,9 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("uno", proposal(songs = 2))
         flow(chat).test {
-            val first = awaitProposal { it.apply is ApplyUiModel.Action }
-            assertEquals("Usar esta lista", first.action().label)
-            assertTrue(first.action().enabled)
+            val first = awaitProposal { it.apply is ApplyUiModel.Targets }
+            assertEquals("Agregar a la próxima jam", first.add().label)
+            assertTrue(first.add().enabled)
 
             val second = assistant.expectReply()
             chat.send("dos")
@@ -75,7 +79,7 @@ class ApplyPresenterTest {
             assertEquals(ApplyUiModel.None, pending.turns[0].apply())
 
             second.complete(proposal(songs = 3))
-            val answered = awaitChat { it.turns.size == 2 && it.turns[1].apply() is ApplyUiModel.Action }
+            val answered = awaitChat { it.turns.size == 2 && it.turns[1].apply() is ApplyUiModel.Targets }
             assertEquals(ApplyUiModel.None, answered.turns[0].apply())
         }
     }
@@ -97,11 +101,11 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("tres", proposal(songs = 4))
         flow(chat).test {
-            val ready = awaitProposal { it.apply is ApplyUiModel.Action }
-            assertNull(ready.action().confirmation)
-            ready.action().events(ApplyUiModel.Action.Event.Request)
+            val ready = awaitProposal { it.apply is ApplyUiModel.Targets }
+            assertNull(ready.targets().confirmation)
+            ready.add().events(TargetActionUiModel.Event.Request)
 
-            val dialog = awaitProposal { it.action().confirmation != null }.action().confirmation!!
+            val dialog = awaitProposal { it.targets().confirmation != null }.targets().confirmation!!
             assertEquals("¿Cargar esta lista?", dialog.title)
             assertEquals(
                 listOf(
@@ -117,7 +121,7 @@ class ApplyPresenterTest {
             assertTrue(adder.calls.isEmpty())
 
             dialog.events(ConfirmationUiModel.Event.Cancel)
-            assertNull(awaitProposal { it.action().confirmation == null }.action().confirmation)
+            assertNull(awaitProposal { it.targets().confirmation == null }.targets().confirmation)
         }
         assertTrue(adder.calls.isEmpty())
     }
@@ -128,8 +132,8 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("dos", proposal(songs = 2))
         flow(chat).test {
-            awaitProposal { it.apply is ApplyUiModel.Action }.action().events(ApplyUiModel.Action.Event.Request)
-            val dialog = awaitProposal { it.action().confirmation != null }.action().confirmation!!
+            awaitProposal { it.apply is ApplyUiModel.Targets }.add().events(TargetActionUiModel.Event.Request)
+            val dialog = awaitProposal { it.targets().confirmation != null }.targets().confirmation!!
             assertEquals(
                 "La lista ya está publicada: los músicos van a ver los temas apenas se agreguen.",
                 dialog.lines.last(),
@@ -144,8 +148,8 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("tres", proposal(songs = 3))
         flow(chat).test {
-            awaitProposal { it.apply is ApplyUiModel.Action }.action().events(ApplyUiModel.Action.Event.Request)
-            val dialog = awaitProposal { it.action().confirmation != null }.action().confirmation!!
+            awaitProposal { it.apply is ApplyUiModel.Targets }.add().events(TargetActionUiModel.Event.Request)
+            val dialog = awaitProposal { it.targets().confirmation != null }.targets().confirmation!!
             dialog.events(ConfirmationUiModel.Event.Confirm)
             dialog.events(ConfirmationUiModel.Event.Confirm)
 
@@ -168,8 +172,8 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("tres", proposal(songs = 3))
         flow(chat).test {
-            awaitProposal { it.apply is ApplyUiModel.Action }.action().events(ApplyUiModel.Action.Event.Request)
-            awaitProposal { it.action().confirmation != null }.action().confirmation!!.events(
+            awaitProposal { it.apply is ApplyUiModel.Targets }.add().events(TargetActionUiModel.Event.Request)
+            awaitProposal { it.targets().confirmation != null }.targets().confirmation!!.events(
                 ConfirmationUiModel.Event.Confirm,
             )
 
@@ -181,7 +185,7 @@ class ApplyPresenterTest {
                 done.songs[1].applyStatus!!.text,
             )
             assertEquals(ApplyStatusKind.FAILED, done.songs[1].applyStatus!!.kind)
-            assertEquals("Reintentar los que faltan", done.action().label)
+            assertEquals("Reintentar los que faltan", done.add().label)
         }
     }
 
@@ -191,8 +195,8 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("tres", proposal(songs = 3))
         flow(chat).test {
-            awaitProposal { it.apply is ApplyUiModel.Action }.action().events(ApplyUiModel.Action.Event.Request)
-            awaitProposal { it.action().confirmation != null }.action().confirmation!!.events(
+            awaitProposal { it.apply is ApplyUiModel.Targets }.add().events(TargetActionUiModel.Event.Request)
+            awaitProposal { it.targets().confirmation != null }.targets().confirmation!!.events(
                 ConfirmationUiModel.Event.Confirm,
             )
 
@@ -218,8 +222,8 @@ class ApplyPresenterTest {
         val chat = chat()
         chat.ask("cuatro", proposal(songs = 4))
         flow(chat).test {
-            awaitProposal { it.apply is ApplyUiModel.Action }.action().events(ApplyUiModel.Action.Event.Request)
-            awaitProposal { it.action().confirmation != null }.action().confirmation!!.events(
+            awaitProposal { it.apply is ApplyUiModel.Targets }.add().events(TargetActionUiModel.Event.Request)
+            awaitProposal { it.targets().confirmation != null }.targets().confirmation!!.events(
                 ConfirmationUiModel.Event.Confirm,
             )
 
@@ -241,10 +245,9 @@ class ApplyPresenterTest {
     @Test
     fun `blocked states draw a note and no button, and an unread snapshot draws nothing`() = runTest {
         val cases = listOf(
-            snapshot(upcoming = null) to "No hay una próxima jam. Pedime que la cree o creala en la planilla.",
+            snapshot(upcoming = null) to "No hay una próxima jam: podés crear una con esta lista.",
             snapshot(jam(JamStatus.DRAFT, com.bbbjam.core.model.Setlist.Withheld)) to
                 "No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé.",
-            snapshot(jam(setlist = listed(1, 2))) to "Todos estos temas ya están en la lista de la próxima jam.",
         )
         for ((snapshot, note) in cases) {
             val blockedJams = FakeJamsRepository(snapshot)
@@ -253,8 +256,23 @@ class ApplyPresenterTest {
             moleculeFlow(RecompositionMode.Immediate) {
                 testPresenter(chat, applier, blockedJams).present(Unit)
             }.test {
-                assertEquals(ApplyUiModel.Blocked(note), awaitProposal { it.apply != ApplyUiModel.None }.apply)
+                val targets = awaitProposal { it.apply != ApplyUiModel.None }.targets()
+                assertEquals(listOf(ApplyMode.CREATE), targets.actions.map { it.target })
+                assertEquals(listOf(note), targets.notes)
             }
+        }
+        val equalJams = FakeJamsRepository(snapshot(jam(setlist = listedOrder(1, 2))))
+        val equalChat = chat()
+        equalChat.ask("dos", proposal(songs = 2))
+        moleculeFlow(RecompositionMode.Immediate) {
+            testPresenter(equalChat, applier, equalJams).present(Unit)
+        }.test {
+            val targets = awaitProposal { it.apply != ApplyUiModel.None }.targets()
+            assertEquals(
+                listOf(false, false),
+                targets.actions.filter { it.target != ApplyMode.CREATE }.map { it.enabled },
+            )
+            assertEquals(listOf("La lista de la próxima jam ya es igual a esta."), targets.notes)
         }
         val unread = FakeJamsRepository(null)
         val chat = chat()
@@ -262,7 +280,7 @@ class ApplyPresenterTest {
         moleculeFlow(RecompositionMode.Immediate) {
             testPresenter(chat, applier, unread).present(Unit)
         }.test {
-            assertFalse(awaitProposal().apply is ApplyUiModel.Blocked)
+            assertFalse(awaitProposal().apply is ApplyUiModel.Targets)
             assertEquals(ApplyUiModel.None, awaitProposal().apply)
         }
         assertTrue(adder.calls.isEmpty())

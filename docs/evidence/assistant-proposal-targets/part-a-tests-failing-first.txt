@@ -1,0 +1,15 @@
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:15:37 Unresolved reference 'SetlistSongMover'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:16:37 Unresolved reference 'SetlistSongRemover'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:64:77 Unresolved reference 'SetlistSongRemover'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:84:75 Unresolved reference 'SetlistSongMover'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:161:14 Unresolved reference 'SetlistSongRemover'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:162:12 Unresolved reference 'SetlistSongMover'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:164:37 Too many arguments for 'constructor(adder: SetlistSongAdder, scope: CoroutineScope): ProposalApplier'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:164:44 Too many arguments for 'constructor(adder: SetlistSongAdder, scope: CoroutineScope): ProposalApplier'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ApplyFixtures.kt:164:53 Too many arguments for 'constructor(adder: SetlistSongAdder, scope: CoroutineScope): ProposalApplier'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ProposalApplierReplaceTest.kt:32:9 Unresolved reference 'replacePlan'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ProposalApplierReplaceTest.kt:32:74 Unresolved reference 'ReplacePlan'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ProposalApplierReplaceTest.kt:43:44 Unresolved reference 'removals'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ProposalApplierReplaceTest.kt:43:65 Unresolved reference 'it'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ProposalApplierReplaceTest.kt:43:86 Cannot infer type for type parameter 'A'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/ProposalApplierReplaceTest.kt:43:86 Cannot infer type for type parameter 'B'. Specify it explicitly.

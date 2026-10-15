@@ -10,7 +10,7 @@ import com.bbbjam.core.ui.theme.BluesJamColors
 internal object ApplyDefaults {
     data class ButtonStyle(val fill: Color, val content: Color)
 
-    /** The confirming dialog: `surfaceRaised` container, `text` actions (it adds, it does not destroy). */
+    /** The confirming dialog: `surfaceRaised` container, `text` actions; the confirm is `error` when it removes. */
     data class ApplyDialogStyle(
         val container: Color,
         val title: Color,
@@ -19,15 +19,16 @@ internal object ApplyDefaults {
         val cancel: Color,
     )
 
-    fun applyDialog(colors: BluesJamColors = BluesJamColors): ApplyDialogStyle = ApplyDialogStyle(
-        container = colors.surfaceRaised,
-        title = colors.text,
-        lines = colors.textMuted,
-        confirm = colors.text,
-        cancel = colors.text,
-    )
+    fun applyDialog(destructive: Boolean = false, colors: BluesJamColors = BluesJamColors): ApplyDialogStyle =
+        ApplyDialogStyle(
+            container = colors.surfaceRaised,
+            title = colors.text,
+            lines = colors.textMuted,
+            confirm = if (destructive) colors.error else colors.text,
+            cancel = colors.text,
+        )
 
-    /** "Usar esta lista": a secondary button, never amber ("Enviar" stays the only primary action). */
+    /** A target button (Agregar, Reemplazar): secondary, never amber ("Enviar" stays the only primary action). */
     fun applyButton(enabled: Boolean, colors: BluesJamColors = BluesJamColors): ButtonStyle = if (enabled) {
         ButtonStyle(fill = colors.surfaceRaised, content = colors.text)
     } else {

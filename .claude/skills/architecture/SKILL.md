@@ -456,6 +456,18 @@ the Room mirror `SetlistJamDao.insertCreatedJam` (extended by `SetlistDao`), and
 (Koin `single`), `JamHandlers` (the only caller of `create`, from the dialog's Confirm), `JamCopy`, `JamDefaults`,
 `JamViews`; `Usar esta lista` on a jam turn waits until the jam is the upcoming one. Konsist unchanged (19 rules).
 
+As built by `assistant-proposal-targets` Parts A and B (15 October 2026; Part C adds the shared jam form and Crear): the
+assistant reaches three more mutations through narrow contracts bound in `:app` to the registry, as `SetlistSongAdder`
+does: `:core:data` `SetlistSongRemover` and `SetlistSongMover` (`fun interface`, no `dataModule` binding; `RegistrySongRemover`
+and `RegistrySongMover`; the registry is unchanged at 14 mutations). `:feature:assistant`: pure `replacePlan` (`Ready`
+with `toAdd`/`toRemove`/`kept`, lost assignments = filled slots + extras of the removed songs) and `reorderMoves`;
+`ProposalApplier(adder, remover, mover, creator, scope)` has three entry points, `apply` (append), `replace` (adds, then
+removes, then moves, a client-side diff of existing actions so kept songs keep their key and musicians) and `create`
+(`createJam`, then the adds into the date the server echoed), over `ApplySteps` and `RunStore`; `ApplyRun` carries `mode`,
+`removals`, `order`, `jam`. A replace is a success only when the latest snapshot lists exactly the proposal (R3). The
+confirming dialog is one saveable `String?` key (`applyKey`, "turnId|MODE"). Konsist rule 19 now bans every
+`core.data.setlist.Setlist...Repository` (shown failing first).
+
 As built by `jam-status-created` (14 October 2026; D-26, amends D-04 and D-25): `JamStatus` has three values,
 `DRAFT` (`BORRADOR`, does not exist for musicians), `CREATED` (`CREADA`, date only) and `PUBLISHED`. `Jam`
 gains `isVisibleToMusicians` (`status != DRAFT`); `setlistForMusicians()` returns the setlist only for
@@ -490,6 +502,23 @@ the internal `SetlistJamStatuses` on the shared `SetlistMutationQueue`; Room cha
 `SET_JAM_STATUS` (12 mutations). `:feature:next-jam`: `JamStatusUiModel` in the admin status block, `JamStatusControls`
 (saveable "date|STATUS" confirming key, an in-flight guard), pure `AdminState.jamStatusUiModel`, `JamStatusViews`
 (neutral actions, `UnpublishDialog`); BORRADOR and CREADA change at once, only leaving PUBLICADA confirms; no new amber.
+
+As built by `assistant-proposal-targets` Part C (15 October 2026; D-29 amends U1): **the jam form is shared.** `:core:data`
+`jams/JamForm.kt` holds the public pure rules moved from `:feature:past-jams` (`JamFormInput`, `JamFormValues`,
+`JamDateProblem`, `JamFormCheck`, `JamFormSeed`, `jamFormSeed`, `parseFormDate`/`Time`, `formatFormDate`/`Time`,
+`checkJamForm`; `JamFormTest` moved with them). `:core:ui` package `com.bbbjam.core.ui.jamform` holds `JamFormUiModel`
+(title, three `JamFormFieldUiModel`s, notes, submit/cancel labels, `canSubmit`, `Edit`/`Submit`/`Cancel` events),
+`JamFormField`, `JamFormDialog`, the internal `JamFormDefaults` (neutral and `error` roles, no amber) and `JamFormText`;
+the Jams tab's `Nueva jam` and edit dialogs draw it and `:feature:assistant` draws it for `Crear una jam nueva con esta
+lista` (state in `CreateFormState`: saveable turn id, three texts, touched mask). **Server:** `Post.js` `addSong_` calls
+`requireFutureJam_` (any future jam, held back included); every other setlist mutation and PUBLICADA stay on
+`requireEditableJam_`; the two guards are pure (`futureJamIn_`, `upcomingJamIn_`) and `checkFutureSetlistWrite` proves them on
+temporary tabs (migration guide `docs/migrations/assistant-proposal-targets-script-update.md`). `ProposalApplier.create`
+(plain `date, startTime, venue, songs`) creates the jam and loads every song into the date the server echoed; a held-back
+target refused `jam_not_editable` on a just-created jam means the script predates D-29 (summary says so, the jam stays).
+`RunLock` (a Koin `single`) makes `ProposalApplier` and `JamCreationRunner` mutually exclusive. `applyPlanFor(songs,
+snapshot, date)` plans a load into the upcoming or a held-back jam (the retry of a create run). The jam card of a proposal
+with songs draws no button.
 
 ## Where Each Piece Goes
 

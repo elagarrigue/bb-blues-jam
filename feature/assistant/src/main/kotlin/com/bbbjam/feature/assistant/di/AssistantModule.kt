@@ -5,6 +5,7 @@ import com.bbbjam.feature.assistant.AssistantChat
 import com.bbbjam.feature.assistant.AssistantPresenter
 import com.bbbjam.feature.assistant.JamCreationRunner
 import com.bbbjam.feature.assistant.ProposalApplier
+import com.bbbjam.feature.assistant.RunLock
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,10 +30,16 @@ val assistantModule = module {
             ),
         )
     }
-    // The load of a proposal outlives the tab too; `SetlistSongAdder` is bound in `:app` to the action registry.
+    // The load of a proposal outlives the tab too; the write contracts are bound in `:app` to the action registry.
+    // One write at a time across the list loads and the jam creations.
+    single { RunLock() }
     single {
         ProposalApplier(
             adder = get(),
+            remover = get(),
+            mover = get(),
+            creator = get(),
+            runLock = get(),
             scope = CoroutineScope(
                 SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
                     Log.e(LOG_TAG, "assistant apply failed: ${error::class.java.name}")
@@ -45,6 +52,7 @@ val assistantModule = module {
         JamCreationRunner(
             creator = get(),
             jams = get(),
+            runLock = get(),
             scope = CoroutineScope(
                 SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
                     Log.e(LOG_TAG, "assistant create jam failed: ${error::class.java.name}")

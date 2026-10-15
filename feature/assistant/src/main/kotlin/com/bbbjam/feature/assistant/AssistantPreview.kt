@@ -17,9 +17,10 @@ private val previewHandlers = AssistantHandlers(
     retry = { id -> EventHandler(id) {} },
     composer = EventHandler {},
     status = EventHandler {},
-    apply = { id -> EventHandler(id) {} },
+    apply = { id, mode -> EventHandler(applyKey(id, mode)) {} },
     confirmation = { id -> EventHandler(id) {} },
     stop = { id -> EventHandler(id) {} },
+    createForm = { id -> EventHandler(id) {} },
     jam = { id -> EventHandler(id) {} },
     jamConfirmation = { id -> EventHandler(id) {} },
 )

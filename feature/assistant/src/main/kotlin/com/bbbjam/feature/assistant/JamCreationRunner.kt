@@ -42,6 +42,7 @@ class JamCreationRunner(
     private val creator: JamCreator,
     private val jams: JamsRepository,
     private val scope: CoroutineScope,
+    private val runLock: RunLock = RunLock(),
 ) {
     private val lock = Any()
     private val state = MutableStateFlow<Map<Long, JamCreation>>(emptyMap())
@@ -51,7 +52,7 @@ class JamCreationRunner(
 
     /** Starts creating [jam] for [turnId]. False, doing nothing, while any creation is running. */
     fun create(turnId: Long, jam: ProposedJam): Boolean = synchronized(lock) {
-        if (state.value.values.any { it == JamCreation.Creating }) return false
+        if (state.value.values.any { it == JamCreation.Creating } || !runLock.tryAcquire()) return false
         state.update { it + (turnId to JamCreation.Creating) }
         scope.launch { execute(turnId, jam) }
         true
@@ -75,6 +76,7 @@ class JamCreationRunner(
                     creations
                 }
             }
+            runLock.release()
         }
     }
 }

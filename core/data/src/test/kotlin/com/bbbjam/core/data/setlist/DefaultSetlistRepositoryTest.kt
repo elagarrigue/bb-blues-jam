@@ -123,6 +123,30 @@ class DefaultSetlistRepositoryTest {
         assertEquals(before, jamsDao.observeJams().first())
     }
 
+    @Test
+    fun `addSong to a held-back cached jam is mirrored into that jam only, never the upcoming one`() = runTest {
+        val repository = seeded()
+        val heldBack = JamEntity(HELD_BACK.toString(), 2, "21:00", "La Macanuda", "DRAFT", "AVAILABLE", null, 0)
+        val redHouse = JamSongEntity(DATE.toString(), 1, "red-house", "Red House", "Jimi Hendrix", "Bb")
+        jamsDao.replaceJams(
+            JamRows(listOf(jam("AVAILABLE"), heldBack), listOf(redHouse), slots(1), emptyList()),
+            state(),
+        )
+        post.answers += ok(position = 1)
+
+        assertEquals(AddSongOutcome.Added(1), repository.addSong(HELD_BACK, CROSSROADS, Key("E")))
+
+        val jams = jamsDao.observeJams().first().map { it.toDomain() }.associateBy { it.date }
+        val upcoming = (jams.getValue(DATE).setlist as Setlist.Available).songs
+        val held = (jams.getValue(HELD_BACK).setlist as Setlist.Available).songs
+        assertEquals(listOf(SongId("red-house")), upcoming.map { it.songId })
+        assertEquals(listOf(CROSSROADS), held.map { it.songId })
+        assertEquals(Key("E"), held.single().key)
+        assertEquals(Lineup.default(), held.single().lineup)
+        val body = Json.parseToJsonElement(post.bodies.single()).jsonObject
+        assertEquals("2026-11-28", body.getValue("date").jsonPrimitive.content)
+    }
+
     @After
     fun tearDown() {
         database.close()
@@ -746,6 +770,7 @@ class DefaultSetlistRepositoryTest {
 
     private companion object {
         val DATE: LocalDate = LocalDate.of(2026, 10, 31)
+        val HELD_BACK: LocalDate = LocalDate.of(2026, 11, 28)
         val CROSSROADS = SongId("crossroads")
         val THRILL = SongId("the-thrill-is-gone")
         val HOOCHIE = SongId("hoochie-coochie-man")

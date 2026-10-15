@@ -1,22 +1,37 @@
 package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.AssistantReply
-import com.bbbjam.core.data.assistant.ProposedJam
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.JamStatus
+import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
 import java.time.LocalDate
 
-/** What the mapping needs to draw the apply parts: the runs, the jams snapshot and the open dialog's turn. */
+/**
+ * What the mapping needs to draw the apply parts: the runs, the jams snapshot and the open dialogs.
+ * [confirming] is the open dialog key ([applyKey]), null when none.
+ */
 internal data class ApplyInputs(
     val runs: Map<Long, ApplyRun> = emptyMap(),
     val snapshot: JamsSnapshot? = null,
-    val confirmingTurnId: Long? = null,
+    val confirming: String? = null,
     val creations: Map<Long, JamCreation> = emptyMap(),
     val today: LocalDate? = null,
     val confirmingJamTurnId: Long? = null,
+    val createForm: CreateFormInputs? = null,
 )
+
+/** The key of the open dialog for [mode] of [turnId]: one saveable string for the whole tab. */
+internal fun applyKey(turnId: Long, mode: ApplyMode): String = "$turnId|$mode"
+
+/** The turn id and mode of [key], or null when it is not an [applyKey]. */
+internal fun parseApplyKey(key: String): Pair<Long, ApplyMode>? {
+    val parts = key.split('|')
+    val turnId = parts.getOrNull(0)?.toLongOrNull()
+    val mode = parts.getOrNull(1)?.let { name -> ApplyMode.entries.firstOrNull { it.name == name } }
+    return if (parts.size == 2 && turnId != null && mode != null) turnId to mode else null
+}
 
 /**
  * The id of the turn that may be loaded: the latest whose reply is a proposal with songs, and only
@@ -30,11 +45,13 @@ internal fun List<ChatTurn>.applicableTurnId(): Long? {
     }?.id
 }
 
-/** The three parts a proposal gets from a run: the action, the summary and each song's status. */
+/** The parts a proposal gets from a run: the targets, the summary, each song's and removal's status, the order. */
 internal class ApplyParts(
     val apply: ApplyUiModel,
     val summary: ApplySummaryUiModel?,
     val statuses: Map<SongId, ApplyStatusUiModel>,
+    val removals: List<ApplyStatusLineUiModel> = emptyList(),
+    val order: String? = null,
 )
 
 internal fun applyParts(
@@ -48,103 +65,17 @@ internal fun applyParts(
     val anyRunning = inputs.runs.values.any { it.state == ApplyRun.State.Running } ||
         inputs.creations.values.any { it == JamCreation.Creating }
     val statuses = run?.songs.orEmpty().mapNotNull { apply -> apply.status()?.let { apply.song.songId to it } }.toMap()
-    val apply = if (!isApplicable || run?.isSuccess == true || run?.state == ApplyRun.State.Running) {
+    val apply = if (!isApplicable || run?.succeeded(inputs.snapshot) == true || run?.state == ApplyRun.State.Running) {
         ApplyUiModel.None
     } else {
-        actionFor(turnId, proposal, run, anyRunning, inputs, handlers)
+        targets(turnId, proposal, run, anyRunning, inputs, handlers)
     }
-    return ApplyParts(apply, run?.summary(handlers.stop(turnId)), statuses)
-}
-
-private fun actionFor(
-    turnId: Long,
-    proposal: AssistantReply.Proposal,
-    run: ApplyRun?,
-    anyRunning: Boolean,
-    inputs: ApplyInputs,
-    handlers: AssistantHandlers,
-): ApplyUiModel = when (val plan = applyPlan(proposal.songs, inputs.snapshot)) {
-    ApplyPlan.Unknown -> ApplyUiModel.None
-
-    // A proposal that also carries a jam loads its list only into that jam (assistant-create-jam, D3).
-    is ApplyPlan.Ready, is ApplyPlan.Blocked -> {
-        val jam = proposal.jam
-        if (jam != null && inputs.snapshot != null) {
-            jamListGate(turnId, jam, plan, run, anyRunning, inputs, handlers)
-        } else {
-            planAction(turnId, plan, run, anyRunning, inputs, handlers)
-        }
-    }
-}
-
-private fun jamListGate(
-    turnId: Long,
-    jam: ProposedJam,
-    plan: ApplyPlan,
-    run: ApplyRun?,
-    anyRunning: Boolean,
-    inputs: ApplyInputs,
-    handlers: AssistantHandlers,
-): ApplyUiModel {
-    val upcoming = inputs.snapshot?.upcoming
-    val creation = inputs.creations[turnId]
-    return when {
-        upcoming?.date == jam.date -> planAction(turnId, plan, run, anyRunning, inputs, handlers)
-
-        creation == JamCreation.Creating -> ApplyUiModel.None
-
-        creation == JamCreation.Created && upcoming != null ->
-            ApplyUiModel.Blocked(JamCopy.listHeldBack(upcoming.date))
-
-        else -> ApplyUiModel.Blocked(JamCopy.LIST_AFTER_CREATE)
-    }
-}
-
-private fun planAction(
-    turnId: Long,
-    plan: ApplyPlan,
-    run: ApplyRun?,
-    anyRunning: Boolean,
-    inputs: ApplyInputs,
-    handlers: AssistantHandlers,
-): ApplyUiModel = when (plan) {
-    ApplyPlan.Unknown -> ApplyUiModel.None
-
-    is ApplyPlan.Blocked -> ApplyUiModel.Blocked(
-        when (plan.reason) {
-            ApplyPlan.Blocked.Reason.NO_UPCOMING -> ApplyCopy.BLOCKED_NO_UPCOMING
-            ApplyPlan.Blocked.Reason.UNREADABLE -> ApplyCopy.BLOCKED_UNREADABLE
-            ApplyPlan.Blocked.Reason.ALL_PRESENT -> ApplyCopy.BLOCKED_ALL_PRESENT
-        },
-    )
-
-    is ApplyPlan.Ready -> ApplyUiModel.Action(
-        label = if (run == null) ApplyCopy.APPLY else ApplyCopy.APPLY_RETRY,
-        enabled = !anyRunning,
-        events = handlers.apply(turnId),
-        confirmation = if (inputs.confirmingTurnId ==
-            turnId
-        ) {
-            plan.confirmation(handlers.confirmation(turnId))
-        } else {
-            null
-        },
-    )
-}
-
-private fun ApplyPlan.Ready.confirmation(events: EventHandler<ConfirmationUiModel.Event>): ConfirmationUiModel {
-    val lines = buildList {
-        add(ApplyCopy.applyIntro(toAdd.size, jamDate))
-        if (existingCount > 0) add(ApplyCopy.applyExisting(existingCount))
-        if (skipped.isNotEmpty()) add(ApplyCopy.applySkipped(skipped.map { it.title }))
-        if (status == JamStatus.PUBLISHED) add(ApplyCopy.APPLY_PUBLISHED)
-    }
-    return ConfirmationUiModel(
-        title = ApplyCopy.APPLY_DIALOG_TITLE,
-        lines = lines,
-        confirmLabel = ApplyCopy.applyConfirm(toAdd.size),
-        cancelLabel = ApplyCopy.APPLY_CANCEL,
-        events = events,
+    return ApplyParts(
+        apply = apply,
+        summary = run?.summary(handlers.stop(turnId), inputs.snapshot),
+        statuses = statuses,
+        removals = run?.removalLines().orEmpty(),
+        order = run?.orderLine(),
     )
 }
 
@@ -157,6 +88,8 @@ private fun SongApply.status(): ApplyStatusUiModel? = when (val current = state)
 
     SongApply.State.Skipped -> ApplyStatusUiModel(ApplyCopy.STATUS_SKIPPED, ApplyStatusKind.SKIPPED)
 
+    SongApply.State.Kept -> ApplyStatusUiModel(ReplaceCopy.KEPT, ApplyStatusKind.SKIPPED)
+
     is SongApply.State.Failed ->
         ApplyStatusUiModel(ApplyOutcomeCopy.songFailure(current.reason), ApplyStatusKind.FAILED)
 
@@ -164,39 +97,24 @@ private fun SongApply.status(): ApplyStatusUiModel? = when (val current = state)
         ApplyStatusUiModel(ApplyCopy.STATUS_NOT_ATTEMPTED, ApplyStatusKind.NOT_ATTEMPTED)
 }
 
-private fun ApplyRun.summary(events: EventHandler<ApplySummaryUiModel.Event>): ApplySummaryUiModel {
-    val added = addedCount
-    return when (val current = state) {
-        ApplyRun.State.Running -> ApplySummaryUiModel(
-            text = ApplyOutcomeCopy.running(songs.count { it.state.isDone() } - skippedBeforeRun(), planned, jamDate),
-            tone = ApplyTone.NEUTRAL,
-            stopLabel = ApplyCopy.APPLY_STOP,
-            events = events,
-        )
+/**
+ * True when the run is a success the admin should see as one: it finished clean and, for a replace, the
+ * latest snapshot lists exactly the proposal (R3). A replace whose list does not match is not a success.
+ */
+internal fun ApplyRun.succeeded(snapshot: JamsSnapshot?): Boolean =
+    isSuccess && (mode != ApplyMode.REPLACE || matchesTarget(snapshot))
 
-        ApplyRun.State.Finished -> if (failedCount == 0) {
-            ApplySummaryUiModel(ApplyOutcomeCopy.success(added, skippedCount, jamDate), ApplyTone.SUCCESS, null, events)
-        } else {
-            ApplySummaryUiModel(ApplyOutcomeCopy.partial(added, planned, failedCount), ApplyTone.FAILURE, null, events)
-        }
-
-        is ApplyRun.State.Aborted -> ApplySummaryUiModel(
-            ApplyOutcomeCopy.aborted(added, planned, ApplyOutcomeCopy.writeFailure(current.reason)),
-            ApplyTone.FAILURE,
-            null,
-            events,
-        )
-
-        ApplyRun.State.Stopped ->
-            ApplySummaryUiModel(ApplyOutcomeCopy.stopped(added, planned), ApplyTone.MUTED, null, events)
-
-        ApplyRun.State.Interrupted ->
-            ApplySummaryUiModel(ApplyOutcomeCopy.interrupted(added, planned), ApplyTone.FAILURE, null, events)
-    }
+private fun ApplyRun.matchesTarget(snapshot: JamsSnapshot?): Boolean {
+    val upcoming = snapshot?.upcoming?.takeIf { it.date == jamDate }
+    val listed = (upcoming?.setlist as? Setlist.Available)?.songs?.map { it.songId }
+    return listed == target
 }
 
-// Songs the run has finished with (added, skipped by the server, or failed), not counting the ones the plan skipped.
-private fun SongApply.State.isDone() =
-    this is SongApply.State.Added || this == SongApply.State.Skipped || this is SongApply.State.Failed
-
-private fun ApplyRun.skippedBeforeRun() = songs.size - planned
+internal fun ApplyRun.summary(
+    events: EventHandler<ApplySummaryUiModel.Event>,
+    snapshot: JamsSnapshot?,
+): ApplySummaryUiModel = when (mode) {
+    ApplyMode.ADD -> addSummary(events)
+    ApplyMode.REPLACE -> replaceSummary(events, succeeded(snapshot))
+    ApplyMode.CREATE -> createSummary(events, snapshot)
+}

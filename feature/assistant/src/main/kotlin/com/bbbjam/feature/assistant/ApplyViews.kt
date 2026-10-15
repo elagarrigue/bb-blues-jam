@@ -2,7 +2,9 @@ package com.bbbjam.feature.assistant
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -16,31 +18,42 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.bbbjam.core.ui.jamform.JamFormDialog
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
-/** Under a proposal: the apply action or the blocked note, the confirmation dialog and the run's summary. */
+/**
+ * Under a proposal: the target buttons and their notes, the confirmation dialog, the run's summary, the
+ * removed songs' lines and the order line.
+ */
 @Composable
-internal fun ApplyContent(apply: ApplyUiModel, summary: ApplySummaryUiModel?) {
+internal fun ApplyContent(
+    apply: ApplyUiModel,
+    summary: ApplySummaryUiModel?,
+    removals: List<ApplyStatusLineUiModel> = emptyList(),
+    order: String? = null,
+) {
     when (apply) {
         ApplyUiModel.None -> Unit
 
-        is ApplyUiModel.Blocked -> Text(
-            text = apply.note,
-            style = BluesJamTheme.typography.body,
-            color = ApplyDefaults.applyNote(),
-        )
-
-        is ApplyUiModel.Action -> {
-            ApplyButton(apply)
+        is ApplyUiModel.Targets -> {
+            Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
+                apply.actions.forEach { TargetButton(it) }
+            }
+            apply.notes.forEach { note ->
+                Text(text = note, style = BluesJamTheme.typography.body, color = ApplyDefaults.applyNote())
+            }
             apply.confirmation?.let { ApplyConfirmationDialog(it) }
+            apply.createForm?.let { JamFormDialog(it) }
         }
     }
     summary?.let { ApplySummary(it) }
+    removals.forEach { RemovalLine(it) }
+    order?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = ApplyDefaults.applyNote()) }
 }
 
 /** The secondary full-width button: opens the confirmation, writes nothing. */
 @Composable
-private fun ApplyButton(model: ApplyUiModel.Action) {
+private fun TargetButton(model: TargetActionUiModel) {
     val shape = BluesJamTheme.shapes.md
     val style = ApplyDefaults.applyButton(model.enabled)
     Box(
@@ -50,12 +63,21 @@ private fun ApplyButton(model: ApplyUiModel.Action) {
             .clip(shape)
             .background(style.fill, shape)
             .clickable(enabled = model.enabled, role = Role.Button) {
-                model.events(ApplyUiModel.Action.Event.Request)
+                model.events(TargetActionUiModel.Event.Request)
             }
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
         Text(text = model.label, style = BluesJamTheme.typography.body, color = style.content)
+    }
+}
+
+@Composable
+private fun RemovalLine(line: ApplyStatusLineUiModel) {
+    val typography = BluesJamTheme.typography
+    Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
+        Text(text = line.title, style = typography.body, color = ApplyDefaults.applyNote())
+        Text(text = line.text, style = typography.caption, color = ApplyDefaults.status(line.kind))
     }
 }
 

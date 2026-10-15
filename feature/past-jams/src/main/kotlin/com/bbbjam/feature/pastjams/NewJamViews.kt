@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import com.bbbjam.core.ui.jamform.JamFormDialog
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
@@ -35,7 +36,7 @@ internal fun NewJamBlock(model: NewJamUiModel) {
         NewJamButton(model.label) { model.events(NewJamUiModel.Event.Open) }
         model.progress?.let { NewJamProgressView(it, model.events) }
     }
-    model.form?.let { NewJamDialog(it, model.events) }
+    model.form?.let { JamFormDialog(it) }
 }
 
 /** A neutral full-width button (`surfaceRaised`, `text`, 48dp), never amber. */
@@ -109,88 +110,4 @@ private fun CreateFailureCard(model: NewJamProgressUiModel.Failed, events: Event
             }
         }
     }
-}
-
-/**
- * The form dialog: three labelled outlined fields (fecha and hora with the numeric keyboard), the notes
- * and `Crear la jam`, enabled only when the plan is ready. Back and a tap outside equal `Cancelar`;
- * nothing is written until `Crear la jam` calls `createJam` through the presenter (D-13).
- */
-@Composable
-private fun NewJamDialog(model: NewJamFormUiModel, events: EventHandler<NewJamUiModel.Event>) {
-    val style = JamsAdminDefaults.form()
-    AlertDialog(
-        onDismissRequest = { events(NewJamUiModel.Event.Cancel) },
-        containerColor = style.container,
-        title = { Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
-                FormField(model.dateLabel, model.date, model.dateHint, model.dateError, KeyboardType.Number, style) {
-                    events(NewJamUiModel.Event.Edit(NewJamField.DATE, it))
-                }
-                FormField(model.timeLabel, model.time, model.timeHint, model.timeError, KeyboardType.Number, style) {
-                    events(NewJamUiModel.Event.Edit(NewJamField.TIME, it))
-                }
-                FormField(model.venueLabel, model.venue, null, model.venueError, KeyboardType.Text, style) {
-                    events(NewJamUiModel.Event.Edit(NewJamField.VENUE, it))
-                }
-                model.waitsNote?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.note) }
-                Text(text = model.draftNote, style = BluesJamTheme.typography.caption, color = style.note)
-            }
-        },
-        confirmButton = {
-            TextButton(enabled = model.canCreate, onClick = { events(NewJamUiModel.Event.Create) }) {
-                Text(text = model.createLabel, color = if (model.canCreate) style.confirm else style.disabled)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { events(NewJamUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
-            }
-        },
-    )
-}
-
-@Composable
-internal fun FormField(
-    label: String,
-    value: String,
-    hint: String?,
-    error: String?,
-    keyboard: KeyboardType,
-    style: JamsAdminDefaults.FormStyle,
-    onValueChange: (String) -> Unit,
-) {
-    val field = style.field
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = BluesJamTheme.typography.body,
-        label = { Text(text = label) },
-        supportingText = (error ?: hint)?.let { text -> { Text(text = text) } },
-        isError = error != null,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard, autoCorrectEnabled = false),
-        shape = BluesJamTheme.shapes.md,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = field.text,
-            unfocusedTextColor = field.text,
-            errorTextColor = field.text,
-            focusedContainerColor = field.container,
-            unfocusedContainerColor = field.container,
-            errorContainerColor = field.container,
-            cursorColor = field.cursor,
-            errorCursorColor = style.error,
-            focusedBorderColor = field.focusedBorder,
-            unfocusedBorderColor = field.unfocusedBorder,
-            errorBorderColor = style.error,
-            focusedLabelColor = field.label,
-            unfocusedLabelColor = field.label,
-            errorLabelColor = style.error,
-            focusedSupportingTextColor = style.note,
-            unfocusedSupportingTextColor = style.note,
-            errorSupportingTextColor = style.error,
-        ),
-        modifier = Modifier.fillMaxWidth(),
-    )
 }

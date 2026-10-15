@@ -49,6 +49,11 @@
  * BORRADOR and CREADA on held-back jams (requireFutureJam_); PUBLICADA and every setlist mutation
  * stay upcoming-only.
  *
+ * assistant-proposal-targets (D-29) amends that: `addSong` alone accepts any future jam (requireFutureJam_), so
+ * the assistant can create a jam and load its list even when another jam is next. Every other setlist
+ * mutation (removeSong, moveSong, setKey, setSlotCount, assignSlot, clearSlot, the extras) and PUBLICADA stay
+ * upcoming-only (requireEditableJam_). `checkFutureSetlistWrite` proves the two guards on temporary tabs.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
  * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -88,6 +93,9 @@ var CREATE_JAM_CHECK_TAB = '_prueba_crear_jam';
 
 /** The transient tabs checkJamEdit creates and deletes (this name and `_a`, `_b` suffixes). Never served. */
 var JAM_EDIT_CHECK_TAB = '_prueba_editar_jam';
+
+/** The transient tabs checkFutureSetlistWrite creates and deletes (this name and a `_lista` suffix). Never served. */
+var FUTURE_SETLIST_CHECK_TAB = '_prueba_lista_futura';
 
 /** Request formats for addSong (docs/sheet-schema.md, Identifiers and Keys). */
 var POST_ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
@@ -153,6 +161,7 @@ var ACTIONS = {
   updateJam: { write: true, run: updateJam_ },
   deleteJam: { write: true, run: deleteJam_ },
   checkJamEdit: { write: true, run: checkJamEdit_ },
+  checkFutureSetlistWrite: { write: true, run: checkFutureSetlistWrite_ },
 };
 
 /**
@@ -351,10 +360,11 @@ function readJamsAsAdmin_(request, spreadsheet, services) {
 }
 
 /**
- * Appends one catalog song to the upcoming jam's tab (`addSong`, a write action: under the lock).
+ * Appends one catalog song to a future jam's tab (`addSong`, a write action: under the lock). The jam is
+ * the upcoming one or a held-back one (D-29): `requireFutureJam_`.
  * Request `{ date, songId, key }`. Every check runs before anything is written, in this order:
  * `invalid_date`, `invalid_song`, `invalid_key`, `unknown_jam` / `duplicate_date`,
- * `jam_not_editable`, `unknown_song`, `missing_header` / `duplicate_header`,
+ * `jam_not_editable` (not a future jam), `unknown_song`, `missing_header` / `duplicate_header`,
  * `song_already_in_setlist`. Then the tab is created when missing (header row in documented order)
  * and the row is appended at `posicion` = 1 + the largest valid one, with the catalog's title and
  * artist, the key from the request (never `tono_default`, D-08) and seven open slots (D-18).
@@ -374,7 +384,7 @@ function addSong_(request, spreadsheet, services) {
     throw new ContractError('invalid_key', 'key must be A-G, an optional # or b, and an optional m');
   }
 
-  requireEditableJam_(spreadsheet, services, date);
+  requireFutureJam_(spreadsheet, services, date);
   const song = catalogSong_(spreadsheet, songId);
 
   const existing = spreadsheet.getSheetByName(date);
@@ -1118,6 +1128,61 @@ function checkJamEdit_(request, spreadsheet, services) {
 }
 
 /**
+ * Self-cleaning proof of the two guards of D-29 on temporary tabs named `_prueba_lista_futura*` only (never
+ * Jams or a real jam tab): on a Jams-shaped tab with two BORRADOR rows dated 2099-01-01 and 2099-01-02 the second
+ * passes futureJamIn_ and fails upcomingJamIn_ (`jam_not_editable`), then a marker row is appended to a
+ * temporary setlist tab with appendSetlistRow_ and read back with buildSetlist. Both tabs are deleted in
+ * `finally`. A read-back that differs is an Error, so `internal_error`.
+ */
+function checkFutureSetlistWrite_(request, spreadsheet, services) {
+  const names = [FUTURE_SETLIST_CHECK_TAB, FUTURE_SETLIST_CHECK_TAB + '_lista'];
+  const clean = function () {
+    names.forEach(function (name) {
+      const tab = spreadsheet.getSheetByName(name);
+      if (tab) spreadsheet.deleteSheet(tab);
+    });
+  };
+  clean();
+  const header = ['fecha', 'hora', 'lugar', 'estado'];
+  const marker = { position: 1, songId: 'zz-prueba-lista-futura', title: '7/4', artist: 'Prueba', key: 'Bbm' };
+  let rows;
+  try {
+    const jamsTab = spreadsheet.insertSheet(names[0]);
+    jamsTab.getRange(1, 1, 3, 4).setValues([
+      header,
+      ['2099-01-01', '21:00', 'Prueba', DRAFT_STATUS],
+      ['2099-01-02', '21:00', 'Prueba', DRAFT_STATUS],
+    ]);
+    const range = jamsTab.getDataRange();
+    const timeZone = spreadsheet.getSpreadsheetTimeZone();
+    const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+      return Utilities.formatDate(value, timeZone, pattern);
+    }).jams;
+    const today = todayIso_(spreadsheet, services);
+    futureJamIn_(jams, '2099-01-02', today);
+    let refused = false;
+    try {
+      upcomingJamIn_(jams, '2099-01-02', today);
+    } catch (err) {
+      if (err instanceof ContractError && err.code === 'jam_not_editable') refused = true;
+      else throw err;
+    }
+    if (!refused) throw new Error('The upcoming guard accepted a held-back jam');
+    const list = createSetlistTab_(spreadsheet, names[1]);
+    appendSetlistRow_(list, marker);
+    const written = list.getDataRange();
+    rows = buildSetlist(written.getDisplayValues(), written.getValues(), names[1]);
+  } finally {
+    clean();
+  }
+  const first = rows && rows.length === 1 ? rows[0] : null;
+  if (!first || first.songId !== marker.songId || first.title !== marker.title || first.key !== marker.key) {
+    throw new Error('The future setlist check read back a different row');
+  }
+  return { ok: true };
+}
+
+/**
  * Throws unless `date` is on exactly one Jams row with a known estado and is today or later (the
  * upcoming or a held-back jam). Unlike requireEditableJam_ it does not mind earlier future jams.
  * Returns `{ jam, jams, today }` (dates normalized through buildJams).
@@ -1132,6 +1197,15 @@ function requireFutureJam_(spreadsheet, services, date) {
   const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
     return Utilities.formatDate(value, timeZone, pattern);
   }).jams;
+  return futureJamIn_(jams, date, todayIso_(spreadsheet, services));
+}
+
+/**
+ * The decision of requireFutureJam_ over built jams: `date` is on exactly one row with a known estado and is
+ * `today` or later. Pure, so checkFutureSetlistWrite can prove it on a temporary tab. Returns
+ * `{ jam, jams, today }`.
+ */
+function futureJamIn_(jams, date, today) {
   const matches = jams.filter(function (jam) { return jam.date === date; });
   if (matches.length === 0) {
     throw new ContractError('unknown_jam', 'Jams has no row with the fecha ' + date);
@@ -1139,7 +1213,6 @@ function requireFutureJam_(spreadsheet, services, date) {
   if (matches.length > 1) {
     throw new ContractError('duplicate_date', 'Jams has the fecha ' + date + ' on more than one row');
   }
-  const today = todayIso_(spreadsheet, services);
   const status = matches[0].status;
   const known = status === DRAFT_STATUS || status === CREATED_STATUS || status === PUBLISHED_STATUS;
   if (!known || date < today) {
@@ -1623,6 +1696,14 @@ function requireEditableJam_(spreadsheet, services, date) {
   };
   const range = sheet.getDataRange();
   const jams = buildJams(range.getDisplayValues(), range.getValues(), noTab, formatDate).jams;
+  upcomingJamIn_(jams, date, todayIso_(spreadsheet, services));
+}
+
+/**
+ * The decision of requireEditableJam_ over built jams: `date` is on exactly one row and that jam is the
+ * upcoming one (a known estado, `today` or later, no other known-estado jam between today and it). Pure.
+ */
+function upcomingJamIn_(jams, date, today) {
   const matches = jams.filter(function (jam) {
     return jam.date === date;
   });
@@ -1632,7 +1713,6 @@ function requireEditableJam_(spreadsheet, services, date) {
   if (matches.length > 1) {
     throw new ContractError('duplicate_date', 'Jams has the fecha ' + date + ' on more than one row');
   }
-  const today = todayIso_(spreadsheet, services);
   const known = function (jam) {
     return jam.status === DRAFT_STATUS || jam.status === CREATED_STATUS || jam.status === PUBLISHED_STATUS;
   };
@@ -1809,6 +1889,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     ACTIONS,
     CREATE_JAM_CHECK_TAB,
+    FUTURE_SETLIST_CHECK_TAB,
     JAM_EDIT_CHECK_TAB,
     PUBLISH_CHECK_TAB,
     SETLIST_CHECK_TAB,

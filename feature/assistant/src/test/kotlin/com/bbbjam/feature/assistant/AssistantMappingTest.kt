@@ -284,6 +284,6 @@ class AssistantMappingTest {
         val action = (chat(turns).turns.single().reply as ReplyUiModel.Proposal).apply
         assertEquals(ApplyUiModel.None, action)
         val withSnapshot = assistantModel(true, turns, available, "", handlers, ready) as AssistantUiModel.Chat
-        assertTrue((withSnapshot.turns.single().reply as ReplyUiModel.Proposal).apply is ApplyUiModel.Action)
+        assertTrue((withSnapshot.turns.single().reply as ReplyUiModel.Proposal).apply is ApplyUiModel.Targets)
     }
 }

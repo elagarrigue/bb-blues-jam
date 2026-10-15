@@ -53,7 +53,7 @@ transfer and no per-record access rules.
 - **Unauthenticated access is the default and the majority case.** The app opens straight to the
   next jam with no login wall. Authentication exists only to reveal editing controls.
 - **The admin edits and deletes future jams from the app** (D-28, `admin-edit-delete-jam`): the date, time and venue of the
-  upcoming and held-back jams, and their deletion with the tab; held-back jams also change between BORRADOR and CREADA.
+  upcoming and held-back jams, and their deletion with the tab; held-back jams also change between BORRADOR and CREADA, and the assistant can load a list into one (`addSong` only, D-29).
   Apps Script authorizes and validates every one of those writes; the local admin flag only draws the controls. Musicians
   see the result on their next refresh under the rules below.
 - **A draft jam does not exist for musicians, and a created jam shows only its date** (D-26,

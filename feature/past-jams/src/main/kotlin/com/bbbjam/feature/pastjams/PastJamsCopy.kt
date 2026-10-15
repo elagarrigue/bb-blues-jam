@@ -1,5 +1,6 @@
 package com.bbbjam.feature.pastjams
 
+import com.bbbjam.core.ui.jamform.JamFormText
 import com.bbbjam.core.ui.text.SpanishDateNames
 import java.time.LocalDate
 import java.time.LocalTime
@@ -78,19 +79,7 @@ internal object PastJamsCopy {
 
     /** The "Nueva jam" form (`admin-jams-tab`, J7/J9). */
     const val NEW_JAM = "Nueva jam"
-    const val NEW_JAM_DATE = "Fecha"
-    const val NEW_JAM_DATE_HINT = "DD/MM/AAAA"
-    const val NEW_JAM_TIME = "Hora"
-    const val NEW_JAM_TIME_HINT = "HH:MM"
-    const val NEW_JAM_VENUE = "Lugar"
     const val NEW_JAM_CREATE = "Crear la jam"
-    const val DATE_FORMAT_ERROR = "Escribí la fecha como DD/MM/AAAA."
-    const val DATE_PAST_ERROR = "Esa fecha ya pasó."
-    const val DATE_EXISTS_ERROR = "Ya hay una jam ese día."
-    const val TIME_ERROR = "Escribí la hora como HH:MM, por ejemplo 21:00."
-    const val VENUE_EMPTY_ERROR = "Escribí el lugar."
-    const val VENUE_LONG_ERROR = "El lugar puede tener hasta 80 letras."
-    const val VENUE_FORMULA_ERROR = "El lugar no puede empezar con =, +, - o @."
     const val NEW_JAM_DRAFT_NOTE =
         "Se crea como borrador: los músicos no la ven hasta que la pases a creada o publiques la lista."
     const val CREATING = "Creando la jam…"
@@ -103,9 +92,7 @@ internal object PastJamsCopy {
         "El script de la planilla todavía no sabe crear jams. Actualizalo con la guía y probá de nuevo."
 
     /** "sábado 31 de octubre": the date inside a sentence, day name in lower case. */
-    fun sentenceDate(date: LocalDate): String = "${SpanishDateNames.day(
-        date.dayOfWeek,
-    ).lowercase()} ${date.dayOfMonth} de ${SpanishDateNames.month(date.month)}"
+    fun sentenceDate(date: LocalDate): String = JamFormText.sentenceDate(date)
 
     /** The line of a held-back card: which jam is the next one (`admin-edit-delete-jam` C3). */
     fun heldBack(upcoming: LocalDate): String = "En espera: la próxima jam es la del ${sentenceDate(upcoming)}."
@@ -113,10 +100,6 @@ internal object PastJamsCopy {
     /** A visible held-back jam behind a BORRADOR upcoming jam is the musicians next jam (D-26). */
     fun visibleBehindDraft(upcoming: LocalDate): String =
         "Los músicos la ven como la próxima jam, porque la del ${sentenceDate(upcoming)} está en borrador."
-
-    fun earlierError(upcoming: LocalDate): String =
-        "Es antes de la próxima jam (${sentenceDate(upcoming)}) y la dejaría en espera. " +
-            "Si de verdad querés eso, agregala en la planilla."
 
     fun waitsNote(upcoming: LocalDate): String =
         "Queda en espera: la próxima jam sigue siendo la del ${sentenceDate(upcoming)}."

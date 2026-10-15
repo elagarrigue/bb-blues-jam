@@ -5,14 +5,13 @@ import java.time.LocalDate
 
 /** The copy of loading a proposal into the upcoming jam (`assistant-apply-proposal`), with *vos* (D-12). */
 internal object ApplyCopy {
-    const val APPLY = "Usar esta lista"
+    const val APPLY = "Agregar a la próxima jam"
     const val APPLY_RETRY = "Reintentar los que faltan"
     const val APPLY_DIALOG_TITLE = "¿Cargar esta lista?"
     const val APPLY_CANCEL = "Cancelar"
     const val APPLY_STOP = "Detener"
     const val APPLY_PUBLISHED =
         "La lista ya está publicada: los músicos van a ver los temas apenas se agreguen."
-    const val BLOCKED_NO_UPCOMING = "No hay una próxima jam. Pedime que la cree o creala en la planilla."
     const val BLOCKED_UNREADABLE =
         "No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé."
     const val BLOCKED_ALL_PRESENT = "Todos estos temas ya están en la lista de la próxima jam."

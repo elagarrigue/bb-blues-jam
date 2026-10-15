@@ -12,7 +12,7 @@ const assert = require('node:assert/strict');
 const { loadScript } = require('./helpers/load.js');
 const { Utilities, BUENOS_AIRES } = require('./helpers/format.js');
 
-const { handlePost, handleGet, ACTIONS, JAM_EDIT_CHECK_TAB, CREATE_JAM_CHECK_TAB, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
+const { handlePost, handleGet, ACTIONS, FUTURE_SETLIST_CHECK_TAB, JAM_EDIT_CHECK_TAB, CREATE_JAM_CHECK_TAB, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
 
 // The actions read today's date and typed cells with Apps Script's Utilities global.
 globalThis.Utilities = Utilities;
@@ -637,7 +637,6 @@ test('addSong validates in order and writes nothing on any failure', () => {
     [{ date: '1999-01-01', songId: 'zz-no-existe' }, 'unknown_jam'],
     [{ date: PAST }, 'jam_not_editable'],
     [{ date: PAST_DRAFT }, 'jam_not_editable'],
-    [{ date: LATER }, 'jam_not_editable'],
     [{ songId: 'zz-no-existe' }, 'unknown_song'],
     [{ songId: 'sin-artista' }, 'unknown_song'],
     [{ songId: 'repetido' }, 'unknown_song'],
@@ -648,7 +647,6 @@ test('addSong validates in order and writes nothing on any failure', () => {
     [{}, 'missing_header', { tabs: brokenTab }],
     [{}, 'duplicate_header', { tabs: duplicatedHeader }],
     [{ songId: 'zz-no-existe' }, 'duplicate_date', jamsWith([UPCOMING, '22:00', 'Otro', 'BORRADOR'])],
-    [{}, 'jam_not_editable', jamsWith(['2026-10-10', '21:00', 'Antes', 'PUBLICADA'])],
     [{ date: '2026-12-19' }, 'jam_not_editable', { jams: [JAMS[0], ['2026-12-19', '21:00', 'X', 'CANCELADA']] }],
     [{}, 'missing_tab', { jams: [] , tabs: { Jams: null } }],
     [{}, 'missing_tab', { tabs: { Catalogo: null } }],
@@ -1807,7 +1805,7 @@ test('a CREADA upcoming jam is editable and publishable; a CREADA earlier jam st
   const created = [JAMS[0], [UPCOMING, '21:00', 'La Macanuda', 'CREADA'], [LATER, '21:00', 'La Macanuda', 'BORRADOR']];
   assert.equal(addSong(fakeSpreadsheet({ jams: created }), {}).position, 4);
   const blocked = fakeSpreadsheet({ jams: created });
-  assertError(addSong(blocked, { date: LATER }), 'jam_not_editable');
+  assertError(call(blocked, 'removeSong', { date: LATER, songId: 'crossroads' }), 'jam_not_editable');
   assert.deepStrictEqual(writes(blocked.log), []);
 
   const fake = fakeSpreadsheet({ jams: created });
@@ -2127,9 +2125,9 @@ test('setJamStatus on a held-back jam: BORRADOR and CREADA are accepted, PUBLICA
   assertError(call(past, 'setJamStatus', { date: PAST_DRAFT, status: 'CREADA' }), 'jam_not_editable');
 });
 
-test('setlist mutations stay upcoming-only (requireEditableJam_ unchanged)', () => {
+test('setlist mutations other than addSong stay upcoming-only (requireEditableJam_ unchanged)', () => {
   const fake = fakeSpreadsheet();
-  assertError(addSong(fake, { date: LATER }), 'jam_not_editable');
+  assertError(call(fake, 'removeSong', { date: LATER, songId: 'crossroads' }), 'jam_not_editable');
   assert.deepStrictEqual(writes(fake.log), []);
 });
 
@@ -2159,4 +2157,89 @@ test('checkJamEdit fails with internal_error and still cleans up when the rename
   assertError(call(fake, 'checkJamEdit'), 'internal_error');
   assert.deepStrictEqual(Object.keys(fake.tabs).filter((n) => n.startsWith(JAM_EDIT_CHECK_TAB)), []);
   assert.ok(!fake.requested.includes('Jams'));
+});
+
+// ---- assistant-proposal-targets (D-29): addSong accepts any future jam; checkFutureSetlistWrite ----
+
+const FUTURE_JAMS = [
+  JAMS[0], JAMS[1], JAMS[2], JAMS[3],
+  [LATER, '21:00', 'La Macanuda', 'BORRADOR'],
+  ['2026-12-12', '21:00', 'La Macanuda', 'CREADA'],
+];
+
+test('addSong accepts a held-back BORRADOR jam: the tab is created there and the upcoming tab is untouched', () => {
+  const fake = fakeSpreadsheet({ jams: FUTURE_JAMS });
+  const upcomingBefore = JSON.stringify(fake.tabs[UPCOMING].cells);
+  const body = addSong(fake, { date: LATER, key: 'E' });
+  assert.deepStrictEqual(body, { schemaVersion: 1, ok: true, position: 1, title: 'Crossroads', artist: 'Eric Clapton' });
+  assert.deepStrictEqual(readTab(fake, LATER).map((item) => item.songId), ['crossroads']);
+  assert.equal(JSON.stringify(fake.tabs[UPCOMING].cells), upcomingBefore);
+  assert.ok(writes(fake.log).every((op) => op[1] === LATER), JSON.stringify(writes(fake.log)));
+});
+
+test('addSong appends to the existing tab of a held-back CREADA jam, after its last position', () => {
+  const created = '2026-12-12';
+  const fake = fakeSpreadsheet({ jams: FUTURE_JAMS, tabs: { [created]: [TAB_HEADER, row('1', 'the-thrill-is-gone', 'The Thrill Is Gone', 'B.B. King', 'Bm')] } });
+  const body = addSong(fake, { date: created });
+  assert.equal(body.position, 2);
+  assert.deepStrictEqual(readTab(fake, created).map((item) => item.songId), ['the-thrill-is-gone', 'crossroads']);
+});
+
+test('addSong still refuses a past jam, an unknown estado, an unknown date and a duplicated date before any write', () => {
+  const cases = [
+    [{ date: PAST }, 'jam_not_editable', FUTURE_JAMS],
+    [{ date: PAST_DRAFT }, 'jam_not_editable', FUTURE_JAMS],
+    [{ date: '2026-12-19' }, 'jam_not_editable', FUTURE_JAMS.concat([['2026-12-19', '21:00', 'X', 'CANCELADA']])],
+    [{ date: '2027-03-03' }, 'unknown_jam', FUTURE_JAMS],
+    [{ date: LATER }, 'duplicate_date', FUTURE_JAMS.concat([[LATER, '22:00', 'Otro', 'BORRADOR']])],
+  ];
+  for (const [fields, code, jams] of cases) {
+    const fake = fakeSpreadsheet({ jams });
+    assertError(addSong(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+});
+
+test('the other setlist mutations and publishing stay upcoming-only on a held-back jam', () => {
+  const fake = fakeSpreadsheet({ jams: FUTURE_JAMS, tabs: { [LATER]: [TAB_HEADER, row('1', 'crossroads', 'Crossroads', 'Eric Clapton', 'A'), row('2', 'the-thrill-is-gone', 'The Thrill Is Gone', 'B.B. King', 'Bm')] } });
+  const attempts = [
+    ['removeSong', { date: LATER, songId: 'crossroads' }],
+    ['moveSong', { date: LATER, songId: 'crossroads', toPosition: 2 }],
+    ['setKey', { date: LATER, songId: 'crossroads', key: 'E' }],
+    ['assignSlot', { date: LATER, songId: 'crossroads', instrument: 'guitar', ordinal: 1, name: 'Ana' }],
+    ['publishSetlist', { date: LATER }],
+  ];
+  for (const [action, fields] of attempts) {
+    assertError(call(fake, action, fields), 'jam_not_editable');
+  }
+  assertError(call(fake, 'setJamStatus', { date: LATER, status: 'PUBLICADA' }), 'jam_not_editable');
+  assert.deepStrictEqual(writes(fake.log), []);
+});
+
+test('checkFutureSetlistWrite proves the future guard on temporary tabs and leaves nothing, never opening Jams', () => {
+  const fake = fakeSpreadsheet({ tabs: { [FUTURE_SETLIST_CHECK_TAB]: [['leftover']] } });
+  assert.deepStrictEqual(call(fake, 'checkFutureSetlistWrite'), { schemaVersion: 1, ok: true });
+  assert.ok(!fake.requested.includes('Jams'), 'checkFutureSetlistWrite opened Jams');
+  const touched = writes(fake.log).map((op) => op[1]).filter((name) => name !== undefined);
+  assert.ok(touched.length > 0);
+  assert.ok(touched.every((name) => String(name).startsWith(FUTURE_SETLIST_CHECK_TAB)), `touched ${touched}`);
+  assert.deepStrictEqual(Object.keys(fake.tabs).filter((n) => n.startsWith(FUTURE_SETLIST_CHECK_TAB)), []);
+  assert.deepStrictEqual(jamsGrid(fake), JAMS);
+});
+
+test('checkFutureSetlistWrite is internal_error when the read-back differs and still deletes both tabs', () => {
+  const fake = fakeSpreadsheet({ convertAlways: true });
+  assertError(call(fake, 'checkFutureSetlistWrite'), 'internal_error');
+  assert.deepStrictEqual(Object.keys(fake.tabs).filter((n) => n.startsWith(FUTURE_SETLIST_CHECK_TAB)), []);
+  assert.ok(!fake.requested.includes('Jams'));
+});
+
+test('checkFutureSetlistWrite is a guarded write', () => {
+  const fake = fakeSpreadsheet();
+  assertError(handlePost({ action: 'checkFutureSetlistWrite' }, fake.spreadsheet, services()), 'invalid_passphrase');
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.equal(ACTIONS.checkFutureSetlistWrite.write, true);
+  const svc = services();
+  call(fake, 'checkFutureSetlistWrite', {}, svc);
+  assert.equal(svc.lock.tries, 1);
 });

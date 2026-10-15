@@ -1,9 +1,17 @@
 package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.jams.JamDateProblem
+import com.bbbjam.core.data.jams.JamFormCheck
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.VenueProblem
+import com.bbbjam.core.data.jams.checkJamForm
+import com.bbbjam.core.data.jams.jamFormSeed
 import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.ui.jamform.JamFormField
+import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
+import com.bbbjam.core.ui.jamform.JamFormText
+import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import java.time.LocalDate
 
@@ -13,69 +21,89 @@ import java.time.LocalDate
  * A blank field shows no error until it has been edited; a typed one shows its error at once.
  */
 internal fun JamsSnapshot.toNewJam(controls: NewJamControls, today: LocalDate): NewJamUiModel {
-    val check = checkNewJam(controls.input, this, today)
+    val check = checkJamForm(controls.input, this, today)
+    val handle: (NewJamUiModel.Event) -> Unit = { event ->
+        when (event) {
+            NewJamUiModel.Event.Open -> controls.onOpen(jamFormSeed(this))
+            NewJamUiModel.Event.Cancel -> controls.onCancel()
+            is NewJamUiModel.Event.Edit -> controls.onEdit(event.field, event.text)
+            NewJamUiModel.Event.Create -> check.values?.let(controls.onCreate)
+            NewJamUiModel.Event.Retry -> controls.onRetry()
+            NewJamUiModel.Event.Dismiss -> controls.onDismiss()
+        }
+    }
     return NewJamUiModel(
         label = PastJamsCopy.NEW_JAM,
-        form = if (controls.isOpen) toForm(controls, check) else null,
+        form = if (controls.isOpen) toForm(controls, check, handle) else null,
         progress = controls.progress?.toUiModel(),
-        events = EventHandler { event ->
-            when (event) {
-                NewJamUiModel.Event.Open -> controls.onOpen(newJamSeed(this))
-                NewJamUiModel.Event.Cancel -> controls.onCancel()
-                is NewJamUiModel.Event.Edit -> controls.onEdit(event.field, event.text)
-                NewJamUiModel.Event.Create -> check.values?.let(controls.onCreate)
-                NewJamUiModel.Event.Retry -> controls.onRetry()
-                NewJamUiModel.Event.Dismiss -> controls.onDismiss()
-            }
-        },
+        events = EventHandler(handle = handle),
     )
 }
 
-private fun toForm(controls: NewJamControls, check: NewJamCheck): NewJamFormUiModel {
+private fun toForm(
+    controls: NewJamControls,
+    check: JamFormCheck,
+    handle: (NewJamUiModel.Event) -> Unit,
+): JamFormUiModel {
     val input = controls.input
-    return NewJamFormUiModel(
+    return JamFormUiModel(
         title = PastJamsCopy.NEW_JAM,
-        dateLabel = PastJamsCopy.NEW_JAM_DATE,
-        dateHint = PastJamsCopy.NEW_JAM_DATE_HINT,
-        timeLabel = PastJamsCopy.NEW_JAM_TIME,
-        timeHint = PastJamsCopy.NEW_JAM_TIME_HINT,
-        venueLabel = PastJamsCopy.NEW_JAM_VENUE,
-        date = input.date,
-        time = input.time,
-        venue = input.venue,
-        dateError = dateError(check, shown = input.date.isNotBlank() || controls.isTouched(NewJamField.DATE)),
-        timeError = PastJamsCopy.TIME_ERROR.takeIf {
-            check.timeInvalid && (input.time.isNotBlank() || controls.isTouched(NewJamField.TIME))
+        date = JamFormFieldUiModel(
+            label = JamFormText.DATE_LABEL,
+            value = input.date,
+            hint = JamFormText.DATE_HINT,
+            error = dateError(check, shown = input.date.isNotBlank() || controls.isTouched(JamFormField.DATE)),
+        ),
+        time = JamFormFieldUiModel(
+            label = JamFormText.TIME_LABEL,
+            value = input.time,
+            hint = JamFormText.TIME_HINT,
+            error = JamFormText.TIME_ERROR.takeIf {
+                check.timeInvalid && (input.time.isNotBlank() || controls.isTouched(JamFormField.TIME))
+            },
+        ),
+        venue = JamFormFieldUiModel(
+            label = JamFormText.VENUE_LABEL,
+            value = input.venue,
+            hint = null,
+            error = venueError(check.venueProblem, touched = controls.isTouched(JamFormField.VENUE)),
+        ),
+        notes = listOfNotNull(check.waitsBehind?.let(PastJamsCopy::waitsNote), PastJamsCopy.NEW_JAM_DRAFT_NOTE),
+        submitLabel = PastJamsCopy.NEW_JAM_CREATE,
+        cancelLabel = JamFormText.CANCEL,
+        canSubmit = check.canCreate,
+        events = EventHandler { event ->
+            handle(
+                when (event) {
+                    is JamFormUiModel.Event.Edit -> NewJamUiModel.Event.Edit(event.field, event.text)
+                    JamFormUiModel.Event.Submit -> NewJamUiModel.Event.Create
+                    JamFormUiModel.Event.Cancel -> NewJamUiModel.Event.Cancel
+                },
+            )
         },
-        venueError = venueError(check.venueProblem, touched = controls.isTouched(NewJamField.VENUE)),
-        waitsNote = check.waitsBehind?.let(PastJamsCopy::waitsNote),
-        draftNote = PastJamsCopy.NEW_JAM_DRAFT_NOTE,
-        createLabel = PastJamsCopy.NEW_JAM_CREATE,
-        cancelLabel = PastJamsCopy.CANCEL,
-        canCreate = check.canCreate,
     )
 }
 
-private fun dateError(check: NewJamCheck, shown: Boolean): String? = when {
+private fun dateError(check: JamFormCheck, shown: Boolean): String? = when {
     !shown -> null
-    check.dateProblem == DateProblem.FORMAT -> PastJamsCopy.DATE_FORMAT_ERROR
-    check.dateProblem == DateProblem.PAST -> PastJamsCopy.DATE_PAST_ERROR
-    check.dateProblem == DateProblem.EXISTS -> PastJamsCopy.DATE_EXISTS_ERROR
-    check.dateProblem == DateProblem.EARLIER -> check.earlierThan?.let(PastJamsCopy::earlierError)
+    check.dateProblem == JamDateProblem.FORMAT -> JamFormText.DATE_FORMAT_ERROR
+    check.dateProblem == JamDateProblem.PAST -> JamFormText.DATE_PAST_ERROR
+    check.dateProblem == JamDateProblem.EXISTS -> JamFormText.DATE_EXISTS_ERROR
+    check.dateProblem == JamDateProblem.EARLIER -> check.earlierThan?.let(JamFormText::earlierError)
     else -> null
 }
 
 internal fun venueError(problem: VenueProblem?, touched: Boolean): String? = when (problem) {
     null -> null
 
-    VenueProblem.EMPTY -> PastJamsCopy.VENUE_EMPTY_ERROR.takeIf { touched }
+    VenueProblem.EMPTY -> JamFormText.VENUE_EMPTY_ERROR.takeIf { touched }
 
-    VenueProblem.TOO_LONG -> PastJamsCopy.VENUE_LONG_ERROR
+    VenueProblem.TOO_LONG -> JamFormText.VENUE_LONG_ERROR
 
-    VenueProblem.FORMULA -> PastJamsCopy.VENUE_FORMULA_ERROR
+    VenueProblem.FORMULA -> JamFormText.VENUE_FORMULA_ERROR
 
     // A soft keyboard's single-line field cannot type one; the generic line is the honest answer.
-    VenueProblem.CONTROL -> PastJamsCopy.VENUE_EMPTY_ERROR
+    VenueProblem.CONTROL -> JamFormText.VENUE_EMPTY_ERROR
 }
 
 private fun NewJamProgress.toUiModel(): NewJamProgressUiModel = when (this) {
@@ -100,7 +128,7 @@ internal fun createFailureMessage(outcome: CreateJamOutcome): String = when (out
         val code = (reason as? WriteOutcome.Rejected)?.code.orEmpty()
         when {
             code == "jam_exists" || code == "tab_exists" -> PastJamsCopy.CREATE_EXISTS
-            code == "past_date" -> PastJamsCopy.DATE_PAST_ERROR
+            code == "past_date" -> JamFormText.DATE_PAST_ERROR
             code.startsWith("invalid_") -> PastJamsCopy.CREATE_INVALID
             else -> failureMessage(reason)
         }

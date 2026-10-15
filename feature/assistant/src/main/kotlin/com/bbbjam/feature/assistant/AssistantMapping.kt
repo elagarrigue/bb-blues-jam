@@ -132,6 +132,8 @@ private fun AssistantReply.Proposal.toModel(parts: ApplyParts, jamCard: JamCardU
     discardedNote = if (rejectedSongIds.isEmpty()) null else AssistantCopy.discarded(rejectedSongIds.size),
     apply = parts.apply,
     summary = parts.summary,
+    removals = parts.removals,
+    order = parts.order,
     jam = jamCard,
     jamNote = jamRejection?.let(JamCopy::rejection),
 )

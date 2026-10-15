@@ -48,48 +48,4 @@ internal object JamsAdminDefaults {
 
     fun newJamButton(colors: BluesJamColors = BluesJamColors): ButtonStyle =
         ButtonStyle(fill = colors.surfaceRaised, content = colors.text)
-
-    /**
-     * The form dialog: `surfaceRaised`, title, `Crear la jam` and `Cancelar` in `text` (creating is not
-     * destructive: never `error`, never amber), a disabled `Crear la jam` and the notes in `textMuted`,
-     * field errors in `error`.
-     */
-    data class FormStyle(
-        val container: Color,
-        val title: Color,
-        val confirm: Color,
-        val disabled: Color,
-        val cancel: Color,
-        val note: Color,
-        val error: Color,
-        val field: FieldStyle,
-    )
-
-    /** A text field of the form with every role set explicitly (Material's focus colour is amber). */
-    data class FieldStyle(
-        val container: Color,
-        val text: Color,
-        val label: Color,
-        val unfocusedBorder: Color,
-        val focusedBorder: Color,
-        val cursor: Color,
-    )
-
-    fun form(colors: BluesJamColors = BluesJamColors): FormStyle = FormStyle(
-        container = colors.surfaceRaised,
-        title = colors.text,
-        confirm = colors.text,
-        disabled = colors.textMuted,
-        cancel = colors.text,
-        note = colors.textMuted,
-        error = colors.error,
-        field = FieldStyle(
-            container = colors.surfaceRaised,
-            text = colors.text,
-            label = colors.textMuted,
-            unfocusedBorder = colors.border,
-            focusedBorder = colors.text,
-            cursor = colors.text,
-        ),
-    )
 }

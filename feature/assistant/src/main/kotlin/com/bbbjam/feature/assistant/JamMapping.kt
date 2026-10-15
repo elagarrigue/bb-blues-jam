@@ -36,7 +36,8 @@ internal fun jamCard(
         date = JamCopy.dateInWords(jam.date),
         detail = JamCopy.detail(jam.startTime, jam.venue),
         note = jamNote(plan, creation),
-        action = jamAction(turnId, jam, plan, creation, inputs, handlers),
+        // A proposal with songs creates its jam through the targets block (C5); the card is information.
+        action = if (proposal.songs.isEmpty()) jamAction(turnId, jam, plan, creation, inputs, handlers) else null,
         result = creation?.result(),
     )
 }

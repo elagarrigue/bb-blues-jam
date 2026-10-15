@@ -1,10 +1,14 @@
 package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.data.jams.JamEditPlan
+import com.bbbjam.core.data.jams.JamFormInput
+import com.bbbjam.core.data.jams.JamFormValues
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.VenueProblem
 import com.bbbjam.core.data.jams.jamEditPlan
 import com.bbbjam.core.data.jams.normalizeVenue
+import com.bbbjam.core.data.jams.parseFormDate
+import com.bbbjam.core.data.jams.parseFormTime
 import com.bbbjam.core.data.jams.venueProblem
 import com.bbbjam.core.model.Jam
 import java.time.LocalDate
@@ -19,7 +23,7 @@ import java.time.LocalDate
 internal enum class JamEditDateProblem { FORMAT, PAST, EXISTS, LATER, EARLIER }
 
 /**
- * The verdict on [NewJamInput] for [jam]. [values] is set only when every field is usable, the plan is Ready
+ * The verdict on [JamFormInput] for [jam]. [values] is set only when every field is usable, the plan is Ready
  * and something differs from the jam, so `Guardar` is enabled exactly then. [otherDate] names the jam in the
  * way of a `LATER` or `EARLIER` date.
  */
@@ -29,14 +33,14 @@ internal data class JamEditCheck(
     val timeInvalid: Boolean,
     val venueProblem: VenueProblem?,
     val dateChanged: Boolean,
-    val values: NewJamValues?,
+    val values: JamFormValues?,
 ) {
     val canSave: Boolean
         get() = values != null
 }
 
 /** The check of [input] for [jam] against the raw [snapshot] on [today]. */
-internal fun checkJamEdit(jam: Jam, input: NewJamInput, snapshot: JamsSnapshot?, today: LocalDate): JamEditCheck {
+internal fun checkJamEdit(jam: Jam, input: JamFormInput, snapshot: JamsSnapshot?, today: LocalDate): JamEditCheck {
     val date = parseFormDate(input.date)
     val time = parseFormTime(input.time)
     val venue = normalizeVenue(input.venue)
@@ -49,7 +53,7 @@ internal fun checkJamEdit(jam: Jam, input: NewJamInput, snapshot: JamsSnapshot?,
     val values = if (usable &&
         differs
     ) {
-        NewJamValues(checkNotNull(date), checkNotNull(time), checkNotNull(venue))
+        JamFormValues(checkNotNull(date), checkNotNull(time), checkNotNull(venue))
     } else {
         null
     }

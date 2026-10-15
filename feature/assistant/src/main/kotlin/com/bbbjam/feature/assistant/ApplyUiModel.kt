@@ -1,30 +1,38 @@
 package com.bbbjam.feature.assistant
 
+import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 
-/** What sits under a proposal to load it into the upcoming jam (`assistant-apply-proposal`). */
+/** What sits under a proposal to use it on the upcoming jam (`assistant-proposal-targets`). */
 sealed interface ApplyUiModel : UiModel {
     /** Nothing: not the latest proposal, snapshot not read yet, a pending turn, or a finished success. */
     data object None : ApplyUiModel
 
-    /** The list cannot be loaded now; [note] says why. */
-    data class Blocked(val note: String) : ApplyUiModel
-
     /**
-     * The "Usar esta lista" (or "Reintentar los que faltan") button. Tapping it only opens
-     * [confirmation]; nothing is written until the dialog's confirm (D-24).
+     * The targets block: one button per [actions] (Agregar, Reemplazar), the [notes] saying why one is
+     * missing or disabled, and the open [confirmation]. Tapping a button only opens its confirmation;
+     * nothing is written until the dialog's confirm (D-24).
      */
-    data class Action(
-        val label: String,
-        val enabled: Boolean,
-        val events: EventHandler<Event>,
+    data class Targets(
+        val actions: List<TargetActionUiModel>,
+        val notes: List<String>,
         val confirmation: ConfirmationUiModel?,
-    ) : ApplyUiModel {
-        sealed interface Event : UiEvent {
-            data object Request : Event
-        }
+        /** The open "Crear una jam nueva con esta lista" form: the shared jam form, its submit is the confirmation. */
+        val createForm: JamFormUiModel? = null,
+    ) : ApplyUiModel
+}
+
+/** One target button: [target] says where the songs go. */
+data class TargetActionUiModel(
+    val target: ApplyMode,
+    val label: String,
+    val enabled: Boolean,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Request : Event
     }
 }
 
@@ -35,6 +43,8 @@ data class ConfirmationUiModel(
     val confirmLabel: String,
     val cancelLabel: String,
     val events: EventHandler<Event>,
+    /** True when confirming removes something: the confirm action is drawn in `error`. */
+    val destructive: Boolean = false,
 ) : UiModel {
     sealed interface Event : UiEvent {
         data object Confirm : Event
@@ -61,3 +71,6 @@ enum class ApplyStatusKind { PROGRESS, DONE, SKIPPED, FAILED, NOT_ATTEMPTED }
 
 /** The caption under a proposed song while or after a run. */
 data class ApplyStatusUiModel(val text: String, val kind: ApplyStatusKind) : UiModel
+
+/** A removed song's line under a replace: its [title] and what happened to it ([text]). */
+data class ApplyStatusLineUiModel(val title: String, val text: String, val kind: ApplyStatusKind) : UiModel

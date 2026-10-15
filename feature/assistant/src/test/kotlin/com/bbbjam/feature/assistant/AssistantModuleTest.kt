@@ -4,6 +4,8 @@ import com.bbbjam.core.data.assistant.SetlistAssistant
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.JamCreator
 import com.bbbjam.core.data.setlist.SetlistSongAdder
+import com.bbbjam.core.data.setlist.SetlistSongMover
+import com.bbbjam.core.data.setlist.SetlistSongRemover
 import com.bbbjam.feature.assistant.di.assistantModule
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
@@ -17,6 +19,8 @@ class AssistantModuleTest {
         val dataBindings = module {
             single<SetlistAssistant> { FakeSetlistAssistant() }
             single<SetlistSongAdder> { FakeSetlistSongAdder() }
+            single<SetlistSongRemover> { FakeSetlistSongRemover() }
+            single<SetlistSongMover> { FakeSetlistSongMover() }
             single<JamCreator> { FakeJamCreator() }
             single { testCalendar() }
             single<JamsRepository> { FakeJamsRepository() }

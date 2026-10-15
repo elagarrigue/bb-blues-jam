@@ -1,6 +1,7 @@
 package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.ui.jamform.JamFormText
 
 /*
  * The failure cards' messages on the Jams tab: the status change, the publication and (`admin-jams-tab`
@@ -27,7 +28,7 @@ internal fun editFailureMessage(reason: WriteOutcome): String {
     val code = (reason as? WriteOutcome.Rejected)?.code.orEmpty()
     return when {
         code == "jam_exists" || code == "tab_exists" -> PastJamsCopy.CREATE_EXISTS
-        code == "past_date" -> PastJamsCopy.DATE_PAST_ERROR
+        code == "past_date" -> JamFormText.DATE_PAST_ERROR
         code == "setlist_changed" -> JamEditCopy.SETLIST_CHANGED
         code.startsWith("invalid_") -> PastJamsCopy.CREATE_INVALID
         else -> failureMessage(reason)

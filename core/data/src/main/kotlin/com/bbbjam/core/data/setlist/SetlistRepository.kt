@@ -30,6 +30,9 @@ interface SetlistRepository :
      * the write runs; on success the song is in the cache from the server's answer and the entry is
      * gone, otherwise the entry turns [SetlistAdd.State.Failed] and nothing is cached.
      *
+     * [jamDate] is any future jam: the upcoming one or a held-back one (D-29, `assistant-proposal-targets`);
+     * every other setlist mutation stays upcoming-only. The cache is mirrored into that jam only.
+     *
      * Writes are sent one at a time, in call order. Cancelling the caller never cancels an add it
      * started: the whole add runs in the data layer's scope from its first instruction.
      */

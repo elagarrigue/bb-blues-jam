@@ -368,9 +368,13 @@ class ModuleIsolationTest {
 
         const val FEATURE_ASSISTANT = "feature/assistant"
 
-        /** The repository and the writer the assistant feature must never reach (D-13, D-24): imports included. */
+        /**
+         * The repositories and the writer the assistant feature must never reach (D-13, D-24): imports
+         * included. Every `core.data.setlist.Setlist...Repository` is banned, not only `SetlistRepository`,
+         * so the feature cannot bypass the registry through `SetlistMoveRepository` and the like.
+         */
         val ASSISTANT_FEATURE_FORBIDDEN =
-            Regex("""\bcom\.bbbjam\.core\.data\.(setlist\.(SetlistRepository|\*)|admin\.(AdminWriter|\*))""")
+            Regex("""\bcom\.bbbjam\.core\.data\.(setlist\.(Setlist\w*Repository|\*)|admin\.(AdminWriter|\*))""")
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")

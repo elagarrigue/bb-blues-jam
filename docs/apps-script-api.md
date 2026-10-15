@@ -7,7 +7,7 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
 (`apps-script-jams-read-endpoint`), and eighteen POST actions in local source: `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
-`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam`, `setJamStatus`, `updateJam`, `deleteJam` and `checkJamEdit`. Every POST
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam`, `setJamStatus`, `updateJam`, `deleteJam`, `checkJamEdit` and `checkFutureSetlistWrite`. Every POST
 action passes the passphrase guard in the router. Earlier actions have the deployment history below;
 the latest local mutations are not live-verified. The user deferred one shared deployment and live
 checks until app implementation is complete.
@@ -259,7 +259,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -298,7 +298,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -359,7 +359,7 @@ A write action, under the lock. Every check runs **before anything is written**,
 | 2 | `songId` is a string matching `^[a-z0-9]+(-[a-z0-9]+)*$` | `invalid_song` |
 | 3 | `key` is a string matching `^[A-G][#b]?m?$` | `invalid_key` |
 | 4 | the `Jams` tab has exactly one row with that `fecha` (dates normalized as the reads do) | `unknown_jam`, `duplicate_date` (and the `Jams` tab's own `missing_tab`/`missing_header`) |
-| 5 | that jam's `estado` is `BORRADOR`, `CREADA` or `PUBLICADA`, its date is today or later, and no jam with a known `estado` falls between today and it (it is the upcoming jam) | `jam_not_editable` |
+| 5 | that jam's `estado` is `BORRADOR`, `CREADA` or `PUBLICADA` and its date is today or later: the upcoming jam **or a jam held back behind it** (`requireFutureJam_`, D-29; before `assistant-proposal-targets` only the upcoming jam passed). Here `jam_not_editable` means "not a future jam" | `jam_not_editable` |
 | 6 | `songId` is on exactly one `Catalogo` row (trimmed `id`), with a non-blank `titulo` and `artista` | `unknown_song` (and `Catalogo`'s own `missing_tab`/`missing_header`) |
 | 7 | the jam's tab, when it exists, has every required header once | `missing_header`, `duplicate_header` |
 | 8 | `songId` is not already in the tab (user approval J1) | `song_already_in_setlist` |
@@ -754,7 +754,7 @@ echo whose `date`/`status` differ or whose `changed` is not a boolean as `NotSet
 All three are guarded, locked writes and the last entries of `ACTIONS`. They act on **future** jams only: the upcoming
 jam and the jams held back behind it (`requireFutureJam_`: `missing_tab`, `unknown_jam`, `duplicate_date`, then
 `jam_not_editable` for an unknown `estado` or a date before today). Past jams are never edited or deleted. The setlist
-mutations keep `requireEditableJam_` (upcoming only).
+mutations keep `requireEditableJam_` (upcoming only), all but `addSong` (D-29: `requireFutureJam_`, so the assistant can load a list into a jam it creates behind the upcoming one).
 
 `updateJam` takes `{date, newDate?, time?, venue?}`; absent fields stay. Refusals, all before any write and in this order:
 `invalid_date`, `invalid_new_date` (present and not a calendar day), `invalid_time` (present, not HH:MM), `invalid_venue`
@@ -820,3 +820,12 @@ Both are passphrase guarded and run under the script lock. They validate date an
 The public `SetlistRepository` functions share the mutation id, FIFO order/write locks and `AdminWriter`. Only a valid success payload is mirrored by a single Room transaction into the uniquely cached available song; otherwise Room stays unchanged and refresh repairs a cache mirror failure. Sending entries optimistically alter only the admin's `Otros` projection; failures revert and remain dismissible. The local admin flag draws controls only; server authorization remains authoritative.
 
 The self-cleaning `checkSetlistWrite` deploy check now exercises extra append/readback, stale ordinal refusal without a cell write, current ordinal removal/readback, the 20-entry limit and final `Otros` cell value on its disposable marker tab. It deletes the marker tab in `finally`; it does not touch a real jam. This check has been exercised by the local Apps Script harness, but no live deployment check was run for this implementation.
+
+### `checkFutureSetlistWrite` (`assistant-proposal-targets`, D-29)
+
+A guarded, locked write, the last entry of `ACTIONS`, with no fields. It works only on tabs named
+`_prueba_lista_futura*`: on a Jams-shaped tab with two `BORRADOR` rows (2099-01-01 and 2099-01-02) it proves the
+second passes the future-jam rule (`futureJamIn_`) and fails the upcoming-jam rule (`upcomingJamIn_`,
+`jam_not_editable`), then appends a marker row to a temporary setlist tab with `appendSetlistRow_` and reads it back with
+`buildSetlist`. Both tabs are deleted in `finally`; it never opens `Jams` or a real jam tab. Answer `{ok:true}`.
+Do not run `addSong` by hand against the real Sheet.

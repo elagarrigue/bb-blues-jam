@@ -19,7 +19,7 @@ class AssistantPresenterTest {
     private fun flow(chat: AssistantChat) = moleculeFlow(RecompositionMode.Immediate) {
         testPresenter(
             chat,
-            ProposalApplier(
+            testApplier(
                 FakeSetlistSongAdder(),
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
             ),

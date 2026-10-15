@@ -11,6 +11,7 @@ import com.bbbjam.core.data.setlist.CreateJamOutcome
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.ui.jamform.JamFormField
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -57,7 +58,7 @@ class NewJamCreateTest {
         else -> error("no admin section: $this")
     }
 
-    private fun NewJamUiModel.edit(field: NewJamField, text: String) = events(NewJamUiModel.Event.Edit(field, text))
+    private fun NewJamUiModel.edit(field: JamFormField, text: String) = events(NewJamUiModel.Event.Edit(field, text))
 
     @Test
     fun `Nueva jam opens the form seeded from the latest jam with an empty date, and Cancelar calls nothing`() =
@@ -73,23 +74,25 @@ class NewJamCreateTest {
                 val open = expectMostRecentItem().newJam()
                 val form = checkNotNull(open.form)
                 assertEquals("Nueva jam", form.title)
-                assertEquals("Fecha", form.dateLabel)
-                assertEquals("DD/MM/AAAA", form.dateHint)
-                assertEquals("Hora", form.timeLabel)
-                assertEquals("HH:MM", form.timeHint)
-                assertEquals("Lugar", form.venueLabel)
-                assertEquals("", form.date)
-                assertEquals("20:30", form.time)
-                assertEquals("La Macanuda", form.venue)
-                assertNull(form.dateError)
-                assertNull(form.waitsNote)
+                assertEquals("Fecha", form.date.label)
+                assertEquals("DD/MM/AAAA", form.date.hint)
+                assertEquals("Hora", form.time.label)
+                assertEquals("HH:MM", form.time.hint)
+                assertEquals("Lugar", form.venue.label)
+                assertEquals("", form.date.value)
+                assertEquals("20:30", form.time.value)
+                assertEquals("La Macanuda", form.venue.value)
+                assertNull(form.date.error)
                 assertEquals(
-                    "Se crea como borrador: los músicos no la ven hasta que la pases a creada o publiques la lista.",
-                    form.draftNote,
+                    listOf(
+                        "Se crea como borrador: los músicos no la ven hasta que la pases a creada " +
+                            "o publiques la lista.",
+                    ),
+                    form.notes,
                 )
-                assertEquals("Crear la jam", form.createLabel)
+                assertEquals("Crear la jam", form.submitLabel)
                 assertEquals("Cancelar", form.cancelLabel)
-                assertFalse(form.canCreate)
+                assertFalse(form.canSubmit)
 
                 open.events(NewJamUiModel.Event.Cancel)
                 assertNull(expectMostRecentItem().newJam().form)
@@ -106,36 +109,36 @@ class NewJamCreateTest {
                 expectMostRecentItem().newJam().events(NewJamUiModel.Event.Open)
                 var model = expectMostRecentItem().newJam()
 
-                model.edit(NewJamField.DATE, "mañana")
+                model.edit(JamFormField.DATE, "mañana")
                 model = expectMostRecentItem().newJam()
-                assertEquals("Escribí la fecha como DD/MM/AAAA.", model.form?.dateError)
+                assertEquals("Escribí la fecha como DD/MM/AAAA.", model.form?.date?.error)
 
-                model.edit(NewJamField.DATE, "1/10/2026")
+                model.edit(JamFormField.DATE, "1/10/2026")
                 model = expectMostRecentItem().newJam()
-                assertEquals("Esa fecha ya pasó.", model.form?.dateError)
+                assertEquals("Esa fecha ya pasó.", model.form?.date?.error)
 
-                model.edit(NewJamField.DATE, "31/10/2026")
+                model.edit(JamFormField.DATE, "31/10/2026")
                 model = expectMostRecentItem().newJam()
-                assertEquals("Ya hay una jam ese día.", model.form?.dateError)
+                assertEquals("Ya hay una jam ese día.", model.form?.date?.error)
 
-                model.edit(NewJamField.DATE, "20/10/2026")
+                model.edit(JamFormField.DATE, "20/10/2026")
                 model = expectMostRecentItem().newJam()
                 assertEquals(
                     "Es antes de la próxima jam (sábado 31 de octubre) y la dejaría en espera. " +
                         "Si de verdad querés eso, agregala en la planilla.",
-                    model.form?.dateError,
+                    model.form?.date?.error,
                 )
-                assertFalse(checkNotNull(model.form).canCreate)
+                assertFalse(checkNotNull(model.form).canSubmit)
 
-                model.edit(NewJamField.DATE, "28/11/2026")
+                model.edit(JamFormField.DATE, "28/11/2026")
                 model = expectMostRecentItem().newJam()
                 val form = checkNotNull(model.form)
-                assertNull(form.dateError)
+                assertNull(form.date.error)
                 assertEquals(
                     "Queda en espera: la próxima jam sigue siendo la del sábado 31 de octubre.",
-                    form.waitsNote,
+                    form.notes.first(),
                 )
-                assertTrue(form.canCreate)
+                assertTrue(form.canSubmit)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -147,21 +150,21 @@ class NewJamCreateTest {
             expectMostRecentItem().newJam().events(NewJamUiModel.Event.Open)
             var model = expectMostRecentItem().newJam()
             // No jam at all: 21:00 and an empty venue, and no error shouted before anything is typed.
-            assertEquals("21:00", model.form?.time)
-            assertNull(model.form?.venueError)
+            assertEquals("21:00", model.form?.time?.value)
+            assertNull(model.form?.venue?.error)
 
-            model.edit(NewJamField.VENUE, "   ")
+            model.edit(JamFormField.VENUE, "   ")
             model = expectMostRecentItem().newJam()
-            assertEquals("Escribí el lugar.", model.form?.venueError)
-            model.edit(NewJamField.VENUE, "=SUMA(A1)")
+            assertEquals("Escribí el lugar.", model.form?.venue?.error)
+            model.edit(JamFormField.VENUE, "=SUMA(A1)")
             model = expectMostRecentItem().newJam()
-            assertEquals("El lugar no puede empezar con =, +, - o @.", model.form?.venueError)
-            model.edit(NewJamField.VENUE, "x".repeat(81))
+            assertEquals("El lugar no puede empezar con =, +, - o @.", model.form?.venue?.error)
+            model.edit(JamFormField.VENUE, "x".repeat(81))
             model = expectMostRecentItem().newJam()
-            assertEquals("El lugar puede tener hasta 80 letras.", model.form?.venueError)
-            model.edit(NewJamField.TIME, "25:61")
+            assertEquals("El lugar puede tener hasta 80 letras.", model.form?.venue?.error)
+            model.edit(JamFormField.TIME, "25:61")
             model = expectMostRecentItem().newJam()
-            assertEquals("Escribí la hora como HH:MM, por ejemplo 21:00.", model.form?.timeError)
+            assertEquals("Escribí la hora como HH:MM, por ejemplo 21:00.", model.form?.time?.error)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -173,11 +176,11 @@ class NewJamCreateTest {
             repository.snapshots.emit(snapshot)
             expectMostRecentItem().newJam().events(NewJamUiModel.Event.Open)
             var model = expectMostRecentItem().newJam()
-            model.edit(NewJamField.DATE, "28-11-2026")
+            model.edit(JamFormField.DATE, "28-11-2026")
             model = expectMostRecentItem().newJam()
-            model.edit(NewJamField.TIME, "9.30")
+            model.edit(JamFormField.TIME, "9.30")
             model = expectMostRecentItem().newJam()
-            model.edit(NewJamField.VENUE, "  El   Sótano ")
+            model.edit(JamFormField.VENUE, "  El   Sótano ")
             model = expectMostRecentItem().newJam()
 
             model.events(NewJamUiModel.Event.Create)
@@ -205,7 +208,7 @@ class NewJamCreateTest {
             repository.snapshots.emit(snapshot)
             expectMostRecentItem().newJam().events(NewJamUiModel.Event.Open)
             var model = expectMostRecentItem().newJam()
-            model.edit(NewJamField.DATE, "20/10/2026")
+            model.edit(JamFormField.DATE, "20/10/2026")
             model = expectMostRecentItem().newJam()
             model.events(NewJamUiModel.Event.Create)
             assertEquals(emptyList<FakeJamCreator.Call>(), creator.calls)
@@ -220,7 +223,7 @@ class NewJamCreateTest {
             repository.snapshots.emit(snapshot)
             expectMostRecentItem().newJam().events(NewJamUiModel.Event.Open)
             var model = expectMostRecentItem().newJam()
-            model.edit(NewJamField.DATE, "28/11/2026")
+            model.edit(JamFormField.DATE, "28/11/2026")
             model = expectMostRecentItem().newJam()
             model.events(NewJamUiModel.Event.Create)
 
@@ -265,7 +268,7 @@ class NewJamCreateTest {
             repository.snapshots.emit(snapshot)
             expectMostRecentItem().newJam().events(NewJamUiModel.Event.Open)
             var model = expectMostRecentItem().newJam()
-            model.edit(NewJamField.DATE, "28/11/2026")
+            model.edit(JamFormField.DATE, "28/11/2026")
             model = expectMostRecentItem().newJam()
             model.events(NewJamUiModel.Event.Create)
 

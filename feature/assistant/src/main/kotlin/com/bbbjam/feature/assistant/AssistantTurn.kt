@@ -116,7 +116,7 @@ private fun ProposalContent(reply: ReplyUiModel.Proposal, card: AssistantDefault
     reply.discardedNote?.let { note ->
         Text(text = note, style = typography.caption, color = AssistantDefaults.notice().caption)
     }
-    ApplyContent(reply.apply, reply.summary)
+    ApplyContent(reply.apply, reply.summary, reply.removals, reply.order)
 }
 
 /** One proposed song: one merged, non-clickable node read in visual order. */

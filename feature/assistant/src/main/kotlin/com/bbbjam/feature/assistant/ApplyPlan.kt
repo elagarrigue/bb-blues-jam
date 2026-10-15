@@ -2,6 +2,7 @@ package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.ProposedSong
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import java.time.LocalDate
@@ -37,12 +38,24 @@ sealed interface ApplyPlan {
  * draft read without the admin read is Withheld and an unreadable one Unavailable, both
  * [ApplyPlan.Blocked.Reason.UNREADABLE]. Duplicates are matched by [ProposedSong.songId].
  */
-fun applyPlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ApplyPlan {
-    val jam = snapshot?.upcoming
+fun applyPlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ApplyPlan =
+    if (snapshot == null) ApplyPlan.Unknown else planFor(songs, snapshot.upcoming)
+
+/**
+ * The plan for [songs] against the jam of [date], looked up in `upcoming` then `heldBack` (C6: the retry of a
+ * create run targets the jam that run created, which may be held back). A date with no such jam is
+ * [ApplyPlan.Blocked.Reason.NO_UPCOMING].
+ */
+fun applyPlanFor(songs: List<ProposedSong>, snapshot: JamsSnapshot?, date: LocalDate): ApplyPlan =
+    if (snapshot == null) {
+        ApplyPlan.Unknown
+    } else {
+        planFor(songs, (listOfNotNull(snapshot.upcoming) + snapshot.heldBack).firstOrNull { it.date == date })
+    }
+
+private fun planFor(songs: List<ProposedSong>, jam: Jam?): ApplyPlan {
     val listed = jam?.setlist as? Setlist.Available
     return when {
-        snapshot == null -> ApplyPlan.Unknown
-
         jam == null -> ApplyPlan.Blocked(ApplyPlan.Blocked.Reason.NO_UPCOMING)
 
         listed == null -> ApplyPlan.Blocked(ApplyPlan.Blocked.Reason.UNREADABLE)

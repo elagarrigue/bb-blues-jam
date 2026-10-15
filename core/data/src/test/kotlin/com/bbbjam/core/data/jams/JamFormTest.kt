@@ -1,8 +1,6 @@
-package com.bbbjam.feature.pastjams
+package com.bbbjam.core.data.jams
 
 import com.bbbjam.core.data.Freshness
-import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.jams.VenueProblem
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
@@ -15,8 +13,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The "Nueva jam" form's pure rules (`admin-jams-tab`, J7/J8). */
-class NewJamFormTest {
+/** The jam form's pure rules (`admin-jams-tab` J7/J8, moved to `:core:data` by `assistant-proposal-targets`). */
+class JamFormTest {
     private val today = LocalDate.of(2026, 10, 2)
     private val upcomingDate = LocalDate.of(2026, 10, 31)
     private val fetched = Freshness(Instant.parse("2026-10-02T14:59:00Z"), lastFailure = null, isRefreshing = false)
@@ -35,7 +33,7 @@ class NewJamFormTest {
         time: String = "21:00",
         venue: String = "La Macanuda",
         snapshot: JamsSnapshot? = snapshot(),
-    ) = checkNewJam(NewJamInput(date, time, venue), snapshot, today)
+    ) = checkJamForm(JamFormInput(date, time, venue), snapshot, today)
 
     @Test
     fun `the date accepts one or two digits and slash, dash or dot`() {
@@ -60,11 +58,11 @@ class NewJamFormTest {
 
     @Test
     fun `a date that is not a date, a past date, an existing date and an earlier date are field errors`() {
-        assertEquals(DateProblem.FORMAT, check("mañana").dateProblem)
-        assertEquals(DateProblem.PAST, check("1/10/2026").dateProblem)
-        assertEquals(DateProblem.EXISTS, check("31/10/2026").dateProblem)
+        assertEquals(JamDateProblem.FORMAT, check("mañana").dateProblem)
+        assertEquals(JamDateProblem.PAST, check("1/10/2026").dateProblem)
+        assertEquals(JamDateProblem.EXISTS, check("31/10/2026").dateProblem)
         val earlier = check("20/10/2026")
-        assertEquals(DateProblem.EARLIER, earlier.dateProblem)
+        assertEquals(JamDateProblem.EARLIER, earlier.dateProblem)
         assertEquals(upcomingDate, earlier.earlierThan)
         assertFalse(earlier.canCreate)
     }
@@ -72,9 +70,9 @@ class NewJamFormTest {
     @Test
     fun `a past jam and a held-back jam also block their date`() {
         val past = snapshot(upcoming = null, past = listOf(jam(LocalDate.of(2026, 10, 2))))
-        assertEquals(DateProblem.EXISTS, check("2/10/2026", snapshot = past).dateProblem)
+        assertEquals(JamDateProblem.EXISTS, check("2/10/2026", snapshot = past).dateProblem)
         val heldBack = snapshot(heldBack = listOf(jam(LocalDate.of(2026, 11, 28))))
-        assertEquals(DateProblem.EXISTS, check("28/11/2026", snapshot = heldBack).dateProblem)
+        assertEquals(JamDateProblem.EXISTS, check("28/11/2026", snapshot = heldBack).dateProblem)
     }
 
     @Test
@@ -82,7 +80,7 @@ class NewJamFormTest {
         val result = check("2/10/2026", snapshot = snapshot(upcoming = null))
         assertNull(result.dateProblem)
         assertNull(result.waitsBehind)
-        assertEquals(NewJamValues(today, LocalTime.of(21, 0), "La Macanuda"), result.values)
+        assertEquals(JamFormValues(today, LocalTime.of(21, 0), "La Macanuda"), result.values)
         assertTrue(result.canCreate)
     }
 
@@ -91,7 +89,7 @@ class NewJamFormTest {
         val result = check("28/11/2026")
         assertNull(result.dateProblem)
         assertEquals(upcomingDate, result.waitsBehind)
-        assertEquals(NewJamValues(LocalDate.of(2026, 11, 28), LocalTime.of(21, 0), "La Macanuda"), result.values)
+        assertEquals(JamFormValues(LocalDate.of(2026, 11, 28), LocalTime.of(21, 0), "La Macanuda"), result.values)
     }
 
     @Test
@@ -113,13 +111,16 @@ class NewJamFormTest {
 
     @Test
     fun `the seed is the latest-dated jam, held back, upcoming or past, else 21 00 and nothing`() {
-        assertEquals(NewJamSeed(LocalTime.of(21, 0), ""), newJamSeed(null))
-        assertEquals(NewJamSeed(LocalTime.of(21, 0), ""), newJamSeed(snapshot(upcoming = null)))
+        assertEquals(JamFormSeed(LocalTime.of(21, 0), ""), jamFormSeed(null))
+        assertEquals(JamFormSeed(LocalTime.of(21, 0), ""), jamFormSeed(snapshot(upcoming = null)))
         val pastJam = jam(LocalDate.of(2026, 9, 26), LocalTime.of(20, 0), "El Sótano")
         val onlyPast = snapshot(upcoming = null, past = listOf(pastJam))
-        assertEquals(NewJamSeed(LocalTime.of(20, 0), "El Sótano"), newJamSeed(onlyPast))
+        assertEquals(JamFormSeed(LocalTime.of(20, 0), "El Sótano"), jamFormSeed(onlyPast))
         val heldBackJam = jam(LocalDate.of(2026, 11, 28), LocalTime.of(22, 30), "Bar Tito")
-        assertEquals(NewJamSeed(LocalTime.of(22, 30), "Bar Tito"), newJamSeed(snapshot(heldBack = listOf(heldBackJam))))
-        assertEquals(NewJamSeed(LocalTime.of(21, 0), "La Macanuda"), newJamSeed(snapshot()))
+        assertEquals(
+            JamFormSeed(LocalTime.of(22, 30), "Bar Tito"),
+            jamFormSeed(snapshot(heldBack = listOf(heldBackJam))),
+        )
+        assertEquals(JamFormSeed(LocalTime.of(21, 0), "La Macanuda"), jamFormSeed(snapshot()))
     }
 }

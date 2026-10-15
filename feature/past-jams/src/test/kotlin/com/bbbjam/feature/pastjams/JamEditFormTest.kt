@@ -1,8 +1,12 @@
 package com.bbbjam.feature.pastjams
 
 import com.bbbjam.core.data.Freshness
+import com.bbbjam.core.data.jams.JamFormInput
+import com.bbbjam.core.data.jams.JamFormValues
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.VenueProblem
+import com.bbbjam.core.data.jams.formatFormDate
+import com.bbbjam.core.data.jams.parseFormDate
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
@@ -30,7 +34,7 @@ class JamEditFormTest {
     private val snapshot = JamsSnapshot(upcoming, emptyList(), fetched, listOf(held))
 
     private fun input(date: String = "31/10/2026", time: String = "21:00", venue: String = "La Macanuda") =
-        NewJamInput(date, time, venue)
+        JamFormInput(date, time, venue)
 
     @Test
     fun `formatFormDate round-trips parseFormDate`() {
@@ -62,7 +66,7 @@ class JamEditFormTest {
             checkJamEdit(upcoming, input(date = "7/11/2026", time = "20.30", venue = " Bar  X "), snapshot, today)
         assertTrue(check.canSave)
         assertTrue(check.dateChanged)
-        assertEquals(NewJamValues(LocalDate.of(2026, 11, 7), LocalTime.of(20, 30), "Bar X"), check.values)
+        assertEquals(JamFormValues(LocalDate.of(2026, 11, 7), LocalTime.of(20, 30), "Bar X"), check.values)
     }
 
     @Test

@@ -16,6 +16,7 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.jamform.JamFormField
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -205,7 +206,7 @@ class JamEditAdminTest {
             var form = checkNotNull(expectMostRecentItem().admin().editForm)
             assertEquals("Los músicos ven el cambio cuando actualicen la app.", form.visibilityNote)
 
-            form.events(EditJamFormUiModel.Event.Edit(NewJamField.DATE, "14/11/2026"))
+            form.events(EditJamFormUiModel.Event.Edit(JamFormField.DATE, "14/11/2026"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
             assertEquals(
                 "Tiene que ser antes de la jam del viernes 13 de noviembre: si no, esa pasaría a ser la próxima.",
@@ -213,13 +214,13 @@ class JamEditAdminTest {
             )
             assertEquals(false, form.canSave)
 
-            form.events(EditJamFormUiModel.Event.Edit(NewJamField.TIME, "25:00"))
+            form.events(EditJamFormUiModel.Event.Edit(JamFormField.TIME, "25:00"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
             assertEquals("Escribí la hora como HH:MM, por ejemplo 21:00.", form.timeError)
 
-            form.events(EditJamFormUiModel.Event.Edit(NewJamField.DATE, "7/11/2026"))
+            form.events(EditJamFormUiModel.Event.Edit(JamFormField.DATE, "7/11/2026"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
-            form.events(EditJamFormUiModel.Event.Edit(NewJamField.TIME, "20:30"))
+            form.events(EditJamFormUiModel.Event.Edit(JamFormField.TIME, "20:30"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
             assertNull(form.dateError)
             assertNull(form.timeError)
@@ -251,7 +252,7 @@ class JamEditAdminTest {
             expectMostRecentItem().card(1).manage.events(JamManageUiModel.Event.Edit)
             val form = checkNotNull(expectMostRecentItem().admin().editForm)
             assertEquals("13/11/2026", form.date)
-            form.events(EditJamFormUiModel.Event.Edit(NewJamField.DATE, "30/10/2026"))
+            form.events(EditJamFormUiModel.Event.Edit(JamFormField.DATE, "30/10/2026"))
             val blocked = checkNotNull(expectMostRecentItem().admin().editForm)
             assertEquals(
                 "Tiene que ser después de la próxima jam (sábado 31 de octubre): si no, la dejaría en espera.",

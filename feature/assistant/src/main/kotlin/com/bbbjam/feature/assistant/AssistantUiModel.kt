@@ -62,6 +62,8 @@ sealed interface ReplyUiModel : UiModel {
         val discardedNote: String?,
         val apply: ApplyUiModel = ApplyUiModel.None,
         val summary: ApplySummaryUiModel? = null,
+        val removals: List<ApplyStatusLineUiModel> = emptyList(),
+        val order: String? = null,
         val jam: JamCardUiModel? = null,
         val jamNote: String? = null,
     ) : ReplyUiModel

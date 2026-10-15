@@ -75,7 +75,7 @@ the model's memory, which is exactly where an LLM is weakest on this repertoire 
 
 - A **Jam** has exactly one ordered setlist of **JamSongs**. Order is explicit via `position`.
 - **Adding a song** (`admin-add-song-to-setlist`, `SetlistRepository.addSong`) appends a catalog
-  song to the upcoming jam only, at `position` = 1 + the largest existing one, in the key the admin
+  song to a future jam (the upcoming one, or a held-back one since `assistant-proposal-targets`, D-29), at `position` = 1 + the largest existing one, in the key the admin
   sent (the picker sends the catalog default, K1 (a); D-08) and with the default lineup, all seven
   slots open (D-18). The same song twice in one setlist is refused. Adding never creates a jam.
 - A **JamSong** references exactly one **Song** and owns exactly one **Lineup**.
@@ -128,7 +128,7 @@ Three states (D-26, `jam-status-created`, which amends D-04 and D-25):
 - **More than one future jam.** The earliest one is the upcoming jam; later ones are held back
   (shown in neither list) and reported in the refresh log. Since `admin-edit-delete-jam` (D-28) the admin edits the
   date, time and venue of a future jam or deletes it from the Jams tab; a date change moves the jam with its tab, and an
-  edit never changes which jam is the upcoming one. A held-back jam can also change status (not to PUBLICADA).
+  edit never changes which jam is the upcoming one. A held-back jam can also change status (not to PUBLICADA), and the app can load songs into it (`addSong` only, D-29: the app owns the setlists of future jams it builds, never past ones; D-04 intact).
 
 The transition DRAFT or CREATED → PUBLISHED is admin-initiated and writes through to the Sheet. Until `admin-set-jam-status`, publishing is the only status change made from the app; the others are made in the Sheet.
 

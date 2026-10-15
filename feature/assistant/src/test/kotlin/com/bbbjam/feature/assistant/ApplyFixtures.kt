@@ -10,7 +10,11 @@ import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.CreateJamOutcome
 import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.MoveSongOutcome
+import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetlistSongAdder
+import com.bbbjam.core.data.setlist.SetlistSongMover
+import com.bbbjam.core.data.setlist.SetlistSongRemover
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -33,8 +37,11 @@ internal val JAM_DATE: LocalDate = LocalDate.of(2026, 10, 31)
 
 internal data class AddCall(val date: LocalDate, val songId: SongId, val key: Key)
 
+/** Every write of a run in call order across the fakes: `add s1`, `remove s2`, `move s3@1`, `create`. */
+internal typealias CallLog = MutableList<String>
+
 /** A [SetlistSongAdder] with scripted outcomes by song id (default: Added) and optional gates. */
-internal class FakeSetlistSongAdder : SetlistSongAdder {
+internal class FakeSetlistSongAdder(val log: CallLog = mutableListOf()) : SetlistSongAdder {
     val calls = mutableListOf<AddCall>()
     val outcomes = mutableMapOf<SongId, AddSongOutcome>()
     val gates = mutableMapOf<SongId, CompletableDeferred<Unit>>()
@@ -45,8 +52,49 @@ internal class FakeSetlistSongAdder : SetlistSongAdder {
 
     override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         calls += AddCall(jamDate, songId, key)
+        log += "add ${songId.value}"
         gates[songId]?.await()
         return outcomes[songId] ?: AddSongOutcome.Added(calls.size)
+    }
+}
+
+internal data class RemoveCall(val date: LocalDate, val songId: SongId)
+
+/** A [SetlistSongRemover] with scripted outcomes by song id (default: Removed) and optional gates. */
+internal class FakeSetlistSongRemover(val log: CallLog = mutableListOf()) : SetlistSongRemover {
+    val calls = mutableListOf<RemoveCall>()
+    val outcomes = mutableMapOf<SongId, RemoveSongOutcome>()
+    val gates = mutableMapOf<SongId, CompletableDeferred<Unit>>()
+
+    fun reject(n: Int, outcome: WriteOutcome) {
+        outcomes[SongId("s$n")] = RemoveSongOutcome.NotRemoved(outcome)
+    }
+
+    override suspend fun removeSong(jamDate: LocalDate, songId: SongId): RemoveSongOutcome {
+        calls += RemoveCall(jamDate, songId)
+        log += "remove ${songId.value}"
+        gates[songId]?.await()
+        return outcomes[songId] ?: RemoveSongOutcome.Removed
+    }
+}
+
+internal data class MoveCall(val date: LocalDate, val songId: SongId, val toPosition: Int)
+
+/** A [SetlistSongMover] with scripted outcomes by song id (default: Moved) and optional gates. */
+internal class FakeSetlistSongMover(val log: CallLog = mutableListOf()) : SetlistSongMover {
+    val calls = mutableListOf<MoveCall>()
+    val outcomes = mutableMapOf<SongId, MoveSongOutcome>()
+    val gates = mutableMapOf<SongId, CompletableDeferred<Unit>>()
+
+    fun reject(n: Int, outcome: WriteOutcome) {
+        outcomes[SongId("s$n")] = MoveSongOutcome.NotMoved(outcome)
+    }
+
+    override suspend fun moveSong(jamDate: LocalDate, songId: SongId, toPosition: Int): MoveSongOutcome {
+        calls += MoveCall(jamDate, songId, toPosition)
+        log += "move ${songId.value}@$toPosition"
+        gates[songId]?.await()
+        return outcomes[songId] ?: MoveSongOutcome.Moved
     }
 }
 
@@ -57,6 +105,10 @@ internal fun jam(status: JamStatus = JamStatus.DRAFT, setlist: Setlist = Setlist
 
 internal fun snapshot(upcoming: Jam? = jam()) =
     JamsSnapshot(upcoming, emptyList(), Freshness(Instant.EPOCH, null, false))
+
+/** A list holding the songs `s<n>` in the order given, positions 1.. (unlike [listed], whose position is the id). */
+internal fun listedOrder(vararg ids: Int) =
+    Setlist.Available(ids.mapIndexed { index, n -> jamSong(n).copy(position = index + 1) })
 
 internal fun listed(vararg ids: Int) = Setlist.Available(ids.map { jamSong(it) })
 
@@ -93,14 +145,24 @@ internal fun testCalendar() =
 internal data class CreateCall(val date: LocalDate, val time: LocalTime, val venue: String)
 
 /** A [JamCreator] with a scripted outcome (default: Created as asked) and an optional gate. */
-internal class FakeJamCreator : JamCreator {
+internal class FakeJamCreator(val log: CallLog = mutableListOf()) : JamCreator {
     val calls = mutableListOf<CreateCall>()
     var outcome: CreateJamOutcome? = null
     var gate: CompletableDeferred<Unit>? = null
 
     override suspend fun createJam(date: LocalDate, startTime: LocalTime, venue: String): CreateJamOutcome {
         calls += CreateCall(date, startTime, venue)
+        log += "create"
         gate?.await()
         return outcome ?: CreateJamOutcome.Created(date, startTime, venue)
     }
 }
+
+/** A [ProposalApplier] over the fakes; each write contract not given is a fresh fake. */
+internal fun testApplier(
+    adder: SetlistSongAdder = FakeSetlistSongAdder(),
+    scope: kotlinx.coroutines.CoroutineScope,
+    remover: SetlistSongRemover = FakeSetlistSongRemover(),
+    mover: SetlistSongMover = FakeSetlistSongMover(),
+    creator: JamCreator = FakeJamCreator(),
+) = ProposalApplier(adder, remover, mover, creator, scope)

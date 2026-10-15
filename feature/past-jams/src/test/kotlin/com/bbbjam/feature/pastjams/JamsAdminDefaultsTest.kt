@@ -45,19 +45,10 @@ class JamsAdminDefaultsTest {
     }
 
     @Test
-    fun `Nueva jam and its form use neutral and error roles only, never amber`() {
+    fun `Nueva jam button uses neutral roles only, never amber`() {
         val button = JamsAdminDefaults.newJamButton()
         assertEquals(JamsAdminDefaults.ButtonStyle(colors.surfaceRaised, colors.text), button)
-        val form = JamsAdminDefaults.form()
-        val field = form.field
-        assertEquals(colors.surfaceRaised, form.container)
-        assertEquals(colors.error, form.error)
-        assertEquals(colors.textMuted, form.disabled)
-        val all = listOf(
-            button.fill, button.content, form.container, form.title, form.confirm, form.disabled, form.cancel,
-            form.note, form.error, field.container, field.text, field.label, field.unfocusedBorder,
-            field.focusedBorder, field.cursor,
-        )
+        val all = listOf(button.fill, button.content)
         assertTrue(all.all { it in neutral || it == colors.border })
     }
 }

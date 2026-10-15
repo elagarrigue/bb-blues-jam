@@ -30,7 +30,7 @@ class ProposalApplierTest {
 
     private fun TestScope.applier(): Pair<ProposalApplier, ChatScope> {
         val scope = ChatScope(testScheduler)
-        return ProposalApplier(adder, scope.scope) to scope
+        return testApplier(adder, scope.scope) to scope
     }
 
     private fun ProposalApplier.run(turn: Long = 1) = runs.value.getValue(turn)
@@ -91,7 +91,7 @@ class ProposalApplierTest {
         )
         for (outcome in outcomes) {
             val fresh = FakeSetlistSongAdder().apply { reject(1, outcome) }
-            val applier = ProposalApplier(fresh, ChatScope(testScheduler).scope)
+            val applier = testApplier(fresh, ChatScope(testScheduler).scope)
             applier.apply(1, plan(4))
 
             assertEquals(outcome.toString(), 1, fresh.calls.size)

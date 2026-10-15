@@ -473,6 +473,13 @@ de estado desde la app; publicar sigue siendo solo para la próxima. Las jams pa
 se puede seguir editando a mano, pero ya no es el camino previsto: si los dos escriben, gana la última escritura, sin
 sincronización. Pedido del organizador del 14 de octubre de 2026.
 
+### D-29 — La app carga listas en una jam en espera. Enmienda a U1 (admin-jams-tab, admin-edit-delete-jam)
+Para que el asistente pueda crear una jam con su lista aunque otra jam sea la próxima, `addSong` acepta cualquier jam
+futura, no solo la próxima. Todo lo demás sigue siendo solo de la próxima jam: quitar, mover, cambiar tonalidad, anotar
+músicos, los extras y publicar. Una lista cargada en una jam en espera no se ve en Próxima jam hasta que esa jam sea la
+próxima; la pestaña Jams muestra la cantidad de temas. Costo aceptado: una redeploy más del script. Pedido del
+organizador del 15 de octubre de 2026.
+
 ---
 
 # Parte III — Harness y seguimiento

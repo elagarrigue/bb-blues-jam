@@ -1,0 +1,13 @@
+== before widening: a reference to SetlistMoveRepository in the assistant feature goes unnoticed ==
+BUILD SUCCESSFUL in 6s
+
+== after widening the rule (same temporary reference still present) ==
+ModuleIsolationTest > the assistant feature applies a proposal only through the song adder contract FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'assistant-feature-applies-through-contract' was violated (1 time). Invalid files:
+    ??? File TempBypass.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\feature\assistant\src\main\kotlin\com\bbbjam\feature\assistant\TempBypass.kt
+19 tests completed, 1 failed
+> Task :konsist-test:test FAILED
+BUILD FAILED in 5s
+
+== temporary reference removed ==
+BUILD SUCCESSFUL in 4s

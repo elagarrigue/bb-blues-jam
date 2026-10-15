@@ -707,7 +707,7 @@ instrument strip can grow.
 ## Asistente (phase 2, `assistant-admin-tab`)
 
 An admin-only fourth tab, **Asistente**, a chat over the setlist assistant. It follows the admin palette
-automatically and writes nothing by itself (D-24); loading a proposal is the admin's confirmed action (see "Cargar la propuesta").
+automatically and writes nothing by itself (D-24); loading a proposal is the admin's confirmed action (see "Usar la propuesta: tres destinos").
 
 - Column: title `Asistente` (`h1`, `text`, heading), a `LazyColumn` of turns (`md` apart), the composer pinned at the
   bottom above the keyboard (`imePadding`; the bar is not drawn while the keyboard is up). The list scrolls to the
@@ -734,6 +734,10 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
 
 ### Crear la jam (`assistant-create-jam`)
 
+Since `assistant-proposal-targets` (C5) a proposal that carries songs **and** a jam draws this card as information only: its own
+`Crear la jam` button is never drawn, `Crear una jam nueva con esta lista` (below) creates the jam. A jam-only proposal keeps
+the button and dialog described here.
+
 - **Card** under the author caption of a proposal that carries a jam: `surfaceRaised`, `shapes.md`. Heading `NUEVA JAM`
   (`caption`, `textMuted`, heading), date in words `Sábado 28 de noviembre de 2026` (`songTitle`, `text`),
   `21:00 · La Macanuda` (`body`, `text`), the held-back note (`body`, `textMuted`): `Queda en espera: la próxima jam
@@ -758,6 +762,9 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
   dense list used one-handed.
 
 ### Jams tab (`admin-jams-tab`)
+
+The `Nueva jam` and edit dialogs are the shared `core.ui.jamform.JamFormDialog` (colours in its internal `JamFormDefaults`, copy
+in `JamFormText`); the assistant's `Crear una jam nueva con esta lista` form uses the same component.
 
 The middle tab (`Jams`, D-27). A musician sees the past jams only, as before (title `Jams anteriores`). The admin sees the
 title `Jams` (`h1`) and two sections: `PRÓXIMAS` and `ANTERIORES` (`caption`, `textMuted`, heading semantics), the second
@@ -821,17 +828,36 @@ sabe cambiar el estado. Actualizalo con la guía y probá de nuevo.` with `Cerra
 
 On the admin's song detail (an admin song row until `song-detail-replaces-row-expansion`), each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). After `Cambiar formación`, `Agregar a Otros` opens a modal `AlertDialog` (12 October 2026, `extras-dialog-and-lines`; `surfaceRaised` container, `text` title/`Agregar`/`Cancelar`, muted disabled `Agregar`, colours from `AdminControlsDefaults.extraDialog()`, no amber) drawn beside the list, not as a list item, with two labelled outlined fields (`Nombre`, `Instrumento`; `AdminControlsDefaults.extraField()`). Back and a tap outside act as `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.
 
-### Cargar la propuesta (`assistant-apply-proposal`)
+### Usar la propuesta: tres destinos (`assistant-proposal-targets`, supersedes "Cargar la propuesta")
 
-- **Action** under the latest proposal with songs (never while a turn is pending): full-width secondary button
-  `Usar esta lista` (`Reintentar los que faltan` after a run that failed, stopped or aborted), `surfaceRaised` fill,
-  `text` content, `shapes.md`, 48dp; disabled `surface`/`textMuted`. **Not amber**: `Enviar` stays the only primary
-  action; the allowlist `feature/assistant = {key, primaryAction, onPrimaryAction}` is unchanged.
+- **Targets block** under the latest proposal with songs (never while a turn is pending): full-width secondary buttons
+  stacked `xs` apart, in the order `Agregar a la próxima jam` (`Reintentar los que faltan` after a failed, stopped or
+  aborted Agregar run), `Reemplazar la lista de la próxima jam` (`Reintentar el reemplazo`), `Crear una jam nueva con
+  esta lista`. `surfaceRaised` fill, `text` content, `shapes.md`, 48dp; disabled `surface`/`textMuted`.
+  **Not amber**: `Enviar` stays the only primary action; the allowlist `feature/assistant = {key, primaryAction,
+  onPrimaryAction}` is unchanged. After a successful run the buttons disappear (the summary stays); after any other end they return.
+- **Crear** is always offered once the jams are read. It opens the **shared jam form** (`core.ui.jamform.JamFormDialog`, the
+  look of the Jams tab's `Nueva jam` dialog, also used by its edit dialog): title `Nueva jam con esta lista`, fecha empty or the
+  proposal jam's, hora and lugar from the proposal jam or the latest jam, the notes `Se crea como borrador y se cargan los N
+  temas en este orden.`, the draft line and, for a date behind the upcoming jam, `Queda en espera detrás de la del ...`
+  (still submittable); `PAST`, `EXISTS` and `EARLIER` dates are field errors in `error` and disable `Crear y cargar N temas`.
+  The form is the confirmation: no extra dialog. After a create run that made the jam but did not load everything the turn
+  offers only `Reintentar los que faltan`, for that jam's date.
+- **Notes** under the buttons (`body`, `textMuted`): no upcoming jam (`No hay una próxima jam: podés crear una con esta lista.`; only
+  Crear) or unreadable list (only Crear), every song
+  already listed, the list already equal to the proposal, the list has repeated songs.
+- **Confirmation dialogs**: Material 3 `AlertDialog`, `surfaceRaised` container, title `text`, lines `textMuted`,
+  confirm and `Cancelar` in `text`. Agregar adds (not `error`). Reemplazar names the jam date, the removed titles, the
+  musicians lost, the songs kept and the songs added; its confirm `Reemplazar` is drawn in `error` only when it
+  removes something. Colours in `ApplyDefaults.applyDialog(destructive)`. Back, outside tap and `Cancelar` write nothing.
 - **Blocked note** instead of the button (no upcoming jam, unreadable list, every song already listed): `body`, `textMuted`.
 - **Confirmation dialog**: Material 3 `AlertDialog`, `surfaceRaised` container, title `text`, lines `textMuted`,
   confirm (`Agregar N temas`) and `Cancelar` in `text` (it adds, it does not destroy: not `error`, not amber).
   Lines: what is added and where, existing count, songs skipped as duplicates, and the published-list warning.
   Colours in `ApplyDefaults.applyDialog()`. Back, outside tap and `Cancelar` write nothing.
+- **Replace progress**: removed songs get their own lines (title `body` `textMuted`, caption `caption`: `Quitando…`,
+  `Quitado`, `Sin intentar` in `textMuted`, `No se quitó: ...` in `error`); kept songs read `Ya estaba; conserva sus músicos`.
+  The summary never reads `Listo` unless the latest snapshot lists exactly the proposal in order.
 - **Progress**: per-song caption (`caption`) under the reason, part of the song's merged node: `Agregando…`, `Agregado`,
   `Ya estaba en la lista`, `Sin intentar` in `textMuted`; `No se agregó: ...` in `error`. One polite live region
   summary (`body`): `text` while running and for `Listo`, `error` for partial or cut runs, `textMuted` when stopped;

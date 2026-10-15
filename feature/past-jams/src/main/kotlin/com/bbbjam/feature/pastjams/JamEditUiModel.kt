@@ -1,5 +1,6 @@
 package com.bbbjam.feature.pastjams
 
+import com.bbbjam.core.ui.jamform.JamFormField
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
@@ -61,7 +62,7 @@ data class EditJamFormUiModel(
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
-        data class Edit(val field: NewJamField, val text: String) : Event
+        data class Edit(val field: JamFormField, val text: String) : Event
         data object Save : Event
         data object Cancel : Event
     }

@@ -8,8 +8,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.bbbjam.core.data.jams.JamFormInput
+import com.bbbjam.core.data.jams.JamFormSeed
+import com.bbbjam.core.data.jams.JamFormValues
+import com.bbbjam.core.data.jams.formatFormTime
 import com.bbbjam.core.data.setlist.CreateJamOutcome
 import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.ui.jamform.JamFormField
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
@@ -20,7 +25,7 @@ internal sealed interface NewJamProgress {
     data object Created : NewJamProgress
 
     /** [outcome] is `NotCreated` or `ScriptOutdated`, never `Created`. */
-    data class Failed(val values: NewJamValues, val outcome: CreateJamOutcome) : NewJamProgress
+    data class Failed(val values: JamFormValues, val outcome: CreateJamOutcome) : NewJamProgress
 }
 
 /**
@@ -31,25 +36,25 @@ internal sealed interface NewJamProgress {
  */
 internal class NewJamControls(
     val isOpen: Boolean,
-    val input: NewJamInput,
+    val input: JamFormInput,
     private val touchedMask: Int,
     val progress: NewJamProgress?,
-    val onOpen: (NewJamSeed) -> Unit,
+    val onOpen: (JamFormSeed) -> Unit,
     val onCancel: () -> Unit,
-    val onEdit: (NewJamField, String) -> Unit,
-    val onCreate: (NewJamValues) -> Unit,
+    val onEdit: (JamFormField, String) -> Unit,
+    val onCreate: (JamFormValues) -> Unit,
     val onRetry: () -> Unit,
     val onDismiss: () -> Unit,
 ) {
     /** True once the admin typed in [field] since the dialog opened (a blank field is no error before that). */
-    fun isTouched(field: NewJamField): Boolean = touchedMask and field.bit != 0
+    fun isTouched(field: JamFormField): Boolean = touchedMask and field.bit != 0
 }
 
-private val NewJamField.bit: Int
+private val JamFormField.bit: Int
     get() = 1 shl ordinal
 
 /** The call and what it leaves behind: the done line, or the values and the outcome to retry. */
-private suspend fun JamCreator.create(values: NewJamValues): NewJamProgress {
+private suspend fun JamCreator.create(values: JamFormValues): NewJamProgress {
     val outcome = createJam(values.date, values.time, values.venue)
     return if (outcome is CreateJamOutcome.Created) NewJamProgress.Created else NewJamProgress.Failed(values, outcome)
 }
@@ -64,7 +69,7 @@ internal fun rememberNewJamControls(creator: JamCreator): NewJamControls {
     var progress by remember { mutableStateOf<NewJamProgress?>(null) }
     var inFlight by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val send: (NewJamValues) -> Unit = { values ->
+    val send: (JamFormValues) -> Unit = { values ->
         inFlight = true
         progress = NewJamProgress.Creating
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -77,7 +82,7 @@ internal fun rememberNewJamControls(creator: JamCreator): NewJamControls {
     }
     return NewJamControls(
         isOpen = isOpen,
-        input = NewJamInput(date, time, venue),
+        input = JamFormInput(date, time, venue),
         touchedMask = touched,
         progress = progress,
         onOpen = { seed ->
@@ -93,9 +98,9 @@ internal fun rememberNewJamControls(creator: JamCreator): NewJamControls {
         onCancel = { isOpen = false },
         onEdit = { field, text ->
             when (field) {
-                NewJamField.DATE -> date = text
-                NewJamField.TIME -> time = text
-                NewJamField.VENUE -> venue = text
+                JamFormField.DATE -> date = text
+                JamFormField.TIME -> time = text
+                JamFormField.VENUE -> venue = text
             }
             touched = touched or field.bit
         },
