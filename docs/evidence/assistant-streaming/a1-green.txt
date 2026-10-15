@@ -1,0 +1,15 @@
+> Task :core:model:jar UP-TO-DATE
+> Task :core:ui:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:ui:compileDebugKotlin
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugJavaRes
+> Task :core:ui:bundleLibRuntimeToJarDebug
+> Task :core:ui:bundleLibCompileToJarDebug
+> Task :core:ui:compileDebugUnitTestKotlin
+> Task :core:ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :core:ui:testDebugUnitTest
+
+BUILD SUCCESSFUL in 9s
+17 actionable tasks: 6 executed, 11 up-to-date
+Configuration cache entry reused.

@@ -50,4 +50,7 @@ sealed interface AssistantFailure {
 
     /** The catalog cache is empty, so there is nothing to propose from. */
     data object CatalogEmpty : AssistantFailure
+
+    /** The stream ended without its end frame: what arrived is not a complete answer. */
+    data object Incomplete : AssistantFailure
 }

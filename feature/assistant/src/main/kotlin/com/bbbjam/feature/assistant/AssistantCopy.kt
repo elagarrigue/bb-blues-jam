@@ -14,8 +14,7 @@ internal object AssistantCopy {
     const val AUTHOR_YOU = "Vos"
     const val AUTHOR_ASSISTANT = "Asistente"
 
-    const val PENDING_STATUS = "Armando la propuesta…"
-    const val PENDING_HINT = "Puede tardar unos segundos."
+    const val PENDING_LABEL = "El asistente está armando la propuesta. Puede tardar unos segundos."
     const val CANCEL = "Cancelar"
 
     const val COMPOSER_LABEL = "Tu pedido"
@@ -35,11 +34,17 @@ internal object AssistantCopy {
     const val CHECKING = "Comprobando el servicio…"
     const val SERVICE_DOWN =
         "El asistente no está disponible en este momento. El servicio de IA no responde; probá más tarde."
+    const val INCOMPLETE_RETRY = "La respuesta se cortó antes de terminar. Probá de nuevo."
+    const val INCOMPLETE = "La respuesta se cortó antes de terminar. Esto es lo que llegó; no está completa."
+    const val NOT_COMPLETE_SUFFIX = " Lo que llegó no está completo."
     const val CANCELLED = "Cancelaste este pedido."
     const val RETRY = "Reintentar"
 
     /** "PROPUESTA · 12 temas", "PROPUESTA · 1 tema". */
     fun proposalHeading(count: Int): String = "PROPUESTA · $count " + if (count == 1) "tema" else "temas"
+
+    /** "PROPUESTA INCOMPLETA · 3 temas", "PROPUESTA INCOMPLETA · 1 tema". */
+    fun incompleteHeading(count: Int): String = "PROPUESTA INCOMPLETA · $count " + if (count == 1) "tema" else "temas"
 
     /** The caption for ids the model gave that are not catalog songs; the ids are never shown. */
     fun discarded(count: Int): String = if (count == 1) {

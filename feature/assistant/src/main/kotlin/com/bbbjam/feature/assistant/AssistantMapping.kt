@@ -3,6 +3,7 @@ package com.bbbjam.feature.assistant
 import com.bbbjam.core.data.assistant.AssistantFailure
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.core.data.assistant.ProposedSong
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.text.SongListText
@@ -40,7 +41,7 @@ internal fun assistantModel(
                 authorLabel = AssistantCopy.AUTHOR_YOU,
                 request = turn.request,
                 reply = turn.state.toReply(
-                    turn.id,
+                    turn,
                     TurnFlags(
                         isLast = index == turns.lastIndex && available,
                         isApplicable = turn.id == applicableTurnId,
@@ -81,51 +82,86 @@ private fun banner(message: String, handlers: AssistantHandlers) =
 private class TurnFlags(val isLast: Boolean, val isApplicable: Boolean, val isCreatable: Boolean)
 
 private fun ChatTurn.State.toReply(
-    id: Long,
+    turn: ChatTurn,
     flags: TurnFlags,
     handlers: AssistantHandlers,
     apply: ApplyInputs,
 ): ReplyUiModel {
-    fun retry() = if (flags.isLast) RetryUiModel(AssistantCopy.RETRY, handlers.retry(id)) else null
-    return when (this) {
-        ChatTurn.State.Pending -> ReplyUiModel.Pending(
-            status = AssistantCopy.PENDING_STATUS,
-            hint = AssistantCopy.PENDING_HINT,
+    val id = turn.id
+    val retry = if (flags.isLast) RetryUiModel(AssistantCopy.RETRY, handlers.retry(id)) else null
+    val songs = turn.draft.rows()
+    val proposal = (this as? ChatTurn.State.Answered)?.reply as? AssistantReply.Proposal
+    val ending = ending(retry)
+    // A broken or cancelled answer that streamed songs shows them as incomplete, never as a proposal.
+    return when {
+        proposal != null -> proposal.toModel(
+            applyParts(id, proposal, flags.isApplicable, apply, handlers),
+            jamCard(id, proposal, flags.isCreatable, apply, handlers),
+        )
+
+        ending == null -> ReplyUiModel.Pending(
+            loadingLabel = AssistantCopy.PENDING_LABEL,
+            songsHeading = if (songs.isEmpty()) null else AssistantCopy.proposalHeading(songs.size),
+            songs = songs,
             cancelLabel = AssistantCopy.CANCEL,
             events = handlers.cancel(id),
         )
 
-        is ChatTurn.State.Answered -> when (val answer = reply) {
-            is AssistantReply.Proposal -> answer.toModel(
-                applyParts(id, answer, flags.isApplicable, apply, handlers),
-                jamCard(id, answer, flags.isCreatable, apply, handlers),
-            )
+        songs.isEmpty() -> ending.plain
 
-            is AssistantReply.Failed -> ReplyUiModel.Failed(answer.failure.message(), retry())
-
-            AssistantReply.NotConfigured -> ReplyUiModel.Failed(AssistantCopy.NOT_CONFIGURED_MESSAGE, null)
-        }
-
-        ChatTurn.State.Cancelled -> ReplyUiModel.Cancelled(AssistantCopy.CANCELLED, retry())
-
-        ChatTurn.State.Interrupted -> ReplyUiModel.Failed(AssistantCopy.INTERRUPTED, retry())
+        else -> ReplyUiModel.Incomplete(
+            heading = AssistantCopy.incompleteHeading(songs.size),
+            songs = songs,
+            message = ending.incompleteMessage,
+            isCancelled = ending.isCancelled,
+            retry = retry,
+        )
     }
 }
+
+/** How a turn that is over and is not a proposal reads alone ([plain]) and when songs arrived before it ended. */
+private class Ending(val plain: ReplyUiModel, val incompleteMessage: String, val isCancelled: Boolean = false)
+
+// Null for a pending turn and for a proposal.
+private fun ChatTurn.State.ending(retry: RetryUiModel?): Ending? = when (this) {
+    ChatTurn.State.Pending -> null
+
+    is ChatTurn.State.Answered -> when (val answer = reply) {
+        is AssistantReply.Proposal -> null
+
+        is AssistantReply.Failed ->
+            Ending(ReplyUiModel.Failed(answer.failure.message(), retry), answer.failure.messageWithDraft())
+
+        AssistantReply.NotConfigured ->
+            Ending(
+                ReplyUiModel.Failed(AssistantCopy.NOT_CONFIGURED_MESSAGE, null),
+                AssistantCopy.NOT_CONFIGURED_MESSAGE,
+            )
+    }
+
+    ChatTurn.State.Cancelled ->
+        Ending(ReplyUiModel.Cancelled(AssistantCopy.CANCELLED, retry), AssistantCopy.CANCELLED, isCancelled = true)
+
+    ChatTurn.State.Interrupted ->
+        Ending(ReplyUiModel.Failed(AssistantCopy.INTERRUPTED, retry), AssistantCopy.INCOMPLETE)
+}
+
+private fun List<ProposedSong>.rows(): List<ProposedSongUiModel> = mapIndexed { index, song -> song.toRow(index, null) }
+
+private fun ProposedSong.toRow(index: Int, applyStatus: ApplyStatusUiModel?) = ProposedSongUiModel(
+    positionLabel = SongListText.positionLabel(index + 1),
+    title = title,
+    artist = artist,
+    key = key.value,
+    keyDescription = SongListText.keyDescription(key.value),
+    reason = reason,
+    applyStatus = applyStatus,
+)
 
 private fun AssistantReply.Proposal.toModel(parts: ApplyParts, jamCard: JamCardUiModel?) = ReplyUiModel.Proposal(
     authorLabel = AssistantCopy.AUTHOR_ASSISTANT,
     heading = if (songs.isEmpty()) null else AssistantCopy.proposalHeading(songs.size),
-    songs = songs.mapIndexed { index, song ->
-        ProposedSongUiModel(
-            positionLabel = SongListText.positionLabel(index + 1),
-            title = song.title,
-            artist = song.artist,
-            key = song.key.value,
-            keyDescription = SongListText.keyDescription(song.key.value),
-            reason = song.reason,
-            applyStatus = parts.statuses[song.songId],
-        )
-    },
+    songs = songs.mapIndexed { index, song -> song.toRow(index, parts.statuses[song.songId]) },
     message = message,
     questionsHeading = if (questions.isEmpty()) null else AssistantCopy.QUESTIONS_HEADING,
     questions = questions,
@@ -146,4 +182,12 @@ private fun AssistantFailure.message(): String = when (this) {
     AssistantFailure.InvalidResponse -> AssistantCopy.INVALID_RESPONSE
     AssistantFailure.TooManySteps -> AssistantCopy.TOO_MANY_STEPS
     AssistantFailure.CatalogEmpty -> AssistantCopy.CATALOG_EMPTY
+    AssistantFailure.Incomplete -> AssistantCopy.INCOMPLETE_RETRY
+}
+
+// What broke after some songs arrived: the answer is not complete, whatever the cause (the status is never shown).
+private fun AssistantFailure.messageWithDraft(): String = when (this) {
+    AssistantFailure.Incomplete, AssistantFailure.InvalidResponse -> AssistantCopy.INCOMPLETE
+    AssistantFailure.CatalogEmpty -> message()
+    else -> message() + AssistantCopy.NOT_COMPLETE_SUFFIX
 }

@@ -1109,3 +1109,27 @@ The admin edits and deletes future jams from the Jams tab (D-28).
   `action-contract-registry` (accepted 9 October 2026), which met D-13 with a typed registry of
   repository functions, not with deeplinks. No destination declares `deepLinks`, no manifest
   intent filter.
+
+## As built by `assistant-streaming`
+
+The assistant's answer streams (15 October 2026). The final parse stays the source of truth.
+
+- **Core (`:core:data`, `assistant`).** `AssistantConversation.send(request, onDraft)`; `AssistantDraft(songs)` is the
+  cumulative, catalog-validated songs of the answer in progress (an empty draft when a tool round discards its text).
+  `streamingProposalStrategy` is a Koog `functionalStrategy`: at most `MAX_AGENT_ITERATIONS` requests, each streamed with the
+  tools; text deltas feed `DraftTracker` (`ProposalStreamParser`, a pure character state machine that returns the raw `songs`
+  element objects, plus `ProposalValidator.Accumulator`, the per-song step the final validation uses too, so the two cannot
+  drift); a round with tool calls runs them and goes on; the text round is parsed whole. The streamed message is shaped before
+  the parse (one text part; reasoning parts dropped from the history). A stream with no finish reason is
+  `IncompleteStreamException`, mapped to `AssistantFailure.Incomplete`; cancellation closes the HTTP call (JVM test with a raw
+  socket gateway). The agent package stays read-only.
+- **Chat (`:feature:assistant`).** `ChatTurn.draft` holds the streamed songs, written only while the turn is Pending (a late
+  call after a cancel is ignored). The mapping shows them under `PROPUESTA · n temas` while pending (`Pending.songs`), shows
+  `Answered(Proposal)` from the final list alone (the draft is ignored), and turns a failed, cancelled or interrupted turn that
+  has songs into `ReplyUiModel.Incomplete` (heading `PROPUESTA INCOMPLETA · n temas`, the songs, a line, `Reintentar`).
+  `ApplyMapping` and `JamMapping` look only at `Answered(Proposal)` turns, so an incomplete answer never offers a target.
+  `Incomplete` is not an outage: it does not trigger the service re-check. The screen follows a growing stream only when
+  the list was already at the end (`shouldFollow`).
+- **UI (`:core:ui`).** `LoadingDots` (`state`) is the only moving element in the app (DESIGN.md M1): `loadingDotAlpha` is
+  pure, `isReducedMotion(scale)` reads `Settings.Global.ANIMATOR_DURATION_SCALE` once per composition, and with scale 0 the dots
+  are static and no transition exists.

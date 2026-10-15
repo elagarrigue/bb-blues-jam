@@ -1,0 +1,25 @@
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/state/LoadingDotsTest.kt:63:21 Unresolved reference 'isReducedMotion'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/state/LoadingDotsTest.kt:64:21 Unresolved reference 'isReducedMotion'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/state/LoadingDotsTest.kt:65:21 Unresolved reference 'isReducedMotion'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/state/LoadingDotsTest.kt:70:48 Unresolved reference 'LoadingDotsDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/state/LoadingDotsTest.kt:71:20 Unresolved reference 'LoadingDotsDefaults'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/ui/src/test/kotlin/com/bbbjam/core/ui/state/LoadingDotsTest.kt:71:56 Unresolved reference 'LoadingDotsDefaults'.
+
+> Task :core:ui:compileDebugUnitTestKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:ui:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 36s
+19 actionable tasks: 1 executed, 18 up-to-date
+Configuration cache entry stored.

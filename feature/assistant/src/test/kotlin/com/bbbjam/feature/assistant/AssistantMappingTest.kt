@@ -84,8 +84,9 @@ class AssistantMappingTest {
         assertEquals("uno", turn.request)
         assertEquals(
             ReplyUiModel.Pending(
-                "Armando la propuesta…",
-                "Puede tardar unos segundos.",
+                "El asistente está armando la propuesta. Puede tardar unos segundos.",
+                null,
+                emptyList(),
                 "Cancelar",
                 EventHandler(7L) {
                 },
@@ -155,6 +156,7 @@ class AssistantMappingTest {
                 "El asistente no llegó a una propuesta. Probá con un pedido más concreto.",
             AssistantFailure.CatalogEmpty to
                 "El catálogo todavía no se cargó. Abrí la app con conexión y volvé a probar.",
+            AssistantFailure.Incomplete to "La respuesta se cortó antes de terminar. Probá de nuevo.",
         )
         expected.forEach { (failure, text) ->
             val reply = replyOf(failed(failure)) as ReplyUiModel.Failed
@@ -162,8 +164,8 @@ class AssistantMappingTest {
             assertEquals("Reintentar", reply.retry?.label)
         }
         assertFalse((replyOf(failed(AssistantFailure.Unavailable(503))) as ReplyUiModel.Failed).message.contains("503"))
-        // The sealed type has exactly these six members.
-        assertEquals(6, expected.size)
+        // The sealed type has exactly these seven members.
+        assertEquals(7, expected.size)
     }
 
     @Test

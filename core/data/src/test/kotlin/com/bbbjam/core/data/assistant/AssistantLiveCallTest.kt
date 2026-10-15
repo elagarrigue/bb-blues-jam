@@ -11,6 +11,8 @@ import java.util.Properties
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -26,7 +28,7 @@ import org.junit.Test
  * `bbbjam.assistantLive` is `true` (`-Pbbbjam.assistantLive=true`, see `core/data/build.gradle.kts`).
  * It reads the key itself from `local.properties` (never through Gradle), runs the brief's example
  * request once against in-memory repositories seeded from the repository's samples (no Sheet access,
- * and no write path exists), and writes `docs/evidence/assistant-agent-core/live-call.md` without the
+ * and no write path exists), and writes `docs/evidence/assistant-streaming/live-call.md` without the
  * key or the Authorization header. It fails if the key appears in anything it printed or wrote.
  */
 class AssistantLiveCallTest {
@@ -82,19 +84,20 @@ class AssistantLiveCallTest {
         val originalOut = System.out
         val originalErr = System.err
         val printed = ByteArrayOutputStream()
+        val drafts = ArrayList<AssistantDraft>()
         val started = System.nanoTime()
         val reply = try {
             System.setOut(PrintStream(printed, true))
             System.setErr(PrintStream(printed, true))
-            runBlocking { assistant.startConversation().send(REQUEST) }
+            runBlocking { assistant.startConversation().send(REQUEST) { drafts += it } }
         } finally {
             System.setOut(originalOut)
             System.setErr(originalErr)
         }
         val totalMillis = (System.nanoTime() - started) / NANOS_PER_MILLI
 
-        val report = report(reply, exchanges, totalMillis, songs.size, printed.toString().isNotBlank())
-        val file = File(rootDir, "docs/evidence/assistant-agent-core/live-call.md")
+        val report = report(reply, exchanges, totalMillis, songs.size, printed.toString().isNotBlank(), drafts)
+        val file = File(rootDir, "docs/evidence/assistant-streaming/live-call.md")
         file.parentFile.mkdirs()
         file.writeText(report)
 
@@ -123,15 +126,20 @@ class AssistantLiveCallTest {
         val response: Response = chain.proceed(request)
         exchange.millis = (System.nanoTime() - begun) / NANOS_PER_MILLI
         exchange.status = response.code
-        val answered = runCatching {
-            Json.parseToJsonElement(response.peekBody(PEEK_BYTES).string()).jsonObject
-                .getValue("choices").jsonArray.first().jsonObject
-        }.getOrNull()
-        exchange.finishReason = answered?.get("finish_reason")?.jsonPrimitive?.content
-        val message = answered?.get("message")?.jsonObject
-        exchange.content = message?.get("content")?.let { it as? kotlinx.serialization.json.JsonPrimitive }?.content
-        exchange.toolCallsRequested = message?.get("tool_calls")?.jsonArray.orEmpty().map {
-            it.jsonObject.getValue("function").jsonObject.getValue("name").jsonPrimitive.content
+        // The gateway answers as an SSE stream: read its `data:` events from the peeked body.
+        val choices = runCatching {
+            response.peekBody(PEEK_BYTES).string().lineSequence()
+                .filter { it.startsWith("data: {") }
+                .map { Json.parseToJsonElement(it.removePrefix("data: ")).jsonObject }
+                .mapNotNull { it["choices"]?.jsonArray?.firstOrNull()?.jsonObject }
+                .toList()
+        }.getOrDefault(emptyList())
+        exchange.finishReason =
+            choices.mapNotNull { (it["finish_reason"] as? JsonPrimitive)?.contentOrNull }.lastOrNull()
+        val deltas = choices.mapNotNull { it["delta"]?.jsonObject }
+        exchange.content = deltas.mapNotNull { (it["content"] as? JsonPrimitive)?.contentOrNull }.joinToString("")
+        exchange.toolCallsRequested = deltas.flatMap { it["tool_calls"]?.jsonArray.orEmpty() }.mapNotNull {
+            (it.jsonObject["function"]?.jsonObject?.get("name") as? JsonPrimitive)?.contentOrNull
         }
         response
     }
@@ -142,9 +150,10 @@ class AssistantLiveCallTest {
         totalMillis: Long,
         catalogSize: Int,
         printedSomething: Boolean,
+        drafts: List<AssistantDraft>,
     ): String = buildString {
         val toolsCalled = exchanges.flatMap { it.toolCallsRequested }
-        appendLine("# assistant-agent-core: live call")
+        appendLine("# assistant-streaming: live call (streamed)")
         appendLine()
         appendLine("Opt-in run against the real gateway; no Sheet access, no write path exists. The key and the")
         appendLine("Authorization header are not recorded.")
@@ -162,6 +171,7 @@ class AssistantLiveCallTest {
         appendLine("- Message roles per request: ${exchanges.map { it.messageRoles }}")
         appendLine("- finish_reason per response: ${exchanges.map { it.finishReason }}")
         val printed = if (printedSomething) "yes (checked: no key in it)" else "no"
+        appendLine("- Drafts seen while streaming: ${drafts.size}; songs per draft: ${drafts.map { it.songs.size }}")
         appendLine("- Anything printed to stdout/stderr during the call: $printed")
         appendLine()
         appendLine("## Request (the brief's example, verbatim)")

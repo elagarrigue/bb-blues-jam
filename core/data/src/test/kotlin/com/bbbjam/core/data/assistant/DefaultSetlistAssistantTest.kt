@@ -81,69 +81,11 @@ class DefaultSetlistAssistantTest {
         AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
     )
 
-    private fun toolCalls(vararg calls: Pair<String, String>): MockResponse = MockResponse.Builder()
-        .addHeader("Content-Type", "application/json")
-        .body(
-            completion(
-                finishReason = "tool_calls",
-                message = buildJsonObject {
-                    put("role", "assistant")
-                    put("content", JsonPrimitive(null as String?))
-                    putJsonArray("tool_calls") {
-                        calls.forEachIndexed { index, (name, arguments) ->
-                            add(
-                                buildJsonObject {
-                                    put("id", "call_$index")
-                                    put("type", "function")
-                                    putJsonObject("function") {
-                                        put("name", name)
-                                        put("arguments", arguments)
-                                    }
-                                },
-                            )
-                        }
-                    }
-                },
-            ),
-        )
-        .build()
+    // The gateway answers as a stream (assistant-streaming): every scripted reply is an SSE body.
+    private fun toolCalls(vararg calls: Pair<String, String>): MockResponse =
+        SseFixtures.response(SseFixtures.toolRound(*calls))
 
-    private fun answer(content: String): MockResponse = MockResponse.Builder()
-        .addHeader("Content-Type", "application/json")
-        .body(
-            completion(
-                finishReason = "stop",
-                message = buildJsonObject {
-                    put("role", "assistant")
-                    put("content", content)
-                },
-            ),
-        )
-        .build()
-
-    private fun completion(finishReason: String, message: JsonObject): String = buildJsonObject {
-        put("id", "chatcmpl-1")
-        put("object", "chat.completion")
-        put("created", 1)
-        put("model", "chat")
-        put(
-            "choices",
-            buildJsonArray {
-                add(
-                    buildJsonObject {
-                        put("index", 0)
-                        put("finish_reason", finishReason)
-                        put("message", message)
-                    },
-                )
-            },
-        )
-        putJsonObject("usage") {
-            put("prompt_tokens", 1)
-            put("completion_tokens", 1)
-            put("total_tokens", 2)
-        }
-    }.toString()
+    private fun answer(content: String): MockResponse = SseFixtures.response(SseFixtures.answer(content, size = 11))
 
     private fun proposalJson(vararg ids: String, message: String = "Armé la lista", questions: String = "[]"): String {
         val songs = ids.joinToString(",") {

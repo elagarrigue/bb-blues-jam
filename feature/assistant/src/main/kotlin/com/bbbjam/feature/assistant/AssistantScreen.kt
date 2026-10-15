@@ -2,6 +2,7 @@ package com.bbbjam.feature.assistant
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,6 +89,16 @@ private fun TurnList(model: AssistantUiModel.Chat, modifier: Modifier) {
     LaunchedEffect(model.turns.size, lastReply?.let { it::class }) {
         if (model.turns.isNotEmpty()) listState.animateScrollToItem(model.turns.lastIndex)
     }
+    // While songs stream in, keep the end in view, but only if the admin had not scrolled up. The value is
+    // read in this composition, before the new row is measured, so it is the state before the change.
+    val songCount = (lastReply as? ReplyUiModel.Pending)?.songs?.size ?: 0
+    val wasAtEnd = !listState.canScrollForward
+    val previousCount = remember { intArrayOf(songCount) }
+    val grew = songCount > previousCount[0]
+    LaunchedEffect(songCount) {
+        previousCount[0] = songCount
+        if (shouldFollow(wasAtEnd, grew)) listState.animateScrollBy(FOLLOW_SCROLL_PX)
+    }
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         state = listState,
@@ -99,6 +111,12 @@ private fun TurnList(model: AssistantUiModel.Chat, modifier: Modifier) {
 }
 
 private const val INTRO_KEY = "intro"
+
+/** Larger than any row: the scroll stops at the end of the list. */
+private const val FOLLOW_SCROLL_PX = 10_000f
+
+/** Follow a growing streamed list only when it was already at the end (the admin had not scrolled up). */
+internal fun shouldFollow(wasAtEnd: Boolean, grew: Boolean): Boolean = wasAtEnd && grew
 
 @Composable
 private fun Composer(model: ComposerUiModel, status: StatusUiModel, modifier: Modifier) {

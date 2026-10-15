@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import com.bbbjam.core.ui.state.LoadingDots
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /** One turn of the chat: the admin's request card and the reply card under it. */
@@ -51,7 +52,7 @@ private fun Card(style: AssistantDefaults.CardStyle, content: @Composable () -> 
 }
 
 @Composable
-private fun Caption(text: String, color: Color, modifier: Modifier = Modifier) {
+internal fun Caption(text: String, color: Color, modifier: Modifier = Modifier) {
     Text(text = text.uppercase(), style = BluesJamTheme.typography.caption, color = color, modifier = modifier)
 }
 
@@ -61,8 +62,9 @@ private fun Reply(reply: ReplyUiModel) {
     val notice = AssistantDefaults.notice()
     Card(card) {
         when (reply) {
-            is ReplyUiModel.Pending -> PendingContent(reply, card, notice)
+            is ReplyUiModel.Pending -> PendingContent(reply, notice)
             is ReplyUiModel.Proposal -> ProposalContent(reply, card)
+            is ReplyUiModel.Incomplete -> IncompleteContent(reply, card, notice)
             is ReplyUiModel.Failed -> NoticeContent(reply.message, notice.failure, reply.retry, notice)
             is ReplyUiModel.Cancelled -> NoticeContent(reply.message, notice.cancelled, reply.retry, notice)
         }
@@ -70,21 +72,25 @@ private fun Reply(reply: ReplyUiModel) {
 }
 
 @Composable
-private fun PendingContent(
-    reply: ReplyUiModel.Pending,
+private fun PendingContent(reply: ReplyUiModel.Pending, notice: AssistantDefaults.NoticeStyle) {
+    // Songs that already arrived, then the only moving element in the app (DESIGN.md M1 exception): one
+    // polite node announces the wait. The songs are plain nodes, not live regions.
+    reply.songsHeading?.let { SongList(it, reply.songs, BluesJamTheme.colors.textMuted) }
+    LoadingDots(description = reply.loadingLabel)
+    TextAction(reply.cancelLabel, notice.action) { reply.events(ReplyUiModel.Pending.Event.Cancel) }
+}
+
+/** An answer that broke or was cancelled: the songs that arrived, marked incomplete, and "Reintentar". */
+@Composable
+private fun IncompleteContent(
+    reply: ReplyUiModel.Incomplete,
     card: AssistantDefaults.CardStyle,
     notice: AssistantDefaults.NoticeStyle,
 ) {
-    val typography = BluesJamTheme.typography
-    // Static, no spinner (as the skeleton list); one polite live region announces the wait.
-    Column(
-        modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-        verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs),
-    ) {
-        Text(text = reply.status, style = typography.body, color = card.text)
-        Text(text = reply.hint, style = typography.caption, color = notice.caption)
-    }
-    TextAction(reply.cancelLabel, notice.action) { reply.events(ReplyUiModel.Pending.Event.Cancel) }
+    SongList(reply.heading, reply.songs, card.caption)
+    val color = if (reply.isCancelled) notice.cancelled else notice.failure
+    Text(text = reply.message, style = BluesJamTheme.typography.body, color = color)
+    reply.retry?.let { TextAction(it.label, notice.action) { it.events(RetryUiModel.Event.Retry) } }
 }
 
 @Composable
@@ -101,10 +107,7 @@ private fun ProposalContent(reply: ReplyUiModel.Proposal, card: AssistantDefault
     reply.jam?.let { JamCard(it) }
     reply.jamNote?.let { Text(text = it, style = typography.body, color = JamDefaults.rejectionNote()) }
     reply.heading?.let { headingText ->
-        Caption(headingText, card.caption, Modifier.semantics { heading() })
-        Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
-            reply.songs.forEach { song -> SongRow(song) }
-        }
+        SongList(headingText, reply.songs, card.caption)
     }
     Text(text = reply.message, style = typography.body, color = card.text)
     reply.questionsHeading?.let { headingText ->
@@ -118,47 +121,6 @@ private fun ProposalContent(reply: ReplyUiModel.Proposal, card: AssistantDefault
     }
     ApplyContent(reply.apply, reply.summary, reply.removals, reply.order)
 }
-
-/** One proposed song: one merged, non-clickable node read in visual order. */
-@Composable
-private fun SongRow(song: ProposedSongUiModel) {
-    val spacing = BluesJamTheme.spacing
-    val typography = BluesJamTheme.typography
-    val style = AssistantDefaults.song()
-    Column(
-        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-        verticalArrangement = Arrangement.spacedBy(spacing.xs),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing.md),
-        ) {
-            Text(text = song.positionLabel, style = typography.songTitle, color = style.position)
-            Text(
-                text = song.title,
-                style = typography.songTitle,
-                color = style.title,
-                maxLines = TITLE_MAX_LINES,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = song.key,
-                style = typography.songTitle,
-                color = style.key,
-                modifier = Modifier.semantics { contentDescription = song.keyDescription },
-            )
-        }
-        Text(text = song.artist, style = typography.body, color = style.artist)
-        Text(text = song.reason, style = typography.body, color = style.reason)
-        song.applyStatus?.let { status ->
-            Text(text = status.text, style = typography.caption, color = ApplyDefaults.status(status.kind))
-        }
-    }
-}
-
-private const val TITLE_MAX_LINES = 2
 
 /** An underlined text action with a 48dp target, in `text` (the primary action is "Enviar"). */
 @Composable

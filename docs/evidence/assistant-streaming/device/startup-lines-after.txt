@@ -1,0 +1,1 @@
+Not captured: the app was not restarted after the device checks, so no startup jams lines exist for 'after'. The final dumps show the same jams; nothing was written.

@@ -2,6 +2,7 @@ package com.bbbjam.core.data.assistant
 
 import ai.koog.agents.core.agent.exception.AIAgentMaxNumberOfIterationsReachedException
 import ai.koog.http.client.KoogHttpClientException
+import ai.koog.prompt.streaming.IncompleteStreamException
 import ai.koog.prompt.structure.LLMStructuredParsingError
 import java.io.IOException
 import kotlinx.serialization.SerializationException
@@ -32,7 +33,8 @@ internal object AssistantErrors {
     private fun failureOfSingle(error: Throwable): AssistantFailure? = when (error) {
         is KoogHttpClientException -> error.statusCode?.let(::httpFailure)
         is IOException -> AssistantFailure.Offline
-        is AIAgentMaxNumberOfIterationsReachedException -> AssistantFailure.TooManySteps
+        is IncompleteStreamException -> AssistantFailure.Incomplete
+        is AIAgentMaxNumberOfIterationsReachedException, is TooManyRoundsException -> AssistantFailure.TooManySteps
         is LLMStructuredParsingError, is SerializationException -> AssistantFailure.InvalidResponse
         else -> null
     }

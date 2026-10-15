@@ -42,8 +42,9 @@ data class TurnUiModel(val id: Long, val authorLabel: String, val request: Strin
 /** What a turn shows under its request. */
 sealed interface ReplyUiModel : UiModel {
     data class Pending(
-        val status: String,
-        val hint: String,
+        val loadingLabel: String,
+        val songsHeading: String?,
+        val songs: List<ProposedSongUiModel>,
         val cancelLabel: String,
         val events: EventHandler<Event>,
     ) : ReplyUiModel {
@@ -66,6 +67,18 @@ sealed interface ReplyUiModel : UiModel {
         val order: String? = null,
         val jam: JamCardUiModel? = null,
         val jamNote: String? = null,
+    ) : ReplyUiModel
+
+    /**
+     * What arrived of an answer that broke or was cancelled: the songs, marked incomplete, and a retry.
+     * Never a target or a jam card (`assistant-streaming`). [isCancelled] picks the muted message colour.
+     */
+    data class Incomplete(
+        val heading: String,
+        val songs: List<ProposedSongUiModel>,
+        val message: String,
+        val isCancelled: Boolean,
+        val retry: RetryUiModel?,
     ) : ReplyUiModel
 
     data class Failed(val message: String, val retry: RetryUiModel?) : ReplyUiModel

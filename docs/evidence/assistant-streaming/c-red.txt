@@ -1,0 +1,11 @@
+# Part C red run: AssistantChat.setDraft accepted drafts for any state and the mapping ignored the draft (temporarily), then restored.
+StreamedAnswerTest > a broken answer with songs is incomplete with the right line for each cause FAILED
+StreamedAnswerTest > pending without songs, then two songs, then the proposal with targets FAILED
+StreamedAnswerTest > a draft that arrives after a cancel is ignored and the cancelled turn keeps what came before FAILED
+StreamedAnswerTest > Reintentar is offered only on the last turn FAILED
+StreamedAnswerTest > a pending turn lists the songs that arrived under the proposal heading FAILED
+StreamedAnswerTest > a cancelled or interrupted turn with songs is incomplete and one song reads singular FAILED
+StreamedAnswerTest > two songs, then the stream breaks, incomplete with Reintentar and no target FAILED
+13 tests completed, 7 failed
+> Task :feature:assistant:testDebugUnitTest FAILED
+BUILD FAILED in 10s

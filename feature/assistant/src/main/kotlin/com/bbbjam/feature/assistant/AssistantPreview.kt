@@ -55,6 +55,25 @@ private fun PendingPreview() = StatePreview(listOf(ChatTurn(1, "12 temas de blue
 
 @Preview
 @Composable
+private fun StreamingPreview() = StatePreview(
+    listOf(ChatTurn(1, "12 temas de blues nacional", ChatTurn.State.Pending, previewProposal.songs)),
+)
+
+@Preview
+@Composable
+private fun IncompletePreview() = StatePreview(
+    listOf(
+        ChatTurn(
+            1,
+            "12 temas de blues nacional",
+            ChatTurn.State.Answered(AssistantReply.Failed(AssistantFailure.Incomplete)),
+            previewProposal.songs,
+        ),
+    ),
+)
+
+@Preview
+@Composable
 private fun ProposalPreview() = StatePreview(
     listOf(ChatTurn(1, "12 temas de blues nacional", ChatTurn.State.Answered(previewProposal))),
 )

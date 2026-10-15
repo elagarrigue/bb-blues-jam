@@ -1,0 +1,5 @@
+> Task :core:data:compileDebugUnitTestKotlin FAILED
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/test/kotlin/com/bbbjam/core/data/assistant/ProposalStreamParserTest.kt:16:22 Unresolved reference 'ProposalStreamParser'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/test/kotlin/com/bbbjam/core/data/assistant/ProposalStreamParserTest.kt:27:22 Unresolved reference 'ProposalStreamParser'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/src/test/kotlin/com/bbbjam/core/data/assistant/ProposalStreamParserTest.kt:146:22 Unresolved reference 'ProposalStreamParser'.
+FAILURE: Build failed with an exception.

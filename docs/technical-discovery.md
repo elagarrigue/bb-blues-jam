@@ -227,3 +227,6 @@ worst outcome the app can produce — a musician reading a setlist the admin thi
   recorded mitigation is that Songsterr and API enrichment are both removable without touching the
   MVP.
 - **UI copy in Rioplatense Spanish; code, commits, and technical docs in English** (D-12).
+
+- **Streaming (15 October 2026, `assistant-streaming`):** the DevExpert gateway streams chat completions over SSE, with and
+  without tools (`docs/evidence/assistant-streaming/gateway-probe.md`); the assistant uses Koog's streaming API.

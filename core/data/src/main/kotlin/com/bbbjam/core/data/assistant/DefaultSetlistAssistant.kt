@@ -4,17 +4,15 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.exception.AIAgentException
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.ext.agent.structuredOutputWithToolsStrategy
 import ai.koog.http.client.KoogHttpClientException
 import ai.koog.prompt.executor.clients.LLMClientException
 import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.streaming.IncompleteStreamException
 import ai.koog.prompt.structure.LLMStructuredParsingError
-import ai.koog.prompt.structure.StructuredRequest
-import ai.koog.prompt.structure.StructuredRequestConfig
-import ai.koog.prompt.structure.json.JsonStructure
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.model.Song
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
@@ -49,14 +47,14 @@ internal class DefaultSetlistAssistant(
         private val history = ArrayList<AssistantPrompt.Turn>()
         private val turns = Mutex()
 
-        override suspend fun send(request: String): AssistantReply {
+        override suspend fun send(request: String, onDraft: (AssistantDraft) -> Unit): AssistantReply {
             if (!credentials.isConfigured) return AssistantReply.NotConfigured
             require(request.isNotBlank()) { "The assistant needs a non-blank request" }
             return turns.withLock {
                 val songs = catalog.observeCatalog().first().songs
                 if (songs.isEmpty()) return@withLock AssistantReply.Failed(AssistantFailure.CatalogEmpty)
                 try {
-                    val dto = runAgent(request.trim())
+                    val dto = runAgent(request.trim(), songs, onDraft)
                     val proposal = withJam(ProposalValidator.validate(dto, songs), dto.jam)
                     history += AssistantPrompt.Turn(
                         request.trim(),
@@ -75,6 +73,10 @@ internal class DefaultSetlistAssistant(
                     failed(e)
                 } catch (e: SerializationException) {
                     failed(e)
+                } catch (e: IncompleteStreamException) {
+                    failed(e)
+                } catch (e: TooManyRoundsException) {
+                    failed(e)
                 } catch (e: IOException) {
                     failed(e)
                 }
@@ -90,7 +92,11 @@ internal class DefaultSetlistAssistant(
 
         private fun failed(error: Throwable): AssistantReply = AssistantReply.Failed(AssistantErrors.failureOf(error))
 
-        private suspend fun runAgent(request: String): ProposalDto {
+        private suspend fun runAgent(
+            request: String,
+            songs: List<Song>,
+            onDraft: (AssistantDraft) -> Unit,
+        ): ProposalDto {
             val agent = AIAgent(
                 promptExecutor = executor,
                 agentConfig = AIAgentConfig(
@@ -98,14 +104,10 @@ internal class DefaultSetlistAssistant(
                     model = AssistantModel.model,
                     maxAgentIterations = AssistantModel.MAX_AGENT_ITERATIONS,
                 ),
-                // Manual, not Native: with `response_format` the gateway's model skips the tools and answers
-                // at once (live call of 13 October 2026, docs/evidence/assistant-agent-core). The schema
-                // travels in the prompt instead and the same parser reads the final text.
-                strategy = structuredOutputWithToolsStrategy<ProposalDto>(
-                    StructuredRequestConfig(
-                        default = StructuredRequest.Manual(JsonStructure.create<ProposalDto>()),
-                    ),
-                ),
+                // Streamed, with the schema in the prompt (Manual, not Native): with `response_format` the
+                // gateway's model skips the tools and answers at once (live call of 13 October 2026,
+                // docs/evidence/assistant-agent-core). The final text is parsed whole after the stream.
+                strategy = streamingProposalStrategy(songs, onDraft),
                 toolRegistry = ToolRegistry {
                     tool(CatalogTool(catalog))
                     tool(PastJamsTool(jams))

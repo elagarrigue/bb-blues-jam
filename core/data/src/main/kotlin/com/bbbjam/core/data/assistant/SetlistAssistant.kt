@@ -25,6 +25,17 @@ interface AssistantConversation {
      * Sends [request] and returns the reply. Calls are serialised per conversation. [request] must not be
      * blank (the caller disables sending blank text; a blank one is a caller bug and throws
      * [IllegalArgumentException]). Coroutine cancellation is rethrown, never mapped to a reply.
+     *
+     * The answer streams: [onDraft] is called, from the request's coroutine and never after this function
+     * returns, each time another catalog-validated song of the answer in progress is complete. The returned
+     * reply is still the source of truth: the whole text parsed and validated, replacing any draft.
      */
-    suspend fun send(request: String): AssistantReply
+    suspend fun send(request: String, onDraft: (AssistantDraft) -> Unit = {}): AssistantReply
 }
+
+/**
+ * The songs of the answer in progress that are complete and found in the catalog (D-14), in arrival order
+ * and cumulative. Empty when a round turned out to be a tool round and its text was discarded. Not a
+ * proposal: nothing can be loaded from it.
+ */
+data class AssistantDraft(val songs: List<ProposedSong>)

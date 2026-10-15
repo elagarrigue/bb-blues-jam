@@ -1,8 +1,10 @@
 package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.AssistantConversation
+import com.bbbjam.core.data.assistant.AssistantDraft
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.core.data.assistant.ProposedSong
 import com.bbbjam.core.data.assistant.SetlistAssistant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -24,7 +26,13 @@ internal class FakeSetlistAssistant(override val isConfigured: Boolean = true) :
 
     /** When set, `checkStatus` waits for it, so a test can observe the Checking state. */
     var statusGate: CompletableDeferred<Unit>? = null
+    private var drafter: ((AssistantDraft) -> Unit)? = null
     private val queue = ArrayDeque<CompletableDeferred<AssistantReply>>()
+
+    /** Streams a draft with [songs] into the send in progress; after it ended the call reaches a dead end. */
+    fun draft(vararg songs: ProposedSong) {
+        drafter?.invoke(AssistantDraft(songs.toList()))
+    }
 
     fun expectReply(): CompletableDeferred<AssistantReply> =
         CompletableDeferred<AssistantReply>().also { queue.addLast(it) }
@@ -38,8 +46,9 @@ internal class FakeSetlistAssistant(override val isConfigured: Boolean = true) :
     override fun startConversation(): AssistantConversation {
         conversationsStarted++
         return object : AssistantConversation {
-            override suspend fun send(request: String): AssistantReply {
+            override suspend fun send(request: String, onDraft: (AssistantDraft) -> Unit): AssistantReply {
                 requests += request
+                drafter = onDraft
                 val reply = queue.removeFirst()
                 try {
                     return reply.await()

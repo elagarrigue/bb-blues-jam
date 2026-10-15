@@ -516,3 +516,16 @@ Stated so they can be challenged rather than silently relied upon.
   that jam is next; removing, moving or editing those songs there waits for it to be next. Until the script is redeployed
   (`docs/migrations/assistant-proposal-targets-script-update.md`) a held-back create stops with the outdated-script line and the
   empty BORRADOR jam stays.
+
+- **Streaming the assistant's answer** (`assistant-streaming`, 15 October 2026), risks and outcomes:
+  - *The gateway may not stream:* probed read-only (`docs/evidence/assistant-streaming/gateway-probe.md`); SSE works, with
+    tools. Outcome: streamed.
+  - *Koog may reject the gateway's chunks* (`reasoning_content`, `reasoning_details`, empty `content`): proved by replaying that
+    exact shape through the real client (`StreamingAssistantTest`). Outcome: decoded; two shaping steps were needed (join the
+    text parts, drop reasoning from the history).
+  - *Koog does not fail a stream that just stops* (it closes it with an end frame without a finish reason): the strategy
+    treats that as `Incomplete`. A hard connection drop may lose the buffered tail, so the incomplete list can be shorter
+    than what the server sent.
+  - *A model that writes `message` before `songs`* streams no songs early; the final answer is still right. Not a defect.
+  - *WCAG 2.2.2 for the animation:* the dots are the only moving element, shown only while a request runs, stopped by
+    `Cancelar`, static with "Quitar animaciones" (DESIGN.md M1).

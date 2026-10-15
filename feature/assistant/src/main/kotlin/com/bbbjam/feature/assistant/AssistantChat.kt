@@ -4,6 +4,7 @@ import com.bbbjam.core.data.assistant.AssistantConversation
 import com.bbbjam.core.data.assistant.AssistantFailure
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.core.data.assistant.ProposedSong
 import com.bbbjam.core.data.assistant.SetlistAssistant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -108,7 +109,7 @@ class AssistantChat(private val assistant: SetlistAssistant, private val scope: 
 
     private suspend fun run(id: Long, chat: AssistantConversation, request: String) {
         try {
-            val reply = chat.send(request)
+            val reply = chat.send(request) { draft -> setDraft(id, draft.songs) }
             finish(id, ChatTurn.State.Answered(reply))
             // The service may have just gone away: a failed send that names it re-checks the status.
             if (reply is AssistantReply.Failed && reply.failure.suggestsOutage()) checkStatus()
@@ -120,6 +121,13 @@ class AssistantChat(private val assistant: SetlistAssistant, private val scope: 
             // handler logs it, nothing is caught broadly.
             finish(id, ChatTurn.State.Interrupted)
             synchronized(lock) { jobs.remove(id) }
+        }
+    }
+
+    /** Keeps the songs streamed so far on turn [id] while it is pending; a late call after a cancel is ignored. */
+    private fun setDraft(id: Long, songs: List<ProposedSong>) {
+        state.update { turns ->
+            turns.map { if (it.id == id && it.state == ChatTurn.State.Pending) it.copy(draft = songs) else it }
         }
     }
 
@@ -140,8 +148,12 @@ class AssistantChat(private val assistant: SetlistAssistant, private val scope: 
     }
 }
 
-/** One request and what became of it. [id] comes from a counter and is never reused. */
-data class ChatTurn(val id: Long, val request: String, val state: State) {
+/**
+ * One request and what became of it. [id] comes from a counter and is never reused. [draft] holds the
+ * catalog-validated songs streamed while the turn was pending; it is a preview, never a proposal: the
+ * final reply replaces it, and it stays only to show an incomplete answer (`assistant-streaming`).
+ */
+data class ChatTurn(val id: Long, val request: String, val state: State, val draft: List<ProposedSong> = emptyList()) {
     sealed interface State {
         /** Sent, no answer yet. */
         data object Pending : State

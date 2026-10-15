@@ -1,0 +1,16 @@
+# B4 red run: StreamingProposalStrategy.kt temporarily mutated (drafts never emitted; the missing-finish-reason check removed), then restored.
+# Run: ./gradlew :core:data:testDebugUnitTest --tests *StreamingAssistantTest* --tests *DraftTrackerTest*
+DraftTrackerTest > the streamed songs equal the final validation of the same answer for any chunking FAILED
+DraftTrackerTest > discard empties the draft once and starts a fresh round FAILED
+StreamingAssistantTest > a connection dropped mid body after songs fails as a lost connection or an incomplete stream FAILED
+StreamingAssistantTest > unknown, malformed, repeated and undecodable songs never appear in a draft FAILED
+StreamingAssistantTest > spike - the gateway chunk shape streams a tool round and then the answer through Koog FAILED
+StreamingAssistantTest > the drafts grow one song at a time and then the final reply holds the same songs FAILED
+StreamingAssistantTest > a stream that ends without its end frame after two songs is incomplete and the drafts held two FAILED
+StreamingAssistantTest > cancelling mid stream throws CancellationException, stops the drafts and closes the connection FAILED
+StreamingAssistantTest > the final reply counts the discarded ids that no draft showed FAILED
+StreamingAssistantTest > invalid final JSON after streamed songs is an invalid response and the history stays clean FAILED
+StreamingAssistantTest > text streamed in a round that ends in tool calls is discarded and the draft resets FAILED
+15 tests completed, 11 failed
+> Task :core:data:testDebugUnitTest FAILED
+BUILD FAILED in 10s

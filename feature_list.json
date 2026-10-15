@@ -1603,5 +1603,34 @@
       "No behaviour change to the date rules (jamCreationPlan, jamEditPlan)",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet"
     ]
+  },
+  {
+    "id": "assistant-streaming",
+    "area": "assistant",
+    "title": "Stream the assistant's answer so songs appear one by one, with a loading animation",
+    "user_visible_behavior": "While the agent works, the chat shows an animated loading indicator instead of the text message. Once the final answer starts, the proposed songs appear one by one as they arrive, each already validated against the catalog, followed by the closing message and questions. The target actions (Agregar, Reemplazar, Crear) appear only when the answer is complete. If the stream breaks, the admin sees what arrived marked as incomplete plus a retry, never a partial list presented as final.",
+    "depends_on": [
+      "jam-date-copy-polish"
+    ],
+    "status": "accepted",
+    "evidence": [
+      "Part A: LoadingDots (:core:ui), Pending carries loadingLabel; red first a1-red.txt; gate part-a-gate.txt (1061 testcases)",
+      "Part B: streaming core (send(onDraft), AssistantDraft, Incomplete, streamingProposalStrategy, ProposalStreamParser, shared Accumulator, DraftTracker); spike passed on the gateway chunk shape; red first b2-red.txt (parser), b4-red.txt (mutated strategy, 11/15 failing); gate part-b-gate.txt (1095 testcases)",
+      "Part C: ChatTurn.draft, Pending songs, ReplyUiModel.Incomplete (heading, songs, line, Reintentar, no targets), scroll follow (shouldFollow); red first c-red.txt (mutation, 7/13 failing); gate part-c-gate.txt",
+      "Final gate: CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1108 testcases (1 skipped, 0 failures) from build/test-results; local.properties md5 569913ae before and after",
+      "Live call (opt-in AssistantLiveCallTest, read-only, in-memory repos): 2 requests 200/200, tool round then answer, 12 drafts 1..12 matching the final 12 songs, reasoning not echoed (docs/evidence/assistant-streaming/live-call.md)",
+      "Device (Pixel, debug admin, one live request 'Propone una lista de 6 temas de blues', nothing tapped but tab, field and Enviar): pending shows the dots node described 'El asistente esta armando la propuesta...' with Cancelar (device/run1_1.png, run1_1.xml); streaming shows songs under PROPUESTA with the dots below and the list following, no targets (device/run1_3.png); final shows PROPUESTA · 6 TEMAS and, after swiping to the end, Agregar/Reemplazar/Crear present and untouched (device/final-bottom.xml). Second request with animator_duration_scale 0 (restored to unset afterwards): the screenshot was taken before the tap registered and the next frame was already the answer, so the static look of the dots was NOT captured; reduced motion is covered by the JVM tests only. Intermediate streaming states were captured once; the app was not restarted after the checks, so no 'after' startup jams lines exist (state unchanged).",
+      "Deviations: see PROGRESS.md (shaped message, reasoning dropped, Incomplete detected by missing finish reason, Incomplete is not an outage). Cancel and broken-stream paths verified on the JVM only.",
+      "Independent validator accepted on 15 October 2026: CI=true ./init.sh exit 0, three tools wired, 1108 testcases, 0 failures; forced rerun of :core:data, :feature:assistant and :core:ui green; secret scan of evidence, feature_list, PROGRESS and test XML clean. Not verified on hardware: static dots under reduced motion, cancel and broken-stream paths (JVM only)."
+    ],
+    "verification": [
+      "The DevExpert gateway's streaming support (SSE on chat completions, with the model alias in use) is probed read-only and recorded before design; if it cannot stream, the spec says so and falls back to the loading animation only",
+      "Streaming goes through Koog's streaming API (D-21); tool calls still run before the final answer; the agent package stays read-only (D-24)",
+      "An incremental parser emits each song only when its JSON object is complete; every emitted song is validated against the catalog before it is shown (D-14); unknown ids never appear; the final parse of the whole answer is still the source of truth and replaces the streamed list",
+      "Target actions are enabled only after the complete, validated answer; a broken or cancelled stream shows an incomplete state with retry and never enables writes",
+      "Loading animation follows DESIGN.md tokens (BluesJamTheme, D-17), respects reduced-motion settings, has an accessible label in vos",
+      "Unit tests with a fake streaming executor cover chunk boundaries inside a song, malformed chunks, unknown ids, cancellation and network failure mid-stream; Molecule presenter tests (D-02)",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check with one live read-only request, no write taps"
+    ]
   }
 ]

@@ -206,7 +206,9 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
 - **Status bar:** the status-bar area is a solid `background` band above every tab and the song
   detail; content scrolls below it, never under the clock.
 - **Motion (M1):** tab switch, a 150 ms crossfade; song detail, slides in from the end in 250 ms
-  over the tabs (which stay drawn under it) and out to the end on back. No other motion.
+  over the tabs (which stay drawn under it) and out to the end on back. No other motion, except the
+  assistant's loading dots (`assistant-streaming`): the only moving element, shown only while a request runs,
+  stopped by `Cancelar`, and drawn static when the system animator scale is 0 (WCAG 2.2.2).
 - **Deeplinks (D1):** none yet; deferred to `action-contract-registry`.
 
 The component is `TabBar` in `:core:ui` (`com.bbbjam.core.ui.nav`); its colors come only from
@@ -718,9 +720,17 @@ automatically and writes nothing by itself (D-24); loading a proposal is the adm
   position (`songTitle`, `textMuted`), title (`songTitle`, `text`, 2 lines), key at the end (`songTitle` size, amber
   `key` role, described "Tonalidad Bm"), artist (`body`, `textMuted`), reason (`body`, `text`). Then the message,
   `PREGUNTAS` with each question as `• …`, and a muted caption for discarded ids (ids are never shown).
-- Pending: status and hint in one polite live region, static (no spinner, as the skeleton list), and a `Cancelar`
-  underlined 48dp text action in `text`. Failed/cancelled: message in `error` / `textMuted`, `Reintentar` underlined
+- Pending: `LoadingDots` (`:core:ui`, `state`): three 8dp circles, `xs` apart, `textMuted` (never amber), fading in turn
+  over 1200 ms (alpha 0.3 to 1, 200 ms stagger); static at alpha 0.6 when the animator duration scale is 0. One polite
+  node described "El asistente está armando la propuesta. Puede tardar unos segundos." (no visible status text), then a
+  `Cancelar` underlined 48dp text action in `text`. Failed/cancelled: message in `error` / `textMuted`, `Reintentar` underlined
   48dp text action in `text`, only on the last turn.
+- Streamed songs (`assistant-streaming`): while pending, songs that already arrived are listed under `PROPUESTA · n temas`
+  (same rows as a proposal, no targets), with the dots below the last row; the rows are plain nodes, not live regions. A broken,
+  failed or cancelled answer that streamed songs becomes `PROPUESTA INCOMPLETA · n temas` (caption `textMuted`), the same
+  rows, one line (`error`, or `textMuted` for a cancel: `La respuesta se cortó antes de terminar. Esto es lo que llegó; no está
+  completa.`) and `Reintentar` on the last turn. Never a target or a jam card. The list follows new songs only if it was already
+  at the end.
 - Composer: outlined field `Tu pedido` with the admin login's colours, up to 5 lines; full-width `Enviar` button
   (`button-primary`, disabled `surfaceRaised`/`textMuted`, label `Esperando respuesta…` while pending).
 - Service status (amendment, 13 October 2026): the tab reads the gateway's status when shown. While unavailable a banner sits under
