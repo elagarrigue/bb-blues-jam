@@ -28,9 +28,9 @@ class JamScheduleToolTest {
     fun `an upcoming draft is also the last jam`() {
         assertEquals(
             """
-            today 2026-10-14 (Buenos Aires)
-            upcoming 2026-10-31 21:30 | La Macanuda | BORRADOR
-            last 2026-10-31 21:30 | La Macanuda
+            today 2026-10-14 (miércoles 14 de octubre, Buenos Aires)
+            upcoming 2026-10-31 (sábado 31 de octubre) 21:30 | La Macanuda | BORRADOR
+            last 2026-10-31 (sábado 31 de octubre) 21:30 | La Macanuda
             """.trimIndent(),
             JamScheduleTool.render(JamsSnapshot(upcoming, listOf(past), fresh), today),
         )
@@ -40,9 +40,9 @@ class JamScheduleToolTest {
     fun `with no upcoming jam the last one is the newest past jam`() {
         assertEquals(
             """
-            today 2026-10-14 (Buenos Aires)
+            today 2026-10-14 (miércoles 14 de octubre, Buenos Aires)
             upcoming none
-            last 2026-09-26 20:00 | Bar del Sur
+            last 2026-09-26 (sábado 26 de septiembre) 20:00 | Bar del Sur
             """.trimIndent(),
             JamScheduleTool.render(JamsSnapshot(null, listOf(past), fresh), today),
         )
@@ -52,11 +52,11 @@ class JamScheduleToolTest {
     fun `a published upcoming jam says PUBLICADA and no jams at all says none twice`() {
         val published = upcoming.copy(status = JamStatus.PUBLISHED, setlist = Setlist.Available(emptyList()))
         assertEquals(
-            "upcoming 2026-10-31 21:30 | La Macanuda | PUBLICADA",
+            "upcoming 2026-10-31 (sábado 31 de octubre) 21:30 | La Macanuda | PUBLICADA",
             JamScheduleTool.render(JamsSnapshot(published, emptyList(), fresh), today).lines()[1],
         )
         assertEquals(
-            "today 2026-10-14 (Buenos Aires)\nupcoming none\nlast none",
+            "today 2026-10-14 (miércoles 14 de octubre, Buenos Aires)\nupcoming none\nlast none",
             JamScheduleTool.render(JamsSnapshot(null, emptyList(), fresh), today),
         )
     }
@@ -65,7 +65,7 @@ class JamScheduleToolTest {
     fun `a created upcoming jam says CREADA`() {
         val created = upcoming.copy(status = JamStatus.CREATED)
         assertEquals(
-            "upcoming 2026-10-31 21:30 | La Macanuda | CREADA",
+            "upcoming 2026-10-31 (sábado 31 de octubre) 21:30 | La Macanuda | CREADA",
             JamScheduleTool.render(JamsSnapshot(created, emptyList(), fresh), today).lines()[1],
         )
     }

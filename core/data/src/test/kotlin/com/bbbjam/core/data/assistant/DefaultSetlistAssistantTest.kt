@@ -246,7 +246,7 @@ class DefaultSetlistAssistantTest {
         val toolResult = messages(server.takeRequest()).map { it.jsonObject }.single {
             it.getValue("role").jsonPrimitive.content == "tool"
         }
-        assertTrue(contentOf(toolResult).contains("today 2026-10-14 (Buenos Aires)"))
+        assertTrue(contentOf(toolResult).contains("today 2026-10-14 (miércoles 14 de octubre, Buenos Aires)"))
     }
 
     @Test

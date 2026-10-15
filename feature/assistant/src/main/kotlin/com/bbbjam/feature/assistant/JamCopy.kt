@@ -51,8 +51,8 @@ internal object JamCopy {
         "Queda en espera: la próxima jam sigue siendo la del ${ApplyCopy.jamDate(upcoming)}."
 
     fun blockedEarlier(upcoming: LocalDate): String =
-        "Esa fecha es anterior a la próxima jam (${ApplyCopy.jamDate(upcoming)}): la dejaría en espera. " +
-            "Si de verdad querés eso, agregala en la planilla."
+        "Esa fecha es anterior a la próxima jam (${ApplyCopy.jamDate(upcoming)}). " +
+            "Si querés adelantarla, cambiá la fecha de esa jam en la pestaña Jams."
 
     fun heldBackLine(upcoming: LocalDate): String =
         "La próxima jam sigue siendo la del ${ApplyCopy.jamDate(upcoming)}; esta queda en espera hasta que pase."

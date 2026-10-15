@@ -1,0 +1,5 @@
+127 tests completed, 1 failed
+95 tests completed, 1 failed
+144 tests completed, 2 failed
+348 tests completed, 6 failed, 1 skipped
+BUILD FAILED in 19s

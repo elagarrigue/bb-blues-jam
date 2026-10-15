@@ -28,7 +28,6 @@ object JamFormText {
     ).lowercase()} ${date.dayOfMonth} de ${SpanishDateNames.month(date.month)}"
 
     /** The error of a date before the upcoming jam, which would put that jam on hold. */
-    fun earlierError(upcoming: LocalDate): String =
-        "Es antes de la próxima jam (${sentenceDate(upcoming)}) y la dejaría en espera. " +
-            "Si de verdad querés eso, agregala en la planilla."
+    fun earlierError(upcoming: LocalDate): String = "Es antes de la próxima jam (${sentenceDate(upcoming)}). " +
+        "Si querés adelantar esa jam, editá su fecha en Jams."
 }

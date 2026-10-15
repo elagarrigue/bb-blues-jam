@@ -1580,5 +1580,28 @@
       "Composable presenter tested with Molecule (D-02), Spanish vos copy, BluesJamTheme tokens only (D-17)",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (stop at the confirmation dialogs)"
     ]
+  },
+  {
+    "id": "jam-date-copy-polish",
+    "area": "assistant",
+    "title": "Readable dates in the assistant's text and no 'agregala en la planilla' for an earlier date",
+    "user_visible_behavior": "The assistant writes dates in its message and questions the way the app does (\"sábado 31 de octubre\"), never ISO 2026-10-31. When a new jam's date is earlier than the upcoming jam, the form (Jams tab and Asistente) no longer sends the admin to the Sheet: it explains the date is before the upcoming jam and points to the in-app way (change the upcoming jam's date in the Jams tab).",
+    "depends_on": [
+      "assistant-proposal-targets"
+    ],
+    "status": "accepted",
+    "evidence": [
+      "Red first: amended copy/tool/prompt tests failed before the change (docs/evidence/jam-date-copy-polish/red-run.txt: 1+1+2+6 failures across core:data, core:ui, feature:assistant, feature:past-jams)",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1055 testcases (1 skipped, 0 failures) from build/test-results (docs/evidence/jam-date-copy-polish/gate.txt)",
+      "jamSchedule render adds the display date next to ISO (JamScheduleToolTest); AssistantPromptTest asserts the long-date rule, jam.date ISO and no Sheet; EARLIER copies amended in 4 tests; jamCreationPlan/jamEditPlan and their tests untouched",
+      "Device (Pixel): app installed, Asistente tab opened, request typed but NOT sent: the auto-mode classifier denied the Enviar tap. The live long-date check did not run. Startup jams log before: upcoming 2026-10-31 draft, 1 held back 2026-11-13; nothing written",
+      "Independent validator accepted on 15 October 2026 after CI=true ./init.sh (konsist/detekt/ktlint wired, 1055 testcases, 0 failures); copy checked against jamEditPlan; plans untouched; :core:data imports no :core:ui. Owed by the user: one live read-only Asistente request to confirm the model writes long dates (the agent's Enviar tap was denied by the permission classifier; nothing was sent)."
+    ],
+    "verification": [
+      "The agent system prompt asks for Spanish long dates in message and questions; structured JSON fields keep ISO dates; a prompt test asserts the instruction; a live call (read-only, no Sheet write) shows a long date",
+      "The EARLIER copy in core/ui JamFormText and feature/assistant JamCopy no longer mentions the planilla and names the in-app path; tests asserting the old copy are amended; vos copy (D-12)",
+      "No behaviour change to the date rules (jamCreationPlan, jamEditPlan)",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet"
+    ]
   }
 ]

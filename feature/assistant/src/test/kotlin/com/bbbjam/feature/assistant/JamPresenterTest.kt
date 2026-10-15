@@ -153,8 +153,8 @@ class JamPresenterTest {
             val earlier = awaitProposal { it.jam?.note != null }.jam!!
             assertNull(earlier.action)
             assertEquals(
-                "Esa fecha es anterior a la próxima jam (sábado 31 de octubre): la dejaría en espera. " +
-                    "Si de verdad querés eso, agregala en la planilla.",
+                "Esa fecha es anterior a la próxima jam (sábado 31 de octubre). " +
+                    "Si querés adelantarla, cambiá la fecha de esa jam en la pestaña Jams.",
                 earlier.note,
             )
             cancelAndIgnoreRemainingEvents()

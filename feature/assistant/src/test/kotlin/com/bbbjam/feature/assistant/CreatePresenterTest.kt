@@ -154,8 +154,8 @@ class CreatePresenterTest {
                 "1/10/2026" to "Esa fecha ya pasó.",
                 "31/10/2026" to "Ya hay una jam ese día.",
                 "20/10/2026" to
-                    "Es antes de la próxima jam (sábado 31 de octubre) y la dejaría en espera. " +
-                    "Si de verdad querés eso, agregala en la planilla.",
+                    "Es antes de la próxima jam (sábado 31 de octubre). " +
+                    "Si querés adelantar esa jam, editá su fecha en Jams.",
             )
             for ((typed, error) in cases) {
                 form.events(JamFormUiModel.Event.Edit(JamFormField.DATE, typed))

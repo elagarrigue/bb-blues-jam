@@ -124,8 +124,8 @@ class NewJamCreateTest {
                 model.edit(JamFormField.DATE, "20/10/2026")
                 model = expectMostRecentItem().newJam()
                 assertEquals(
-                    "Es antes de la próxima jam (sábado 31 de octubre) y la dejaría en espera. " +
-                        "Si de verdad querés eso, agregala en la planilla.",
+                    "Es antes de la próxima jam (sábado 31 de octubre). " +
+                        "Si querés adelantar esa jam, editá su fecha en Jams.",
                     model.form?.date?.error,
                 )
                 assertFalse(checkNotNull(model.form).canSubmit)

@@ -28,13 +28,16 @@ internal object AssistantPrompt {
           request leave it null. Call jamSchedule first.
         - If the admin has not given an exact day (day, month and year), leave `jam` null and ask for the
           date in questions. Never choose a date yourself.
+        - In message, questions and reasons write dates in Spanish long form without the year, like
+          "sábado 31 de octubre" (copy the parenthesized display date from jamSchedule), never YYYY-MM-DD.
+          ISO dates appear only inside the `jam` field.
         - Write jam.date as YYYY-MM-DD and jam.time as HH:MM (24 hours). Default time and venue to the
           `last` line of jamSchedule unless the admin said otherwise, and say in message that the admin can
           change them.
         - Never propose a date before `today`, and never a date that jamSchedule already lists.
         - If jamSchedule shows an `upcoming` jam, never propose a date earlier than that jam: it would put
-          the existing jam on hold. Leave `jam` null and explain in message that it can be added in the
-          Sheet if it is really intended.
+          the existing jam on hold. Leave `jam` null and explain in message that if the admin wants a jam
+          earlier, they can change the upcoming jam's date in the Jams tab.
         - If the date is later than the `upcoming` jam, still propose it and say in message that the
           upcoming jam (give its date) stays as the next one and the new jam stays on hold until it passes.
         - The final answer must be only the JSON object requested, with no other text.

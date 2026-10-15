@@ -41,13 +41,23 @@ internal class JamScheduleTool(private val jams: JamsRepository, private val cal
             val upcoming = snapshot.upcoming
             val last = upcoming ?: snapshot.past.firstOrNull()
             return listOf(
-                "today $today (Buenos Aires)",
+                "today $today (${longDate(today)}, Buenos Aires)",
                 upcoming?.let { "upcoming ${line(it)} | ${statusText(it)}" } ?: "upcoming none",
                 last?.let { "last ${line(it)}" } ?: "last none",
             ).joinToString("\n")
         }
 
-        private fun line(jam: Jam) = "${jam.date} ${jam.startTime} | ${jam.venue}"
+        private fun line(jam: Jam) = "${jam.date} (${longDate(jam.date)}) ${jam.startTime} | ${jam.venue}"
+
+        private val DAYS = listOf("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+        private val MONTHS = listOf(
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        )
+
+        /** "sábado 31 de octubre": the display date the model must copy into free text. */
+        private fun longDate(date: LocalDate) =
+            "${DAYS[date.dayOfWeek.ordinal]} ${date.dayOfMonth} de ${MONTHS[date.monthValue - 1]}"
 
         private fun statusText(jam: Jam) = when (jam.status) {
             JamStatus.DRAFT -> "BORRADOR"
