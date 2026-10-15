@@ -22,6 +22,18 @@ internal fun failureMessage(reason: WriteOutcome): String = when (reason) {
     }
 }
 
+/** The failed edit or deletion reason: the edit codes first, then the shared outcomes. */
+internal fun editFailureMessage(reason: WriteOutcome): String {
+    val code = (reason as? WriteOutcome.Rejected)?.code.orEmpty()
+    return when {
+        code == "jam_exists" || code == "tab_exists" -> PastJamsCopy.CREATE_EXISTS
+        code == "past_date" -> PastJamsCopy.DATE_PAST_ERROR
+        code == "setlist_changed" -> JamEditCopy.SETLIST_CHANGED
+        code.startsWith("invalid_") -> PastJamsCopy.CREATE_INVALID
+        else -> failureMessage(reason)
+    }
+}
+
 /** Publication warns that a timeout can follow a successful server write, so retry remains safe. */
 internal fun publishFailureMessage(reason: WriteOutcome): String = when (reason) {
     WriteOutcome.Offline -> PastJamsCopy.PUBLISH_OFFLINE

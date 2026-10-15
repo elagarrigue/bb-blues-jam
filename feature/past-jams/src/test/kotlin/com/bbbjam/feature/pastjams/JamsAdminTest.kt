@@ -60,7 +60,10 @@ class JamsAdminTest {
     private fun snapshot(upcoming: Jam? = null, heldBack: List<Jam> = emptyList(), past: List<Jam> = emptyList()) =
         JamsSnapshot(upcoming, past, fetched, heldBack)
 
-    private fun presenter() = PastJamsPresenter(repository, calendar, session, statuses, publishes, creator)
+    private val edits = FakeJamEditRepository()
+
+    private fun presenter() =
+        PastJamsPresenter(repository, calendar, session, JamsAdminWrites(statuses, publishes, creator, edits))
 
     private fun PastJamsUiModel.admin(): JamsAdminUiModel? = when (this) {
         is PastJamsUiModel.Jams -> admin
@@ -70,7 +73,7 @@ class JamsAdminTest {
 
     private fun PastJamsUiModel.card(): FutureJamUiModel = checkNotNull(admin()).future.first()
 
-    private fun PastJamsUiModel.controls(): JamControlsUiModel = checkNotNull(card().controls)
+    private fun PastJamsUiModel.controls(): JamControlsUiModel = card().controls
 
     private fun JamStatusUiModel.labels() = actions.map { it.label }
 
@@ -124,16 +127,17 @@ class JamsAdminTest {
                 assertEquals("Los músicos ven la fecha, pero todavía no la lista.", first.note)
                 assertEquals("12 temas", first.songCount)
                 assertNull(first.heldBack)
-                assertEquals(listOf("Pasar a borrador"), checkNotNull(first.controls).status.labels())
-                assertEquals("Publicar lista", (first.controls?.publish as PublishUiModel.Idle).label)
+                assertEquals(listOf("Pasar a borrador"), first.controls.status.labels())
+                assertEquals("Publicar lista", (first.controls.publish as PublishUiModel.Idle).label)
 
                 val second = admin.future[1]
                 assertEquals("Sábado 28 de noviembre · 21:00", second.dateLabel)
                 assertEquals(JamStatusBadgeUiModel("Borrador", isPublished = false), second.badge)
                 assertEquals("Los músicos todavía no ven esta jam.", second.note)
                 assertEquals("Sin temas todavía", second.songCount)
-                assertEquals("En espera: su estado se cambia cuando sea la próxima jam.", second.heldBack)
-                assertNull(second.controls)
+                assertEquals("En espera: la próxima jam es la del sábado 31 de octubre.", second.heldBack)
+                assertEquals(listOf("Pasar a creada"), second.controls.status.labels())
+                assertNull(second.controls.publish)
 
                 // The past rows are what a musician sees, under ANTERIORES.
                 assertEquals(listOf(LocalDate.of(2026, 7, 25)), model.rows.map { it.date })

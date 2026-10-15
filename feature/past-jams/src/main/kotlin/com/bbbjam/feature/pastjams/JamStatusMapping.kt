@@ -1,5 +1,6 @@
 package com.bbbjam.feature.pastjams
 
+import com.bbbjam.core.data.setlist.JamEdit
 import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.model.Jam
@@ -28,7 +29,8 @@ internal fun JamsAdminState.jamStatusUiModel(jam: Jam): JamStatusUiModel {
     val confirmTarget = statusConfirmTarget(status.confirming, jam.date)
         ?.takeIf { jam.status == JamStatus.PUBLISHED && it != JamStatus.PUBLISHED }
     val failed = mine.lastOrNull { it.state !is JamStatusChange.State.Sending }
-    val busy = changeSending || publishSending
+    val editSending = edits.any { it.jamDate == jam.date && it.state == JamEdit.State.Sending }
+    val busy = changeSending || publishSending || editSending
     return JamStatusUiModel(
         actions = if (busy) {
             emptyList()

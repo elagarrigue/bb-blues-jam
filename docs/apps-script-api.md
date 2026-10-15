@@ -5,9 +5,9 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and fifteen POST actions in local source: `checkPassphrase`,
+(`apps-script-jams-read-endpoint`), and eighteen POST actions in local source: `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
-`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam` and `setJamStatus`. Every POST
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam`, `setJamStatus`, `updateJam`, `deleteJam` and `checkJamEdit`. Every POST
 action passes the passphrase guard in the router. Earlier actions have the deployment history below;
 the latest local mutations are not live-verified. The user deferred one shared deployment and live
 checks until app implementation is complete.
@@ -259,7 +259,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -298,7 +298,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -748,6 +748,38 @@ The client `SetlistJamStatusRepository.setJamStatus(date, status)` maps `JamStat
 echo whose `date`/`status` differ or whose `changed` is not a boolean as `NotSet(Unavailable)`, and treats
 `unknown_action` (a script not yet redeployed) as `ScriptOutdated`. Room changes only after a confirmed echo:
 `markPublished` for `PUBLICADA`, `updateJamStatus` otherwise. There is no optimistic badge.
+
+### `updateJam`, `deleteJam` and `checkJamEdit` (`admin-edit-delete-jam`, D-28)
+
+All three are guarded, locked writes and the last entries of `ACTIONS`. They act on **future** jams only: the upcoming
+jam and the jams held back behind it (`requireFutureJam_`: `missing_tab`, `unknown_jam`, `duplicate_date`, then
+`jam_not_editable` for an unknown `estado` or a date before today). Past jams are never edited or deleted. The setlist
+mutations keep `requireEditableJam_` (upcoming only).
+
+`updateJam` takes `{date, newDate?, time?, venue?}`; absent fields stay. Refusals, all before any write and in this order:
+`invalid_date`, `invalid_new_date` (present and not a calendar day), `invalid_time` (present, not HH:MM), `invalid_venue`
+(same rules as `createJam`), `invalid_update` (none of the three present), the future-jam codes, then, only when the date
+changes, `past_date` (before today in the spreadsheet zone), `jam_exists` (another Jams row has the date, any `estado`)
+and `tab_exists` (a tab named like the new date exists). If every given value equals the row's (venue compared after
+normalization) the answer is `changed: false` with no write. Writes: a date change first renames the jam tab (when it
+exists) and checks the rename; then only the changed `fecha`/`hora`/`lugar` cells are written as plain text, flushed and
+read back (`estado` is never written). A mismatch restores the tab name (best effort) and is `internal_error`.
+Answer: `{ok, date, previousDate, time, venue, status, changed, tabRenamed}`. The server does not care whether the new
+date changes which jam is the upcoming one; the app blocks that (E9).
+
+`deleteJam` takes `{date, expectedSongs}`. Refusals before any write: `invalid_date`, `invalid_expected_songs` (not a
+non-negative integer), the future-jam codes, any error reading an unreadable jam tab, and `setlist_changed` (the tab's
+song count, 0 without a tab, differs from `expectedSongs`). It deletes the jam tab (if any) and checks it is gone, then
+deletes the Jams row and checks it is gone (a survivor is `internal_error`). The tab goes first so a failure in between
+leaves a jam with an empty setlist, never an orphan tab (which would make `createJam` refuse the date). Answer:
+`{ok, date, deletedSongs, tabDeleted}`.
+
+`checkJamEdit` works only on tabs named `_prueba_editar_jam*`: it builds a Jams-like tab and a jam tab, renames the jam
+tab, writes a row's cells, deletes a tab and a row, reads everything back, and deletes every temporary tab in `finally`.
+It never opens `Jams`. Do not run `updateJam`, `deleteJam` or `setJamStatus` by hand against the real Sheet.
+
+`setJamStatus` (U1): targets `BORRADOR` and `CREADA` now also accept a held-back future jam (`requireFutureJam_`);
+`PUBLICADA` (and `publishSetlist`) stay upcoming-only, because only the upcoming jam has an app-built setlist.
 
 ### `publishSetlist` and `checkPublish` (`admin-publish-setlist`)
 

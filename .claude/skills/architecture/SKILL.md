@@ -1030,6 +1030,28 @@ held-back jams and creates the next one.
   launches `creator.createJam` undispatched; the card appears from Room after the server echo. If the tab's
   composition dies mid-call the write finishes in `DataScope` and only the result line is lost.
 
+## As built by `admin-edit-delete-jam`
+
+The admin edits and deletes future jams from the Jams tab (D-28).
+
+- **Server (E1-E5, U1).** `updateJam`, `deleteJam` and `checkJamEdit` are the last entries of `ACTIONS`.
+  `requireFutureJam_` (any known-`estado` jam dated today or later) guards them and the BORRADOR/CREADA targets of
+  `setJamStatus`; `requireEditableJam_` (upcoming only) still guards every setlist mutation and PUBLICADA.
+- **Repository (E6, E7).** `SetlistJamEditRepository` is part of `SetlistRepository`; `SetlistJamEdits` runs on the
+  shared `SetlistMutationQueue` with the `scope.async(UNDISPATCHED)` pattern. Room follows only a confirmed echo:
+  `SetlistJamEditDao.moveJam` copies the jam, songs, slots and extras to the new date in one transaction and deletes the
+  old row (children cascade); a delete drops the row. No schema change.
+- **Date rule (E9).** `jamEditPlan` (pure, `:core:data` `jams/`) blocks an edit that would change which jam is the
+  upcoming one; the server stays generic.
+- **Registry (E10).** 14 mutations: `UPDATE_JAM` and `DELETE_JAM` with `SetlistAction.UpdateJam` and `DeleteJam`
+  (nested under `JamEditAction` so `dispatch` stays under detekt's complexity limit).
+- **Jams tab (C1-C7).** `PastJamsPresenter(jams, calendar, adminSession, writes)` takes `JamsAdminWrites(statuses,
+  publishes, creator, edits)` (constructor injection, a `factory` in `pastJamsModule`; `:app` binds
+  `SetlistJamEditRepository` to the one `SetlistRepository`). Every future card has `controls` (publish on the upcoming
+  card only) and `manage` (`JamManageUiModel`); the edit and delete dialogs are section-level models drawn by the card
+  they are for, with saveable keys that close themselves if the jam leaves the snapshot. `checkJamEdit` (pure) layers on
+  `jamEditPlan` and the `Nueva jam` parsers.
+
 ## Anti-Patterns
 
 | Do not | Instead |

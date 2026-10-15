@@ -4,6 +4,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.SetlistJamEditRepository
 import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
 import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.feature.pastjams.di.pastJamsModule
@@ -23,6 +24,7 @@ class PastJamsModuleTest {
             single<SetlistJamStatusRepository> { FakeJamStatusRepository() }
             single<SetlistPublishRepository> { FakePublishRepository() }
             single<JamCreator> { FakeJamCreator() }
+            single<SetlistJamEditRepository> { FakeJamEditRepository() }
         }
         val app = koinApplication { modules(pastJamsModule, dataBindings) }
         try {

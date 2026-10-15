@@ -99,9 +99,7 @@ class PastJamsPresenterTest {
         repository,
         calendar,
         FakeAdminSession(),
-        FakeJamStatusRepository(),
-        FakePublishRepository(),
-        FakeJamCreator(),
+        JamsAdminWrites(FakeJamStatusRepository(), FakePublishRepository(), FakeJamCreator(), FakeJamEditRepository()),
     )
 
     /** Skips models until one matches: a re-subscription may recompose once with the same model. */

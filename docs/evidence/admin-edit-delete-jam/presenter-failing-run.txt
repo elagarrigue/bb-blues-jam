@@ -1,0 +1,246 @@
+Calculating task graph as no cached configuration is available for tasks: :feature:past-jams:testDebugUnitTest --tests *JamEditAdminTest --tests *JamEditFormTest
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :feature:past-jams:preBuild UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:data:preBuild UP-TO-DATE
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :feature:past-jams:preDebugBuild UP-TO-DATE
+> Task :feature:past-jams:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :core:data:generateDebugResources UP-TO-DATE
+> Task :feature:past-jams:javaPreCompileDebug UP-TO-DATE
+> Task :core:data:javaPreCompileDebug UP-TO-DATE
+> Task :feature:past-jams:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :core:data:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :feature:past-jams:generateDebugResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :feature:past-jams:processDebugNavigationResources UP-TO-DATE
+> Task :feature:past-jams:packageDebugResources UP-TO-DATE
+> Task :core:data:packageDebugResources UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :feature:past-jams:parseDebugLocalResources UP-TO-DATE
+> Task :core:data:parseDebugLocalResources UP-TO-DATE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :core:data:generateDebugRFile UP-TO-DATE
+> Task :feature:past-jams:generateDebugRFile UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :feature:past-jams:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:data:kspDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:processDebugJavaRes UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:data:compileDebugKotlin UP-TO-DATE
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:processDebugJavaRes UP-TO-DATE
+> Task :core:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:past-jams:compileDebugKotlin UP-TO-DATE
+> Task :feature:past-jams:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:past-jams:processDebugJavaRes UP-TO-DATE
+> Task :feature:past-jams:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :feature:past-jams:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :feature:past-jams:compileDebugUnitTestKotlin FAILED
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:67:58 Unresolved reference 'JamsAdminWrites'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:67:58 No value passed for parameter 'publishes'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:67:58 No value passed for parameter 'creator'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:90:53 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:91:53 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:92:54 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:93:54 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:106:58 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:107:39 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:121:35 Unresolved reference 'musicianNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:124:42 Unresolved reference 'musicianNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:127:59 Unresolved reference 'musicianNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:131:59 Unresolved reference 'musicianNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:153:39 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:154:28 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:154:42 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:156:24 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:156:50 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:157:48 Unresolved reference 'title'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:158:40 Unresolved reference 'dateLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:159:45 Unresolved reference 'dateHint'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:160:39 Unresolved reference 'timeLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:161:40 Unresolved reference 'venueLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:162:45 Unresolved reference 'date'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:163:40 Unresolved reference 'time'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:164:46 Unresolved reference 'venue'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:165:38 Unresolved reference 'canSave'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:166:42 Unresolved reference 'saveLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:167:43 Unresolved reference 'cancelLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:168:29 Unresolved reference 'dateNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:169:29 Unresolved reference 'visibilityNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:171:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:171:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:172:55 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:182:44 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:182:58 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:183:24 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:183:68 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:184:86 Unresolved reference 'visibilityNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:186:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:186:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:187:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:187:64 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:190:22 Unresolved reference 'dateError'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:192:38 Unresolved reference 'canSave'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:194:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:194:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:195:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:195:64 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:196:81 Unresolved reference 'timeError'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:198:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:198:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:199:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:199:64 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:200:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:200:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:201:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:201:64 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:202:29 Unresolved reference 'dateError'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:203:29 Unresolved reference 'timeError'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:204:90 Unresolved reference 'dateNote'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:205:37 Unresolved reference 'canSave'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:207:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:207:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:208:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:208:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:220:55 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:229:44 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:229:58 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:230:24 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:230:68 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:231:45 Unresolved reference 'date'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:232:18 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:232:25 Unresolved reference 'EditJamFormUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:233:27 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:233:71 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:236:25 Unresolved reference 'dateError'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:247:48 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:247:62 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:248:30 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:248:74 Unresolved reference 'deleteConfirm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:249:81 Unresolved reference 'title'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:257:28 Function invocation 'lines()' expected.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:259:54 Unresolved reference 'confirmLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:260:49 Unresolved reference 'cancelLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:262:24 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:262:31 Unresolved reference 'DeleteJamUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:263:59 Unresolved reference 'deleteConfirm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:266:48 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:266:62 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:267:29 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:267:73 Unresolved reference 'deleteConfirm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:268:23 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:268:30 Unresolved reference 'DeleteJamUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:269:23 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:269:30 Unresolved reference 'DeleteJamUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:279:44 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:279:58 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:287:17 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:287:61 Unresolved reference 'deleteConfirm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:287:76 Function invocation 'lines()' expected.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:292:13 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:292:40 Unresolved reference 'deleteConfirm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:292:55 Unresolved reference 'events'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:292:62 Unresolved reference 'DeleteJamUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:293:44 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:293:58 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:294:24 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:294:68 Unresolved reference 'deleteConfirm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:295:78 Unresolved reference 'title'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:302:22 Function invocation 'lines()' expected.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:318:60 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:319:32 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:320:32 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:324:30 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:325:49 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:331:55 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:332:33 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:350:38 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:351:57 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:364:57 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:365:27 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:366:63 Unresolved reference 'title'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:367:96 Unresolved reference 'message'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:368:63 Unresolved reference 'consequence'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:369:48 Unresolved reference 'retryLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:370:44 Unresolved reference 'dismissLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:372:27 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:385:27 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:405:26 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:405:53 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:406:61 Unresolved reference 'title'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:407:95 Unresolved reference 'message'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:408:31 Unresolved reference 'retryLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:409:28 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:409:55 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:410:64 Unresolved reference 'title'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:413:26 Unresolved reference 'message'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:415:33 Unresolved reference 'retryLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:425:48 Unresolved reference 'manage'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:425:62 Unresolved reference 'JamManageUiModel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:426:62 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:430:41 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditAdminTest.kt:437:42 Unresolved reference 'editForm'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:37:36 Unresolved reference 'formatFormDate'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:38:36 Unresolved reference 'formatFormDate'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:40:44 Unresolved reference 'formatFormDate'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:46:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:54:20 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:55:20 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:56:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:61:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:69:22 Unresolved reference 'JamEditDateProblem'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:69:49 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:71:13 Unresolved reference 'JamEditDateProblem'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:72:13 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:75:13 Unresolved reference 'JamEditDateProblem'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:76:13 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:78:20 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:79:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:82:44 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:87:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:88:22 Unresolved reference 'JamEditDateProblem'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:91:20 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:96:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:97:22 Unresolved reference 'JamEditDateProblem'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:100:20 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:105:21 Unresolved reference 'checkJamEdit'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/JamEditFormTest.kt:113:21 Unresolved reference 'checkJamEdit'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':feature:past-jams:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2s
+40 actionable tasks: 1 executed, 39 up-to-date
+Configuration cache entry stored.
+exit 1

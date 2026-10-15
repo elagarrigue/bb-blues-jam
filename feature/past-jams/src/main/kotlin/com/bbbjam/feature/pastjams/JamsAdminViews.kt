@@ -32,7 +32,7 @@ internal fun LazyListScope.adminUpcomingItems(admin: JamsAdminUiModel) {
     item(key = UPCOMING_HEADING_KEY) { SectionHeading(admin.upcomingHeading) }
     item(key = NEW_JAM_KEY) { NewJamBlock(admin.newJam) }
     admin.noFuture?.let { line -> item(key = NO_FUTURE_KEY) { NoFutureLine(line) } }
-    items(admin.future, key = { "future-${it.date}" }) { jam -> FutureJamCard(jam) }
+    items(admin.future, key = { "future-${it.date}" }) { jam -> FutureJamCard(jam, admin) }
 }
 
 /** The `ANTERIORES` heading, drawn for the admin only (a musician's list has no headings). */
@@ -61,12 +61,13 @@ private fun NoFutureLine(text: String) {
 }
 
 /**
- * One future jam: one card with the date, the venue and count, the badge and its note. The upcoming
- * jam's card also carries the status actions and `Publicar lista`; a held-back card carries its line
- * and no action. Colours only from [JamsAdminDefaults].
+ * One future jam: one card with the date, the venue and count, the badge and its note, the status
+ * actions and the edit and delete actions; the upcoming card also carries `Publicar lista`, a held-back
+ * card its line. The edit and delete dialogs of [admin] are drawn by the card they are for.
+ * Colours only from [JamsAdminDefaults].
  */
 @Composable
-private fun FutureJamCard(jam: FutureJamUiModel) {
+private fun FutureJamCard(jam: FutureJamUiModel, admin: JamsAdminUiModel) {
     val spacing = BluesJamTheme.spacing
     val typography = BluesJamTheme.typography
     val style = JamsAdminDefaults.card()
@@ -94,10 +95,14 @@ private fun FutureJamCard(jam: FutureJamUiModel) {
                 JamStatusBadge(jam.badge)
                 Text(text = jam.note, style = typography.caption, color = style.note)
                 jam.heldBack?.let { Text(text = it, style = typography.caption, color = style.note) }
-                jam.controls?.let { JamControls(it) }
+                jam.musicianNote?.let { Text(text = it, style = typography.caption, color = style.note) }
+                JamControls(jam.controls)
+                JamManageActions(jam.manage)
             }
         }
     }
+    admin.editForm?.takeIf { it.jamDate == jam.date }?.let { EditJamDialog(it) }
+    admin.deleteConfirm?.takeIf { it.jamDate == jam.date }?.let { DeleteJamDialog(it) }
 }
 
 @Composable

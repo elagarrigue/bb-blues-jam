@@ -190,7 +190,7 @@ const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
 test('the action table: checkPassphrase and readJams read, every other action writes', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus']);
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus', 'updateJam', 'deleteJam', 'checkJamEdit']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
@@ -206,6 +206,9 @@ test('the action table: checkPassphrase and readJams read, every other action wr
   assert.equal(ACTIONS.createJam.write, true);
   assert.equal(ACTIONS.checkCreateJam.write, true);
   assert.equal(ACTIONS.setJamStatus.write, true);
+  assert.equal(ACTIONS.updateJam.write, true);
+  assert.equal(ACTIONS.deleteJam.write, true);
+  assert.equal(ACTIONS.checkJamEdit.write, true);
   for (const name of ACTION_NAMES) {
     assert.deepStrictEqual(Object.keys(ACTIONS[name]).sort(), ['run', 'write']);
     assert.equal(typeof ACTIONS[name].run, 'function');
@@ -490,7 +493,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -517,7 +520,7 @@ test('no response, message, cache key or cache value contains the stored or the 
             assert.ok(!text.includes('zz-submitted-marker') && !text.includes('definitely-wrong'), `submitted passphrase leaked: ${text}`);
           }
           // The tabs the actions are documented to open (docs/apps-script-api.md); never any other.
-          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, PUBLISH_CHECK_TAB, CREATE_JAM_CHECK_TAB, 'Jams', 'Catalogo'];
+          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, PUBLISH_CHECK_TAB, CREATE_JAM_CHECK_TAB, JAM_EDIT_CHECK_TAB, `${JAM_EDIT_CHECK_TAB}_a`, `${JAM_EDIT_CHECK_TAB}_b`, 'Jams', 'Catalogo'];
           assert.ok(fake.requested.every((name) => allowed.includes(name)), `requested ${fake.requested}`);
           for (const [key, value] of services.cache.store) {
             assert.match(key, /^auth_failures_\d+$/);
@@ -595,7 +598,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus'));
+  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit'));
   });
   withAppsScript({
     getActiveSpreadsheet() {
@@ -647,5 +650,9 @@ test('Post.js holds the lines the README tells the user to look for after pastin
   assert.ok(source.includes('removeSong: { write: true, run: removeSong_ },'));
   assert.ok(source.includes('setKey: { write: true, run: setKey_ },'));
   assert.ok(source.includes('setJamStatus: { write: true, run: setJamStatus_ },'));
+  assert.ok(source.includes('updateJam: { write: true, run: updateJam_ },'));
+  assert.ok(source.includes('deleteJam: { write: true, run: deleteJam_ },'));
+  assert.ok(source.includes('var JAM_EDIT_CHECK_TAB'));
+  assert.ok(source.includes('function requireFutureJam_'));
   assert.ok(!source.includes('checkPassphrase: checkPassphrase_,'), 'the old marker must be gone, so an old paste is detectable');
 });

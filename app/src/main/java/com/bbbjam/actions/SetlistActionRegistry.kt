@@ -4,6 +4,7 @@ import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.AssignSlotOutcome
 import com.bbbjam.core.data.setlist.ClearSlotOutcome
 import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.DeleteJamOutcome
 import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.PublishOutcome
@@ -12,6 +13,7 @@ import com.bbbjam.core.data.setlist.SetJamStatusOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.UpdateJamOutcome
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
@@ -34,6 +36,8 @@ enum class SetlistMutation {
     PUBLISH_SETLIST,
     CREATE_JAM,
     SET_JAM_STATUS,
+    UPDATE_JAM,
+    DELETE_JAM,
 }
 
 sealed interface SetlistAction {
@@ -111,6 +115,17 @@ sealed interface SetlistAction {
         override val mutation = SetlistMutation.SET_JAM_STATUS
     }
 
+    sealed interface JamEditAction : SetlistAction
+
+    data class UpdateJam(val jamDate: LocalDate, val newDate: LocalDate, val startTime: LocalTime, val venue: String) :
+        JamEditAction {
+        override val mutation = SetlistMutation.UPDATE_JAM
+    }
+
+    data class DeleteJam(val jamDate: LocalDate, val expectedSongs: Int) : JamEditAction {
+        override val mutation = SetlistMutation.DELETE_JAM
+    }
+
     companion object {
         private val DATE = LocalDate.of(2026, 10, 31)
         private val SONG = SongId("red-house")
@@ -131,6 +146,8 @@ sealed interface SetlistAction {
             PublishSetlist(DATE),
             CreateJam(DATE, LocalTime.of(21, 0), "La Macanuda"),
             SetJamStatus(DATE, JamStatus.CREATED),
+            UpdateJam(DATE, DATE.plusDays(7), LocalTime.of(21, 0), "La Macanuda"),
+            DeleteJam(DATE, 0),
         )
     }
 }
@@ -148,6 +165,8 @@ sealed interface SetlistActionResult {
     data class SetlistPublished(val outcome: PublishOutcome) : SetlistActionResult
     data class JamCreated(val outcome: CreateJamOutcome) : SetlistActionResult
     data class JamStatusSet(val outcome: SetJamStatusOutcome) : SetlistActionResult
+    data class JamUpdated(val outcome: UpdateJamOutcome) : SetlistActionResult
+    data class JamDeleted(val outcome: DeleteJamOutcome) : SetlistActionResult
 }
 
 class SetlistActionRegistry(private val repository: SetlistRepository) {
@@ -212,6 +231,18 @@ class SetlistActionRegistry(private val repository: SetlistRepository) {
 
         is SetlistAction.SetJamStatus -> SetlistActionResult.JamStatusSet(
             repository.setJamStatus(action.jamDate, action.status),
+        )
+
+        is SetlistAction.JamEditAction -> dispatchEdit(action)
+    }
+
+    private suspend fun dispatchEdit(action: SetlistAction.JamEditAction): SetlistActionResult = when (action) {
+        is SetlistAction.UpdateJam -> SetlistActionResult.JamUpdated(
+            repository.updateJam(action.jamDate, action.newDate, action.startTime, action.venue),
+        )
+
+        is SetlistAction.DeleteJam -> SetlistActionResult.JamDeleted(
+            repository.deleteJam(action.jamDate, action.expectedSongs),
         )
     }
 }

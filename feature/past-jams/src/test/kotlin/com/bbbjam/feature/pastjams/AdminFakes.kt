@@ -4,13 +4,17 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.DeleteJamOutcome
 import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.JamEdit
 import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.PublishOutcome
 import com.bbbjam.core.data.setlist.SetJamStatusOutcome
+import com.bbbjam.core.data.setlist.SetlistJamEditRepository
 import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
 import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.data.setlist.SetlistPublishRepository
+import com.bbbjam.core.data.setlist.UpdateJamOutcome
 import com.bbbjam.core.model.JamStatus
 import java.time.LocalDate
 import java.time.LocalTime
@@ -92,3 +96,38 @@ class FakeJamCreator : JamCreator {
 
 /** A refusal outcome for tests. */
 fun notCreated(code: String): CreateJamOutcome = CreateJamOutcome.NotCreated(WriteOutcome.Rejected(code))
+
+/** Records every edit and deletion; [entries] is what `observeJamEdits` emits, a [hold] keeps a call open. */
+class FakeJamEditRepository : SetlistJamEditRepository {
+    data class Update(val jamDate: LocalDate, val newDate: LocalDate, val time: LocalTime, val venue: String)
+
+    val entries = MutableStateFlow<List<JamEdit>>(emptyList())
+    val updates = mutableListOf<Update>()
+    val deletes = mutableListOf<Pair<LocalDate, Int>>()
+    val dismissed = mutableListOf<Long>()
+    var hold: CompletableDeferred<Unit>? = null
+
+    override suspend fun updateJam(
+        jamDate: LocalDate,
+        newDate: LocalDate,
+        startTime: LocalTime,
+        venue: String,
+    ): UpdateJamOutcome {
+        updates += Update(jamDate, newDate, startTime, venue)
+        hold?.await()
+        return UpdateJamOutcome.Updated(newDate, startTime, venue, changed = true)
+    }
+
+    override suspend fun deleteJam(jamDate: LocalDate, expectedSongs: Int): DeleteJamOutcome {
+        deletes += jamDate to expectedSongs
+        hold?.await()
+        return DeleteJamOutcome.Deleted(expectedSongs)
+    }
+
+    override fun observeJamEdits(): Flow<List<JamEdit>> = entries
+
+    override fun dismissJamEdit(id: Long) {
+        dismissed += id
+        entries.value = entries.value.filterNot { it.id == id && it.state !is JamEdit.State.Sending }
+    }
+}

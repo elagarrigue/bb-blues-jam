@@ -767,8 +767,11 @@ jam first, BORRADOR included (D-26); with none, the line `No hay ninguna jam pro
 (`shapes.md`): the date `Sábado 31 de octubre · 21:00` (`songTitle`, `text`), the venue and `12 temas` / `1 tema` /
 `Sin temas todavía` / `No se pudo leer la lista` (`body`, `textMuted`), the shared status badge (`:core:ui`, the
 "Status badge" component) and its note (`caption`, `textMuted`). The upcoming card carries the status actions and
-`Publicar lista`, below. A held-back card has the line `En espera: su estado se cambia cuando sea la próxima jam.` and no
-action (the server changes only the upcoming jam's status). Cards are not tappable; the list is edited in Próxima jam.
+`Publicar lista`, below. Every future card carries the status actions (`Pasar a creada` / `Pasar a borrador`) and the
+edit and delete actions (see the next section); `Publicar lista` stays on the upcoming card only. A held-back card has the
+line `En espera: la próxima jam es la del sábado 31 de octubre.` (`caption`, `textMuted`); a held-back CREADA or PUBLICADA
+card behind a BORRADOR upcoming jam adds `Los músicos la ven como la próxima jam, porque la del sábado 31 de octubre está
+en borrador.` Cards are not tappable; the list is edited in Próxima jam.
 
 `Nueva jam` opens a modal `AlertDialog` (`surfaceRaised`): three labelled outlined fields (`Fecha` `DD/MM/AAAA`, `Hora`
 `HH:MM`, `Lugar`; fecha and hora use the numeric keyboard and accept `/`, `-`, `.` and `:`, `.`), field errors in `error`
@@ -779,6 +782,21 @@ la próxima jam sigue siendo la del sábado 31 de octubre.`; every creation says
 ven hasta que la pases a creada o publiques la lista.` `Crear la jam` closes the dialog and shows `Creando la jam…` (polite),
 then `Jam creada como borrador.`, or an assertive failure card (`No se pudo crear la jam`, the reason, `La jam no se creó.`,
 `Reintentar`, `Cerrar`; with an outdated script, `Cerrar` only). The new card appears only after the server answers.
+
+### Editing and deleting a jam (admin-edit-delete-jam)
+
+Under the status block of every future card, two neutral underlined 48dp text actions (`text`, `Role.Button`, never amber):
+`Editar la jam` and `Borrar la jam` (the second only when the setlist is readable, so its song count is known). While the
+jam is being written the card shows one polite line (`Guardando los cambios…` / `Borrando la jam…`, `textMuted`) instead of
+every action; edit and delete are also hidden while a status change or publication of that jam is sending. The edit dialog is
+the `Nueva jam` dialog (`surfaceRaised`, three labelled outlined fields seeded with the jam, `error` `caption` field errors,
+`textMuted` notes `La lista y los músicos anotados pasan a la nueva fecha.` and `Los músicos ven el cambio cuando
+actualicen la app.`, `Guardar` in `text`, `textMuted` when disabled, and `Cancelar` in `text`). An edit may not change which
+jam is the upcoming one: the date shows an `error` line naming the other jam. The delete dialog is a modal `AlertDialog` like
+the unpublish dialog (`surfaceRaised`, `text` title `¿Borrar la jam del sábado 31 de octubre?`, `textMuted` `caption` lines:
+the song count, what musicians stop seeing, which jam is next afterwards, `No se puede deshacer.`; `Borrar la jam` in
+`error`, `Cancelar` in `text`). A failure is the assertive card of the status block (`No se pudo guardar la jam` / `No se pudo
+borrar la jam`, the reason, `La jam sigue como estaba.`, `Reintentar`, `Cerrar`). No amber is added; the allowlist is unchanged.
 
 Publishing and changing the status moved here from Próxima jam, with the same visuals, onto the upcoming card:
 

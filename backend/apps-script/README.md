@@ -93,7 +93,7 @@ create a second URL, and the app would keep calling the old version. After deplo
 `?resource=config` replies `unknown_resource` after the pending deployment, with the message ending in `Known: catalog, jams`
 (the route list of the code now in `src/Code.js`); an older list means the deployment still runs
 an old `Code.gs`. Since `admin-passphrase-login`, also check that `curl -sL -d '{}' "$URL"` replies
-`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus`
+`unknown_action` after the pending deployment, with the message ending in `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit`
 (the action list in the current `ACTIONS` table in `src/Post.js`; a list ending in `clearSlot`
 is missing the reorder actions, while a list ending in `checkSetlistRemove`
 means the `admin-remove-song-from-setlist` version without set-key, one ending in
@@ -265,7 +265,7 @@ are.
    `_prueba_lista` within one request), then set-key's (`checkSetlistWrite`, now also rewriting
    its marker's key, does the same). After the deploy, `curl -sL -d '{}' "$URL"` must end in
    `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong,
-   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus`. No check removes a song from or changes a key in a real jam.
+   checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit`. No check removes a song from or changes a key in a real jam.
 
 ### Temporary test jam for the draft check (user approval A3)
 
@@ -309,7 +309,7 @@ for i in $(seq 10); do curl -sL -o /dev/null -w "%{time_total}\n" "$URL?resource
 Passphrase check (`admin-passphrase-login`). Only obviously wrong values; never the real one:
 
 ```bash
-curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam"
+curl -sL -d '{}' "$URL"                                              # unknown_action, "... Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit"
 curl -sL -d '{"action":"checkPassphrase","passphrase":"definitely-wrong"}' "$URL"   # invalid_passphrase
 curl -sL -d 'not json' "$URL"                                        # invalid_request
 ```
@@ -471,12 +471,20 @@ jam.
 `createJam` and `checkCreateJam` are the last two entries of `ACTIONS`. Paste only `Post.gs`; it must contain
 `createJam: { write: true, run: createJam_ },` and `var CREATE_JAM_CHECK_TAB`. After the new version is deployed,
 `curl -sL -d '{"action":"deployProbe"}' "$URL"` (no passphrase, no write) answers `unknown_action` with a message
-ending `..., publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus`. Guide: `docs/migrations/assistant-create-jam-script-update.md`.
+ending `..., publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit`. Guide: `docs/migrations/assistant-create-jam-script-update.md`.
 
 ## `admin-set-jam-status` (pending deployment, combined with `jam-status-created`)
 
 `setJamStatus` is the last entry of `ACTIONS`; `publishSetlist` stays as a thin alias of it. Paste `Code.gs`, `Jams.gs`
 and `Post.gs`; `Post.gs` must contain `readAllJams_(` and `setJamStatus: { write: true, run: setJamStatus_ },`. After
 the new version is deployed, `curl -sL -d '{"action":"deployProbe"}' "$URL"` (no passphrase, no write) answers
-`unknown_action` with a message ending `..., publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus`.
+`unknown_action` with a message ending `..., publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit`.
 Guide: `docs/migrations/jam-status-script-update.md`.
+
+## `admin-edit-delete-jam` (pending deployment)
+
+`updateJam`, `deleteJam` and `checkJamEdit` are the last three entries of `ACTIONS`. Paste only `Post.gs`; it must contain
+`updateJam: { write: true, run: updateJam_ },`, `deleteJam: { write: true, run: deleteJam_ },`, `var JAM_EDIT_CHECK_TAB`
+and `function requireFutureJam_`. After the new version is deployed, `curl -sL -d '{"action":"deployProbe"}' "$URL"` (no
+passphrase, no write) answers `unknown_action` with a message ending `..., setJamStatus, updateJam, deleteJam, checkJamEdit`.
+Guide: `docs/migrations/admin-edit-delete-jam-script-update.md`.

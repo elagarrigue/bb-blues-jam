@@ -126,7 +126,9 @@ Three states (D-26, `jam-status-created`, which amends D-04 and D-25):
   next day. In a past jam an empty slot means "not recorded": the lineup keeps only filled slots,
   and no past jam ever shows an open slot.
 - **More than one future jam.** The earliest one is the upcoming jam; later ones are held back
-  (shown in neither list) and reported in the refresh log.
+  (shown in neither list) and reported in the refresh log. Since `admin-edit-delete-jam` (D-28) the admin edits the
+  date, time and venue of a future jam or deletes it from the Jams tab; a date change moves the jam with its tab, and an
+  edit never changes which jam is the upcoming one. A held-back jam can also change status (not to PUBLICADA).
 
 The transition DRAFT or CREATED → PUBLISHED is admin-initiated and writes through to the Sheet. Until `admin-set-jam-status`, publishing is the only status change made from the app; the others are made in the Sheet.
 
@@ -148,7 +150,7 @@ from the project entirely (D-04).
 |---|---|---|
 | Song catalog | Sheet | Sheet → app, read-only |
 | Past jams | Sheet | Sheet → app, read-only |
-| Upcoming jam row (creation only, D-25) | App | app → Sheet via Apps Script; later edits in the Sheet |
+| Future jam rows (D-25, D-28) | App | create, edit (date, time, venue) and delete via Apps Script; past jams stay in the Sheet |
 | Upcoming setlist | App | app → Sheet via Apps Script |
 | Published status | App | app → Sheet |
 

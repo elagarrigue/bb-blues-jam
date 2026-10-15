@@ -65,7 +65,7 @@ private fun dateError(check: NewJamCheck, shown: Boolean): String? = when {
     else -> null
 }
 
-private fun venueError(problem: VenueProblem?, touched: Boolean): String? = when (problem) {
+internal fun venueError(problem: VenueProblem?, touched: Boolean): String? = when (problem) {
     null -> null
 
     VenueProblem.EMPTY -> PastJamsCopy.VENUE_EMPTY_ERROR.takeIf { touched }

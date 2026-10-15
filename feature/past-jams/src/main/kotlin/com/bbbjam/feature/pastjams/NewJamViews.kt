@@ -152,7 +152,7 @@ private fun NewJamDialog(model: NewJamFormUiModel, events: EventHandler<NewJamUi
 }
 
 @Composable
-private fun FormField(
+internal fun FormField(
     label: String,
     value: String,
     hint: String?,

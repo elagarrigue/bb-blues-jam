@@ -35,7 +35,6 @@ internal object PastJamsCopy {
     const val UPCOMING_HEADING = "PRÓXIMAS"
     const val PAST_HEADING = "ANTERIORES"
     const val NO_FUTURE = "No hay ninguna jam programada."
-    const val HELD_BACK = "En espera: su estado se cambia cuando sea la próxima jam."
     const val NO_SONGS_YET = "Sin temas todavía"
     const val FUTURE_UNAVAILABLE = "No se pudo leer la lista"
 
@@ -107,6 +106,13 @@ internal object PastJamsCopy {
     fun sentenceDate(date: LocalDate): String = "${SpanishDateNames.day(
         date.dayOfWeek,
     ).lowercase()} ${date.dayOfMonth} de ${SpanishDateNames.month(date.month)}"
+
+    /** The line of a held-back card: which jam is the next one (`admin-edit-delete-jam` C3). */
+    fun heldBack(upcoming: LocalDate): String = "En espera: la próxima jam es la del ${sentenceDate(upcoming)}."
+
+    /** A visible held-back jam behind a BORRADOR upcoming jam is the musicians next jam (D-26). */
+    fun visibleBehindDraft(upcoming: LocalDate): String =
+        "Los músicos la ven como la próxima jam, porque la del ${sentenceDate(upcoming)} está en borrador."
 
     fun earlierError(upcoming: LocalDate): String =
         "Es antes de la próxima jam (${sentenceDate(upcoming)}) y la dejaría en espera. " +

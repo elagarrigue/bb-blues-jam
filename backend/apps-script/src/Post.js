@@ -43,6 +43,12 @@
  * alias of it (PUBLICADA, older answer shape) for installed admin builds. `checkPublish` also writes
  * CREADA on its temporary row and reads it back.
  *
+ * admin-edit-delete-jam adds `updateJam`, `deleteJam` and `checkJamEdit` (D-28): the fecha, hora and lugar
+ * of a future jam (upcoming or held back) change, and a jam is deleted with its tab; a date change
+ * renames the tab with the row. Every refusal happens before any write. `setJamStatus` also accepts
+ * BORRADOR and CREADA on held-back jams (requireFutureJam_); PUBLICADA and every setlist mutation
+ * stay upcoming-only.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
  * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -79,6 +85,9 @@ var PUBLISH_CHECK_TAB = '_prueba_publicar';
 
 /** The transient Jams tab checkCreateJam creates and deletes within one request. Never served. */
 var CREATE_JAM_CHECK_TAB = '_prueba_crear_jam';
+
+/** The transient tabs checkJamEdit creates and deletes (this name and `_a`, `_b` suffixes). Never served. */
+var JAM_EDIT_CHECK_TAB = '_prueba_editar_jam';
 
 /** Request formats for addSong (docs/sheet-schema.md, Identifiers and Keys). */
 var POST_ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
@@ -141,6 +150,9 @@ var ACTIONS = {
   createJam: { write: true, run: createJam_ },
   checkCreateJam: { write: true, run: checkCreateJam_ },
   setJamStatus: { write: true, run: setJamStatus_ },
+  updateJam: { write: true, run: updateJam_ },
+  deleteJam: { write: true, run: deleteJam_ },
+  checkJamEdit: { write: true, run: checkJamEdit_ },
 };
 
 /**
@@ -736,7 +748,10 @@ function setJamStatus_(request, spreadsheet, services) {
 
 /** The shared body of setJamStatus and publishSetlist; `date` and `status` are already valid. */
 function setJamStatusCore_(spreadsheet, services, date, status) {
-  requireEditableJam_(spreadsheet, services, date);
+  // Publishing stays upcoming-only (only that jam has an app-built setlist); BORRADOR and CREADA also
+  // reach held-back jams (D-28).
+  if (status === PUBLISHED_STATUS) requireEditableJam_(spreadsheet, services, date);
+  else requireFutureJam_(spreadsheet, services, date);
   const sheet = spreadsheet.getSheetByName(JAMS_TAB);
   const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, sheet.getDataRange().getDisplayValues()[0] || []);
   const jam = findJamRow_(sheet, columns, date, spreadsheet);
@@ -904,6 +919,233 @@ function checkCreateJam_(request, spreadsheet, services) {
     throw new Error('The create jam check read back a different row');
   }
   return { ok: true };
+}
+
+/**
+ * Edits the date, time or venue of a future jam (admin-edit-delete-jam, D-28). `date` names the jam;
+ * `newDate`, `time` and `venue` are optional and absent ones stay. Refusals, all before any write and
+ * in this order: invalid_date, invalid_new_date, invalid_time, invalid_venue, invalid_update (nothing
+ * to change), requireFutureJam_ (missing_tab, unknown_jam, duplicate_date, jam_not_editable), then for
+ * a different date past_date, jam_exists (any estado) and tab_exists. Values equal to the row's answer
+ * `changed: false` with no write. A date change renames the jam tab first, then writes only the
+ * changed cells (never `estado`) and reads each back; a mismatch restores the tab name and is an Error.
+ */
+function updateJam_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const hasDate = request.newDate !== undefined;
+  const hasTime = request.time !== undefined;
+  const hasVenue = request.venue !== undefined;
+  if (hasDate && (typeof request.newDate !== 'string' || !isCalendarDate_(request.newDate))) {
+    throw new ContractError('invalid_new_date', 'newDate must be a YYYY-MM-DD calendar date');
+  }
+  if (hasTime && (typeof request.time !== 'string' || !POST_TIME_.test(request.time))) {
+    throw new ContractError('invalid_time', 'time must be HH:MM');
+  }
+  const venue = hasVenue ? normalizeVenue_(request.venue) : null;
+  if (!hasDate && !hasTime && !hasVenue) {
+    throw new ContractError('invalid_update', 'newDate, time or venue is required');
+  }
+  const context = requireFutureJam_(spreadsheet, services, date);
+  const jam = context.jam;
+  const newDate = hasDate ? request.newDate : date;
+  const dateChanges = newDate !== date;
+  if (dateChanges) {
+    if (newDate < context.today) {
+      throw new ContractError('past_date', 'The date ' + newDate + ' is in the past');
+    }
+    if (context.jams.some(function (other) { return other.date === newDate; })) {
+      throw new ContractError('jam_exists', 'Jams already has a row with the fecha ' + newDate);
+    }
+    if (spreadsheet.getSheetByName(newDate)) {
+      throw new ContractError('tab_exists', 'A tab named ' + newDate + ' already exists');
+    }
+  }
+  const time = hasTime ? request.time : jam.startTime;
+  const timeChanges = hasTime && request.time !== jam.startTime;
+  const venueChanges = hasVenue && venue !== jam.venue;
+  const answer = function (changed, tabRenamed) {
+    return {
+      ok: true, date: newDate, previousDate: date, time: time, venue: hasVenue ? venue : jam.venue,
+      status: jam.status, changed: changed, tabRenamed: tabRenamed,
+    };
+  };
+  if (!dateChanges && !timeChanges && !venueChanges) return answer(false, false);
+
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, sheet.getDataRange().getDisplayValues()[0] || []);
+  const row = findJamRow_(sheet, columns, date, spreadsheet).row;
+  const changes = [];
+  if (dateChanges) changes.push({ column: columns.date, value: newDate });
+  if (timeChanges) changes.push({ column: columns.startTime, value: request.time });
+  if (venueChanges) changes.push({ column: columns.venue, value: venue });
+  const tabRenamed = dateChanges && renameJamTab_(spreadsheet, date, newDate);
+  try {
+    writeJamCells_(sheet, row, services, changes);
+  } catch (err) {
+    if (tabRenamed) {
+      try { renameJamTab_(spreadsheet, newDate, date); } catch (ignored) { /* best effort */ }
+    }
+    throw err;
+  }
+  return answer(true, tabRenamed);
+}
+
+/** Renames the tab `from` to `to` when it exists and checks the rename; false when there is no such tab. */
+function renameJamTab_(spreadsheet, from, to) {
+  const tab = spreadsheet.getSheetByName(from);
+  if (!tab) return false;
+  tab.setName(to);
+  if (!spreadsheet.getSheetByName(to) || spreadsheet.getSheetByName(from)) {
+    try { tab.setName(from); } catch (ignored) { /* best effort */ }
+    throw new Error('The tab ' + from + ' did not rename to ' + to);
+  }
+  return true;
+}
+
+/** Writes the cells `[{column, value}]` of one Jams row as text, flushes, and reads each back. */
+function writeJamCells_(sheet, row, services, changes) {
+  changes.forEach(function (change) { sheet.getRange(row, change.column + 1).setNumberFormat(PLAIN_TEXT_FORMAT); });
+  changes.forEach(function (change) { sheet.getRange(row, change.column + 1).setValue(change.value); });
+  services.flush();
+  changes.forEach(function (change) {
+    if (sheet.getRange(row, change.column + 1).getDisplayValues()[0][0] !== change.value) {
+      throw new Error('The Jams cell did not read back');
+    }
+  });
+}
+
+/**
+ * Deletes a future jam: its Jams row and its tab (admin-edit-delete-jam, D-28). `expectedSongs` is
+ * the song count the admin confirmed; a different count is `setlist_changed`. Refusals before any
+ * write: invalid_date, invalid_expected_songs, requireFutureJam_ codes, an unreadable tab, setlist_changed.
+ * The tab goes first, so a failure in between leaves a jam with an empty setlist, never an orphan tab.
+ */
+function deleteJam_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const expected = request.expectedSongs;
+  if (typeof expected !== 'number' || !Number.isInteger(expected) || expected < 0) {
+    throw new ContractError('invalid_expected_songs', 'expectedSongs must be a non-negative integer');
+  }
+  requireFutureJam_(spreadsheet, services, date);
+  const tab = spreadsheet.getSheetByName(date);
+  let songs = 0;
+  if (tab) {
+    const range = tab.getDataRange();
+    songs = buildSetlist(range.getDisplayValues(), range.getValues(), date).length;
+  }
+  if (songs !== expected) {
+    throw new ContractError('setlist_changed', 'The setlist has ' + songs + ' songs, not ' + expected);
+  }
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  const columns = mapColumns(JAMS_TAB, JAMS_FIELDS, sheet.getDataRange().getDisplayValues()[0] || []);
+  deleteJamTabAndRow_(spreadsheet, sheet, columns, services, date, date);
+  return { ok: true, date: date, deletedSongs: songs, tabDeleted: tab !== null };
+}
+
+/** Deletes the tab `tabName` (when present, checked) and then the row of `date` in `sheet` (checked). */
+function deleteJamTabAndRow_(spreadsheet, sheet, columns, services, date, tabName) {
+  const tab = spreadsheet.getSheetByName(tabName);
+  if (tab) {
+    spreadsheet.deleteSheet(tab);
+    if (spreadsheet.getSheetByName(tabName)) throw new Error('The tab ' + tabName + ' was not deleted');
+  }
+  const row = findJamRow_(sheet, columns, date, spreadsheet).row;
+  sheet.deleteRow(row);
+  services.flush();
+  let stillThere = true;
+  try {
+    findJamRow_(sheet, columns, date, spreadsheet);
+  } catch (err) {
+    if (err instanceof ContractError && err.code === 'unknown_jam') stillThere = false;
+    else throw err;
+  }
+  if (stillThere) throw new Error('The Jams row of ' + date + ' was not deleted');
+}
+
+/**
+ * Self-cleaning proof that a tab can be renamed and deleted and a Jams row written and deleted, on
+ * temporary tabs named `_prueba_editar_jam*` only. It never opens Jams.
+ */
+function checkJamEdit_(request, spreadsheet, services) {
+  const names = [JAM_EDIT_CHECK_TAB, JAM_EDIT_CHECK_TAB + '_a', JAM_EDIT_CHECK_TAB + '_b'];
+  const clean = function () {
+    names.forEach(function (name) {
+      const tab = spreadsheet.getSheetByName(name);
+      if (tab) spreadsheet.deleteSheet(tab);
+    });
+  };
+  clean();
+  const header = ['fecha', 'hora', 'lugar', 'estado'];
+  const sheet = spreadsheet.insertSheet(JAM_EDIT_CHECK_TAB);
+  let jams;
+  try {
+    sheet.getRange(1, 1, 3, 4).setValues([
+      header,
+      ['2099-01-01', '21:00', 'Prueba', DRAFT_STATUS],
+      ['2099-01-02', '21:00', 'Prueba', DRAFT_STATUS],
+    ]);
+    const columns = mapColumns(JAM_EDIT_CHECK_TAB, JAMS_FIELDS, header);
+    spreadsheet.insertSheet(names[1]);
+    if (!renameJamTab_(spreadsheet, names[1], names[2])) throw new Error('The edit check tab did not rename');
+    const jam = findJamRow_(sheet, columns, '2099-01-01', spreadsheet);
+    writeJamCells_(sheet, jam.row, services, [
+      { column: columns.date, value: '2099-01-03' },
+      { column: columns.startTime, value: '20:30' },
+      { column: columns.venue, value: 'Prueba 2' },
+    ]);
+    const range = sheet.getDataRange();
+    const timeZone = spreadsheet.getSpreadsheetTimeZone();
+    jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+      return Utilities.formatDate(value, timeZone, pattern);
+    }).jams;
+    deleteJamTabAndRow_(spreadsheet, sheet, columns, services, '2099-01-03', names[2]);
+    const after = sheet.getDataRange().getDisplayValues();
+    if (after.length !== 2 || after[1][0] !== '2099-01-02') throw new Error('The edit check row was not deleted');
+  } finally {
+    clean();
+  }
+  const edited = jams && jams.length === 2 ? jams[0] : null;
+  if (!edited || edited.date !== '2099-01-03' || edited.startTime !== '20:30' || edited.venue !== 'Prueba 2' || edited.status !== DRAFT_STATUS) {
+    throw new Error('The edit check read back a different row');
+  }
+  return { ok: true };
+}
+
+/**
+ * Throws unless `date` is on exactly one Jams row with a known estado and is today or later (the
+ * upcoming or a held-back jam). Unlike requireEditableJam_ it does not mind earlier future jams.
+ * Returns `{ jam, jams, today }` (dates normalized through buildJams).
+ */
+function requireFutureJam_(spreadsheet, services, date) {
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  if (!sheet) {
+    throw new ContractError('missing_tab', 'The tab ' + JAMS_TAB + ' does not exist');
+  }
+  const timeZone = spreadsheet.getSpreadsheetTimeZone();
+  const range = sheet.getDataRange();
+  const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+    return Utilities.formatDate(value, timeZone, pattern);
+  }).jams;
+  const matches = jams.filter(function (jam) { return jam.date === date; });
+  if (matches.length === 0) {
+    throw new ContractError('unknown_jam', 'Jams has no row with the fecha ' + date);
+  }
+  if (matches.length > 1) {
+    throw new ContractError('duplicate_date', 'Jams has the fecha ' + date + ' on more than one row');
+  }
+  const today = todayIso_(spreadsheet, services);
+  const status = matches[0].status;
+  const known = status === DRAFT_STATUS || status === CREATED_STATUS || status === PUBLISHED_STATUS;
+  if (!known || date < today) {
+    throw new ContractError('jam_not_editable', 'The jam ' + date + ' is not a future jam');
+  }
+  return { jam: matches[0], jams: jams, today: today };
 }
 
 /** Finds the unique Jams row by normalized date without relying on a blank-row-skipping row index. */
@@ -1567,6 +1809,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     ACTIONS,
     CREATE_JAM_CHECK_TAB,
+    JAM_EDIT_CHECK_TAB,
     PUBLISH_CHECK_TAB,
     SETLIST_CHECK_TAB,
     WRITE_CHECK_TAB,

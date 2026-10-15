@@ -58,6 +58,7 @@ internal fun newJamSeed(snapshot: JamsSnapshot?): NewJamSeed {
 private val DATE_TEXT = Regex("""(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})""")
 private val TIME_TEXT = Regex("""(\d{1,2})[:.](\d{2})""")
 private const val TIME_DIGITS = 2
+private const val YEAR_DIGITS = 4
 
 /** `5/11/2026`, `05-11-2026` and `05.11.2026` are 5 November 2026; anything else or a missing day is null. */
 internal fun parseFormDate(text: String): LocalDate? {
@@ -77,6 +78,10 @@ internal fun parseFormTime(text: String): LocalTime? {
     val normalized = "${hour.padStart(TIME_DIGITS, '0')}:$minute"
     return if (isValidTime(normalized)) LocalTime.parse(normalized) else null
 }
+
+/** The date as the field shows it: `DD/MM/AAAA`, which [parseFormDate] reads back. */
+internal fun formatFormDate(date: LocalDate): String = "${date.dayOfMonth.toString().padStart(TIME_DIGITS, '0')}/" +
+    "${date.monthValue.toString().padStart(TIME_DIGITS, '0')}/${date.year.toString().padStart(YEAR_DIGITS, '0')}"
 
 /** The time as the field shows it. */
 internal fun formatFormTime(time: LocalTime): String =

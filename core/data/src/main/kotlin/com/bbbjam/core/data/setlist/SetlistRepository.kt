@@ -21,6 +21,7 @@ interface SetlistRepository :
     SetlistPublishRepository,
     SetlistJamCreationRepository,
     SetlistJamStatusRepository,
+    SetlistJamEditRepository,
     SetlistExtraParticipantRepository {
 
     /**

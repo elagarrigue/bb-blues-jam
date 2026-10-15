@@ -54,9 +54,12 @@ class PastJamsPullRefreshTest {
                 repository,
                 calendar,
                 FakeAdminSession(),
-                FakeJamStatusRepository(),
-                FakePublishRepository(),
-                FakeJamCreator(),
+                JamsAdminWrites(
+                    FakeJamStatusRepository(),
+                    FakePublishRepository(),
+                    FakeJamCreator(),
+                    FakeJamEditRepository(),
+                ),
             )
         val screen = Screen()
         backgroundScope.launch {

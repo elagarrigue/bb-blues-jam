@@ -1,0 +1,4 @@
+10-14 22:00:06.277 20244 20272 I BluesJam: jams refresh: updated 3 jams, 0 rejected, 0 setlist issues, 1 held back, 0 hidden drafts; held back 2026-11-13 (admin read)
+10-14 22:00:06.403 20244 20265 I BluesJam: jams cache: upcoming 2026-10-31 draft, past 1, songs 25 (25 from catalog) admin (debug)
+10-14 22:00:06.277 20244 20272 I BluesJam: jams refresh: updated 3 jams, 0 rejected, 0 setlist issues, 1 held back, 0 hidden drafts; held back 2026-11-13 (admin read)
+10-14 22:00:06.403 20244 20265 I BluesJam: jams cache: upcoming 2026-10-31 draft, past 1, songs 25 (25 from catalog) admin (debug)

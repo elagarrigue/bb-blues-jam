@@ -15,12 +15,15 @@ data class JamsAdminUiModel(
     val noFuture: String?,
     val future: List<FutureJamUiModel>,
     val newJam: NewJamUiModel,
+    val editForm: EditJamFormUiModel?,
+    val deleteConfirm: DeleteJamUiModel?,
 ) : UiModel
 
 /**
- * One future jam. [date] is its identity (the list key). [heldBack] is the line of a held-back jam
- * (its status cannot be changed until it is the upcoming one) and [controls] are the upcoming jam's
- * status actions and publication; exactly one of them is set.
+ * One future jam. [date] is its identity (the list key). [heldBack] is the line of a held-back jam and
+ * [musicianNote] the extra line of a visible held-back jam behind a BORRADOR upcoming jam (D-26). [controls]
+ * are the status actions (every card) and, on the upcoming card only, the publication; [manage] are the edit
+ * and delete actions (`admin-edit-delete-jam`).
  */
 data class FutureJamUiModel(
     val date: LocalDate,
@@ -30,7 +33,9 @@ data class FutureJamUiModel(
     val note: String,
     val songCount: String?,
     val heldBack: String?,
-    val controls: JamControlsUiModel?,
+    val musicianNote: String?,
+    val controls: JamControlsUiModel,
+    val manage: JamManageUiModel,
 ) : UiModel
 
 /** The upcoming jam's controls: the status change and, while it applies, the publication. */

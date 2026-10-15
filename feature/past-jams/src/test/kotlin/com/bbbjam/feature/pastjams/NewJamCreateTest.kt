@@ -48,9 +48,7 @@ class NewJamCreateTest {
         repository,
         calendar,
         session,
-        FakeJamStatusRepository(),
-        FakePublishRepository(),
-        creator,
+        JamsAdminWrites(FakeJamStatusRepository(), FakePublishRepository(), creator, FakeJamEditRepository()),
     )
 
     private fun PastJamsUiModel.newJam(): NewJamUiModel = when (this) {

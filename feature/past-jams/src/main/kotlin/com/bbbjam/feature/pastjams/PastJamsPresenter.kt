@@ -14,9 +14,6 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.JamCreator
-import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
-import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -34,8 +31,8 @@ import kotlinx.coroutines.launch
  * Presents the Jams tab (formerly Anteriores): the past jams of [JamsRepository.observeJams], newest first.
  * The past jams are read-only (D-04). For the admin (flag from [adminSession], which only decides what is
  * drawn) the model also carries [JamsAdminUiModel] (`admin-jams-tab`, D-27): the upcoming and held-back
- * jams with the status actions, the publication and "Nueva jam", which go through [statuses], [publishes]
- * and [creator] (D-13, D-03: narrow contracts, never `SetlistRepository`). It never starts network work
+ * jams with the status actions, the publication, "Nueva jam" and the edit and delete of a future jam, which go
+ * through [writes] (D-13, D-03: narrow contracts, never `SetlistRepository`). It never starts network work
  * on its own
  * (collecting the flow may start the repository's own background refresh), and has no periodic refresh
  * (`live-refresh-during-jam` polls only Próxima jam). The exceptions are the musician's Retry
@@ -50,9 +47,7 @@ class PastJamsPresenter(
     private val jams: JamsRepository,
     private val calendar: JamCalendar,
     private val adminSession: AdminSession,
-    private val statuses: SetlistJamStatusRepository,
-    private val publishes: SetlistPublishRepository,
-    private val creator: JamCreator,
+    private val writes: JamsAdminWrites,
 ) : Presenter<PastJamsUiModel, PastJamsPresenter.Params> {
 
     /** [onOpenJam] opens a past jam's detail (bound by `:app`). */
@@ -68,7 +63,10 @@ class PastJamsPresenter(
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
         val now = remember(snapshot) { calendar.now() }
         val today = remember(snapshot) { calendar.today() }
-        val admin = rememberJamsAdminState(statuses, publishes, creator, today, isAdmin)
+        val futureDates = remember(snapshot) {
+            snapshot?.let { (listOfNotNull(it.upcoming) + it.heldBack).map { jam -> jam.date }.toSet() }
+        }
+        val admin = rememberJamsAdminState(writes, today, isAdmin, futureDates)
         val onRetry: () -> Unit = {
             subscription++
             scope.launch { jams.refresh() }

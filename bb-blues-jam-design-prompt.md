@@ -76,7 +76,7 @@ de los cupos en el detalle del tema dependen de él (enmienda del 11 de octubre 
 Tres pestañas en una barra de navegación inferior:
 
 1. **Próxima jam**
-2. **Jams** (antes Anteriores: para los músicos sigue siendo la lista de jams anteriores; el admin ve arriba las jams que vienen, `admin-jams-tab`, D-27)
+2. **Jams** (antes Anteriores: para los músicos sigue siendo la lista de jams anteriores; el admin ve arriba las jams que vienen y puede editarlas o borrarlas, `admin-jams-tab`, `admin-edit-delete-jam`, D-27, D-28)
 3. **Info**
 
 ---

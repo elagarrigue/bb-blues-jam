@@ -465,6 +465,14 @@ La pestaña Anteriores pasa a ser Jams. El admin maneja ahí las jams que vienen
 nueva; Próxima jam queda para armar la lista y solo muestra el estado. Los músicos ven las jams anteriores
 igual que antes. Pedido del organizador del 14 de octubre de 2026.
 
+### D-28 — El admin edita y borra las jams que vienen desde la app. Enmienda a D-25 y D-04
+En la pestaña Jams, la próxima jam y las que esperan detrás se pueden editar (fecha, hora y lugar, con `updateJam`) y
+borrar (`deleteJam`, siempre con confirmación). Cambiar la fecha mueve la jam con su pestaña, su lista y sus músicos;
+borrarla borra la fila y la pestaña. La edición nunca cambia cuál es la próxima jam. Las jams en espera también cambian
+de estado desde la app; publicar sigue siendo solo para la próxima. Las jams pasadas siguen siendo del Sheet. El Sheet
+se puede seguir editando a mano, pero ya no es el camino previsto: si los dos escriben, gana la última escritura, sin
+sincronización. Pedido del organizador del 14 de octubre de 2026.
+
 ---
 
 # Parte III — Harness y seguimiento

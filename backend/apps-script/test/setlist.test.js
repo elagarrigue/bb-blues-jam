@@ -12,7 +12,7 @@ const assert = require('node:assert/strict');
 const { loadScript } = require('./helpers/load.js');
 const { Utilities, BUENOS_AIRES } = require('./helpers/format.js');
 
-const { handlePost, handleGet, ACTIONS, CREATE_JAM_CHECK_TAB, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
+const { handlePost, handleGet, ACTIONS, JAM_EDIT_CHECK_TAB, CREATE_JAM_CHECK_TAB, PUBLISH_CHECK_TAB, SETLIST_CHECK_TAB, buildSetlist } = loadScript();
 
 // The actions read today's date and typed cells with Apps Script's Utilities global.
 globalThis.Utilities = Utilities;
@@ -37,7 +37,7 @@ const WIDE_TAB_HEADER = ['posicion', 'id_tema', 'titulo', 'artista', 'tono'].con
 // A tab created by the app: 14 slot columns, no Batería 2/3 or Teclados 2/3.
 const CREATED_TAB_HEADER = WIDE_TAB_HEADER.filter((h) => !['Batería 2', 'Batería 3', 'Teclados 2', 'Teclados 3'].includes(h));
 const DRAFT_MARKER = 'zz-borrador-secreto';
-const WRITE_OPS = ['insertSheet', 'deleteSheet', 'setValues', 'setValue', 'setNumberFormat', 'deleteRow', 'insertRowAfter'];
+const WRITE_OPS = ['insertSheet', 'deleteSheet', 'setName', 'setValues', 'setValue', 'setNumberFormat', 'deleteRow', 'insertRowAfter'];
 
 const JAMS = [
   ['fecha', 'hora', 'lugar', 'estado'],
@@ -111,6 +111,20 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []
     name,
     cells,
     getName: () => name,
+    onRename: null,
+    brokenRename: false,
+    setName(newName) {
+      log.push(['setName', name, newName]);
+      if (sheet.brokenRename) {
+        return;
+      }
+      const old = name;
+      name = newName;
+      sheet.name = newName;
+      if (sheet.onRename) {
+        sheet.onRename(old, newName);
+      }
+    },
     getLastRow: lastRow,
     getLastColumn: lastColumn,
     getMaxRows: () => cells.length,
@@ -175,12 +189,12 @@ function gridSheet(name, rows, log, convertAlways, brokenDelete, lostValues = []
 }
 
 /** A spreadsheet of grid tabs; `requested` lists every getSheetByName, `log` every write. */
-function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlways = false, brokenDelete = false, lostValues = [], lostValueAt = -1, lostCells = [] } = {}) {
+function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlways = false, brokenDelete = false, lostValues = [], lostValueAt = -1, lostCells = [], brokenRename = false, brokenSheetDelete = false, brokenJamsRowDelete = false } = {}) {
   const log = [];
   const requested = [];
   const all = {
     Config: gridSheet('Config', [['clave', 'valor'], ['passphrase', STORED]], log),
-    Jams: gridSheet('Jams', jams, log, false, false, [], -1, lostCells),
+    Jams: gridSheet('Jams', jams, log, false, brokenJamsRowDelete, [], -1, lostCells),
     Catalogo: gridSheet('Catalogo', catalog, log),
     [PAST]: gridSheet(PAST, PAST_TAB, log),
     [PAST_DRAFT]: gridSheet(PAST_DRAFT, PAST_DRAFT_TAB, log),
@@ -193,6 +207,15 @@ function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlw
       all[name] = gridSheet(name, rows, log);
     }
   }
+  const hook = (sheet) => {
+    sheet.brokenRename = brokenRename;
+    sheet.onRename = (from, to) => {
+      assert.ok(!(to in all), `setName: ${to} already exists`);
+      delete all[from];
+      all[to] = sheet;
+    };
+  };
+  Object.values(all).forEach(hook);
   const spreadsheet = {
     getSheetByName(name) {
       requested.push(name);
@@ -203,12 +226,15 @@ function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlw
       log.push(['insertSheet', name]);
       assert.ok(!(name in all), `insertSheet: ${name} already exists`);
     all[name] = gridSheet(name, [], log, convertAlways, brokenDelete, lostValues, lostValueAt, lostCells);
+      hook(all[name]);
       return all[name];
     },
     deleteSheet(sheet) {
       const name = Object.keys(all).find((key) => all[key] === sheet);
       log.push(['deleteSheet', name]);
-      delete all[name];
+      if (!brokenSheetDelete) {
+        delete all[name];
+      }
     },
   };
   return { spreadsheet, tabs: all, log, requested };
@@ -1865,7 +1891,7 @@ test('setJamStatus refuses everything wrong before any write', () => {
     [{ date: UPCOMING, status: 'ARCHIVADA' }, 'invalid_status'],
     [{ date: UPCOMING, status: ' CREADA' }, 'invalid_status'],
     [{ date: PAST, status: 'CREADA' }, 'jam_not_editable'],
-    [{ date: LATER, status: 'CREADA' }, 'jam_not_editable'],
+    [{ date: LATER, status: 'PUBLICADA' }, 'jam_not_editable'],
     [{ date: '1999-01-01', status: 'CREADA' }, 'unknown_jam'],
   ];
   for (const [fields, code] of cases) {
@@ -1906,4 +1932,231 @@ test('checkPublish also moves its temporary row back to CREADA and reads it', ()
   const dropped = fakeSpreadsheet({ lostCells: [{ sheet: PUBLISH_CHECK_TAB, row: 2, column: 4, value: 'CREADA' }] });
   assertError(call(dropped, 'checkPublish'), 'internal_error');
   assert.equal(dropped.tabs[PUBLISH_CHECK_TAB], undefined);
+});
+
+// ---- admin-edit-delete-jam (D-28) ----
+const OTHER_TAB_DATE = '2026-11-14';
+
+function setlistTabFor(count) {
+  return [TAB_HEADER].concat(Array.from({ length: count }, (_, i) => row(String(i + 1), `song-${i + 1}`, `Song ${i + 1}`, 'Artist', 'A')));
+}
+
+function update(fake, fields, svc) {
+  return call(fake, 'updateJam', fields, svc);
+}
+
+test('updateJam changes only the cells that differ: time only, venue only, date only (tab renamed), all three', () => {
+  const time = fakeSpreadsheet();
+  assert.deepStrictEqual(update(time, { date: UPCOMING, time: '20:30' }), {
+    schemaVersion: 1, ok: true, date: UPCOMING, previousDate: UPCOMING, time: '20:30', venue: 'La Macanuda', status: 'BORRADOR', changed: true, tabRenamed: false,
+  });
+  assert.deepStrictEqual(writes(time.log), [['setNumberFormat', 'Jams', 4, 2, '@'], ['setValue', 'Jams', 4, 2, '20:30']]);
+
+  const venue = fakeSpreadsheet();
+  const venueBody = update(venue, { date: UPCOMING, venue: '  La  Macanuda 2 ' });
+  assert.equal(venueBody.venue, 'La Macanuda 2');
+  assert.deepStrictEqual(writes(venue.log), [['setNumberFormat', 'Jams', 4, 3, '@'], ['setValue', 'Jams', 4, 3, 'La Macanuda 2']]);
+
+  const moved = fakeSpreadsheet();
+  const before = JSON.stringify(readTab(moved, UPCOMING));
+  const movedBody = update(moved, { date: UPCOMING, newDate: OTHER_TAB_DATE });
+  assert.equal(movedBody.date, OTHER_TAB_DATE);
+  assert.equal(movedBody.previousDate, UPCOMING);
+  assert.equal(movedBody.tabRenamed, true);
+  assert.deepStrictEqual(writes(moved.log), [
+    ['setName', UPCOMING, OTHER_TAB_DATE],
+    ['setNumberFormat', 'Jams', 4, 1, '@'],
+    ['setValue', 'Jams', 4, 1, OTHER_TAB_DATE],
+  ]);
+  assert.equal(moved.tabs[UPCOMING], undefined);
+  assert.equal(JSON.stringify(readTab(moved, OTHER_TAB_DATE)), before, 'setlist rows are untouched');
+  assert.equal(jamsGrid(moved)[3][0], OTHER_TAB_DATE);
+  assert.equal(jamsGrid(moved)[3][3], 'BORRADOR', 'estado is never written');
+
+  const all = fakeSpreadsheet();
+  const allBody = update(all, { date: UPCOMING, newDate: OTHER_TAB_DATE, time: '19:00', venue: 'Bar' });
+  assert.deepStrictEqual([allBody.changed, allBody.tabRenamed], [true, true]);
+  assert.deepStrictEqual(jamsGrid(all)[3], [OTHER_TAB_DATE, '19:00', 'Bar', 'BORRADOR']);
+});
+
+test('updateJam on a held-back jam without a tab writes only fecha', () => {
+  const fake = fakeSpreadsheet();
+  const body = update(fake, { date: LATER, newDate: '2026-12-05' });
+  assert.deepStrictEqual([body.changed, body.tabRenamed], [true, false]);
+  assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', 'Jams', 5, 1, '@'], ['setValue', 'Jams', 5, 1, '2026-12-05']]);
+});
+
+test('updateJam with the values already there is changed:false, no write, lock taken and released', () => {
+  const fake = fakeSpreadsheet();
+  const svc = services();
+  const body = update(fake, { date: UPCOMING, newDate: UPCOMING, time: '21:00', venue: ' La  Macanuda' }, svc);
+  assert.deepStrictEqual(body, { schemaVersion: 1, ok: true, date: UPCOMING, previousDate: UPCOMING, time: '21:00', venue: 'La Macanuda', status: 'BORRADOR', changed: false, tabRenamed: false });
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.equal(svc.lock.tries, 1);
+  assert.equal(svc.lock.releases, 1);
+});
+
+test('updateJam refuses everything wrong, in order, before any write', () => {
+  const jams = JAMS.concat([['2026-12-05', '21:00', 'X', 'CREADA']]);
+  const cases = [
+    [{ date: '2026-02-30', time: '20:00' }, 'invalid_date'],
+    [{ date: 5, time: '20:00' }, 'invalid_date'],
+    [{ date: '2026-02-30', newDate: 'x' }, 'invalid_date'],
+    [{ date: UPCOMING, newDate: '2026-02-30' }, 'invalid_new_date'],
+    [{ date: UPCOMING, newDate: null }, 'invalid_new_date'],
+    [{ date: UPCOMING, newDate: '31/10/2026' }, 'invalid_new_date'],
+    [{ date: UPCOMING, newDate: 'x', time: '25:00' }, 'invalid_new_date'],
+    [{ date: UPCOMING, time: '25:00' }, 'invalid_time'],
+    [{ date: UPCOMING, time: 2100 }, 'invalid_time'],
+    [{ date: UPCOMING, time: '25:00', venue: '=x' }, 'invalid_time'],
+    [{ date: UPCOMING, venue: '=cmd' }, 'invalid_venue'],
+    [{ date: UPCOMING, venue: '   ' }, 'invalid_venue'],
+    [{ date: UPCOMING }, 'invalid_update'],
+    [{ date: '1999-01-01', time: '20:00' }, 'unknown_jam'],
+    [{ date: PAST, time: '20:00' }, 'jam_not_editable'],
+    [{ date: PAST_DRAFT, time: '20:00' }, 'jam_not_editable'],
+    [{ date: UPCOMING, newDate: '2026-10-05' }, 'past_date'],
+    [{ date: UPCOMING, newDate: PAST }, 'past_date'],
+    [{ date: UPCOMING, newDate: LATER }, 'jam_exists'],
+    [{ date: UPCOMING, newDate: '2026-12-05' }, 'jam_exists'],
+    [{ date: UPCOMING, newDate: '2026-12-12' }, 'tab_exists'],
+  ];
+  for (const [fields, code] of cases) {
+    const fake = fakeSpreadsheet({ jams, tabs: { '2026-12-12': [TAB_HEADER] } });
+    assertError(update(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], `${code} ${JSON.stringify(fields)}`);
+  }
+  // A past row's date is a jam_exists conflict only when it is not before today; here it is past_date first.
+  const typo = fakeSpreadsheet({ jams: jamsWith('Borrador') });
+  assertError(update(typo, { date: UPCOMING, time: '20:00' }), 'jam_not_editable');
+  assert.deepStrictEqual(writes(typo.log), []);
+  const duplicate = fakeSpreadsheet({ jams: JAMS.concat([[UPCOMING, '22:00', 'Otro', 'BORRADOR']]) });
+  assertError(update(duplicate, { date: UPCOMING, time: '20:00' }), 'duplicate_date');
+  const noJams = fakeSpreadsheet();
+  delete noJams.tabs.Jams;
+  assertError(update(noJams, { date: UPCOMING, time: '20:00' }), 'missing_tab');
+  assert.deepStrictEqual(writes(noJams.log), []);
+});
+
+test('updateJam accepts a held-back jam, an upcoming BORRADOR and a date that reorders the jams (the server is generic)', () => {
+  assert.equal(update(fakeSpreadsheet(), { date: LATER, time: '20:00' }).ok, true);
+  assert.equal(update(fakeSpreadsheet(), { date: UPCOMING, time: '20:00' }).status, 'BORRADOR');
+  assert.equal(update(fakeSpreadsheet(), { date: UPCOMING, newDate: '2026-12-31' }).ok, true);
+  assert.equal(update(fakeSpreadsheet(), { date: LATER, newDate: '2026-10-20' }).ok, true);
+  assert.equal(update(fakeSpreadsheet(), { date: UPCOMING, newDate: '2026-10-06' }).ok, true, 'today is allowed');
+});
+
+test('updateJam: a cell or a tab rename that does not read back is internal_error; the tab name is restored', () => {
+  const lost = fakeSpreadsheet({ lostCells: [{ sheet: 'Jams', row: 4, column: 1, value: OTHER_TAB_DATE }] });
+  assertError(update(lost, { date: UPCOMING, newDate: OTHER_TAB_DATE }), 'internal_error');
+  assert.ok(lost.tabs[UPCOMING], 'tab name restored after the cell write failed');
+  assert.equal(lost.tabs[OTHER_TAB_DATE], undefined);
+  const noRename = fakeSpreadsheet({ brokenRename: true });
+  assertError(update(noRename, { date: UPCOMING, newDate: OTHER_TAB_DATE }), 'internal_error');
+  assert.ok(noRename.tabs[UPCOMING]);
+  assert.equal(jamsGrid(noRename)[3][0], UPCOMING, 'fecha untouched when the rename failed');
+});
+
+function delJam(fake, fields, svc) {
+  return call(fake, 'deleteJam', fields, svc);
+}
+
+test('deleteJam deletes the tab then the row and answers the song count', () => {
+  const fake = fakeSpreadsheet({ tabs: { [LATER]: setlistTabFor(3) } });
+  const body = delJam(fake, { date: LATER, expectedSongs: 3 });
+  assert.deepStrictEqual(body, { schemaVersion: 1, ok: true, date: LATER, deletedSongs: 3, tabDeleted: true });
+  assert.deepStrictEqual(writes(fake.log), [['deleteSheet', LATER], ['deleteRow', 'Jams', 5]]);
+  assert.equal(fake.tabs[LATER], undefined);
+  assert.equal(jamsGrid(fake).length, 4);
+});
+
+test('deleteJam without a tab deletes only the row (expectedSongs 0); the upcoming jam can be deleted', () => {
+  const fake = fakeSpreadsheet();
+  assert.deepStrictEqual(delJam(fake, { date: LATER, expectedSongs: 0 }), { schemaVersion: 1, ok: true, date: LATER, deletedSongs: 0, tabDeleted: false });
+  assert.deepStrictEqual(writes(fake.log), [['deleteRow', 'Jams', 5]]);
+  const upcoming = fakeSpreadsheet();
+  assert.equal(delJam(upcoming, { date: UPCOMING, expectedSongs: 3 }).deletedSongs, 3);
+  assert.equal(upcoming.tabs[UPCOMING], undefined);
+});
+
+test('deleteJam refuses everything wrong before any write', () => {
+  const cases = [
+    [{ date: 'x', expectedSongs: 0 }, 'invalid_date'],
+    [{ date: LATER }, 'invalid_expected_songs'],
+    [{ date: LATER, expectedSongs: -1 }, 'invalid_expected_songs'],
+    [{ date: LATER, expectedSongs: 1.5 }, 'invalid_expected_songs'],
+    [{ date: LATER, expectedSongs: '0' }, 'invalid_expected_songs'],
+    [{ date: '1999-01-01', expectedSongs: 0 }, 'unknown_jam'],
+    [{ date: PAST, expectedSongs: 1 }, 'jam_not_editable'],
+    [{ date: LATER, expectedSongs: 2 }, 'setlist_changed'],
+    [{ date: LATER, expectedSongs: 4 }, 'setlist_changed'],
+  ];
+  for (const [fields, code] of cases) {
+    const fake = fakeSpreadsheet({ tabs: { [LATER]: setlistTabFor(3) } });
+    assertError(delJam(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+  const noTab = fakeSpreadsheet();
+  assertError(delJam(noTab, { date: LATER, expectedSongs: 1 }), 'setlist_changed');
+  assert.deepStrictEqual(writes(noTab.log), []);
+  const unreadable = fakeSpreadsheet({ tabs: { [LATER]: [['otra', 'cosa']] } });
+  assert.ok(delJam(unreadable, { date: LATER, expectedSongs: 0 }).error, 'an unreadable tab is refused');
+  assert.deepStrictEqual(writes(unreadable.log), []);
+});
+
+test('deleteJam: a tab or a row that survives is internal_error', () => {
+  const tab = fakeSpreadsheet({ tabs: { [LATER]: setlistTabFor(1) }, brokenSheetDelete: true });
+  assertError(delJam(tab, { date: LATER, expectedSongs: 1 }), 'internal_error');
+  assert.equal(jamsGrid(tab).length, 5, 'row kept when the tab could not be deleted');
+  const rowStays = fakeSpreadsheet({ brokenJamsRowDelete: true });
+  assertError(delJam(rowStays, { date: LATER, expectedSongs: 0 }), 'internal_error');
+});
+
+test('setJamStatus on a held-back jam: BORRADOR and CREADA are accepted, PUBLICADA stays upcoming-only', () => {
+  for (const to of ['CREADA', 'BORRADOR']) {
+    const from = to === 'CREADA' ? 'BORRADOR' : 'CREADA';
+    const fake = fakeSpreadsheet({ jams: jamsWith('BORRADOR', from) });
+    assert.equal(call(fake, 'setJamStatus', { date: LATER, status: to }).changed, true);
+    assert.deepStrictEqual(writes(fake.log), [['setNumberFormat', 'Jams', 5, 4, '@'], ['setValue', 'Jams', 5, 4, to]]);
+  }
+  const publish = fakeSpreadsheet({ tabs: { [LATER]: setlistTabFor(1) } });
+  assertError(call(publish, 'setJamStatus', { date: LATER, status: 'PUBLICADA' }), 'jam_not_editable');
+  assertError(call(publish, 'publishSetlist', { date: LATER }), 'jam_not_editable');
+  assert.deepStrictEqual(writes(publish.log), []);
+  const past = fakeSpreadsheet();
+  assertError(call(past, 'setJamStatus', { date: PAST_DRAFT, status: 'CREADA' }), 'jam_not_editable');
+});
+
+test('setlist mutations stay upcoming-only (requireEditableJam_ unchanged)', () => {
+  const fake = fakeSpreadsheet();
+  assertError(addSong(fake, { date: LATER }), 'jam_not_editable');
+  assert.deepStrictEqual(writes(fake.log), []);
+});
+
+test('updateJam, deleteJam and checkJamEdit need the passphrase', () => {
+  for (const action of ['updateJam', 'deleteJam', 'checkJamEdit']) {
+    const fake = fakeSpreadsheet();
+    const body = handlePost({ action, date: UPCOMING, time: '20:00', expectedSongs: 0 }, fake.spreadsheet, services());
+    assertError(body, 'invalid_passphrase');
+    assert.deepStrictEqual(writes(fake.log), []);
+  }
+});
+
+test('checkJamEdit proves rename, cell write, tab delete and row delete on temporary tabs, never opening Jams', () => {
+  const fake = fakeSpreadsheet({ tabs: { [JAM_EDIT_CHECK_TAB]: [['leftover']], [`${JAM_EDIT_CHECK_TAB}_b`]: [['leftover']] } });
+  assert.deepStrictEqual(call(fake, 'checkJamEdit'), { schemaVersion: 1, ok: true });
+  assert.ok(!fake.requested.includes('Jams'), 'checkJamEdit opened Jams');
+  const touched = writes(fake.log).map((op) => op[1]).filter((name) => name !== undefined);
+  assert.ok(touched.every((name) => String(name).startsWith(JAM_EDIT_CHECK_TAB)), `touched ${touched}`);
+  assert.ok(writes(fake.log).some((op) => op[0] === 'setName'));
+  assert.ok(writes(fake.log).some((op) => op[0] === 'deleteRow'));
+  assert.deepStrictEqual(Object.keys(fake.tabs).filter((n) => n.startsWith(JAM_EDIT_CHECK_TAB)), []);
+  assert.deepStrictEqual(jamsGrid(fake), JAMS);
+});
+
+test('checkJamEdit fails with internal_error and still cleans up when the rename does not happen', () => {
+  const fake = fakeSpreadsheet({ brokenRename: true });
+  assertError(call(fake, 'checkJamEdit'), 'internal_error');
+  assert.deepStrictEqual(Object.keys(fake.tabs).filter((n) => n.startsWith(JAM_EDIT_CHECK_TAB)), []);
+  assert.ok(!fake.requested.includes('Jams'));
 });

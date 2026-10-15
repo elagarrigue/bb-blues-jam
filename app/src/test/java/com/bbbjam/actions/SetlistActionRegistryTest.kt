@@ -4,6 +4,7 @@ import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.AssignSlotOutcome
 import com.bbbjam.core.data.setlist.ClearSlotOutcome
 import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.DeleteJamOutcome
 import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
 import com.bbbjam.core.data.setlist.MoveSongOutcome
 import com.bbbjam.core.data.setlist.PublishOutcome
@@ -11,9 +12,11 @@ import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetJamStatusOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
+import com.bbbjam.core.data.setlist.SetlistJamEditRepository
 import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
 import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.UpdateJamOutcome
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
@@ -37,6 +40,7 @@ class SetlistActionRegistryTest {
     private val songId = SongId("red-house")
     private val key = Key("C")
     private val instrument = Instrument.GUITAR
+    private val newDate = LocalDate.of(2026, 11, 7)
     private val ordinal = SlotPosition(2)
     private val musician = requireNotNull(MusicianName.parseOrNull("Ana"))
 
@@ -53,14 +57,16 @@ class SetlistActionRegistryTest {
         SetlistAction.PublishSetlist(date),
         SetlistAction.CreateJam(date, LocalTime.of(21, 30), "La Macanuda"),
         SetlistAction.SetJamStatus(date, JamStatus.CREATED),
+        SetlistAction.UpdateJam(date, newDate, LocalTime.of(20, 0), "El Sotano"),
+        SetlistAction.DeleteJam(date, 12),
     )
 
     @Test
     fun `inventory contains every mutation once and dispatch delegates exact inputs and outcomes`() = runBlocking {
         val repository = RecordingSetlistRepository()
         val registry = SetlistActionRegistry(repository)
-        assertEquals(12, SetlistAction.inventory.size)
-        assertEquals(12, SetlistAction.inventory.map(SetlistAction::mutation).toSet().size)
+        assertEquals(14, SetlistAction.inventory.size)
+        assertEquals(14, SetlistAction.inventory.map(SetlistAction::mutation).toSet().size)
         assertEquals(SetlistMutation.entries.toSet(), registry.registeredMutations)
         assertEquals(actions.map(SetlistAction::mutation), SetlistAction.inventory.map(SetlistAction::mutation))
 
@@ -84,6 +90,10 @@ class SetlistActionRegistryTest {
                 SetlistActionResult.SetlistPublished(PublishOutcome.Published(alreadyPublished = false)),
                 SetlistActionResult.JamCreated(CreateJamOutcome.Created(date, LocalTime.of(21, 30), "La Macanuda")),
                 SetlistActionResult.JamStatusSet(SetJamStatusOutcome.StatusSet(JamStatus.CREATED, changed = true)),
+                SetlistActionResult.JamUpdated(
+                    UpdateJamOutcome.Updated(newDate, LocalTime.of(20, 0), "El Sotano", changed = true),
+                ),
+                SetlistActionResult.JamDeleted(DeleteJamOutcome.Deleted(12)),
             ),
             results,
         )
@@ -101,6 +111,8 @@ class SetlistActionRegistryTest {
                 RecordedCall(SetlistMutation.PUBLISH_SETLIST, listOf(date)),
                 RecordedCall(SetlistMutation.CREATE_JAM, listOf(date, LocalTime.of(21, 30), "La Macanuda")),
                 RecordedCall(SetlistMutation.SET_JAM_STATUS, listOf(date, JamStatus.CREATED)),
+                RecordedCall(SetlistMutation.UPDATE_JAM, listOf(date, newDate, LocalTime.of(20, 0), "El Sotano")),
+                RecordedCall(SetlistMutation.DELETE_JAM, listOf(date, 12)),
             ),
             repository.calls,
         )
@@ -138,6 +150,7 @@ class SetlistActionRegistryTest {
         try {
             assertSame(repository, application.koin.get<SetlistJamStatusRepository>())
             assertSame(repository, application.koin.get<SetlistPublishRepository>())
+            assertSame(repository, application.koin.get<SetlistJamEditRepository>())
         } finally {
             application.close()
         }
@@ -245,6 +258,25 @@ internal class RecordingSetlistRepository : SetlistRepository {
     override fun observeJamStatusChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.JamStatusChange>>()
 
     override fun dismissJamStatusChange(id: Long) = Unit
+
+    override suspend fun updateJam(
+        jamDate: LocalDate,
+        newDate: LocalDate,
+        startTime: LocalTime,
+        venue: String,
+    ): UpdateJamOutcome {
+        record(SetlistMutation.UPDATE_JAM, jamDate, newDate, startTime, venue)
+        return UpdateJamOutcome.Updated(newDate, startTime, venue, changed = true)
+    }
+
+    override suspend fun deleteJam(jamDate: LocalDate, expectedSongs: Int): DeleteJamOutcome {
+        record(SetlistMutation.DELETE_JAM, jamDate, expectedSongs)
+        return DeleteJamOutcome.Deleted(expectedSongs)
+    }
+
+    override fun observeJamEdits() = emptyFlow<List<com.bbbjam.core.data.setlist.JamEdit>>()
+
+    override fun dismissJamEdit(id: Long) = Unit
 
     override suspend fun addExtraParticipant(
         jamDate: LocalDate,

@@ -231,6 +231,22 @@ class FakeSetlistRepository : SetlistRepository {
         }
     }
 
+    // Editing and deleting jams belongs to the Jams tab (admin-edit-delete-jam); this screen never calls it.
+    override suspend fun updateJam(
+        jamDate: LocalDate,
+        newDate: LocalDate,
+        startTime: java.time.LocalTime,
+        venue: String,
+    ) = com.bbbjam.core.data.setlist.UpdateJamOutcome.NotUpdated(com.bbbjam.core.data.admin.WriteOutcome.Unavailable)
+
+    override suspend fun deleteJam(jamDate: LocalDate, expectedSongs: Int) =
+        com.bbbjam.core.data.setlist.DeleteJamOutcome.NotDeleted(com.bbbjam.core.data.admin.WriteOutcome.Unavailable)
+
+    override fun observeJamEdits(): Flow<List<com.bbbjam.core.data.setlist.JamEdit>> =
+        kotlinx.coroutines.flow.emptyFlow()
+
+    override fun dismissJamEdit(id: Long) = Unit
+
     override fun dismiss(id: Long) {
         dismissed += id
     }
