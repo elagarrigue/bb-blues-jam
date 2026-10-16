@@ -1684,5 +1684,29 @@
       "Molecule tests for pending chip identity, disabled chips while sending, cleared on answer and failure; pure tests for the animation/reduced-motion helpers",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never writes to the real Sheet (the pending state is shown by JVM tests or a debug preview, not by a real write)"
     ]
+  },
+  {
+    "id": "publish-confirm-dialog",
+    "area": "feature-past-jams",
+    "title": "The publish confirmation becomes a dialog",
+    "user_visible_behavior": "Tapping the Publicada chip on the Jams tab opens a modal dialog '¿Publicar la lista?' with the same content and buttons as today's inline confirmation, styled like the unpublish dialog. Cancelar or back closes it with nothing written; Publicar publishes with the existing rules and the pending chip animation.",
+    "depends_on": [
+      "jam-status-chip-loading"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Same content, copy (vos) and publish rules; JamStatusDefaults.publishDialog reuses the unpublish dialog roles with amber only on Publicar (D-17)",
+      "Dismiss on back or outside tap equals Cancelar and writes nothing; a double tap on Publicar publishes once; the dialog closes when the jam leaves the snapshot",
+      "Molecule tests amended/added for open, cancel, confirm, double confirm and dismissal; no backend, registry or repository change",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check opens and cancels the dialog only, never taps Publicar"
+    ],
+    "evidence": [
+      "PublishConfirmDialog is modal; same model/copy retained; Cancel and AlertDialog onDismissRequest dispatch Cancel; double Confirm remains guarded by PublishControls.consumed; Failed remains an inline card. Inline button and its unused style removed.",
+      "JamStatusDefaultsTest asserts publish dialog uses surfaceRaised/text/textMuted/primaryAction/text; only the confirm role is amber. JamStatusMapping no longer includes publish.confirming in its event key. onRequest is idempotent.",
+      "Stale confirmation is retained only for a known eligible upcoming date and cleared if the jam is absent, published, empty/unreadable, or any write starts. Null snapshot during Activity recreation preserves rememberSaveable state; rotation was observed on device.",
+      ":feature:past-jams:test exit 0: 101 tests. CI=true ./init.sh exit 0; konsist, detekt, ktlint wired; all modules: 1128 tests, 1 skipped, 0 failures.",
+      "Device Pixel 5, debug admin, real Sheet, no writes: :app:installDebug exit 0. On 31/10 with 12 temas, dialog title/details/note/buttons and amber confirm observed; Cancel, Back, and outside tap each closed it. After fix, dialog stayed open on portrait-to-landscape rotation. Publicar was never tapped. Screenshot: docs/evidence/publish-confirm-dialog/dialog-open.png.",
+      "Independent validator accepted on 16 October 2026 after rerunning CI=true ./init.sh and :feature:past-jams:test; gate tools wired, diff check clean, screenshot and implementation reviewed."
+    ]
   }
 ]

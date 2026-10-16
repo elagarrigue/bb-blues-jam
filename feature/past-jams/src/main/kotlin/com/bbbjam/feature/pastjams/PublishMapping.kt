@@ -4,6 +4,7 @@ import com.bbbjam.core.data.setlist.JamEdit
 import com.bbbjam.core.data.setlist.JamStatusChange
 import com.bbbjam.core.data.setlist.SetlistPublish
 import com.bbbjam.core.model.Jam
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.EventHandler
 import java.time.LocalDate
@@ -15,7 +16,7 @@ internal fun JamsAdminState.publishUiModel(jam: Jam): PublishUiModel? {
     val entries = publishes.filter { it.jamDate == jam.date }
     val publishing = entries.any { it.state == SetlistPublish.State.Sending }
     val writing = changing || editing || publishing
-    if (songCount == 0 || writing) return null
+    if (jam.status == JamStatus.PUBLISHED || songCount == 0 || writing) return null
     val failed = entries.lastOrNull { it.state is SetlistPublish.State.Failed }
     return when {
         failed != null -> toPublishFailure(jam.date, failed)

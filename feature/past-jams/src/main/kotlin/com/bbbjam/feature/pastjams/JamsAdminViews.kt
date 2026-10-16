@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -114,31 +116,39 @@ private fun FutureJamCard(jam: FutureJamUiModel, admin: JamsAdminUiModel) {
 @Composable
 private fun JamControls(controls: JamControlsUiModel) {
     JamStatusActions(controls.status)
-    controls.publish?.let { PublishControl(it) }
+    controls.publish?.let { model ->
+        when (model) {
+            is PublishUiModel.Confirming -> PublishConfirmDialog(model)
+            is PublishUiModel.Failed -> PublishFailureCard(model)
+        }
+    }
     controls.status.confirming?.let { UnpublishDialog(it, controls.status.events) }
 }
 
 @Composable
-private fun PublishControl(model: PublishUiModel) {
-    val spacing = BluesJamTheme.spacing
-    val note = JamsAdminDefaults.status()
-    when (model) {
-        is PublishUiModel.Confirming -> Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-            Text(text = model.prompt, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
-            Text(text = model.details, style = BluesJamTheme.typography.caption, color = note)
-            Text(text = model.reversibleNote, style = BluesJamTheme.typography.caption, color = note)
-            Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
-                PrimaryPublishButton(model.confirmLabel, Modifier.weight(1f)) {
-                    model.events(PublishUiModel.Event.Confirm)
-                }
-                PublishTextAction(model.cancelLabel, Modifier.weight(1f)) {
-                    model.events(PublishUiModel.Event.Cancel)
-                }
+private fun PublishConfirmDialog(model: PublishUiModel.Confirming) {
+    val style = JamStatusDefaults.publishDialog()
+    AlertDialog(
+        onDismissRequest = { model.events(PublishUiModel.Event.Cancel) },
+        containerColor = style.container,
+        title = { Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
+                Text(text = model.details, style = BluesJamTheme.typography.caption, color = style.body)
+                Text(text = model.reversibleNote, style = BluesJamTheme.typography.caption, color = style.body)
             }
-        }
-
-        is PublishUiModel.Failed -> PublishFailureCard(model)
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = { model.events(PublishUiModel.Event.Confirm) }) {
+                Text(text = model.confirmLabel, color = style.confirm)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { model.events(PublishUiModel.Event.Cancel) }) {
+                Text(text = model.cancelLabel, color = style.cancel)
+            }
+        },
+    )
 }
 
 @Composable
@@ -164,32 +174,6 @@ private fun PublishFailureCard(model: PublishUiModel.Failed) {
                 PublishTextAction(model.dismissLabel, Modifier.weight(1f)) {
                     model.events(PublishUiModel.Event.Dismiss)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PrimaryPublishButton(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val style = JamsAdminDefaults.publish()
-    Box(
-        modifier = modifier
-            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics(mergeDescendants = true) { },
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(color = style.fill, contentColor = style.text, shape = BluesJamTheme.shapes.md) {
-            Box(
-                modifier = Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    style = BluesJamTheme.typography.body,
-                    color = style.text,
-                    modifier = Modifier.padding(horizontal = BluesJamTheme.spacing.md),
-                )
             }
         }
     }

@@ -30,12 +30,6 @@ internal object JamsAdminDefaults {
     /** `PRÓXIMAS` and `ANTERIORES`: `textMuted` captions. */
     fun heading(colors: BluesJamColors = BluesJamColors): Color = colors.textMuted
 
-    /** `Publicar`, the inline confirmation's button: the primary action pair. */
-    data class PublishStyle(val fill: Color, val text: Color)
-
-    fun publish(colors: BluesJamColors = BluesJamColors): PublishStyle =
-        PublishStyle(fill = colors.primaryAction, text = colors.onPrimaryAction)
-
     /** A failure card: `surface`, the title in `error`, the message `textMuted`, actions in `text`. */
     data class FailureStyle(val container: Color, val title: Color, val message: Color, val action: Color)
 
@@ -46,7 +40,7 @@ internal object JamsAdminDefaults {
         action = colors.text,
     )
 
-    /** The sending lines and the inline publish confirmation's notes: `textMuted`. */
+    /** The sending lines: `textMuted`. */
     fun status(colors: BluesJamColors = BluesJamColors): Color = colors.textMuted
 
     /** `Nueva jam`: `surfaceRaised` fill with `text`, never amber. */

@@ -37,6 +37,7 @@ internal fun rememberJamsAdminState(
     today: LocalDate,
     isAdmin: Boolean,
     futureDates: Set<LocalDate>?,
+    publishDates: Set<LocalDate>?,
 ): JamsAdminState? {
     val changes by remember { writes.statuses.observeJamStatusChanges() }.collectAsState(initial = emptyList())
     val entries by remember { writes.publishes.observePublishes() }.collectAsState(initial = emptyList())
@@ -47,6 +48,15 @@ internal fun rememberJamsAdminState(
     val editControls = rememberJamEditControls(writes.edits)
     // A dialog for a jam that left the snapshot (edited elsewhere, deleted) closes by itself.
     LaunchedEffect(futureDates) { futureDates?.let(editControls.retain) }
+    // Keep a confirmation only while its jam remains publishable and no write is in flight.
+    LaunchedEffect(publishDates, changes, entries, editEntries) {
+        val busyDates = buildSet {
+            changes.filter { it.state == JamStatusChange.State.Sending }.forEach { add(it.jamDate) }
+            entries.filter { it.state == SetlistPublish.State.Sending }.forEach { add(it.jamDate) }
+            editEntries.filter { it.state == JamEdit.State.Sending }.forEach { add(it.jamDate) }
+        }
+        publishDates?.let { publishControls.retain(it - busyDates) }
+    }
     if (!isAdmin) return null
     return JamsAdminState(
         statusChanges = changes,

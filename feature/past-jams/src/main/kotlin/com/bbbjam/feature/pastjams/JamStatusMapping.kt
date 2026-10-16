@@ -20,7 +20,7 @@ private fun actionLabel(target: JamStatus): String =
  * it is sending, the requested chip marked pending while a change or publication sends
  * (`jam-status-chip-loading`: no text line); PUBLICADA only when the card is the upcoming one, not yet
  * published, with a readable, non-empty list; the
- * confirming dialog only while the jam is PUBLICADA; a failed or outdated entry as a card.
+ * publish confirmation in a modal dialog; a failed or outdated entry as a card.
  */
 internal fun JamsAdminState.jamStatusUiModel(jam: Jam, isUpcoming: Boolean): JamStatusUiModel {
     val mine = statusChanges.filter { it.jamDate == jam.date }
@@ -87,26 +87,19 @@ private fun JamsAdminState.publishUnavailable(jam: Jam, isUpcoming: Boolean): St
 }
 
 /**
- * A tap on a chip. The selected chip does nothing. Publicada opens the publish confirmation (once) only when it
- * is enabled; any other chip first closes an open publish confirmation, then applies its normal rule. Nothing
- * is sent while the card is busy.
+ * A tap on a chip. The selected chip does nothing. Publicada opens the publish confirmation only when enabled.
+ * The confirmation is modal, so no other chip can be tapped while it is open. Nothing is sent while busy.
  */
 private fun JamsAdminState.chipEvents(jam: Jam, busy: Boolean, canPublish: Boolean, failedId: Long?) =
     EventHandler<JamStatusChipsUiModel.Event>(
-        key = "${jam.date}|${jam.status}|$busy|$canPublish|${publish.confirming}|$failedId",
+        key = "${jam.date}|${jam.status}|$busy|$canPublish|$failedId",
     ) { event ->
         val target = (event as JamStatusChipsUiModel.Event.Select).status
         val ignored = busy || target == jam.status
-        val confirmingPublish = publish.confirming == jam.date.toString()
         when {
             ignored -> Unit
-
-            target == JamStatus.PUBLISHED -> if (canPublish && !confirmingPublish) publish.onRequest(jam.date)
-
-            else -> {
-                if (confirmingPublish) publish.onCancel(jam.date)
-                status.onRequest(jam.date, jam.status, target)
-            }
+            target == JamStatus.PUBLISHED -> if (canPublish) publish.onRequest(jam.date)
+            else -> status.onRequest(jam.date, jam.status, target)
         }
     }
 

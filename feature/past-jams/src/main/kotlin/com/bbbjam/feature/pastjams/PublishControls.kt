@@ -16,6 +16,7 @@ internal data class PublishControls(
     val confirming: String?,
     val onRequest: (LocalDate) -> Unit,
     val onCancel: (LocalDate) -> Unit,
+    val retain: (Set<LocalDate>) -> Unit,
     val onConfirm: (LocalDate) -> Unit,
     val onRetry: (LocalDate, Long) -> Unit,
 )
@@ -28,11 +29,19 @@ internal fun rememberPublishControls(publishes: SetlistPublishRepository): Publi
     return PublishControls(
         confirming = confirming,
         onRequest = { date ->
-            confirming = date.toString()
-            consumed = false
+            if (confirming != date.toString()) {
+                confirming = date.toString()
+                consumed = false
+            }
         },
         onCancel = { date ->
             if (confirming == date.toString()) {
+                confirming = null
+                consumed = false
+            }
+        },
+        retain = { dates ->
+            if (confirming != null && confirming !in dates.map(LocalDate::toString)) {
                 confirming = null
                 consumed = false
             }

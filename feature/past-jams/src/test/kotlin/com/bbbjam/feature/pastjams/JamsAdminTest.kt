@@ -388,6 +388,59 @@ class JamsAdminTest {
     }
 
     @Test
+    fun `publish confirmation clears when the jam leaves and needs a new chip tap after it returns`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            val idle = expectMostRecentItem().controls().status
+            idle.select(JamStatus.PUBLISHED)
+            assertTrue(awaitItem().controls().publish is PublishUiModel.Confirming)
+
+            repository.snapshots.emit(snapshot())
+            assertTrue(checkNotNull(expectMostRecentItem().admin()).future.isEmpty())
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            val returned = expectMostRecentItem().controls()
+            assertNull(returned.publish)
+            returned.status.select(JamStatus.PUBLISHED)
+            assertTrue(awaitItem().controls().publish is PublishUiModel.Confirming)
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `publish confirmation clears when the jam is published or a write starts`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            val idle = expectMostRecentItem().controls().status
+            idle.select(JamStatus.PUBLISHED)
+            assertTrue(awaitItem().controls().publish is PublishUiModel.Confirming)
+
+            publishes.entries.value = listOf(
+                com.bbbjam.core.data.setlist.SetlistPublish(
+                    55,
+                    upcomingDate,
+                    com.bbbjam.core.data.setlist.SetlistPublish.State.Sending,
+                ),
+            )
+            val sending = expectMostRecentItem().controls()
+            assertNull(sending.publish)
+            assertEquals(listOf("Publicada"), sending.status.pending())
+            publishes.entries.value = emptyList()
+            val idleAgain = expectMostRecentItem().controls()
+            assertNull(idleAgain.publish)
+
+            idleAgain.status.select(JamStatus.PUBLISHED)
+            assertTrue(awaitItem().controls().publish is PublishUiModel.Confirming)
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED, 2)))
+            assertNull(expectMostRecentItem().controls().publish)
+            repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
+            assertNull(expectMostRecentItem().controls().publish)
+            assertEquals(emptyList<LocalDate>(), publishes.calls)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `a single song says the song, an empty or unreadable list disables Publicada with a reason`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED, 1)))
@@ -484,7 +537,7 @@ class JamsAdminTest {
         }
 
     @Test
-    fun `another chip while the publish confirmation is open closes it and applies its rule`() = runTest {
+    fun `tapping Publicada again while publish confirmation is open is a no-op`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
             expectMostRecentItem().controls().status.select(JamStatus.PUBLISHED)
@@ -494,10 +547,8 @@ class JamsAdminTest {
             confirming.status.select(JamStatus.PUBLISHED)
             expectNoEvents()
             assertEquals("Borrador", confirming.status.selected())
-            confirming.status.select(JamStatus.CREATED)
-            assertEquals(listOf(upcomingDate to JamStatus.CREATED), statuses.calls)
+            assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
             assertEquals(emptyList<LocalDate>(), publishes.calls)
-            assertNull(expectMostRecentItem().controls().publish)
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -37,14 +37,6 @@ class JamsAdminDefaultsTest {
     }
 
     @Test
-    fun `Publicar lista is the primary action pair`() {
-        assertEquals(
-            JamsAdminDefaults.PublishStyle(colors.primaryAction, colors.onPrimaryAction),
-            JamsAdminDefaults.publish(),
-        )
-    }
-
-    @Test
     fun `Nueva jam button uses neutral roles only, never amber`() {
         val button = JamsAdminDefaults.newJamButton()
         assertEquals(JamsAdminDefaults.ButtonStyle(colors.surfaceRaised, colors.text), button)

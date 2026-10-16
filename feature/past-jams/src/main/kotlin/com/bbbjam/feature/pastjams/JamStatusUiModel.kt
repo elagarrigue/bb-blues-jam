@@ -44,7 +44,7 @@ data class StatusFailureUiModel(
     val dismissLabel: String,
 ) : UiModel
 
-/** Publishing the upcoming jam: the inline confirmation (opened by the Publicada chip) and the failure card. */
+/** Publishing the upcoming jam: the modal confirmation (opened by the Publicada chip) and the failure card. */
 sealed interface PublishUiModel : UiModel {
     data class Confirming(
         val prompt: String,

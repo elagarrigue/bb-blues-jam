@@ -30,4 +30,13 @@ internal object JamStatusDefaults {
         confirm = colors.error,
         cancel = colors.text,
     )
+
+    /** The publish dialog: the same roles with `primaryAction` on its explicit confirm button. */
+    fun publishDialog(colors: BluesJamColors = BluesJamColors): DialogStyle = DialogStyle(
+        container = colors.surfaceRaised,
+        title = colors.text,
+        body = colors.textMuted,
+        confirm = colors.primaryAction,
+        cancel = colors.text,
+    )
 }

@@ -15,6 +15,7 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.Jam
+import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
@@ -66,7 +67,15 @@ class PastJamsPresenter(
         val futureDates = remember(snapshot) {
             snapshot?.let { (listOfNotNull(it.upcoming) + it.heldBack).map { jam -> jam.date }.toSet() }
         }
-        val admin = rememberJamsAdminState(writes, today, isAdmin, futureDates)
+        val publishDates = remember(snapshot) {
+            snapshot?.let { current ->
+                current.upcoming?.takeIf { jam ->
+                    jam.status != JamStatus.PUBLISHED &&
+                        (jam.setlist as? Setlist.Available)?.songs?.isNotEmpty() == true
+                }?.let { setOf(it.date) } ?: emptySet()
+            }
+        }
+        val admin = rememberJamsAdminState(writes, today, isAdmin, futureDates, publishDates)
         val onRetry: () -> Unit = {
             subscription++
             scope.launch { jams.refresh() }
