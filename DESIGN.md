@@ -353,7 +353,7 @@ had.
   the key. Then the lineup on a `surface` block with `rounded.md`
   and padding `md`: the **Lineup panel** (above), with an admin `+ Otro` / `Agregar` action row at the
   end of `CUPOS LIBRES` (it opens the existing extras dialog and does not create a slot); then, for
-  the admin, `Cambiar formación` (or the inline `FORMACIÓN` editor) after the panel; then,
+  the admin, the always-visible `FORMACIÓN` editor after the panel; then,
   for the admin, the failure cards of this song only (`Cerrar` dismisses them here and on the list).
 - **Lineup (P1):** the same open-first panel for musicians and the admin, replacing the earlier
   grouping by instrument (G1, `InstrumentGroups`, deleted). The admin's lines carry `Anotar` (opens
@@ -536,16 +536,17 @@ through `AdminControlsDefaults`, **no amber**:
   musician and adds a dismissible `No se pudo liberar el cupo` card; stale targets say `Ese cupo ya
   no está ocupado. Actualizá la lista para ver cómo quedó.`. The immediate action
   uses the established neutral admin/action treatment, not amber.
-- **Adjusting a lineup** (`admin-adjust-lineup`): on the song detail, after the panel inside its
-  block, `Cambiar formación` opens the inline `FORMACIÓN` editor (caption heading). One `surface` row per
+- **Adjusting a lineup** (`admin-adjust-lineup`): on the admin song detail, the inline `FORMACIÓN`
+  editor is always visible after the lineup panel (caption heading; no `Cambiar formación` button).
+  It has one `surface` row per
   instrument, full name in `body`/`text`, count (`3 cupos`, `2 cupos`, `1 cupo`, `No va en este tema`)
   in `caption`/`textMuted`. The editor's lines are inset `spacing.md`, like the panel. Minus/plus are 48dp squares, `shapes.md`, glyphs in `songTitle`, `Role.Button`, with
   explicit instrument descriptions. An enabled one has a `surfaceRaised` fill, a hairline `border`
   outline (the fill alone is about 1.05:1 on `surface`) and a `text` glyph; a disabled one has no
   fill, no outline and a `textMuted` glyph, is not clickable and has disabled semantics, so the
   state shows in shape, not brightness alone. The plus is enabled up to each instrument's own ceiling (`lineup-grow-any-instrument`, `lineup-max-per-instrument`): three for Guitarra, Bajo, Voz and Armónica, one for Batería and Teclados, so those two have the plus disabled from the start; at the ceiling it is disabled like the minus at zero. A jam tab never widened to the three-column layout answers a plus past its columns with the dismissible failure card (`Esta hoja todavía no tiene columnas para ese cupo…`). Removing a filled-only instrument is disabled
-  with `Tiene músico anotado. Liberá el cupo antes de sacarlo.` beneath it. `Listo` and the entry
-  action use underlined 48dp text actions through `AdminControlsDefaults.lineupEditor()`, no amber.
+  with `Tiene músico anotado. Liberá el cupo antes de sacarlo.` beneath it. There is no editor opener or closer; the count
+  controls use `AdminControlsDefaults.lineupEditor()` and stay neutral.
   Sending counts update the strip, panel and filters at once for the admin only. One muted
   `Guardando…` line covers key and lineup together; failure reverts and leaves a persistent card.
 - **Reordering songs** (`admin-reorder-songs`): `Subir`/`Bajar` are the first two actions of each
@@ -569,7 +570,7 @@ through `AdminControlsDefaults`, **no amber**:
    tap opens the song detail, where the song-level controls are (**Admin controls**)
 3. **Song detail** — key displayed very large as the main element, and the full lineup panel (open
    slots first, then filled, then `OTROS`); for the admin, `Cambiar tonalidad`, the slot actions, an
-   `+ Otro` / `Agregar` row at the end of `CUPOS LIBRES`, and `Cambiar formación`. No tags, tempo,
+   `+ Otro` / `Agregar` row at the end of `CUPOS LIBRES`, and the always-visible formation editor. No tags, tempo,
    difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first
    few titles. As built (`past-jams-list`, 5 October 2026): the title `Jams anteriores` (`h1`,

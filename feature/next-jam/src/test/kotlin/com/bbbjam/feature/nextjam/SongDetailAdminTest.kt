@@ -124,7 +124,7 @@ class SongDetailAdminTest {
             val song = awaitSong()
             val controls = song.controls()
             assertEquals("Cambiar tonalidad", controls.setKey.label)
-            assertEquals("Cambiar formación", (controls.lineup as LineupEditorUiModel.Idle).label)
+            assertEquals("FORMACIÓN", controls.lineup.heading)
             assertFalse(controls.extraParticipants.formVisible)
             assertNull(controls.saveStatus)
             assertTrue(controls.failures.isEmpty())
@@ -340,14 +340,12 @@ class SongDetailAdminTest {
     }
 
     @Test
-    fun `the lineup editor opens and closes, and a retained handler queues distinct counts`() = runTest {
+    fun `the always-visible lineup editor and a retained handler queue distinct counts`() = runTest {
         setlist.lineupHold = CompletableDeferred()
         val defaults = crossroads.copy(lineup = Lineup.default(), extraParticipants = emptyList())
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
             jams.snapshots.emit(snapshot(listOf(defaults)))
-            (awaitSong().controls().lineup as LineupEditorUiModel.Idle).events(LineupEditorUiModel.Event.Open)
-            val editing = awaitSong { it.controls().lineup is LineupEditorUiModel.Editing }
-                .controls().lineup as LineupEditorUiModel.Editing
+            val editing = awaitSong().controls().lineup
             assertEquals("FORMACIÓN", editing.heading)
             val retained = editing.lines.single { it.instrument == Instrument.GUITAR }.events
             retained(LineupEditorLineUiModel.Event.Remove)
@@ -356,7 +354,7 @@ class SongDetailAdminTest {
             assertEquals(listOf(1, 0), setlist.lineupCalls.map { it.count })
             val empty = expectMostRecentItem() as SongDetailUiModel.Song
             assertEquals("Guardando…", empty.controls().saveStatus)
-            val guitar = (empty.controls().lineup as LineupEditorUiModel.Editing).lines.first()
+            val guitar = empty.controls().lineup.lines.first()
             assertEquals("No va en este tema", guitar.countLabel)
             assertFalse(guitar.canRemove)
             retained(LineupEditorLineUiModel.Event.Add)
@@ -364,14 +362,14 @@ class SongDetailAdminTest {
             retained(LineupEditorLineUiModel.Event.Add)
             assertEquals(listOf(1, 0, 1, 2, 3), setlist.lineupCalls.map { it.count })
             setlist.lineupHold?.complete(Unit)
-            editing.events(LineupEditorUiModel.Event.Done)
-            awaitSong { it.controls().lineup is LineupEditorUiModel.Idle }
+            val afterWrites = awaitSong { it.controls().saveStatus == null }
+            assertEquals("FORMACIÓN", afterWrites.controls().lineup.heading)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     private fun SongDetailUiModel.editor() =
-        (this as SongDetailUiModel.Song).controls().lineup as LineupEditorUiModel.Editing
+        (this as SongDetailUiModel.Song).controls().lineup
 
     @Test
     fun `every instrument can grow to three and the plus disables at three`() = runTest {
@@ -384,9 +382,7 @@ class SongDetailAdminTest {
             jams.snapshots.emit(
                 snapshot(listOf(crossroads.copy(lineup = Lineup.default(), extraParticipants = emptyList()))),
             )
-            (awaitSong().controls().lineup as LineupEditorUiModel.Idle).events(LineupEditorUiModel.Event.Open)
-            val one = awaitSong { it.controls().lineup is LineupEditorUiModel.Editing }
-                .controls().lineup as LineupEditorUiModel.Editing
+            val one = awaitSong().controls().lineup
             val vocals = one.lines.single { it.instrument == Instrument.VOCALS }
             assertEquals("1 cupo", vocals.countLabel)
             assertTrue(vocals.canAdd)
@@ -413,9 +409,7 @@ class SongDetailAdminTest {
             jams.snapshots.emit(
                 snapshot(listOf(crossroads.copy(lineup = Lineup.default(), extraParticipants = emptyList()))),
             )
-            (awaitSong().controls().lineup as LineupEditorUiModel.Idle).events(LineupEditorUiModel.Event.Open)
-            val editor = awaitSong { it.controls().lineup is LineupEditorUiModel.Editing }
-                .controls().lineup as LineupEditorUiModel.Editing
+            val editor = awaitSong().controls().lineup
             fun canAdd(instrument: Instrument) = editor.lines.single { it.instrument == instrument }.canAdd
             assertFalse(canAdd(Instrument.DRUMS))
             assertFalse(canAdd(Instrument.KEYBOARDS))
@@ -430,9 +424,7 @@ class SongDetailAdminTest {
         val filled = crossroads.copy(lineup = Lineup(listOf(Slot(Instrument.GUITAR, "Tincho"))))
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
             jams.snapshots.emit(snapshot(listOf(filled)))
-            (awaitSong().controls().lineup as LineupEditorUiModel.Idle).events(LineupEditorUiModel.Event.Open)
-            val editor = awaitSong { it.controls().lineup is LineupEditorUiModel.Editing }
-                .controls().lineup as LineupEditorUiModel.Editing
+            val editor = awaitSong().controls().lineup
             val guitar = editor.lines.first()
             assertFalse(guitar.canRemove)
             assertTrue(guitar.canAdd)

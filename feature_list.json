@@ -908,7 +908,7 @@
     "id": "admin-adjust-lineup",
     "area": "feature-next-jam",
     "title": "Adjust a song's lineup",
-    "user_visible_behavior": "The admin changes how many slots of each instrument a song needs, and the instrument strip updates.",
+    "user_visible_behavior": "The admin always sees the formation editor on song detail and changes how many slots of each instrument a song needs; the instrument strip updates.",
     "depends_on": [
       "admin-add-song-to-setlist",
       "instrument-strip-component"
@@ -928,7 +928,7 @@
       "9 Oct 2026 shared live verification: L1 all required batch actions present; L2 one wrong passphrase returned invalid_passphrase; L3 checkSetlistWrite ok in 6.378 s; L4 invalid_date, invalid_song, invalid_instrument, all four invalid_count cases, unknown_jam, jam_not_editable, and song_not_in_setlist matched; L5 readJams unchanged (2 jams, 26 songs, aggregate SHA-256 42CFABE0DE3C8D71 before/after). No real jam was changed.",
       "Independent validator (9 Oct 2026): accept. `CI=true ./init.sh` exit 0; konsist, detekt, and ktlint all wired. Validator independently inspected the selected spec, implementation diff, live L1-L5 evidence, architecture, and reconciled deployment documentation. Remote source hash remains unobservable."
     ],
-    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies. From sheet-schema-definition validation: under U1 = B, restoring a removed guitar slot into Guitarra 1 while Guitarra 2 holds a name shifts that musician from the 1st to the 2nd guitar slot; decide the write behaviour explicitly."
+    "notes": "D-06. Default is 2 guitars, bass, drums, vocals, harmonica, keyboards. D-18 (29 September 2026): adjusting a lineup only removes or restores slots of the default seven, never adds; players outside the lineup go in the JamSong's Extra Participants (\"Otros\", name + free-text instrument). Adding and removing an extra participant are mutations too (D-13): plan them here or split a slice, and write them to the jam tab's Otros column as docs/sheet-schema.md specifies. From sheet-schema-definition validation: under U1 = B, restoring a removed guitar slot into Guitarra 1 while Guitarra 2 holds a name shifts that musician from the 1st to the 2nd guitar slot; decide the write behaviour explicitly. 16 October 2026 detail refinement: the admin's formation editor is always visible; the Cambiar formación and Listo toggles are removed."
   },
   {
     "id": "admin-edit-extra-participants",

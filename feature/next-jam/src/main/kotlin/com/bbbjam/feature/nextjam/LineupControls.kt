@@ -3,12 +3,9 @@ package com.bbbjam.feature.nextjam
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistRepository
@@ -21,9 +18,7 @@ import kotlinx.coroutines.launch
 
 internal class LineupControls(
     val lineupChanges: List<LineupChange>,
-    val lineupEditing: String?,
     val reservations: LineupReservations,
-    val onLineupEditor: (LocalDate, SongId, LineupEditorUiModel.Event) -> Unit,
     val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit,
 )
 
@@ -36,17 +31,9 @@ internal fun rememberLineupControls(
     val scope = rememberCoroutineScope()
     val currentIsAdmin by rememberUpdatedState(isAdmin)
     val lineupChanges by remember { setlist.observeLineupChanges() }.collectAsState(initial = emptyList())
-    var lineupEditing by rememberSaveable { mutableStateOf<String?>(null) }
     val reservations = remember { LineupReservations() }
     val currentLineupChanges by rememberUpdatedState(lineupChanges)
     val currentSnapshot by rememberUpdatedState(snapshot)
-    val onLineupEditor: (LocalDate, SongId, LineupEditorUiModel.Event) -> Unit = { date, id, event ->
-        val key = removalKey(date, id)
-        when (event) {
-            LineupEditorUiModel.Event.Open -> lineupEditing = key
-            LineupEditorUiModel.Event.Done -> if (lineupEditing == key) lineupEditing = null
-        }
-    }
     val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit =
         { date, id, instrument, event ->
             val jam = currentSnapshot?.upcoming
@@ -73,5 +60,5 @@ internal fun rememberLineupControls(
                 }
             }
         }
-    return LineupControls(lineupChanges, lineupEditing, reservations, onLineupEditor, onLineupCount)
+    return LineupControls(lineupChanges, reservations, onLineupCount)
 }

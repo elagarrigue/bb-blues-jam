@@ -52,8 +52,8 @@ import org.koin.compose.koinInject
  * (open slots first, then filled, then `Otros`). Musicians only read it. For the admin
  * (`song-detail-replaces-row-expansion`) each block gains its controls after what a musician sees:
  * "Guardando…" under the title, the key opens its picker on tap via [onSetKey], "Anotar",
- * "Liberar" and "Quitar" on the panel lines ("Anotar" calls [onAssignSlot]), "Cambiar formación" and
- * a "+ Otro / Agregar" row after the open slots, then the song's failure cards. It renders
+ * "Liberar" and "Quitar" on the panel lines ("Anotar" calls [onAssignSlot]), the always-visible
+ * formation editor and a "+ Otro / Agregar" row after the open slots, then the song's failure cards. It renders
  * [SongDetailUiModel] and forwards events; the presenter decides. [onBack], [onSetKey] and
  * [onAssignSlot] are the caller's: `:app` binds them to navigation, which this module never sees.
  * [contentPadding] goes inside the list, so the background runs edge to edge.

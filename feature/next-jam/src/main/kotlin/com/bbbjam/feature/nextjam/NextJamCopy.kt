@@ -85,9 +85,7 @@ internal object NextJamCopy {
      * Setting a key, approved on 6 October 2026 (`docs/specs/admin-set-key.md`, V1, O1 and C2). The
      * row shows the new key at once with [SAVING] under the title until the server answers.
      */
-    const val CHANGE_LINEUP = "Cambiar formación"
     const val LINEUP_HEADING = "FORMACIÓN"
-    const val LINEUP_DONE = "Listo"
     const val LINEUP_BLOCKED = "Tiene músico anotado. Liberá el cupo antes de sacarlo."
     const val SLOT_FILLED = "Ese cupo tiene un músico anotado. Liberalo antes de sacarlo."
     const val NOT_EXPANDABLE =

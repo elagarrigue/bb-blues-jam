@@ -34,21 +34,10 @@ internal class LineupReservations {
 }
 
 internal fun SongAdminState.lineupEditor(date: LocalDate, song: JamSong): LineupEditorUiModel {
-    val key = removalKey(date, song.songId)
-    val editing = lineupEditing == key
-    val handler = EventHandler<LineupEditorUiModel.Event>(key = "$key|lineup|$editing") {
-        onLineupEditor(date, song.songId, it)
-    }
-    return if (!editing) {
-        LineupEditorUiModel.Idle(NextJamCopy.CHANGE_LINEUP, handler)
-    } else {
-        LineupEditorUiModel.Editing(
-            NextJamCopy.LINEUP_HEADING,
-            Instrument.entries.map { instrument -> lineupLine(date, song, instrument) },
-            NextJamCopy.LINEUP_DONE,
-            handler,
-        )
-    }
+    return LineupEditorUiModel(
+        heading = NextJamCopy.LINEUP_HEADING,
+        lines = Instrument.entries.map { instrument -> lineupLine(date, song, instrument) },
+    )
 }
 
 private fun SongAdminState.lineupLine(date: LocalDate, song: JamSong, instrument: Instrument): LineupEditorLineUiModel {

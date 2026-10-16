@@ -35,11 +35,12 @@ screen, no route, no Room schema change.
 
 ## Goal
 
-In admin mode an expanded row gets **Cambiar formación**. It opens an inline editor in the row:
-one line per instrument of the default lineup with `−` and `+`. Each tap sets that instrument's slot
-count (0 up to its default: guitar 2, every other instrument 1) and the row's strip and lineup panel
-update **at once** (optimistic, as set-key's O1), with `Guardando…` until the server answers. On
-failure the row reverts and a card says why.
+On the admin song detail the `FORMACIÓN` editor is always visible after the lineup panel. There is
+no `Cambiar formación` opener or `Listo` closer. It has one line per instrument of the default
+lineup with `−` and `+`. Each tap sets that instrument's slot count (0 up to its default: guitar 2,
+every other instrument 1) and the detail's strip and lineup panel update **at once** (optimistic, as
+set-key's O1), with `Guardando…` until the server answers. On failure the detail reverts and a card
+says why.
 
 - **Remove** writes `-` into a slot cell, so the instrument is not in this song's lineup.
 - **Restore** writes an empty cell back into a `-` column: an open slot. Never beyond the default
@@ -205,9 +206,8 @@ skill and existing discovery docs. `AGENTS.md` needs no change.
 
 - `:core:ui` `strip/`: public `fun Instrument.fullName(): String` delegating to
   `InstrumentStripCopy.name` (one source for "Guitarra"…). No new component.
-- `NextJamPresenter` collects `observeLineupChanges()` into `AdminState.lineupChanges`, and holds
-  `lineupEditing: String?` (the `removalKey` of the row whose editor is open, `rememberSaveable`,
-  one at a time, like the removal's `confirming`).
+- `NextJamPresenter` collects `observeLineupChanges()` into `AdminState.lineupChanges`. The detail
+  renders the editor for every admin song without a saveable open/closed state.
 - **Overlay** (`LineupChangeOverlay.kt`, beside `KeyChangeOverlay.kt`): `pendingLineup(date, songId,
   confirmed): Lineup?` takes, per instrument, the latest `Sending` change (highest id) and applies
   them with `withSlotCount`; a change that returns null is skipped. `Failed` never overlays: the
@@ -216,8 +216,8 @@ skill and existing discovery docs. `AGENTS.md` needs no change.
   what is filtered agree. Musicians never get it.
 - **Status line.** Rename `SongRowAdminUiModel.keyStatus` to `saveStatus`: `Guardando…` while any key
   or lineup change of the row is sending (one line, same drawing). Assign/clear may reuse it.
-- `SongRowAdminUiModel` gains `lineup: LineupEditorUiModel` — `Idle(label, events)` (`Cambiar
-  formación`) or `Editing(heading, lines, doneLabel, events)` with `LineupEditorLineUiModel(
+- `SongDetailAdminUiModel` holds `lineup: LineupEditorUiModel(heading, lines)` with
+  `LineupEditorLineUiModel(
   instrument, countLabel, removeDescription, addDescription, canRemove, canAdd, blockedNote,
   events)`. `canRemove` = count > 0 and `withSlotCount(count − 1) != null`; `canAdd` = count <
   default; both computed on the overlaid lineup. A tap calls `setSlotCount(…, count ± 1)` launched
@@ -227,8 +227,7 @@ skill and existing discovery docs. `AGENTS.md` needs no change.
   Compose. Reserve the target synchronously in presenter state when handling a tap, so two taps before
   recomposition queue distinct target counts; reconcile reservations with repository entries and
   reset on failure. Test that retained-handler path.
-- Row actions, in order: `Ver detalle del tema`, `Cambiar tonalidad`, `Cambiar formación` (or its
-  editor in place), `Quitar de la lista` (last).
+- The collapsed song list keeps its list actions; lineup controls live only on song detail.
 - Failures: `NextJamAdminUiModel.failures` merges lineup changes by id; title
   `NextJamCopy.lineupFailed(title)`; `lineupFailureMessage`: `slot_filled` → `SLOT_FILLED`,
   `song_not_in_setlist` → `JAM_CHANGED`, `duplicate_song` → `DUPLICATE_SONG`, else `failureMessage`.
@@ -237,12 +236,10 @@ skill and existing discovery docs. `AGENTS.md` needs no change.
 
 | Key | Text |
 |---|---|
-| action | `Cambiar formación` |
 | heading | `FORMACIÓN` (caption, uppercase, heading) |
 | count | `2 cupos` · `1 cupo` · `No va en este tema` |
 | buttons | `−` / `+`, described `Sacar un cupo de guitarra` / `Sumar un cupo de guitarra` |
 | blocked note | `Tiene músico anotado. Liberá el cupo antes de sacarlo.` |
-| done | `Listo` |
 | card title | `No se pudo cambiar la formación de «Crossroads»` |
 | `slot_filled` | `Ese cupo tiene un músico anotado. Liberalo antes de sacarlo.` |
 
@@ -251,8 +248,8 @@ skill and existing discovery docs. `AGENTS.md` needs no change.
 **No amber in the editor**: counts are not open slots. Lines are `surface` rows; the instrument in
 `body`/`text`, the count in `caption`/`textMuted`; `−`/`+` are 48dp `surfaceRaised` squares,
 `shapes.md`, glyph in `songTitle`/`text`, `Role.Button`; disabled ones `textMuted`, not clickable,
-`disabled()` semantics. The blocked note is `caption`/`textMuted` under its line. `Listo` and
-`Cambiar formación` are the underlined 48dp text action (`AdminControlsDefaults`). Colours through
+`disabled()` semantics. The blocked note is `caption`/`textMuted` under its line. There is no opener
+or closer action. Colours through
 `AdminControlsDefaults` (new `lineupEditor()`), no dp literals in the feature. Amber stays where the
 strip and panel already draw it (open slots, inside `:core:ui`). Konsist allowlist unchanged
 (`{key}`). `DESIGN.md` gains "Adjusting a lineup" under Admin controls.

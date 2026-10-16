@@ -12,7 +12,7 @@
 
 Próxima jam rows no longer expand. A row tap opens the song detail, which now holds everything the
 expanded panel had: artist, key, the lineup panel with `OTROS` and, for the admin, `Cambiar
-tonalidad`, assign (`Anotar`), clear (`Liberar`), `Cambiar formación` and add/remove extras, with
+tonalidad`, assign (`Anotar`), clear (`Liberar`), the always-visible formation editor and add/remove extras, with
 their pending (`Guardando…`) and failure states. The list keeps the collapsed row with the
 instrument strip (D-07). Admin list rows keep `Subir`/`Bajar` and `Quitar de la lista` (with its
 inline confirmation) as a compact bar under the row. `:feature:song-detail` is merged into
@@ -56,8 +56,8 @@ one place.
    "No quedan cupos libres."), with no control.
 4. **Admin detail.** Given the admin, the key itself is tappable and announced with the action
    `Cambiar tonalidad`; there is no separate button. The detail also shows `Anotar` on
-   open lines, `Liberar` on filled lines, `Quitar` on each extra line, `Cambiar formación` (inline
-   editor). At the end of `CUPOS LIBRES`, an amber `+ Otro` / `Agregar` row uses the same type style
+   open lines, `Liberar` on filled lines, `Quitar` on each extra line, and the always-visible
+   `FORMACIÓN` editor. At the end of `CUPOS LIBRES`, an amber `+ Otro` / `Agregar` row uses the same type style
    for both texts and opens the existing extra
    participant dialog; this action is not a slot and does not affect slot counts or filters. The panel
    has no musician hint.
@@ -193,7 +193,8 @@ Back; title (`h1`, heading); artist; admin `Guardando…` (`SaveStatusLine`); ke
 `Cambiar tonalidad`); the
 lineup `surface` block (`shapes.md`, padding `md`) with `LineupPanel`; at the end of its open-slot
 section, the admin sees the `+ Otro` / `Agregar` row, which opens the extra participant dialog. The
-action does not create a lineup slot. After the panel, admin `LineupEditor`; admin failure cards.
+action does not create a lineup slot. After the panel, the admin always sees `LineupEditor`; admin
+failure cards.
 Reuse the existing composables from
 `AdminControls.kt`, `LineupEditorControl.kt`, `ExtraParticipantControls.kt`. `SongDetailDefaults`
 keeps the key the largest text (its test now covers the panel and admin styles).
@@ -261,7 +262,7 @@ still fail: temporarily add `implementation(project(":feature:past-jams"))` to
 |---|---|
 | Row click label (P5) | `ver el detalle del tema` |
 | Detail (moved, unchanged) | `Tonalidad`, `Cargando el tema`, `Este tema ya no está en la lista`, `Puede que la organización haya cambiado la lista. Volvé a la próxima jam para ver la actual.` |
-| Admin controls (reused) | `Cambiar tonalidad`, `Cambiar formación`, the `+ Otro` / `Agregar` row (accessible action `Agregar a Otros`), `Guardando…`, `Subir`, `Bajar`, `Quitar de la lista` and the existing confirmation/card copy |
+| Admin controls (reused) | `Cambiar tonalidad`, the always-visible `FORMACIÓN` editor, the `+ Otro` / `Agregar` row (accessible action `Agregar a Otros`), `Guardando…`, `Subir`, `Bajar`, `Quitar de la lista` and the existing confirmation/card copy |
 
 ## Durable Documentation Impact
 
@@ -353,7 +354,7 @@ an extra's `Quitar`, `Publicar`. Never write to the real Sheet.
    a detail, back → same filter and scroll (screenshots before/after); rotate in the detail, back.
 2. Admin: rows show the compact bar; `Quitar de la lista` → confirmation → `Cancelar`; tap a row →
    detail with `Cambiar tonalidad`, `Anotar`, `Liberar`, extra `Quitar` (`Quitar a Valeria, saxo`
-   node), `Cambiar formación` (open → `Listo`), the `+ Otro` / `Agregar` row (opens the dialog →
+   node), the always-visible `FORMACIÓN` editor (minus/plus controls), the `+ Otro` / `Agregar` row (opens the dialog →
    `Cancelar`); `Cambiar
    tonalidad` → picker → `Volver` → detail; `Anotar` → assign → `Volver` → detail; back → list state.
 3. Font scale 2.0: screenshots of the admin bar and the admin detail; restore 1.0.

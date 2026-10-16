@@ -37,35 +37,21 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 /** Adjusting a lineup keeps the counts with their instrument and exposes described +/- controls. */
 @Composable
 internal fun LineupEditor(model: LineupEditorUiModel) {
-    when (model) {
-        is LineupEditorUiModel.Idle -> RowTextAction(model.label, AdminControlsDefaults.lineupEditor().action) {
-            model.events(LineupEditorUiModel.Event.Open)
-        }
-
-        is LineupEditorUiModel.Editing -> {
-            val spacing = BluesJamTheme.spacing
-            val style = AdminControlsDefaults.lineupEditor()
-            Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-                // Inset like the panel and the row's actions (`ui-polish-pass`, U7).
-                Column(
-                    modifier = Modifier.padding(horizontal = spacing.md),
-                    verticalArrangement = Arrangement.spacedBy(spacing.xs),
-                ) {
-                    Text(
-                        text = model.heading,
-                        style = BluesJamTheme.typography.caption,
-                        color = style.heading,
-                        modifier = Modifier
-                            .padding(top = spacing.xs)
-                            .semantics { heading() },
-                    )
-                    model.lines.forEach { line -> LineupEditorLine(line) }
-                }
-                RowTextAction(model.doneLabel, style.action) {
-                    model.events(LineupEditorUiModel.Event.Done)
-                }
-            }
-        }
+    val spacing = BluesJamTheme.spacing
+    val style = AdminControlsDefaults.lineupEditor()
+    Column(
+        modifier = Modifier.padding(horizontal = spacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing.xs),
+    ) {
+        Text(
+            text = model.heading,
+            style = BluesJamTheme.typography.caption,
+            color = style.heading,
+            modifier = Modifier
+                .padding(top = spacing.xs)
+                .semantics { heading() },
+        )
+        model.lines.forEach { line -> LineupEditorLine(line) }
     }
 }
 

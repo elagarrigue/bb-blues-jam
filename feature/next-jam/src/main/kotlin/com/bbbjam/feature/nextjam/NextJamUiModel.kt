@@ -274,20 +274,11 @@ sealed interface RemovalUiModel : UiModel {
     data class Removing(val status: String) : RemovalUiModel
 }
 
-/** The song detail's inline lineup editor (one open song at a time). */
-sealed interface LineupEditorUiModel : UiModel {
-    sealed interface Event : UiEvent {
-        data object Open : Event
-        data object Done : Event
-    }
-    data class Idle(val label: String, val events: EventHandler<Event>) : LineupEditorUiModel
-    data class Editing(
-        val heading: String,
-        val lines: List<LineupEditorLineUiModel>,
-        val doneLabel: String,
-        val events: EventHandler<Event>,
-    ) : LineupEditorUiModel
-}
+/** The song detail's always-visible admin lineup controls. */
+data class LineupEditorUiModel(
+    val heading: String,
+    val lines: List<LineupEditorLineUiModel>,
+) : UiModel
 
 data class LineupEditorLineUiModel(
     val instrument: com.bbbjam.core.model.Instrument,
