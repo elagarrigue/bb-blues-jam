@@ -54,11 +54,12 @@ one place.
 3. **Musician detail.** Given a musician, the detail shows back, title, artist (if any), the key
    block, and the lineup panel (`CUPOS LIBRES`, `CUPOS CUBIERTOS`, `OTROS`, the musician hint or
    "No quedan cupos libres."), with no control.
-4. **Admin detail.** Given the admin, the detail additionally shows `Cambiar tonalidad`, `Anotar` on
+4. **Admin detail.** Given the admin, the key itself is tappable and announced with the action
+   `Cambiar tonalidad`; there is no separate button. The detail also shows `Anotar` on
    open lines, `Liberar` on filled lines, `Quitar` on each extra line, `Cambiar formación` (inline
    editor) and `Agregar a Otros` (inline form); the panel has no musician hint.
-5. **Detail → picker → detail.** Given the admin on a detail, when they tap `Cambiar tonalidad` (or
-   `Anotar`), the picker opens above the detail; a pick or `Volver` returns to the detail, whose key
+5. **Detail → picker → detail.** Given the admin on a detail, when they tap the key (or `Anotar`),
+   the picker opens above the detail; a pick or `Volver` returns to the detail, whose key
    (or slot) shows the pending value with `Guardando…`.
 6. **List and detail agree.** Given a pending key/lineup/assign/clear/extras change of a song, the
    list row (key, strip, `Guardando…`) and the detail (key, panel, `Guardando…`) show the same
@@ -184,8 +185,9 @@ failures: List<AddFailureUiModel>)`. `key`/`keyDescription` show the pending key
 
 ### Detail screen (order)
 
-Back; title (`h1`, heading); artist; admin `Guardando…` (`SaveStatusLine`); key block (unchanged,
-`keyDisplay`, `key` role); admin `Cambiar tonalidad` (`RowTextAction`, `keyChange().action`); the
+Back; title (`h1`, heading); artist; admin `Guardando…` (`SaveStatusLine`); key block (`keyDisplay`,
+`key` role; in admin mode the block itself is a 48dp-minimum `Role.Button` with click label
+`Cambiar tonalidad`); the
 lineup `surface` block (`shapes.md`, padding `md`) with `LineupPanel`; admin `LineupEditor`, then
 `ExtraParticipantEditor`; admin failure cards. Reuse the existing composables from
 `AdminControls.kt`, `LineupEditorControl.kt`, `ExtraParticipantControls.kt`. `SongDetailDefaults`

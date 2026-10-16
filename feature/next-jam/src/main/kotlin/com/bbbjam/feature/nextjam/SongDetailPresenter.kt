@@ -40,7 +40,7 @@ import java.time.LocalDate
  * the upcoming jam's `jam.setlist` (drafts included) and gains [SongDetailAdminUiModel]: the
  * [SongOverlays] of [setlist] (the same rule the list applies), the inline lineup editor, the
  * "Otros" form, "Anotar"/"Liberar"/"Quitar" on the panel lines and the song's failure cards.
- * "Cambiar tonalidad" calls [Params.onSetKey] and "Anotar" [Params.onAssignSlot] (navigation, bound
+ * Tapping the key calls [Params.onSetKey] and "Anotar" calls [Params.onAssignSlot] (navigation, bound
  * by `:app`); every write is an existing [SetlistRepository] function (D-13).
  *
  * Every callback is read through `rememberUpdatedState`, so an earlier model's handler calls the
@@ -55,8 +55,8 @@ class SongDetailPresenter(
     /**
      * [jamDate] and [songId] name the song ([position] only picks between rows a hand-edited tab
      * gives the same id, see [findSong]); [onBack] leaves the screen. [onSetKey] opens the key
-     * picker and [onAssignSlot] the assign screen for an open slot (both the admin's, bound by
-     * `:app`).
+     * picker from the admin's key block, and [onAssignSlot] opens the assign screen for an open slot.
+     * Both are bound by `:app`.
      */
     data class Params(
         val jamDate: LocalDate,

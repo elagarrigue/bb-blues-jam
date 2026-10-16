@@ -1,3 +1,7 @@
+## 16 October 2026 - admin-set-key direct tap (in progress)
+
+In the admin song detail, tapping the key block now opens the existing key picker; the separate `Cambiar tonalidad` text button is removed. The key block is exposed as a button with the accessible action label `Cambiar tonalidad`; musician detail remains read-only. The existing picker, repository mutation, pending overlay and failure behavior are unchanged. Updated `DESIGN.md`, the design prompt and the two related feature specs. Baseline `CI=true ./init.sh` passed before the edit (Konsist, detekt and ktlint wired). No post-change tests or device check run yet.
+
 ## 16 October 2026 - publish-confirm-dialog accepted
 
 On the upcoming jam, `Publicada` opens a modal `AlertDialog` titled `¿Publicar la lista?` with the existing song-count details, reversible note, `Cancelar` and amber `Publicar`. Cancel, Android back and an outside tap dismiss without a publish; the dialog remains open through rotation. The failure card stays inline. `PublishUiModel.Confirming` remains unchanged. `JamStatusDefaults.publishDialog()` uses `surfaceRaised`, `text`, `textMuted`, `primaryAction`, `text`; inline button code/style removed. Snapshot cleanup clears a confirmation when the upcoming jam is absent, published, unreadable/empty or a write starts; an unknown initial snapshot preserves saveable state through Activity recreation. `onRequest` is idempotent. `DESIGN.md` updated.

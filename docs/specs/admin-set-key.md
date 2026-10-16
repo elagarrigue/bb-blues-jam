@@ -58,8 +58,8 @@ The mutation is `SetlistRepository.setKey(jamDate, songId, key)` in `:core:data`
 
 ## Non-Goals
 
-- Editing the key from the song detail. That screen shows only the confirmed (cached) key, with no
-  optimistic overlay.
+- Editing the key inline on the song detail. In admin mode tapping its displayed key opens the
+  existing full-screen picker; the detail itself does not contain an inline editor.
 - Writing a catalog `defaultKey` or anything in `Catalogo` (D-08, D-04).
 - Suggesting a key from any API (D-08).
 - Drawing `♭`/`♯`.

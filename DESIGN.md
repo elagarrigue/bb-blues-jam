@@ -348,8 +348,9 @@ had.
   when there is one; for the admin, `Guardando…` (`caption`, `textMuted`, polite) while a write of
   the song is sending; the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in
   `keyDisplay`, colour `key`, one screen-reader node "Tonalidad Bm" (for the admin, the pending key
-  while one is saving); for the admin, `Cambiar tonalidad` under the key (48dp underlined text action
-  in `text`, its text lined up with the key); then the lineup on a `surface` block with `rounded.md`
+  while one is saving). In admin mode the key block itself is a 48dp-minimum `Role.Button` with the
+  click label `Cambiar tonalidad`; tapping it opens the key picker. There is no separate action under
+  the key. Then the lineup on a `surface` block with `rounded.md`
   and padding `md`: the **Lineup panel** (above), and for the admin, after it inside the same block,
   `Cambiar formación` (or the inline `FORMACIÓN` editor) and `Agregar a Otros` (or its dialog); then,
   for the admin, the failure cards of this song only (`Cerrar` dismisses them here and on the list).
@@ -495,9 +496,10 @@ through `AdminControlsDefaults`, **no amber**:
   when the server confirms. A failure draws the row as before plus a card after the rows, `No se
   pudo quitar «…»` with the reason and `Cerrar`, as the add-song cards.
 - **Setting a key** (`admin-set-key`, V1, O1 and C2 approved by the user, 6 October 2026): admin
-  only, on the song detail under the key (`song-detail-replaces-row-expansion`; it used to be in an
-  expanded row): `Cambiar tonalidad`, a full-width, 48dp, underlined `body` text action in
-  `text` (`AdminControlsDefaults.keyChange()`), `Role.Button`, never amber. It opens the key picker.
+  only, on the song detail (`song-detail-replaces-row-expansion`; it used to be in an expanded row):
+  tapping the large key block opens the key picker. The block is a 48dp-minimum `Role.Button` with
+  the click label `Cambiar tonalidad`; there is no separate text button. The key remains in the amber
+  `key` role, and the control adds no other amber.
   **The optimistic rule**: after a pick the row and the detail show the new key at once in the amber
   `key` role, with `Guardando…` (`caption`, `textMuted`, a polite live region) under the title, until
   the server answers. Only a change still sending is drawn; the latest of two wins. On

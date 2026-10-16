@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -49,7 +51,7 @@ import org.koin.compose.koinInject
  * the amber `key` role (the screen's main element, read from arm's length) and the lineup panel
  * (open slots first, then filled, then `Otros`). Musicians only read it. For the admin
  * (`song-detail-replaces-row-expansion`) each block gains its controls after what a musician sees:
- * "Guardando…" under the title, "Cambiar tonalidad" (which calls [onSetKey]) under the key, "Anotar",
+ * "Guardando…" under the title, the key opens its picker on tap via [onSetKey], "Anotar",
  * "Liberar" and "Quitar" on the panel lines ("Anotar" calls [onAssignSlot]), "Cambiar formación" and
  * "Agregar a Otros" at the end of the panel's card, then the song's failure cards. It renders
  * [SongDetailUiModel] and forwards events; the presenter decides. [onBack], [onSetKey] and
@@ -120,17 +122,13 @@ private fun LazyListScope.songItems(model: SongDetailUiModel.Song) {
     val admin = model.admin
     item(key = TITLE_KEY) { Title(model, Modifier.padding(start = BluesJamTheme.spacing.sm)) }
     item(key = KEY_KEY) {
-        Column {
-            KeyBlock(model, Modifier.padding(start = BluesJamTheme.spacing.sm))
-            // "Cambiar tonalidad" under the key it changes, its text lined up with the key's.
-            admin?.let {
-                RowTextAction(
-                    label = it.setKey.label,
-                    color = AdminControlsDefaults.keyChange().action,
-                    startInset = BluesJamTheme.spacing.sm,
-                ) { it.setKey.events(SetKeyActionUiModel.Event.Open) }
-            }
-        }
+        val keyAction = admin?.setKey
+        KeyBlock(
+            model = model,
+            modifier = Modifier.padding(start = BluesJamTheme.spacing.sm),
+            onClick = keyAction?.let { { it.events(SetKeyActionUiModel.Event.Open) } },
+            clickLabel = keyAction?.label,
+        )
     }
     item(key = LINEUP_KEY) {
         Surface(
@@ -179,10 +177,22 @@ private fun Title(model: SongDetailUiModel.Song, modifier: Modifier) {
     }
 }
 
-/** The label and the key are one screen-reader node: "Tonalidad Bm", read once. */
+/** The label and key are one screen-reader node; for the admin it also opens the picker on tap. */
 @Composable
-private fun KeyBlock(model: SongDetailUiModel.Song, modifier: Modifier) {
-    Column(modifier = modifier.clearAndSetSemantics { contentDescription = model.keyDescription }) {
+private fun KeyBlock(
+    model: SongDetailUiModel.Song,
+    modifier: Modifier,
+    onClick: (() -> Unit)? = null,
+    clickLabel: String? = null,
+) {
+    val keyModifier = if (onClick != null) {
+        Modifier
+            .clickable(role = Role.Button, onClickLabel = clickLabel, onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = model.keyDescription }
+    } else {
+        Modifier.clearAndSetSemantics { contentDescription = model.keyDescription }
+    }
+    Column(modifier = modifier.then(keyModifier)) {
         Text(
             text = model.keyLabel.uppercase(),
             style = SongDetailDefaults.captionStyle,

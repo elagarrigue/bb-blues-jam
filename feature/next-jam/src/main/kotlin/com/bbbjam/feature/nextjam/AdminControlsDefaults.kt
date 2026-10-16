@@ -72,7 +72,7 @@ internal object AdminControlsDefaults {
         cancel = colors.text,
     )
 
-    data class KeyChangeStyle(val action: Color, val status: Color)
+    data class KeyChangeStyle(val status: Color)
 
     /**
      * [underlineDisabled] is false: a disabled "Subir"/"Bajar" loses its underline as well as its
@@ -109,13 +109,8 @@ internal object AdminControlsDefaults {
         val cursor: Color,
     )
 
-    /**
-     * Setting a key (`admin-set-key`): "Cambiar tonalidad" in `text`, a quiet text action like "Ver
-     * detalle del tema", and the "Guardando…" line under the title in `textMuted`. Never amber: the
-     * only amber on the row stays the key itself.
-     */
-    fun keyChange(colors: BluesJamColors = BluesJamColors): KeyChangeStyle =
-        KeyChangeStyle(action = colors.text, status = colors.textMuted)
+    /** Setting a key (`admin-set-key`): the "Guardando…" line under the title uses `textMuted`. */
+    fun keyChange(colors: BluesJamColors = BluesJamColors): KeyChangeStyle = KeyChangeStyle(status = colors.textMuted)
 
     /** Reordering uses neutral text actions; neither enabled nor disabled states use amber. */
     fun move(colors: BluesJamColors = BluesJamColors): MoveStyle =

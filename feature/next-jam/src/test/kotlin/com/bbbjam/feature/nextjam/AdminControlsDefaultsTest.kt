@@ -32,7 +32,7 @@ class AdminControlsDefaultsTest {
         val keyChange = AdminControlsDefaults.keyChange()
         val status = AdminControlsDefaults.status()
         listOf(
-            keyChange.action, keyChange.status,
+            keyChange.status,
             removal.action, removal.prompt, removal.details, removal.confirm, removal.cancel, removal.status,
             removalDialog.container, removalDialog.title, removalDialog.details,
             removalDialog.confirm, removalDialog.cancel,
@@ -75,9 +75,9 @@ class AdminControlsDefaultsTest {
             ),
             AdminControlsDefaults.removalDialog(),
         )
-        // Setting a key: a quiet text action and a muted status line (`admin-set-key`).
+        // Setting a key: the saving status line is muted (`admin-set-key`).
         assertEquals(
-            AdminControlsDefaults.KeyChangeStyle(action = colors.text, status = colors.textMuted),
+            AdminControlsDefaults.KeyChangeStyle(status = colors.textMuted),
             AdminControlsDefaults.keyChange(),
         )
         // The badge is the musician draft card's badge (`badge-draft`).
