@@ -53,7 +53,7 @@ import org.koin.compose.koinInject
  * (`song-detail-replaces-row-expansion`) each block gains its controls after what a musician sees:
  * "Guardando…" under the title, the key opens its picker on tap via [onSetKey], "Anotar",
  * "Liberar" and "Quitar" on the panel lines ("Anotar" calls [onAssignSlot]), "Cambiar formación" and
- * "Agregar a Otros" at the end of the panel's card, then the song's failure cards. It renders
+ * an "Otro / Agregar" row after the open slots, then the song's failure cards. It renders
  * [SongDetailUiModel] and forwards events; the presenter decides. [onBack], [onSetKey] and
  * [onAssignSlot] are the caller's: `:app` binds them to navigation, which this module never sees.
  * [contentPadding] goes inside the list, so the background runs edge to edge.
@@ -140,10 +140,13 @@ private fun LazyListScope.songItems(model: SongDetailUiModel.Song) {
                 .fillMaxWidth(),
         ) {
             Column {
-                LineupPanel(model.lineup, Modifier.padding(BluesJamTheme.spacing.md))
+                LineupPanel(
+                    model = model.lineup,
+                    modifier = Modifier.padding(BluesJamTheme.spacing.md),
+                    openSlotsFooter = admin?.let { { ExtraParticipantEditor(it.extraParticipants) } },
+                )
                 admin?.let {
                     LineupEditor(it.lineup)
-                    ExtraParticipantEditor(it.extraParticipants)
                 }
             }
         }

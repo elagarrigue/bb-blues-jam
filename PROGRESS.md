@@ -1,6 +1,6 @@
-## 16 October 2026 - admin-set-key direct tap (in progress)
+## 16 October 2026 - song detail admin actions (in progress)
 
-In the admin song detail, tapping the key block now opens the existing key picker; the separate `Cambiar tonalidad` text button is removed. The key block is exposed as a button with the accessible action label `Cambiar tonalidad`; musician detail remains read-only. The existing picker, repository mutation, pending overlay and failure behavior are unchanged. Updated `DESIGN.md`, the design prompt and the two related feature specs. Baseline `CI=true ./init.sh` passed before the edit (Konsist, detekt and ktlint wired). No post-change tests or device check run yet.
+In the admin song detail, tapping the key block opens the existing key picker; the separate `Cambiar tonalidad` text button is removed. The key block is exposed as a button with the accessible action label `Cambiar tonalidad`; musician detail remains read-only. The separate `Agregar a Otros` button is also removed: an `Otro` / `Agregar` action row now appears at the end of `CUPOS LIBRES` and opens the existing extra participant dialog. This row is an action only; it does not add an instrument line or affect slot counts and filters. The existing mutations, pending overlays and failure behavior are unchanged. Updated `DESIGN.md`, the design prompt and the related feature specs. Baseline `CI=true ./init.sh` passed before these edits (Konsist, detekt and ktlint wired). No post-change tests or device check run yet.
 
 ## 16 October 2026 - publish-confirm-dialog accepted
 

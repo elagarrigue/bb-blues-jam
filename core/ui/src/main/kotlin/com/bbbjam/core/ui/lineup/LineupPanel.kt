@@ -21,26 +21,32 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
  * gone since `song-detail-replaces-row-expansion`): open slots first under "Cupos libres", then
  * "Cupos cubiertos", then "Otros"; a section is drawn only when it has lines. Not interactive for
  * musicians: no click, no ripple, no role. Lines are compact (no 48dp minimum, because nothing here
- * is a touch target) and each is one screen-reader node with its description.
+ * is a touch target) and each is one screen-reader node with its description. The admin may provide
+ * [openSlotsFooter], drawn after the free slots and before the filled section.
  */
 @Composable
-fun LineupPanel(model: LineupPanelUiModel, modifier: Modifier = Modifier) {
-    val hasOpen = model.openSlots.isNotEmpty()
+fun LineupPanel(
+    model: LineupPanelUiModel,
+    modifier: Modifier = Modifier,
+    openSlotsFooter: (@Composable () -> Unit)? = null,
+) {
+    val hasOpenSection = model.openSlots.isNotEmpty() || openSlotsFooter != null
     val hasCaption = model.hint != null || model.noOpenSlotsNote != null
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
-        if (hasOpen) {
+        if (hasOpenSection) {
             Section(LineupPanelCopy.OPEN_HEADING, model.openSlots, separated = false)
+            openSlotsFooter?.invoke()
         }
         model.hint?.let { Caption(it) }
         model.noOpenSlotsNote?.let { Caption(it) }
         if (model.filledSlots.isNotEmpty()) {
-            Section(LineupPanelCopy.FILLED_HEADING, model.filledSlots, separated = hasOpen || hasCaption)
+            Section(LineupPanelCopy.FILLED_HEADING, model.filledSlots, separated = hasOpenSection || hasCaption)
         }
         if (model.extras.isNotEmpty()) {
             Section(
                 LineupPanelCopy.EXTRAS_HEADING,
                 model.extras,
-                separated = hasOpen || hasCaption || model.filledSlots.isNotEmpty(),
+                separated = hasOpenSection || hasCaption || model.filledSlots.isNotEmpty(),
             )
         }
     }

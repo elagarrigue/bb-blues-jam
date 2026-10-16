@@ -105,6 +105,7 @@ internal object NextJamCopy {
     const val INVALID_ASSIGNMENT_NAME = "La planilla no aceptó ese nombre."
 
     const val SET_KEY = "Cambiar tonalidad"
+    const val OTHER = "Otro"
     const val ADD_EXTRA = "Agregar a Otros"
     const val SUBMIT_EXTRA = "Agregar"
     const val EXTRA_NAME = "Nombre"

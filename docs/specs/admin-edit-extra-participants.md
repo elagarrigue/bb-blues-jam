@@ -20,9 +20,9 @@ Apps Script already routes every write through the passphrase guard and script l
 
 ## Goal and non-goals
 
-In the expanded Próxima jam admin row, add a clear `Agregar a Otros` control and an inline form for a name and free-text instrument. Each existing extra also gets an accessible `Quitar` action. The admin sees a Sending-only optimistic row change with `Guardando…`; a confirmed server response updates Room, while a failed write restores confirmed data and creates a dismissible failure card. The musician projection never receives pending values or edit controls.
+On the admin song detail, place an `Otro` / `Agregar` action row at the end of `CUPOS LIBRES`. `Agregar` opens the existing dialog for a name and free-text instrument. This action is visually grouped with open slots but is not a slot, instrument line, or filter/count input. Each existing extra also gets an accessible `Quitar` action. The admin sees a Sending-only optimistic row change with `Guardando…`; a confirmed server response updates Room, while a failed write restores confirmed data and creates a dismissible failure card. The musician projection never receives pending values or edit controls.
 
-Do not add or remove lineup slots, assign musicians to slots, change suggestions, edit song detail, alter past jams, support offline writes, add a route, or add an action-registry/deeplink entry. Do not create a feature module, ViewModel, dependency, or Room migration. No changes to `Catalogo` or the Jams row.
+Do not add or remove lineup slots, assign musicians to slots, change suggestions, alter past jams, support offline writes, add a route, or add an action-registry/deeplink entry. Do not create a feature module, ViewModel, dependency, or Room migration. No changes to `Catalogo` or the Jams row.
 
 ## Mutation and validation contract
 
@@ -69,7 +69,7 @@ No new modules or Gradle dependencies. Keep allowed dependency direction `:featu
 - Update `docs/apps-script-api.md` with actions, fields, response, limits, error codes, locking and deploy check.
 - Update `docs/sheet-schema.md` only if its existing `Otros` grammar needs the new validation/serialization limits clarified.
 - Update `docs/user-and-access-model.md` permissions table to include add/remove `Otros`.
-- Update `DESIGN.md` with the final inline form, action order, copy, error and accessibility behavior.
+- Update `DESIGN.md` with the final dialog, `Otro` / `Agregar` row placement, copy, error and accessibility behavior.
 - `AGENTS.md`, `CONTEXT.md`, and `docs/domain-model.md`: no change expected; the existing authority and domain distinction already cover this feature.
 - Update `PROGRESS.md` and `feature_list.json` with actual verification evidence/status during implementation, not during planning.
 

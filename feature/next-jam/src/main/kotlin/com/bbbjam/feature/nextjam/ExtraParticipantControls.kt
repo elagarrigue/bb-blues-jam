@@ -2,29 +2,48 @@ package com.bbbjam.feature.nextjam
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The admin's "Otros" opener after "Cambiar formación": "Agregar a Otros" (which opens
- * [AddExtraDialog], drawn by the screen beside the list, not here) and "Guardando…" while a write
- * is pending. The extras and their "Quitar" are lines of the row's lineup panel.
+ * The admin's "Otro / Agregar" row at the end of the open slots. The action opens [AddExtraDialog]
+ * (drawn by the screen beside the list, not here); "Guardando…" appears below while a write is
+ * pending. The extras and their "Quitar" are lines of the row's lineup panel.
  */
 @Composable
 internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
     val spacing = BluesJamTheme.spacing
     val action = AdminControlsDefaults.lineupEditor().action
-    Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-        if (model.saving) SaveStatusLine(NextJamCopy.SAVING)
-        RowTextAction(NextJamCopy.ADD_EXTRA, action) {
-            model.events(ExtraParticipantEditorUiModel.Event.Open)
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = NextJamCopy.OTHER, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
+            Spacer(Modifier.weight(1f))
+            TextButton(
+                onClick = { model.events(ExtraParticipantEditorUiModel.Event.Open) },
+                modifier = Modifier
+                    .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+                    .semantics { contentDescription = NextJamCopy.ADD_EXTRA },
+            ) {
+                Text(text = NextJamCopy.SUBMIT_EXTRA, color = action)
+            }
         }
+        if (model.saving) SaveStatusLine(NextJamCopy.SAVING)
     }
 }
 
