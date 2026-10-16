@@ -351,7 +351,7 @@ had.
   while one is saving). In admin mode the key block itself is a 48dp-minimum `Role.Button` with the
   click label `Cambiar tonalidad`; tapping it opens the key picker. There is no separate action under
   the key. Then the lineup on a `surface` block with `rounded.md`
-  and padding `md`: the **Lineup panel** (above), with an admin `Otro` / `Agregar` action row at the
+  and padding `md`: the **Lineup panel** (above), with an admin `+ Otro` / `Agregar` action row at the
   end of `CUPOS LIBRES` (it opens the existing extras dialog and does not create a slot); then, for
   the admin, `Cambiar formación` (or the inline `FORMACIÓN` editor) after the panel; then,
   for the admin, the failure cards of this song only (`Cerrar` dismisses them here and on the list).
@@ -569,7 +569,7 @@ through `AdminControlsDefaults`, **no amber**:
    tap opens the song detail, where the song-level controls are (**Admin controls**)
 3. **Song detail** — key displayed very large as the main element, and the full lineup panel (open
    slots first, then filled, then `OTROS`); for the admin, `Cambiar tonalidad`, the slot actions, an
-   `Otro` / `Agregar` row at the end of `CUPOS LIBRES`, and `Cambiar formación`. No tags, tempo,
+   `+ Otro` / `Agregar` row at the end of `CUPOS LIBRES`, and `Cambiar formación`. No tags, tempo,
    difficulty or tab button for now (D-20)
 4. **Past jams list** — reverse chronological; date, venue, song count, and a hook such as the first
    few titles. As built (`past-jams-list`, 5 October 2026): the title `Jams anteriores` (`h1`,
@@ -874,7 +874,7 @@ sabe cambiar el estado. Actualizalo con la guía y probá de nuevo.` with `Cerra
 
 ### Extra participants (`admin-edit-extra-participants`)
 
-On the admin's song detail (an admin song row until `song-detail-replaces-row-expansion`), each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). At the end of `CUPOS LIBRES`, the `Otro` / `Agregar` row opens a modal `AlertDialog` (12 October 2026, `extras-dialog-and-lines`; `surfaceRaised` container, `text` title/`Agregar`/`Cancelar`, muted disabled `Agregar`, colours from `AdminControlsDefaults.extraDialog()`, no amber) drawn beside the list, not as a list item, with two labelled outlined fields (`Nombre`, `Instrumento`; `AdminControlsDefaults.extraField()`). Back and a tap outside act as `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.
+On the admin's song detail (an admin song row until `song-detail-replaces-row-expansion`), each extra in the panel's `OTROS` section is a line with a visible `Quitar` action at its end, in `text` like `Liberar`, with an accessible name identifying the participant and instrument (`Quitar a Juan, saxo`); the extras keep their order and are not listed a second time among the row actions (`ui-polish-pass`, U4). At the end of `CUPOS LIBRES`, the `+ Otro` / `Agregar` row uses the open-slot amber fill and color, with the same body type style for both texts, and opens a modal `AlertDialog` (12 October 2026, `extras-dialog-and-lines`; `surfaceRaised` container, `text` title/`Agregar`/`Cancelar`, muted disabled `Agregar`, colours from `AdminControlsDefaults.extraDialog()`, no amber) drawn beside the list, not as a list item, with two labelled outlined fields (`Nombre`, `Instrumento`; `AdminControlsDefaults.extraField()`). Back and a tap outside act as `Cancelar`. `Agregar` is enabled only when both trimmed fields are non-blank; disabled it is muted with no underline. `Cancelar` closes and clears the form without a write. Use Rioplatense Spanish with vos, theme tokens, neutral admin action colors, and touch targets of at least 48dp. While saving, show `Guardando…`; only the admin projection receives the sending overlay. Failed writes restore the last confirmed list and use the existing dismissible failure card. Musician rows continue to render extras as read-only `Otros` chips after all slot chips. Extras do not affect lineup filters, slot counts or open-slot counts.
 
 ### Usar la propuesta: tres destinos (`assistant-proposal-targets`, supersedes "Cargar la propuesta")
 

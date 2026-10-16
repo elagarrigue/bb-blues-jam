@@ -146,7 +146,7 @@ Se abre al tocar una fila de la lista y tiene todo lo que no entra en ella (enmi
   vista para músicos y admin (enmienda del 11 de octubre de 2026), en lugar de agrupar por instrumento
 - Por ahora sin etiquetas, tempo, dificultad ni botón de tablatura (D-20)
 - En modo admin: tocar la tonalidad abre el selector (sin un botón aparte «Cambiar tonalidad»),
-  anotar y liberar cupos, mostrar al final de «Cupos libres» la fila «Otro» / «Agregar» (abre el
+  anotar y liberar cupos, mostrar al final de «Cupos libres» la fila «+ Otro» / «Agregar» (abre el
   diálogo existente y no agrega un cupo), cambiar la formación y editar Otros
 
 ### 4. Jams anteriores — lista

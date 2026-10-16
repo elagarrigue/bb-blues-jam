@@ -2,47 +2,31 @@ package com.bbbjam.feature.nextjam
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import com.bbbjam.core.ui.lineup.LineupPanelActionRow
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The admin's "Otro / Agregar" row at the end of the open slots. The action opens [AddExtraDialog]
+ * The admin's "+ Otro / Agregar" row at the end of the open slots. The action opens [AddExtraDialog]
  * (drawn by the screen beside the list, not here); "Guardando…" appears below while a write is
  * pending. The extras and their "Quitar" are lines of the row's lineup panel.
  */
 @Composable
 internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
     val spacing = BluesJamTheme.spacing
-    val action = AdminControlsDefaults.lineupEditor().action
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = NextJamCopy.OTHER, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
-            Spacer(Modifier.weight(1f))
-            TextButton(
-                onClick = { model.events(ExtraParticipantEditorUiModel.Event.Open) },
-                modifier = Modifier
-                    .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                    .semantics { contentDescription = NextJamCopy.ADD_EXTRA },
-            ) {
-                Text(text = NextJamCopy.SUBMIT_EXTRA, color = action)
-            }
-        }
+        LineupPanelActionRow(
+            instrument = NextJamCopy.OTHER,
+            actionLabel = NextJamCopy.SUBMIT_EXTRA,
+            actionDescription = NextJamCopy.ADD_EXTRA,
+            onAction = { model.events(ExtraParticipantEditorUiModel.Event.Open) },
+        )
         if (model.saving) SaveStatusLine(NextJamCopy.SAVING)
     }
 }
