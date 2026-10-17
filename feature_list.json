@@ -1763,5 +1763,31 @@
       "Independent validator accepted on 17 October 2026: CI=true ./init.sh rerun exit 0 (konsist, detekt, ktlint wired, 1133 testcases), 162 renames with only package/import lines changed in .kt files, 0 package/path mismatches, layout matches the spec, AppNavHost has only the five import updates, konsist-test and tool config untouched."
     ],
     "notes": "Requested by the organizer on 17 October 2026 after a package-size review. Group by flow/screen, not by layer. NextJamCopy stays in the root package for this slice. Implementer subagents run on sonnet."
+  },
+  {
+    "id": "remove-action-registry",
+    "area": "app",
+    "title": "Remove SetlistActionRegistry and bind the assistant's narrow contracts directly to SetlistRepository",
+    "user_visible_behavior": "None. The assistant still loads, replaces, reorders and creates jams exactly as before, and the admin screens are unchanged. Internally, :app binds SetlistSongAdder, SetlistSongRemover, SetlistSongMover and JamCreator straight to the one SetlistRepository instance; SetlistActionRegistry, SetlistAction, SetlistMutation, SetlistActionResult and the four Registry* adapters are deleted.",
+    "depends_on": [
+      "action-contract-registry",
+      "assistant-proposal-targets"
+    ],
+    "status": "accepted",
+    "verification": [
+      "SetlistActionRegistry, SetlistAction, SetlistMutation, SetlistActionResult, RegistrySongAdder, RegistrySongRemover, RegistrySongMover and RegistryJamCreator no longer exist in main or test sources",
+      "Koin test: the four narrow contracts resolve from appModule and delegate to the same SetlistRepository instance the other narrow contracts use (proven able to fail)",
+      "The assistant feature, ProposalApplier, JamCreationRunner and Konsist rule 19 (assistant-feature-applies-through-contract) are unchanged; Konsist rule count unchanged",
+      "D-13 amended in the bitácora with a dated note (organizer decision of 17 October 2026: the registry was redundant; every mutation stays a SetlistRepository function); architecture skill, phase-2 brief and any current doc naming the registry updated, history sections left alone",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded (it drops by the deleted registry tests)"
+    ],
+    "evidence": [
+      "17 October 2026, implementer: baseline CI=true ./init.sh exit 0 with 1135 testcases; final exit 0, konsist/detekt/ktlint wired, 1124 testcases (13 registry tests deleted, 2 added in AppModuleBindingsTest), 19 Konsist @Test unchanged, no change under konsist-test/ (docs/evidence/remove-action-registry/baseline-init.txt, final-init.txt, baseline-count.txt, final-count.txt)",
+      "Red first: binding SetlistSongMover to a lambda passing position+1 makes AppModuleBindingsTest 'narrow write contracts delegate...' fail (red-mutant-wrong-argument.txt), then restored",
+      "Final grep for the eight deleted names over app/src, feature, core, konsist-test: 0 hits (final-grep.txt); SetlistMutationQueue untouched",
+      "D-13 dated note added in the bitacora; architecture skill, architecture.md, phase-2 brief, domain-model, risks, entregable and SVG updated. Not run: device (not required by the spec); app-architecture.png not regenerated",
+      "Independent validator accepted on 17 October 2026: CI=true ./init.sh rerun exit 0 (konsist, detekt, ktlint wired, 1124 testcases), 0 references to the eight deleted types, own mutant on the mover binding red then restored, :core:data KDoc-only and :feature:assistant comment-only diffs, konsist-test untouched, D-13 note additive; the stale PNG diagram is not embedded anywhere."
+    ],
+    "notes": "Organizer decision of 17 October 2026 (option A): the registry was a pure indirection, the LLM emits proposals not SetlistActions, and SetlistRepository already is the mutation inventory. Keeps the narrow contracts and rule 19 (D-24 enforcement). Amends the second sentence of D-13. Subagents run on sonnet."
   }
 ]

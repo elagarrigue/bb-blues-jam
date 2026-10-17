@@ -342,6 +342,14 @@ Son una o dos personas administrando.
 Toda mutación existe como deeplink o función del repositorio desde la fase 1. Al llegar el
 asistente, se registran esas funciones desde `:app` sin tocar los módulos de feature.
 
+*Nota, 17 de octubre de 2026:* se enmienda la segunda frase. El asistente ya no registra las funciones
+en `:app`: los contratos angostos de `:core:data` (`SetlistSongAdder`, `SetlistSongRemover`,
+`SetlistSongMover` y `JamCreator`) se atan directo a `SetlistRepository`, porque el LLM emite
+propuestas y no acciones, y el registro solo envolvía y desenvolvía la misma llamada
+(`remove-action-registry`). El inventario de mutaciones es `SetlistRepository`; el núcleo de D-13
+(toda mutación es una función del repositorio o un deeplink) sigue vigente. Decisión del organizador,
+17 de octubre de 2026.
+
 ### D-14 — El catálogo del Sheet es el pool de candidatos del LLM
 El asistente elige del repertorio cargado, con título, artista, tonalidad, tempo, etiquetas y
 dificultad. Acotar la selección a datos propios convierte el problema en filtrado y ranking sobre

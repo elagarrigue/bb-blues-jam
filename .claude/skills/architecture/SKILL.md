@@ -21,7 +21,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the action registry (D-13). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
+| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the direct Koin bindings of the narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover`, `JamCreator`) to the one `SetlistRepository` (D-13; there is no action registry since `remove-action-registry`). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
@@ -294,6 +294,8 @@ participant-specific `actionDescription` ("Quitar a Juan, saxo", `LineupPanelCop
 admin mapping forwards it to the same `removeExtraParticipant` event; the editor only holds the
 add form (`Agregar`/`Cancelar`, `submitEnabled`).
 
+**Superseded by `remove-action-registry` (17 October 2026): the registry, `SetlistAction`, `SetlistMutation`, `SetlistActionResult` and the `Registry*` adapters described in the history paragraphs below were deleted; `SetlistRepository` is the mutation inventory and `appModule` binds the narrow contracts to it directly.**
+
 As built by `action-contract-registry` (`:app` only, no feature module change):
 `com.bbbjam.actions.SetlistActionRegistry` lists the ten D-13 setlist mutations
 (`SetlistMutation`), takes a typed `SetlistAction` and dispatches it exhaustively to the one
@@ -419,7 +421,7 @@ supplies (`SupervisorJob + Dispatchers.Default` with a handler that logs the exc
 `AssistantConversation` and a `StateFlow<List<ChatTurn>>`, so the conversation and a pending 8 s+ request outlive the presenter's
 composition (a presenter is a `factory`, its composition dies when the tab is left); only `cancel` cancels. The presenter
 (`factory`) holds only the composer draft (`rememberSaveable`). Nothing is written (D-24); the feature never references
-`SetlistRepository`, `AdminWriter` or the action registry (the apply slice does). **Tab gating in `:app`:** `AppTab.ASSISTANT` is last;
+`SetlistRepository` or `AdminWriter`; the apply slice reaches the setlist only through narrow contracts. **Tab gating in `:app`:** `AppTab.ASSISTANT` is last;
 `MainActivity` collects `observeIsAdmin()` as `Boolean?` (`initial = null`); `visibleTabs(admin)` (only `true` shows it),
 `tabBarModel(selected, admin, onSelect)` and `shouldLeaveAssistant(selected, admin)` (only a real `false`) are pure and tested;
 `TabsShell(admin)` always registers the route, draws `AssistantScreen` only for the admin and hides the bar while the keyboard is
@@ -429,9 +431,8 @@ onPrimaryAction}` (shown failing first).
 
 As built by `assistant-apply-proposal` (14 October 2026; phase 2): **loading a proposal goes through a narrow contract, not
 the repository.** `:core:data` `setlist/SetlistSongAdder` is a `fun interface` (`suspend addSong(jamDate, songId, key):
-AddSongOutcome`) with no implementation there and no `dataModule` binding; `:app` binds it with `single<SetlistSongAdder> {
-RegistrySongAdder(get()) }`, which dispatches `SetlistAction.AddSong` through the `SetlistActionRegistry` (D-13) and
-returns the original outcome. `:feature:assistant` gets only that mutation (no remove, publish or clear). Konsist rule 19,
+AddSongOutcome`) with no implementation there and no `dataModule` binding; `:app` binds it with a lambda over the one
+`SetlistRepository` (`remove-action-registry`; it was a registry adapter before), which returns the original outcome. `:feature:assistant` gets only that mutation (no remove, publish or clear). Konsist rule 19,
 `assistant-feature-applies-through-contract`: no reference, import included, to `core.data.setlist.SetlistRepository`,
 `core.data.admin.AdminWriter` or their wildcards in that feature's main or test sources (shown failing first,
 `docs/evidence/assistant-apply-proposal/konsist-failing-run.txt`); `assistant-reads-only` is unchanged. In the feature:
@@ -527,8 +528,8 @@ with songs draws no button.
 - A new Sheet read or write → a route in `backend/apps-script` plus a repository function in
   `:core:data`. A write is an `ACTIONS` entry guarded by the router and a repository
   function that calls `AdminWriter`.
-- **A mutation** → a repository function in `:core:data`, then registered in the `:app` action
-  registry. Never a lambda that only exists in a composable.
+- **A mutation** → a repository function in `:core:data`, (plus a narrow `fun interface` in `:core:data` when a feature other than its owner must apply it, bound
+  in `:app` directly to the repository; there is no action registry). Never a lambda that only exists in a composable.
 - A color, spacing or type value → `:core:ui` tokens from `DESIGN.md`. Never a literal in a feature.
   Screens wrap in `BluesJamTheme { }` (already done in `MainActivity`) and read `BluesJamTheme.colors`,
   `.typography`, `.shapes` and `.spacing` (package `com.bbbjam.core.ui.theme`), never
@@ -1051,7 +1052,7 @@ held-back jams and creates the next one.
 - **Narrow contracts (J1).** `PastJamsPresenter(jams, calendar, adminSession, statuses, publishes, creator)`
   takes `SetlistJamStatusRepository`, `SetlistPublishRepository` and `JamCreator`, never `SetlistRepository`.
   `:app`'s `appModule` binds the first two to the one `SetlistRepository` instance (so the in-memory entries
-  are shared with Próxima jam) and `JamCreator` stays bound to `RegistryJamCreator` (D-13). The composition
+  are shared with Próxima jam) and `JamCreator` is bound to the same instance too (D-13). The composition
   root chooses the narrow surface.
 - **Moved, not copied (J4).** The status and publish code (`JamStatusControls/Mapping/Views/Defaults`,
   `PublishControls/Mapping/Details`, the `JamStatusUiModel` and `PublishUiModel` models and their tests) moved from

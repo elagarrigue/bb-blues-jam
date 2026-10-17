@@ -1,0 +1,165 @@
+Reusing configuration cache.
+> Task :feature:info:preBuild UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :feature:next-jam:preBuild UP-TO-DATE
+> Task :core:data:preBuild UP-TO-DATE
+> Task :feature:assistant:preBuild UP-TO-DATE
+> Task :feature:past-jams:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :feature:info:preDebugBuild UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :feature:next-jam:preDebugBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :feature:next-jam:processDebugNavigationResources UP-TO-DATE
+> Task :feature:assistant:preDebugBuild UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :feature:next-jam:javaPreCompileDebug UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :feature:past-jams:preDebugBuild UP-TO-DATE
+> Task :core:data:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :feature:assistant:processDebugNavigationResources UP-TO-DATE
+> Task :core:data:generateDebugResources UP-TO-DATE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :feature:next-jam:generateDebugResources UP-TO-DATE
+> Task :feature:assistant:generateDebugResources UP-TO-DATE
+> Task :feature:info:processDebugNavigationResources UP-TO-DATE
+> Task :feature:info:generateDebugResources UP-TO-DATE
+> Task :feature:info:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:writeDebugAarMetadata UP-TO-DATE
+> Task :core:data:javaPreCompileDebug UP-TO-DATE
+> Task :feature:assistant:javaPreCompileDebug UP-TO-DATE
+> Task :feature:past-jams:javaPreCompileDebug UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :core:data:writeDebugAarMetadata UP-TO-DATE
+> Task :feature:past-jams:processDebugNavigationResources UP-TO-DATE
+> Task :feature:assistant:writeDebugAarMetadata UP-TO-DATE
+> Task :feature:info:writeDebugAarMetadata UP-TO-DATE
+> Task :feature:past-jams:generateDebugResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :feature:next-jam:writeDebugAarMetadata UP-TO-DATE
+> Task :feature:assistant:extractDeepLinksDebug UP-TO-DATE
+> Task :feature:past-jams:writeDebugAarMetadata UP-TO-DATE
+> Task :core:data:extractDeepLinksDebug UP-TO-DATE
+> Task :feature:info:extractDeepLinksDebug UP-TO-DATE
+> Task :core:ui:extractDeepLinksDebug UP-TO-DATE
+> Task :feature:assistant:packageDebugResources UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :feature:assistant:processDebugManifest UP-TO-DATE
+> Task :feature:past-jams:extractDeepLinksDebug UP-TO-DATE
+> Task :core:data:processDebugManifest UP-TO-DATE
+> Task :feature:next-jam:packageDebugResources UP-TO-DATE
+> Task :feature:info:packageDebugResources UP-TO-DATE
+> Task :core:data:packageDebugResources UP-TO-DATE
+> Task :core:ui:processDebugManifest UP-TO-DATE
+> Task :feature:next-jam:processDebugManifest UP-TO-DATE
+> Task :feature:next-jam:extractDeepLinksDebug UP-TO-DATE
+> Task :feature:info:processDebugManifest UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:model:classes UP-TO-DATE
+> Task :feature:past-jams:processDebugManifest UP-TO-DATE
+> Task :core:data:mapDebugSourceSetPaths UP-TO-DATE
+> Task :feature:assistant:parseDebugLocalResources UP-TO-DATE
+> Task :feature:past-jams:packageDebugResources UP-TO-DATE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :core:data:parseDebugLocalResources UP-TO-DATE
+> Task :feature:next-jam:mapDebugSourceSetPaths UP-TO-DATE
+> Task :feature:info:parseDebugLocalResources UP-TO-DATE
+> Task :feature:assistant:mapDebugSourceSetPaths UP-TO-DATE
+> Task :core:ui:mapDebugSourceSetPaths UP-TO-DATE
+> Task :feature:next-jam:parseDebugLocalResources UP-TO-DATE
+> Task :core:data:compileDebugLibraryResources UP-TO-DATE
+> Task :feature:next-jam:generateDebugRFile UP-TO-DATE
+> Task :feature:past-jams:mapDebugSourceSetPaths UP-TO-DATE
+> Task :feature:info:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :feature:past-jams:compileDebugLibraryResources UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :feature:past-jams:parseDebugLocalResources UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :feature:info:compileDebugLibraryResources UP-TO-DATE
+> Task :feature:next-jam:compileDebugLibraryResources UP-TO-DATE
+> Task :feature:info:generateDebugRFile UP-TO-DATE
+> Task :core:ui:compileDebugLibraryResources UP-TO-DATE
+> Task :feature:assistant:compileDebugLibraryResources UP-TO-DATE
+> Task :feature:assistant:generateDebugRFile UP-TO-DATE
+> Task :core:data:generateDebugRFile UP-TO-DATE
+> Task :feature:past-jams:generateDebugRFile UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :core:data:kspDebugKotlin UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugJavaRes UP-TO-DATE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core:data:compileDebugKotlin UP-TO-DATE
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:data:processDebugJavaRes UP-TO-DATE
+> Task :core:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :feature:info:compileDebugKotlin UP-TO-DATE
+> Task :feature:info:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:info:processDebugJavaRes UP-TO-DATE
+> Task :feature:info:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :feature:info:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:past-jams:compileDebugKotlin UP-TO-DATE
+> Task :feature:past-jams:processDebugJavaRes UP-TO-DATE
+> Task :feature:past-jams:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:assistant:compileDebugKotlin UP-TO-DATE
+> Task :feature:past-jams:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:past-jams:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :feature:assistant:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:assistant:processDebugJavaRes UP-TO-DATE
+> Task :feature:assistant:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:assistant:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :feature:next-jam:compileDebugKotlin UP-TO-DATE
+> Task :feature:next-jam:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:next-jam:processDebugJavaRes UP-TO-DATE
+> Task :feature:next-jam:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:next-jam:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :app:compileDebugKotlin
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :app:testDebugUnitTest FAILED
+
+AppModuleBindingsTest > narrow write contracts delegate to the same SetlistRepository with outcomes unchanged FAILED
+    java.lang.AssertionError at AppModuleBindingsTest.kt:83
+
+2 tests completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 3s
+119 actionable tasks: 5 executed, 114 up-to-date
+Configuration cache entry reused.

@@ -265,10 +265,10 @@ upcoming jam until the earlier one passes. The list proposal can be loaded only 
 
 ### Complete setlist mutation inventory (D-13)
 
-The app-owned `SetlistActionRegistry` exposes exactly these eleven repository-callable mutations:
+`SetlistRepository` is the mutation inventory: exactly these eleven repository-callable mutations (the `SetlistActionRegistry` that once listed them was removed by `remove-action-registry`, 17 October 2026):
 add song, remove song, set key, adjust lineup slot count, assign musician, clear slot, add extra
 participant under `Otros`, remove extra participant under `Otros`, reorder song, publish setlist, and create the next jam (a `BORRADOR` `Jams` row, D-25).
 Each delegates to the corresponding `SetlistRepository` function and preserves its specific typed
 outcome. Read-only refresh/observe operations, failure dismissal and admin login are not setlist
-mutations. Apps Script remains the write authority; the registry is not a credential or protocol
+mutations. Apps Script remains the write authority; the repository is not a credential or protocol
 boundary. A deeplink scheme remains deferred under D1.

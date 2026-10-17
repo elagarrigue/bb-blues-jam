@@ -19,8 +19,8 @@
   <text x="86" y="241" class="module">:app</text>
   <text x="86" y="270" class="body">Navigation Compose · inicio de Koin · composición de módulos</text>
   <line x1="674" y1="226" x2="674" y2="276" stroke="#514532"/>
-  <text x="697" y="241" class="body" font-weight="700">SetlistActionRegistry</text>
-  <text x="697" y="267" class="small">Adaptadores de contratos de acciones</text>
+  <text x="697" y="241" class="body" font-weight="700">SetlistRepository</text>
+  <text x="697" y="267" class="small">Contratos angostos atados directo</text>
 
   <path d="M540 294V315M177 315H903" class="bus"/>
   <path d="M177 315V338" class="dependency"/><path d="M419 315V338" class="dependency"/>

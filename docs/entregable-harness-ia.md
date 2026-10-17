@@ -381,8 +381,9 @@ El MVP se construyó para recibir al asistente: contrato de acciones (D-13), cat
   y tonalidad se toman del catálogo, nunca del modelo, y lo que no existe se descarta.
 - **Streaming:** un parser incremental muestra cada tema validado apenas llega. El parseo final es
   la fuente de verdad.
-- **Aplicar una propuesta** (Agregar, Reemplazar o Crear jam) pasa por el `SetlistActionRegistry`,
-  el mismo contrato de 14 mutaciones que usa el admin a mano. Dos reglas de Konsist garantizan que
+- **Aplicar una propuesta** (Agregar, Reemplazar o Crear jam) pasa por los contratos angostos de `:core:data`
+  atados directo a `SetlistRepository` (desde `remove-action-registry` ya no existe el `SetlistActionRegistry`),
+  las mismas funciones que usa el admin a mano. Dos reglas de Konsist garantizan que
   el agente no puede escribir y que la feature solo aplica a través del contrato.
 
 ### 6.3 Lo que solo apareció al ejecutar

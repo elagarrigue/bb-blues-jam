@@ -10,7 +10,7 @@ production-module dependencies are shown below.
 
 ```mermaid
 flowchart TB
-    app[":app<br/>Composition root · Navigation Compose<br/>Koin bindings · SetlistActionRegistry"]
+    app[":app<br/>Composition root · Navigation Compose<br/>Koin bindings"]
     subgraph features["Isolated feature modules"]
         next[":feature:next-jam<br/>Upcoming jam · song detail · editing"]
         past[":feature:past-jams<br/>Jams · history · future-jam management"]
@@ -53,7 +53,6 @@ flowchart TB
         cache[("Room cache")]
         session["AdminSession / DataStore"]
         repo["SetlistRepository / AdminWriter"]
-        registry["SetlistActionRegistry<br/>:app adapters implement shared contracts"]
         agent["Koog agent in :core:data<br/>searchCatalog · pastJams · jamSchedule"]
         validator["ProposalValidator / JamProposalValidator"]
         confirm["Admin reviews and confirms<br/>:feature:assistant"]
@@ -68,8 +67,7 @@ flowchart TB
         agent -->|read-only tools| reads
         agent -->|structured output / stream| validator
         validator -->|validated proposal| confirm
-        confirm -->|shared action contracts| registry
-        registry --> repo
+        confirm -->|narrow write contracts| repo
         repo -->|confirmed server result| cache
         session -->|stored credential supplied to writes| repo
     end
@@ -85,9 +83,10 @@ flowchart TB
 
 The agent itself is read-only: its tools access the catalog, past jams and jam schedule. It cannot
 reach a writing repository. Applying a proposal is a separate confirmed feature flow through
-shared action contracts, whose adapters are wired in `:app` to `SetlistActionRegistry`. Manual
-feature edits can call narrow repository contracts directly; they do not all pass through the
-registry. Every supported mutation remains available through the action contract.
+narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover`,
+`JamCreator`) that `:app` binds directly to `SetlistRepository`; there is no action registry since
+`remove-action-registry`. Manual feature edits call the same repository functions. Every supported
+mutation is a `SetlistRepository` function.
 
 The local admin state controls which UI is rendered; Apps Script authenticates and validates
 server actions. Room is a local cache, not an independent authority. The Sheet owns the catalog
@@ -108,7 +107,6 @@ tools inspect the product; they are not runtime services.
 - [Composition root](../app/src/main/java/com/bbbjam/BluesJamApp.kt).
 - [Application bindings](../app/src/main/java/com/bbbjam/di/AppModule.kt).
 - [Data bindings](../core/data/src/main/kotlin/com/bbbjam/core/data/di/DataModule.kt).
-- [Action registry](../app/src/main/java/com/bbbjam/actions/SetlistActionRegistry.kt).
 - [Agent and registered tools](../core/data/src/main/kotlin/com/bbbjam/core/data/assistant/DefaultSetlistAssistant.kt).
 - [Server action router](../backend/apps-script/src/Post.js).
 - [Canonical architecture rules](../.claude/skills/architecture/SKILL.md) and [domain authority](domain-model.md).

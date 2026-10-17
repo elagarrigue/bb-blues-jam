@@ -6,7 +6,7 @@ import java.time.LocalDate
 /**
  * The setlist removal the assistant feature may call (`assistant-proposal-targets`, D-13, D-24): take
  * a song out of a jam's setlist by id. Like [SetlistSongAdder] it has no implementation in `:core:data`
- * and no `dataModule` binding; `:app` binds it to the action registry. The outcome is
+ * and no `dataModule` binding; `:app` binds it to the setlist repository. The outcome is
  * [SetlistRepository.removeSong]'s, unchanged.
  */
 fun interface SetlistSongRemover {

@@ -25,8 +25,9 @@ tags; the real catalog is growing past it. Loading should run in parallel with d
 
 D-13's complete inventory is ten repository-callable operations: add song to setlist, remove song,
 set key, adjust lineup, assign musician to slot, clear slot, add and remove an extra participant
-(`Otros`), reorder songs, and publish. The app-owned `SetlistActionRegistry` delegates each action
-to its existing `SetlistRepository` function with its typed outcome. Apps Script continues to
+(`Otros`), reorder songs, and publish. The app-owned `SetlistActionRegistry` delegated each action
+to its existing `SetlistRepository` function with its typed outcome (superseded by
+`remove-action-registry`, 17 October 2026: the registry is gone and `SetlistRepository` is the inventory). Apps Script continues to
 authorize writes. D1 still defers the deeplink scheme; a deeplink is not required for this inventory.
 
 ### Instrument strip: chips, not icons — resolved
@@ -181,7 +182,7 @@ Settled with the user: icons from `material-icons-core` (I1), a 150 ms tab cross
 detail slide (M1), and **deeplinks deferred** (D1).
 
 Open question: **the deeplink scheme.** No destination declares `deepLinks` and the manifest has
-no intent filter. D-13 is met by repository functions registered in the `:app` action registry; a
+no intent filter. D-13 is met by `SetlistRepository` functions (the `:app` action registry was removed by `remove-action-registry`); a
 deeplink is the alternative, not a requirement. An exported URI entry point parses untrusted input
 and needs its own validation design, so it is decided with `action-contract-registry` (or a slice
 of its own).
@@ -440,7 +441,7 @@ Stated so they can be challenged rather than silently relied upon.
       non-mutating `addSong` probes 2.4–5.1 s (the deeper the check, the slower). An add is
       therefore about 5 s, which the pending row covers.
 - [x] Confirmed the ten-mutation inventory in `action-contract-registry`; the app-owned registry
-      covers all repository-callable setlist writes.
+      covers all repository-callable setlist writes (registry removed by `remove-action-registry`; `SetlistRepository` is the inventory).
 - [x] Instrument strip resolved as labelled chips by the Stitch export; no icon set needed.
 - [ ] Confirm MusicBrainz and Deezer terms permit this use, and record the conclusion.
 - [x] Reconcile the DESIGN.md palette — done 19 September 2026 against the Stitch export.

@@ -1,3 +1,11 @@
+## 17 October 2026 - remove-action-registry accepted
+
+Organizer decision of 17 October 2026 (option A, amends D-13's second sentence). Deleted `app/.../actions/` (`SetlistActionRegistry`, `SetlistAction`, `SetlistMutation`, `SetlistActionResult`, four `Registry*` adapters) and the five registry tests (13 testcases). `appModule` now binds `SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover` and `JamCreator` with SAM lambdas that delegate to `get<SetlistRepository>()` (repository untouched). New `app/src/test/.../di/AppModuleBindingsTest.kt` (fake repository, surviving same-instance test, new delegation test with `assertSame` on non-default outcomes incl. failures). Comments in `AppRoutes`, `AssistantModule`, `NewJamUiModel`, `PastJamsModule` and four `:core:data` KDocs now say "setlist repository". Docs: bitacora dated note under D-13, architecture skill (current text fixed, supersede pointer before the "As built" history), `docs/architecture.md`, phase-2 brief, domain-model, risks, entregable line, SVG relabelled (the PNG was not regenerated and still shows `SetlistActionRegistry`).
+
+Verification: baseline `CI=true ./init.sh` exit 0, 1135 testcases; final exit 0, konsist/detekt/ktlint wired, 1124 testcases (1135 - 13 + 2), 19 Konsist rules unchanged. Red first: a wrong-argument mutant on the Mover binding fails the new test (`docs/evidence/remove-action-registry/red-mutant-wrong-argument.txt`), restored. Grep for the deleted names: 0 hits. Not run: device (not required).
+
+Independent validation: accepted on 17 October 2026 (gate rerun, 1124 testcases, own mutant on the mover binding red, docs and D-13 note reviewed).
+
 ## 17 October 2026 - application architecture diagrams
 
 Added docs/architecture.md with exact production-module dependency and runtime Mermaid diagrams, plus docs/diagrams/app-architecture.svg and .png for presentation. Overview reuses the app palette; documents eight product modules, isolated features, Compose presenters, Koin composition root, Room/DataStore, Apps Script/Sheets, read-only on-device Koog agent and confirmed proposal application through shared action contracts. Shows all three currently registered read tools, including jamSchedule. No app code or feature statuses changed.

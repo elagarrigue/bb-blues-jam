@@ -9,7 +9,7 @@ import com.bbbjam.core.ui.presenter.UiModel
 /**
  * The "Nueva jam" action of the Jams tab (`admin-jams-tab`, J7/J9): the button ([label]), the form
  * dialog while [form] is set, and the result of the last creation in [progress]. One handler takes
- * every event; the creation goes through `JamCreator`, the action registry's entry (D-13, D-25).
+ * every event; the creation goes through `JamCreator`, bound to the setlist repository (D-13, D-25).
  */
 data class NewJamUiModel(
     val label: String,

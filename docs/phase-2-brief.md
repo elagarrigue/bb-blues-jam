@@ -35,7 +35,7 @@ Only the admin. Musicians never see the assistant.
 5. Every proposed song id is **validated against the catalog** before it is shown (D-14). Songs
    outside the catalog are never presented as part of the list.
 6. **Later slice:** a "Usar esta lista" action loads the proposal into the upcoming setlist through
-   the action contract (`SetlistActionRegistry`, D-13), after the admin confirms. The agent itself
+   the narrow contracts bound to `SetlistRepository` (D-13; the registry was removed by `remove-action-registry`), after the admin confirms. The agent itself
    never writes.
 
 ## Technical decisions

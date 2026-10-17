@@ -13,7 +13,7 @@ import java.util.Locale
  *
  * No destination declares a deeplink and the manifest has no intent filter (`bottom-navigation`,
  * user decision D1, 5 October 2026): the deeplink scheme is deferred to `action-contract-registry`.
- * D-13 is met by repository functions registered in the `:app` action registry; an exported URI
+ * D-13 is met by `SetlistRepository` functions; an exported URI
  * entry point needs its own validation design.
  */
 internal object AppRoutes {

@@ -30,7 +30,7 @@ val assistantModule = module {
             ),
         )
     }
-    // The load of a proposal outlives the tab too; the write contracts are bound in `:app` to the action registry.
+    // The load of a proposal outlives the tab too; the write contracts are bound in `:app` to the setlist repository.
     // One write at a time across the list loads and the jam creations.
     single { RunLock() }
     single {
@@ -47,7 +47,7 @@ val assistantModule = module {
             ),
         )
     }
-    // Creating a jam outlives the tab too; `JamCreator` is bound in `:app` to the action registry.
+    // Creating a jam outlives the tab too; `JamCreator` is bound in `:app` to the setlist repository.
     single {
         JamCreationRunner(
             creator = get(),
