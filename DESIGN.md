@@ -105,6 +105,11 @@ rules are in `docs/build-brief.md`. Interface copy is Rioplatense Spanish using 
 
 ## Existing Design Assets
 
+- **Band logo** — Logo blanco BBB.png is the supplied transparent white mark. The app reuses it
+  without edits as the shared header in Próxima jam and Info.
+- **Launcher icon** — app/src/main/res/drawable-nodpi/launcher_brand.png pairs the mark with a
+  midnight background and amber ring; density-specific launcher assets use the same composition.
+
 - **`bb-blues-jam-design-prompt.md`** — the complete design brief: screen-by-screen requirements,
   the slot model as it affects layout, reading priority, and design rules. **Source of truth.**
 - **Prior interactive mockup** — established the dark indigo plus neon amber direction. Accepted as
@@ -127,8 +132,8 @@ copy is Rioplatense Spanish using *vos* (D-12).
 
 ## Generated Concept Images
 
-None from `imagegen`, deliberately: Stitch is the generation path, and a parallel set of concepts
-would compete with it as a reference.
+The launcher icon is a generated adaptation of the supplied band logo. It is an app asset, not a
+screen concept or a replacement for the written design direction.
 
 Stitch screens are catalogued in `docs/design/README.md`, which also fixes the file naming so a
 screen is identifiable without opening it.
@@ -911,4 +916,3 @@ On the admin's song detail (an admin song row until `song-detail-replaces-row-ex
   `Ya estaba en la lista`, `Sin intentar` in `textMuted`; `No se agregó: ...` in `error`. One polite live region
   summary (`body`): `text` while running and for `Listo`, `error` for partial or cut runs, `textMuted` when stopped;
   `Detener` is an underlined 48dp text action in `text` while running. Never `Listo` when any song failed.
-

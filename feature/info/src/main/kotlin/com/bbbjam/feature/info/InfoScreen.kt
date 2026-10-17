@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
+import com.bbbjam.core.ui.brand.BandLogo
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -63,6 +64,7 @@ private fun InfoContent(model: InfoUiModel, modifier: Modifier, contentPadding: 
             .padding(horizontal = spacing.md, vertical = spacing.lg),
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
+        BandLogo()
         Column {
             Text(text = model.title, style = BluesJamTheme.typography.h1, modifier = Modifier.semantics { heading() })
             Text(text = model.tagline, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)

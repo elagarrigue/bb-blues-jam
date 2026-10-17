@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.bbbjam.core.ui.brand.BandLogo
 import androidx.compose.ui.Modifier
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.StalenessNotice
@@ -21,13 +22,14 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 
 @Composable
 internal fun NoUpcomingJamContent(model: NextJamUiModel.NoUpcomingJam, modifier: Modifier, padding: PaddingValues) {
-    val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = EMPTY_KEY)
+    val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = BRAND_HEADER_KEY)
     LazyColumn(
         state = listState,
         modifier = modifier,
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.md),
     ) {
+        item(key = BRAND_HEADER_KEY) { BandLogo() }
         model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
         item(key = EMPTY_KEY) { EmptyStateBlock(model.empty) }
         model.adminHint?.let { hint -> item(key = ADMIN_HINT_KEY) { AdminHint(hint) } }
@@ -36,7 +38,7 @@ internal fun NoUpcomingJamContent(model: NextJamUiModel.NoUpcomingJam, modifier:
 
 @Composable
 internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: PaddingValues) {
-    val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = HEADER_KEY)
+    val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = BRAND_HEADER_KEY)
     val rowKeys = ((model.setlist as? SetlistUiModel.Songs)?.rows).orEmpty().map { it.rowKey }
     var moveAnchor by remember { mutableStateOf<MoveScrollAnchor?>(null) }
     LaunchedEffect(moveAnchor, rowKeys) {
@@ -60,6 +62,7 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
     ) {
+        item(key = BRAND_HEADER_KEY) { BandLogo() }
         model.staleness?.let { notice -> item(key = STALENESS_KEY) { StalenessNotice(notice) } }
         // The header and the admin status block end their group with an extra `sm`, so the groups
         // sit `md` apart while song rows stay `sm` apart (`ui-polish-pass`, U11).

@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -46,6 +47,7 @@ import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.brand.BandLogo
 import com.bbbjam.core.ui.filter.InstrumentFilterBar
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -122,12 +124,20 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
     val fill = Modifier.fillMaxSize()
     RefreshableContent(model.pullRefresh, modifier = background) {
         when (model) {
-            is NextJamUiModel.Loading -> Box(modifier = fill.verticalScroll(rememberScrollState()).padding(padding)) {
+            is NextJamUiModel.Loading -> Column(
+                modifier = fill.verticalScroll(rememberScrollState()).padding(padding),
+                verticalArrangement = Arrangement.spacedBy(spacing.md),
+            ) {
+                BandLogo()
                 SkeletonList(description = model.description)
             }
 
             // At the top of the padded area, like the other messages, not vertically centred.
-            is NextJamUiModel.Failed -> Box(modifier = fill.verticalScroll(rememberScrollState()).padding(padding)) {
+            is NextJamUiModel.Failed -> Column(
+                modifier = fill.verticalScroll(rememberScrollState()).padding(padding),
+                verticalArrangement = Arrangement.spacedBy(spacing.md),
+            ) {
+                BandLogo()
                 ListErrorBlock(model.error)
             }
 
@@ -169,6 +179,7 @@ internal fun LazyListScope.setlistItems(
 }
 
 internal const val HEADER_KEY = "header"
+internal const val BRAND_HEADER_KEY = "brand-header"
 internal const val NOTE_KEY = "note"
 internal const val FILTER_KEY = "filter"
 internal const val STALENESS_KEY = "staleness"
