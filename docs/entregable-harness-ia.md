@@ -14,11 +14,11 @@ cada decisión. La funcionalidad de la app está en el [README](../README.md).
 | | |
 |---|---|
 | Período | 19 de septiembre al 17 de octubre de 2026, cuatro semanas |
-| Rebanadas (features) en `feature_list.json` | 65: 63 `accepted`, 1 `blocked` por decisión de alcance (D-20), 1 `in_progress` |
-| Especificaciones escritas por el `planner` | 64, en `docs/specs/` |
+| Rebanadas (features) en `feature_list.json` | 67: 66 `accepted`, 1 `blocked` por decisión de alcance (D-20) |
+| Especificaciones escritas por el `planner` | 66, en `docs/specs/` |
 | Decisiones registradas con su fundamento | 29 (D-01 … D-29) |
-| Commits | más de 210 |
-| Tests JVM en la última corrida del gate | 1128 |
+| Commits | más de 220 |
+| Tests JVM en la última corrida del gate | 1135 |
 | Reglas de arquitectura ejecutables (Konsist) | 19 |
 | Módulos Gradle | 8, más `:konsist-test` y el build incluido `build-logic` |
 | Acciones del backend (Apps Script) | más de 20, todas validadas en el servidor |

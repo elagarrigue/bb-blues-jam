@@ -248,6 +248,13 @@ list whose UiModel branch changes while away starts at the top; whether Compose 
     key until the next refresh; the Sheet is correct.
   - Pending and failed key changes live in memory: a pending overlay dies with the process, and the
     cache then shows the key the Sheet last confirmed.
+  - *Song detail refinement* (amendment of 16 October 2026, accepted 17 October 2026): the admin
+    opens the picker by tapping the key block and adds to `Otros` from the `+ Otro` row. Checked on
+    the Pixel 5 except two cases the debug setup cannot reach: a song with every slot filled (the
+    demo jam has none; `CUPOS LIBRES` then shows the note and the row, JVM-tested only) and the
+    musician detail (it would require leaving the admin session; JVM-tested). TalkBack was not run:
+    the key block's single announced node is inferred from Compose merging, the dump shows the
+    description on a same-bounds child.
   - (Resolved by `song-detail-replaces-row-expansion`: the admin's song detail applies the same
     overlay as the row, so both show the pending key with "Guardando…".)
   - `Guardando…` adds a line to the row while sending, so the rows below move down by one caption
