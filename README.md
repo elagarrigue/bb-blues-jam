@@ -33,17 +33,19 @@ La app resuelve los cuatro primeros puntos y el asistente, el quinto.
 | Crear, editar, borrar y publicar jams | | ✓ |
 | Asistente con IA | | ✓ |
 
-El admin no usa otra app ni otras pantallas: usa las mismas que el músico, con controles extra. Entra
-con una frase de acceso desde Info. En modo admin el fondo pasa a ser color vino y aparece arriba
-la franja **MODO ADMIN**, así nadie publica algo creyendo que está en la vista de músico.
+El admin no usa otra app ni otras pantallas: usa las mismas que el músico, con controles extra. No
+hay botón de admin a la vista. Para entrar, se toca **5 veces seguidas el logo de Bahía Blanca
+Blues en Info** y se escribe la frase de acceso. Para salir, otros 5 taps en el mismo logo. En modo
+admin el fondo pasa a ser color vino y aparece arriba la franja **MODO ADMIN**, así nadie publica
+algo creyendo que está en la vista de músico.
 
-## Funcionalidad
+## Vista de músico
 
 ### Próxima jam
 
 <p>
-  <img src="docs/screenshots/01-proxima-jam.png" width="260" alt="Próxima jam: encabezado con fecha, lugar, estado y filtros">
-  <img src="docs/screenshots/02-lista-de-temas.png" width="260" alt="Lista de temas con tonalidad y cupos">
+  <img src="docs/screenshots/musico-01-proxima-jam.png" width="260" alt="Próxima jam en vista de músico: fecha, lugar, filtros y lista">
+  <img src="docs/screenshots/musico-02-filtro.png" width="260" alt="Lista filtrada por cupo libre para bajo">
 </p>
 
 - **Encabezado:** fecha, hora y lugar, y cuánto falta ("En 14 días"). El lugar lo trae cada jam,
@@ -59,65 +61,87 @@ la franja **MODO ADMIN**, así nadie publica algo creyendo que está en la vista
   - mientras carga, filas esqueleto;
   - sin conexión, la última versión guardada con un aviso;
   - si hay un error, un mensaje con Reintentar;
-  - si la jam está en preparación, "la lista se está armando".
-- **Admin:** cada fila suma una barra con Subir, Bajar y Quitar; quitar pide confirmar en un
-  diálogo. Arriba de la lista está "Agregar tema", que busca en el catálogo.
+  - si la jam todavía no está publicada, el aviso de que la lista se está armando.
 
-### Detalle del tema
+### Detalle del tema y jams anteriores
 
 <p>
-  <img src="docs/screenshots/03-detalle-tema.png" width="260" alt="Detalle del tema con la tonalidad grande y los cupos libres">
-  <img src="docs/screenshots/04-detalle-formacion.png" width="260" alt="Editor de formación del tema">
+  <img src="docs/screenshots/musico-03-detalle-tema.png" width="260" alt="Detalle del tema con la tonalidad grande y los cupos libres">
+  <img src="docs/screenshots/musico-04-jams-anteriores.png" width="260" alt="Jams anteriores en vista de músico">
 </p>
 
-- Título, artista y la tonalidad en tamaño grande.
-- **Cupos:** primero los libres, después los cubiertos y al final los **Otros** (quien toca fuera
-  de la formación, como un saxo o percusión). Los Otros nunca cuentan como cupo.
-- **Admin:**
+- **Detalle del tema:** título, artista y la tonalidad en tamaño grande. Abajo, los cupos: primero
+  los libres, después los cubiertos y al final los **Otros** (quien toca fuera de la formación,
+  como un saxo o percusión). Los Otros nunca cuentan como cupo.
+- **Jams anteriores:** lista de la más nueva a la más vieja, con fecha, lugar, cantidad de temas y
+  los primeros títulos. Al abrir una se ve la lista que se tocó.
+
+### Info
+
+<img src="docs/screenshots/musico-05-info.png" width="260" alt="Pantalla Info sobre Bahía Blanca Blues">
+
+Presenta a la comunidad **Bahía Blanca Blues**: quién organiza, qué es la jam, el programa de radio
+**Hideaway**, las redes y cómo sumarse.
+
+## Modo admin
+
+### Entrar y salir
+
+<img src="docs/screenshots/musico-06-login.png" width="260" alt="Pantalla para ingresar la frase de acceso">
+
+Cinco taps seguidos en el logo de Info abren el ingreso con frase de acceso. Con el modo admin
+activo, otros cinco taps lo cierran. Los taps tienen que ser seguidos: si pasa más de un segundo y
+medio entre uno y otro, la cuenta vuelve a empezar. La frase la valida el servidor; el modo admin
+del teléfono solo decide qué controles se dibujan.
+
+### Próxima jam y detalle del tema
+
+<p>
+  <img src="docs/screenshots/admin-01-proxima-jam.png" width="200" alt="Próxima jam en modo admin con el estado de la jam">
+  <img src="docs/screenshots/admin-02-lista-de-temas.png" width="200" alt="Lista de temas con controles para subir, bajar y quitar">
+  <img src="docs/screenshots/admin-03-detalle-tema.png" width="200" alt="Detalle del tema con cupos para anotar músicos">
+  <img src="docs/screenshots/admin-04-detalle-formacion.png" width="200" alt="Editor de formación del tema">
+</p>
+
+- **Lista:** cada fila suma una barra con Subir, Bajar y Quitar; quitar pide confirmar en un
+  diálogo. Arriba de la lista está "Agregar tema", que busca en el catálogo.
+- **Detalle del tema:**
   - **Anotar** a un músico en un cupo, con sugerencias de nombres de jams anteriores, y liberarlo;
   - tocar la tonalidad para cambiarla;
   - **ajustar la formación** de ese tema: cada instrumento va de 0 a 3 cupos, salvo Batería y
     Teclados, que llegan a 1;
   - agregar Otros con nombre e instrumento.
 
-### Jams: próximas y anteriores
+### Jams: crear, editar, publicar
 
 <p>
-  <img src="docs/screenshots/05-jams.png" width="260" alt="Pestaña Jams con las próximas jams y sus estados">
-  <img src="docs/screenshots/06-jam-anterior.png" width="260" alt="Detalle de una jam anterior">
-  <img src="docs/screenshots/12-publicar-dialogo.png" width="260" alt="Diálogo de confirmación para publicar la lista">
+  <img src="docs/screenshots/admin-05-jams.png" width="260" alt="Pestaña Jams con las próximas jams y sus estados">
+  <img src="docs/screenshots/admin-12-publicar-dialogo.png" width="260" alt="Diálogo de confirmación para publicar la lista">
 </p>
 
-- **Anteriores:** lista de la más nueva a la más vieja, con fecha, lugar, cantidad de temas y los
-  primeros títulos. Al abrir una se ve la lista que se tocó.
-- **Próximas (admin):** acá se maneja todo lo relacionado con las fechas.
-  - **Nueva jam:** fecha, hora y lugar.
-  - **Editar** fecha, hora y lugar con el lápiz. **Borrar** con el tacho, que siempre pide
-    confirmación.
-  - **Estado** con chips de selección única:
-    - **Borrador:** los músicos no ven la jam.
-    - **Creada:** ven fecha, hora y lugar, y el aviso de que la lista se está armando.
-    - **Publicada:** ven todo.
-  - Publicar pide confirmación en un diálogo. Despublicar también pide confirmación, porque los
-    músicos dejan de ver la lista.
-  - Mientras se guarda un cambio de estado, los chips se deshabilitan y el borde del chip elegido
-    pulsa.
-  - Si hay más de una jam futura, la más cercana es "la próxima" y las demás quedan en espera.
+En la pestaña Jams, arriba de las anteriores, el admin ve las próximas y maneja todo lo relacionado
+con las fechas:
 
-### Info
+- **Nueva jam:** fecha, hora y lugar.
+- **Editar** fecha, hora y lugar con el lápiz. **Borrar** con el tacho, que siempre pide
+  confirmación.
+- **Estado** con chips de selección única:
+  - **Borrador:** los músicos no ven la jam.
+  - **Creada:** ven fecha, hora y lugar, y el aviso de que la lista se está armando.
+  - **Publicada:** ven todo.
+- Publicar pide confirmación en un diálogo. Despublicar también pide confirmación, porque los
+  músicos dejan de ver la lista.
+- Mientras se guarda un cambio de estado, los chips se deshabilitan y el borde del chip elegido
+  pulsa.
+- Si hay más de una jam futura, la más cercana es "la próxima" y las demás quedan en espera.
 
-<img src="docs/screenshots/07-info.png" width="260" alt="Pantalla Info sobre Bahía Blanca Blues">
-
-Presenta a la comunidad **Bahía Blanca Blues**: quién organiza, qué es la jam, el programa de radio
-**Hideaway**, las redes y cómo sumarse. Abajo de todo está la entrada discreta al modo admin.
-
-### Asistente (solo admin)
+### Asistente
 
 <p>
-  <img src="docs/screenshots/08-asistente.png" width="200" alt="Asistente vacío con el campo de pedido">
-  <img src="docs/screenshots/09-asistente-streaming.png" width="200" alt="Asistente mientras espera la respuesta">
-  <img src="docs/screenshots/10-asistente-propuesta.png" width="200" alt="Propuesta del asistente con temas, tonalidad y motivo">
-  <img src="docs/screenshots/11-asistente-acciones.png" width="200" alt="Acciones para usar la propuesta">
+  <img src="docs/screenshots/admin-08-asistente.png" width="200" alt="Asistente vacío con el campo de pedido">
+  <img src="docs/screenshots/admin-09-asistente-streaming.png" width="200" alt="Asistente mientras espera la respuesta">
+  <img src="docs/screenshots/admin-10-asistente-propuesta.png" width="200" alt="Propuesta del asistente con temas, tonalidad y motivo">
+  <img src="docs/screenshots/admin-11-asistente-acciones.png" width="200" alt="Acciones para usar la propuesta">
 </p>
 
 Es un chat. El admin pide la lista en una frase, por ejemplo:
