@@ -27,9 +27,9 @@ internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
     val spacing = BluesJamTheme.spacing
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
         LineupPanelActionRow(
-            instrument = NextJamCopy.OTHER,
-            actionLabel = NextJamCopy.SUBMIT_EXTRA,
-            actionDescription = NextJamCopy.ADD_EXTRA,
+            instrument = model.rowLabel,
+            actionLabel = model.actionLabel,
+            actionDescription = model.actionDescription,
             onAction = { model.events(ExtraParticipantEditorUiModel.Event.Open) },
         )
         if (model.saving) SaveStatusLine(NextJamCopy.SAVING)

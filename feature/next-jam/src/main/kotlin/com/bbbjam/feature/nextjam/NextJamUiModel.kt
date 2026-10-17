@@ -192,9 +192,11 @@ data class SongRowAdminUiModel(
 ) : UiModel
 
 /**
- * The admin's "Otros" editor (`admin-edit-extra-participants`): "Agregar a Otros", or the open form
- * with its two fields, "Agregar" (enabled only when [submitEnabled]: both trimmed values non-blank)
- * and "Cancelar". The extras themselves, each with its "Quitar", are lines of the song detail's
+ * The admin's "Otros" editor (`admin-edit-extra-participants`): the "+ Otro" row at the end of the
+ * open slots ([rowLabel] "Otro", drawn as "+ Otro"; its button [actionLabel] "Agregar" with
+ * [actionDescription] "Agregar a Otros" for screen readers), and the dialog it opens while
+ * [formVisible]: two fields, "Agregar" (enabled only when [submitEnabled]: both trimmed values
+ * non-blank) and "Cancelar". The extras themselves, each with its "Quitar", are lines of the song detail's
  * lineup panel (`ui-polish-pass`, U4), which sends [Event.Remove] here.
  */
 data class ExtraParticipantEditorUiModel(
@@ -203,6 +205,9 @@ data class ExtraParticipantEditorUiModel(
     val instrument: String,
     val submitEnabled: Boolean,
     val saving: Boolean,
+    val rowLabel: String,
+    val actionLabel: String,
+    val actionDescription: String,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {

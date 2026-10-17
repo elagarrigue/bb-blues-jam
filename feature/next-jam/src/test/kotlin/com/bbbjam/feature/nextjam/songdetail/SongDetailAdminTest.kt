@@ -61,7 +61,7 @@ import org.junit.Test
  * `song-detail-replaces-row-expansion`: the song detail holds everything the expanded row had. The
  * copy is written out from the approved tables, never read from [NextJamCopy] or [SongDetailCopy].
  * Several tests here moved from the list's tests (extras form, panel "Quitar", lineup editor,
- * "Cambiar tonalidad"), now driven through [SongDetailPresenter].
+ * the key block that opens the picker), now driven through [SongDetailPresenter].
  */
 class SongDetailAdminTest {
     private val jams = FakeJamsRepository()
@@ -186,7 +186,7 @@ class SongDetailAdminTest {
     }
 
     @Test
-    fun `Cambiar tonalidad and Anotar navigate for this song, and Liberar clears that slot once`() = runTest {
+    fun `the key block and Anotar navigate for this song, and Liberar clears that slot once`() = runTest {
         val keys = mutableListOf<Pair<LocalDate, SongId>>()
         val assigns = mutableListOf<List<Any>>()
         val p = params(
@@ -301,7 +301,7 @@ class SongDetailAdminTest {
     }
 
     @Test
-    fun `the Otros form submits through the repository, a blank one cannot, and Cancelar clears it`() = runTest {
+    fun `the Otros dialog submits through the repository, a blank one cannot, and Cancelar clears it`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
             jams.snapshots.emit(snapshot())
             var editor = awaitSong().controls().extraParticipants
@@ -333,6 +333,46 @@ class SongDetailAdminTest {
                 setlist.extraAddCalls,
             )
             assertTrue(setlist.extraRemoveCalls.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the Otro row carries its three strings in the model, and Open creates no slot or editor change`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
+            jams.snapshots.emit(snapshot())
+            val before = awaitSong()
+            val editor = before.controls().extraParticipants
+            assertEquals("Otro", editor.rowLabel)
+            assertEquals("Agregar", editor.actionLabel)
+            assertEquals("Agregar a Otros", editor.actionDescription)
+            // The editor lines are there with no event first; there is no opener or closer.
+            assertTrue(before.controls().lineup.lines.isNotEmpty())
+            editor.events(ExtraParticipantEditorUiModel.Event.Open)
+            val after = awaitSong { it.controls().extraParticipants.formVisible }
+            assertEquals(before.lineup.openSlots.map { it.detail }, after.lineup.openSlots.map { it.detail })
+            assertEquals(before.lineup.filledSlots.map { it.detail }, after.lineup.filledSlots.map { it.detail })
+            assertEquals(
+                before.controls().lineup.lines.map { it.countLabel },
+                after.controls().lineup.lines.map { it.countLabel },
+            )
+            assertTrue(setlist.extraAddCalls.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a song with no open slot keeps the note and still offers the Otro row`() = runTest {
+        val full = crossroads.copy(
+            lineup = Lineup(listOf(Slot(Instrument.GUITAR, "Tincho"), Slot(Instrument.BASS, "Ana"))),
+        )
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
+            jams.snapshots.emit(snapshot(listOf(full)))
+            val song = awaitSong()
+            assertTrue(song.lineup.openSlots.isEmpty())
+            assertEquals("No quedan cupos libres.", song.lineup.noOpenSlotsNote)
+            assertNull(song.lineup.hint)
+            assertEquals("Agregar a Otros", song.controls().extraParticipants.actionDescription)
             cancelAndIgnoreRemainingEvents()
         }
     }

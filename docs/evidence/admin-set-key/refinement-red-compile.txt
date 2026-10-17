@@ -1,0 +1,73 @@
+Calculating task graph as configuration cache cannot be reused because file 'settings.gradle.kts' has changed.
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :feature:next-jam:preBuild UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :core:data:preBuild UP-TO-DATE
+> Task :feature:next-jam:preDebugBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :feature:next-jam:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :feature:next-jam:javaPreCompileDebug UP-TO-DATE
+> Task :feature:next-jam:generateDebugResources UP-TO-DATE
+> Task :core:data:processDebugNavigationResources UP-TO-DATE
+> Task :feature:next-jam:processDebugNavigationResources UP-TO-DATE
+> Task :core:data:javaPreCompileDebug UP-TO-DATE
+> Task :core:data:generateDebugResources UP-TO-DATE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :core:data:packageDebugResources UP-TO-DATE
+> Task :feature:next-jam:packageDebugResources UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :feature:next-jam:parseDebugLocalResources UP-TO-DATE
+> Task :core:data:parseDebugLocalResources UP-TO-DATE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :core:data:generateDebugRFile UP-TO-DATE
+> Task :feature:next-jam:generateDebugRFile UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :feature:next-jam:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:data:kspDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:data:compileDebugKotlin UP-TO-DATE
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:next-jam:compileDebugKotlin UP-TO-DATE
+> Task :feature:next-jam:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:next-jam:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :feature:next-jam:compileDebugUnitTestKotlin FAILED
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/songdetail/SongDetailAdminTest.kt:346:41 Unresolved reference 'rowLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/songdetail/SongDetailAdminTest.kt:347:44 Unresolved reference 'actionLabel'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/songdetail/SongDetailAdminTest.kt:348:52 Unresolved reference 'actionDescription'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/songdetail/SongDetailAdminTest.kt:373:79 Unresolved reference 'actionDescription'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':feature:next-jam:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3s
+33 actionable tasks: 1 executed, 32 up-to-date
+Configuration cache entry stored.

@@ -52,9 +52,8 @@ sealed interface SongDetailUiModel : UiModel {
  * The admin's controls of one song on its detail, drawn with or after what a musician sees in each block:
  * [saveStatus] ("Guardando…" while any song-level write of it is sending), [setKey] (the key block
  * tap opens the picker; its label is used for accessibility), [lineup] (the always-visible inline
- * editor),
- * [extraParticipants] ("Agregar a Otros" or its form) and [failures], the failed writes of this song
- * only, each with "Cerrar". "Anotar", "Liberar" and an extra's "Quitar" are line actions of the
+ * editor), [extraParticipants] (the "+ Otro" row and the dialog it opens) and [failures], the failed
+ * writes of this song only, each with "Cerrar". "Anotar", "Liberar" and an extra's "Quitar" are line actions of the
  * lineup panel.
  */
 data class SongDetailAdminUiModel(

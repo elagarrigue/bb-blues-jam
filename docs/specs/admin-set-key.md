@@ -444,3 +444,124 @@ of these.
   pending.
 
 The questions as originally asked (B1, V1, O1, L1, R1) are in git history (e82f084).
+
+---
+
+## Amendment 16 October 2026 — song detail admin actions
+
+Parts A and B stay accepted. This amendment covers a UX refinement of the admin song detail, already
+implemented and committed (up to `fa94dcc`; `9beaa44` moved the files to
+`com.bbbjam.feature.nextjam.songdetail`). Owed: post-change tests and a device check. No mutation,
+repository function, overlay or failure rule changes.
+
+### What the code does today (inspected 17 October 2026)
+
+- `SongDetailScreen.kt` `KeyBlock`: the admin gets `clickable(role = Button, onClickLabel = setKey.label)`
+  plus `contentDescription = keyDescription` (merged); the click sends `SetKeyActionUiModel.Event.Open`.
+  The musician keeps `clearAndSetSemantics` with the description and no click.
+- `SongDetailAdminUiModel` has no editor opener field and no `Agregar a Otros` button state: `setKey`
+  (label `Cambiar tonalidad`), `lineup: LineupEditorUiModel` (always drawn after the panel) and
+  `extraParticipants` (`formVisible` drives the existing dialog). `LineupPanel` takes an
+  `openSlotsFooter`; the screen passes `ExtraParticipantEditor`, which draws `LineupPanelActionRow`
+  (`+ Otro`, button `Agregar`, description `Agregar a Otros`) and fires
+  `ExtraParticipantEditorUiModel.Event.Open`.
+- `NextJamCopy` has `SET_KEY`, `OTHER`, `SUBMIT_EXTRA`, `ADD_EXTRA`; no `Cambiar formación` or `Listo` copy remains.
+
+### Gaps found and decisions (settled by the organizer's coordinator; do not reinvent)
+
+1. **Row copy is not in the UiModel. Decision (a): expose it.** Add the row's label (`Otro`, drawn
+   as `+ Otro`), action label (`Agregar`) and content description (`Agregar a Otros`) to
+   `ExtraParticipantEditorUiModel` (for example `rowLabel`, `actionLabel`, `actionDescription`),
+   fill them in the presenter/mapping from `NextJamCopy`, and have `ExtraParticipantEditor` read them
+   from the model. Update every constructor call. A JVM test pins the three strings.
+2. **Empty open section. Decision (b): keep the current behavior.** With no open slots the panel
+   draws the `CUPOS LIBRES` heading, then `noOpenSlotsNote`, then the `+ Otro` footer. Pin it with a
+   test of the model or of the defaults (admin model of an all-filled song: `openSlots` empty,
+   `noOpenSlotsNote` present, `extraParticipants` still offers the row), and check it on device.
+3. **Stale KDoc.** `SongDetailAdminUiModel` and `NextJamUiModel.kt` (~line 195) still describe
+   `extraParticipants` as "`Agregar a Otros` or its form". Reword: the model drives the `+ Otro` row and the dialog.
+4. `Role.Button` plus `onClickLabel` is not visible in `uiautomator dump`; see the device section.
+5. There is no Compose UI harness: the key block's click wiring and the row's placement are verified
+   on device, not on the JVM.
+
+### Acceptance criteria
+
+**A1. Key block opens the picker (admin only).** The admin model exposes `setKey.label == "Cambiar tonalidad"`;
+`setKey.events(Open)` calls `onSetKey(date, songId)` exactly once and nothing else. The musician model
+has `admin == null`, so no key action exists. `keyDescription`, `keyLabel` and `key` are unchanged and a
+pending key still shows from `Sending` entries (Part B behavior).
+
+**A2. `+ Otro` row.** The model carries the three strings of decision (a). With `formVisible == false`
+the dialog is hidden; `events(Open)` makes `formVisible` true; `Submit` calls `addExtraParticipant`
+once with the typed values; `Cancel` clears the form. The action creates no slot: `lineup.openSlots`,
+slot counts, filters and the `LineupEditorUiModel` lines are identical before and after
+`Open`/`Submit` (submit changes only `extras`).
+
+**A3. Formation editor always present.** In the admin model `lineup.lines` is non-empty with no prior
+event, and no opener or closer exists in `LineupEditorUiModel` or `SongDetailAdminUiModel`
+(`grep` finds no `Cambiar formación` or `Listo` in `feature/next-jam/src/main`). Add and Remove still
+queue distinct counts and keep the max, filled-slot and blocked-note rules.
+
+**A4. Musician detail unchanged.** `admin == null`, `lineup.hint` present, every line has
+`action == null && actionLabel == null`.
+
+**A5. No open slots.** As decision (b).
+
+### Tests (feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/songdetail)
+
+- `SongDetailAdminTest` already covers Cambiar tonalidad navigation, the Otros form, the
+  always-visible editor and the musician case. Review each for wording that assumes an opener or a
+  button, and update it. Add: (a) `Open` leaves `openSlots` and editor lines unchanged; (b) editor
+  lines present with no event first; (c) the three row strings; (d) the all-filled song of A5.
+- `SongDetailModelShapeTest` and `SongDetailMappingTest`: update if they list admin fields.
+- `ExtraDialogDefaultsTest` stays (neutral tokens, never amber).
+- New tests must be able to fail: show the red run (for example make `Open` a no-op) under
+  `docs/evidence/admin-set-key/`.
+
+### Accessibility check on device (`uiautomator dump`)
+
+- Admin key block: one node, `clickable="true"`, `content-desc` equal to the key description
+  (`Tonalidad <key>`), at least 48dp tall. `onClickLabel` (`Cambiar tonalidad`) does not appear in the
+  dump: record that as a known limit (TalkBack not run unless the organizer does it).
+- Admin `CUPOS LIBRES`: a `+ Otro` text node and a `clickable` button with `content-desc`
+  `Agregar a Otros` (text `Agregar`), at least 48dp tall, after the last open slot. Also check an
+  all-filled song (A5).
+- Admin: no node with `Cambiar formación`, `Listo`, or a separate `Agregar a Otros` button; the
+  `FORMACIÓN` heading and its lines are visible without any tap.
+- Musician (debug admin off): key node not clickable; no `+ Otro`, no editor.
+
+### Regression guards
+
+- No new mutation or repository function; D-13 intact (the row calls the existing
+  `addExtraParticipant`). `git diff` against `9beaa44~` shows no change in `core/data` or `backend/`.
+- No amber added: amber stays on keys and the existing allowlist. The row uses the open-slot style
+  tokens; the dialog stays `text` and `surfaceRaised`.
+- No feature-module dependency added; screens read `BluesJamTheme.*` only; Konsist, detekt and ktlint `wired`.
+
+### Docs. Decision (c)
+
+`DESIGN.md`, `bb-blues-jam-design-prompt.md` and `.claude/skills/architecture/SKILL.md` must
+describe the refined UI (key block as the picker's entry, `+ Otro` / `Agregar` row, always-visible
+editor) and nothing in them may describe the removed buttons as current. Fix what is stale and record
+what was checked. Older specs and history sections (PROGRESS history, other `docs/specs/*`) stay as
+they are. Do not touch `PROGRESS.md` in this amendment's planning; the implementer updates it at the end.
+
+### Verification
+
+1. `CI=true ./init.sh` exit 0, `konsist`, `detekt`, `ktlint` all `wired`; record the total test count
+   and the next-jam count before and after.
+2. Device check on the debug demo jam with the debug admin session, no Sheet writes: open the song
+   detail, tap the key block (picker opens; dismiss without confirming), tap `Agregar` (dialog opens;
+   `Cancelar`), confirm the editor is visible without a tap, take the dumps above and a screenshot under
+   `docs/evidence/admin-set-key/`. Never confirm the picker, press `Agregar` in the dialog, `Anotar`,
+   `Liberar` or the editor's plus/minus on a real jam. `local.properties` md5 unchanged.
+3. The emulator does not start on this machine. The Pixel 5 needs the organizer's explicit approval.
+   If the device check cannot run without it, **stop and report**; do not install or tap without
+   approval, and list what was not seen on device.
+
+### Validator checklist (amendment)
+
+- [ ] A1-A5 each have a test that can fail, or a stated reason; decisions (a), (b), (c) applied.
+- [ ] Dumps match the accessibility section; musician unchanged.
+- [ ] No new mutation, no new amber, D-13 and D-03 intact; three tools `wired`.
+- [ ] Device check done with approval, or reported as not run.

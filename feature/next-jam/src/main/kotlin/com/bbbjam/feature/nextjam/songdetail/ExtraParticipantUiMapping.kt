@@ -8,6 +8,7 @@ import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.lineup.toLineupPanel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
+import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.admin.removalKey
 import com.bbbjam.feature.nextjam.overlay.isClearing
 import java.time.LocalDate
@@ -20,6 +21,9 @@ internal fun SongAdminState.extraEditor(date: LocalDate, song: JamSong): ExtraPa
         instrument = extraInstrument,
         submitEnabled = formVisible && isSubmittable(extraName, extraInstrument),
         saving = overlays.isSavingExtras(date, song.songId),
+        rowLabel = NextJamCopy.OTHER,
+        actionLabel = NextJamCopy.SUBMIT_EXTRA,
+        actionDescription = NextJamCopy.ADD_EXTRA,
         events = EventHandler(key = "${removalKey(date, song.songId)}|extras") { onExtraEvent(date, song.songId, it) },
     )
 }
