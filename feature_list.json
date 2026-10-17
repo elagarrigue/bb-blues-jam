@@ -1735,5 +1735,27 @@
       "Independent validator accepted on 17 October 2026: gate rerun exit 0 (konsist, detekt, ktlint wired, 1133 tests), mutants (5->4, no gap reset, swapped branches, no reset after action) each red, device evidence reviewed."
     ],
     "notes": "Requested by the organizer on 17 October 2026."
+  },
+  {
+    "id": "feature-subpackages",
+    "area": "project-hygiene",
+    "title": "Split the large feature packages into per-flow subpackages",
+    "user_visible_behavior": "None. Pure refactor: the files of :feature:next-jam (60 in one package), :feature:assistant (43) and :feature:past-jams (37) move into subpackages grouped by flow or screen (for example nextjam.addsong, nextjam.setkey, nextjam.assign, nextjam.songdetail, nextjam.overlay, nextjam.admin, nextjam.refresh; pastjams.detail, .admin, .status, .edit, .create; assistant.chat, .run, .apply, .create, .jam). Test sources mirror the main layout. :feature:info stays flat. No class is renamed and no behavior, UiModel, copy or dependency changes.",
+    "depends_on": [],
+    "status": "accepted",
+    "verification": [
+      "Every moved file's package matches its directory under the module root; no source file left in a package that does not match its path",
+      "No class, function, UiModel, copy or Koin binding changes beyond package/import lines (git diff -M shows renames with only package/import edits, plus the minimum visibility or import fixes needed to compile)",
+      "Konsist rules unchanged (same count, no allowlist or rule edits); no new project or library dependency",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired and the same test count as before (1133)",
+      "architecture skill and any doc naming a moved file's package are updated"
+    ],
+    "evidence": [
+      "17 October 2026, implementer: baseline and final CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1133 testcases both times, 19 Konsist @Test both times; no change under konsist-test/ or tool config (docs/evidence/feature-subpackages/baseline-gate.txt, final-gate.txt, summary.md)",
+      "git diff HEAD -M: 162 renames, 0 pure add/delete .kt; 26 root files + AppNavHost.kt changed only in import lines; filter for non package/import lines is empty (non-import-changes.txt); package==directory check has 0 mismatches (package-path-check.txt)",
+      "Layout exactly as in the spec, no group deviations; two fixes beyond bare imports: NextJamPresenter imports admin.toUiModel (overloaded toUiModel) and four next-jam tests import nextjam.toUiModel. Core/ui IconRowAction KDoc mentions RowTextAction, which does not exist; left as is. Architecture skill and presenter-pattern updated",
+      "Independent validator accepted on 17 October 2026: CI=true ./init.sh rerun exit 0 (konsist, detekt, ktlint wired, 1133 testcases), 162 renames with only package/import lines changed in .kt files, 0 package/path mismatches, layout matches the spec, AppNavHost has only the five import updates, konsist-test and tool config untouched."
+    ],
+    "notes": "Requested by the organizer on 17 October 2026 after a package-size review. Group by flow/screen, not by layer. NextJamCopy stays in the root package for this slice. Implementer subagents run on sonnet."
   }
 ]

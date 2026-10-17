@@ -6,7 +6,10 @@ import com.bbbjam.core.data.setlist.JamCreator
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.core.data.setlist.SetlistSongMover
 import com.bbbjam.core.data.setlist.SetlistSongRemover
+import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.di.assistantModule
+import com.bbbjam.feature.assistant.run.JamCreationRunner
+import com.bbbjam.feature.assistant.run.ProposalApplier
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Test

@@ -7,6 +7,11 @@ import app.cash.turbine.test
 import com.bbbjam.core.data.assistant.AssistantFailure
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.feature.assistant.apply.ApplyUiModel
+import com.bbbjam.feature.assistant.chat.AssistantChat
+import com.bbbjam.feature.assistant.chat.ChatTurn
+import com.bbbjam.feature.assistant.chat.ServiceState
+import com.bbbjam.feature.assistant.chat.assistantModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

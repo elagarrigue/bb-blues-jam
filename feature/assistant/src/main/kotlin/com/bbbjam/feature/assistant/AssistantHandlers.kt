@@ -2,6 +2,12 @@ package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.feature.assistant.apply.ApplySummaryUiModel
+import com.bbbjam.feature.assistant.apply.ConfirmationUiModel
+import com.bbbjam.feature.assistant.apply.TargetActionUiModel
+import com.bbbjam.feature.assistant.chat.AssistantChat
+import com.bbbjam.feature.assistant.jam.JamActionUiModel
+import com.bbbjam.feature.assistant.run.ApplyMode
 
 /** The handlers the mapping hands to the model; the presenter builds them over [AssistantChat]. */
 internal class AssistantHandlers(

@@ -19,7 +19,7 @@ dependency (`ExternalLinkOpener`), local state in `remember`, copy from `InfoCop
 feature's module layout; the next-jam sketch shows data and admin state.
 
 The first feature presenter that reads data is `NextJamPresenter` in `:feature:next-jam`
-(`feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/`), set up by
+(`feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/`; the module root keeps it, while other flows live in subpackages such as `nextjam/admin/` and `nextjam/songdetail/`), set up by
 `next-jam-read-only-list`: constructor `NextJamPresenter(jams: JamsRepository, calendar:
 JamCalendar)`, one `remember { jams.observeJams() }.collectAsState(initial = null)`, "today" read
 once per snapshot with `remember(snapshot) { calendar.today() }`, and the mapping in a pure

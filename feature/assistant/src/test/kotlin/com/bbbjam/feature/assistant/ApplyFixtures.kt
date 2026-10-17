@@ -23,6 +23,7 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.feature.assistant.run.ProposalApplier
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

@@ -1,3 +1,9 @@
+## 17 October 2026 - feature-subpackages passing (awaiting validation)
+
+The files of `:feature:next-jam` (60), `:feature:past-jams` (37) and `:feature:assistant` (43), main and test, moved with `git mv` into per-flow subpackages (`nextjam.{admin,addsong,assign,overlay,refresh,setkey,songdetail}`, `pastjams.{admin,create,detail,edit,status}`, `assistant.{apply,chat,create,jam,run}`); the primary presenter/UiModel/screen/copy, `di/` and shared test fakes stay at each module root and `:feature:info` is flat. Only `package` and `import` lines changed; `AppNavHost.kt` imports follow. Architecture skill and `presenter-pattern.md` updated; intra-module package cycles accepted and not checked by any rule.
+
+Verification: baseline and final `CI=true ./init.sh` exit 0, konsist/detekt/ktlint wired, 1133 testcases both times, 19 Konsist tests both times; 162 renames, package==directory check 0 mismatches, non package/import changed lines: 0. Evidence in `docs/evidence/feature-subpackages/`. Not run: device. Stale `RowTextAction` KDoc in `IconRowAction.kt` left as is (class never existed).
+
 ## 17 October 2026 - admin-entry-logo-taps accepted
 
 Info no longer draws `Entrar como admin`, `Modo admin activo` or `Salir del modo admin`. Five taps on Info's band logo, each within 1.5 s of the previous one, open the admin login (musician) or call `AdminSession.logOut()` (admin, no confirmation). `InfoUiModel.adminEntry`/`AdminEntryUiModel` and the events `AdminEntryTapped`/`LogOut` are replaced by `LogoTapped`; the count lives in a non-snapshot `LogoTapCounter` in `InfoPresenter` (taps emit no model), the gesture is `pointerInput { detectTapGestures }` on the logo with no semantics change. Docs updated: DESIGN.md, design prompt, user-and-access-model, risks (TalkBack tradeoff), apps-script-api, architecture skill, bitacora note, `WriteOutcome` KDoc.

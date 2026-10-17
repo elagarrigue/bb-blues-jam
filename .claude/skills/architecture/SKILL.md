@@ -304,7 +304,7 @@ a JSON protocol or a deeplink scheme (D1 stays deferred).
 As built by `song-detail-replaces-row-expansion` (user decisions of 11 October 2026: merge the
 module, list-level actions stay on the list, D-07 kept; H1 = P1): **Próxima jam rows no longer
 expand.** `:feature:song-detail` is merged into `:feature:next-jam` (package
-`com.bbbjam.feature.nextjam`; `SongDetailPresenter`, `SongDetailUiModel`, `SongDetailScreen`,
+`com.bbbjam.feature.nextjam`, since `feature-subpackages` in `nextjam.songdetail`; `SongDetailPresenter`, `SongDetailUiModel`, `SongDetailScreen`,
 `SongDetailCopy`, `SongDetailDefaults`; one `factory` in `nextJamModule`) and the module, its
 `settings.gradle.kts` include, `:app` dependency and `songDetailModule` are gone. A row's header is
 one `Role.Button` node whose action (`onClickLabel` "ver el detalle del tema") is
@@ -794,6 +794,17 @@ them.
 - **Package root is `com.bbbjam.<module path>` with hyphens removed** (`:feature:next-jam` →
   `com.bbbjam.feature.nextjam`), and every source file in `:core:*` and `:feature:*` declares a package
   equal to or under it. Enforced by the `package-under-module-root` Konsist rule.
+- **Large feature modules use per-flow subpackages** (`feature-subpackages`, 17 October 2026).
+  `:feature:next-jam` (`admin`, `addsong`, `assign`, `overlay`, `refresh`, `setkey`, `songdetail`),
+  `:feature:past-jams` (`admin`, `create`, `detail`, `edit`, `status`) and `:feature:assistant`
+  (`apply`, `chat`, `create`, `jam`, `run`) group files by flow or screen, never by layer. The
+  module's primary presenter, UiModel, screen, copy and defaults (for example `NextJamPresenter`,
+  `NextJamCopy`) and the `di/` package stay at the module root; main and test sources mirror each
+  other, and the shared test fakes live at the test root. `:feature:info` stays flat. **A new file
+  goes in the subpackage of its flow**, and `package` equals the directory. Visibility is
+  unchanged (`internal` is module-wide), so crossing a subpackage only needs an import. The
+  packages are an organization aid, not a boundary: package-level cycles inside a module (for
+  example root <-> `admin`, `apply` <-> `run`) are accepted, and no rule checks them.
 - **Dependencies**: `:core:ui` and `:core:data` use `api(project(":core:model"))`, because their
   public contracts expose domain types. `:app` lists each module it uses with
   `implementation(project(...))`. Use `project(":…")`, not type-safe project accessors.

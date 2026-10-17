@@ -1,8 +1,8 @@
 package com.bbbjam.feature.pastjams.di
 
-import com.bbbjam.feature.pastjams.JamsAdminWrites
-import com.bbbjam.feature.pastjams.PastJamDetailPresenter
 import com.bbbjam.feature.pastjams.PastJamsPresenter
+import com.bbbjam.feature.pastjams.admin.JamsAdminWrites
+import com.bbbjam.feature.pastjams.detail.PastJamDetailPresenter
 import org.koin.dsl.module
 
 /**

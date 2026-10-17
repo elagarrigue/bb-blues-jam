@@ -10,6 +10,10 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.assistant.apply.applyKey
+import com.bbbjam.feature.assistant.chat.ChatTurn
+import com.bbbjam.feature.assistant.chat.ServiceState
+import com.bbbjam.feature.assistant.chat.assistantModel
 
 /** One preview per state: intro, pending, proposal, failure, not configured. Built by the real mapping. */
 private val previewHandlers = AssistantHandlers(

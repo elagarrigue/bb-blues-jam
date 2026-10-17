@@ -60,6 +60,8 @@ import com.bbbjam.core.ui.strip.InstrumentStrip
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.nextjam.admin.AdminRowBar
+import com.bbbjam.feature.nextjam.admin.SaveStatusLine
 import java.time.LocalDate
 import org.koin.compose.koinInject
 

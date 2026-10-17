@@ -1,10 +1,10 @@
 package com.bbbjam.feature.nextjam.di
 
-import com.bbbjam.feature.nextjam.AddSongPresenter
-import com.bbbjam.feature.nextjam.AssignMusicianPresenter
 import com.bbbjam.feature.nextjam.NextJamPresenter
-import com.bbbjam.feature.nextjam.SetKeyPresenter
-import com.bbbjam.feature.nextjam.SongDetailPresenter
+import com.bbbjam.feature.nextjam.addsong.AddSongPresenter
+import com.bbbjam.feature.nextjam.assign.AssignMusicianPresenter
+import com.bbbjam.feature.nextjam.setkey.SetKeyPresenter
+import com.bbbjam.feature.nextjam.songdetail.SongDetailPresenter
 import org.koin.dsl.module
 
 /**

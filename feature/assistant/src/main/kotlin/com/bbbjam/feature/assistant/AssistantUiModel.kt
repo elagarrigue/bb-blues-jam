@@ -4,6 +4,11 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.feature.assistant.apply.ApplyStatusLineUiModel
+import com.bbbjam.feature.assistant.apply.ApplyStatusUiModel
+import com.bbbjam.feature.assistant.apply.ApplySummaryUiModel
+import com.bbbjam.feature.assistant.apply.ApplyUiModel
+import com.bbbjam.feature.assistant.jam.JamCardUiModel
 
 /** The Asistente tab (`assistant-admin-tab`): either the not-configured block or the chat. */
 sealed interface AssistantUiModel : UiModel {

@@ -7,7 +7,10 @@ import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.feature.nextjam.addsong.AddSongPresenter
 import com.bbbjam.feature.nextjam.di.nextJamModule
+import com.bbbjam.feature.nextjam.setkey.SetKeyPresenter
+import com.bbbjam.feature.nextjam.songdetail.SongDetailPresenter
 import java.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow

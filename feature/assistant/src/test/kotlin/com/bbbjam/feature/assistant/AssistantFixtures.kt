@@ -7,6 +7,10 @@ import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.feature.assistant.apply.applyKey
+import com.bbbjam.feature.assistant.chat.AssistantChat
+import com.bbbjam.feature.assistant.run.JamCreationRunner
+import com.bbbjam.feature.assistant.run.ProposalApplier
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob

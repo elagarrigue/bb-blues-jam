@@ -26,11 +26,11 @@ import androidx.navigation.navArgument
 import com.bbbjam.core.ui.admin.AdminBanner
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.info.AdminLoginScreen
-import com.bbbjam.feature.nextjam.AddSongScreen
-import com.bbbjam.feature.nextjam.AssignMusicianScreen
-import com.bbbjam.feature.nextjam.SetKeyScreen
-import com.bbbjam.feature.nextjam.SongDetailScreen
-import com.bbbjam.feature.pastjams.PastJamDetailScreen
+import com.bbbjam.feature.nextjam.addsong.AddSongScreen
+import com.bbbjam.feature.nextjam.assign.AssignMusicianScreen
+import com.bbbjam.feature.nextjam.setkey.SetKeyScreen
+import com.bbbjam.feature.nextjam.songdetail.SongDetailScreen
+import com.bbbjam.feature.pastjams.detail.PastJamDetailScreen
 
 /**
  * The app's navigation (`song-detail-screen`, N1; reshaped by `bottom-navigation`): Navigation

@@ -7,6 +7,7 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
+import com.bbbjam.feature.pastjams.admin.JamsAdminUiModel
 import java.time.LocalDate
 
 /**

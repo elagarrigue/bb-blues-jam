@@ -1,6 +1,10 @@
 package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.ui.theme.BluesJamColors
+import com.bbbjam.feature.assistant.apply.ApplyDefaults
+import com.bbbjam.feature.assistant.apply.ApplyStatusKind
+import com.bbbjam.feature.assistant.apply.ApplyTone
+import com.bbbjam.feature.assistant.apply.summary
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

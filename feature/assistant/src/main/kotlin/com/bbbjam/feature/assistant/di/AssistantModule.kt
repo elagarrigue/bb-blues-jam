@@ -1,11 +1,11 @@
 package com.bbbjam.feature.assistant.di
 
 import android.util.Log
-import com.bbbjam.feature.assistant.AssistantChat
 import com.bbbjam.feature.assistant.AssistantPresenter
-import com.bbbjam.feature.assistant.JamCreationRunner
-import com.bbbjam.feature.assistant.ProposalApplier
-import com.bbbjam.feature.assistant.RunLock
+import com.bbbjam.feature.assistant.chat.AssistantChat
+import com.bbbjam.feature.assistant.run.JamCreationRunner
+import com.bbbjam.feature.assistant.run.ProposalApplier
+import com.bbbjam.feature.assistant.run.RunLock
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

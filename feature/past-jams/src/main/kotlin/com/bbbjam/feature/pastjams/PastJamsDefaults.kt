@@ -2,6 +2,7 @@ package com.bbbjam.feature.pastjams
 
 import androidx.compose.ui.graphics.Color
 import com.bbbjam.core.ui.theme.BluesJamColors
+import com.bbbjam.feature.pastjams.detail.PastJamDetailDefaults
 
 /**
  * The archive treatment of a past jam row, kept apart from the composable so a JVM test can check

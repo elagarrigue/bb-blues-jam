@@ -6,6 +6,8 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.bbbjam.core.data.assistant.AssistantFailure
 import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.feature.assistant.chat.AssistantChat
+import com.bbbjam.feature.assistant.chat.ChatTurn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

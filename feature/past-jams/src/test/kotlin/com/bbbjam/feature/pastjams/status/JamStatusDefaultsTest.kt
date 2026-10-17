@@ -1,0 +1,40 @@
+package com.bbbjam.feature.pastjams.status
+
+import com.bbbjam.core.ui.theme.BluesJamColors
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** The status controls use neutral and error roles only: no amber (D-17). */
+class JamStatusDefaultsTest {
+    private val colors = BluesJamColors
+    private val neutral = setOf(colors.surfaceRaised, colors.text, colors.textMuted, colors.error)
+
+    @Test
+    fun `the status action and unpublish dialog use neutral roles while publish confirm alone is amber`() {
+        val action = JamStatusDefaults.action()
+        val dialog = JamStatusDefaults.dialog()
+        val publishDialog = JamStatusDefaults.publishDialog()
+        assertEquals(colors.text, action.action)
+        assertEquals(colors.surfaceRaised, dialog.container)
+        assertEquals(colors.text, dialog.title)
+        assertEquals(colors.textMuted, dialog.body)
+        assertEquals(colors.error, dialog.confirm)
+        assertEquals(colors.text, dialog.cancel)
+        assertEquals(colors.surfaceRaised, publishDialog.container)
+        assertEquals(colors.text, publishDialog.title)
+        assertEquals(colors.textMuted, publishDialog.body)
+        assertEquals(colors.primaryAction, publishDialog.confirm)
+        assertEquals(colors.text, publishDialog.cancel)
+        val all = listOf(action.action, dialog.container, dialog.title, dialog.body, dialog.confirm, dialog.cancel)
+        assertTrue(all.all { it in neutral })
+        val publishColors = listOf(
+            publishDialog.container,
+            publishDialog.title,
+            publishDialog.body,
+            publishDialog.cancel,
+        )
+        assertTrue(publishColors.all { it in neutral })
+        assertEquals(colors.primaryAction, publishDialog.confirm)
+    }
+}

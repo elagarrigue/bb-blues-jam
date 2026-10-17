@@ -12,6 +12,14 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
+import com.bbbjam.feature.assistant.apply.ApplyHandlers
+import com.bbbjam.feature.assistant.apply.ApplyInputs
+import com.bbbjam.feature.assistant.chat.AssistantChat
+import com.bbbjam.feature.assistant.chat.assistantModel
+import com.bbbjam.feature.assistant.create.rememberCreateFormState
+import com.bbbjam.feature.assistant.jam.JamHandlers
+import com.bbbjam.feature.assistant.run.JamCreationRunner
+import com.bbbjam.feature.assistant.run.ProposalApplier
 
 /**
  * Presents the Asistente tab. The conversation is [AssistantChat]'s (it outlives this composition, so
