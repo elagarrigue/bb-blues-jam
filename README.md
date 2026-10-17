@@ -154,12 +154,12 @@ Es un chat. El admin pide la lista en una frase, por ejemplo:
 ## Cómo funciona por dentro
 
 ```
- ┌──────────────┐  lee (GET anónimo)   ┌──────────────┐        ┌──────────────────┐
+ ┌──────────────┐  lee (GET anónimo)    ┌──────────────┐        ┌──────────────────┐
  │  App Android │ ───────────────────▶ │  Apps Script │ ─────▶ │  Google Sheet    │
  │  (Compose)   │ ◀─────────────────── │  (validación │        │  catálogo, jams, │
- │              │  escribe (frase de   │   y lock)    │        │  una pestaña por │
- │              │  acceso + validación)└──────────────┘        │  fecha           │
- │              │                                              └──────────────────┘
+ │              │  escribe (frase de    │   y lock)    │        │  una pestaña por │
+ │              │  acceso + validación )└──────────────┘        │  fecha           │
+ │              │                                               └──────────────────┘
  │   Asistente  │ ── Koog (en el teléfono) ──▶ DevExpert Inference (compatible con OpenAI)
  └──────────────┘
 ```
