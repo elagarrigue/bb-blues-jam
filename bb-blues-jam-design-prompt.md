@@ -167,7 +167,7 @@ noción de libre.
 - El programa de radio Hideaway
 - Enlaces a redes sociales
 - Cómo sumarse como músico
-- Acceso discreto a "Entrar como admin"
+- Acceso oculto al modo admin: 5 toques en el logo (entrar y salir), sin texto en pantalla
 
 ### 7. Ingreso de admin
 

@@ -54,8 +54,8 @@ sends nothing when blank, POSTs `checkPassphrase` and stores only on `ok`. `remo
 `AppsScriptPostTransport` (`suspend post(json)`, implemented by the same
 `OkHttpAppsScriptTransport` instance), `AppsScriptEnvelope.decodeOk` and the serializable
 `CheckPassphraseRequest`. `:feature:info` (now also depending on `:core:data`) holds
-`InfoPresenter(linkOpener, adminSession)` with `Params(onOpenAdminLogin)` and a sealed
-`AdminEntryUiModel` (`LoggedOut`, `LoggedIn`), and `AdminLoginPresenter(adminSession)` with
+`InfoPresenter(linkOpener, adminSession)` with `Params(onOpenAdminLogin)` that handles
+`LogoTapped` (5 taps, 1.5 s gap) by calling `onOpenAdminLogin` or `AdminSession.logOut()`, and `AdminLoginPresenter(adminSession)` with
 `Params(onBack, onLoggedIn)`, `AdminLoginUiModel` (its `toString` hides the passphrase),
 `AdminLoginScreen`, `AdminLoginCopy` and `AdminLoginDefaults`. The typed passphrase lives in plain
 `remember`, never `rememberSaveable`. Every later admin slice reads `AdminSession.observeIsAdmin()`.

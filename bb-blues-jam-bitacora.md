@@ -354,6 +354,10 @@ en `:feature:next-jam` y el ingreso por frase de acceso vive en `:feature:info`,
 entrada discreta. Un `:feature:admin` separado chocaba con D-03: sus controles se dibujan sobre la
 pantalla de otro módulo, que no podría importar.
 
+*Nota, 17 de octubre de 2026:* la "entrada discreta" pasó a ser un gesto oculto: 5 toques en el logo
+de Info entran y salen del modo admin, sin texto en pantalla (`admin-entry-logo-taps`). D-15 sigue
+vigente.
+
 ### D-16 — Koin para inyección de dependencias
 Sin procesamiento de anotaciones, y es lo que ya usan los artículos de referencia del patrón de
 *presenters* (`koinInject()`). Solo inyección por constructor, para que los tests armen *presenters*

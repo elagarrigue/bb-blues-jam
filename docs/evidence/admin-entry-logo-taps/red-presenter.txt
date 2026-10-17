@@ -1,0 +1,81 @@
+Calculating task graph as no cached configuration is available for tasks: :feature:info:test
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :feature:info:preBuild UP-TO-DATE
+> Task :core:data:preBuild UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:ui:preBuild UP-TO-DATE
+> Task :core:ui:preDebugBuild UP-TO-DATE
+> Task :feature:info:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :feature:info:preDebugBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :feature:info:javaPreCompileDebug UP-TO-DATE
+> Task :core:ui:generateDebugResources UP-TO-DATE
+> Task :core:ui:processDebugNavigationResources UP-TO-DATE
+> Task :core:ui:javaPreCompileDebug UP-TO-DATE
+> Task :core:data:processDebugNavigationResources UP-TO-DATE
+> Task :core:data:generateDebugResources UP-TO-DATE
+> Task :feature:info:processDebugNavigationResources UP-TO-DATE
+> Task :feature:info:generateDebugResources UP-TO-DATE
+> Task :core:data:javaPreCompileDebug UP-TO-DATE
+> Task :feature:info:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :core:ui:packageDebugResources UP-TO-DATE
+> Task :feature:info:packageDebugResources UP-TO-DATE
+> Task :core:data:packageDebugResources UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:ui:parseDebugLocalResources UP-TO-DATE
+> Task :feature:info:parseDebugLocalResources UP-TO-DATE
+> Task :core:data:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:ui:generateDebugRFile UP-TO-DATE
+> Task :core:data:generateDebugRFile UP-TO-DATE
+> Task :feature:info:generateDebugRFile UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :core:data:kspDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugKotlin UP-TO-DATE
+> Task :core:ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:ui:processDebugJavaRes UP-TO-DATE
+> Task :core:ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:data:compileDebugKotlin UP-TO-DATE
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core:data:processDebugJavaRes UP-TO-DATE
+> Task :core:data:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :feature:info:compileDebugKotlin UP-TO-DATE
+> Task :feature:info:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature:info:processDebugJavaRes UP-TO-DATE
+> Task :feature:info:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature:info:bundleLibRuntimeToJarDebug
+> Task :feature:info:generateDebugUnitTestStubRFile
+> Task :core:ui:bundleLibRuntimeToJarDebug
+
+> Task :feature:info:compileDebugUnitTestKotlin
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/info/src/test/kotlin/com/bbbjam/feature/info/InfoPresenterTest.kt:67:9 No value passed for parameter 'adminEntry'.
+e: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/feature/info/src/test/kotlin/com/bbbjam/feature/info/InfoPresenterTest.kt:111:41 Unresolved reference 'LogoTapped'.
+
+> Task :feature:info:compileDebugUnitTestKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':feature:info:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 7s
+40 actionable tasks: 4 executed, 36 up-to-date
+Configuration cache entry stored.
+exit 1

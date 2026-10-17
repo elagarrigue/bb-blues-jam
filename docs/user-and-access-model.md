@@ -111,11 +111,11 @@ transfer and no per-record access rules.
 - **Revocation is by rotating the passphrase** in the Sheet. This invalidates every device at once,
   which is the correct granularity when the credential is shared anyway. A device logged in before
   the rotation keeps its admin controls, before and after its first rejected write (W3): every write
-  fails with `AccessRefused` until the admin taps "Salir del modo admin" on Info and logs in again
-  with the new passphrase ("Entrar como admin"). The server-side check is what actually stops it.
-- A visible logout action is available from the info screen so a borrowed or shared phone can be
-  cleared deliberately. As built: "Salir del modo admin" under "Modo admin activo", no
-  confirmation (A4); it deletes the stored passphrase and makes no request.
+  fails with `AccessRefused` until the admin leaves admin mode (five taps on the Info logo) and logs in
+  again with the new passphrase (five taps again open the login). The server-side check is what actually stops it.
+- A hidden logout gesture is available on the Info screen so a borrowed or shared phone can be
+  cleared deliberately. As built (`admin-entry-logo-taps`): five taps on the Info logo, each within
+  1.5 s of the last, no confirmation; there is no admin text on Info. It deletes the stored passphrase and makes no request.
 - **No re-check on start** (`admin-passphrase-login`): a device keeps admin mode across restarts
   without asking the server again. After a rotation every write is rejected (`AccessRefused`),
   and the device stays in admin mode until a manual logout (W3).

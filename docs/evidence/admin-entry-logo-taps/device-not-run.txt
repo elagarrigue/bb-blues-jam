@@ -1,0 +1,7 @@
+Device check NOT run. The only emulator (AVD Pixel_6a_API_34) refused to start:
+  "ERROR | x86_64 emulation currently requires hardware acceleration!
+   CPU acceleration status: Android Emulator hypervisor driver is not installed on this machine"
+The Pixel 5 (09281FDD4004U6, real admin session) was not touched: no install, no adb command with its serial.
+Spec steps 3-9 (gesture wiring on the logo: 4 taps, slow taps, 5 taps leave, 5 taps open login, Proxima jam logo inert,
+force-stop + relaunch) remain unverified on any device. The APK builds (:app:assembleDebug exit 0).
+local.properties md5 prefix before and after: 569913ae.

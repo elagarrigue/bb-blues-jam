@@ -1709,5 +1709,31 @@
       "Device Pixel 5, debug admin, real Sheet, no writes: :app:installDebug exit 0. On 31/10 with 12 temas, dialog title/details/note/buttons and amber confirm observed; Cancel, Back, and outside tap each closed it. After fix, dialog stayed open on portrait-to-landscape rotation. Publicar was never tapped. Screenshot: docs/evidence/publish-confirm-dialog/dialog-open.png.",
       "Independent validator accepted on 16 October 2026 after rerunning CI=true ./init.sh and :feature:past-jams:test; gate tools wired, diff check clean, screenshot and implementation reviewed."
     ]
+  },
+  {
+    "id": "admin-entry-logo-taps",
+    "area": "feature-info",
+    "title": "Enter and leave admin mode with five taps on the Info logo",
+    "user_visible_behavior": "Info no longer shows the 'Entrar como admin' / 'Salir del modo admin' buttons nor the 'Modo admin activo' text. Five consecutive taps on the Bahía Blanca Blues logo in Info open the existing passphrase login when not in admin mode, and leave admin mode when in it. Everything else in Info is unchanged.",
+    "depends_on": [
+      "admin-passphrase-login",
+      "debug-admin-session"
+    ],
+    "status": "accepted",
+    "verification": [
+      "The three Info elements are gone; copy and tests updated; no other screen changes",
+      "Five taps within a short window on the Info logo open the passphrase login (musician) or leave admin mode (admin); fewer taps or slow taps do nothing; Molecule tests cover counting, reset and both directions",
+      "Passphrase validation, server-side write authorization and the debug admin session are unchanged (D-11, D-15); no new mutation",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; device check never logs out of the real admin session or clears app data unless the user allows it"
+    ],
+    "evidence": [
+      "Red first: docs/evidence/admin-entry-logo-taps/red-presenter.txt (compile failure on LogoTapped / adminEntry); green: green-presenter.txt, InfoPresenterTest 11 testcases, 0 failures",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1133 testcases (1128 before), 0 failures (docs/evidence/admin-entry-logo-taps/gate.txt)",
+      "local.properties md5 569913ae before and after",
+      "DEVICE CHECK NOT RUN: emulator Pixel_6a_API_34 cannot start (no hypervisor driver), Pixel 5 untouched; see docs/evidence/admin-entry-logo-taps/device-not-run.txt. Logo gesture wiring unverified on a device. (superseded by the Pixel 5 device check below)",
+      "Device check run on the Pixel 5 with the organizer's approval (emulator unavailable), 17 Oct 2026: 4 quick taps and 5 slow taps do nothing; 5 quick taps leave admin; Info has no admin line; Próxima jam logo inert; 5 taps as musician open the login, back returns; force-stop brings the debug admin back. No write, no data clear. docs/evidence/admin-entry-logo-taps/device-check.md and device-01..09 PNGs.",
+      "Independent validator accepted on 17 October 2026: gate rerun exit 0 (konsist, detekt, ktlint wired, 1133 tests), mutants (5->4, no gap reset, swapped branches, no reset after action) each red, device evidence reviewed."
+    ],
+    "notes": "Requested by the organizer on 17 October 2026."
   }
 ]

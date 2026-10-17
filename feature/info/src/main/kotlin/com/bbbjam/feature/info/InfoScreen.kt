@@ -2,6 +2,7 @@ package com.bbbjam.feature.info
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +17,14 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
@@ -33,9 +35,9 @@ import kotlinx.coroutines.flow.flowOf
 import org.koin.compose.koinInject
 
 /**
- * The Info screen: who runs the jam, the Hideaway program, how to join, the social links and the
- * discreet admin line. It renders [InfoUiModel] and forwards events; the presenter decides.
- * [onOpenAdminLogin] opens the admin login. [contentPadding] goes inside the scroll, so the
+ * The Info screen: who runs the jam, the Hideaway program, how to join, the social links. The logo
+ * carries the hidden admin gesture (five taps, D-15). It renders [InfoUiModel] and forwards events;
+ * the presenter decides. [onOpenAdminLogin] opens the admin login. [contentPadding] goes inside the scroll, so the
  * background runs edge to edge.
  */
 @Composable
@@ -55,6 +57,7 @@ fun InfoScreen(
 @Composable
 private fun InfoContent(model: InfoUiModel, modifier: Modifier, contentPadding: PaddingValues) {
     val spacing = BluesJamTheme.spacing
+    val currentEvents by rememberUpdatedState(model.events)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -64,7 +67,11 @@ private fun InfoContent(model: InfoUiModel, modifier: Modifier, contentPadding: 
             .padding(horizontal = spacing.md, vertical = spacing.lg),
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
-        BandLogo()
+        BandLogo(
+            modifier = Modifier.pointerInput(Unit) {
+                detectTapGestures(onTap = { currentEvents(InfoUiModel.Event.LogoTapped) })
+            },
+        )
         Column {
             Text(text = model.title, style = BluesJamTheme.typography.h1, modifier = Modifier.semantics { heading() })
             Text(text = model.tagline, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
@@ -90,7 +97,6 @@ private fun InfoContent(model: InfoUiModel, modifier: Modifier, contentPadding: 
                 }
             }
         }
-        AdminLine(model = model.adminEntry, onEvent = { model.events(it) })
     }
 }
 
@@ -124,46 +130,6 @@ private fun LinkRow(link: InfoLinkUiModel, onClick: () -> Unit) {
     ) {
         Text(text = link.label, style = BluesJamTheme.typography.body)
         Text(text = link.destination, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
-    }
-}
-
-/** The admin line: the same discreet caption in both states, each action a 48dp underlined text target. */
-@Composable
-private fun AdminLine(model: AdminEntryUiModel, onEvent: (InfoUiModel.Event) -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        when (model) {
-            is AdminEntryUiModel.LoggedOut ->
-                CaptionAction(text = model.label, onClick = { onEvent(InfoUiModel.Event.AdminEntryTapped) })
-
-            is AdminEntryUiModel.LoggedIn -> {
-                Text(
-                    text = model.status,
-                    style = BluesJamTheme.typography.caption,
-                    color = BluesJamTheme.colors.textMuted,
-                    textAlign = TextAlign.Center,
-                )
-                CaptionAction(text = model.logoutLabel, onClick = { onEvent(InfoUiModel.Event.LogOut) })
-            }
-        }
-    }
-}
-
-@Composable
-private fun CaptionAction(text: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = BluesJamTheme.spacing.md),
-        contentAlignment = Alignment.Center,
-    ) {
-        // Underlined like the other secondary text actions, so it never reads as the status line.
-        Text(
-            text = text,
-            style = BluesJamTheme.typography.caption,
-            color = BluesJamTheme.colors.textMuted,
-            textDecoration = TextDecoration.Underline,
-        )
     }
 }
 

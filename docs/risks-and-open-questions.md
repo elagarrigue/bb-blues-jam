@@ -156,8 +156,12 @@ full-screen login route. Risks, not solved:
   (`run-as`) can read it.
 - A device logged in before a rotation keeps showing admin mode, **after** its first rejected write
   too (user decision W3, `apps-script-write-auth`): every write answers `AccessRefused` and nothing
-  logs it out. Recovery is Info → "Salir del modo admin" → "Entrar como admin" with the new
-  passphrase; the first mutation slice's error copy must say so.
+  logs it out. Recovery is five taps on the Info logo to leave, then five taps again to open
+  the login, with the new passphrase; the first mutation slice's error copy must say so.
+- **Hidden admin gesture** (`admin-entry-logo-taps`): TalkBack users cannot reach the login or the
+  logout from Info, because the logo has no click semantics (accepted tradeoff; the admins are one
+  or two known sighted people). A musician who taps the logo five times sees the login; harmless
+  without the passphrase (the server decides, D-11).
 - **CacheService and LockService scopes** (`apps-script-write-auth`): assumed to need no OAuth
   scope beyond `spreadsheets.currentonly`. Status: checked live (6 October 2026, checks L4 and
   L6), no new authorization asked. L4: a wrong `checkPassphrase` answered `invalid_passphrase`, not

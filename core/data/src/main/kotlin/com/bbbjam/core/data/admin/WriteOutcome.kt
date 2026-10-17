@@ -13,8 +13,8 @@ sealed interface WriteOutcome {
      * The server refused the stored passphrase (`invalid_passphrase`, or `passphrase_not_set`), or
      * no passphrase is stored on this device, in which case nothing was sent. The device stays in
      * admin mode and keeps the stored passphrase (user decision W3): the controls stay drawn and
-     * every write fails until the admin taps "Salir del modo admin" on Info and logs in again with
-     * the current passphrase.
+     * every write fails until the admin leaves admin mode with five taps on the Info logo and logs
+     * in again with the current passphrase.
      */
     data object AccessRefused : WriteOutcome
 

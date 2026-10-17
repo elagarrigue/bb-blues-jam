@@ -8,10 +8,14 @@ import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.core.ui.presenter.EventHandler
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class InfoPresenterTest {
     /** Records every URL it is asked to open and answers with [result]. */
     private class FakeLinkOpener(private val result: Boolean) : ExternalLinkOpener {
@@ -25,17 +29,14 @@ class InfoPresenterTest {
 
     private val session = FakeAdminSession()
 
-    private val loggedOut = AdminEntryUiModel.LoggedOut("Entrar como admin")
-    private val loggedIn = AdminEntryUiModel.LoggedIn("Modo admin activo", "Salir del modo admin")
-
     private fun presenter(opener: ExternalLinkOpener) = InfoPresenter(opener, session)
 
     private fun flow(opener: ExternalLinkOpener, params: InfoPresenter.Params = InfoPresenter.Params()) =
         moleculeFlow(RecompositionMode.Immediate) { presenter(opener).present(params) }
 
-    // Written out from the approved copy tables (docs/specs/info-screen.md, and A5 of
-    // admin-passphrase-login for the admin line), not from InfoCopy, so a copy change fails here.
-    private fun expected(linkError: String? = null, adminEntry: AdminEntryUiModel = loggedOut) = InfoUiModel(
+    // Written out from the approved copy table (docs/specs/info-screen.md), not from InfoCopy,
+    // so a copy change fails here.
+    private fun expected(linkError: String? = null) = InfoUiModel(
         title = "Bahía Blanca Blues",
         tagline = "Comunidad de amantes del blues",
         sections = listOf(
@@ -66,7 +67,6 @@ class InfoPresenterTest {
             InfoLinkUiModel(SocialLink.LINKTREE, "Linktree", "linktr.ee/bahiablancablues", "Abrir Linktree"),
         ),
         linkError = linkError,
-        adminEntry = adminEntry,
         events = EventHandler {},
     )
 
@@ -111,8 +111,12 @@ class InfoPresenterTest {
         assertEquals(listOf("https://www.youtube.com/channel/UCayS6srPr0FQ2FF4XoEZ-8w"), opener.opened)
     }
 
+    private val tap = InfoUiModel.Event.LogoTapped
+
+    private fun tapTimes(model: InfoUiModel, times: Int) = repeat(times) { model.events(tap) }
+
     @Test
-    fun `the admin entry opens the login through the current callback and changes nothing else`() = runTest {
+    fun `five quick taps open the login through the current callback and nothing else`() = runTest {
         val opener = FakeLinkOpener(result = true)
         val calls = mutableListOf<String>()
         var params by mutableStateOf(InfoPresenter.Params { calls += "first" })
@@ -122,7 +126,10 @@ class InfoPresenterTest {
 
             params = InfoPresenter.Params { calls += "second" }
             awaitItem()
-            first.events(InfoUiModel.Event.AdminEntryTapped)
+            repeat(5) {
+                first.events(tap)
+                advanceTimeBy(1_400)
+            }
             expectNoEvents()
         }
         assertEquals(listOf("second"), calls)
@@ -131,33 +138,95 @@ class InfoPresenterTest {
     }
 
     @Test
-    fun `the admin line follows the session, logged out to logged in and back on LogOut`() = runTest {
-        flow(FakeLinkOpener(true)).test {
-            val first = awaitItem()
-            assertEquals(loggedOut, first.adminEntry)
-
-            session.isAdmin.value = true
-            val admin = awaitItem()
-            assertEquals(expected(adminEntry = loggedIn), admin)
-
-            admin.events(InfoUiModel.Event.LogOut)
-            assertEquals(expected(adminEntry = loggedOut), awaitItem())
+    fun `an admin leaves with five taps, never opening the login`() = runTest {
+        val admin = FakeAdminSession(initiallyAdmin = true)
+        val calls = mutableListOf<String>()
+        moleculeFlow(RecompositionMode.Immediate) {
+            InfoPresenter(FakeLinkOpener(true), admin).present(InfoPresenter.Params { calls += "login" })
+        }.test {
+            val model = awaitItem()
+            assertEquals(expected(), model)
+            advanceUntilIdle()
+            tapTimes(model, 5)
+            assertEquals(1, admin.logOuts)
+            assertEquals(emptyList<String>(), calls)
+            assertEquals(false, admin.isAdmin.value)
         }
-        assertEquals(1, session.logOuts)
-        assertEquals(emptyList<String>(), session.logIns)
     }
 
     @Test
-    fun `an admin device opens Info in admin mode`() = runTest {
+    fun `four taps do nothing`() = runTest {
+        val calls = mutableListOf<String>()
+        flow(FakeLinkOpener(true), InfoPresenter.Params { calls += "login" }).test {
+            val model = awaitItem()
+            tapTimes(model, 4)
+            advanceTimeBy(5_000)
+            expectNoEvents()
+        }
+        assertEquals(emptyList<String>(), calls)
+        assertEquals(0, session.logOuts)
+    }
+
+    @Test
+    fun `a slow gap resets the count and the late tap starts a new sequence`() = runTest {
+        val calls = mutableListOf<String>()
+        flow(FakeLinkOpener(true), InfoPresenter.Params { calls += "login" }).test {
+            val model = awaitItem()
+            tapTimes(model, 2)
+            advanceTimeBy(1_600)
+            tapTimes(model, 3)
+            assertEquals(emptyList<String>(), calls)
+            tapTimes(model, 2)
+            assertEquals(listOf("login"), calls)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `after an action the count restarts`() = runTest {
+        val calls = mutableListOf<String>()
+        flow(FakeLinkOpener(true), InfoPresenter.Params { calls += "login" }).test {
+            val model = awaitItem()
+            tapTimes(model, 5)
+            assertEquals(1, calls.size)
+            tapTimes(model, 4)
+            assertEquals(1, calls.size)
+            model.events(tap)
+            assertEquals(2, calls.size)
+        }
+    }
+
+    @Test
+    fun `events from a stale model act on the current admin state`() = runTest {
+        val calls = mutableListOf<String>()
+        flow(FakeLinkOpener(true), InfoPresenter.Params { calls += "login" }).test {
+            val stale = awaitItem()
+            session.isAdmin.value = true
+            advanceUntilIdle()
+            tapTimes(stale, 5)
+            assertEquals(1, session.logOuts)
+            assertEquals(emptyList<String>(), calls)
+        }
+    }
+
+    @Test
+    fun `taps emit no new model`() = runTest {
+        flow(FakeLinkOpener(true)).test {
+            val model = awaitItem()
+            tapTimes(model, 4)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `an admin device shows the same Info`() = runTest {
         val admin = FakeAdminSession(initiallyAdmin = true)
         val opener = FakeLinkOpener(true)
         moleculeFlow(RecompositionMode.Immediate) {
             InfoPresenter(opener, admin).present(InfoPresenter.Params())
         }.test {
-            // collectAsState starts from false; the stored state arrives with the flow's first value.
-            var model = awaitItem()
-            if (model.adminEntry == loggedOut) model = awaitItem()
-            assertEquals(expected(adminEntry = loggedIn), model)
+            // Info looks the same in both states: no admin text anywhere.
+            assertEquals(expected(), awaitItem())
         }
     }
 }

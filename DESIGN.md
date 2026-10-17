@@ -614,15 +614,16 @@ through `AdminControlsDefaults`, **no amber**:
    archivo` / `Puede que la organización la haya cambiado. Volvé a Jams para ver las jams
    guardadas.` No staleness notice, as in the song detail.
 6. **Info** — who organizes (Bahía Blanca Blues), what the jam is and that it is monthly, the
-   Hideaway radio program, social links, how to join, and a discreet admin entry point. No venue:
-   it can change, so it belongs to each jam, shown in the next-jam header (D-19). The admin line
-   as built (`admin-passphrase-login`, 5 October 2026), centred at the end, `caption` in
-   `textMuted`, each action a 48dp text target: logged out, `Entrar como admin` (opens the login);
-   logged in, `Modo admin activo` and under it `Salir del modo admin` (no confirmation). The line
-   swaps text in place; nothing else on Info moves.
+   Hideaway radio program, social links, how to join, and no visible admin entry. No venue:
+   it can change, so it belongs to each jam, shown in the next-jam header (D-19). Info draws no admin
+   text (`admin-entry-logo-taps`, 17 October 2026). Five taps on Info's band logo, each at most 1.5 s
+   after the previous one, open the login (musician) or leave admin mode at once (admin, no
+   confirmation); a longer pause restarts the count. No ripple and no feedback beyond the `MODO ADMIN`
+   banner and palette going away. Próxima jam's logo is inert. The logo keeps its image semantics, so
+   TalkBack does not offer the gesture (accepted tradeoff).
 7. **Admin login** — a single passphrase field and a button; no registration, no recovery, no email;
    error state included. As built (`admin-passphrase-login`, 5 October 2026): full screen over the
-   tabs (no bar), from Info. A back button (`Volver`, 48dp), the title `Entrar como admin` (`h1`, a
+   tabs (no bar), from the hidden logo gesture on Info. A back button (`Volver`, 48dp), the title `Entrar como admin` (`h1`, a
    heading), then a Material 3 outlined field labelled `Frase de acceso` with explicit token colours
    (`AdminLoginDefaults`: container `surface`, text and focused border and cursor `text`, label
    `textMuted`, unfocused border `border`, error border and supporting text `error`; **no amber**),

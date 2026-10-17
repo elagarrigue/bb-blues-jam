@@ -572,8 +572,8 @@ it and decodes with `decodeOk`:
 | any other service code | `Rejected(code)` |
 
 `AdminWriter` never saves or clears the stored passphrase, whatever the answer (user decision
-W3): a refused write leaves the device in admin mode, and the admin recovers on Info with "Salir
-del modo admin" and "Entrar como admin". It never logs.
+W3): a refused write leaves the device in admin mode, and the admin recovers on Info with five
+taps on the logo to leave and five more to open the login. It never logs.
 
 `AdminWriter.send(action, fields): AdminAnswer` (`admin-add-song-to-setlist`) is the same path for
 an action whose answer carries a payload: `AdminAnswer.Ok(body)` with the whole answer object
