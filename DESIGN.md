@@ -107,8 +107,8 @@ rules are in `docs/build-brief.md`. Interface copy is Rioplatense Spanish using 
 
 - **Band logo** — Logo blanco BBB.png is the supplied transparent white mark. The app reuses it
   without edits as the shared header in Próxima jam and Info.
-- **Launcher icon** — app/src/main/res/drawable-nodpi/launcher_brand.png pairs the mark with a
-  midnight background and amber ring; density-specific launcher assets use the same composition.
+- **Launcher icon** — app/src/main/res/drawable-nodpi/launcher_brand.png adapts the guitar and
+  checklist artwork from JAM de BLUES Guitar Checklist.png with a safe margin for Android masking.
 
 - **`bb-blues-jam-design-prompt.md`** — the complete design brief: screen-by-screen requirements,
   the slot model as it affects layout, reading priority, and design rules. **Source of truth.**
@@ -132,8 +132,8 @@ copy is Rioplatense Spanish using *vos* (D-12).
 
 ## Generated Concept Images
 
-The launcher icon is a generated adaptation of the supplied band logo. It is an app asset, not a
-screen concept or a replacement for the written design direction.
+The launcher icon is a generated adaptation of the supplied guitar-and-checklist artwork. It is an
+app asset, not a screen concept or a replacement for the written design direction.
 
 Stitch screens are catalogued in `docs/design/README.md`, which also fixes the file naming so a
 screen is identifiable without opening it.
