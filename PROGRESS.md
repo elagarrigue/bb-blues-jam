@@ -1,3 +1,19 @@
+## 17 October 2026 - presenter notes for harness presentation
+
+Published successfully at https://bb-blues-jam-harness.ivorycow5.chatgpt.site (source 394218d10a978b860678b7568882db27265d28bc).
+
+Expanded all eight slides with a Spanish first-person presenter script, ten-minute timing plan, visual cues, transitions and source references. Full companion script: presentations/harness-ia/notas-presentador.md. Embedded notes open with N and start at the beginning; they share the audience screen, so the companion document can be used privately on a second device. Slide metrics retain the original presentation snapshot despite subsequent updates to the source deliverable. No Android code or feature statuses changed.
+
+Verification: node --check and git diff --check passed. Headless Edge passed 77 checks, including navigation and notes; desktop/mobile geometry unchanged, no runtime exceptions, eight printed pages.
+
+## 17 October 2026 - harness presentation ready
+
+Published owner-private with Sites: https://bb-blues-jam-harness.ivorycow5.chatgpt.site (deployment succeeded, version 1; source commit 2e279d5be40c3a6edb384194729bb2e26f4b7afa).
+
+Created presentations/harness-ia/: eight Spanish slides based on docs/entregable-harness-ia.md, with app tokens, bundled fonts/branding, real screenshots, diagrams, feature-status chart, keyboard/touch navigation, index, fullscreen and speaker notes. Works offline via dist/index.html; presentation.pdf has eight pages. Metrics retain the source deliverable snapshot. No Android code or backlog statuses changed.
+
+Verification: baseline CI=true ./init.sh exit 0; konsist/detekt/ktlint wired. node --check passed. Headless Edge: 77 assertions passed, eight slides, local assets/fonts, desktop at 1366x768/1440x900/1920x1080 without overflow, mobile at 390x844 without horizontal overflow, navigation/index/notes/restart, no runtime exceptions and eight-page PDF. Report: presentations/harness-ia/verification.json; checker: verify.mjs.
+
 ## 17 October 2026 - admin-set-key song detail amendment accepted
 
 Implemented the 16 October amendment of `docs/specs/admin-set-key.md` (the UI was already committed). `ExtraParticipantEditorUiModel` now carries the `+ Otro` row copy (`rowLabel` `Otro`, `actionLabel` `Agregar`, `actionDescription` `Agregar a Otros`), filled from `NextJamCopy` in `ExtraParticipantUiMapping` and read by `ExtraParticipantEditor`. Stale KDoc of `ExtraParticipantEditorUiModel` and `SongDetailAdminUiModel` reworded; two stale lines of the architecture skill updated (DESIGN.md and the design prompt already described the refined UI). `SongDetailAdminTest` +2 tests (row strings and Open changes no slot or editor line; all-filled song keeps the `CUPOS LIBRES` note and the row).
