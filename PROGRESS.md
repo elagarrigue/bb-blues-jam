@@ -1,3 +1,9 @@
+## 17 October 2026 - application architecture diagrams
+
+Added docs/architecture.md with exact production-module dependency and runtime Mermaid diagrams, plus docs/diagrams/app-architecture.svg and .png for presentation. Overview reuses the app palette; documents eight product modules, isolated features, Compose presenters, Koin composition root, Room/DataStore, Apps Script/Sheets, read-only on-device Koog agent and confirmed proposal application through shared action contracts. Shows all three currently registered read tools, including jamSchedule. No app code or feature statuses changed.
+
+Verification: parsed Gradle dependencies for eight modules and asserted all four feature dependencies and core edges; SVG XML parsed; headless Edge render checked for text outside the canvas, none found, and visually reviewed. No product tests run for this documentation-only change.
+
 ## 17 October 2026 - presenter notes for harness presentation
 
 Published successfully at https://bb-blues-jam-harness.ivorycow5.chatgpt.site (source 394218d10a978b860678b7568882db27265d28bc).
