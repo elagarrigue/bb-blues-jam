@@ -33,12 +33,10 @@ internal class LineupReservations {
         .fold(confirmed) { lineup, (key, target) -> lineup.withSlotCount(key.third, target.count) ?: lineup }
 }
 
-internal fun SongAdminState.lineupEditor(date: LocalDate, song: JamSong): LineupEditorUiModel {
-    return LineupEditorUiModel(
-        heading = NextJamCopy.LINEUP_HEADING,
-        lines = Instrument.entries.map { instrument -> lineupLine(date, song, instrument) },
-    )
-}
+internal fun SongAdminState.lineupEditor(date: LocalDate, song: JamSong): LineupEditorUiModel = LineupEditorUiModel(
+    heading = NextJamCopy.LINEUP_HEADING,
+    lines = Instrument.entries.map { instrument -> lineupLine(date, song, instrument) },
+)
 
 private fun SongAdminState.lineupLine(date: LocalDate, song: JamSong, instrument: Instrument): LineupEditorLineUiModel {
     val count = song.lineup.count(instrument)

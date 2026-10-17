@@ -13,8 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.bbbjam.core.ui.brand.BandLogo
 import androidx.compose.ui.Modifier
+import com.bbbjam.core.ui.brand.BandLogo
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.state.rememberRevealingLazyListState

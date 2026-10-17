@@ -368,8 +368,7 @@ class SongDetailAdminTest {
         }
     }
 
-    private fun SongDetailUiModel.editor() =
-        (this as SongDetailUiModel.Song).controls().lineup
+    private fun SongDetailUiModel.editor() = (this as SongDetailUiModel.Song).controls().lineup
 
     @Test
     fun `every instrument can grow to three and the plus disables at three`() = runTest {

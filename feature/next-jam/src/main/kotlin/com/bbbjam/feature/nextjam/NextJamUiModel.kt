@@ -275,10 +275,7 @@ sealed interface RemovalUiModel : UiModel {
 }
 
 /** The song detail's always-visible admin lineup controls. */
-data class LineupEditorUiModel(
-    val heading: String,
-    val lines: List<LineupEditorLineUiModel>,
-) : UiModel
+data class LineupEditorUiModel(val heading: String, val lines: List<LineupEditorLineUiModel>) : UiModel
 
 data class LineupEditorLineUiModel(
     val instrument: com.bbbjam.core.model.Instrument,

@@ -63,12 +63,7 @@ fun LineupPanel(
 
 /** An admin action styled as an available instrument line, with its action at the end. */
 @Composable
-fun LineupPanelActionRow(
-    instrument: String,
-    actionLabel: String,
-    actionDescription: String,
-    onAction: () -> Unit,
-) {
+fun LineupPanelActionRow(instrument: String, actionLabel: String, actionDescription: String, onAction: () -> Unit) {
     val spacing = BluesJamTheme.spacing
     val style = LineupPanelDefaults.style(InstrumentChipKind.OPEN_SLOT)
     Row(
