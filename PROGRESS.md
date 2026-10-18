@@ -1,3 +1,41 @@
+## 18 October 2026 - presentation rebuilt after final code review
+
+Published successfully (owner-private) at https://bb-blues-jam-harness.ivorycow5.chatgpt.site; source 363c93f4b5eaf2f2ed63b394bbe3c3b9e101a42d, deployment appgdep_6ad530ff01e881918e899ba05e116775.
+
+Re-evaluated the source deliverable, feature graph, current nine-module architecture and final review evidence. Rebuilt the eight-slide presentation around the current cut: 75 slices (74 accepted, one scope-blocked), 74 specs, 1156 JVM testcases, 22 Konsist rules and over 240 commits. Added the final global review (nine findings, seven fix slices, feature API reduced from 122 declarations to 14), the new core:assistant module, updated ten-minute presenter notes, current feature-status chart and snapshot.json. Recreated the architecture SVG/PNG by responsibilities and principal flows; removed write-binding and DI implementation detail as requested. Slide 7 links to a bundled architecture SVG.
+
+Verification: CI=true ./init.sh exit 0, konsist/detekt/ktlint wired; JVM XML totals 1156 with one skipped live testcase. Feature counts/spec count and the exact nine-module dependency assertions passed. SVG XML parsed and headless Edge render reviewed with no text outside canvas. Presentation: node --check and diff check passed; 80 browser assertions passed across desktop/mobile, no runtime exceptions, eight printed pages. PDF and verification report regenerated. Product code and feature statuses unchanged.
+
+## 18 October 2026 - architecture artifacts regenerated
+
+Refreshed docs/architecture.md and SVG/PNG overview after remove-action-registry (44657af). Diagram now shows Koin write bindings in app, narrow core:data contracts delegating directly to SetlistRepository and no intermediate registry. Updated presentation slide 7, presenter notes and local PDF; documented all three read tools including jamSchedule. Original presentation metrics remain its historical snapshot. No product code or backlog statuses changed.
+
+Verification: Gradle dependency assertions passed for unchanged eight-module graph; removed app/actions directory absent and four current write bindings verified; SVG XML valid, rendered in headless Edge and visually reviewed with no text outside canvas. Presentation: 77 browser checks passed, no desktop/mobile horizontal overflow, no runtime exceptions, eight PDF pages. Local PDF and verification report regenerated. Publication remains on the previous version: Sites returned already-expired credentials on repeated requests, so no source push or deployment was possible; generated local artifacts are ready.
+
+## 17 October 2026 - application architecture diagrams
+
+Added docs/architecture.md with exact production-module dependency and runtime Mermaid diagrams, plus docs/diagrams/app-architecture.svg and .png for presentation. Overview reuses the app palette; documents eight product modules, isolated features, Compose presenters, Koin composition root, Room/DataStore, Apps Script/Sheets, read-only on-device Koog agent and confirmed proposal application through shared action contracts. Shows all three currently registered read tools, including jamSchedule. No app code or feature statuses changed.
+
+Verification: parsed Gradle dependencies for eight modules and asserted all four feature dependencies and core edges; SVG XML parsed; headless Edge render checked for text outside the canvas, none found, and visually reviewed. No product tests run for this documentation-only change.
+
+## 17 October 2026 - presenter notes for harness presentation
+
+Published successfully at https://bb-blues-jam-harness.ivorycow5.chatgpt.site (source 394218d10a978b860678b7568882db27265d28bc).
+
+Expanded all eight slides with a Spanish first-person presenter script, ten-minute timing plan, visual cues, transitions and source references. Full companion script: presentations/harness-ia/notas-presentador.md. Embedded notes open with N and start at the beginning; they share the audience screen, so the companion document can be used privately on a second device. Slide metrics retain the original presentation snapshot despite subsequent updates to the source deliverable. No Android code or feature statuses changed.
+
+Verification: node --check and git diff --check passed. Headless Edge passed 77 checks, including navigation and notes; desktop/mobile geometry unchanged, no runtime exceptions, eight printed pages.
+
+## 17 October 2026 - harness presentation ready
+
+Published owner-private with Sites: https://bb-blues-jam-harness.ivorycow5.chatgpt.site (deployment succeeded, version 1; source commit 2e279d5be40c3a6edb384194729bb2e26f4b7afa).
+
+Created presentations/harness-ia/: eight Spanish slides based on docs/entregable-harness-ia.md, with app tokens, bundled fonts/branding, real screenshots, diagrams, feature-status chart, keyboard/touch navigation, index, fullscreen and speaker notes. Works offline via dist/index.html; presentation.pdf has eight pages. Metrics retain the source deliverable snapshot. No Android code or backlog statuses changed.
+
+Verification: baseline CI=true ./init.sh exit 0; konsist/detekt/ktlint wired. node --check passed. Headless Edge: 77 assertions passed, eight slides, local assets/fonts, desktop at 1366x768/1440x900/1920x1080 without overflow, mobile at 390x844 without horizontal overflow, navigation/index/notes/restart, no runtime exceptions and eight-page PDF. Report: presentations/harness-ia/verification.json; checker: verify.mjs.
+
+
+
 ## 18 October 2026 - core-assistant-module accepted
 
 Code review finding 9. The Koog agent (18 files) and its 14 test files moved with `git mv` from `:core:data` (`com.bbbjam.core.data.assistant`) to the new `:core:assistant` module (`com.bbbjam.core.assistant`), which depends on `:core:model` and `:core:data` (only package lines and imports changed). New `assistantCoreModule` (`SetlistAssistant` single) listed in `startKoin`; `dataModule` lost the binding; `AssistantCredentials` stays bound in `:app`. `:core:data` has no Koog, Ktor or agent code (`rg "ai\.koog|io\.ktor" core/data` empty); `feature/assistant` and `app` depend on `:core:assistant`. `:core:assistant` uses the `bluesjam.android.data` convention, so its KSP plugin is applied with no processor (harmless; orchestrator decision, `build-logic` untouched). `AssistantLiveCallTest` now seeds a twelve-song catalog in code (it cannot read `Fixtures` or the mappers, which stay internal to `:core:data`), still opt-in and skipped by default; it was compiled, not run live, and a future live run is not byte-comparable with `docs/evidence/assistant-streaming/live-call.md`.
@@ -69,28 +107,6 @@ Organizer decision of 17 October 2026 (option A, amends D-13's second sentence).
 Verification: baseline `CI=true ./init.sh` exit 0, 1135 testcases; final exit 0, konsist/detekt/ktlint wired, 1124 testcases (1135 - 13 + 2), 19 Konsist rules unchanged. Red first: a wrong-argument mutant on the Mover binding fails the new test (`docs/evidence/remove-action-registry/red-mutant-wrong-argument.txt`), restored. Grep for the deleted names: 0 hits. Not run: device (not required).
 
 Independent validation: accepted on 17 October 2026 (gate rerun, 1124 testcases, own mutant on the mover binding red, docs and D-13 note reviewed).
-
-## 17 October 2026 - application architecture diagrams
-
-Added docs/architecture.md with exact production-module dependency and runtime Mermaid diagrams, plus docs/diagrams/app-architecture.svg and .png for presentation. Overview reuses the app palette; documents eight product modules, isolated features, Compose presenters, Koin composition root, Room/DataStore, Apps Script/Sheets, read-only on-device Koog agent and confirmed proposal application through shared action contracts. Shows all three currently registered read tools, including jamSchedule. No app code or feature statuses changed.
-
-Verification: parsed Gradle dependencies for eight modules and asserted all four feature dependencies and core edges; SVG XML parsed; headless Edge render checked for text outside the canvas, none found, and visually reviewed. No product tests run for this documentation-only change.
-
-## 17 October 2026 - presenter notes for harness presentation
-
-Published successfully at https://bb-blues-jam-harness.ivorycow5.chatgpt.site (source 394218d10a978b860678b7568882db27265d28bc).
-
-Expanded all eight slides with a Spanish first-person presenter script, ten-minute timing plan, visual cues, transitions and source references. Full companion script: presentations/harness-ia/notas-presentador.md. Embedded notes open with N and start at the beginning; they share the audience screen, so the companion document can be used privately on a second device. Slide metrics retain the original presentation snapshot despite subsequent updates to the source deliverable. No Android code or feature statuses changed.
-
-Verification: node --check and git diff --check passed. Headless Edge passed 77 checks, including navigation and notes; desktop/mobile geometry unchanged, no runtime exceptions, eight printed pages.
-
-## 17 October 2026 - harness presentation ready
-
-Published owner-private with Sites: https://bb-blues-jam-harness.ivorycow5.chatgpt.site (deployment succeeded, version 1; source commit 2e279d5be40c3a6edb384194729bb2e26f4b7afa).
-
-Created presentations/harness-ia/: eight Spanish slides based on docs/entregable-harness-ia.md, with app tokens, bundled fonts/branding, real screenshots, diagrams, feature-status chart, keyboard/touch navigation, index, fullscreen and speaker notes. Works offline via dist/index.html; presentation.pdf has eight pages. Metrics retain the source deliverable snapshot. No Android code or backlog statuses changed.
-
-Verification: baseline CI=true ./init.sh exit 0; konsist/detekt/ktlint wired. node --check passed. Headless Edge: 77 assertions passed, eight slides, local assets/fonts, desktop at 1366x768/1440x900/1920x1080 without overflow, mobile at 390x844 without horizontal overflow, navigation/index/notes/restart, no runtime exceptions and eight-page PDF. Report: presentations/harness-ia/verification.json; checker: verify.mjs.
 
 ## 17 October 2026 - admin-set-key song detail amendment accepted
 

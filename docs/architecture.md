@@ -4,9 +4,11 @@ Verified against the module definitions, composition root, repository bindings a
 on 18 October 2026, after the code-review fixes that ended with `core-assistant-module` (commit
 `414ff69`). The presentation-ready
 overview is available as [SVG](diagrams/app-architecture.svg) and [PNG](diagrams/app-architecture.png).
-Solid arrows in that overview indicate module dependencies; dashed arrows indicate runtime HTTP
-communication. The overview groups repeated dependencies to keep it readable. The exact direct
-production-module dependencies are shown below.
+The overview presents responsibilities and principal dependencies, grouping the four features
+and repeated arrows. Dashed arrows indicate remote communication. It deliberately omits
+dependency-injection configuration and write-binding details. The exact direct production-module
+dependencies are shown below; the feature group in the overview does not mean that every feature
+depends on every core module.
 
 ## Module dependencies
 
@@ -98,7 +100,10 @@ The bindings are constructor-time SAM implementations in `appModule`: add, remov
 delegate directly to the same repository instance. They introduce no dispatcher, action DTO,
 registry or extra runtime layer. `SetlistRepository` and its implementation remain in `:core:data`;
 `:app` only selects and wires the narrow surfaces. Status, publication and jam-edit contracts are
-also bound to that repository instance. The module graph gains one module, `:core:assistant`, and one core-to-core edge, `:core:assistant -> :core:data`; every other dependency is unchanged.
+also bound to that repository instance. The extraction adds `:core:assistant`, which depends on
+`:core:model` and `:core:data`. `:app` and `:feature:assistant` also depend on the new module.
+The other three features do not. Room and DataStore remain in `:core:data`; Koog, Ktor,
+the tools, prompt, streaming parser and proposal validation belong to `:core:assistant`.
 
 The local admin state controls which UI is rendered; Apps Script authenticates and validates
 server actions. Room is a local cache, not an independent authority. The Sheet owns the catalog

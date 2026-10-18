@@ -1,108 +1,85 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title desc">
-  <title id="title">Arquitectura de BB Blues Jam</title>
-  <desc id="desc">Ocho módulos Android. App compone cuatro features aisladas que dependen de core UI y core data; ambos dependen de core model. Core data contiene repositorios, caché local y el agente Koog de solo lectura. La app se comunica por HTTP con Apps Script, que valida y persiste en Google Sheets, y con el gateway de IA. El admin confirma antes de aplicar propuestas.</desc>
+  <title id="title">BB Blues Jam: arquitectura actual</title>
+  <desc id="desc">Nueve módulos de producto. App compone cuatro features aisladas y cuatro módulos core. UI contiene presentación compartida; data contiene repositorios y persistencia; assistant contiene el agente Koog, herramientas de lectura y validadores; model contiene el dominio puro. Apps Script valida y persiste en Google Sheets. La IA propone y el admin confirma. Vista resumida por responsabilidades; las dependencias exactas están en docs/architecture.md.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#D6C4AC"/></marker>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#E2E2E9} .headline{font-size:42px;font-weight:800;letter-spacing:-1px}.subtitle{font-size:17px;fill:#D6C4AC}.eyebrow{font-size:11px;letter-spacing:2px;fill:#D6C4AC}.module{font-size:23px;font-weight:700}.body{font-size:16px;fill:#D6C4AC}.small{font-size:13px;fill:#D6C4AC}.tiny{font-size:11px;fill:#D6C4AC}.box{fill:#1A1B21;stroke:#514532;stroke-width:1.2}.inner{fill:#111318;stroke:#514532;stroke-width:1}.dependency{fill:none;stroke:#D6C4AC;stroke-width:1.6;marker-end:url(#arrow)}.bus{fill:none;stroke:#D6C4AC;stroke-width:1.4}.http{fill:none;stroke:#D6C4AC;stroke-width:1.6;stroke-dasharray:6 5;marker-end:url(#arrow)}
+      text{font-family:Arial,Helvetica,sans-serif;fill:#E2E2E9}.title{font-size:42px;font-weight:800;letter-spacing:-1px}.subtitle{font-size:17px;fill:#D6C4AC}.label{font-size:11px;letter-spacing:1.8px;fill:#D6C4AC}.module{font-size:24px;font-weight:700}.body{font-size:15px;fill:#D6C4AC}.small{font-size:12px;fill:#D6C4AC}.box{fill:#1A1B21;stroke:#514532;stroke-width:1.2}.edge{fill:none;stroke:#D6C4AC;stroke-width:1.6;marker-end:url(#arrow)}.bus{fill:none;stroke:#D6C4AC;stroke-width:1.4}.http{fill:none;stroke:#D6C4AC;stroke-width:1.6;stroke-dasharray:6 5;marker-end:url(#arrow)}
     </style>
   </defs>
   <rect width="1600" height="1120" fill="#111318"/>
-  <text x="48" y="45" class="eyebrow">BB BLUES JAM / ARQUITECTURA DE LA APP</text>
-  <text x="48" y="98" class="headline">Ocho módulos. Features aisladas.</text>
-  <text x="48" y="128" class="subtitle">Android nativo · Kotlin · Jetpack Compose · inyección por constructor con Koin</text>
-  <rect x="40" y="159" width="1000" height="706" rx="14" fill="none" stroke="#514532"/>
-  <text x="64" y="187" class="eyebrow">EN EL TELÉFONO</text>
-  <text x="1120" y="187" class="eyebrow">SERVICIOS REMOTOS</text>
-
-  <rect x="64" y="207" width="952" height="87" rx="8" class="box"/>
-  <text x="86" y="241" class="module">:app</text>
-  <text x="86" y="270" class="body">Navigation Compose · inicio de Koin · composición de módulos</text>
-  <line x1="674" y1="226" x2="674" y2="276" stroke="#514532"/>
-  <text x="697" y="241" class="body" font-weight="700">Bindings de escritura</text>
-  <text x="697" y="267" class="small">Contratos → SetlistRepository</text>
-
-  <path d="M540 294V315M177 315H903" class="bus"/>
-  <path d="M177 315V338" class="dependency"/><path d="M419 315V338" class="dependency"/>
-  <path d="M661 315V338" class="dependency"/><path d="M903 315V338" class="dependency"/>
-  <rect x="64" y="339" width="226" height="102" rx="8" class="box"/>
-  <text x="82" y="371" class="body" font-weight="700">:feature:next-jam</text>
-  <text x="82" y="399" class="small">Próxima jam · detalle del tema</text>
-  <text x="82" y="421" class="small">Edición de lista y cupos</text>
-  <rect x="306" y="339" width="226" height="102" rx="8" class="box"/>
-  <text x="324" y="371" class="body" font-weight="700">:feature:past-jams</text>
-  <text x="324" y="399" class="small">Jams · historial</text>
-  <text x="324" y="421" class="small">Gestión de jams futuras</text>
-  <rect x="548" y="339" width="226" height="102" rx="8" class="box"/>
-  <text x="566" y="371" class="body" font-weight="700">:feature:info</text>
-  <text x="566" y="399" class="small">Información de la comunidad</text>
-  <text x="566" y="421" class="small">Ingreso del admin</text>
-  <rect x="790" y="339" width="226" height="102" rx="8" class="box"/>
-  <text x="808" y="371" class="body" font-weight="700">:feature:assistant</text>
-  <text x="808" y="399" class="small">Chat solo para el admin</text>
-  <text x="808" y="421" class="small">Revisar y aplicar propuestas</text>
-  <path d="M177 441V463M419 441V463M661 441V463M903 441V463M177 463H903" class="bus"/>
-  <text x="64" y="495" class="small">Cada feature depende de :core:ui y :core:data. Ninguna depende de otra feature.</text>
-  <path d="M214 463V478M703 463V478" class="bus"/>
-  <path d="M214 500V520" class="dependency"/><path d="M703 500V520" class="dependency"/>
-
-  <rect x="64" y="521" width="300" height="190" rx="8" class="box"/>
-  <text x="85" y="555" class="module">:core:ui</text>
-  <text x="85" y="587" class="body">Contratos de presentación</text>
-  <text x="85" y="612" class="small">Presenter · UiModel · UiEvent</text>
-  <text x="85" y="649" class="body">BluesJamTheme</text>
-  <text x="85" y="674" class="small">Tokens · componentes compartidos</text>
-  <rect x="390" y="521" width="626" height="190" rx="8" class="box"/>
-  <text x="412" y="555" class="module">:core:data</text>
-  <text x="412" y="585" class="small">CatalogRepository · JamsRepository · SetlistRepository · AdminWriter</text>
-  <rect x="410" y="609" width="250" height="82" rx="6" class="inner"/>
-  <text x="427" y="636" class="body" font-weight="700">Datos y persistencia local</text>
-  <text x="427" y="661" class="small">Room: caché de catálogo y jams</text>
-  <text x="427" y="679" class="tiny">DataStore: sesión admin · HTTP: OkHttp</text>
-  <rect x="677" y="609" width="319" height="82" rx="6" class="inner"/>
-  <text x="693" y="636" class="body" font-weight="700">Agente Koog · solo lectura</text>
-  <text x="693" y="661" class="small">Catálogo · jams pasadas · agenda</text>
-  <text x="693" y="679" class="tiny">Validación de propuestas · streaming</text>
-  <path d="M214 711V754" class="dependency"/><path d="M703 711V754" class="dependency"/>
-  <text x="234" y="738" class="tiny">api(:core:model)</text>
-  <text x="723" y="738" class="tiny">api(:core:model)</text>
-  <rect x="64" y="755" width="952" height="70" rx="8" class="box"/>
-  <text x="85" y="787" class="module">:core:model</text>
-  <text x="290" y="785" class="body">Kotlin puro · Jam · Song · JamSong · Lineup · Slot · Key</text>
-  <text x="290" y="808" class="small">Sin Android ni dependencias de otros módulos del proyecto</text>
-  <text x="64" y="848" class="tiny">:app también depende directamente de los tres módulos core; esas flechas se omiten para simplificar la vista.</text>
-
-  <rect x="1120" y="339" width="432" height="119" rx="8" class="box"/>
-  <text x="1142" y="373" class="module">DevExpert Inference</text>
-  <text x="1142" y="403" class="body">Gateway del modelo de lenguaje</text>
-  <text x="1142" y="430" class="small">Chat Completions · respuestas en streaming</text>
-  <path d="M996 651H1067V398H1118" class="http"/>
-  <text x="1079" y="382" class="tiny">IA</text>
-
-  <rect x="1120" y="521" width="432" height="134" rx="8" class="box"/>
-  <text x="1142" y="555" class="module">Apps Script</text>
-  <text x="1142" y="585" class="body">Lecturas + acciones autenticadas</text>
-  <text x="1142" y="612" class="small">Validación en servidor · bloqueo de escritura</text>
-  <text x="1142" y="636" class="tiny">El flag local de admin solo controla la interfaz.</text>
-  <path d="M1016 566H1118" class="http"/>
-  <rect x="1044" y="545" width="65" height="18" fill="#111318"/>
-  <text x="1050" y="557" class="tiny">HTTP</text>
-  <path d="M1336 655V706" class="http"/>
-  <rect x="1120" y="707" width="432" height="118" rx="8" class="box"/>
-  <text x="1142" y="741" class="module">Google Sheets</text>
-  <text x="1142" y="770" class="body">Persistencia remota vía Apps Script</text>
-  <text x="1142" y="796" class="small">Autoridad: catálogo e historial de jams</text>
-  <text x="1120" y="851" class="tiny">La app controla la próxima lista y su publicación.</text>
-
-  <rect x="40" y="890" width="1512" height="111" rx="10" fill="#2A1218" stroke="#514532"/>
-  <text x="64" y="919" class="eyebrow">LÍMITE DEL ASISTENTE</text>
-  <text x="64" y="952" class="module" font-size="21">El agente propone → se valida → el admin confirma → contratos de escritura → repositorio → servidor</text>
-  <text x="64" y="980" class="small">Koin conecta los contratos directamente al repositorio. La edición manual usa sus mismas funciones; el agente no escribe.</text>
-
-  <path d="M49 1040H95" class="dependency"/><text x="108" y="1045" class="small">Dependencia de módulo</text>
-  <path d="M345 1040H391" class="http"/><text x="404" y="1045" class="small">Comunicación en ejecución</text>
-  <text x="750" y="1045" class="small">Estado en Compose · presenters sin ViewModels · admin como estado</text>
-  <line x1="48" y1="1064" x2="1552" y2="1064" stroke="#514532"/>
-  <text x="48" y="1091" class="small">VERIFICACIÓN / Molecule + tests JVM · Konsist · detekt · ktlint · init.sh</text>
-  <text x="1552" y="1091" text-anchor="end" class="tiny">Código actual · sin registro de acciones · 18 OCT 2026</text>
+  <text x="48" y="45" class="label">BB BLUES JAM / ARQUITECTURA</text>
+  <text x="48" y="98" class="title">Nueve módulos. La IA tiene su propio lugar.</text>
+  <text x="48" y="129" class="subtitle">Kotlin + Jetpack Compose · features aisladas · dominio compartido · control humano</text>
+  <rect x="40" y="158" width="1050" height="736" rx="14" fill="none" stroke="#514532"/>
+  <text x="64" y="187" class="label">EN EL TELÉFONO</text>
+  <text x="1150" y="187" class="label">SERVICIOS REMOTOS</text>
+  <rect x="64" y="207" width="1002" height="80" rx="8" class="box"/>
+  <text x="86" y="240" class="module">:app</text>
+  <text x="86" y="267" class="body">Navegación y composición de la aplicación</text>
+  <path d="M565 287V327" class="edge"/>
+  <rect x="64" y="329" width="1002" height="124" rx="8" class="box"/>
+  <text x="84" y="354" class="label">CUATRO FEATURES INDEPENDIENTES</text>
+  <line x1="310" y1="370" x2="310" y2="431" stroke="#514532"/>
+  <line x1="565" y1="370" x2="565" y2="431" stroke="#514532"/>
+  <line x1="820" y1="370" x2="820" y2="431" stroke="#514532"/>
+  <text x="84" y="390" class="body" font-weight="700">:feature:next-jam</text>
+  <text x="84" y="418" class="small">Próxima jam · temas · cupos</text>
+  <text x="332" y="390" class="body" font-weight="700">:feature:past-jams</text>
+  <text x="332" y="418" class="small">Historial y gestión de jams</text>
+  <text x="586" y="390" class="body" font-weight="700">:feature:info</text>
+  <text x="586" y="418" class="small">Comunidad e ingreso de admin</text>
+  <text x="840" y="390" class="body" font-weight="700">:feature:assistant</text>
+  <text x="840" y="418" class="small">Chat y revisión de propuestas</text>
+  <path d="M565 453V472M204 472H900" class="bus"/>
+  <path d="M204 472V485M540 472V485M900 472V485" class="bus"/>
+  <path d="M204 509V529" class="edge"/><path d="M540 509V529" class="edge"/><path d="M900 509V529" class="edge"/>
+  <text x="64" y="503" class="small">Cada feature usa UI y datos; solo Asistente usa :core:assistant. No hay dependencias entre features.</text>
+  <rect x="64" y="530" width="280" height="180" rx="8" class="box"/>
+  <text x="85" y="566" class="module">:core:ui</text>
+  <text x="85" y="601" class="body">Presentación compartida</text>
+  <text x="85" y="629" class="small">Presenters · modelos de pantalla</text>
+  <text x="85" y="654" class="small">Tema · tokens · componentes</text>
+  <text x="85" y="687" class="small">Estado en Compose, sin ViewModels</text>
+  <rect x="380" y="530" width="320" height="180" rx="8" class="box"/>
+  <text x="402" y="566" class="module">:core:data</text>
+  <text x="402" y="601" class="body">Datos y persistencia</text>
+  <text x="402" y="629" class="small">Repositorios · cliente Apps Script</text>
+  <text x="402" y="654" class="small">Room: catálogo y jams en caché</text>
+  <text x="402" y="687" class="small">DataStore: sesión de admin</text>
+  <rect x="736" y="530" width="330" height="180" rx="8" class="box"/>
+  <text x="758" y="566" class="module">:core:assistant</text>
+  <text x="758" y="601" class="body">Agente Koog en el dispositivo</text>
+  <text x="758" y="629" class="small">Catálogo · historial · agenda</text>
+  <text x="758" y="654" class="small">Validación de propuestas · streaming</text>
+  <text x="758" y="687" class="small">Herramientas de solo lectura</text>
+  <path d="M736 620H702" class="edge"/>
+  <path d="M204 710V789" class="edge"/><path d="M540 710V789" class="edge"/><path d="M900 710V789" class="edge"/>
+  <rect x="64" y="790" width="1002" height="72" rx="8" class="box"/>
+  <text x="85" y="824" class="module">:core:model</text>
+  <text x="286" y="820" class="body">Dominio puro: Jam · Song · JamSong · Lineup · Slot · Key</text>
+  <text x="286" y="845" class="small">Sin Android ni dependencias de otros módulos del proyecto</text>
+  <text x="64" y="882" class="small">Vista resumida por responsabilidades. El grafo completo de dependencias está en docs/architecture.md.</text>
+  <rect x="1150" y="329" width="402" height="120" rx="8" class="box"/>
+  <text x="1172" y="364" class="module">DevExpert Inference</text>
+  <text x="1172" y="397" class="body">Modelo de lenguaje remoto</text>
+  <text x="1172" y="425" class="small">Propuestas con respuesta en streaming</text>
+  <path d="M1066 577H1116V388H1148" class="http"/>
+  <rect x="1150" y="692" width="402" height="107" rx="8" class="box"/>
+  <text x="1172" y="728" class="module">Apps Script</text>
+  <text x="1172" y="758" class="body">Lecturas y escrituras validadas</text>
+  <text x="1172" y="782" class="small">Autorización de cada escritura en servidor</text>
+  <path d="M700 674H718V748H1148" class="http"/>
+  <path d="M1351 799V831" class="http"/>
+  <rect x="1150" y="833" width="402" height="61" rx="8" class="box"/>
+  <text x="1172" y="870" class="module">Google Sheets</text>
+  <rect x="40" y="920" width="1512" height="90" rx="10" fill="#2A1218" stroke="#514532"/>
+  <text x="64" y="948" class="label">CONTROL HUMANO</text>
+  <text x="64" y="980" class="module">El asistente propone → la app valida → el admin confirma → el servidor aplica</text>
+  <path d="M48 1046H94" class="edge"/><text x="107" y="1051" class="small">Dependencias agrupadas</text>
+  <path d="M335 1046H381" class="http"/><text x="394" y="1051" class="small">Comunicación remota</text>
+  <text x="750" y="1051" class="small">Sheet: catálogo e historial · App: próxima lista y publicación</text>
+  <line x1="48" y1="1071" x2="1552" y2="1071" stroke="#514532"/>
+  <text x="48" y="1097" class="small">VERIFICACIÓN / Tests JVM y Molecule · 22 reglas Konsist · detekt · ktlint</text>
+  <text x="1552" y="1097" text-anchor="end" class="small">Estado verificado · 18 OCT 2026</text>
 </svg>
