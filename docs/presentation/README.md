@@ -8,7 +8,7 @@ of the plan, the final whole-system review, and lessons. Internal decision codes
 in the speaker notes, never on the slides.
 The presentation is independent of the Android application and has no build or runtime dependencies.
 
-Open `dist/index.html` directly in a browser. Fonts, branding and real application screenshots
+Open `dist/index.html` directly in a browser. Fonts, branding and the architecture diagram
 are bundled locally; the presentation works offline. To serve it locally, run
 `python -m http.server 8080 --directory dist` from this directory.
 
@@ -29,7 +29,6 @@ records the figures and their source. Feature counts and specs were checked agai
 The presentation does not change feature statuses or claim new product acceptance.
 
 Brand tokens and bundled fonts come from `DESIGN.md` and `core/ui/src/main/res/`.
-Screenshots come from `docs/screenshots/` and are used without modification.
 This folder is the versioned copy. The hosting checkout lives in `presentations/harness-ia/`
 (git-ignored here), with its own repository and the static hosting settings in `.openai/hosting.json`;
 edit there and copy the files back, or the other way around, so both stay in sync.
