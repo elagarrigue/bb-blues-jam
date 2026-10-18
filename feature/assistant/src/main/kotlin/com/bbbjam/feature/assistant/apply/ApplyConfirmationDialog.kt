@@ -6,6 +6,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -19,22 +20,22 @@ internal fun ApplyConfirmationDialog(model: ConfirmationUiModel) {
     AlertDialog(
         onDismissRequest = { model.events(ConfirmationUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title) },
+        title = { Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm)) {
                 model.lines.forEach { line ->
-                    Text(text = line, style = BluesJamTheme.typography.body, color = style.lines)
+                    Text(text = line.resolve(), style = BluesJamTheme.typography.body, color = style.lines)
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = { model.events(ConfirmationUiModel.Event.Confirm) }) {
-                Text(text = model.confirmLabel, color = style.confirm)
+                Text(text = model.confirmLabel.resolve(), color = style.confirm)
             }
         },
         dismissButton = {
             TextButton(onClick = { model.events(ConfirmationUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
+                Text(text = model.cancelLabel.resolve(), color = style.cancel)
             }
         },
     )

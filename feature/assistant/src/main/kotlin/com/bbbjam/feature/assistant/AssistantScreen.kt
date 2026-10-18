@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.state.EmptyStateBlock
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.assistant.chat.StatusBanner
 import com.bbbjam.feature.assistant.chat.Turn
@@ -66,7 +67,7 @@ internal fun AssistantContent(model: AssistantUiModel, modifier: Modifier = Modi
             .imePadding(),
     ) {
         Text(
-            text = model.title,
+            text = model.title.resolve(),
             style = BluesJamTheme.typography.h1,
             color = BluesJamTheme.colors.text,
             modifier = Modifier
@@ -137,7 +138,7 @@ private fun Composer(model: ComposerUiModel, status: StatusUiModel, modifier: Mo
         (status as? StatusUiModel.Checking)?.let { checking ->
             // Static, no spinner, one polite live region (as the pending card).
             Text(
-                text = checking.text,
+                text = checking.text.resolve(),
                 style = BluesJamTheme.typography.caption,
                 color = AssistantDefaults.banner().checking,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -148,8 +149,8 @@ private fun Composer(model: ComposerUiModel, status: StatusUiModel, modifier: Mo
             onValueChange = { model.events(ComposerUiModel.Event.TextChanged(it)) },
             modifier = Modifier.fillMaxWidth(),
             textStyle = BluesJamTheme.typography.body,
-            label = { Text(text = model.label) },
-            placeholder = { Text(text = model.placeholder) },
+            label = { Text(text = model.label.resolve()) },
+            placeholder = { Text(text = model.placeholder.resolve()) },
             maxLines = COMPOSER_MAX_LINES,
             shape = BluesJamTheme.shapes.md,
             colors = OutlinedTextFieldDefaults.colors(
@@ -190,6 +191,6 @@ private fun SendButton(model: ComposerUiModel, focusManager: FocusManager) {
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = model.sendLabel, style = BluesJamTheme.typography.body, color = style.content)
+        Text(text = model.sendLabel.resolve(), style = BluesJamTheme.typography.body, color = style.content)
     }
 }

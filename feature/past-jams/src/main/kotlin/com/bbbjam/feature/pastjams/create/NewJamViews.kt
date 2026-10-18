@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import com.bbbjam.core.ui.jamform.JamFormDialog
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.pastjams.admin.JamsAdminDefaults
 import com.bbbjam.feature.pastjams.admin.PublishTextAction
@@ -43,7 +45,7 @@ internal fun NewJamBlock(model: NewJamUiModel) {
 
 /** A neutral full-width button (`surfaceRaised`, `text`, 48dp), never amber. */
 @Composable
-private fun NewJamButton(label: String, onClick: () -> Unit) {
+private fun NewJamButton(label: UiText, onClick: () -> Unit) {
     val style = JamsAdminDefaults.newJamButton()
     Surface(color = style.fill, contentColor = style.content, shape = BluesJamTheme.shapes.md) {
         Box(
@@ -54,7 +56,7 @@ private fun NewJamButton(label: String, onClick: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = label,
+                text = label.resolve(),
                 style = BluesJamTheme.typography.body,
                 color = style.content,
                 modifier = Modifier.padding(horizontal = BluesJamTheme.spacing.md),
@@ -74,9 +76,9 @@ private fun NewJamProgressView(model: NewJamProgressUiModel, events: EventHandle
 }
 
 @Composable
-private fun StatusLine(text: String, color: Color, mode: LiveRegionMode) {
+private fun StatusLine(text: UiText, color: Color, mode: LiveRegionMode) {
     Text(
-        text = text,
+        text = text.resolve(),
         style = BluesJamTheme.typography.body,
         color = color,
         modifier = Modifier
@@ -101,9 +103,9 @@ private fun CreateFailureCard(model: NewJamProgressUiModel.Failed, events: Event
             modifier = Modifier.padding(start = spacing.md, end = spacing.md, top = spacing.sm),
             verticalArrangement = Arrangement.spacedBy(spacing.xs),
         ) {
-            Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title)
-            Text(text = model.message, style = BluesJamTheme.typography.body, color = style.message)
-            Text(text = model.consequence, style = BluesJamTheme.typography.caption, color = style.message)
+            Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title)
+            Text(text = model.message.resolve(), style = BluesJamTheme.typography.body, color = style.message)
+            Text(text = model.consequence.resolve(), style = BluesJamTheme.typography.caption, color = style.message)
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
                 model.retryLabel?.let { label ->
                     PublishTextAction(label, Modifier.weight(1f)) { events(NewJamUiModel.Event.Retry) }

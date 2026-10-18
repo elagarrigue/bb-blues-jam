@@ -3,13 +3,14 @@ package com.bbbjam.core.ui.state
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * A list with nothing to list (DESIGN.md "Required States", Empty): a concrete [title] and an
  * invitation [message], never "No hay nada todavía". Not the filter's no-results case, which
  * belongs to the filter bar.
  */
-data class EmptyStateUiModel(val title: String, val message: String) : UiModel
+data class EmptyStateUiModel(val title: UiText, val message: UiText) : UiModel
 
 /**
  * Nothing is cached and the read failed (DESIGN.md "Required States", Error): a [title] naming
@@ -17,9 +18,9 @@ data class EmptyStateUiModel(val title: String, val message: String) : UiModel
  * kind and its detail never reach the musician) and the [retryLabel] button.
  */
 data class ListErrorUiModel(
-    val title: String,
-    val message: String,
-    val retryLabel: String,
+    val title: UiText,
+    val message: UiText,
+    val retryLabel: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
@@ -34,9 +35,9 @@ data class ListErrorUiModel(
  * "Actualizando…" while a retry runs. [retryLabel] is null while refreshing, so no action is drawn.
  */
 data class StalenessNoticeUiModel(
-    val title: String,
-    val detail: String,
-    val retryLabel: String?,
+    val title: UiText,
+    val detail: UiText,
+    val retryLabel: UiText?,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {

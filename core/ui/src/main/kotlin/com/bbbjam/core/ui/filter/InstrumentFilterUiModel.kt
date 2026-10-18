@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.filter
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The instrument filter bar (DESIGN.md "Filter chip"): a [heading], the `Todos` chip and one chip
@@ -11,11 +12,11 @@ import com.bbbjam.core.ui.presenter.UiModel
  * action when it matches none. Both are null while nothing is selected; never both set.
  */
 data class InstrumentFilterBarUiModel(
-    val heading: String,
+    val heading: UiText,
     val chips: List<FilterChipUiModel>,
-    val summary: String?,
-    val noResults: String?,
-    val clearLabel: String,
+    val summary: UiText?,
+    val noResults: UiText?,
+    val clearLabel: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
@@ -31,9 +32,9 @@ data class InstrumentFilterBarUiModel(
  * selected and tapping it clears the selection.
  */
 data class FilterChipUiModel(
-    val label: String,
+    val label: UiText,
     val count: String,
-    val contentDescription: String,
+    val contentDescription: UiText,
     val isSelected: Boolean,
     val events: EventHandler<Event>,
 ) : UiModel {

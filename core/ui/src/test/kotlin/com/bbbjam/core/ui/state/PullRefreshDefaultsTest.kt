@@ -1,6 +1,9 @@
 package com.bbbjam.core.ui.state
 
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.text
 import com.bbbjam.core.ui.theme.BluesJamColors
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -34,7 +37,7 @@ class PullRefreshDefaultsTest {
 
     @Test
     fun `the accessibility action is Actualizar`() {
-        assertEquals("Actualizar", PullRefreshCopy.ACTION)
+        assertEquals("Actualizar", UiText.res(R.string.pull_refresh_action).text())
     }
 
     @Test

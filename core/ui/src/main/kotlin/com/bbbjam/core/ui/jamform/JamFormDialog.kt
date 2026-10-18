@@ -12,6 +12,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -25,7 +26,7 @@ fun JamFormDialog(model: JamFormUiModel) {
     AlertDialog(
         onDismissRequest = { model.events(JamFormUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title) },
+        title = { Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
                 FormField(model.date, KeyboardType.Number, style) {
@@ -37,17 +38,19 @@ fun JamFormDialog(model: JamFormUiModel) {
                 FormField(model.venue, KeyboardType.Text, style) {
                     model.events(JamFormUiModel.Event.Edit(JamFormField.VENUE, it))
                 }
-                model.notes.forEach { Text(text = it, style = BluesJamTheme.typography.caption, color = style.note) }
+                model.notes.forEach {
+                    Text(text = it.resolve(), style = BluesJamTheme.typography.caption, color = style.note)
+                }
             }
         },
         confirmButton = {
             TextButton(enabled = model.canSubmit, onClick = { model.events(JamFormUiModel.Event.Submit) }) {
-                Text(text = model.submitLabel, color = if (model.canSubmit) style.confirm else style.disabled)
+                Text(text = model.submitLabel.resolve(), color = if (model.canSubmit) style.confirm else style.disabled)
             }
         },
         dismissButton = {
             TextButton(onClick = { model.events(JamFormUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
+                Text(text = model.cancelLabel.resolve(), color = style.cancel)
             }
         },
     )
@@ -66,8 +69,8 @@ private fun FormField(
         onValueChange = onValueChange,
         singleLine = true,
         textStyle = BluesJamTheme.typography.body,
-        label = { Text(text = model.label) },
-        supportingText = (model.error ?: model.hint)?.let { text -> { Text(text = text) } },
+        label = { Text(text = model.label.resolve()) },
+        supportingText = (model.error ?: model.hint)?.let { text -> { Text(text = text.resolve()) } },
         isError = model.error != null,
         keyboardOptions = KeyboardOptions(keyboardType = keyboard, autoCorrectEnabled = false),
         shape = BluesJamTheme.shapes.md,

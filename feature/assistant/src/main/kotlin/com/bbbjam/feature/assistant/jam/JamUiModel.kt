@@ -3,6 +3,7 @@ package com.bbbjam.feature.assistant.jam
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.apply.ApplyTone
 import com.bbbjam.feature.assistant.apply.ConfirmationUiModel
 import com.bbbjam.feature.assistant.apply.confirmation
@@ -13,17 +14,17 @@ import com.bbbjam.feature.assistant.apply.confirmation
  * jam is created. [note] says what is held back or why it cannot be created.
  */
 internal data class JamCardUiModel(
-    val heading: String,
-    val date: String,
-    val detail: String,
-    val note: String?,
+    val heading: UiText,
+    val date: UiText,
+    val detail: UiText,
+    val note: UiText?,
     val action: JamActionUiModel?,
     val result: JamResultUiModel?,
 ) : UiModel
 
 /** "Crear la jam" (or "Reintentar"): tapping it only opens [confirmation]; nothing is written (D-24). */
 internal data class JamActionUiModel(
-    val label: String,
+    val label: UiText,
     val enabled: Boolean,
     val events: EventHandler<Event>,
     val confirmation: ConfirmationUiModel?,
@@ -34,4 +35,4 @@ internal data class JamActionUiModel(
 }
 
 /** The creation's one-line status, a polite live region. */
-internal data class JamResultUiModel(val text: String, val tone: ApplyTone) : UiModel
+internal data class JamResultUiModel(val text: UiText, val tone: ApplyTone) : UiModel

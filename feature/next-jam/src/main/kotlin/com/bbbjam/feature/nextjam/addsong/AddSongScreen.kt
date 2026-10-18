@@ -36,7 +36,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.ListErrorBlock
 import com.bbbjam.core.ui.state.SkeletonList
-import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -93,7 +93,7 @@ internal fun AddSongContent(model: AddSongUiModel, modifier: Modifier, contentPa
     ) {
         BackButton(model.back, modifier = Modifier.padding(top = spacing.sm))
         Text(
-            text = model.title,
+            text = model.title.resolve(),
             style = BluesJamTheme.typography.h1,
             color = BluesJamTheme.colors.text,
             modifier = Modifier.semantics { heading() },
@@ -109,7 +109,9 @@ internal fun AddSongContent(model: AddSongUiModel, modifier: Modifier, contentPa
             verticalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             when (val content = model.content) {
-                is AddSongContentUiModel.Loading -> item(key = STATE_KEY) { SkeletonList(content.description) }
+                is AddSongContentUiModel.Loading -> item(key = STATE_KEY) {
+                    SkeletonList(content.description.resolve())
+                }
 
                 is AddSongContentUiModel.Failed -> item(key = STATE_KEY) { ListErrorBlock(content.error) }
 
@@ -117,7 +119,7 @@ internal fun AddSongContent(model: AddSongUiModel, modifier: Modifier, contentPa
 
                 is AddSongContentUiModel.NoResults -> item(key = STATE_KEY) {
                     Text(
-                        text = content.message,
+                        text = content.message.resolve(),
                         style = BluesJamTheme.typography.body,
                         color = BluesJamTheme.colors.textMuted,
                     )
@@ -139,7 +141,7 @@ private fun SearchField(model: SearchFieldUiModel) {
         onValueChange = { model.events(SearchFieldUiModel.Event.Changed(it)) },
         modifier = Modifier.fillMaxWidth(),
         textStyle = BluesJamTheme.typography.body,
-        label = { Text(text = model.label) },
+        label = { Text(text = model.label.resolve()) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         shape = BluesJamTheme.shapes.md,
@@ -166,10 +168,11 @@ private fun SearchField(model: SearchFieldUiModel) {
 private fun CatalogRow(row: CatalogRowUiModel) {
     val spacing = BluesJamTheme.spacing
     val style = AddSongDefaults.row(row.isListed)
+    val keyDescription = row.keyDescription.resolve()
     val click = if (row.isListed) {
         Modifier.semantics(mergeDescendants = true) {}
     } else {
-        Modifier.clickable(onClickLabel = row.pickLabel, role = Role.Button) {
+        Modifier.clickable(onClickLabel = row.pickLabel.resolve(), role = Role.Button) {
             row.events(CatalogRowUiModel.Event.Pick)
         }
     }
@@ -195,13 +198,15 @@ private fun CatalogRow(row: CatalogRowUiModel) {
                     text = row.key,
                     style = BluesJamTheme.typography.songTitle,
                     color = style.key,
-                    modifier = Modifier.semantics { contentDescription = row.keyDescription },
+                    modifier = Modifier.semantics { contentDescription = keyDescription },
                 )
             }
             if (row.artist.isNotBlank()) {
                 Text(text = row.artist, style = BluesJamTheme.typography.body, color = style.artist)
             }
-            row.listedLabel?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.note) }
+            row.listedLabel?.let {
+                Text(text = it.resolve(), style = BluesJamTheme.typography.caption, color = style.note)
+            }
         }
     }
 }

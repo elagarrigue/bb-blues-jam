@@ -3,29 +3,37 @@ package com.bbbjam.feature.assistant.chat
 import com.bbbjam.core.assistant.AssistantFailure
 import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.core.assistant.AssistantStatus
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
-import com.bbbjam.feature.assistant.AssistantCopy
+import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.ProposedSongUiModel
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.ReplyUiModel
 import com.bbbjam.feature.assistant.RetryUiModel
 import com.bbbjam.feature.assistant.StatusUiModel
-import com.bbbjam.feature.assistant.apply.ApplyCopy
 import com.bbbjam.feature.assistant.apply.ApplyInputs
-import com.bbbjam.feature.assistant.apply.ApplyOutcomeCopy
 import com.bbbjam.feature.assistant.apply.ApplyUiModel
+import com.bbbjam.feature.assistant.apply.applyConfirmText
+import com.bbbjam.feature.assistant.apply.applyPartialText
+import com.bbbjam.feature.assistant.apply.applySkippedText
+import com.bbbjam.feature.assistant.apply.applyStoppedText
+import com.bbbjam.feature.assistant.apply.applySuccessText
 import com.bbbjam.feature.assistant.failed
 import com.bbbjam.feature.assistant.proposal
 import com.bbbjam.feature.assistant.snapshot
 import com.bbbjam.feature.assistant.testHandlers
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The pure mapping, with the copy written out from the approved table (not read from AssistantCopy). */
+/** The pure mapping, with the expected resources named from the approved table. */
 class AssistantMappingTest {
     private val handlers = testHandlers()
 
@@ -43,10 +51,10 @@ class AssistantMappingTest {
         val model = assistantModel(false, listOf(answered(1, proposal())), available, "hola", handlers)
         assertEquals(
             AssistantUiModel.NotConfigured(
-                "Asistente",
+                UiText.res(CoreR.string.tab_assistant),
                 EmptyStateUiModel(
-                    "El asistente no está configurado",
-                    "Esta versión de la app no tiene la clave del servicio, así que no se pueden pedir listas.",
+                    UiText.res(R.string.assistant_not_configured_title),
+                    UiText.res(R.string.assistant_not_configured_message),
                 ),
             ),
             model,
@@ -56,19 +64,18 @@ class AssistantMappingTest {
     @Test
     fun `the empty chat has the intro and a disabled Enviar`() {
         val model = chat()
-        assertEquals("Asistente", model.title)
+        assertEquals(UiText.res(CoreR.string.tab_assistant), model.title)
         assertEquals(
             EmptyStateUiModel(
-                "Pedí una lista",
-                "Contale al asistente qué jam querés armar: cuántos temas, qué estilo, cómo arrancar y cómo " +
-                    "cerrar. Solo propone temas del catálogo.",
+                UiText.res(R.string.assistant_intro_title),
+                UiText.res(R.string.assistant_intro_message),
             ),
             model.intro,
         )
         assertTrue(model.turns.isEmpty())
-        assertEquals("Tu pedido", model.composer.label)
-        assertEquals("Ej.: 12 temas de blues nacional, con inicio y final arriba", model.composer.placeholder)
-        assertEquals("Enviar", model.composer.sendLabel)
+        assertEquals(UiText.res(R.string.assistant_composer_label), model.composer.label)
+        assertEquals(UiText.res(R.string.assistant_composer_placeholder), model.composer.placeholder)
+        assertEquals(UiText.res(R.string.assistant_send), model.composer.sendLabel)
         assertFalse(model.composer.sendEnabled)
     }
 
@@ -83,25 +90,25 @@ class AssistantMappingTest {
         assertFalse(chat(draft = "   ").composer.sendEnabled)
         val pending = chat(listOf(ChatTurn(1, "uno", ChatTurn.State.Pending)), draft = "hola").composer
         assertFalse(pending.sendEnabled)
-        assertEquals("Esperando respuesta…", pending.sendLabel)
+        assertEquals(UiText.res(R.string.assistant_send_waiting), pending.sendLabel)
         assertEquals("hola", pending.text)
         val done = chat(listOf(answered(1, proposal())), draft = "hola").composer
         assertTrue(done.sendEnabled)
-        assertEquals("Enviar", done.sendLabel)
+        assertEquals(UiText.res(R.string.assistant_send), done.sendLabel)
     }
 
     @Test
     fun `a pending turn shows the wait copy and a Cancelar keyed by its id`() {
         val turn = chat(listOf(ChatTurn(7, "uno", ChatTurn.State.Pending))).turns.single()
         assertEquals(7, turn.id)
-        assertEquals("Vos", turn.authorLabel)
+        assertEquals(UiText.res(R.string.assistant_author_you), turn.authorLabel)
         assertEquals("uno", turn.request)
         assertEquals(
             ReplyUiModel.Pending(
-                "El asistente está armando la propuesta. Puede tardar unos segundos.",
+                UiText.res(R.string.assistant_pending_label),
                 null,
                 emptyList(),
-                "Cancelar",
+                UiText.res(R.string.assistant_cancel),
                 EventHandler(7L) {
                 },
             ),
@@ -114,14 +121,28 @@ class AssistantMappingTest {
         val reply = replyOf(proposal(songs = 2, message = "Cerramos arriba.", questions = listOf("¿Con armónica?")))
         assertEquals(
             ReplyUiModel.Proposal(
-                authorLabel = "Asistente",
-                heading = "PROPUESTA · 2 temas",
+                authorLabel = UiText.res(CoreR.string.tab_assistant),
+                heading = UiText.plural(R.plurals.assistant_proposal_heading, 2),
                 songs = listOf(
-                    ProposedSongUiModel("01", "Tema 1", "Artista 1", "Bm", "Tonalidad Bm", "Razón 1"),
-                    ProposedSongUiModel("02", "Tema 2", "Artista 2", "Bm", "Tonalidad Bm", "Razón 2"),
+                    ProposedSongUiModel(
+                        "01",
+                        "Tema 1",
+                        "Artista 1",
+                        "Bm",
+                        SongListText.keyDescription("Bm"),
+                        "Razón 1",
+                    ),
+                    ProposedSongUiModel(
+                        "02",
+                        "Tema 2",
+                        "Artista 2",
+                        "Bm",
+                        SongListText.keyDescription("Bm"),
+                        "Razón 2",
+                    ),
                 ),
                 message = "Cerramos arriba.",
-                questionsHeading = "PREGUNTAS",
+                questionsHeading = UiText.res(R.string.assistant_questions_heading),
                 questions = listOf("¿Con armónica?"),
                 discardedNote = null,
             ),
@@ -132,7 +153,7 @@ class AssistantMappingTest {
     @Test
     fun `one song says tema and no questions means no heading`() {
         val reply = replyOf(proposal(songs = 1)) as ReplyUiModel.Proposal
-        assertEquals("PROPUESTA · 1 tema", reply.heading)
+        assertEquals(UiText.plural(R.plurals.assistant_proposal_heading, 1), reply.heading)
         assertNull(reply.questionsHeading)
         assertTrue(reply.questions.isEmpty())
     }
@@ -144,7 +165,7 @@ class AssistantMappingTest {
         assertNull(reply.heading)
         assertTrue(reply.songs.isEmpty())
         assertEquals("¿Cuántos temas?", reply.message)
-        assertEquals("PREGUNTAS", reply.questionsHeading)
+        assertEquals(UiText.res(R.string.assistant_questions_heading), reply.questionsHeading)
     }
 
     @Test
@@ -152,32 +173,38 @@ class AssistantMappingTest {
         val none = replyOf(proposal(rejected = emptyList())) as ReplyUiModel.Proposal
         assertNull(none.discardedNote)
         val one = replyOf(proposal(rejected = listOf("zz-secreto"))) as ReplyUiModel.Proposal
-        assertEquals("Se descartó 1 tema que no está en el catálogo.", one.discardedNote)
+        assertEquals(UiText.plural(R.plurals.assistant_discarded, 1), one.discardedNote)
         val two = replyOf(proposal(rejected = listOf("a-1", "b-2"))) as ReplyUiModel.Proposal
-        assertEquals("Se descartaron 2 temas que no están en el catálogo.", two.discardedNote)
+        assertEquals(UiText.plural(R.plurals.assistant_discarded, 2), two.discardedNote)
         assertFalse(two.toString().contains("a-1"))
     }
 
     @Test
     fun `every failure has its Spanish copy and the status is never shown`() {
         val expected = mapOf(
-            AssistantFailure.Offline to "No hay conexión. Para usar el asistente necesitás internet.",
-            AssistantFailure.Unauthorized to "El servicio rechazó la clave del asistente.",
+            AssistantFailure.Offline to UiText.res(R.string.assistant_offline),
+            AssistantFailure.Unauthorized to UiText.res(R.string.assistant_unauthorized),
             AssistantFailure.Unavailable(503) to
-                "El servicio del asistente no respondió. Probá de nuevo en un rato.",
-            AssistantFailure.InvalidResponse to "No se pudo leer la respuesta del asistente. Probá de nuevo.",
+                UiText.res(R.string.assistant_unavailable),
+            AssistantFailure.InvalidResponse to UiText.res(R.string.assistant_invalid_response),
             AssistantFailure.TooManySteps to
-                "El asistente no llegó a una propuesta. Probá con un pedido más concreto.",
+                UiText.res(R.string.assistant_too_many_steps),
             AssistantFailure.CatalogEmpty to
-                "El catálogo todavía no se cargó. Abrí la app con conexión y volvé a probar.",
-            AssistantFailure.Incomplete to "La respuesta se cortó antes de terminar. Probá de nuevo.",
+                UiText.res(R.string.assistant_catalog_empty),
+            AssistantFailure.Incomplete to UiText.res(R.string.assistant_incomplete_retry),
         )
         expected.forEach { (failure, text) ->
             val reply = replyOf(failed(failure)) as ReplyUiModel.Failed
             assertEquals(text, reply.message)
-            assertEquals("Reintentar", reply.retry?.label)
+            assertEquals(UiText.res(R.string.assistant_retry), reply.retry?.label)
         }
-        assertFalse((replyOf(failed(AssistantFailure.Unavailable(503))) as ReplyUiModel.Failed).message.contains("503"))
+        assertFalse(
+            (
+                replyOf(
+                    failed(AssistantFailure.Unavailable(503)),
+                ) as ReplyUiModel.Failed
+                ).message.toString().contains("503"),
+        )
         // The sealed type has exactly these seven members.
         assertEquals(7, expected.size)
     }
@@ -187,9 +214,9 @@ class AssistantMappingTest {
         val cancelled = chat(listOf(ChatTurn(1, "a", ChatTurn.State.Cancelled))).turns.single().reply
         assertEquals(
             ReplyUiModel.Cancelled(
-                "Cancelaste este pedido.",
+                UiText.res(R.string.assistant_cancelled),
                 RetryUiModel(
-                    "Reintentar",
+                    UiText.res(R.string.assistant_retry),
                     EventHandler(1L) {
                     },
                 ),
@@ -199,8 +226,8 @@ class AssistantMappingTest {
         val interrupted = chat(listOf(ChatTurn(1, "a", ChatTurn.State.Interrupted))).turns.single().reply
         assertEquals(
             ReplyUiModel.Failed(
-                "No se pudo terminar este pedido. Probá de nuevo.",
-                RetryUiModel("Reintentar", EventHandler(1L) {}),
+                UiText.res(R.string.assistant_interrupted),
+                RetryUiModel(UiText.res(R.string.assistant_retry), EventHandler(1L) {}),
             ),
             interrupted,
         )
@@ -209,10 +236,7 @@ class AssistantMappingTest {
     @Test
     fun `a NotConfigured reply maps to the not-configured message without retry`() {
         val reply = replyOf(AssistantReply.NotConfigured) as ReplyUiModel.Failed
-        assertEquals(
-            "Esta versión de la app no tiene la clave del servicio, así que no se pueden pedir listas.",
-            reply.message,
-        )
+        assertEquals(UiText.res(R.string.assistant_not_configured_message), reply.message)
         assertNull(reply.retry)
     }
 
@@ -226,7 +250,7 @@ class AssistantMappingTest {
         val replies = chat(turns).turns.map { it.reply }
         assertNull((replies[0] as ReplyUiModel.Cancelled).retry)
         assertNull((replies[1] as ReplyUiModel.Failed).retry)
-        assertEquals("Reintentar", (replies[2] as ReplyUiModel.Failed).retry?.label)
+        assertEquals(UiText.res(R.string.assistant_retry), (replies[2] as ReplyUiModel.Failed).retry?.label)
     }
 
     @Test
@@ -238,23 +262,23 @@ class AssistantMappingTest {
     @Test
     fun `checking shows a static line and disables Enviar`() {
         val model = chat(draft = "hola", service = ServiceState.Checking)
-        assertEquals(StatusUiModel.Checking("Comprobando el servicio…"), model.status)
+        assertEquals(StatusUiModel.Checking(UiText.res(R.string.assistant_checking)), model.status)
         assertFalse(model.composer.sendEnabled)
-        assertEquals("Enviar", model.composer.sendLabel)
+        assertEquals(UiText.res(R.string.assistant_send), model.composer.sendLabel)
     }
 
     @Test
     fun `each problem has its banner copy, Reintentar, and a disabled Enviar`() {
         val expected = mapOf(
             AssistantStatus.ServiceDown to
-                "El asistente no está disponible en este momento. El servicio de IA no responde; probá más tarde.",
-            AssistantStatus.Offline to "No hay conexión. Para usar el asistente necesitás internet.",
-            AssistantStatus.Unauthorized to "El servicio rechazó la clave del asistente.",
+                UiText.res(R.string.assistant_service_down),
+            AssistantStatus.Offline to UiText.res(R.string.assistant_offline),
+            AssistantStatus.Unauthorized to UiText.res(R.string.assistant_unauthorized),
         )
         expected.forEach { (status, text) ->
             val model = chat(draft = "hola", service = ServiceState.Known(status))
             assertEquals(
-                StatusUiModel.Banner(text, "Reintentar", EventHandler {}),
+                StatusUiModel.Banner(text, UiText.res(R.string.assistant_retry), EventHandler {}),
                 model.status,
             )
             assertFalse("$status", model.composer.sendEnabled)
@@ -264,7 +288,10 @@ class AssistantMappingTest {
     @Test
     fun `a turn's Reintentar is withheld while the service is not available`() {
         val turns = listOf(answered(1, failed(AssistantFailure.Offline)))
-        assertEquals("Reintentar", ((chat(turns).turns.single().reply) as ReplyUiModel.Failed).retry?.label)
+        assertEquals(
+            UiText.res(R.string.assistant_retry),
+            ((chat(turns).turns.single().reply) as ReplyUiModel.Failed).retry?.label,
+        )
         val down = chat(turns, service = ServiceState.Known(AssistantStatus.ServiceDown))
         assertNull((down.turns.single().reply as ReplyUiModel.Failed).retry)
         val checking = chat(turns, service = ServiceState.Checking)
@@ -272,24 +299,42 @@ class AssistantMappingTest {
     }
 
     @Test
-    fun `the apply copy is written out for singular and plural`() {
-        val date = java.time.LocalDate.of(2026, 10, 31)
+    fun `the apply texts pick the singular and the plural`() {
+        val date = LocalDate.of(2026, 10, 31)
+        val day = SpanishDateNames.sentence(date)
+        fun themes(count: Int) = UiText.plural(R.plurals.assistant_apply_themes, count)
+        fun alreadyThere(count: Int) = UiText.plural(R.plurals.assistant_apply_already_there, count)
+        fun failedCount(count: Int) = UiText.plural(R.plurals.assistant_apply_failed_count, count)
         assertEquals(
-            "Listo: se agregaron 11 temas a la jam del sábado 31 de octubre. 1 ya estaba en la lista.",
-            ApplyOutcomeCopy.success(11, 1, date),
+            UiText.res(
+                R.string.assistant_apply_success_with_skipped,
+                UiText.plural(R.plurals.assistant_apply_success, 11, 11, day),
+                alreadyThere(1),
+            ),
+            applySuccessText(11, 1, date),
         )
-        assertEquals("Listo: se agregó 1 tema a la jam del sábado 31 de octubre.", ApplyOutcomeCopy.success(1, 0, date))
+        assertEquals(UiText.plural(R.plurals.assistant_apply_success, 1, 1, day), applySuccessText(1, 0, date))
         assertEquals(
-            "No se agregó ningún tema a la jam del sábado 31 de octubre. 2 ya estaban en la lista.",
-            ApplyOutcomeCopy.success(0, 2, date),
+            UiText.res(
+                R.string.assistant_apply_success_with_skipped,
+                UiText.res(R.string.assistant_apply_success_none, day),
+                alreadyThere(2),
+            ),
+            applySuccessText(0, 2, date),
         )
-        assertEquals("Se agregaron 10 de 11 temas. 1 no se agregó.", ApplyOutcomeCopy.partial(10, 11, 1))
-        assertEquals("Se agregaron 8 de 11 temas. 3 no se agregaron.", ApplyOutcomeCopy.partial(8, 11, 3))
-        assertEquals("Detuviste la carga: se agregaron 4 de 11 temas.", ApplyOutcomeCopy.stopped(4, 11))
-        assertEquals("Agregar 1 tema", ApplyCopy.applyConfirm(1))
         assertEquals(
-            "3 ya están en la lista y no se agregan: A, B, C.",
-            ApplyCopy.applySkipped(listOf("A", "B", "C")),
+            UiText.res(R.string.assistant_apply_partial, 10, themes(11), failedCount(1)),
+            applyPartialText(10, 11, 1),
+        )
+        assertEquals(
+            UiText.res(R.string.assistant_apply_partial, 8, themes(11), failedCount(3)),
+            applyPartialText(8, 11, 3),
+        )
+        assertEquals(UiText.res(R.string.assistant_apply_stopped, 4, themes(11)), applyStoppedText(4, 11))
+        assertEquals(UiText.res(R.string.assistant_apply_add_confirm, themes(1)), applyConfirmText(1))
+        assertEquals(
+            UiText.plural(R.plurals.assistant_apply_add_skipped, 3, 3, "A, B, C"),
+            applySkippedText(listOf("A", "B", "C")),
         )
     }
 

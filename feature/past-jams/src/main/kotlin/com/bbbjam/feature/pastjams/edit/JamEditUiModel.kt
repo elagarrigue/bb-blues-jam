@@ -4,6 +4,7 @@ import com.bbbjam.core.ui.jamform.JamFormField
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * Editing and deleting a future jam (`admin-edit-delete-jam`, D-28; icons by `jam-status-chips`) on one card:
@@ -14,7 +15,7 @@ import com.bbbjam.core.ui.presenter.UiModel
 internal data class JamManageUiModel(
     val edit: IconActionUiModel,
     val delete: IconActionUiModel?,
-    val sending: String?,
+    val sending: UiText?,
     val failure: JamEditFailureUiModel?,
     val events: EventHandler<Event>,
 ) : UiModel {
@@ -27,16 +28,16 @@ internal data class JamManageUiModel(
 }
 
 /** An icon action: [description] names the jam's date for a screen reader; [enabled] is false while it is sending. */
-internal data class IconActionUiModel(val description: String, val enabled: Boolean) : UiModel
+internal data class IconActionUiModel(val description: UiText, val enabled: Boolean) : UiModel
 
 /** [retryLabel] is null when retrying is pointless (the script is outdated, or the list changed). */
 internal data class JamEditFailureUiModel(
     val id: Long,
-    val title: String,
-    val message: String,
-    val consequence: String,
-    val retryLabel: String?,
-    val dismissLabel: String,
+    val title: UiText,
+    val message: UiText,
+    val consequence: UiText,
+    val retryLabel: UiText?,
+    val dismissLabel: UiText,
 ) : UiModel
 
 /**
@@ -45,23 +46,23 @@ internal data class JamEditFailureUiModel(
  * musicians already see.
  */
 internal data class EditJamFormUiModel(
-    val title: String,
+    val title: UiText,
     val jamDate: java.time.LocalDate,
-    val dateLabel: String,
-    val dateHint: String,
-    val timeLabel: String,
-    val timeHint: String,
-    val venueLabel: String,
+    val dateLabel: UiText,
+    val dateHint: UiText,
+    val timeLabel: UiText,
+    val timeHint: UiText,
+    val venueLabel: UiText,
     val date: String,
     val time: String,
     val venue: String,
-    val dateError: String?,
-    val timeError: String?,
-    val venueError: String?,
-    val dateNote: String?,
-    val visibilityNote: String?,
-    val saveLabel: String,
-    val cancelLabel: String,
+    val dateError: UiText?,
+    val timeError: UiText?,
+    val venueError: UiText?,
+    val dateNote: UiText?,
+    val visibilityNote: UiText?,
+    val saveLabel: UiText,
+    val cancelLabel: UiText,
     val canSave: Boolean,
     val events: EventHandler<Event>,
 ) : UiModel {
@@ -74,11 +75,11 @@ internal data class EditJamFormUiModel(
 
 /** The delete confirmation: the [title], the [lines] of consequences in order and the two buttons. */
 internal data class DeleteJamUiModel(
-    val title: String,
+    val title: UiText,
     val jamDate: java.time.LocalDate,
-    val lines: List<String>,
-    val confirmLabel: String,
-    val cancelLabel: String,
+    val lines: List<UiText>,
+    val confirmLabel: UiText,
+    val cancelLabel: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {

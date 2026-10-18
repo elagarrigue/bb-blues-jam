@@ -24,6 +24,7 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.lineup.LineupLineUiModel
 import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -32,6 +33,7 @@ import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
+import com.bbbjam.core.ui.text.UiText
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -42,9 +44,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Every user-facing string expected here is written out from the approved copy tables in
- * `docs/specs/next-jam-read-only-list.md` and `docs/specs/list-states.md`, never read from
- * [NextJamCopy], so any change to the shipped copy fails this class.
+ * Every user-facing text expected here is a `UiText` written out with its resource id and arguments
+ * (`docs/specs/next-jam-read-only-list.md`, `docs/specs/list-states.md`), never built by the code under
+ * test, so a change of id or of arguments fails this class.
  */
 class NextJamPresenterTest {
     private val repository = FakeJamsRepository()
@@ -86,20 +88,14 @@ class NextJamPresenterTest {
 
     /** The 7 chips of `Lineup.default()`, written out from the approved copy (instrument strip spec, C1). */
     private val defaultChips = listOf(
-        open("GTR: LIBRE", "Guitarra: libre"),
-        open("GTR: LIBRE", "Guitarra: libre"),
-        open("BAJO: LIBRE", "Bajo: libre"),
-        open("BAT: LIBRE", "Batería: libre"),
-        open("VOZ: LIBRE", "Voz: libre"),
-        open("ARM: LIBRE", "Armónica: libre"),
-        open("TEC: LIBRE", "Teclados: libre"),
+        openChip(Instrument.GUITAR),
+        openChip(Instrument.GUITAR),
+        openChip(Instrument.BASS),
+        openChip(Instrument.DRUMS),
+        openChip(Instrument.VOCALS),
+        openChip(Instrument.HARMONICA),
+        openChip(Instrument.KEYBOARDS),
     )
-
-    private fun open(label: String, description: String) =
-        InstrumentChipUiModel(label, description, InstrumentChipKind.OPEN_SLOT)
-
-    private fun filled(label: String, description: String) =
-        InstrumentChipUiModel(label, description, InstrumentChipKind.FILLED_SLOT)
 
     /**
      * An expected row (rows never expand); [positionLabel] is written out and the position read from it.
@@ -116,9 +112,9 @@ class NextJamPresenterTest {
         positionLabel = positionLabel,
         title = title,
         key = key,
-        keyDescription = "Tonalidad $key",
+        keyDescription = keyDescription(key),
         instruments = chips,
-        openDetailLabel = "ver el detalle del tema",
+        openDetailLabel = UiText.res(R.string.next_jam_open_detail),
         events = EventHandler {},
     )
 
@@ -131,7 +127,7 @@ class NextJamPresenterTest {
     private fun snapshot(upcoming: Jam?, freshness: Freshness = fetched) =
         JamsSnapshot(upcoming = upcoming, past = emptyList(), freshness = freshness)
 
-    private val header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días")
+    private val header = octoberThirtyFirstHeader
 
     private fun presenter(calendar: JamCalendar = octoberSecond) = FakeSetlistRepository().let {
         NextJamPresenter(repository, calendar, FakeAdminSession(), it.writes(), it.sources())
@@ -151,37 +147,37 @@ class NextJamPresenterTest {
 
     private val octoberSecondNoon = Instant.parse("2026-10-02T15:00:00Z")
 
-    private val loading = NextJamUiModel.Loading("Cargando la próxima jam")
+    private val loading = NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
 
     private val noUpcomingJam = NextJamUiModel.NoUpcomingJam(
         EmptyStateUiModel(
-            "Todavía no hay fecha",
-            "La próxima jam todavía no tiene fecha. Cuando se confirme, la vas a ver acá.",
+            UiText.res(R.string.next_jam_no_upcoming_title),
+            UiText.res(R.string.next_jam_no_upcoming_message),
         ),
         staleness = null,
     )
 
     private val emptySetlist = SetlistUiModel.Empty(
         EmptyStateUiModel(
-            "Todavía no hay temas",
-            "La lista está publicada pero todavía no tiene temas. ¿Tenés uno en mente? Contáselo a la organización.",
+            UiText.res(R.string.next_jam_empty_title),
+            UiText.res(R.string.next_jam_empty_message),
         ),
     )
 
     private val offlineError = NextJamUiModel.Failed(
         ListErrorUiModel(
-            "No pudimos cargar la próxima jam",
-            "No hay conexión y todavía no hay nada guardado. Revisá los datos o el wifi y probá de nuevo.",
-            "Reintentar",
+            UiText.res(R.string.next_jam_load_failed),
+            UiText.res(CoreR.string.list_state_error_offline),
+            UiText.res(CoreR.string.list_state_retry),
             EventHandler {},
         ),
     )
 
     private val otherError = NextJamUiModel.Failed(
         ListErrorUiModel(
-            "No pudimos cargar la próxima jam",
-            "Algo falló al leer los datos. Probá de nuevo en un rato; si sigue fallando, avisale a la organización.",
-            "Reintentar",
+            UiText.res(R.string.next_jam_load_failed),
+            UiText.res(CoreR.string.list_state_error_other),
+            UiText.res(CoreR.string.list_state_retry),
             EventHandler {},
         ),
     )
@@ -295,9 +291,15 @@ class NextJamPresenterTest {
             repository.snapshots.emit(snapshot(cached, failedOffline))
             val stale = awaitItem() as NextJamUiModel.Jam
             val notice = checkNotNull(stale.staleness)
-            assertEquals("Sin conexión", notice.title)
-            assertEquals("Mostrando lo guardado hace 2 horas.", notice.detail)
-            assertEquals("Reintentar", notice.retryLabel)
+            assertEquals(UiText.res(CoreR.string.list_state_notice_offline), notice.title)
+            assertEquals(
+                UiText.res(
+                    CoreR.string.list_state_showing_saved,
+                    UiText.plural(CoreR.plurals.list_state_age_hours, 2),
+                ),
+                notice.detail,
+            )
+            assertEquals(UiText.res(CoreR.string.list_state_retry), notice.retryLabel)
             // The header and rows are still drawn, filter bar included.
             assertEquals(header, stale.header)
             assertEquals(listOf(row("01", "Sweet Little Angel", "B")), stale.rows())
@@ -306,7 +308,7 @@ class NextJamPresenterTest {
             notice.events(StalenessNoticeUiModel.Event.Retry)
             repository.snapshots.emit(snapshot(cached, failedOffline.copy(isRefreshing = true)))
             val refreshing = awaitMatching { it != stale } as NextJamUiModel.Jam
-            assertEquals("Actualizando…", refreshing.staleness?.detail)
+            assertEquals(UiText.res(CoreR.string.list_state_refreshing), refreshing.staleness?.detail)
             assertEquals(null, refreshing.staleness?.retryLabel)
             assertEquals(1, repository.refreshCalls)
 
@@ -349,7 +351,7 @@ class NextJamPresenterTest {
             .toUiModel(today, filter = setOf(Instrument.HARMONICA))
         val songs = (filtered as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs
         assertEquals(emptyList<SongRowUiModel>(), songs.rows)
-        assertEquals("Ningún tema tiene cupo libre para armónica.", songs.filterBar?.noResults)
+        assertEquals(filterNoResults(Instrument.HARMONICA), songs.filterBar?.noResults)
     }
 
     @Test
@@ -367,7 +369,7 @@ class NextJamPresenterTest {
         assertEquals(
             NextJamUiModel.Jam(
                 header,
-                SetlistUiModel.Songs(gapRows, "Falta 1 tema: no se pudo leer.", bar(2)),
+                SetlistUiModel.Songs(gapRows, UiText.plural(CoreR.plurals.song_list_dropped_rows, 1), bar(2)),
                 staleness = null,
             ),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 1))).toUiModel(today),
@@ -375,7 +377,7 @@ class NextJamPresenterTest {
         assertEquals(
             NextJamUiModel.Jam(
                 header,
-                SetlistUiModel.Songs(gapRows, "Faltan 2 temas: no se pudieron leer.", bar(2)),
+                SetlistUiModel.Songs(gapRows, UiText.plural(CoreR.plurals.song_list_dropped_rows, 2), bar(2)),
                 staleness = null,
             ),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 2))).toUiModel(today),
@@ -397,14 +399,20 @@ class NextJamPresenterTest {
         }.test {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(upcoming)
-            assertEquals("Mañana", (awaitItem() as NextJamUiModel.Jam).header.timeRemaining)
+            assertEquals(
+                UiText.res(R.string.next_jam_tomorrow),
+                (awaitItem() as NextJamUiModel.Jam).header.timeRemaining,
+            )
         }
 
         // 20:00 in Buenos Aires on the jam's own date.
         moleculeFlow(RecompositionMode.Immediate) {
             presenter(calendarAt("2026-10-31T23:00:00Z")).present(NextJamPresenter.Params())
         }.test {
-            assertEquals("Esta noche", (awaitAfterLoading() as NextJamUiModel.Jam).header.timeRemaining)
+            assertEquals(
+                UiText.res(R.string.next_jam_tonight),
+                (awaitAfterLoading() as NextJamUiModel.Jam).header.timeRemaining,
+            )
         }
     }
 
@@ -428,13 +436,13 @@ class NextJamPresenterTest {
                 "Sweet Little Angel",
                 "B",
                 listOf(
-                    open("GTR: LIBRE", "Guitarra: libre"),
-                    filled("Gtr: Tincho", "Guitarra: Tincho"),
-                    filled("Bajo: Nico", "Bajo: Nico"),
-                    open("BAT: LIBRE", "Batería: libre"),
-                    open("VOZ: LIBRE", "Voz: libre"),
-                    filled("Arm: Mono", "Armónica: Mono"),
-                    InstrumentChipUiModel("+ saxo: Juan", "Otros: saxo, Juan", InstrumentChipKind.EXTRA),
+                    openChip(Instrument.GUITAR),
+                    filledChip(Instrument.GUITAR, "Tincho"),
+                    filledChip(Instrument.BASS, "Nico"),
+                    openChip(Instrument.DRUMS),
+                    openChip(Instrument.VOCALS),
+                    filledChip(Instrument.HARMONICA, "Mono"),
+                    extraChip("saxo", "Juan"),
                 ),
             ),
             row("02", "Walking Thru the Park", "A", emptyList()),
@@ -478,7 +486,7 @@ class NextJamPresenterTest {
             assertEquals(loading, awaitItem())
             repository.snapshots.emit(snapshot(jam(Setlist.Available(seedSongs.take(3)))))
             val rows = awaitItem().songRows()
-            assertEquals("ver el detalle del tema", rows[1].openDetailLabel)
+            assertEquals(UiText.res(R.string.next_jam_open_detail), rows[1].openDetailLabel)
             rows[1].events(SongRowUiModel.Event.OpenDetail)
             assertEquals(listOf(Triple(LocalDate.of(2026, 10, 31), SongId("walking-thru-the-park"), 2)), opened)
             // Opening is navigation only: no refresh.

@@ -1,21 +1,23 @@
 package com.bbbjam.navigation
 
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.nav.TabBarUiModel
 import com.bbbjam.core.ui.nav.TabIcon
 import com.bbbjam.core.ui.nav.TabUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The bottom bar's tabs in bar order, each with its inner route, its approved label (Rioplatense
  * Spanish, D-12) and its icon (I1).
  */
-internal enum class AppTab(val route: String, val label: String, val icon: TabIcon) {
-    NEXT_JAM(AppRoutes.NEXT_JAM, "Próxima jam", TabIcon.SETLIST),
-    PAST_JAMS(AppRoutes.PAST_JAMS, "Jams", TabIcon.ARCHIVE),
-    INFO(AppRoutes.INFO, "Info", TabIcon.INFO),
+internal enum class AppTab(val route: String, val label: Int, val icon: TabIcon) {
+    NEXT_JAM(AppRoutes.NEXT_JAM, R.string.tab_next_jam, TabIcon.SETLIST),
+    PAST_JAMS(AppRoutes.PAST_JAMS, R.string.tab_jams, TabIcon.ARCHIVE),
+    INFO(AppRoutes.INFO, R.string.tab_info, TabIcon.INFO),
 
     /** Admin only (`assistant-admin-tab`); always last, so the musician tabs never move. */
-    ASSISTANT(AppRoutes.ASSISTANT, "Asistente", TabIcon.ASSISTANT),
+    ASSISTANT(AppRoutes.ASSISTANT, R.string.tab_assistant, TabIcon.ASSISTANT),
     ;
 
     companion object {
@@ -46,7 +48,7 @@ internal fun shouldLeaveAssistant(selected: AppTab?, admin: Boolean?): Boolean =
 internal fun tabBarModel(selected: AppTab?, admin: Boolean?, onSelect: (AppTab) -> Unit): TabBarUiModel = TabBarUiModel(
     visibleTabs(admin).map { tab ->
         TabUiModel(
-            label = tab.label,
+            label = UiText.res(tab.label),
             icon = tab.icon,
             selected = tab == selected,
             events = EventHandler { event ->

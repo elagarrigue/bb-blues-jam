@@ -18,7 +18,10 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
+import com.bbbjam.feature.nextjam.R
+import com.bbbjam.feature.nextjam.keyDescription
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -28,7 +31,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** `admin-set-key` Part B: the key picker. Copy written out from the approved table (V1). */
+/** `admin-set-key` Part B: the key picker. Texts written out as `UiText` with their resource ids (V1). */
 class SetKeyPresenterTest {
     private val jams = FakeJamsRepository()
     private val session = FakeAdminSession(isAdmin = true)
@@ -37,7 +40,10 @@ class SetKeyPresenterTest {
     private val crossroads = SongId("crossroads")
     private val fetched = Freshness(Instant.parse("2026-10-02T14:59:00Z"), lastFailure = null, isRefreshing = false)
     private val gone =
-        EmptyStateUiModel("Este tema ya no está en la lista", "Volvé a la próxima jam para ver la actual.")
+        EmptyStateUiModel(
+            UiText.res(R.string.set_key_gone_title),
+            UiText.res(R.string.set_key_gone_message),
+        )
 
     private fun snapshot(key: String = "A", status: JamStatus = JamStatus.DRAFT, date: LocalDate = jamDate) =
         JamsSnapshot(
@@ -65,12 +71,15 @@ class SetKeyPresenterTest {
             assertTrue(awaitItem() is SetKeyUiModel.Loading)
             jams.snapshots.emit(snapshot())
             val model = expectMostRecentItem() as SetKeyUiModel.Content
-            assertEquals("Cambiar tonalidad", model.title)
+            assertEquals(UiText.res(R.string.set_key_title), model.title)
             assertEquals("Crossroads", model.songTitle)
-            assertEquals("Tonalidad actual", model.currentLabel)
+            assertEquals(UiText.res(R.string.set_key_current), model.currentLabel)
             assertEquals("A", model.currentKey)
-            assertEquals("Tonalidad A", model.currentKeyDescription)
-            assertEquals(listOf("Mayores", "Menores"), model.sections.map { it.label })
+            assertEquals(keyDescription("A"), model.currentKeyDescription)
+            assertEquals(
+                listOf(UiText.res(R.string.set_key_majors), UiText.res(R.string.set_key_minors)),
+                model.sections.map { it.label },
+            )
             assertEquals(listOf(listOf(4, 4, 4), listOf(4, 4, 4)), model.sections.map { s -> s.rows.map { it.size } })
             assertEquals(
                 listOf("C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B") +
@@ -79,11 +88,11 @@ class SetKeyPresenterTest {
             )
             val current = model.cell("A")
             assertTrue(current.isCurrent)
-            assertEquals("actual", current.currentLabel)
+            assertEquals(UiText.res(R.string.set_key_current_cell), current.currentLabel)
             assertEquals(listOf("A"), model.cells().filter { it.isCurrent }.map { it.key })
             val bb = model.cell("Bb")
-            assertEquals("Tonalidad Bb", bb.description)
-            assertEquals("elegir esta tonalidad", bb.pickLabel)
+            assertEquals(keyDescription("Bb"), bb.description)
+            assertEquals(UiText.res(R.string.set_key_pick_label), bb.pickLabel)
             assertEquals(null, bb.currentLabel)
             cancelAndIgnoreRemainingEvents()
         }

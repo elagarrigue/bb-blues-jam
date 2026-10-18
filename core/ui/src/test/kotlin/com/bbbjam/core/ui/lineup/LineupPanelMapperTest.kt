@@ -6,28 +6,67 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.ui.strip.InstrumentChipKind
+import com.bbbjam.core.ui.text.text
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * The expanded panel's order and copy. Every string is written out from the approved copy table in
- * `docs/specs/song-row-expansion.md` (and the strip's approved descriptions), never read from
- * [LineupPanelCopy], so a copy change fails here.
+ * `docs/specs/song-row-expansion.md` (and the strip's approved descriptions), compared with the text
+ * the models resolve to in `strings.xml`, so a copy change fails here.
  */
 class LineupPanelMapperTest {
 
     private val hint = "Para tocar, anotate en la jam: la organización te suma a un tema."
     private val noOpen = "No quedan cupos libres."
 
+    /** A line as the user reads it; [hasAction] says whether it carries a handler. */
+    private data class Line(
+        val instrument: String,
+        val detail: String,
+        val contentDescription: String,
+        val kind: InstrumentChipKind,
+        val actionLabel: String? = null,
+        val hasAction: Boolean = false,
+        val actionDescription: String? = null,
+    )
+
+    /** The panel as the user reads it. */
+    private data class Panel(
+        val openSlots: List<Line>,
+        val filledSlots: List<Line>,
+        val extras: List<Line>,
+        val noOpenSlotsNote: String?,
+        val hint: String?,
+    )
+
+    private fun LineupLineUiModel.resolved() = Line(
+        instrument.text(),
+        detail.text(),
+        contentDescription.text(),
+        kind,
+        actionLabel?.text(),
+        action != null,
+        actionDescription?.text(),
+    )
+
+    private fun LineupPanelUiModel.resolved() = Panel(
+        openSlots.map { it.resolved() },
+        filledSlots.map { it.resolved() },
+        extras.map { it.resolved() },
+        noOpenSlotsNote?.text(),
+        hint?.text(),
+    )
+
     private fun open(instrument: String, description: String) =
-        LineupLineUiModel(instrument, "LIBRE", description, InstrumentChipKind.OPEN_SLOT)
+        Line(instrument, "LIBRE", description, InstrumentChipKind.OPEN_SLOT)
 
     private fun filled(instrument: String, name: String, description: String) =
-        LineupLineUiModel(instrument, name, description, InstrumentChipKind.FILLED_SLOT)
+        Line(instrument, name, description, InstrumentChipKind.FILLED_SLOT)
 
     private fun extra(instrument: String, name: String, description: String) =
-        LineupLineUiModel(instrument, name, description, InstrumentChipKind.EXTRA)
+        Line(instrument, name, description, InstrumentChipKind.EXTRA)
 
     @Test
     fun `open slots first, then filled, then extras, each in lineup order`() {
@@ -42,7 +81,7 @@ class LineupPanelMapperTest {
             ),
         )
         assertEquals(
-            LineupPanelUiModel(
+            Panel(
                 openSlots = listOf(
                     open("Guitarra", "Guitarra: libre"),
                     open("Batería", "Batería: libre"),
@@ -57,7 +96,7 @@ class LineupPanelMapperTest {
                 noOpenSlotsNote = null,
                 hint = hint,
             ),
-            lineup.toLineupPanel(listOf(ExtraParticipant("Juan", "saxo"))),
+            lineup.toLineupPanel(listOf(ExtraParticipant("Juan", "saxo"))).resolved(),
         )
     }
 
@@ -72,7 +111,7 @@ class LineupPanelMapperTest {
                 Slot(Instrument.VOCALS),
             ),
         )
-        val panel = lineup.toLineupPanel(emptyList())
+        val panel = lineup.toLineupPanel(emptyList()).resolved()
         assertEquals(
             listOf(open("Guitarra", "Guitarra: libre"), open("Bajo", "Bajo: libre"), open("Voz", "Voz: libre")),
             panel.openSlots,
@@ -90,7 +129,7 @@ class LineupPanelMapperTest {
             listOf(Slot(Instrument.GUITAR), Slot(Instrument.GUITAR), Slot(Instrument.BASS, "Tincho")),
         ).toLineupPanel(emptyList()) { instrument, position -> calls += instrument to position }
 
-        assertEquals("Anotar", panel.openSlots.first().actionLabel)
+        assertEquals("Anotar", panel.openSlots.first().actionLabel?.text())
         panel.openSlots.first().action?.invoke(LineupLineEvent.Activate)
         panel.openSlots.last().action?.invoke(LineupLineEvent.Activate)
         assertEquals(
@@ -110,8 +149,8 @@ class LineupPanelMapperTest {
                 Triple(instrument, position, name)
         })
 
-        assertEquals("Liberar", panel.filledSlots.single().actionLabel)
-        assertEquals("Guitarra: Ana. Liberar", panel.filledSlots.single().contentDescription)
+        assertEquals("Liberar", panel.filledSlots.single().actionLabel?.text())
+        assertEquals("Guitarra: Ana. Liberar", panel.filledSlots.single().contentDescription.text())
         panel.filledSlots.single().action?.invoke(LineupLineEvent.Activate)
         assertEquals(listOf(Triple(Instrument.GUITAR, SlotPosition(2), "Ana")), calls)
         assertEquals(
@@ -123,7 +162,7 @@ class LineupPanelMapperTest {
     @Test
     fun `an all-open lineup lists every slot as open with the hint and no note`() {
         assertEquals(
-            LineupPanelUiModel(
+            Panel(
                 openSlots = listOf(
                     open("Guitarra", "Guitarra: libre"),
                     open("Guitarra", "Guitarra: libre"),
@@ -138,7 +177,7 @@ class LineupPanelMapperTest {
                 noOpenSlotsNote = null,
                 hint = hint,
             ),
-            Lineup.default().toLineupPanel(emptyList()),
+            Lineup.default().toLineupPanel(emptyList()).resolved(),
         )
     }
 
@@ -146,7 +185,7 @@ class LineupPanelMapperTest {
     fun `an all-filled lineup shows the note instead of open slots, and no hint`() {
         val lineup = Lineup(listOf(Slot(Instrument.BASS, "Nico"), Slot(Instrument.KEYBOARDS, "Caro")))
         assertEquals(
-            LineupPanelUiModel(
+            Panel(
                 openSlots = emptyList(),
                 filledSlots = listOf(
                     filled("Bajo", "Nico", "Bajo: Nico"),
@@ -156,22 +195,22 @@ class LineupPanelMapperTest {
                 noOpenSlotsNote = noOpen,
                 hint = null,
             ),
-            lineup.toLineupPanel(emptyList()),
+            lineup.toLineupPanel(emptyList()).resolved(),
         )
     }
 
     @Test
     fun `an empty lineup with no extras is the note only`() {
         assertEquals(
-            LineupPanelUiModel(emptyList(), emptyList(), emptyList(), noOpenSlotsNote = noOpen, hint = null),
-            Lineup(emptyList()).toLineupPanel(emptyList()),
+            Panel(emptyList(), emptyList(), emptyList(), noOpenSlotsNote = noOpen, hint = null),
+            Lineup(emptyList()).toLineupPanel(emptyList()).resolved(),
         )
     }
 
     @Test
     fun `extras are never open nor filled slots, and never make room`() {
         val extras = listOf(ExtraParticipant("Juan", "saxo"), ExtraParticipant("Ana", "Trompeta"))
-        val panel = Lineup(listOf(Slot(Instrument.DRUMS, "Pato"))).toLineupPanel(extras)
+        val panel = Lineup(listOf(Slot(Instrument.DRUMS, "Pato"))).toLineupPanel(extras).resolved()
         assertTrue(panel.openSlots.isEmpty())
         assertEquals(listOf(filled("Batería", "Pato", "Batería: Pato")), panel.filledSlots)
         assertEquals(
@@ -185,7 +224,7 @@ class LineupPanelMapperTest {
     @Test
     fun `a long name is kept verbatim`() {
         val name = "Maximiliano Fernández de la Torre y Sotomayor"
-        val panel = Lineup(listOf(Slot(Instrument.KEYBOARDS, name))).toLineupPanel(emptyList())
+        val panel = Lineup(listOf(Slot(Instrument.KEYBOARDS, name))).toLineupPanel(emptyList()).resolved()
         assertEquals(listOf(filled("Teclados", name, "Teclados: $name")), panel.filledSlots)
     }
 
@@ -198,13 +237,18 @@ class LineupPanelMapperTest {
             onRemoveExtra = { ordinal, extra -> calls += ordinal to extra },
         )
 
-        assertEquals(listOf("Quitar", "Quitar"), panel.extras.map { it.actionLabel })
+        assertEquals(listOf("Quitar", "Quitar"), panel.extras.map { it.actionLabel?.text() })
         assertEquals(
             listOf("Quitar a Juan, saxo", "Quitar a Mora, trompeta"),
-            panel.extras.map { it.actionDescription },
+            panel.extras.map { it.actionDescription?.text() },
         )
         // The line itself still reads as the extra, as for a musician.
-        assertEquals(listOf("Otros: saxo, Juan", "Otros: trompeta, Mora"), panel.extras.map { it.contentDescription })
+        assertEquals(
+            listOf("Otros: saxo, Juan", "Otros: trompeta, Mora"),
+            panel.extras.map {
+                it.contentDescription.text()
+            },
+        )
         assertTrue(panel.extras[0].action != panel.extras[1].action)
 
         panel.extras[1].action?.invoke(LineupLineEvent.Activate)
@@ -215,6 +259,6 @@ class LineupPanelMapperTest {
     fun `without a remove handler extra lines carry no action`() {
         val panel = Lineup(listOf(Slot(Instrument.GUITAR, "Ana")))
             .toLineupPanel(listOf(ExtraParticipant("Juan", "saxo")))
-        assertEquals(listOf(extra("+ saxo", "Juan", "Otros: saxo, Juan")), panel.extras)
+        assertEquals(listOf(extra("+ saxo", "Juan", "Otros: saxo, Juan")), panel.resolved().extras)
     }
 }

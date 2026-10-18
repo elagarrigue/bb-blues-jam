@@ -1,0 +1,32 @@
+<resources>
+    <!-- Info -->
+    <string name="info_title">Bahía Blanca Blues</string>
+    <string name="info_tagline">Comunidad de amantes del blues</string>
+    <string name="info_organizer_title">Quién organiza</string>
+    <string name="info_organizer_body">La jam la organiza Bahía Blanca Blues, una comunidad de amantes del blues que también arma festivales, conciertos y programas de radio.</string>
+    <string name="info_jam_title">La jam</string>
+    <string name="info_jam_body">Una jam de blues en Bahía Blanca, una vez por mes. El lugar puede cambiar de una jam a otra: lo ves junto a la fecha de cada una.</string>
+    <string name="info_hideaway_title">Hideaway</string>
+    <string name="info_hideaway_body">Hideaway es el programa de radio de Bahía Blanca Blues. Sale los martes de 20 a 22.</string>
+    <string name="info_join_title">Cómo sumarte</string>
+    <string name="info_join_body">Si tocás, venite a la jam y anotate ahí: la organización te suma a un tema. No necesitás cuenta ni registrarte en la app.</string>
+    <string name="info_links_title">Redes</string>
+    <string name="info_instagram_label">Instagram</string>
+    <string name="info_instagram_open">Abrir Instagram</string>
+    <string name="info_youtube_label">YouTube</string>
+    <string name="info_youtube_open">Abrir YouTube</string>
+    <string name="info_linktree_label">Linktree</string>
+    <string name="info_linktree_open">Abrir Linktree</string>
+    <string name="info_link_error">No se pudo abrir el enlace.</string>
+
+    <!-- Admin login -->
+    <string name="admin_login_title">Entrar como admin</string>
+    <string name="admin_login_field_label">Frase de acceso</string>
+    <string name="admin_login_show">Mostrar</string>
+    <string name="admin_login_hide">Ocultar</string>
+    <string name="admin_login_submit">Entrar</string>
+    <string name="admin_login_verifying">Verificando…</string>
+    <string name="admin_login_wrong">La frase de acceso no es correcta.</string>
+    <string name="admin_login_offline">No hay conexión. Para entrar como admin necesitás internet.</string>
+    <string name="admin_login_unavailable">No se pudo verificar la frase de acceso. Probá de nuevo en un rato.</string>
+</resources>

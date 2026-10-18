@@ -22,12 +22,15 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.admin.AdminState
+import com.bbbjam.feature.nextjam.chipName
+import com.bbbjam.feature.nextjam.savingText
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.toUiModel
 import com.bbbjam.feature.nextjam.writes
@@ -46,7 +49,7 @@ import org.junit.Test
 
 /**
  * `admin-set-key` Part B on Próxima jam: "Cambiar tonalidad", the optimistic key (O1) and its revert.
- * The copy is written out from the approved table, never read from [NextJamCopy].
+ * The texts are `UiText` values written out with their resource ids.
  */
 class NextJamLineupChangeTest {
     private val repository = FakeJamsRepository()
@@ -95,23 +98,23 @@ class NextJamLineupChangeTest {
             setlist.lineupChanges.value = listOf(change(1, 0))
             val sending = awaitItem().row("Crossroads")
             assertEquals(original.instruments.size - 2, sending.instruments.size)
-            assertEquals("Guardando…", sending.admin?.saveStatus)
+            assertEquals(savingText, sending.admin?.saveStatus)
             val filtered = snapshot(
                 listOf(crossroads),
             ).toUiModel(today, filter = setOf(Instrument.GUITAR), admin = admin(setlist.lineupChanges.value))
             assertTrue(filtered.rows().isEmpty())
             val bar = ((filtered as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).filterBar
-            assertEquals("0", checkNotNull(bar).chips.single { it.label == "Guitarra" }.count)
+            assertEquals("0", checkNotNull(bar).chips.single { it.label.chipName() == "Guitarra" }.count)
             setlist.lineupChanges.value =
                 listOf(change(1, 0, LineupChange.State.Failed(WriteOutcome.Rejected("slot_filled"))))
             val failed = awaitItem()
             assertEquals(original.instruments, failed.row("Crossroads").instruments)
             assertNull(failed.row("Crossroads").admin?.saveStatus)
-            assertEquals("No se pudo cambiar la formación de «Crossroads»", failed.failures().single().title)
             assertEquals(
-                "Ese cupo tiene un músico anotado. Liberalo antes de sacarlo.",
-                failed.failures().single().message,
+                UiText.res(R.string.next_jam_lineup_failed, "Crossroads"),
+                failed.failures().single().title,
             )
+            assertEquals(UiText.res(R.string.next_jam_failure_slot_filled), failed.failures().single().message)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -130,7 +133,7 @@ class NextJamLineupChangeTest {
                 ),
             )
             assertEquals(
-                "Esta hoja todavía no tiene columnas para ese cupo. Agregalas en el Sheet y volvé a probar.",
+                UiText.res(R.string.next_jam_failure_not_expandable),
                 awaitItem().failures().single().message,
             )
             cancelAndIgnoreRemainingEvents()
@@ -170,7 +173,7 @@ class NextJamLineupChangeTest {
             setlist.lineupChanges.value = listOf(change(1, 1))
             setlist.keyChanges.value =
                 listOf(KeyChange(2, jamDate, crossroads.songId, crossroads.title, Key("C"), KeyChange.State.Sending))
-            assertEquals("Guardando…", expectMostRecentItem().row("Crossroads").admin?.saveStatus)
+            assertEquals(savingText, expectMostRecentItem().row("Crossroads").admin?.saveStatus)
             repository.snapshots.emit(
                 snapshot(
                     listOf(
@@ -181,7 +184,7 @@ class NextJamLineupChangeTest {
             setlist.lineupChanges.value = emptyList()
             val row = expectMostRecentItem().row("Crossroads")
             assertEquals(6, row.instruments.size)
-            assertEquals("Guardando…", row.admin?.saveStatus)
+            assertEquals(savingText, row.admin?.saveStatus)
             setlist.keyChanges.value = emptyList()
             assertNull(expectMostRecentItem().row("Crossroads").admin?.saveStatus)
             cancelAndIgnoreRemainingEvents()

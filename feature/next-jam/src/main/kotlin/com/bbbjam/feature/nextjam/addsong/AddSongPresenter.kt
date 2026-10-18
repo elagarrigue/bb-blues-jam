@@ -26,6 +26,8 @@ import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.R
 import java.text.Normalizer
 import java.time.LocalDate
 import java.util.Locale
@@ -80,10 +82,10 @@ internal class AddSongPresenter(
         }
         return AddSongUiModel(
             back = backUiModel { currentOnBack() },
-            title = AddSongCopy.TITLE,
+            title = UiText.res(R.string.add_song_title),
             search = SearchFieldUiModel(
                 query = query,
-                label = AddSongCopy.SEARCH_LABEL,
+                label = UiText.res(R.string.add_song_search_label),
                 events = EventHandler { event ->
                     when (event) {
                         is SearchFieldUiModel.Event.Changed -> query = event.query
@@ -125,7 +127,7 @@ internal fun addSongContent(
     val failure = freshness?.lastFailure
     val wanted = query.trim()
     return when {
-        catalog == null -> AddSongContentUiModel.Loading(AddSongCopy.LOADING)
+        catalog == null -> AddSongContentUiModel.Loading(UiText.res(R.string.add_song_loading))
 
         catalog.songs.isNotEmpty() -> {
             val needle = wanted.searchKey()
@@ -137,21 +139,26 @@ internal fun addSongContent(
                 .sortedWith(compareBy({ it.title.searchKey() }, { it.artist.searchKey() }, { it.id.value }))
                 .map { song -> song.toRow(isListed = song.id in listed, onPick = onPick) }
             if (rows.isEmpty()) {
-                AddSongContentUiModel.NoResults(
-                    AddSongCopy.noResults(wanted),
-                )
+                AddSongContentUiModel.NoResults(UiText.res(R.string.add_song_no_results, wanted))
             } else {
                 AddSongContentUiModel.Songs(rows)
             }
         }
 
         freshness?.fetchedAt != null ->
-            AddSongContentUiModel.Empty(EmptyStateUiModel(AddSongCopy.EMPTY_TITLE, AddSongCopy.EMPTY))
+            AddSongContentUiModel.Empty(
+                EmptyStateUiModel(
+                    UiText.res(R.string.add_song_empty_title),
+                    UiText.res(R.string.add_song_empty_message),
+                ),
+            )
 
         failure != null && freshness?.isRefreshing != true ->
-            AddSongContentUiModel.Failed(listError(AddSongCopy.LOAD_FAILED, failure is DataFailure.Offline, onRetry))
+            AddSongContentUiModel.Failed(
+                listError(UiText.res(R.string.add_song_load_failed), failure is DataFailure.Offline, onRetry),
+            )
 
-        else -> AddSongContentUiModel.Loading(AddSongCopy.LOADING)
+        else -> AddSongContentUiModel.Loading(UiText.res(R.string.add_song_loading))
     }
 }
 
@@ -162,8 +169,8 @@ private fun Song.toRow(isListed: Boolean, onPick: (Song) -> Unit) = CatalogRowUi
     key = defaultKey.value,
     keyDescription = SongListText.keyDescription(defaultKey.value),
     isListed = isListed,
-    listedLabel = if (isListed) AddSongCopy.ALREADY_LISTED else null,
-    pickLabel = AddSongCopy.PICK_LABEL,
+    listedLabel = if (isListed) UiText.res(R.string.add_song_already_listed) else null,
+    pickLabel = UiText.res(R.string.add_song_pick_label),
     events = EventHandler(key = id.value) { event ->
         when (event) {
             CatalogRowUiModel.Event.Pick -> if (!isListed) onPick(this)

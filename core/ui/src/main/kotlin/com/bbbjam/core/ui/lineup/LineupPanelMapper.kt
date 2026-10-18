@@ -5,8 +5,10 @@ import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SlotPosition
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.strip.InstrumentChipKind
-import com.bbbjam.core.ui.strip.InstrumentStripCopy
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.fullName
 
 /**
  * The panel of one song: the open slots in lineup order, then the filled slots in lineup order (a
@@ -22,7 +24,7 @@ fun Lineup.toLineupPanel(
     canAssign: (Instrument, SlotPosition) -> Boolean = { _, _ -> true },
     canClear: (Instrument, SlotPosition) -> Boolean = { _, _ -> true },
     isClearing: (Instrument, SlotPosition) -> Boolean = { _, _ -> false },
-    clearingLabel: String = "Quitando…",
+    clearingLabel: UiText = UiText.res(R.string.lineup_clearing),
     onRemoveExtra: ((ordinal: Int, ExtraParticipant) -> Unit)? = null,
     onClear: ((Instrument, SlotPosition, String) -> Unit)? = null,
     // Last, so a trailing lambda stays the assign handler.
@@ -65,29 +67,30 @@ fun Lineup.toLineupPanel(
 }
 
 /** The note drawn when no slot is open, or null. */
-internal fun noOpenSlotsNote(hasOpenSlot: Boolean): String? = if (hasOpenSlot) null else LineupPanelCopy.NO_OPEN_SLOTS
+internal fun noOpenSlotsNote(hasOpenSlot: Boolean): UiText? =
+    if (hasOpenSlot) null else UiText.res(R.string.lineup_no_open_slots)
 
 /** The hint drawn when at least one slot is open, or null. */
-internal fun openSlotsHint(hasOpenSlot: Boolean): String? = if (hasOpenSlot) LineupPanelCopy.HINT else null
+internal fun openSlotsHint(hasOpenSlot: Boolean): UiText? = if (hasOpenSlot) UiText.res(R.string.lineup_hint) else null
 
 internal fun Slot.toLine(
     onAssign: (() -> Unit)? = null,
     actionKey: String? = null,
     onClear: (() -> Unit)? = null,
-    pendingStatus: String? = null,
+    pendingStatus: UiText? = null,
 ): LineupLineUiModel {
     val name = musicianName
     return if (name == null) {
         LineupLineUiModel(
-            instrument = InstrumentStripCopy.name(instrument),
-            detail = pendingStatus ?: LineupPanelCopy.OPEN_DETAIL,
+            instrument = instrument.fullName(),
+            detail = pendingStatus ?: UiText.res(R.string.lineup_open_detail),
             contentDescription = if (pendingStatus == null) {
-                InstrumentStripCopy.openDescription(instrument)
+                UiText.res(R.string.strip_open_description, instrument.fullName())
             } else {
-                "${InstrumentStripCopy.name(instrument)}: $pendingStatus"
+                UiText.res(R.string.strip_filled_description, instrument.fullName(), pendingStatus)
             },
             kind = InstrumentChipKind.OPEN_SLOT,
-            actionLabel = if (onAssign == null) null else LineupPanelCopy.ASSIGN,
+            actionLabel = if (onAssign == null) null else UiText.res(R.string.lineup_assign),
             action = onAssign?.let { callback ->
                 com.bbbjam.core.ui.presenter.EventHandler(key = "assign:${actionKey ?: instrument.name}") { event ->
                     when (event) {
@@ -98,12 +101,15 @@ internal fun Slot.toLine(
         )
     } else {
         LineupLineUiModel(
-            instrument = InstrumentStripCopy.name(instrument),
-            detail = name,
-            contentDescription = InstrumentStripCopy.filledDescription(instrument, name) +
-                if (onClear == null) "" else ". ${LineupPanelCopy.CLEAR_SLOT}",
+            instrument = instrument.fullName(),
+            detail = UiText.raw(name),
+            contentDescription = if (onClear == null) {
+                UiText.res(R.string.strip_filled_description, instrument.fullName(), name)
+            } else {
+                UiText.res(R.string.lineup_filled_clearable_description, instrument.fullName(), name)
+            },
             kind = InstrumentChipKind.FILLED_SLOT,
-            actionLabel = if (onClear == null) null else LineupPanelCopy.CLEAR_SLOT,
+            actionLabel = if (onClear == null) null else UiText.res(R.string.lineup_clear_slot),
             action = onClear?.let { callback ->
                 com.bbbjam.core.ui.presenter.EventHandler(key = "clear:${actionKey ?: instrument.name}") { event ->
                     when (event) {
@@ -116,11 +122,11 @@ internal fun Slot.toLine(
 }
 
 internal fun ExtraParticipant.toLine(onRemove: (() -> Unit)? = null, ordinal: Int = 0) = LineupLineUiModel(
-    instrument = LineupPanelCopy.extraInstrument(instrument),
-    detail = name,
-    contentDescription = InstrumentStripCopy.extraDescription(instrument, name),
+    instrument = UiText.res(R.string.lineup_extra_instrument, instrument),
+    detail = UiText.raw(name),
+    contentDescription = UiText.res(R.string.strip_extra_description, instrument, name),
     kind = InstrumentChipKind.EXTRA,
-    actionLabel = onRemove?.let { LineupPanelCopy.REMOVE_EXTRA },
+    actionLabel = onRemove?.let { UiText.res(R.string.lineup_remove_extra) },
     action = onRemove?.let { callback ->
         com.bbbjam.core.ui.presenter.EventHandler(key = "remove-extra:$ordinal:$name:$instrument") { event ->
             when (event) {
@@ -128,5 +134,5 @@ internal fun ExtraParticipant.toLine(onRemove: (() -> Unit)? = null, ordinal: In
             }
         }
     },
-    actionDescription = onRemove?.let { LineupPanelCopy.removeExtraDescription(name, instrument) },
+    actionDescription = onRemove?.let { UiText.res(R.string.lineup_remove_extra_description, name, instrument) },
 )

@@ -1,5 +1,7 @@
 package com.bbbjam.core.ui.text
 
+import com.bbbjam.core.ui.R
+
 /**
  * The song-row text every setlist screen writes the same way (Próxima jam, Anteriores, the song
  * detail): the two-digit position, what a screen reader says for the key, and the note under a
@@ -12,9 +14,8 @@ object SongListText {
     fun positionLabel(position: Int): String = position.toString().padStart(POSITION_DIGITS, '0')
 
     /** What a screen reader says for the key: "Tonalidad Bm". */
-    fun keyDescription(key: String): String = "Tonalidad $key"
+    fun keyDescription(key: String): UiText = UiText.res(R.string.song_list_key_description, key)
 
     /** The note under a setlist that lost [count] invalid rows (next-jam P4); [count] is at least 1. */
-    fun droppedRows(count: Int): String =
-        if (count == 1) "Falta 1 tema: no se pudo leer." else "Faltan $count temas: no se pudieron leer."
+    fun droppedRows(count: Int): UiText = UiText.plural(R.plurals.song_list_dropped_rows, count)
 }

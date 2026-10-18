@@ -15,7 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -35,7 +38,7 @@ fun BackButton(model: BackUiModel, modifier: Modifier = Modifier) {
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = model.label,
+            contentDescription = model.label.resolve(),
             tint = BluesJamTheme.colors.text,
         )
     }
@@ -46,7 +49,7 @@ fun BackButton(model: BackUiModel, modifier: Modifier = Modifier) {
 private fun BackButtonPreview() {
     BluesJamTheme {
         Surface(color = BluesJamTheme.colors.background) {
-            BackButton(BackUiModel(NavCopy.BACK, EventHandler {}))
+            BackButton(BackUiModel(UiText.res(R.string.nav_back), EventHandler {}))
         }
     }
 }

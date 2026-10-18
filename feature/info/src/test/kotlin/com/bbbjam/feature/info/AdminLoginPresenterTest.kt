@@ -8,8 +8,10 @@ import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,23 +22,35 @@ import org.junit.Test
 class AdminLoginPresenterTest {
     private val session = FakeAdminSession()
 
-    // Written out from the approved copy table (A5), not from AdminLoginCopy, so a copy change fails here.
+    // Written out from the approved copy ids (A5), so a wrong id fails here.
     private fun expected(
         passphrase: String = "",
         masked: Boolean = true,
         verifying: Boolean = false,
-        error: String? = null,
+        error: UiText? = null,
     ) = AdminLoginUiModel(
-        title = "Entrar como admin",
-        fieldLabel = "Frase de acceso",
+        title = UiText.res(R.string.admin_login_title),
+        fieldLabel = UiText.res(R.string.admin_login_field_label),
         passphrase = passphrase,
         masked = masked,
-        visibilityToggleLabel = if (masked) "Mostrar" else "Ocultar",
-        submitLabel = if (verifying) "Verificando…" else "Entrar",
+        visibilityToggleLabel = if (masked) {
+            UiText.res(
+                R.string.admin_login_show,
+            )
+        } else {
+            UiText.res(R.string.admin_login_hide)
+        },
+        submitLabel = if (verifying) {
+            UiText.res(
+                R.string.admin_login_verifying,
+            )
+        } else {
+            UiText.res(R.string.admin_login_submit)
+        },
         submitEnabled = !verifying && passphrase.isNotBlank(),
         isVerifying = verifying,
         error = error,
-        back = BackUiModel("Volver", EventHandler {}),
+        back = BackUiModel(UiText.res(CoreR.string.nav_back), EventHandler {}),
         events = EventHandler {},
     )
 
@@ -76,7 +90,7 @@ class AdminLoginPresenterTest {
             assertEquals(expected(passphrase = WRONG, verifying = true), awaitItem())
 
             session.answer.complete(LoginOutcome.WrongPassphrase)
-            assertEquals(expected(passphrase = WRONG, error = "La frase de acceso no es correcta."), awaitItem())
+            assertEquals(expected(passphrase = WRONG, error = UiText.res(R.string.admin_login_wrong)), awaitItem())
 
             first.events(AdminLoginUiModel.Event.PassphraseChanged("$WRONG!"))
             assertEquals(expected(passphrase = "$WRONG!"), awaitItem())
@@ -96,7 +110,7 @@ class AdminLoginPresenterTest {
             awaitItem()
             session.answer.complete(LoginOutcome.Offline)
             assertEquals(
-                expected(passphrase = WRONG, error = "No hay conexión. Para entrar como admin necesitás internet."),
+                expected(passphrase = WRONG, error = UiText.res(R.string.admin_login_offline)),
                 awaitItem(),
             )
 
@@ -107,7 +121,7 @@ class AdminLoginPresenterTest {
             assertEquals(
                 expected(
                     passphrase = WRONG,
-                    error = "No se pudo verificar la frase de acceso. Probá de nuevo en un rato.",
+                    error = UiText.res(R.string.admin_login_unavailable),
                 ),
                 awaitItem(),
             )
@@ -127,7 +141,7 @@ class AdminLoginPresenterTest {
             first.events(AdminLoginUiModel.Event.Submit)
             val verifying = awaitItem()
             assertTrue(verifying.isVerifying)
-            assertEquals("Verificando…", verifying.submitLabel)
+            assertEquals(UiText.res(R.string.admin_login_verifying), verifying.submitLabel)
             assertFalse(verifying.submitEnabled)
 
             // Typing while the server is asked changes nothing.

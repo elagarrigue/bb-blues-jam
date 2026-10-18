@@ -10,6 +10,8 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.admin.AdminState
 import java.time.Instant
 import java.time.LocalDate
@@ -23,8 +25,8 @@ import org.junit.Test
 /**
  * `jam-status-created` (D-26), scenarios 1 to 4 on Próxima jam: a BORRADOR jam does not exist for a
  * musician, the next CREADA or PUBLICADA jam takes its place, a CREADA jam shows the date and the
- * "se está armando" card, and the admin sees all three states with their badge. The copy is written
- * out, never read from [NextJamCopy].
+ * "se está armando" card, and the admin sees all three states with their badge. The texts are `UiText`
+ * values written out with their resource ids.
  */
 class NextJamCreatedTest {
     private val today = LocalDate.of(2026, 10, 2)
@@ -66,13 +68,13 @@ class NextJamCreatedTest {
         val snapshot = snapshot(jam("2026-11-07", JamStatus.DRAFT), jam("2026-11-28", JamStatus.CREATED))
 
         val musician = snapshot.toUiModel(today).asJam()
-        assertEquals("Sábado 28 de noviembre · 21:00", musician.header.date)
+        assertEquals(dateTimeLabel(LocalDate.of(2026, 11, 28)), musician.header.date)
         assertTrue(musician.setlist is SetlistUiModel.Withheld)
         assertNull(musician.admin)
 
         val admin = snapshot.toUiModel(today, admin = adminState()).asJam()
-        assertEquals("Sábado 7 de noviembre · 21:00", admin.header.date)
-        assertEquals("Borrador", admin.admin?.status?.badge?.label)
+        assertEquals(dateTimeLabel(LocalDate.of(2026, 11, 7)), admin.header.date)
+        assertEquals(UiText.res(CoreR.string.jam_status_draft), admin.admin?.status?.badge?.label)
     }
 
     @Test
@@ -82,13 +84,7 @@ class NextJamCreatedTest {
         val model = created.toUiModel(today).asJam()
 
         assertEquals(
-            SetlistUiModel.Withheld(
-                DraftSetlistUiModel(
-                    "En preparación",
-                    "La lista se está armando",
-                    "Cuando la organización la publique, vas a ver acá los temas, las tonalidades y los cupos libres.",
-                ),
-            ),
+            SetlistUiModel.Withheld(draftCard),
             model.setlist,
         )
         assertFalse(model.toString().contains("Red House"))
@@ -97,20 +93,20 @@ class NextJamCreatedTest {
     @Test
     fun `scenario 4, the admin sees the songs and a badge with its note in each of the three states`() {
         val expected = mapOf(
-            JamStatus.DRAFT to Triple("Borrador", "Los músicos todavía no ven esta jam.", false),
-            JamStatus.CREATED to Triple("Creada", "Los músicos ven la fecha, pero todavía no la lista.", false),
-            JamStatus.PUBLISHED to Triple("Publicada", "Los músicos ya ven esta lista.", true),
+            JamStatus.DRAFT to Triple(CoreR.string.jam_status_draft, R.string.next_jam_note_draft, false),
+            JamStatus.CREATED to Triple(CoreR.string.jam_status_created, R.string.next_jam_note_created, false),
+            JamStatus.PUBLISHED to Triple(CoreR.string.jam_status_published, R.string.next_jam_note_published, true),
         )
         expected.forEach { (status, badgeNoteAndPublished) ->
             val model = snapshot(jam("2026-10-31", status)).toUiModel(today, admin = adminState()).asJam()
 
             val admin = checkNotNull(model.admin)
             assertEquals("$status", listOf("Red House"), (model.setlist as SetlistUiModel.Songs).rows.map { it.title })
-            assertEquals("$status", badgeNoteAndPublished.first, admin.status.badge.label)
-            assertEquals("$status", badgeNoteAndPublished.second, admin.status.note)
+            assertEquals("$status", UiText.res(badgeNoteAndPublished.first), admin.status.badge.label)
+            assertEquals("$status", UiText.res(badgeNoteAndPublished.second), admin.status.note)
             assertEquals("$status", badgeNoteAndPublished.third, admin.status.badge.isPublished)
             // Since `admin-jams-tab` the status is read-only here: the hint points to the Jams tab.
-            assertEquals("$status", "El estado y las fechas se manejan en la pestaña Jams.", admin.status.hint)
+            assertEquals("$status", UiText.res(R.string.next_jam_status_hint), admin.status.hint)
         }
     }
 

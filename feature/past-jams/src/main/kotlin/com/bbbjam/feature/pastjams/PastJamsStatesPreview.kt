@@ -14,6 +14,7 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.Duration
 import java.time.Instant
@@ -28,7 +29,7 @@ import java.time.LocalTime
 @Composable
 private fun StatePreview(snapshot: JamsSnapshot?) {
     val model = snapshot?.toUiModel(now = PREVIEW_NOW)
-        ?: PastJamsUiModel.Loading(PastJamsCopy.TITLE, PastJamsCopy.LOADING)
+        ?: PastJamsUiModel.Loading(UiText.res(R.string.past_jams_title), UiText.res(R.string.past_jams_loading))
     BluesJamTheme { PastJamsContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) }
 }
 

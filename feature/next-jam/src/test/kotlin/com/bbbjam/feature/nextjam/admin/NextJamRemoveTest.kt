@@ -21,13 +21,15 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.sources
@@ -45,8 +47,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * `admin-remove-song-from-setlist` Part B: the inline two-step removal on an expanded row. The copy
- * is written out from the approved table, never read from [NextJamCopy].
+ * `admin-remove-song-from-setlist` Part B: the inline two-step removal on an expanded row. The texts
+ * are `UiText` values written out with their resource ids.
  */
 class NextJamRemoveTest {
     private val repository = FakeJamsRepository()
@@ -96,7 +98,7 @@ class NextJamRemoveTest {
 
     /** An idle removal of [songId]; handlers compare by key, which names the jam, the song and the step. */
     private fun idleRemoval(songId: String) =
-        RemovalUiModel.Idle("Quitar de la lista", EventHandler(key = "$jamDate|$songId|idle") {})
+        RemovalUiModel.Idle(UiText.res(R.string.next_jam_remove), EventHandler(key = "$jamDate|$songId|idle") {})
 
     @Test
     fun `the admin's rows offer Quitar de la lista, a musician's rows have no admin part`() {
@@ -121,16 +123,20 @@ class NextJamRemoveTest {
             val title = model.rows().single { it.admin?.removal is RemovalUiModel.Confirming }.title
             id to (model.removal(title) as RemovalUiModel.Confirming).let { it.prompt to it.details }
         }
-        val published = "La lista está publicada: los músicos van a dejar de verlo."
-        assertEquals("¿Quitar «Crossroads» de la lista?" to listOf(published), details["crossroads"])
+        val published = UiText.res(R.string.next_jam_remove_published_note)
         assertEquals(
-            "¿Quitar «Hoochie Coochie Man» de la lista?" to listOf("Se borra también el músico anotado.", published),
+            UiText.res(R.string.next_jam_remove_prompt, "Crossroads") to listOf(published),
+            details["crossroads"],
+        )
+        assertEquals(
+            UiText.res(R.string.next_jam_remove_prompt, "Hoochie Coochie Man") to
+                listOf(UiText.plural(R.plurals.next_jam_remove_assigned, 1), published),
             details["hoochie"],
         )
         // Two filled slots plus one extra.
         assertEquals(
-            "¿Quitar «The Thrill Is Gone» de la lista?" to
-                listOf("Se borran también los 3 músicos anotados.", published),
+            UiText.res(R.string.next_jam_remove_prompt, "The Thrill Is Gone") to
+                listOf(UiText.plural(R.plurals.next_jam_remove_assigned, 3), published),
             details["thrill"],
         )
 
@@ -140,9 +146,9 @@ class NextJamRemoveTest {
             admin = AdminState(emptyList(), {}, {}, RemovalState(confirming = "$jamDate|crossroads")),
         )
         val confirming = draft.removal("Crossroads") as RemovalUiModel.Confirming
-        assertEquals(emptyList<String>(), confirming.details)
-        assertEquals("OK", confirming.confirmLabel)
-        assertEquals("Cancelar", confirming.cancelLabel)
+        assertEquals(emptyList<UiText>(), confirming.details)
+        assertEquals(UiText.res(R.string.next_jam_remove_ok), confirming.confirmLabel)
+        assertEquals(UiText.res(R.string.next_jam_cancel), confirming.cancelLabel)
     }
 
     @Test
@@ -199,7 +205,10 @@ class NextJamRemoveTest {
 
             setlist.removes.value = listOf(remove(5, "hoochie", "Hoochie Coochie Man", SetlistRemove.State.Sending))
             var model = awaitItem()
-            assertEquals(RemovalUiModel.Removing("Quitando…"), model.removal("Hoochie Coochie Man"))
+            assertEquals(
+                RemovalUiModel.Removing(UiText.res(R.string.next_jam_removing)),
+                model.removal("Hoochie Coochie Man"),
+            )
             assertTrue(model.removal("Crossroads") is RemovalUiModel.Idle)
 
             setlist.adds.value = listOf(
@@ -228,15 +237,16 @@ class NextJamRemoveTest {
             val failures = checkNotNull((model as NextJamUiModel.Jam).admin).failures
             assertEquals(
                 listOf(
-                    "No se pudo quitar «Hoochie Coochie Man»" to
-                        "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar.",
-                    "No se pudo agregar «Red House»" to "No hay conexión. Probá de nuevo cuando tengas internet.",
-                    "No se pudo quitar «Pride and Joy»" to
-                        "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo.",
+                    UiText.res(R.string.next_jam_remove_failed, "Hoochie Coochie Man") to
+                        UiText.res(CoreR.string.write_failure_access_refused),
+                    UiText.res(R.string.next_jam_add_failed, "Red House") to
+                        UiText.res(CoreR.string.write_failure_offline),
+                    UiText.res(R.string.next_jam_remove_failed, "Pride and Joy") to
+                        UiText.res(R.string.next_jam_failure_duplicate_song),
                 ),
                 failures.map { it.title to it.message },
             )
-            assertEquals(listOf("Cerrar", "Cerrar", "Cerrar"), failures.map { it.dismissLabel })
+            assertEquals(List(3) { UiText.res(R.string.next_jam_close) }, failures.map { it.dismissLabel })
 
             failures.first().events(AddFailureUiModel.Event.Dismiss)
             assertEquals(listOf(5L), setlist.dismissed)
@@ -266,9 +276,12 @@ class NextJamRemoveTest {
 
     @Test
     fun `the two removal codes have their approved messages`() {
-        assertEquals("Ese tema ya no estaba en la lista.", failureMessage(WriteOutcome.Rejected("song_not_in_setlist")))
         assertEquals(
-            "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo.",
+            UiText.res(R.string.next_jam_failure_not_in_setlist),
+            failureMessage(WriteOutcome.Rejected("song_not_in_setlist")),
+        )
+        assertEquals(
+            UiText.res(R.string.next_jam_failure_duplicate_song),
             failureMessage(WriteOutcome.Rejected("duplicate_song")),
         )
     }
@@ -288,10 +301,18 @@ class NextJamRemoveTest {
         )
         val admin = empty.toUiModel(today, admin = AdminState(emptyList(), {}, {})) as NextJamUiModel.Jam
         assertEquals(
-            SetlistUiModel.Empty(EmptyStateUiModel("Todavía no hay temas", "Agregá el primero desde el catálogo.")),
+            SetlistUiModel.Empty(
+                EmptyStateUiModel(
+                    UiText.res(R.string.next_jam_admin_empty_title),
+                    UiText.res(R.string.next_jam_admin_empty_message),
+                ),
+            ),
             admin.setlist,
         )
         val musician = empty.toUiModel(today) as NextJamUiModel.Jam
-        assertEquals("Todavía no hay temas", (musician.setlist as SetlistUiModel.Empty).empty.title)
+        assertEquals(
+            UiText.res(R.string.next_jam_empty_title),
+            (musician.setlist as SetlistUiModel.Empty).empty.title,
+        )
     }
 }

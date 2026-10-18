@@ -20,6 +20,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.assistant.apply.ApplyConfirmationDialog
 import com.bbbjam.feature.assistant.apply.ApplyDefaults
@@ -39,21 +40,21 @@ internal fun JamCard(card: JamCardUiModel) {
             verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
         ) {
             Text(
-                text = card.heading.uppercase(),
+                text = card.heading.resolve().uppercase(),
                 style = typography.caption,
                 color = style.heading,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(text = card.date, style = typography.songTitle, color = style.date)
-            Text(text = card.detail, style = typography.body, color = style.detail)
-            card.note?.let { Text(text = it, style = typography.body, color = style.note) }
+            Text(text = card.date.resolve(), style = typography.songTitle, color = style.date)
+            Text(text = card.detail.resolve(), style = typography.body, color = style.detail)
+            card.note?.let { Text(text = it.resolve(), style = typography.body, color = style.note) }
             card.action?.let { action ->
                 JamButton(action)
                 action.confirmation?.let { ApplyConfirmationDialog(it) }
             }
             card.result?.let { result ->
                 Text(
-                    text = result.text,
+                    text = result.text.resolve(),
                     style = typography.body,
                     color = ApplyDefaults.summary(result.tone),
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -79,6 +80,6 @@ private fun JamButton(model: JamActionUiModel) {
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = model.label, style = BluesJamTheme.typography.body, color = style.content)
+        Text(text = model.label.resolve(), style = BluesJamTheme.typography.body, color = style.content)
     }
 }

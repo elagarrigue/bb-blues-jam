@@ -9,6 +9,7 @@ import app.cash.turbine.test
 import com.bbbjam.core.data.testing.FakeAdminSession
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -35,37 +36,36 @@ class InfoPresenterTest {
     private fun flow(opener: ExternalLinkOpener, params: InfoPresenter.Params = InfoPresenter.Params()) =
         moleculeFlow(RecompositionMode.Immediate) { presenter(opener).present(params) }
 
-    // Written out from the approved copy table (docs/specs/info-screen.md), not from InfoCopy,
-    // so a copy change fails here.
-    private fun expected(linkError: String? = null) = InfoUiModel(
-        title = "Bahía Blanca Blues",
-        tagline = "Comunidad de amantes del blues",
+    // Written out from the approved copy ids (docs/specs/info-screen.md), so a wrong id fails here.
+    private fun expected(linkError: UiText? = null) = InfoUiModel(
+        title = UiText.res(R.string.info_title),
+        tagline = UiText.res(R.string.info_tagline),
         sections = listOf(
-            InfoSectionUiModel(
-                "Quién organiza",
-                "La jam la organiza Bahía Blanca Blues, una comunidad de amantes del blues que también arma " +
-                    "festivales, conciertos y programas de radio.",
-            ),
-            InfoSectionUiModel(
-                "La jam",
-                "Una jam de blues en Bahía Blanca, una vez por mes. El lugar puede cambiar de una jam a otra: " +
-                    "lo ves junto a la fecha de cada una.",
-            ),
-            InfoSectionUiModel(
-                "Hideaway",
-                "Hideaway es el programa de radio de Bahía Blanca Blues. Sale los martes de 20 a 22.",
-            ),
-            InfoSectionUiModel(
-                "Cómo sumarte",
-                "Si tocás, venite a la jam y anotate ahí: la organización te suma a un tema. " +
-                    "No necesitás cuenta ni registrarte en la app.",
-            ),
+            InfoSectionUiModel(UiText.res(R.string.info_organizer_title), UiText.res(R.string.info_organizer_body)),
+            InfoSectionUiModel(UiText.res(R.string.info_jam_title), UiText.res(R.string.info_jam_body)),
+            InfoSectionUiModel(UiText.res(R.string.info_hideaway_title), UiText.res(R.string.info_hideaway_body)),
+            InfoSectionUiModel(UiText.res(R.string.info_join_title), UiText.res(R.string.info_join_body)),
         ),
-        linksTitle = "Redes",
+        linksTitle = UiText.res(R.string.info_links_title),
         links = listOf(
-            InfoLinkUiModel(SocialLink.INSTAGRAM, "Instagram", "@bahiablancablues", "Abrir Instagram"),
-            InfoLinkUiModel(SocialLink.YOUTUBE, "YouTube", "youtube.com", "Abrir YouTube"),
-            InfoLinkUiModel(SocialLink.LINKTREE, "Linktree", "linktr.ee/bahiablancablues", "Abrir Linktree"),
+            InfoLinkUiModel(
+                SocialLink.INSTAGRAM,
+                UiText.res(R.string.info_instagram_label),
+                "@bahiablancablues",
+                UiText.res(R.string.info_instagram_open),
+            ),
+            InfoLinkUiModel(
+                SocialLink.YOUTUBE,
+                UiText.res(R.string.info_youtube_label),
+                "youtube.com",
+                UiText.res(R.string.info_youtube_open),
+            ),
+            InfoLinkUiModel(
+                SocialLink.LINKTREE,
+                UiText.res(R.string.info_linktree_label),
+                "linktr.ee/bahiablancablues",
+                UiText.res(R.string.info_linktree_open),
+            ),
         ),
         linkError = linkError,
         events = EventHandler {},
@@ -104,7 +104,7 @@ class InfoPresenterTest {
             assertEquals(null, first.linkError)
 
             first.events(InfoUiModel.Event.OpenLink(SocialLink.YOUTUBE))
-            assertEquals(expected(linkError = "No se pudo abrir el enlace."), awaitItem())
+            assertEquals(expected(linkError = UiText.res(R.string.info_link_error)), awaitItem())
 
             first.events(InfoUiModel.Event.DismissLinkError)
             assertEquals(expected(linkError = null), awaitItem())

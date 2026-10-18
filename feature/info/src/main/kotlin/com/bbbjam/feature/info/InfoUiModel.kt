@@ -3,16 +3,17 @@ package com.bbbjam.feature.info
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /** Everything the Info screen draws, as plain values: the copy, the links, the link error. */
 internal data class InfoUiModel(
-    val title: String,
-    val tagline: String,
+    val title: UiText,
+    val tagline: UiText,
     val sections: List<InfoSectionUiModel>,
-    val linksTitle: String,
+    val linksTitle: UiText,
     val links: List<InfoLinkUiModel>,
     /** Shown when a link could not be opened; null otherwise. */
-    val linkError: String?,
+    val linkError: UiText?,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
@@ -28,12 +29,13 @@ internal data class InfoUiModel(
     }
 }
 
-internal data class InfoSectionUiModel(val title: String, val body: String) : UiModel
+internal data class InfoSectionUiModel(val title: UiText, val body: UiText) : UiModel
 
 /** [openLabel] is the accessibility action label for the row ("Abrir Instagram"). */
 internal data class InfoLinkUiModel(
     val link: SocialLink,
-    val label: String,
+    val label: UiText,
+    /** A handle or address, not copy. */
     val destination: String,
-    val openLabel: String,
+    val openLabel: UiText,
 ) : UiModel

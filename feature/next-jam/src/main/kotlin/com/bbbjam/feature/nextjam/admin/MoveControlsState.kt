@@ -13,9 +13,10 @@ import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.MoveActionUiModel
 import com.bbbjam.feature.nextjam.MoveUiModel
-import com.bbbjam.feature.nextjam.NextJamCopy
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SongRowUiModel
 import com.bbbjam.feature.nextjam.overlay.displayOrder
@@ -59,7 +60,7 @@ internal fun rememberMoveControls(setlist: SetlistMoveRepository, snapshot: Jams
     return MoveControlsState(moves, onMove)
 }
 
-internal fun RowAdmin.moveAction(songId: SongId, enabled: Boolean, label: String, clickLabel: String, direction: Int) =
+internal fun RowAdmin.moveAction(songId: SongId, enabled: Boolean, label: UiText, clickLabel: UiText, direction: Int) =
     MoveActionUiModel(
         label = label,
         clickLabel = clickLabel,
@@ -82,7 +83,19 @@ internal fun RowAdmin.moveModel(
     null
 } else {
     MoveUiModel(
-        up = moveAction(song.songId, row.position > 1, NextJamCopy.MOVE_UP, "subir un lugar", -1),
-        down = moveAction(song.songId, row.position < total, NextJamCopy.MOVE_DOWN, "bajar un lugar", 1),
+        up = moveAction(
+            song.songId,
+            row.position > 1,
+            UiText.res(R.string.next_jam_move_up),
+            UiText.res(R.string.next_jam_move_up_description),
+            -1,
+        ),
+        down = moveAction(
+            song.songId,
+            row.position < total,
+            UiText.res(R.string.next_jam_move_down),
+            UiText.res(R.string.next_jam_move_down_description),
+            1,
+        ),
     )
 }

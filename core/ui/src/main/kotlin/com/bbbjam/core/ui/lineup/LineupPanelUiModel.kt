@@ -4,6 +4,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.strip.InstrumentChipKind
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The lineup of one song, as the song detail shows it (DESIGN.md "Song detail"): open slots
@@ -16,8 +17,8 @@ data class LineupPanelUiModel(
     val openSlots: List<LineupLineUiModel>,
     val filledSlots: List<LineupLineUiModel>,
     val extras: List<LineupLineUiModel>,
-    val noOpenSlotsNote: String?,
-    val hint: String?,
+    val noOpenSlotsNote: UiText?,
+    val hint: UiText?,
 ) : UiModel
 
 /**
@@ -26,18 +27,18 @@ data class LineupPanelUiModel(
  * ([contentDescription], the strip's own descriptions). [kind] reuses the strip's three kinds.
  */
 data class LineupLineUiModel(
-    val instrument: String,
-    val detail: String,
-    val contentDescription: String,
+    val instrument: UiText,
+    val detail: UiText,
+    val contentDescription: UiText,
     val kind: InstrumentChipKind,
     /**
      * Present only on the admin's lines of the song detail: "Anotar" on an open slot, "Liberar" on
      * a filled one, "Quitar" on an extra.
      */
-    val actionLabel: String? = null,
+    val actionLabel: UiText? = null,
     val action: EventHandler<LineupLineEvent>? = null,
     /** What a screen reader says for the action button when its label alone is ambiguous, or null. */
-    val actionDescription: String? = null,
+    val actionDescription: UiText? = null,
 ) : UiModel
 
 sealed interface LineupLineEvent : UiEvent {

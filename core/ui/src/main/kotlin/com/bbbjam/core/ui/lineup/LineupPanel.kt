@@ -14,6 +14,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -22,7 +23,10 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.strip.InstrumentChipKind
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -43,17 +47,22 @@ fun LineupPanel(
     val hasCaption = model.hint != null || model.noOpenSlotsNote != null
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
         if (hasOpenSection) {
-            Section(LineupPanelCopy.OPEN_HEADING, model.openSlots, separated = false)
+            Section(stringResource(R.string.lineup_open_heading), model.openSlots, separated = false)
             openSlotsFooter?.invoke()
         }
         model.hint?.let { Caption(it) }
         model.noOpenSlotsNote?.let { Caption(it) }
         if (model.filledSlots.isNotEmpty()) {
-            Section(LineupPanelCopy.FILLED_HEADING, model.filledSlots, separated = hasOpenSection || hasCaption)
+            Section(
+                stringResource(R.string.lineup_filled_heading),
+                model.filledSlots,
+                separated =
+                    hasOpenSection || hasCaption,
+            )
         }
         if (model.extras.isNotEmpty()) {
             Section(
-                LineupPanelCopy.EXTRAS_HEADING,
+                stringResource(R.string.lineup_extras_heading),
                 model.extras,
                 separated = hasOpenSection || hasCaption || model.filledSlots.isNotEmpty(),
             )
@@ -76,7 +85,7 @@ fun LineupPanelActionRow(instrument: String, actionLabel: String, actionDescript
         horizontalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         Text(
-            text = "+ $instrument",
+            text = stringResource(R.string.lineup_extra_instrument, instrument),
             style = BluesJamTheme.typography.body,
             color = style.textColor,
             modifier = Modifier.weight(1f),
@@ -110,8 +119,8 @@ private fun Section(heading: String, lines: List<LineupLineUiModel>, separated: 
 }
 
 @Composable
-private fun Caption(text: String) {
-    Text(text = text, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
+private fun Caption(text: UiText) {
+    Text(text = text.resolve(), style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
 }
 
 @Composable

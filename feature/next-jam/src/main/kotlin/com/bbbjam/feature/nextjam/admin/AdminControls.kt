@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -36,14 +37,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.bbbjam.core.ui.action.IconRowAction
 import com.bbbjam.core.ui.action.IconRowActionIcon
-import com.bbbjam.core.ui.strip.fullName
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.AddSongActionUiModel
 import com.bbbjam.feature.nextjam.MoveActionUiModel
 import com.bbbjam.feature.nextjam.NextJamAdminUiModel
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.PendingRowUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SongRowAdminUiModel
 
@@ -83,7 +85,7 @@ internal fun PendingRow(model: PendingRowUiModel) {
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            Text(text = model.status, style = BluesJamTheme.typography.body, color = style.content)
+            Text(text = model.status.resolve(), style = BluesJamTheme.typography.body, color = style.content)
         }
     }
 }
@@ -104,8 +106,8 @@ internal fun AddFailureCard(model: AddFailureUiModel) {
                 modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
                 verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
-                Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title)
-                Text(text = model.message, style = BluesJamTheme.typography.body, color = style.message)
+                Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title)
+                Text(text = model.message.resolve(), style = BluesJamTheme.typography.body, color = style.message)
             }
             Box(
                 modifier = Modifier
@@ -115,7 +117,7 @@ internal fun AddFailureCard(model: AddFailureUiModel) {
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
-                    text = model.dismissLabel,
+                    text = model.dismissLabel.resolve(),
                     style = BluesJamTheme.typography.body,
                     color = style.action,
                     textDecoration = TextDecoration.Underline,
@@ -140,7 +142,7 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = model.label, style = BluesJamTheme.typography.body, color = style.content)
+        Text(text = model.label.resolve(), style = BluesJamTheme.typography.body, color = style.content)
     }
 }
 
@@ -177,7 +179,7 @@ internal fun AdminRowBar(
         Box(modifier = Modifier.weight(1f))
         IconRowAction(
             icon = IconRowActionIcon.Delete,
-            contentDescription = NextJamCopy.REMOVE,
+            contentDescription = stringResource(R.string.next_jam_remove),
             tint = AdminControlsDefaults.removal().action,
             mutedTint = AdminControlsDefaults.move().disabled,
         ) {
@@ -194,9 +196,9 @@ internal fun AdminRowBar(
  * when it appears. Drawn inside the row header and under the song detail's title.
  */
 @Composable
-internal fun SaveStatusLine(status: String) {
+internal fun SaveStatusLine(status: UiText) {
     Text(
-        text = status,
+        text = status.resolve(),
         style = BluesJamTheme.typography.caption,
         color = AdminControlsDefaults.keyChange().status,
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -221,7 +223,7 @@ private fun RemovalControl(model: RemovalUiModel.Removing) {
             .padding(start = spacing.md, end = spacing.md, bottom = spacing.xs),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Text(text = model.status, style = BluesJamTheme.typography.body, color = style.status)
+        Text(text = model.status.resolve(), style = BluesJamTheme.typography.body, color = style.status)
     }
 }
 
@@ -241,26 +243,26 @@ private fun RemovalConfirmationDialog(model: RemovalUiModel.Confirming) {
     AlertDialog(
         onDismissRequest = { model.events(RemovalUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.title) },
+        title = { Text(text = model.prompt.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
         text = if (model.details.isEmpty()) {
             null
         } else {
             {
                 Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
                     model.details.forEach { line ->
-                        Text(text = line, style = BluesJamTheme.typography.caption, color = style.details)
+                        Text(text = line.resolve(), style = BluesJamTheme.typography.caption, color = style.details)
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = { model.events(RemovalUiModel.Event.Confirm) }) {
-                Text(text = model.confirmLabel, color = style.confirm)
+                Text(text = model.confirmLabel.resolve(), color = style.confirm)
             }
         },
         dismissButton = {
             TextButton(onClick = { model.events(RemovalUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
+                Text(text = model.cancelLabel.resolve(), color = style.cancel)
             }
         },
     )
@@ -335,8 +337,8 @@ internal fun AdminControlsDefaults.FieldStyle.textFieldColors(): TextFieldColors
 
 /** The admin's line on Próxima jam with no upcoming jam (J1): how to create one in the Sheet. */
 @Composable
-internal fun AdminHint(text: String) {
-    Text(text = text, style = BluesJamTheme.typography.caption, color = AdminControlsDefaults.draft().note)
+internal fun AdminHint(text: UiText) {
+    Text(text = text.resolve(), style = BluesJamTheme.typography.caption, color = AdminControlsDefaults.draft().note)
 }
 
 /** The admin's items after the list: pending adds, failure cards, then "Agregar tema". */

@@ -9,7 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -36,7 +38,11 @@ fun AdminBanner(modifier: Modifier = Modifier) {
             .background(defaults.fill()),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = AdminBannerCopy.LABEL, style = BluesJamTheme.typography.body, color = defaults.content())
+        Text(
+            text = stringResource(R.string.admin_banner_label),
+            style = BluesJamTheme.typography.body,
+            color = defaults.content(),
+        )
     }
 }
 

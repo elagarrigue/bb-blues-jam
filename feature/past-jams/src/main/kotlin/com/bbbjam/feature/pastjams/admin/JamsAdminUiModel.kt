@@ -1,6 +1,7 @@
 package com.bbbjam.feature.pastjams.admin
 
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.pastjams.create.NewJamUiModel
 import com.bbbjam.feature.pastjams.edit.DeleteJamUiModel
 import com.bbbjam.feature.pastjams.edit.EditJamFormUiModel
@@ -15,9 +16,9 @@ import java.time.LocalDate
  * (D-26), above the past jams. [noFuture] is the line shown when there is no future jam.
  */
 internal data class JamsAdminUiModel(
-    val upcomingHeading: String,
-    val pastHeading: String,
-    val noFuture: String?,
+    val upcomingHeading: UiText,
+    val pastHeading: UiText,
+    val noFuture: UiText?,
     val future: List<FutureJamUiModel>,
     val newJam: NewJamUiModel,
     val editForm: EditJamFormUiModel?,
@@ -32,12 +33,12 @@ internal data class JamsAdminUiModel(
  */
 internal data class FutureJamUiModel(
     val date: LocalDate,
-    val dateLabel: String,
+    val dateLabel: UiText,
     val venue: String,
-    val note: String,
-    val songCount: String?,
-    val heldBack: String?,
-    val musicianNote: String?,
+    val note: UiText,
+    val songCount: UiText?,
+    val heldBack: UiText?,
+    val musicianNote: UiText?,
     val controls: JamControlsUiModel,
     val manage: JamManageUiModel,
 ) : UiModel

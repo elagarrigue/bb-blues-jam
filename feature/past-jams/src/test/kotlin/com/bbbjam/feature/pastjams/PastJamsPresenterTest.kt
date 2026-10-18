@@ -20,10 +20,13 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.pastjams.admin.JamsAdminWrites
 import java.time.Clock
 import java.time.Instant
@@ -36,9 +39,9 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * The presenter with Molecule and Turbine on the JVM. Every user-facing string expected here is
- * written out from the approved copy table in `docs/specs/past-jams-list.md` (C1), never read from
- * [PastJamsCopy].
+ * The presenter with Molecule and Turbine on the JVM. Every user-facing text expected here is the
+ * `UiText` (resource id and arguments) the approved copy table in `docs/specs/past-jams-list.md` (C1)
+ * maps to.
  */
 class PastJamsPresenterTest {
     private val repository = FakeJamsRepository()
@@ -47,17 +50,17 @@ class PastJamsPresenterTest {
     private val calendar =
         JamCalendar(Clock.fixed(Instant.parse("2026-10-05T15:00:00Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
 
-    private val title = "Jams anteriores"
-    private val loading = PastJamsUiModel.Loading(title, "Cargando las jams anteriores")
+    private val title = UiText.res(R.string.past_jams_title)
+    private val loading = PastJamsUiModel.Loading(title, UiText.res(R.string.past_jams_loading))
     private val fetched = Freshness(Instant.parse("2026-10-05T14:59:00Z"), lastFailure = null, isRefreshing = false)
     private val offline = Freshness(fetchedAt = null, lastFailure = DataFailure.Offline, isRefreshing = false)
 
     private val offlineError = PastJamsUiModel.Failed(
         title,
         ListErrorUiModel(
-            "No pudimos cargar las jams anteriores",
-            "No hay conexión y todavía no hay nada guardado. Revisá los datos o el wifi y probá de nuevo.",
-            "Reintentar",
+            UiText.res(R.string.past_jams_load_failed),
+            UiText.res(CoreR.string.list_state_error_offline),
+            UiText.res(CoreR.string.list_state_retry),
             EventHandler {},
         ),
     )
@@ -65,8 +68,8 @@ class PastJamsPresenterTest {
     private val empty = PastJamsUiModel.Empty(
         title,
         EmptyStateUiModel(
-            "Todavía no hay jams anteriores",
-            "Después de cada jam, su lista queda guardada acá para que veas qué se tocó.",
+            UiText.res(R.string.past_jams_empty_title),
+            UiText.res(R.string.past_jams_empty_message),
         ),
         staleness = null,
     )
@@ -82,18 +85,25 @@ class PastJamsPresenterTest {
         Setlist.Available(listOf(song(1, "Sweet Home Chicago"))),
     )
 
-    private fun row(date: LocalDate, label: String, venue: String = "La Macanuda") = PastJamRowUiModel(
+    private fun row(date: LocalDate, label: UiText, venue: String = "La Macanuda") = PastJamRowUiModel(
         date,
         label,
         venue,
-        PastJamSummary.Songs("1 tema", "Sweet Home Chicago"),
-        openLabel = "ver la lista de temas",
+        PastJamSummary.Songs(
+            UiText.plural(R.plurals.past_jams_song_count, 1),
+            UiText.raw("Sweet Home Chicago"),
+        ),
+        openLabel = UiText.res(R.string.past_jams_open_jam),
         events = EventHandler {},
     )
 
-    private val julyRow = row(LocalDate.of(2026, 7, 25), "Sábado 25 de julio de 2026")
-    private val juneRow = row(LocalDate.of(2026, 6, 27), "Sábado 27 de junio de 2026")
-    private val mayRow = row(LocalDate.of(2026, 5, 30), "Sábado 30 de mayo de 2026")
+    /** "Sábado 25 de julio de 2026": the shared date label and the year. */
+    private fun dateLabel(date: LocalDate) =
+        UiText.res(R.string.past_jams_date_with_year, SpanishDateNames.label(date), date.year)
+
+    private val julyRow = row(LocalDate.of(2026, 7, 25), dateLabel(LocalDate.of(2026, 7, 25)))
+    private val juneRow = row(LocalDate.of(2026, 6, 27), dateLabel(LocalDate.of(2026, 6, 27)))
+    private val mayRow = row(LocalDate.of(2026, 5, 30), dateLabel(LocalDate.of(2026, 5, 30)))
 
     private fun snapshot(past: List<Jam>, freshness: Freshness = fetched, upcoming: Jam? = null) =
         JamsSnapshot(upcoming, past, freshness)
@@ -184,9 +194,12 @@ class PastJamsPresenterTest {
             val stale = awaitItem() as PastJamsUiModel.Jams
             assertEquals(
                 StalenessNoticeUiModel(
-                    "Sin conexión",
-                    "Mostrando lo guardado hace 2 horas.",
-                    "Reintentar",
+                    UiText.res(CoreR.string.list_state_notice_offline),
+                    UiText.res(
+                        CoreR.string.list_state_showing_saved,
+                        UiText.plural(CoreR.plurals.list_state_age_hours, 2),
+                    ),
+                    UiText.res(CoreR.string.list_state_retry),
                     EventHandler {
                     },
                 ),

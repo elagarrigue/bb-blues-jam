@@ -1,0 +1,206 @@
+<resources>
+    <!-- Chat: intro and not configured -->
+    <string name="assistant_intro_title">Pedí una lista</string>
+    <string name="assistant_intro_message">Contale al asistente qué jam querés armar: cuántos temas, qué estilo, cómo arrancar y cómo cerrar. Solo propone temas del catálogo.</string>
+    <string name="assistant_not_configured_title">El asistente no está configurado</string>
+    <string name="assistant_not_configured_message">Esta versión de la app no tiene la clave del servicio, así que no se pueden pedir listas.</string>
+
+    <!-- Chat: authors, pending, composer -->
+    <string name="assistant_author_you">Vos</string>
+    <string name="assistant_pending_label">El asistente está armando la propuesta. Puede tardar unos segundos.</string>
+    <string name="assistant_cancel">Cancelar</string>
+    <string name="assistant_composer_label">Tu pedido</string>
+    <string name="assistant_composer_placeholder">Ej.: 12 temas de blues nacional, con inicio y final arriba</string>
+    <string name="assistant_send">Enviar</string>
+    <string name="assistant_send_waiting">Esperando respuesta…</string>
+    <string name="assistant_questions_heading">PREGUNTAS</string>
+    <string name="assistant_retry">Reintentar</string>
+
+    <!-- Chat: service status and failures -->
+    <string name="assistant_offline">No hay conexión. Para usar el asistente necesitás internet.</string>
+    <string name="assistant_unauthorized">El servicio rechazó la clave del asistente.</string>
+    <string name="assistant_unavailable">El servicio del asistente no respondió. Probá de nuevo en un rato.</string>
+    <string name="assistant_invalid_response">No se pudo leer la respuesta del asistente. Probá de nuevo.</string>
+    <string name="assistant_too_many_steps">El asistente no llegó a una propuesta. Probá con un pedido más concreto.</string>
+    <string name="assistant_catalog_empty">El catálogo todavía no se cargó. Abrí la app con conexión y volvé a probar.</string>
+    <string name="assistant_interrupted">No se pudo terminar este pedido. Probá de nuevo.</string>
+    <string name="assistant_checking">Comprobando el servicio…</string>
+    <string name="assistant_service_down">El asistente no está disponible en este momento. El servicio de IA no responde; probá más tarde.</string>
+    <string name="assistant_incomplete_retry">La respuesta se cortó antes de terminar. Probá de nuevo.</string>
+    <string name="assistant_incomplete">La respuesta se cortó antes de terminar. Esto es lo que llegó; no está completa.</string>
+    <string name="assistant_not_complete_suffix">%1$s Lo que llegó no está completo.</string>
+    <string name="assistant_cancelled">Cancelaste este pedido.</string>
+
+    <!-- Chat: proposal headings -->
+    <plurals name="assistant_proposal_heading">
+        <item quantity="one">PROPUESTA · %1$d tema</item>
+        <item quantity="other">PROPUESTA · %1$d temas</item>
+    </plurals>
+    <plurals name="assistant_incomplete_heading">
+        <item quantity="one">PROPUESTA INCOMPLETA · %1$d tema</item>
+        <item quantity="other">PROPUESTA INCOMPLETA · %1$d temas</item>
+    </plurals>
+    <plurals name="assistant_discarded">
+        <item quantity="one">Se descartó %1$d tema que no está en el catálogo.</item>
+        <item quantity="other">Se descartaron %1$d temas que no están en el catálogo.</item>
+    </plurals>
+
+    <!-- Add to the upcoming jam -->
+    <string name="assistant_apply_add">Agregar a la próxima jam</string>
+    <string name="assistant_apply_add_retry">Reintentar los que faltan</string>
+    <string name="assistant_apply_add_dialog_title">¿Cargar esta lista?</string>
+    <string name="assistant_apply_stop">Detener</string>
+    <string name="assistant_apply_add_published">La lista ya está publicada: los músicos van a ver los temas apenas se agreguen.</string>
+    <string name="assistant_apply_blocked_unreadable">No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé.</string>
+    <string name="assistant_apply_blocked_all_present">Todos estos temas ya están en la lista de la próxima jam.</string>
+    <string name="assistant_apply_status_adding">Agregando…</string>
+    <string name="assistant_apply_status_added">Agregado</string>
+    <string name="assistant_apply_status_skipped">Ya estaba en la lista</string>
+    <string name="assistant_apply_status_not_attempted">Sin intentar</string>
+    <plurals name="assistant_apply_themes">
+        <item quantity="one">%1$d tema</item>
+        <item quantity="other">%1$d temas</item>
+    </plurals>
+    <plurals name="assistant_apply_add_intro">
+        <item quantity="one">Se va a agregar %1$d tema al final de la lista de la jam del %2$s, con la tonalidad del catálogo. Después podés cambiar cualquier tonalidad.</item>
+        <item quantity="other">Se van a agregar %1$d temas al final de la lista de la jam del %2$s, en este orden y con la tonalidad del catálogo. Después podés cambiar cualquier tonalidad.</item>
+    </plurals>
+    <string name="assistant_apply_add_existing">La lista ya tiene %1$s; los nuevos van después.</string>
+    <plurals name="assistant_apply_add_skipped">
+        <item quantity="one">%1$d ya está en la lista y no se agrega: %2$s.</item>
+        <item quantity="other">%1$d ya están en la lista y no se agregan: %2$s.</item>
+    </plurals>
+    <string name="assistant_apply_add_confirm">Agregar %1$s</string>
+
+    <!-- Add run: progress, summary and failures -->
+    <string name="assistant_apply_write_offline">No pudimos confirmar si se agregó: no hay conexión o el servidor tardó.</string>
+    <plurals name="assistant_apply_already_there">
+        <item quantity="one">%1$d ya estaba en la lista.</item>
+        <item quantity="other">%1$d ya estaban en la lista.</item>
+    </plurals>
+    <plurals name="assistant_apply_failed_count">
+        <item quantity="one">%1$d no se agregó.</item>
+        <item quantity="other">%1$d no se agregaron.</item>
+    </plurals>
+    <string name="assistant_apply_running">Agregando temas a la jam del %3$s: %1$d de %2$d.</string>
+    <string name="assistant_apply_success_none">No se agregó ningún tema a la jam del %1$s.</string>
+    <plurals name="assistant_apply_success">
+        <item quantity="one">Listo: se agregó %1$d tema a la jam del %2$s.</item>
+        <item quantity="other">Listo: se agregaron %1$d temas a la jam del %2$s.</item>
+    </plurals>
+    <string name="assistant_apply_success_with_skipped">%1$s %2$s</string>
+    <string name="assistant_apply_partial">Se agregaron %1$d de %2$s. %3$s</string>
+    <string name="assistant_apply_aborted">Se cortó la carga: se agregaron %1$d de %2$s. %3$s</string>
+    <string name="assistant_apply_stopped">Detuviste la carga: se agregaron %1$d de %2$s.</string>
+    <string name="assistant_apply_interrupted">Se interrumpió la carga: se agregaron %1$d de %2$s.</string>
+    <string name="assistant_apply_song_failure">No se agregó: %1$s</string>
+
+    <!-- Replace the list of the upcoming jam -->
+    <string name="assistant_replace_action">Reemplazar la lista de la próxima jam</string>
+    <string name="assistant_replace_retry">Reintentar el reemplazo</string>
+    <string name="assistant_replace_dialog_title">¿Reemplazar la lista?</string>
+    <string name="assistant_replace_confirm">Reemplazar</string>
+    <string name="assistant_replace_note_equal">La lista de la próxima jam ya es igual a esta.</string>
+    <string name="assistant_replace_note_repeated">La lista de la próxima jam tiene temas repetidos; arreglala en la planilla para poder reemplazarla.</string>
+    <string name="assistant_replace_no_assignments">Ninguno de esos temas tiene músicos anotados.</string>
+    <string name="assistant_replace_published">La lista está publicada: los músicos ven cada cambio apenas se guarda.</string>
+    <string name="assistant_replace_mismatch">La lista de la próxima jam no quedó igual a la propuesta. Revisala en Próxima jam.</string>
+    <string name="assistant_replace_unordered">La planilla tiene posiciones repetidas o vacías; ordená la lista a mano.</string>
+    <string name="assistant_replace_removing">Quitando…</string>
+    <string name="assistant_replace_removed">Quitado</string>
+    <string name="assistant_replace_removal_not_attempted">Sin intentar</string>
+    <string name="assistant_replace_kept_status">Ya estaba; conserva sus músicos</string>
+    <string name="assistant_replace_ordering">Ordenando la lista…</string>
+    <string name="assistant_replace_order_failed">No se pudo ordenar la lista.</string>
+    <string name="assistant_replace_order_not_attempted">Orden sin intentar.</string>
+    <plurals name="assistant_replace_intro">
+        <item quantity="one">La lista de la jam del %2$s va a quedar igual a esta: %1$d tema.</item>
+        <item quantity="other">La lista de la jam del %2$s va a quedar igual a esta: %1$d temas, en este orden.</item>
+    </plurals>
+    <plurals name="assistant_replace_removed_titles">
+        <item quantity="one">Se quita %1$d tema: %2$s.</item>
+        <item quantity="other">Se quitan %1$d temas: %2$s.</item>
+    </plurals>
+    <plurals name="assistant_replace_lost">
+        <item quantity="one">Se pierde %1$d músico anotado en esos temas.</item>
+        <item quantity="other">Se pierden %1$d músicos anotados en esos temas.</item>
+    </plurals>
+    <plurals name="assistant_replace_kept">
+        <item quantity="one">%1$d ya estaba: conserva su tonalidad y sus músicos.</item>
+        <item quantity="other">%1$d ya estaban: conservan su tonalidad y sus músicos.</item>
+    </plurals>
+    <plurals name="assistant_replace_added">
+        <item quantity="one">Se agrega %1$d tema con la tonalidad del catálogo.</item>
+        <item quantity="other">Se agregan %1$d temas con la tonalidad del catálogo.</item>
+    </plurals>
+    <string name="assistant_replace_empty">La lista está vacía: se cargan %1$s.</string>
+
+    <!-- Replace run: progress, summary and failures -->
+    <string name="assistant_replace_removal_offline">No pudimos confirmar si se quitó: no hay conexión o el servidor tardó.</string>
+    <string name="assistant_replace_running">Reemplazando la lista de la jam del %3$s: paso %1$d de %2$d.</string>
+    <string name="assistant_replace_success">Listo: la lista de la jam del %1$s quedó igual a la propuesta.</string>
+    <string name="assistant_replace_cut_in_adds">Se cortó el reemplazo antes de quitar temas: se agregaron %1$d de %2$d y no se quitó ninguno. %3$s</string>
+    <string name="assistant_replace_cut_later">Se cortó el reemplazo: se agregaron %1$d y se quitaron %2$d de %3$d. %4$s</string>
+    <string name="assistant_replace_not_ordered">Los temas quedaron cargados, pero no en el orden propuesto. %1$s</string>
+    <string name="assistant_replace_stopped">Detuviste el reemplazo: se agregaron %1$d y se quitaron %2$d.</string>
+    <string name="assistant_replace_interrupted">Se interrumpió el reemplazo: se agregaron %1$d y se quitaron %2$d.</string>
+    <string name="assistant_replace_removal_failure">No se quitó: %1$s</string>
+
+    <!-- Create a jam with the list of the proposal -->
+    <string name="assistant_create_action">Crear una jam nueva con esta lista</string>
+    <string name="assistant_create_form_title">Nueva jam con esta lista</string>
+    <string name="assistant_create_note_no_upcoming">No hay una próxima jam: podés crear una con esta lista.</string>
+    <string name="assistant_create_creating">Creando la jam…</string>
+    <string name="assistant_create_outdated_held_back">La jam se creó, pero el script de la planilla todavía no sabe cargar listas en una jam en espera. Actualizalo con la guía y reintentá.</string>
+    <plurals name="assistant_create_form_note">
+        <item quantity="one">Se crea como borrador y se carga %1$d tema.</item>
+        <item quantity="other">Se crea como borrador y se cargan los %1$d temas en este orden.</item>
+    </plurals>
+    <string name="assistant_create_waits_note">Queda en espera detrás de la del %1$s; la lista se carga en esta jam nueva y la vas a ver en Próxima jam cuando pase esa.</string>
+    <string name="assistant_create_submit">Crear y cargar %1$s</string>
+    <string name="assistant_create_loading">Cargando temas en la jam del %1$s: %2$d de %3$d.</string>
+    <plurals name="assistant_create_success">
+        <item quantity="one">Listo: se creó la jam del %2$s como borrador y se cargó %1$d tema.</item>
+        <item quantity="other">Listo: se creó la jam del %2$s como borrador y se cargaron %1$d temas.</item>
+    </plurals>
+    <plurals name="assistant_create_success_waiting">
+        <item quantity="one">Listo: se creó la jam del %2$s como borrador, en espera detrás de la del %3$s, y se cargó %1$d tema.</item>
+        <item quantity="other">Listo: se creó la jam del %2$s como borrador, en espera detrás de la del %3$s, y se cargaron %1$d temas.</item>
+    </plurals>
+    <string name="assistant_create_not_created">No se pudo crear la jam: %1$s No se cargó ningún tema.</string>
+    <string name="assistant_create_partial">La jam del %1$s se creó como borrador, pero se cargaron %2$d de %3$s. %4$s</string>
+    <string name="assistant_create_stopped">Detuviste la carga: la jam del %1$s se creó como borrador y se cargaron %2$d de %3$s.</string>
+    <string name="assistant_create_interrupted">Se interrumpió la carga: la jam del %1$s se creó como borrador y se cargaron %2$d de %3$s.</string>
+
+    <!-- Create the next jam: card, dialog and result -->
+    <string name="assistant_jam_card_heading">Nueva jam</string>
+    <string name="assistant_jam_create">Crear la jam</string>
+    <string name="assistant_jam_create_retry">Reintentar</string>
+    <string name="assistant_jam_dialog_title">¿Crear la jam?</string>
+    <string name="assistant_jam_draft_line">Se crea como borrador: los músicos no la ven hasta que la pases a creada o publiques la lista.</string>
+    <string name="assistant_jam_dialog_date">Fecha: %1$s</string>
+    <string name="assistant_jam_dialog_time">Hora: %1$s</string>
+    <string name="assistant_jam_dialog_venue">Lugar: %1$s</string>
+    <string name="assistant_jam_date_in_words">%1$s %2$d de %3$s de %4$d</string>
+    <string name="assistant_jam_date_in_words_lower">%1$s %2$d de %3$s de %4$d</string>
+    <string name="assistant_jam_detail">%1$s · %2$s</string>
+    <string name="assistant_jam_creating">Creando la jam…</string>
+    <string name="assistant_jam_created">Jam creada como borrador.</string>
+    <string name="assistant_jam_failure">No se pudo crear: %1$s</string>
+    <string name="assistant_jam_reason_offline">no pudimos confirmar si se creó: no hay conexión o el servidor tardó.</string>
+    <string name="assistant_jam_reason_interrupted">se interrumpió la creación; revisá la planilla antes de reintentar.</string>
+    <string name="assistant_jam_reason_jam_exists">ya hay una jam con esa fecha en la planilla.</string>
+    <string name="assistant_jam_reason_tab_exists">ya hay una pestaña con esa fecha en la planilla; revisala antes de crear la jam.</string>
+    <string name="assistant_jam_reason_past_date">esa fecha ya pasó.</string>
+    <string name="assistant_jam_reason_invalid_data">la planilla rechazó los datos de la jam.</string>
+    <string name="assistant_jam_script_outdated">El script de la planilla todavía no sabe crear jams. Actualizalo con la guía y probá de nuevo.</string>
+    <string name="assistant_jam_blocked_past">Esa fecha ya pasó; pedime otra.</string>
+    <string name="assistant_jam_blocked_exists">Ya hay una jam con esa fecha. Pedime otra fecha.</string>
+    <string name="assistant_jam_blocked_earlier">Esa fecha es anterior a la próxima jam (%1$s). Si querés adelantarla, cambiá la fecha de esa jam en la pestaña Jams.</string>
+    <string name="assistant_jam_held_back_note">Queda en espera: la próxima jam sigue siendo la del %1$s.</string>
+    <string name="assistant_jam_held_back_line">La próxima jam sigue siendo la del %1$s; esta queda en espera hasta que pase.</string>
+    <string name="assistant_jam_rejected_date">La fecha propuesta no era válida; pedile otra.</string>
+    <string name="assistant_jam_rejected_past">La fecha propuesta ya pasó; pedile otra.</string>
+    <string name="assistant_jam_rejected_time">La hora propuesta no era válida; pedile otra.</string>
+    <string name="assistant_jam_rejected_venue">El lugar propuesto no era válido; pedile otro.</string>
+</resources>

@@ -9,9 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
@@ -56,12 +58,13 @@ fun RefreshableContent(
     val state = rememberPullToRefreshState()
     val colors = PullRefreshDefaults.indicatorColors(BluesJamTheme.colors)
     val onRefresh: () -> Unit = { model.events(PullRefreshUiModel.Event.Refresh) }
+    val actionLabel = stringResource(R.string.pull_refresh_action)
     PullToRefreshBox(
         isRefreshing = model.isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier.semantics {
             customActions = listOf(
-                CustomAccessibilityAction(PullRefreshCopy.ACTION) {
+                CustomAccessibilityAction(actionLabel) {
                     onRefresh()
                     true
                 },
@@ -90,10 +93,4 @@ internal object PullRefreshDefaults {
 
     fun indicatorColors(colors: BluesJamColors = BluesJamColors): IndicatorColors =
         IndicatorColors(container = colors.surfaceRaised, content = colors.text)
-}
-
-/** The pull to refresh copy (L3, approved on 6 October 2026). Rioplatense Spanish (D-12). */
-internal object PullRefreshCopy {
-    /** The screen reader's custom action that refreshes the list. */
-    const val ACTION = "Actualizar"
 }

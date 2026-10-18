@@ -27,15 +27,19 @@ import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.admin.AdminState
 import com.bbbjam.feature.nextjam.admin.RemovalState
 import com.bbbjam.feature.nextjam.admin.keyFailureMessage
+import com.bbbjam.feature.nextjam.keyDescription
+import com.bbbjam.feature.nextjam.savingText
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.toUiModel
 import com.bbbjam.feature.nextjam.writes
@@ -51,7 +55,7 @@ import org.junit.Test
 
 /**
  * `admin-set-key` Part B on Próxima jam: "Cambiar tonalidad", the optimistic key (O1) and its revert.
- * The copy is written out from the approved table, never read from [NextJamCopy].
+ * The texts are `UiText` values written out with their resource ids.
  */
 class NextJamKeyChangeTest {
     private val repository = FakeJamsRepository()
@@ -101,7 +105,7 @@ class NextJamKeyChangeTest {
             repository.snapshots.emit(snapshot())
             val row = expectMostRecentItem().row("Crossroads")
             assertEquals("A", row.key)
-            assertEquals("Tonalidad A", row.keyDescription)
+            assertEquals(keyDescription("A"), row.keyDescription)
             assertNull(row.admin)
             cancelAndIgnoreRemainingEvents()
         }
@@ -117,8 +121,8 @@ class NextJamKeyChangeTest {
             var model = awaitItem()
             val sending = model.row("Crossroads")
             assertEquals("Bb", sending.key)
-            assertEquals("Tonalidad Bb", sending.keyDescription)
-            assertEquals("Guardando…", checkNotNull(sending.admin).saveStatus)
+            assertEquals(keyDescription("Bb"), sending.keyDescription)
+            assertEquals(savingText, checkNotNull(sending.admin).saveStatus)
             // Only that row is overlaid.
             assertEquals("E", model.row("Hoochie Coochie Man").key)
             assertEquals(emptyList<AddFailureUiModel>(), model.failures())
@@ -127,15 +131,12 @@ class NextJamKeyChangeTest {
             model = awaitItem()
             val reverted = model.row("Crossroads")
             assertEquals("A", reverted.key)
-            assertEquals("Tonalidad A", reverted.keyDescription)
+            assertEquals(keyDescription("A"), reverted.keyDescription)
             assertNull(checkNotNull(reverted.admin).saveStatus)
             val card = model.failures().single()
-            assertEquals("No se pudo cambiar la tonalidad de «Crossroads»", card.title)
-            assertEquals(
-                "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar.",
-                card.message,
-            )
-            assertEquals("Cerrar", card.dismissLabel)
+            assertEquals(UiText.res(R.string.next_jam_key_failed, "Crossroads"), card.title)
+            assertEquals(UiText.res(CoreR.string.write_failure_access_refused), card.message)
+            assertEquals(UiText.res(R.string.next_jam_close), card.dismissLabel)
             card.events(AddFailureUiModel.Event.Dismiss)
             assertEquals(listOf(4L), setlist.dismissed)
             assertEquals(listOf("KeyChange" to 4L), setlist.dismissCalls)
@@ -173,10 +174,7 @@ class NextJamKeyChangeTest {
         val changes = listOf(change(8, "C", KeyChange.State.Failed(WriteOutcome.Offline)))
         val model = cached.toUiModel(today, admin = admin(changes))
         assertEquals("Bb", model.row("Crossroads").key)
-        assertEquals(
-            "No hay conexión. Probá de nuevo cuando tengas internet.",
-            model.failures().single().message,
-        )
+        assertEquals(UiText.res(CoreR.string.write_failure_offline), model.failures().single().message)
     }
 
     @Test
@@ -226,13 +224,15 @@ class NextJamKeyChangeTest {
         assertEquals(listOf(1L, 2L, 3L, 4L), failures.map { it.id })
         assertEquals(
             listOf(
-                "No se pudo cambiar la tonalidad de «Crossroads»" to
-                    "La jam cambió en la planilla. Actualizá y probá de nuevo.",
-                "No se pudo agregar «Red House»" to "El servidor no respondió. Probá de nuevo en un rato.",
+                UiText.res(R.string.next_jam_key_failed, "Crossroads") to
+                    UiText.res(CoreR.string.write_failure_jam_changed),
+                UiText.res(R.string.next_jam_add_failed, "Red House") to
+                    UiText.res(CoreR.string.write_failure_unavailable),
                 // The removal keeps its own wording for the same code.
-                "No se pudo quitar «Hoochie Coochie Man»" to "Ese tema ya no estaba en la lista.",
-                "No se pudo cambiar la tonalidad de «Crossroads»" to
-                    "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo.",
+                UiText.res(R.string.next_jam_remove_failed, "Hoochie Coochie Man") to
+                    UiText.res(R.string.next_jam_failure_not_in_setlist),
+                UiText.res(R.string.next_jam_key_failed, "Crossroads") to
+                    UiText.res(R.string.next_jam_failure_duplicate_song),
             ),
             failures.map { it.title to it.message },
         )
@@ -320,24 +320,16 @@ class NextJamKeyChangeTest {
 
     @Test
     fun `a key change maps the outcomes like the other cards, except the list-changed codes`() {
-        assertEquals(
-            "La jam cambió en la planilla. Actualizá y probá de nuevo.",
-            keyFailureMessage(WriteOutcome.Rejected("song_not_in_setlist")),
-        )
+        val jamChanged = UiText.res(CoreR.string.write_failure_jam_changed)
+        assertEquals(jamChanged, keyFailureMessage(WriteOutcome.Rejected("song_not_in_setlist")))
         listOf("unknown_jam", "jam_not_editable", "duplicate_date").forEach { code ->
-            assertEquals(
-                "La jam cambió en la planilla. Actualizá y probá de nuevo.",
-                keyFailureMessage(WriteOutcome.Rejected(code)),
-            )
+            assertEquals(jamChanged, keyFailureMessage(WriteOutcome.Rejected(code)))
         }
         assertEquals(
-            "La planilla rechazó el cambio. Revisala y probá de nuevo.",
+            UiText.res(CoreR.string.write_failure_sheet_refused),
             keyFailureMessage(WriteOutcome.Rejected("invalid_key")),
         )
-        assertEquals("No hay conexión. Probá de nuevo cuando tengas internet.", keyFailureMessage(WriteOutcome.Offline))
-        assertEquals(
-            "El servidor no respondió. Probá de nuevo en un rato.",
-            keyFailureMessage(WriteOutcome.Unavailable),
-        )
+        assertEquals(UiText.res(CoreR.string.write_failure_offline), keyFailureMessage(WriteOutcome.Offline))
+        assertEquals(UiText.res(CoreR.string.write_failure_unavailable), keyFailureMessage(WriteOutcome.Unavailable))
     }
 }

@@ -1,3 +1,9 @@
+## 18 October 2026 - UI copy moved to strings.xml
+
+User decision, reversing `info-screen` Decision 6 (copy in Kotlin `*Copy` objects). Every `*Copy` object is deleted; each of `:core:ui`, `:feature:next-jam`, `:feature:past-jams`, `:feature:assistant` and `:feature:info` owns `src/main/res/values/strings.xml` (module-prefixed names, no duplicates across modules). UiModels carry `com.bbbjam.core.ui.text.UiText` (`res`/`plural`/`raw`), resolved by screens; presenters stay Android-free and tests assert `UiText` equality. Shared copy (write failures, jam form, list states, instruments, dates, statuses) lives in `:core:ui`. Not migrated on purpose: logs, Sheet/wire names, the agent prompt and tool output in `:core:assistant`, preview fixtures. Architecture skill updated. Accepted cost: the phase 2 assistant no longer reads plain copy from a UiModel.
+
+Verification: CI=true ./init.sh exit 0; konsist, detekt, ktlint wired. Not yet checked on a device.
+
 ## 18 October 2026 - presentation rebuilt after final code review
 
 Published successfully (owner-private) at https://bb-blues-jam-harness.ivorycow5.chatgpt.site; source 363c93f4b5eaf2f2ed63b394bbe3c3b9e101a42d, deployment appgdep_6ad530ff01e881918e899ba05e116775.

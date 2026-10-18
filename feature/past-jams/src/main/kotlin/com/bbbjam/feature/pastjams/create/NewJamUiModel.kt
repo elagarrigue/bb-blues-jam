@@ -5,6 +5,7 @@ import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The "Nueva jam" action of the Jams tab (`admin-jams-tab`, J7/J9): the button ([label]), the form
@@ -12,7 +13,7 @@ import com.bbbjam.core.ui.presenter.UiModel
  * every event; the creation goes through `JamCreator`, bound to the setlist repository (D-13, D-25).
  */
 internal data class NewJamUiModel(
-    val label: String,
+    val label: UiText,
     val form: JamFormUiModel?,
     val progress: NewJamProgressUiModel?,
     val events: EventHandler<Event>,
@@ -29,16 +30,16 @@ internal data class NewJamUiModel(
 
 /** What the last creation did: still going, done, or a card. */
 internal sealed interface NewJamProgressUiModel : UiModel {
-    data class Creating(val status: String) : NewJamProgressUiModel
+    data class Creating(val status: UiText) : NewJamProgressUiModel
 
-    data class Created(val message: String) : NewJamProgressUiModel
+    data class Created(val message: UiText) : NewJamProgressUiModel
 
     /** [retryLabel] is null when retrying is pointless (the script is outdated). */
     data class Failed(
-        val title: String,
-        val message: String,
-        val consequence: String,
-        val retryLabel: String?,
-        val dismissLabel: String,
+        val title: UiText,
+        val message: UiText,
+        val consequence: UiText,
+        val retryLabel: UiText?,
+        val dismissLabel: UiText,
     ) : NewJamProgressUiModel
 }

@@ -5,7 +5,11 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.lineup.LineupPanelUiModel
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.R
+import com.bbbjam.feature.nextjam.keyDescription
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.failedRead
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.id
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.jam
@@ -116,7 +120,13 @@ class SongDetailMappingTest {
         val model = snapshot(bare).toSongDetail(upcomingDate, id(1), 1) {} as SongDetailUiModel.Song
         assertNull(model.artist)
         assertEquals(
-            LineupPanelUiModel(emptyList(), emptyList(), emptyList(), "No quedan cupos libres.", null),
+            LineupPanelUiModel(
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                UiText.res(CoreR.string.lineup_no_open_slots),
+                null,
+            ),
             model.lineup,
         )
     }
@@ -128,8 +138,8 @@ class SongDetailMappingTest {
         val inA = jam(upcomingDate, Setlist.Available(listOf(song(1, key = "A"))))
         val model = snapshot(inA).toSongDetail(upcomingDate, id(1), 1) {} as SongDetailUiModel.Song
         assertEquals("A", model.key)
-        assertEquals("Tonalidad A", model.keyDescription)
-        assertEquals("Tonalidad", model.keyLabel)
+        assertEquals(keyDescription("A"), model.keyDescription)
+        assertEquals(UiText.res(R.string.song_detail_key_label), model.keyLabel)
     }
 
     @Test

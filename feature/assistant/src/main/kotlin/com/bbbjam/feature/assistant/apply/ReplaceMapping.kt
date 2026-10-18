@@ -2,6 +2,8 @@ package com.bbbjam.feature.assistant.apply
 
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.run.ApplyRun
 import com.bbbjam.feature.assistant.run.OrderStep
 import com.bbbjam.feature.assistant.run.SongApply
@@ -17,35 +19,35 @@ internal fun ApplyRun.replaceSummary(
 ): ApplySummaryUiModel {
     val date = checkNotNull(jamDate)
 
-    fun summary(text: String, tone: ApplyTone, stopLabel: String? = null) =
+    fun summary(text: UiText, tone: ApplyTone, stopLabel: UiText? = null) =
         ApplySummaryUiModel(text, tone, stopLabel, events)
     return when (val current = state) {
         ApplyRun.State.Running -> {
             val total = planned + removals.size + ((order as? OrderStep.Moving)?.total ?: 0)
             summary(
-                ReplaceOutcomeCopy.running((stepsDone() + 1).coerceAtMost(total), total, date),
+                replaceRunningText((stepsDone() + 1).coerceAtMost(total), total, date),
                 ApplyTone.NEUTRAL,
-                ApplyCopy.APPLY_STOP,
+                UiText.res(R.string.assistant_apply_stop),
             )
         }
 
         ApplyRun.State.Finished -> when {
-            ok -> summary(ReplaceOutcomeCopy.success(date), ApplyTone.SUCCESS)
+            ok -> summary(replaceSuccessText(date), ApplyTone.SUCCESS)
 
-            isSuccess -> summary(ReplaceCopy.MISMATCH, ApplyTone.FAILURE)
+            isSuccess -> summary(UiText.res(R.string.assistant_replace_mismatch), ApplyTone.FAILURE)
 
             else -> summary(
-                ReplaceOutcomeCopy.cutLater(addedCount, removedCount, removals.size, firstFailure()),
+                replaceCutLaterText(addedCount, removedCount, removals.size, firstFailure()),
                 ApplyTone.FAILURE,
             )
         }
 
         is ApplyRun.State.Aborted -> summary(abortedText(current.reason), ApplyTone.FAILURE)
 
-        ApplyRun.State.Stopped -> summary(ReplaceOutcomeCopy.stopped(addedCount, removedCount), ApplyTone.MUTED)
+        ApplyRun.State.Stopped -> summary(replaceStoppedText(addedCount, removedCount), ApplyTone.MUTED)
 
         ApplyRun.State.Interrupted, ApplyRun.State.ScriptOutdated ->
-            summary(ReplaceOutcomeCopy.interrupted(addedCount, removedCount), ApplyTone.FAILURE)
+            summary(replaceInterruptedText(addedCount, removedCount), ApplyTone.FAILURE)
     }
 }
 
@@ -58,28 +60,28 @@ private fun ApplyRun.stepsDone(): Int {
     return adds + removed + ((order as? OrderStep.Moving)?.done ?: 0)
 }
 
-private fun ApplyRun.abortedText(reason: WriteOutcome): String = when {
-    order is OrderStep.Failed -> ReplaceOutcomeCopy.notOrdered(ReplaceOutcomeCopy.moveFailure(reason))
+private fun ApplyRun.abortedText(reason: WriteOutcome): UiText = when {
+    order is OrderStep.Failed -> replaceNotOrderedText(moveFailureText(reason))
 
     removals.none { it.state != SongRemoval.State.NotAttempted } ->
-        ReplaceOutcomeCopy.cutInAdds(addedCount, planned, ApplyOutcomeCopy.writeFailure(reason))
+        replaceCutInAddsText(addedCount, planned, writeFailureText(reason))
 
-    else -> ReplaceOutcomeCopy.cutLater(
+    else -> replaceCutLaterText(
         addedCount,
         removedCount,
         removals.size,
-        ReplaceOutcomeCopy.removalFailure(reason),
+        removalFailureText(reason),
     )
 }
 
 // The first thing that went wrong in a run that finished with failures.
-private fun ApplyRun.firstFailure(): String {
+private fun ApplyRun.firstFailure(): UiText {
     val song = songs.firstNotNullOfOrNull { (it.state as? SongApply.State.Failed)?.reason }
     val removal = removals.firstNotNullOfOrNull { (it.state as? SongRemoval.State.Failed)?.reason }
     return when {
-        song != null -> ApplyOutcomeCopy.songFailure(song)
-        removal != null -> ReplaceOutcomeCopy.removalFailure(removal)
-        else -> ""
+        song != null -> songFailureText(song)
+        removal != null -> removalFailureText(removal)
+        else -> UiText.raw("")
     }
 }
 
@@ -89,22 +91,43 @@ internal fun ApplyRun.removalLines(): List<ApplyStatusLineUiModel> = removals.ma
     when (val state = removal.state) {
         SongRemoval.State.Waiting -> null
 
-        SongRemoval.State.Removing -> ApplyStatusLineUiModel(title, ReplaceCopy.REMOVING, ApplyStatusKind.PROGRESS)
+        SongRemoval.State.Removing -> ApplyStatusLineUiModel(
+            title,
+            UiText.res(R.string.assistant_replace_removing),
+            ApplyStatusKind.PROGRESS,
+        )
 
-        SongRemoval.State.Removed -> ApplyStatusLineUiModel(title, ReplaceCopy.REMOVED, ApplyStatusKind.DONE)
+        SongRemoval.State.Removed -> ApplyStatusLineUiModel(
+            title,
+            UiText.res(R.string.assistant_replace_removed),
+            ApplyStatusKind.DONE,
+        )
 
         is SongRemoval.State.Failed ->
-            ApplyStatusLineUiModel(title, ReplaceOutcomeCopy.removalFailure(state.reason), ApplyStatusKind.FAILED)
+            ApplyStatusLineUiModel(title, removalFailureText(state.reason), ApplyStatusKind.FAILED)
 
         SongRemoval.State.NotAttempted ->
-            ApplyStatusLineUiModel(title, ReplaceCopy.REMOVAL_NOT_ATTEMPTED, ApplyStatusKind.NOT_ATTEMPTED)
+            ApplyStatusLineUiModel(
+                title,
+                UiText.res(R.string.assistant_replace_removal_not_attempted),
+                ApplyStatusKind.NOT_ATTEMPTED,
+            )
     }
 }
 
 /** The order phase's line, drawn under the removals; null when there is nothing to say. */
-internal fun ApplyRun.orderLine(): String? = when (order) {
+internal fun ApplyRun.orderLine(): UiText? = when (order) {
     null, OrderStep.Waiting, OrderStep.Ordered -> null
-    is OrderStep.Moving -> ReplaceCopy.ORDERING
-    is OrderStep.Failed -> ReplaceCopy.ORDER_FAILED
-    OrderStep.NotAttempted -> if (state == ApplyRun.State.Finished) ReplaceCopy.ORDER_NOT_ATTEMPTED else null
+
+    is OrderStep.Moving -> UiText.res(R.string.assistant_replace_ordering)
+
+    is OrderStep.Failed -> UiText.res(R.string.assistant_replace_order_failed)
+
+    OrderStep.NotAttempted -> if (state ==
+        ApplyRun.State.Finished
+    ) {
+        UiText.res(R.string.assistant_replace_order_not_attempted)
+    } else {
+        null
+    }
 }

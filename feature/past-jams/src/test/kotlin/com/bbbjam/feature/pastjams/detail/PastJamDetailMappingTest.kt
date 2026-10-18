@@ -6,6 +6,9 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.ui.nav.BackUiModel
+import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.back
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.busyLineup
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.header
@@ -32,7 +35,7 @@ class PastJamDetailMappingTest {
         val model = detail(jam(setlist = Setlist.Available(songs)))
         assertEquals(
             PastJamDetailUiModel.Jam(
-                header = header("13 temas"),
+                header = header(13),
                 setlist = PastSetlistUiModel.Songs(
                     rows = listOf(
                         row(1, "01"), row(2, "02"), row(3, "03"), row(4, "04"), row(5, "05"), row(6, "06"),
@@ -52,7 +55,7 @@ class PastJamDetailMappingTest {
         val model = detail(jam(setlist = Setlist.Available(listOf(song(1, key = "Bbm"))))) as PastJamDetailUiModel.Jam
         val single = (model.setlist as PastSetlistUiModel.Songs).rows.single()
         assertEquals("Bbm", single.key)
-        assertEquals("Tonalidad Bbm", single.keyDescription)
+        assertEquals(SongListText.keyDescription("Bbm"), single.keyDescription)
     }
 
     @Test
@@ -63,13 +66,13 @@ class PastJamDetailMappingTest {
 
     @Test
     fun `the dropped-rows note says how many rows were lost, and nothing when none`() {
-        fun note(dropped: Int): String? {
+        fun note(dropped: Int): UiText? {
             val model = detail(jam(setlist = Setlist.Available(listOf(song(1)), dropped))) as PastJamDetailUiModel.Jam
             return (model.setlist as PastSetlistUiModel.Songs).droppedRowsNote
         }
         assertNull(note(0))
-        assertEquals("Falta 1 tema: no se pudo leer.", note(1))
-        assertEquals("Faltan 2 temas: no se pudieron leer.", note(2))
+        assertEquals(SongListText.droppedRows(1), note(1))
+        assertEquals(SongListText.droppedRows(2), note(2))
     }
 
     @Test
@@ -77,7 +80,7 @@ class PastJamDetailMappingTest {
         assertEquals(
             PastJamDetailUiModel.Jam(
                 header(null),
-                PastSetlistUiModel.NotShown("La lista de esta jam no se publicó."),
+                PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_setlist_not_published)),
                 back,
             ),
             detail(jam(setlist = Setlist.Withheld, status = JamStatus.CREATED)),
@@ -85,7 +88,7 @@ class PastJamDetailMappingTest {
         assertEquals(
             PastJamDetailUiModel.Jam(
                 header(null),
-                PastSetlistUiModel.NotShown("No se pudo leer la lista de esta jam."),
+                PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_setlist_unavailable)),
                 back,
             ),
             detail(jam(setlist = Setlist.Unavailable(SetlistProblem.MISSING_TAB))),
@@ -93,7 +96,7 @@ class PastJamDetailMappingTest {
         assertEquals(
             PastJamDetailUiModel.Jam(
                 header(null),
-                PastSetlistUiModel.NotShown("Esta jam no tiene temas cargados."),
+                PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_empty_setlist)),
                 back,
             ),
             detail(jam(setlist = Setlist.Available(emptyList()))),
@@ -110,7 +113,7 @@ class PastJamDetailMappingTest {
         assertEquals(
             PastJamDetailUiModel.Jam(
                 header(null),
-                PastSetlistUiModel.NotShown("La lista de esta jam no se publicó."),
+                PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_setlist_not_published)),
                 back,
             ),
             detail(jam(setlist = Setlist.Available(listOf(song(1))), status = JamStatus.CREATED)),

@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -42,7 +44,7 @@ fun InstrumentFilterBar(model: InstrumentFilterBarUiModel, modifier: Modifier = 
     val spacing = BluesJamTheme.spacing
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
         Text(
-            text = model.heading,
+            text = model.heading.resolve(),
             style = BluesJamTheme.typography.caption,
             color = BluesJamTheme.colors.textMuted,
             modifier = Modifier.semantics { heading() },
@@ -55,7 +57,7 @@ fun InstrumentFilterBar(model: InstrumentFilterBarUiModel, modifier: Modifier = 
         }
         model.summary?.let { summary ->
             Text(
-                text = summary,
+                text = summary.resolve(),
                 style = BluesJamTheme.typography.body,
                 color = BluesJamTheme.colors.text,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -66,9 +68,9 @@ fun InstrumentFilterBar(model: InstrumentFilterBarUiModel, modifier: Modifier = 
 }
 
 @Composable
-private fun NoResults(message: String, model: InstrumentFilterBarUiModel) {
+private fun NoResults(message: UiText, model: InstrumentFilterBarUiModel) {
     Text(
-        text = message,
+        text = message.resolve(),
         style = BluesJamTheme.typography.body,
         color = BluesJamTheme.colors.textMuted,
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -80,7 +82,7 @@ private fun NoResults(message: String, model: InstrumentFilterBarUiModel) {
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
-            text = model.clearLabel,
+            text = model.clearLabel.resolve(),
             style = BluesJamTheme.typography.body,
             color = BluesJamTheme.colors.text,
             textDecoration = TextDecoration.Underline,
@@ -93,12 +95,13 @@ private fun FilterChip(chip: FilterChipUiModel) {
     val spacing = BluesJamTheme.spacing
     val shape = BluesJamTheme.shapes.lg
     val style = InstrumentFilterDefaults.chipStyle(chip.isSelected)
+    val description = chip.contentDescription.resolve()
     Row(
         modifier = Modifier
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
             .clip(shape)
             .background(style.fill, shape)
-            .semantics { contentDescription = chip.contentDescription }
+            .semantics { contentDescription = description }
             .toggleable(value = chip.isSelected, role = Role.Checkbox) {
                 chip.events(FilterChipUiModel.Event.Toggle)
             }
@@ -107,7 +110,7 @@ private fun FilterChip(chip: FilterChipUiModel) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = chip.label,
+            text = chip.label.resolve(),
             style = BluesJamTheme.typography.body,
             color = style.content,
             maxLines = 1,

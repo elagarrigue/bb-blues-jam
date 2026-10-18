@@ -2,7 +2,9 @@ package com.bbbjam.feature.assistant.apply
 
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantHandlers
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.run.ApplyMode
 import com.bbbjam.feature.assistant.run.ApplyPlan
 import com.bbbjam.feature.assistant.run.ReplacePlan
@@ -24,40 +26,40 @@ internal fun confirmation(
 
 internal fun ApplyPlan.Ready.confirmation(events: EventHandler<ConfirmationUiModel.Event>): ConfirmationUiModel {
     val lines = buildList {
-        add(ApplyCopy.applyIntro(toAdd.size, jamDate))
-        if (existingCount > 0) add(ApplyCopy.applyExisting(existingCount))
-        if (skipped.isNotEmpty()) add(ApplyCopy.applySkipped(skipped.map { it.title }))
-        if (status == JamStatus.PUBLISHED) add(ApplyCopy.APPLY_PUBLISHED)
+        add(applyIntroText(toAdd.size, jamDate))
+        if (existingCount > 0) add(applyExistingText(existingCount))
+        if (skipped.isNotEmpty()) add(applySkippedText(skipped.map { it.title }))
+        if (status == JamStatus.PUBLISHED) add(UiText.res(R.string.assistant_apply_add_published))
     }
     return ConfirmationUiModel(
-        title = ApplyCopy.APPLY_DIALOG_TITLE,
+        title = UiText.res(R.string.assistant_apply_add_dialog_title),
         lines = lines,
-        confirmLabel = ApplyCopy.applyConfirm(toAdd.size),
-        cancelLabel = ApplyCopy.APPLY_CANCEL,
+        confirmLabel = applyConfirmText(toAdd.size),
+        cancelLabel = UiText.res(R.string.assistant_cancel),
         events = events,
     )
 }
 
 internal fun ReplacePlan.Ready.confirmation(events: EventHandler<ConfirmationUiModel.Event>): ConfirmationUiModel {
     val lines = buildList {
-        add(ReplaceCopy.intro(target.size, jamDate))
+        add(replaceIntroText(target.size, jamDate))
         if (existingCount == 0) {
-            add(ReplaceCopy.empty(toAdd.size))
+            add(replaceEmptyText(toAdd.size))
         } else {
             if (toRemove.isNotEmpty()) {
-                add(ReplaceCopy.removed(toRemove.map { it.title }))
-                add(ReplaceCopy.lost(lostAssignments))
+                add(replaceRemovedText(toRemove.map { it.title }))
+                add(replaceLostText(lostAssignments))
             }
-            if (kept.isNotEmpty()) add(ReplaceCopy.kept(kept.size))
-            if (toAdd.isNotEmpty()) add(ReplaceCopy.added(toAdd.size))
+            if (kept.isNotEmpty()) add(replaceKeptText(kept.size))
+            if (toAdd.isNotEmpty()) add(replaceAddedText(toAdd.size))
         }
-        if (status == JamStatus.PUBLISHED) add(ReplaceCopy.PUBLISHED)
+        if (status == JamStatus.PUBLISHED) add(UiText.res(R.string.assistant_replace_published))
     }
     return ConfirmationUiModel(
-        title = ReplaceCopy.DIALOG_TITLE,
+        title = UiText.res(R.string.assistant_replace_dialog_title),
         lines = lines,
-        confirmLabel = ReplaceCopy.CONFIRM,
-        cancelLabel = ApplyCopy.APPLY_CANCEL,
+        confirmLabel = UiText.res(R.string.assistant_replace_confirm),
+        cancelLabel = UiText.res(R.string.assistant_cancel),
         events = events,
         destructive = toRemove.isNotEmpty(),
     )

@@ -1,9 +1,11 @@
 package com.bbbjam.core.ui.status
 
 import com.bbbjam.core.model.JamStatus
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The three single-select status chips of a jam card (`jam-status-chips`): [chips] in BORRADOR, CREADA,
@@ -19,8 +21,8 @@ data class JamStatusChipsUiModel(val chips: List<JamStatusChipUiModel>, val even
 /** One chip: [label] ("Creada"), the accessibility [description] ("Estado: Creada") and its state. */
 data class JamStatusChipUiModel(
     val status: JamStatus,
-    val label: String,
-    val description: String,
+    val label: UiText,
+    val description: UiText,
     val selected: Boolean,
     val enabled: Boolean,
     val isPublished: Boolean,
@@ -31,7 +33,7 @@ data class JamStatusChipUiModel(
  * The chip whose status is being applied (`jam-status-chip-loading`): it is drawn with a pulsing outline and
  * announced with [description] ("Cambiando el estado a Creada…") instead of "Estado: Creada".
  */
-data class PendingChip(val status: JamStatus, val description: String)
+data class PendingChip(val status: JamStatus, val description: UiText)
 
 /**
  * The chips for a jam whose confirmed status is [current]; only the statuses in [enabled] can be tapped. The
@@ -49,7 +51,14 @@ fun jamStatusChips(
         JamStatusChipUiModel(
             status = status,
             label = label,
-            description = if (isPending) pending.description else "Estado: $label",
+            description = if (isPending) {
+                pending.description
+            } else {
+                UiText.res(
+                    R.string.jam_status_chip_description,
+                    label,
+                )
+            },
             selected = status == current,
             enabled = status in enabled && !isPending,
             isPublished = status == JamStatus.PUBLISHED,

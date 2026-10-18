@@ -23,7 +23,10 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
+import com.bbbjam.feature.nextjam.R
+import com.bbbjam.feature.nextjam.keyDescription
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -38,7 +41,7 @@ import org.junit.Test
 
 /**
  * The catalog picker (`admin-add-song-to-setlist` Part B): states, search, sort, listed songs and the
- * pick. The copy is written out from the approved table (C1), never read from [AddSongCopy].
+ * pick. The texts are `UiText` values written out with their resource ids (C1).
  */
 class AddSongPresenterTest {
     private val catalog = FakeCatalogRepository()
@@ -53,6 +56,8 @@ class AddSongPresenterTest {
     private val redHouse = Song(SongId("red-house"), "Red House", "Jimi Hendrix", Key("Bb"))
     private val songs = listOf(thrill, agua, crossroads, redHouse)
 
+    private val loadingContent = AddSongContentUiModel.Loading(UiText.res(R.string.add_song_loading))
+
     private fun snapshot(songs: List<Song>, freshness: Freshness = fetched) = CatalogSnapshot(songs, freshness)
 
     private fun titles(content: AddSongContentUiModel) = (content as AddSongContentUiModel.Songs).rows.map { it.title }
@@ -65,8 +70,8 @@ class AddSongPresenterTest {
         val row = (content as AddSongContentUiModel.Songs).rows.last()
         assertEquals("B.B. King", row.artist)
         assertEquals("Bm", row.key)
-        assertEquals("Tonalidad Bm", row.keyDescription)
-        assertEquals("agregar a la lista", row.pickLabel)
+        assertEquals(keyDescription("Bm"), row.keyDescription)
+        assertEquals(UiText.res(R.string.add_song_pick_label), row.pickLabel)
         assertFalse(row.isListed)
         assertNull(row.listedLabel)
     }
@@ -78,7 +83,7 @@ class AddSongPresenterTest {
         assertEquals(listOf("The Thrill Is Gone"), titles(addSongContent(snapshot(songs), emptySet(), "b.b.")))
         assertEquals(listOf("crossroads"), titles(addSongContent(snapshot(songs), emptySet(), "CLAP")))
         assertEquals(
-            AddSongContentUiModel.NoResults("Ningún tema coincide con «zeppelin»."),
+            AddSongContentUiModel.NoResults(UiText.res(R.string.add_song_no_results, "zeppelin")),
             addSongContent(snapshot(songs), emptySet(), " zeppelin "),
         )
     }
@@ -91,7 +96,7 @@ class AddSongPresenterTest {
 
         val listed = rows.single { it.id == "red-house" }
         assertTrue(listed.isListed)
-        assertEquals("Ya está en la lista", listed.listedLabel)
+        assertEquals(UiText.res(R.string.add_song_already_listed), listed.listedLabel)
         listed.events(CatalogRowUiModel.Event.Pick)
         assertNull(picked)
 
@@ -116,22 +121,25 @@ class AddSongPresenterTest {
 
     @Test
     fun `the states follow the cached catalog`() {
-        assertEquals(AddSongContentUiModel.Loading("Cargando el catálogo"), addSongContent(null, emptySet(), ""))
+        assertEquals(loadingContent, addSongContent(null, emptySet(), ""))
         assertEquals(
-            AddSongContentUiModel.Loading("Cargando el catálogo"),
+            loadingContent,
             addSongContent(snapshot(emptyList(), Freshness(null, null, isRefreshing = true)), emptySet(), ""),
         )
         assertEquals(
             AddSongContentUiModel.Empty(
-                EmptyStateUiModel("El catálogo está vacío", "Cargá temas en la pestaña Catalogo de la planilla."),
+                EmptyStateUiModel(
+                    UiText.res(R.string.add_song_empty_title),
+                    UiText.res(R.string.add_song_empty_message),
+                ),
             ),
             addSongContent(snapshot(emptyList()), emptySet(), "blues"),
         )
         val failed = addSongContent(snapshot(emptyList(), Freshness(null, DataFailure.Offline, false)), emptySet(), "")
-        assertEquals("No pudimos cargar el catálogo", ((failed as AddSongContentUiModel.Failed).error).title)
+        assertEquals(UiText.res(R.string.add_song_load_failed), ((failed as AddSongContentUiModel.Failed).error).title)
         // A retry running shows the skeleton again.
         assertEquals(
-            AddSongContentUiModel.Loading("Cargando el catálogo"),
+            loadingContent,
             addSongContent(snapshot(emptyList(), Freshness(null, DataFailure.Offline, true)), emptySet(), ""),
         )
     }
@@ -144,9 +152,9 @@ class AddSongPresenterTest {
             presenter.present(AddSongPresenter.Params(jamDate, onBack = {}, onAdded = { added++ }))
         }.test {
             val first = awaitItem()
-            assertEquals("Agregar tema", first.title)
-            assertEquals("Buscar por título o artista", first.search.label)
-            assertEquals(AddSongContentUiModel.Loading("Cargando el catálogo"), first.content)
+            assertEquals(UiText.res(R.string.add_song_title), first.title)
+            assertEquals(UiText.res(R.string.add_song_search_label), first.search.label)
+            assertEquals(loadingContent, first.content)
             catalog.snapshots.emit(snapshot(songs))
             jams.snapshots.emit(JamsSnapshot(null, emptyList(), fetched))
             val rows = (expectMostRecentItem().content as AddSongContentUiModel.Songs).rows

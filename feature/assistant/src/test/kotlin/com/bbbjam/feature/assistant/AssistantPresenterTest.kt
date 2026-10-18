@@ -6,6 +6,8 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.bbbjam.core.assistant.AssistantFailure
 import com.bbbjam.core.assistant.AssistantStatus
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.chat.ChatTurn
 import kotlinx.coroutines.CompletableDeferred
@@ -75,13 +77,13 @@ class AssistantPresenterTest {
             assertEquals("doce temas", pending.turns.single().request)
             assertTrue(pending.turns.single().reply is ReplyUiModel.Pending)
             assertFalse(pending.composer.sendEnabled)
-            assertEquals("Esperando respuesta…", pending.composer.sendLabel)
+            assertEquals(UiText.res(R.string.assistant_send_waiting), pending.composer.sendLabel)
 
             reply.complete(proposal(songs = 2))
             val answered = awaitChat { it.turns.singleOrNull()?.reply is ReplyUiModel.Proposal }
             val proposalModel = answered.turns.single().reply as ReplyUiModel.Proposal
-            assertEquals("PROPUESTA · 2 temas", proposalModel.heading)
-            assertEquals("Enviar", answered.composer.sendLabel)
+            assertEquals(UiText.plural(R.plurals.assistant_proposal_heading, 2), proposalModel.heading)
+            assertEquals(UiText.res(R.string.assistant_send), answered.composer.sendLabel)
         }
         assertEquals(listOf("doce temas"), assistant.requests)
     }
@@ -116,7 +118,7 @@ class AssistantPresenterTest {
 
             val cancelled = awaitChat { it.turns.singleOrNull()?.reply is ReplyUiModel.Cancelled }
             val reply = cancelled.turns.single().reply as ReplyUiModel.Cancelled
-            assertEquals("Cancelaste este pedido.", reply.message)
+            assertEquals(UiText.res(R.string.assistant_cancelled), reply.message)
             assertTrue(assistant.sawCancellation)
 
             val next = assistant.expectReply()
@@ -157,11 +159,11 @@ class AssistantPresenterTest {
         val chat = AssistantChat(assistant, ChatScope(testScheduler).scope)
         flow(chat).test {
             val checking = awaitChat { it.status is StatusUiModel.Checking }
-            assertEquals(StatusUiModel.Checking("Comprobando el servicio…"), checking.status)
+            assertEquals(StatusUiModel.Checking(UiText.res(R.string.assistant_checking)), checking.status)
             assertFalse(checking.composer.sendEnabled)
             gate.complete(Unit)
             val ready = awaitChat { it.status == StatusUiModel.None }
-            assertEquals("Enviar", ready.composer.sendLabel)
+            assertEquals(UiText.res(R.string.assistant_send), ready.composer.sendLabel)
         }
         assertEquals(1, assistant.statusChecks)
     }
@@ -174,7 +176,7 @@ class AssistantPresenterTest {
             val down = awaitChat { it.status is StatusUiModel.Banner }
             val banner = down.status as StatusUiModel.Banner
             assertEquals(
-                "El asistente no está disponible en este momento. El servicio de IA no responde; probá más tarde.",
+                UiText.res(R.string.assistant_service_down),
                 banner.message,
             )
             assertFalse(down.composer.sendEnabled)
@@ -196,8 +198,8 @@ class AssistantPresenterTest {
     @Test
     fun `Offline and Unauthorized show their copy`() = runTest {
         listOf(
-            AssistantStatus.Offline to "No hay conexión. Para usar el asistente necesitás internet.",
-            AssistantStatus.Unauthorized to "El servicio rechazó la clave del asistente.",
+            AssistantStatus.Offline to UiText.res(R.string.assistant_offline),
+            AssistantStatus.Unauthorized to UiText.res(R.string.assistant_unauthorized),
         ).forEach { (status, text) ->
             val fake = FakeSetlistAssistant().also { it.status = status }
             val chat = AssistantChat(fake, ChatScope(testScheduler).scope)
@@ -223,7 +225,7 @@ class AssistantPresenterTest {
             val model = awaitChat { it.status is StatusUiModel.Banner }
             assertFalse(model.composer.sendEnabled)
             val failedReply = model.turns.single().reply as ReplyUiModel.Failed
-            assertEquals("El servicio del asistente no respondió. Probá de nuevo en un rato.", failedReply.message)
+            assertEquals(UiText.res(R.string.assistant_unavailable), failedReply.message)
             assertEquals(null, failedReply.retry)
         }
         assertEquals(2, assistant.statusChecks)

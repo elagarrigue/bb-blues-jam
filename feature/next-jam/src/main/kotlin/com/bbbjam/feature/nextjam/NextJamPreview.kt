@@ -12,6 +12,7 @@ import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 internal fun previewRow(
@@ -27,7 +28,7 @@ internal fun previewRow(
     key = key,
     keyDescription = SongListText.keyDescription(key),
     instruments = lineup.toInstrumentChips(extras),
-    openDetailLabel = NextJamCopy.OPEN_DETAIL,
+    openDetailLabel = UiText.res(R.string.next_jam_open_detail),
     events = EventHandler {},
 )
 
@@ -53,10 +54,14 @@ private fun NextJamScreenPreview() {
     )
     val lineups = listOf(Lineup.default(), mixed, Lineup(emptyList()), Lineup.default())
     val model = NextJamUiModel.Jam(
-        header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días"),
+        header = JamHeaderUiModel(
+            date = jamDateLabel(PREVIEW_DATE, PREVIEW_START),
+            venue = "La Macanuda",
+            timeRemaining = timeRemaining(PREVIEW_TODAY, PREVIEW_DATE, PREVIEW_START),
+        ),
         setlist = SetlistUiModel.Songs(
             rows = rows,
-            droppedRowsNote = "Falta 1 tema: no se pudo leer.",
+            droppedRowsNote = SongListText.droppedRows(1),
             filterBar = instrumentFilterBar(lineups, emptySet()) {},
         ),
         staleness = null,

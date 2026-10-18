@@ -6,16 +6,19 @@ import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.status.JamStatusChipsUiModel
 import com.bbbjam.core.ui.status.PendingChip
+import com.bbbjam.core.ui.status.jamStatusBadge
 import com.bbbjam.core.ui.status.jamStatusChips
-import com.bbbjam.feature.pastjams.PastJamsCopy
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.admin.JamsAdminState
 import com.bbbjam.feature.pastjams.admin.failureMessage
 
-private fun actionLabel(target: JamStatus): String =
-    if (target == JamStatus.DRAFT) PastJamsCopy.TO_DRAFT else PastJamsCopy.TO_CREATED
+private fun actionLabel(target: JamStatus): UiText =
+    UiText.res(if (target == JamStatus.DRAFT) R.string.past_jams_to_draft else R.string.past_jams_to_created)
 
 /**
  * The status change layer for the future [jam] (`jam-status-chips`): the three chips with the confirmed status
@@ -53,9 +56,12 @@ internal fun JamsAdminState.jamStatusUiModel(jam: Jam, isUpcoming: Boolean): Jam
 /** The chip being applied: the requested status of a sending change, else Publicada for a sending publication. */
 private fun pendingChip(changeTarget: JamStatus?, publishSending: Boolean): PendingChip? = when {
     changeTarget == JamStatus.PUBLISHED || (changeTarget == null && publishSending) ->
-        PendingChip(JamStatus.PUBLISHED, PastJamsCopy.PUBLISHING_ANNOUNCEMENT)
+        PendingChip(JamStatus.PUBLISHED, UiText.res(R.string.past_jams_publishing_announcement))
 
-    changeTarget != null -> PendingChip(changeTarget, PastJamsCopy.statusChanging(changeTarget))
+    changeTarget != null -> PendingChip(
+        changeTarget,
+        UiText.res(R.string.past_jams_status_changing, jamStatusBadge(changeTarget).label),
+    )
 
     else -> null
 }
@@ -78,13 +84,18 @@ private fun JamsAdminState.canPublish(jam: Jam, isUpcoming: Boolean): Boolean {
 }
 
 /** Why Publicada is disabled on an idle card that is not published, in the planner's wording (P8). */
-private fun JamsAdminState.publishUnavailable(jam: Jam, isUpcoming: Boolean): String? {
+private fun JamsAdminState.publishUnavailable(jam: Jam, isUpcoming: Boolean): UiText? {
     val failedPublish = publishes.any { it.jamDate == jam.date && it.state is SetlistPublish.State.Failed }
     return when {
         jam.status == JamStatus.PUBLISHED || failedPublish -> null
-        !isUpcoming -> PastJamsCopy.PUBLISH_ONLY_UPCOMING
-        (jam.setlist as? Setlist.Available)?.songs?.isEmpty() == true -> PastJamsCopy.PUBLISH_NEEDS_SONG
-        jam.setlist !is Setlist.Available -> PastJamsCopy.PUBLISH_NEEDS_READABLE
+
+        !isUpcoming -> UiText.res(R.string.past_jams_publish_only_upcoming)
+
+        (jam.setlist as? Setlist.Available)?.songs?.isEmpty() == true ->
+            UiText.res(R.string.past_jams_publish_needs_song)
+
+        jam.setlist !is Setlist.Available -> UiText.res(R.string.past_jams_publish_needs_readable)
+
         else -> null
     }
 }
@@ -121,16 +132,16 @@ private fun JamsAdminState.statusEvents(jam: Jam, failedId: Long?) =
     }
 
 private fun confirmation(target: JamStatus) = StatusConfirmUiModel(
-    prompt = PastJamsCopy.UNPUBLISH_PROMPT,
-    body = if (target ==
-        JamStatus.DRAFT
-    ) {
-        PastJamsCopy.UNPUBLISH_TO_DRAFT_BODY
-    } else {
-        PastJamsCopy.UNPUBLISH_TO_CREATED_BODY
-    },
+    prompt = UiText.res(R.string.past_jams_unpublish_prompt),
+    body = UiText.res(
+        if (target == JamStatus.DRAFT) {
+            R.string.past_jams_unpublish_to_draft_body
+        } else {
+            R.string.past_jams_unpublish_to_created_body
+        },
+    ),
     confirmLabel = actionLabel(target),
-    cancelLabel = PastJamsCopy.CANCEL,
+    cancelLabel = UiText.res(CoreR.string.jam_form_cancel),
 )
 
 private fun toFailure(entry: JamStatusChange): StatusFailureUiModel {
@@ -138,10 +149,10 @@ private fun toFailure(entry: JamStatusChange): StatusFailureUiModel {
     val reason = (entry.state as? JamStatusChange.State.Failed)?.reason
     return StatusFailureUiModel(
         id = entry.id,
-        title = PastJamsCopy.STATUS_FAILED,
-        message = if (reason == null) PastJamsCopy.STATUS_SCRIPT_OUTDATED else failureMessage(reason),
-        consequence = PastJamsCopy.STATUS_CONSEQUENCE,
-        retryLabel = if (outdated) null else PastJamsCopy.PUBLISH_RETRY,
-        dismissLabel = PastJamsCopy.CLOSE,
+        title = UiText.res(R.string.past_jams_status_failed),
+        message = if (reason == null) UiText.res(R.string.past_jams_status_script_outdated) else failureMessage(reason),
+        consequence = UiText.res(R.string.past_jams_jam_unchanged),
+        retryLabel = if (outdated) null else UiText.res(CoreR.string.list_state_retry),
+        dismissLabel = UiText.res(R.string.past_jams_close),
     )
 }

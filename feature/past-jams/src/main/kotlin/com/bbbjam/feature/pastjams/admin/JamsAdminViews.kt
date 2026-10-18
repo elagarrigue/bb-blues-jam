@@ -26,6 +26,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.pastjams.create.NewJamBlock
 import com.bbbjam.feature.pastjams.edit.DeleteJamDialog
@@ -56,9 +58,9 @@ private const val NEW_JAM_KEY = "new-jam"
 private const val PAST_HEADING_KEY = "past-heading"
 
 @Composable
-private fun SectionHeading(text: String) {
+private fun SectionHeading(text: UiText) {
     Text(
-        text = text,
+        text = text.resolve(),
         style = BluesJamTheme.typography.caption,
         color = JamsAdminDefaults.heading(),
         modifier = Modifier.fillMaxWidth().semantics { heading() },
@@ -66,8 +68,8 @@ private fun SectionHeading(text: String) {
 }
 
 @Composable
-private fun NoFutureLine(text: String) {
-    Text(text = text, style = BluesJamTheme.typography.body, color = JamsAdminDefaults.card().note)
+private fun NoFutureLine(text: UiText) {
+    Text(text = text.resolve(), style = BluesJamTheme.typography.body, color = JamsAdminDefaults.card().note)
 }
 
 /**
@@ -88,7 +90,7 @@ private fun FutureJamCard(jam: FutureJamUiModel, admin: JamsAdminUiModel) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = jam.dateLabel,
+                    text = jam.dateLabel.resolve(),
                     style = typography.songTitle,
                     color = style.date,
                     modifier = Modifier.weight(1f),
@@ -104,15 +106,15 @@ private fun FutureJamCard(jam: FutureJamUiModel, admin: JamsAdminUiModel) {
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                jam.songCount?.let { Text(text = it, style = typography.body, color = style.count) }
+                jam.songCount?.let { Text(text = it.resolve(), style = typography.body, color = style.count) }
             }
             Column(
                 modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
                 verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
-                Text(text = jam.note, style = typography.caption, color = style.note)
-                jam.heldBack?.let { Text(text = it, style = typography.caption, color = style.note) }
-                jam.musicianNote?.let { Text(text = it, style = typography.caption, color = style.note) }
+                Text(text = jam.note.resolve(), style = typography.caption, color = style.note)
+                jam.heldBack?.let { Text(text = it.resolve(), style = typography.caption, color = style.note) }
+                jam.musicianNote?.let { Text(text = it.resolve(), style = typography.caption, color = style.note) }
                 JamControls(jam.controls)
                 JamManageActions(jam.manage)
             }
@@ -140,21 +142,25 @@ private fun PublishConfirmDialog(model: PublishUiModel.Confirming) {
     AlertDialog(
         onDismissRequest = { model.events(PublishUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.title) },
+        title = { Text(text = model.prompt.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
-                Text(text = model.details, style = BluesJamTheme.typography.caption, color = style.body)
-                Text(text = model.reversibleNote, style = BluesJamTheme.typography.caption, color = style.body)
+                Text(text = model.details.resolve(), style = BluesJamTheme.typography.caption, color = style.body)
+                Text(
+                    text = model.reversibleNote.resolve(),
+                    style = BluesJamTheme.typography.caption,
+                    color = style.body,
+                )
             }
         },
         confirmButton = {
             TextButton(onClick = { model.events(PublishUiModel.Event.Confirm) }) {
-                Text(text = model.confirmLabel, color = style.confirm)
+                Text(text = model.confirmLabel.resolve(), color = style.confirm)
             }
         },
         dismissButton = {
             TextButton(onClick = { model.events(PublishUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
+                Text(text = model.cancelLabel.resolve(), color = style.cancel)
             }
         },
     )
@@ -175,9 +181,9 @@ private fun PublishFailureCard(model: PublishUiModel.Failed) {
             modifier = Modifier.padding(start = spacing.md, end = spacing.md, top = spacing.sm),
             verticalArrangement = Arrangement.spacedBy(spacing.xs),
         ) {
-            Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title)
-            Text(text = model.message, style = BluesJamTheme.typography.body, color = style.message)
-            Text(text = model.consequence, style = BluesJamTheme.typography.caption, color = style.message)
+            Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title)
+            Text(text = model.message.resolve(), style = BluesJamTheme.typography.body, color = style.message)
+            Text(text = model.consequence.resolve(), style = BluesJamTheme.typography.caption, color = style.message)
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
                 PublishTextAction(model.retryLabel, Modifier.weight(1f)) { model.events(PublishUiModel.Event.Retry) }
                 PublishTextAction(model.dismissLabel, Modifier.weight(1f)) {
@@ -191,7 +197,7 @@ private fun PublishFailureCard(model: PublishUiModel.Failed) {
 /** An underlined text action (never amber): `Cancelar`, `Reintentar` and `Cerrar`. */
 @Composable
 internal fun PublishTextAction(
-    label: String,
+    label: UiText,
     modifier: Modifier = Modifier,
     color: Color = BluesJamTheme.colors.text,
     onClick: () -> Unit,
@@ -203,7 +209,7 @@ internal fun PublishTextAction(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = label,
+            text = label.resolve(),
             style = BluesJamTheme.typography.body,
             color = color,
             textDecoration = TextDecoration.Underline,

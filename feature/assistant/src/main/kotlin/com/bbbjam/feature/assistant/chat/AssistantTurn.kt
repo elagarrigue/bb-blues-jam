@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import com.bbbjam.core.ui.state.LoadingDots
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.assistant.AssistantDefaults
 import com.bbbjam.feature.assistant.ReplyUiModel
@@ -41,7 +43,7 @@ internal fun Turn(turn: TurnUiModel) {
     Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm)) {
         val style = AssistantDefaults.requestCard()
         Card(style) {
-            Caption(turn.authorLabel, style.caption)
+            Caption(turn.authorLabel.resolve(), style.caption)
             Text(text = turn.request, style = BluesJamTheme.typography.body, color = style.text)
         }
         Reply(turn.reply)
@@ -83,9 +85,9 @@ private fun Reply(reply: ReplyUiModel) {
 private fun PendingContent(reply: ReplyUiModel.Pending, notice: AssistantDefaults.NoticeStyle) {
     // Songs that already arrived, then the only moving element in the app (DESIGN.md M1 exception): one
     // polite node announces the wait. The songs are plain nodes, not live regions.
-    reply.songsHeading?.let { SongList(it, reply.songs, BluesJamTheme.colors.textMuted) }
-    LoadingDots(description = reply.loadingLabel)
-    TextAction(reply.cancelLabel, notice.action) { reply.events(ReplyUiModel.Pending.Event.Cancel) }
+    reply.songsHeading?.let { SongList(it.resolve(), reply.songs, BluesJamTheme.colors.textMuted) }
+    LoadingDots(description = reply.loadingLabel.resolve())
+    TextAction(reply.cancelLabel.resolve(), notice.action) { reply.events(ReplyUiModel.Pending.Event.Cancel) }
 }
 
 /** An answer that broke or was cancelled: the songs that arrived, marked incomplete, and "Reintentar". */
@@ -95,37 +97,37 @@ private fun IncompleteContent(
     card: AssistantDefaults.CardStyle,
     notice: AssistantDefaults.NoticeStyle,
 ) {
-    SongList(reply.heading, reply.songs, card.caption)
+    SongList(reply.heading.resolve(), reply.songs, card.caption)
     val color = if (reply.isCancelled) notice.cancelled else notice.failure
-    Text(text = reply.message, style = BluesJamTheme.typography.body, color = color)
-    reply.retry?.let { TextAction(it.label, notice.action) { it.events(RetryUiModel.Event.Retry) } }
+    Text(text = reply.message.resolve(), style = BluesJamTheme.typography.body, color = color)
+    reply.retry?.let { TextAction(it.label.resolve(), notice.action) { it.events(RetryUiModel.Event.Retry) } }
 }
 
 @Composable
-private fun NoticeContent(message: String, color: Color, retry: RetryUiModel?, notice: AssistantDefaults.NoticeStyle) {
-    Text(text = message, style = BluesJamTheme.typography.body, color = color)
-    retry?.let { TextAction(it.label, notice.action) { it.events(RetryUiModel.Event.Retry) } }
+private fun NoticeContent(message: UiText, color: Color, retry: RetryUiModel?, notice: AssistantDefaults.NoticeStyle) {
+    Text(text = message.resolve(), style = BluesJamTheme.typography.body, color = color)
+    retry?.let { TextAction(it.label.resolve(), notice.action) { it.events(RetryUiModel.Event.Retry) } }
 }
 
 @Composable
 private fun ProposalContent(reply: ReplyUiModel.Proposal, card: AssistantDefaults.CardStyle) {
     val typography = BluesJamTheme.typography
     val spacing = BluesJamTheme.spacing
-    Caption(reply.authorLabel, card.caption)
+    Caption(reply.authorLabel.resolve(), card.caption)
     reply.jam?.let { JamCard(it) }
-    reply.jamNote?.let { Text(text = it, style = typography.body, color = JamDefaults.rejectionNote()) }
+    reply.jamNote?.let { Text(text = it.resolve(), style = typography.body, color = JamDefaults.rejectionNote()) }
     reply.heading?.let { headingText ->
-        SongList(headingText, reply.songs, card.caption)
+        SongList(headingText.resolve(), reply.songs, card.caption)
     }
     Text(text = reply.message, style = typography.body, color = card.text)
     reply.questionsHeading?.let { headingText ->
-        Caption(headingText, card.caption, Modifier.semantics { heading() })
+        Caption(headingText.resolve(), card.caption, Modifier.semantics { heading() })
         reply.questions.forEach { question ->
             Text(text = "• $question", style = typography.body, color = card.text)
         }
     }
     reply.discardedNote?.let { note ->
-        Text(text = note, style = typography.caption, color = AssistantDefaults.notice().caption)
+        Text(text = note.resolve(), style = typography.caption, color = AssistantDefaults.notice().caption)
     }
     ApplyContent(reply.apply, reply.summary, reply.removals, reply.order)
 }
@@ -159,9 +161,9 @@ internal fun StatusBanner(banner: StatusUiModel.Banner, modifier: Modifier = Mod
             verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
         ) {
             Column(modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
-                Text(text = banner.message, style = BluesJamTheme.typography.body, color = style.text)
+                Text(text = banner.message.resolve(), style = BluesJamTheme.typography.body, color = style.text)
             }
-            TextAction(banner.retryLabel, style.action) { banner.events(StatusUiModel.Banner.Event.Retry) }
+            TextAction(banner.retryLabel.resolve(), style.action) { banner.events(StatusUiModel.Banner.Event.Retry) }
         }
     }
 }

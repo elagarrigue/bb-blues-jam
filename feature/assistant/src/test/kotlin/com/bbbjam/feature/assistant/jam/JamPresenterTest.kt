@@ -10,12 +10,16 @@ import com.bbbjam.core.assistant.ProposedJam
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.model.JamStatus
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.ChatScope
 import com.bbbjam.feature.assistant.CreateCall
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
 import com.bbbjam.feature.assistant.JAM_DATE
+import com.bbbjam.feature.assistant.JAM_DAY
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.ReplyUiModel
 import com.bbbjam.feature.assistant.ScriptedJamCreator
 import com.bbbjam.feature.assistant.SettableJamsRepository
@@ -33,8 +37,10 @@ import com.bbbjam.feature.assistant.snapshot
 import com.bbbjam.feature.assistant.song
 import com.bbbjam.feature.assistant.testApplier
 import com.bbbjam.feature.assistant.testPresenter
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -99,14 +105,14 @@ class JamPresenterTest {
             chat.ask("uno", jamProposal())
             flow(chat).test {
                 val card = awaitProposal { it.jam?.action != null }.jam!!
-                assertEquals("Nueva jam", card.heading)
-                assertEquals("Sábado 28 de noviembre de 2026", card.date)
-                assertEquals("21:30 · La Macanuda", card.detail)
+                assertEquals(UiText.res(R.string.assistant_jam_card_heading), card.heading)
+                assertEquals(NOV_28_WORDS, card.date)
+                assertEquals(UiText.res(R.string.assistant_jam_detail, "21:30", "La Macanuda"), card.detail)
                 assertEquals(
-                    "Queda en espera: la próxima jam sigue siendo la del sábado 31 de octubre.",
+                    UiText.res(R.string.assistant_jam_held_back_note, JAM_DAY),
                     card.note,
                 )
-                assertEquals("Crear la jam", card.action!!.label)
+                assertEquals(UiText.res(R.string.assistant_jam_create), card.action!!.label)
                 assertTrue(card.action!!.enabled)
                 assertNull(card.result)
 
@@ -119,7 +125,7 @@ class JamPresenterTest {
                 val answered = awaitChat { it.turns.size == 2 && it.turns[1].card()?.action != null }
                 assertNull(answered.turns[0].card()!!.action)
                 assertNull(answered.turns[0].card()!!.note)
-                assertEquals("Sábado 28 de noviembre de 2026", answered.turns[0].card()!!.date)
+                assertEquals(NOV_28_WORDS, answered.turns[0].card()!!.date)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -134,19 +140,28 @@ class JamPresenterTest {
             ready.jam!!.action!!.events(JamActionUiModel.Event.Request)
 
             val dialog = awaitProposal { it.jam?.action?.confirmation != null }.jam!!.action!!.confirmation!!
-            assertEquals("¿Crear la jam?", dialog.title)
+            assertEquals(UiText.res(R.string.assistant_jam_dialog_title), dialog.title)
             assertEquals(
                 listOf(
-                    "Fecha: sábado 28 de noviembre de 2026",
-                    "Hora: 21:30",
-                    "Lugar: La Macanuda",
-                    "Se crea como borrador: los músicos no la ven hasta que la pases a creada o publiques la lista.",
-                    "La próxima jam sigue siendo la del sábado 31 de octubre; esta queda en espera hasta que pase.",
+                    UiText.res(
+                        R.string.assistant_jam_dialog_date,
+                        UiText.res(
+                            R.string.assistant_jam_date_in_words_lower,
+                            SpanishDateNames.dayLower(DayOfWeek.SATURDAY),
+                            28,
+                            SpanishDateNames.month(Month.NOVEMBER),
+                            2026,
+                        ),
+                    ),
+                    UiText.res(R.string.assistant_jam_dialog_time, "21:30"),
+                    UiText.res(R.string.assistant_jam_dialog_venue, "La Macanuda"),
+                    UiText.res(R.string.assistant_jam_draft_line),
+                    UiText.res(R.string.assistant_jam_held_back_line, JAM_DAY),
                 ),
                 dialog.lines,
             )
-            assertEquals("Crear la jam", dialog.confirmLabel)
-            assertEquals("Cancelar", dialog.cancelLabel)
+            assertEquals(UiText.res(R.string.assistant_jam_create), dialog.confirmLabel)
+            assertEquals(UiText.res(R.string.assistant_cancel), dialog.cancelLabel)
             assertTrue(creator.calls.isEmpty())
 
             dialog.events(ConfirmationUiModel.Event.Cancel)
@@ -177,8 +192,7 @@ class JamPresenterTest {
             val earlier = awaitProposal { it.jam?.note != null }.jam!!
             assertNull(earlier.action)
             assertEquals(
-                "Esa fecha es anterior a la próxima jam (sábado 31 de octubre). " +
-                    "Si querés adelantarla, cambiá la fecha de esa jam en la pestaña Jams.",
+                UiText.res(R.string.assistant_jam_blocked_earlier, JAM_DAY),
                 earlier.note,
             )
             cancelAndIgnoreRemainingEvents()
@@ -189,7 +203,7 @@ class JamPresenterTest {
         flow(taken).test {
             val exists = awaitProposal { it.jam?.note != null }.jam!!
             assertNull(exists.action)
-            assertEquals("Ya hay una jam con esa fecha. Pedime otra fecha.", exists.note)
+            assertEquals(UiText.res(R.string.assistant_jam_blocked_exists), exists.note)
             cancelAndIgnoreRemainingEvents()
         }
         assertTrue(creator.calls.isEmpty())
@@ -205,7 +219,7 @@ class JamPresenterTest {
             dialog.events(ConfirmationUiModel.Event.Confirm)
             dialog.events(ConfirmationUiModel.Event.Confirm)
 
-            val done = awaitProposal { it.jam?.result?.text == "Jam creada como borrador." }.jam!!
+            val done = awaitProposal { it.jam?.result?.text == UiText.res(R.string.assistant_jam_created) }.jam!!
             assertEquals(ApplyTone.SUCCESS, done.result!!.tone)
             assertNull(done.action)
             cancelAndIgnoreRemainingEvents()
@@ -226,9 +240,12 @@ class JamPresenterTest {
             )
 
             val failed = awaitProposal { it.jam?.result?.tone == ApplyTone.FAILURE }.jam!!
-            assertEquals("No se pudo crear: ya hay una jam con esa fecha en la planilla.", failed.result!!.text)
+            assertEquals(
+                UiText.res(R.string.assistant_jam_failure, UiText.res(R.string.assistant_jam_reason_jam_exists)),
+                failed.result!!.text,
+            )
             assertEquals(ApplyTone.FAILURE, failed.result!!.tone)
-            assertEquals("Reintentar", failed.action!!.label)
+            assertEquals(UiText.res(R.string.assistant_jam_create_retry), failed.action!!.label)
             assertEquals(0, jams.refreshes)
 
             creator.outcome = CreateJamOutcome.ScriptOutdated
@@ -236,11 +253,9 @@ class JamPresenterTest {
             awaitProposal { it.jam?.action?.confirmation != null }.jam!!.action!!.confirmation!!.events(
                 ConfirmationUiModel.Event.Confirm,
             )
-            val outdated = awaitProposal { it.jam?.result?.text?.startsWith("El script") == true }.jam!!
-            assertEquals(
-                "El script de la planilla todavía no sabe crear jams. Actualizalo con la guía y probá de nuevo.",
-                outdated.result!!.text,
-            )
+            val outdatedText = UiText.res(R.string.assistant_jam_script_outdated)
+            val outdated = awaitProposal { it.jam?.result?.text == outdatedText }.jam!!
+            assertEquals(outdatedText, outdated.result!!.text)
             cancelAndIgnoreRemainingEvents()
         }
         assertEquals(2, creator.calls.size)
@@ -255,9 +270,9 @@ class JamPresenterTest {
             val targets = reply.apply as ApplyUiModel.Targets
             assertEquals(
                 listOf(
-                    "Agregar a la próxima jam",
-                    "Reemplazar la lista de la próxima jam",
-                    "Crear una jam nueva con esta lista",
+                    UiText.res(R.string.assistant_apply_add),
+                    UiText.res(R.string.assistant_replace_action),
+                    UiText.res(R.string.assistant_create_action),
                 ),
                 targets.actions.map { it.label },
             )
@@ -274,7 +289,7 @@ class JamPresenterTest {
         chat.ask("uno", proposal(songs = 0).copy(jamRejection = JamRejection.PAST_DATE))
         flow(chat).test {
             val reply = awaitProposal { it.jamNote != null }
-            assertEquals("La fecha propuesta ya pasó; pedile otra.", reply.jamNote)
+            assertEquals(UiText.res(R.string.assistant_jam_rejected_past), reply.jamNote)
             assertNull(reply.jam)
             cancelAndIgnoreRemainingEvents()
         }
@@ -309,3 +324,12 @@ class JamPresenterTest {
         }
     }
 }
+
+/** "Sábado 28 de noviembre de 2026", the date of the proposed jam. */
+private val NOV_28_WORDS: UiText = UiText.res(
+    R.string.assistant_jam_date_in_words,
+    SpanishDateNames.day(DayOfWeek.SATURDAY),
+    28,
+    SpanishDateNames.month(Month.NOVEMBER),
+    2026,
+)

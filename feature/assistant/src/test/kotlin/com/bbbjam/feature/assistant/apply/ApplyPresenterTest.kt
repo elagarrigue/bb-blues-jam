@@ -7,10 +7,14 @@ import app.cash.turbine.test
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.ChatScope
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
+import com.bbbjam.feature.assistant.JAM_DAY
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.ReplyUiModel
 import com.bbbjam.feature.assistant.SettableJamsRepository
 import com.bbbjam.feature.assistant.TurnUiModel
@@ -23,6 +27,7 @@ import com.bbbjam.feature.assistant.run.ApplyMode
 import com.bbbjam.feature.assistant.snapshot
 import com.bbbjam.feature.assistant.testApplier
 import com.bbbjam.feature.assistant.testPresenter
+import com.bbbjam.feature.assistant.themesOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +91,7 @@ class ApplyPresenterTest {
         chat.ask("uno", proposal(songs = 2))
         flow(chat).test {
             val first = awaitProposal { it.apply is ApplyUiModel.Targets }
-            assertEquals("Agregar a la próxima jam", first.add().label)
+            assertEquals(UiText.res(R.string.assistant_apply_add), first.add().label)
             assertTrue(first.add().enabled)
 
             val second = assistant.expectReply()
@@ -122,18 +127,17 @@ class ApplyPresenterTest {
             ready.add().events(TargetActionUiModel.Event.Request)
 
             val dialog = awaitProposal { it.targets().confirmation != null }.targets().confirmation!!
-            assertEquals("¿Cargar esta lista?", dialog.title)
+            assertEquals(UiText.res(R.string.assistant_apply_add_dialog_title), dialog.title)
             assertEquals(
                 listOf(
-                    "Se van a agregar 3 temas al final de la lista de la jam del sábado 31 de octubre, " +
-                        "en este orden y con la tonalidad del catálogo. Después podés cambiar cualquier tonalidad.",
-                    "La lista ya tiene 2 temas; los nuevos van después.",
-                    "1 ya está en la lista y no se agrega: Tema 2.",
+                    UiText.plural(R.plurals.assistant_apply_add_intro, 3, 3, JAM_DAY),
+                    UiText.res(R.string.assistant_apply_add_existing, themesOf(2)),
+                    UiText.plural(R.plurals.assistant_apply_add_skipped, 1, 1, "Tema 2"),
                 ),
                 dialog.lines,
             )
-            assertEquals("Agregar 3 temas", dialog.confirmLabel)
-            assertEquals("Cancelar", dialog.cancelLabel)
+            assertEquals(UiText.res(R.string.assistant_apply_add_confirm, themesOf(3)), dialog.confirmLabel)
+            assertEquals(UiText.res(R.string.assistant_cancel), dialog.cancelLabel)
             assertTrue(adder.calls.isEmpty())
 
             dialog.events(ConfirmationUiModel.Event.Cancel)
@@ -151,11 +155,11 @@ class ApplyPresenterTest {
             awaitProposal { it.apply is ApplyUiModel.Targets }.add().events(TargetActionUiModel.Event.Request)
             val dialog = awaitProposal { it.targets().confirmation != null }.targets().confirmation!!
             assertEquals(
-                "La lista ya está publicada: los músicos van a ver los temas apenas se agreguen.",
+                UiText.res(R.string.assistant_apply_add_published),
                 dialog.lines.last(),
             )
-            assertEquals("Se va a agregar 1 tema", dialog.lines.first().substringBefore(" al final"))
-            assertEquals("Agregar 1 tema", dialog.confirmLabel)
+            assertEquals(UiText.plural(R.plurals.assistant_apply_add_intro, 1, 1, JAM_DAY), dialog.lines.first())
+            assertEquals(UiText.res(R.string.assistant_apply_add_confirm, themesOf(1)), dialog.confirmLabel)
         }
     }
 
@@ -171,7 +175,7 @@ class ApplyPresenterTest {
 
             val done = awaitProposal { it.summary != null && it.summary!!.stopLabel == null }
             assertEquals(
-                "Listo: se agregaron 3 temas a la jam del sábado 31 de octubre.",
+                UiText.plural(R.plurals.assistant_apply_success, 3, 3, JAM_DAY),
                 done.summary!!.text,
             )
             assertEquals(ApplyTone.SUCCESS, done.summary!!.tone)
@@ -194,14 +198,25 @@ class ApplyPresenterTest {
             )
 
             val done = awaitProposal { it.summary?.stopLabel == null && it.summary != null }
-            assertEquals("Se agregaron 2 de 3 temas. 1 no se agregó.", done.summary!!.text)
+            assertEquals(
+                UiText.res(
+                    R.string.assistant_apply_partial,
+                    2,
+                    themesOf(3),
+                    UiText.plural(R.plurals.assistant_apply_failed_count, 1),
+                ),
+                done.summary!!.text,
+            )
             assertEquals(ApplyTone.FAILURE, done.summary!!.tone)
             assertEquals(
-                "No se agregó: Ese tema ya no está en el catálogo.",
+                UiText.res(
+                    R.string.assistant_apply_song_failure,
+                    UiText.res(CoreR.string.write_failure_not_in_catalog),
+                ),
                 done.songs[1].applyStatus!!.text,
             )
             assertEquals(ApplyStatusKind.FAILED, done.songs[1].applyStatus!!.kind)
-            assertEquals("Reintentar los que faltan", done.add().label)
+            assertEquals(UiText.res(R.string.assistant_apply_add_retry), done.add().label)
         }
     }
 
@@ -218,8 +233,12 @@ class ApplyPresenterTest {
 
             val done = awaitProposal { it.summary != null && it.summary!!.stopLabel == null }
             assertEquals(
-                "Se cortó la carga: se agregaron 0 de 3 temas. " +
-                    "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar.",
+                UiText.res(
+                    R.string.assistant_apply_aborted,
+                    0,
+                    themesOf(3),
+                    UiText.res(CoreR.string.write_failure_access_refused),
+                ),
                 done.summary!!.text,
             )
             assertEquals(1, adder.calls.size)
@@ -227,7 +246,7 @@ class ApplyPresenterTest {
                 listOf(ApplyStatusKind.FAILED, ApplyStatusKind.NOT_ATTEMPTED, ApplyStatusKind.NOT_ATTEMPTED),
                 done.songs.map { it.applyStatus!!.kind },
             )
-            assertEquals("Sin intentar", done.songs[2].applyStatus!!.text)
+            assertEquals(UiText.res(R.string.assistant_apply_status_not_attempted), done.songs[2].applyStatus!!.text)
         }
     }
 
@@ -244,15 +263,15 @@ class ApplyPresenterTest {
             )
 
             val running = awaitProposal { it.summary?.stopLabel != null && it.songs[1].applyStatus != null }
-            assertEquals("Detener", running.summary!!.stopLabel)
-            assertEquals("Agregando…", running.songs[1].applyStatus!!.text)
+            assertEquals(UiText.res(R.string.assistant_apply_stop), running.summary!!.stopLabel)
+            assertEquals(UiText.res(R.string.assistant_apply_status_adding), running.songs[1].applyStatus!!.text)
             assertEquals(ApplyUiModel.None, running.apply)
 
             running.summary!!.events(ApplySummaryUiModel.Event.Stop)
             gate.complete(Unit)
 
             val done = awaitProposal { it.summary != null && it.summary!!.stopLabel == null }
-            assertEquals("Detuviste la carga: se agregaron 2 de 4 temas.", done.summary!!.text)
+            assertEquals(UiText.res(R.string.assistant_apply_stopped, 2, themesOf(4)), done.summary!!.text)
             assertEquals(ApplyTone.MUTED, done.summary!!.tone)
             assertEquals(2, adder.calls.size)
         }
@@ -261,9 +280,9 @@ class ApplyPresenterTest {
     @Test
     fun `blocked states draw a note and no button, and an unread snapshot draws nothing`() = runTest {
         val cases = listOf(
-            snapshot(upcoming = null) to "No hay una próxima jam: podés crear una con esta lista.",
+            snapshot(upcoming = null) to UiText.res(R.string.assistant_create_note_no_upcoming),
             snapshot(jam(JamStatus.DRAFT, com.bbbjam.core.model.Setlist.Withheld)) to
-                "No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé.",
+                UiText.res(R.string.assistant_apply_blocked_unreadable),
         )
         for ((snapshot, note) in cases) {
             val blockedJams = SettableJamsRepository(snapshot)
@@ -288,7 +307,7 @@ class ApplyPresenterTest {
                 listOf(false, false),
                 targets.actions.filter { it.target != ApplyMode.CREATE }.map { it.enabled },
             )
-            assertEquals(listOf("La lista de la próxima jam ya es igual a esta."), targets.notes)
+            assertEquals(listOf(UiText.res(R.string.assistant_replace_note_equal)), targets.notes)
         }
         val unread = SettableJamsRepository(null)
         val chat = chat()

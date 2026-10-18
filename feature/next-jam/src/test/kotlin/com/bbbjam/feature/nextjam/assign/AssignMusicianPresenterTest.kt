@@ -19,7 +19,10 @@ import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackUiModel
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.fullName
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
+import com.bbbjam.feature.nextjam.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,9 +49,12 @@ class AssignMusicianPresenterTest {
         }.test {
             jams.snapshots.emit(snapshot())
             val content = expectMostRecentItem() as AssignMusicianUiModel.Content
-            assertEquals("Anotar músico", content.title)
+            assertEquals(UiText.res(R.string.assign_musician_title), content.title)
             assertEquals("Crossroads", content.songTitle)
-            assertEquals("Guitarra 2", content.slotLabel)
+            assertEquals(
+                UiText.res(R.string.assign_musician_slot_numbered, Instrument.GUITAR.fullName(), 2),
+                content.slotLabel,
+            )
             assertEquals(2, content.ordinal)
             assertFalse(content.submitEnabled)
             content.events(AssignMusicianUiModel.Content.Event.Submit)
@@ -56,7 +62,7 @@ class AssignMusicianPresenterTest {
 
             content.events(AssignMusicianUiModel.Content.Event.NameChanged("Tincho;"))
             val invalid = expectMostRecentItem() as AssignMusicianUiModel.Content
-            assertEquals(AssignMusicianCopy.INVALID_NAME, invalid.validationMessage)
+            assertEquals(UiText.res(R.string.next_jam_failure_invalid_name), invalid.validationMessage)
             invalid.events(AssignMusicianUiModel.Content.Event.Submit)
             assertTrue(setlist.assignmentCalls.isEmpty())
             cancelAndIgnoreRemainingEvents()

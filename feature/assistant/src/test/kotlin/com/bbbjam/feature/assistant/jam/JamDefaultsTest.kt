@@ -1,14 +1,18 @@
 package com.bbbjam.feature.assistant.jam
 
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.ui.text.WriteFailureCopy
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamColors
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.apply.ApplyDefaults
-import com.bbbjam.feature.assistant.apply.ApplyOutcomeCopy
 import com.bbbjam.feature.assistant.apply.ApplyTone
 import com.bbbjam.feature.assistant.apply.summary
 import com.bbbjam.feature.assistant.run.JamFailure
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.Month
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -47,24 +51,34 @@ class JamDefaultsTest {
     }
 
     @Test
-    fun `the copy uses vos and the documented sentences`() {
-        assertEquals("Sábado 28 de noviembre de 2026", JamCopy.dateInWords(LocalDate.of(2026, 11, 28)))
-        assertEquals("21:05", JamCopy.time(java.time.LocalTime.of(21, 5)))
+    fun `the texts name the documented resources`() {
         assertEquals(
-            "No se pudo crear: ${WriteFailureCopy.ACCESS_REFUSED}",
-            JamCopy.failure(JamFailure.Write(WriteOutcome.AccessRefused)),
+            UiText.res(
+                R.string.assistant_jam_date_in_words,
+                SpanishDateNames.day(DayOfWeek.SATURDAY),
+                28,
+                SpanishDateNames.month(Month.NOVEMBER),
+                2026,
+            ),
+            jamDateInWordsText(LocalDate.of(2026, 11, 28)),
+        )
+        assertEquals("21:05", jamTime(java.time.LocalTime.of(21, 5)))
+        assertEquals(
+            UiText.res(R.string.assistant_jam_failure, UiText.res(CoreR.string.write_failure_access_refused)),
+            jamFailureText(JamFailure.Write(WriteOutcome.AccessRefused)),
         )
         assertEquals(
-            "No se pudo crear: ya hay una pestaña con esa fecha en la planilla; revisala antes de crear la jam.",
-            JamCopy.failure(JamFailure.Write(WriteOutcome.Rejected("tab_exists"))),
+            UiText.res(R.string.assistant_jam_failure, UiText.res(R.string.assistant_jam_reason_tab_exists)),
+            jamFailureText(JamFailure.Write(WriteOutcome.Rejected("tab_exists"))),
         )
         assertEquals(
-            "No se pudo crear: esa fecha ya pasó.",
-            JamCopy.failure(JamFailure.Write(WriteOutcome.Rejected("past_date"))),
+            UiText.res(R.string.assistant_jam_failure, UiText.res(R.string.assistant_jam_reason_past_date)),
+            jamFailureText(JamFailure.Write(WriteOutcome.Rejected("past_date"))),
         )
         assertEquals(
-            "No se pudo crear: la planilla rechazó los datos de la jam.",
-            JamCopy.failure(JamFailure.Write(WriteOutcome.Rejected("invalid_venue"))),
+            UiText.res(R.string.assistant_jam_failure, UiText.res(R.string.assistant_jam_reason_invalid_data)),
+            jamFailureText(JamFailure.Write(WriteOutcome.Rejected("invalid_venue"))),
         )
+        assertEquals(UiText.res(R.string.assistant_jam_script_outdated), jamFailureText(JamFailure.ScriptOutdated))
     }
 }

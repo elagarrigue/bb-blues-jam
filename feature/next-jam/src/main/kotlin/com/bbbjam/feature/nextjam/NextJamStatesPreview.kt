@@ -14,6 +14,7 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.Duration
 import java.time.Instant
@@ -28,13 +29,19 @@ import java.time.LocalTime
  */
 @Composable
 internal fun StatePreview(snapshot: JamsSnapshot?) {
-    val model = snapshot?.toUiModel(PREVIEW_TODAY, now = PREVIEW_NOW) ?: NextJamUiModel.Loading(NextJamCopy.LOADING)
+    val model =
+        snapshot?.toUiModel(PREVIEW_TODAY, now = PREVIEW_NOW)
+            ?: NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
     BluesJamTheme { NextJamContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) }
 }
 
 /** 2 October 2026, 12:00 in Buenos Aires. */
 private val PREVIEW_NOW: Instant = Instant.parse("2026-10-02T15:00:00Z")
-private val PREVIEW_TODAY: LocalDate = LocalDate.of(2026, 10, 2)
+internal val PREVIEW_TODAY: LocalDate = LocalDate.of(2026, 10, 2)
+
+/** The preview jam's date and start (31 October 2026, 21:00). */
+internal val PREVIEW_DATE: LocalDate = LocalDate.of(2026, 10, 31)
+internal val PREVIEW_START: LocalTime = LocalTime.of(21, 0)
 internal val THREE_HOURS_AGO: Instant = PREVIEW_NOW.minus(Duration.ofHours(3))
 
 private fun previewSong(position: Int, title: String, key: String) = JamSong(

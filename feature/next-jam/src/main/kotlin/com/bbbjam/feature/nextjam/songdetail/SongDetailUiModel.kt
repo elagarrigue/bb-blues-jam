@@ -4,6 +4,7 @@ import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.LineupEditorUiModel
@@ -23,7 +24,7 @@ internal sealed interface SongDetailUiModel : UiModel {
      * not-found frame for a draft's song). Only the back control is drawn; [description] is for
      * screen readers.
      */
-    data class Loading(val description: String, override val back: BackUiModel) : SongDetailUiModel
+    data class Loading(val description: UiText, override val back: BackUiModel) : SongDetailUiModel
 
     /** The jam or the row is gone, or the setlist is not shown: the empty block. Never an error. */
     data class NotFound(val empty: EmptyStateUiModel, override val back: BackUiModel) : SongDetailUiModel
@@ -39,9 +40,9 @@ internal sealed interface SongDetailUiModel : UiModel {
     data class Song(
         val title: String,
         val artist: String?,
-        val keyLabel: String,
+        val keyLabel: UiText,
         val key: String,
-        val keyDescription: String,
+        val keyDescription: UiText,
         val lineup: LineupPanelUiModel,
         override val back: BackUiModel,
         val admin: SongDetailAdminUiModel? = null,
@@ -57,7 +58,7 @@ internal sealed interface SongDetailUiModel : UiModel {
  * lineup panel.
  */
 internal data class SongDetailAdminUiModel(
-    val saveStatus: String?,
+    val saveStatus: UiText?,
     val setKey: SetKeyActionUiModel,
     val lineup: LineupEditorUiModel,
     val extraParticipants: ExtraParticipantEditorUiModel,

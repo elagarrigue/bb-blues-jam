@@ -8,7 +8,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.nextjam.R
 
 @Preview
 @Composable
@@ -20,14 +22,14 @@ private fun AddSongScreenPreview() {
         key = key,
         keyDescription = SongListText.keyDescription(key),
         isListed = listed,
-        listedLabel = if (listed) AddSongCopy.ALREADY_LISTED else null,
-        pickLabel = AddSongCopy.PICK_LABEL,
+        listedLabel = if (listed) UiText.res(R.string.add_song_already_listed) else null,
+        pickLabel = UiText.res(R.string.add_song_pick_label),
         events = EventHandler {},
     )
     val model = AddSongUiModel(
         back = backUiModel {},
-        title = AddSongCopy.TITLE,
-        search = SearchFieldUiModel("", AddSongCopy.SEARCH_LABEL, EventHandler {}),
+        title = UiText.res(R.string.add_song_title),
+        search = SearchFieldUiModel("", UiText.res(R.string.add_song_search_label), EventHandler {}),
         content = AddSongContentUiModel.Songs(
             listOf(
                 row("crossroads", "Crossroads", "Eric Clapton", "A"),

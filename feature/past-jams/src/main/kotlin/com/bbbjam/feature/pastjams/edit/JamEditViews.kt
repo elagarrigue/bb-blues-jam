@@ -23,6 +23,7 @@ import com.bbbjam.core.ui.jamform.JamFormDialog
 import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
 import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.pastjams.admin.JamsAdminDefaults
 import com.bbbjam.feature.pastjams.admin.PublishTextAction
@@ -38,7 +39,7 @@ import com.bbbjam.feature.pastjams.status.UnpublishDialog
 internal fun JamManageActions(model: JamManageUiModel) {
     model.sending?.let { line ->
         Text(
-            text = line,
+            text = line.resolve(),
             style = BluesJamTheme.typography.body,
             color = JamsAdminDefaults.status(),
             modifier = Modifier
@@ -65,9 +66,9 @@ private fun JamEditFailureCard(failure: JamEditFailureUiModel, events: EventHand
             modifier = Modifier.padding(start = spacing.md, end = spacing.md, top = spacing.sm),
             verticalArrangement = Arrangement.spacedBy(spacing.xs),
         ) {
-            Text(text = failure.title, style = BluesJamTheme.typography.body, color = style.title)
-            Text(text = failure.message, style = BluesJamTheme.typography.body, color = style.message)
-            Text(text = failure.consequence, style = BluesJamTheme.typography.caption, color = style.message)
+            Text(text = failure.title.resolve(), style = BluesJamTheme.typography.body, color = style.title)
+            Text(text = failure.message.resolve(), style = BluesJamTheme.typography.body, color = style.message)
+            Text(text = failure.consequence.resolve(), style = BluesJamTheme.typography.caption, color = style.message)
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
                 failure.retryLabel?.let { label ->
                     PublishTextAction(label, color = style.action) { events(JamManageUiModel.Event.Retry(failure.id)) }
@@ -120,22 +121,22 @@ internal fun DeleteJamDialog(model: DeleteJamUiModel) {
     AlertDialog(
         onDismissRequest = { model.events(DeleteJamUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = model.title, style = BluesJamTheme.typography.body, color = style.title) },
+        title = { Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
                 model.lines.forEach { line ->
-                    Text(text = line, style = BluesJamTheme.typography.caption, color = style.body)
+                    Text(text = line.resolve(), style = BluesJamTheme.typography.caption, color = style.body)
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = { model.events(DeleteJamUiModel.Event.Confirm) }) {
-                Text(text = model.confirmLabel, color = style.confirm)
+                Text(text = model.confirmLabel.resolve(), color = style.confirm)
             }
         },
         dismissButton = {
             TextButton(onClick = { model.events(DeleteJamUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
+                Text(text = model.cancelLabel.resolve(), color = style.cancel)
             }
         },
     )
@@ -145,10 +146,12 @@ internal fun DeleteJamDialog(model: DeleteJamUiModel) {
 @Composable
 internal fun JamManageIcons(model: JamManageUiModel) {
     val colors = JamsAdminDefaults.icons()
+    val editDescription = model.edit.description.resolve()
+    val deleteDescription = model.delete?.description?.resolve()
     Row {
         IconRowAction(
             icon = IconRowActionIcon.Edit,
-            contentDescription = model.edit.description,
+            contentDescription = editDescription,
             tint = colors.edit,
             mutedTint = colors.muted,
             enabled = model.edit.enabled,
@@ -156,7 +159,7 @@ internal fun JamManageIcons(model: JamManageUiModel) {
         model.delete?.let { delete ->
             IconRowAction(
                 icon = IconRowActionIcon.Delete,
-                contentDescription = delete.description,
+                contentDescription = checkNotNull(deleteDescription),
                 tint = colors.delete,
                 mutedTint = colors.muted,
                 enabled = delete.enabled,

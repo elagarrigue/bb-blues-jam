@@ -21,19 +21,22 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.filter.FilterChipUiModel
 import com.bbbjam.core.ui.lineup.LineupLineEvent
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.AddSongActionUiModel
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
 import com.bbbjam.feature.nextjam.PendingRowUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.SongRowAdminUiModel
+import com.bbbjam.feature.nextjam.chipName
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.toUiModel
 import com.bbbjam.feature.nextjam.writes
@@ -51,8 +54,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * `admin-add-song-to-setlist` Part B: the admin's layer on Próxima jam. The copy is written out from
- * the approved table (C1), never read from [NextJamCopy].
+ * `admin-add-song-to-setlist` Part B: the admin's layer on Próxima jam. The texts are
+ * `UiText` values written out with their resource ids (C1).
  */
 class NextJamAdminTest {
     private val repository = FakeJamsRepository()
@@ -96,10 +99,10 @@ class NextJamAdminTest {
 
         assertEquals(listOf("Red House", "Boogie"), (model.setlist as SetlistUiModel.Songs).rows.map { it.title })
         val admin = checkNotNull(model.admin)
-        assertEquals("Borrador", admin.status.badge.label)
-        assertEquals("Los músicos todavía no ven esta jam.", admin.status.note)
-        assertEquals("El estado y las fechas se manejan en la pestaña Jams.", admin.status.hint)
-        assertEquals("Agregar tema", admin.addSong?.label)
+        assertEquals(UiText.res(CoreR.string.jam_status_draft), admin.status.badge.label)
+        assertEquals(UiText.res(R.string.next_jam_note_draft), admin.status.note)
+        assertEquals(UiText.res(R.string.next_jam_status_hint), admin.status.hint)
+        assertEquals(UiText.res(R.string.next_jam_add_song), admin.addSong?.label)
         assertEquals(emptyList<PendingRowUiModel>(), admin.pending)
         assertEquals(emptyList<AddFailureUiModel>(), admin.failures)
 
@@ -116,7 +119,7 @@ class NextJamAdminTest {
         val rows = (admin.setlist as SetlistUiModel.Songs).rows
         val first = checkNotNull(rows.first().admin)
         assertTrue(first.removal is RemovalUiModel.Idle)
-        assertEquals("Subir", first.move?.up?.label)
+        assertEquals(UiText.res(R.string.next_jam_move_up), first.move?.up?.label)
         assertFalse(checkNotNull(first.move).up.enabled)
         assertTrue(checkNotNull(first.move).down.enabled)
         assertNull(first.saveStatus)
@@ -133,14 +136,14 @@ class NextJamAdminTest {
     fun `a published jam shows its badge, and bad setlists hide the add button`() {
         val published = snapshot(jam(Setlist.Available(listOf(redHouse)), JamStatus.PUBLISHED))
             .toUiModel(today, admin = adminState()).asJam()
-        assertEquals("Publicada", published.admin?.status?.badge?.label)
+        assertEquals(UiText.res(CoreR.string.jam_status_published), published.admin?.status?.badge?.label)
         assertEquals(true, published.admin?.status?.badge?.isPublished)
-        assertEquals("Los músicos ya ven esta lista.", published.admin?.status?.note)
-        assertEquals("Agregar tema", published.admin?.addSong?.label)
+        assertEquals(UiText.res(R.string.next_jam_note_published), published.admin?.status?.note)
+        assertEquals(UiText.res(R.string.next_jam_add_song), published.admin?.addSong?.label)
 
         val withheld = snapshot(jam(Setlist.Withheld)).toUiModel(today, admin = adminState()).asJam()
         assertEquals(SetlistUiModel.Withheld::class, withheld.setlist::class)
-        assertEquals("Borrador", withheld.admin?.status?.badge?.label)
+        assertEquals(UiText.res(CoreR.string.jam_status_draft), withheld.admin?.status?.badge?.label)
         assertNull(withheld.admin?.addSong)
 
         val unreadable = snapshot(jam(Setlist.Unavailable(SetlistProblem.INVALID_TAB)))
@@ -154,14 +157,19 @@ class NextJamAdminTest {
 
         val admin = empty.toUiModel(today, admin = adminState()).asJam()
         assertEquals(
-            SetlistUiModel.Empty(EmptyStateUiModel("Todavía no hay temas", "Agregá el primero desde el catálogo.")),
+            SetlistUiModel.Empty(
+                EmptyStateUiModel(
+                    UiText.res(R.string.next_jam_admin_empty_title),
+                    UiText.res(R.string.next_jam_admin_empty_message),
+                ),
+            ),
             admin.setlist,
         )
-        assertEquals("Agregar tema", admin.admin?.addSong?.label)
+        assertEquals(UiText.res(R.string.next_jam_add_song), admin.admin?.addSong?.label)
 
         val musician = empty.toUiModel(today).asJam()
         assertEquals(
-            "La lista está publicada pero todavía no tiene temas. ¿Tenés uno en mente? Contáselo a la organización.",
+            UiText.res(R.string.next_jam_empty_message),
             (musician.setlist as SetlistUiModel.Empty).empty.message,
         )
     }
@@ -171,7 +179,7 @@ class NextJamAdminTest {
         val none = snapshot(null)
 
         val admin = none.toUiModel(today, admin = adminState()) as NextJamUiModel.NoUpcomingJam
-        assertEquals("Para armar la lista, creá la próxima jam en la pestaña Jams.", admin.adminHint)
+        assertEquals(UiText.res(R.string.next_jam_admin_no_upcoming), admin.adminHint)
         assertNull((none.toUiModel(today) as NextJamUiModel.NoUpcomingJam).adminHint)
     }
 
@@ -186,15 +194,12 @@ class NextJamAdminTest {
             .toUiModel(today, filter = setOf(Instrument.HARMONICA), admin = adminState(adds)).asJam()
 
         val admin = checkNotNull(model.admin)
-        assertEquals(listOf(PendingRowUiModel(1, "Crossroads", "Agregando…")), admin.pending)
+        assertEquals(listOf(PendingRowUiModel(1, "Crossroads", UiText.res(R.string.next_jam_adding))), admin.pending)
         val failure = admin.failures.single()
         assertEquals(2L, failure.id)
-        assertEquals("No se pudo agregar «Red House»", failure.title)
-        assertEquals(
-            "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar.",
-            failure.message,
-        )
-        assertEquals("Cerrar", failure.dismissLabel)
+        assertEquals(UiText.res(R.string.next_jam_add_failed, "Red House"), failure.title)
+        assertEquals(UiText.res(CoreR.string.write_failure_access_refused), failure.message)
+        assertEquals(UiText.res(R.string.next_jam_close), failure.dismissLabel)
         // The harmonica filter hides Boogie (bass only), never the admin's entries.
         assertEquals(listOf("Red House"), (model.setlist as SetlistUiModel.Songs).rows.map { it.title })
     }
@@ -202,17 +207,16 @@ class NextJamAdminTest {
     @Test
     fun `every outcome and code has its approved message`() {
         val expected = mapOf(
-            WriteOutcome.AccessRefused to
-                "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar.",
-            WriteOutcome.Offline to "No hay conexión. Probá de nuevo cuando tengas internet.",
-            WriteOutcome.Unavailable to "El servidor no respondió. Probá de nuevo en un rato.",
-            WriteOutcome.Rejected("song_already_in_setlist") to "Ese tema ya está en la lista.",
-            WriteOutcome.Rejected("unknown_song") to "Ese tema ya no está en el catálogo.",
-            WriteOutcome.Rejected("unknown_jam") to "La jam cambió en la planilla. Actualizá y probá de nuevo.",
-            WriteOutcome.Rejected("jam_not_editable") to "La jam cambió en la planilla. Actualizá y probá de nuevo.",
-            WriteOutcome.Rejected("duplicate_date") to "La jam cambió en la planilla. Actualizá y probá de nuevo.",
-            WriteOutcome.Rejected("missing_header") to "La planilla rechazó el cambio. Revisala y probá de nuevo.",
-            WriteOutcome.Rejected("invalid_key") to "La planilla rechazó el cambio. Revisala y probá de nuevo.",
+            WriteOutcome.AccessRefused to UiText.res(CoreR.string.write_failure_access_refused),
+            WriteOutcome.Offline to UiText.res(CoreR.string.write_failure_offline),
+            WriteOutcome.Unavailable to UiText.res(CoreR.string.write_failure_unavailable),
+            WriteOutcome.Rejected("song_already_in_setlist") to UiText.res(R.string.next_jam_failure_already_listed),
+            WriteOutcome.Rejected("unknown_song") to UiText.res(CoreR.string.write_failure_not_in_catalog),
+            WriteOutcome.Rejected("unknown_jam") to UiText.res(CoreR.string.write_failure_jam_changed),
+            WriteOutcome.Rejected("jam_not_editable") to UiText.res(CoreR.string.write_failure_jam_changed),
+            WriteOutcome.Rejected("duplicate_date") to UiText.res(CoreR.string.write_failure_jam_changed),
+            WriteOutcome.Rejected("missing_header") to UiText.res(CoreR.string.write_failure_sheet_refused),
+            WriteOutcome.Rejected("invalid_key") to UiText.res(CoreR.string.write_failure_sheet_refused),
         )
         expected.forEach { (outcome, message) -> assertEquals(outcome.toString(), message, failureMessage(outcome)) }
     }
@@ -249,7 +253,7 @@ class NextJamAdminTest {
                         it.title
                     },
                 )
-                assertEquals("Borrador", model.admin?.status?.badge?.label)
+                assertEquals(UiText.res(CoreR.string.jam_status_draft), model.admin?.status?.badge?.label)
 
                 setlist.adds.value = listOf(add(4, SetlistAdd.State.Failed(WriteOutcome.Rejected("busy"))))
                 model = awaitItem().asJam()
@@ -299,10 +303,10 @@ class NextJamAdminTest {
             repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(redHouse, boogie)))))
             val model = expectMostRecentItem().asJam()
             checkNotNull((model.setlist as SetlistUiModel.Songs).filterBar)
-                .chips.single { it.label == "Armónica" }.events(FilterChipUiModel.Event.Toggle)
+                .chips.single { it.label.chipName() == "Armónica" }.events(FilterChipUiModel.Event.Toggle)
             val filtered = awaitItem().asJam()
             assertEquals(listOf("Red House"), (filtered.setlist as SetlistUiModel.Songs).rows.map { it.title })
-            assertEquals("Agregar tema", filtered.admin?.addSong?.label)
+            assertEquals(UiText.res(R.string.next_jam_add_song), filtered.admin?.addSong?.label)
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.ui.nav.BackButton
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -93,7 +94,7 @@ private fun AdminLoginContent(model: AdminLoginUiModel, modifier: Modifier, cont
     ) {
         BackButton(model.back)
         Text(
-            text = model.title,
+            text = model.title.resolve(),
             style = BluesJamTheme.typography.h1,
             color = BluesJamTheme.colors.text,
             modifier = Modifier.semantics { heading() },
@@ -112,11 +113,11 @@ private fun PassphraseField(model: AdminLoginUiModel) {
         modifier = Modifier.fillMaxWidth(),
         readOnly = model.isVerifying,
         textStyle = BluesJamTheme.typography.body,
-        label = { Text(text = model.fieldLabel) },
+        label = { Text(text = model.fieldLabel.resolve()) },
         trailingIcon = { VisibilityToggle(model) },
         supportingText = model.error?.let { error ->
             {
-                Text(text = error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                Text(text = error.resolve(), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
         },
         isError = model.error != null,
@@ -164,7 +165,7 @@ private fun VisibilityToggle(model: AdminLoginUiModel) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = model.visibilityToggleLabel,
+            text = model.visibilityToggleLabel.resolve(),
             style = BluesJamTheme.typography.caption,
             color = AdminLoginDefaults.toggle(),
         )
@@ -187,6 +188,6 @@ private fun SubmitButton(model: AdminLoginUiModel) {
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = model.submitLabel, style = BluesJamTheme.typography.body, color = style.content)
+        Text(text = model.submitLabel.resolve(), style = BluesJamTheme.typography.body, color = style.content)
     }
 }

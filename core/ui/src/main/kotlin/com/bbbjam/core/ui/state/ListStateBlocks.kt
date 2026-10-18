@@ -22,6 +22,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.Duration
 
@@ -37,12 +39,16 @@ fun ListErrorBlock(model: ListErrorUiModel, modifier: Modifier = Modifier) {
     val style = ListStateDefaults.retryButtonStyle()
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
         Text(
-            text = model.title,
+            text = model.title.resolve(),
             style = BluesJamTheme.typography.songTitle,
             color = BluesJamTheme.colors.text,
             modifier = Modifier.semantics { heading() },
         )
-        Text(text = model.message, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
+        Text(
+            text = model.message.resolve(),
+            style = BluesJamTheme.typography.body,
+            color = BluesJamTheme.colors.textMuted,
+        )
         Box(
             modifier = Modifier
                 .padding(top = spacing.sm)
@@ -54,7 +60,7 @@ fun ListErrorBlock(model: ListErrorUiModel, modifier: Modifier = Modifier) {
                 .padding(horizontal = spacing.md),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = model.retryLabel, style = BluesJamTheme.typography.body, color = style.content)
+            Text(text = model.retryLabel.resolve(), style = BluesJamTheme.typography.body, color = style.content)
         }
     }
 }
@@ -75,13 +81,13 @@ fun StalenessNotice(model: StalenessNoticeUiModel, modifier: Modifier = Modifier
     ) {
         Column(modifier = Modifier.padding(spacing.md), verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
             Text(
-                text = model.title,
+                text = model.title.resolve(),
                 style = BluesJamTheme.typography.body,
                 color = BluesJamTheme.colors.text,
                 modifier = Modifier.semantics { heading() },
             )
             Text(
-                text = model.detail,
+                text = model.detail.resolve(),
                 style = BluesJamTheme.typography.body,
                 color = BluesJamTheme.colors.textMuted,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -94,7 +100,7 @@ fun StalenessNotice(model: StalenessNoticeUiModel, modifier: Modifier = Modifier
                     contentAlignment = Alignment.CenterStart,
                 ) {
                     Text(
-                        text = label,
+                        text = label.resolve(),
                         style = BluesJamTheme.typography.body,
                         color = BluesJamTheme.colors.text,
                         textDecoration = TextDecoration.Underline,
@@ -110,12 +116,16 @@ fun StalenessNotice(model: StalenessNoticeUiModel, modifier: Modifier = Modifier
 fun EmptyStateBlock(model: EmptyStateUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm)) {
         Text(
-            text = model.title,
+            text = model.title.resolve(),
             style = BluesJamTheme.typography.songTitle,
             color = BluesJamTheme.colors.text,
             modifier = Modifier.semantics { heading() },
         )
-        Text(text = model.message, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
+        Text(
+            text = model.message.resolve(),
+            style = BluesJamTheme.typography.body,
+            color = BluesJamTheme.colors.textMuted,
+        )
     }
 }
 
@@ -134,13 +144,13 @@ private const val PREVIEW_AGE_HOURS = 3L
 @Preview
 @Composable
 private fun ListErrorOfflinePreview() = ListStatePreviewFrame {
-    ListErrorBlock(listError("No pudimos cargar la lista", isOffline = true) {})
+    ListErrorBlock(listError(UiText.raw("No pudimos cargar la lista"), isOffline = true) {})
 }
 
 @Preview
 @Composable
 private fun ListErrorOtherPreview() = ListStatePreviewFrame {
-    ListErrorBlock(listError("No pudimos cargar la lista", isOffline = false) {})
+    ListErrorBlock(listError(UiText.raw("No pudimos cargar la lista"), isOffline = false) {})
 }
 
 @Preview
@@ -158,5 +168,10 @@ private fun StalenessNoticeRefreshingPreview() = ListStatePreviewFrame {
 @Preview
 @Composable
 private fun EmptyStateBlockPreview() = ListStatePreviewFrame {
-    EmptyStateBlock(EmptyStateUiModel("Todavía no hay temas", "La lista está publicada pero todavía no tiene temas."))
+    EmptyStateBlock(
+        EmptyStateUiModel(
+            UiText.raw("Todavía no hay temas"),
+            UiText.raw("La lista está publicada pero todavía no tiene temas."),
+        ),
+    )
 }

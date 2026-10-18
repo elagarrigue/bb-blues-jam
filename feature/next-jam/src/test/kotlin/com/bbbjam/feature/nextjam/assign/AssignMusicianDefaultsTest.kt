@@ -1,7 +1,10 @@
 package com.bbbjam.feature.nextjam.assign
 
 import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamColors
+import com.bbbjam.feature.nextjam.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,9 +18,15 @@ class AssignMusicianDefaultsTest {
 
     @Test
     fun `slot names number only guitars`() {
-        assertEquals("Guitarra 2", AssignMusicianDefaults.slotName(Instrument.GUITAR, 2))
-        assertEquals("Bajo", AssignMusicianDefaults.slotName(Instrument.BASS, 1))
-        assertEquals("Teclados", AssignMusicianDefaults.slotName(Instrument.KEYBOARDS, 1))
+        assertEquals(
+            UiText.res(R.string.assign_musician_slot_numbered, UiText.res(CoreR.string.instrument_guitar), 2),
+            AssignMusicianDefaults.slotName(Instrument.GUITAR, 2),
+        )
+        assertEquals(UiText.res(CoreR.string.instrument_bass), AssignMusicianDefaults.slotName(Instrument.BASS, 1))
+        assertEquals(
+            UiText.res(CoreR.string.instrument_keyboards),
+            AssignMusicianDefaults.slotName(Instrument.KEYBOARDS, 1),
+        )
     }
 
     @Test

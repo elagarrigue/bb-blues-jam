@@ -4,6 +4,7 @@ import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * Everything the admin login draws. [passphrase] is what the field holds, so the screen stays a pure
@@ -11,19 +12,19 @@ import com.bbbjam.core.ui.presenter.UiModel
  * assistant context must leave it out (`docs/risks-and-open-questions.md`).
  */
 internal data class AdminLoginUiModel(
-    val title: String,
-    val fieldLabel: String,
+    val title: UiText,
+    val fieldLabel: UiText,
     val passphrase: String,
     /** True while the field draws dots instead of the text. */
     val masked: Boolean,
     /** `Mostrar` while masked, `Ocultar` while shown. */
-    val visibilityToggleLabel: String,
+    val visibilityToggleLabel: UiText,
     /** `Entrar`, or `Verificando…` while the server is asked. */
-    val submitLabel: String,
+    val submitLabel: UiText,
     val submitEnabled: Boolean,
     val isVerifying: Boolean,
     /** Under the field after a failed attempt; null otherwise. Typing clears it. */
-    val error: String?,
+    val error: UiText?,
     val back: BackUiModel,
     val events: EventHandler<Event>,
 ) : UiModel {

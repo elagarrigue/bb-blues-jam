@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -33,7 +34,9 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackButton
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.state.EmptyStateBlock
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.admin.textFieldColors
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -105,7 +108,7 @@ internal fun AssignMusicianContent(model: AssignMusicianUiModel, modifier: Modif
 private fun AssignmentBody(model: AssignMusicianUiModel.Content) {
     val spacing = BluesJamTheme.spacing
     Text(
-        model.title,
+        model.title.resolve(),
         style = BluesJamTheme.typography.h1,
         color = BluesJamTheme.colors.text,
         modifier = Modifier.semantics {
@@ -115,23 +118,23 @@ private fun AssignmentBody(model: AssignMusicianUiModel.Content) {
     Text(model.songTitle, style = BluesJamTheme.typography.songTitle, color = BluesJamTheme.colors.text)
     Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
         Text(
-            AssignMusicianCopy.SLOT.uppercase(),
+            stringResource(R.string.assign_musician_slot).uppercase(),
             style = BluesJamTheme.typography.caption,
             color = BluesJamTheme.colors.textMuted,
         )
-        Text(model.slotLabel, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
+        Text(model.slotLabel.resolve(), style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
     }
     OutlinedTextField(
         value = model.name,
         onValueChange = { model.events(AssignMusicianUiModel.Content.Event.NameChanged(it)) },
-        label = { Text(model.nameLabel) },
+        label = { Text(model.nameLabel.resolve()) },
         singleLine = true,
         isError = model.validationMessage != null,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = {
             if (model.submitEnabled) model.events(AssignMusicianUiModel.Content.Event.Submit)
         }),
-        supportingText = model.validationMessage?.let { message -> ({ Text(message) }) },
+        supportingText = model.validationMessage?.let { message -> ({ Text(message.resolve()) }) },
         shape = BluesJamTheme.shapes.md,
         colors = AssignMusicianDefaults.field().textFieldColors(),
         modifier = Modifier.fillMaxWidth(),
@@ -149,7 +152,7 @@ private fun AssignmentBody(model: AssignMusicianUiModel.Content) {
             disabledContentColor = BluesJamTheme.colors.textMuted,
         ),
         modifier = Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current),
-    ) { Text(model.submitLabel) }
+    ) { Text(model.submitLabel.resolve()) }
 }
 
 @Composable
@@ -157,7 +160,7 @@ private fun SuggestionSection(model: SuggestionSectionUiModel) {
     val spacing = BluesJamTheme.spacing
     Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
         Text(
-            model.label.uppercase(),
+            model.label.resolve().uppercase(),
             style = BluesJamTheme.typography.caption,
             color = BluesJamTheme.colors.textMuted,
             modifier = Modifier.semantics {
@@ -169,7 +172,7 @@ private fun SuggestionSection(model: SuggestionSectionUiModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                    .clickable(role = Role.Button, onClickLabel = row.clickLabel) {
+                    .clickable(role = Role.Button, onClickLabel = row.clickLabel.resolve()) {
                         row.events(SuggestionRowUiModel.Event.Select)
                     }
                     .padding(horizontal = spacing.sm),
@@ -177,7 +180,7 @@ private fun SuggestionSection(model: SuggestionSectionUiModel) {
             ) { Text(row.name, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text) }
         }
         model.emptyMessage?.let {
-            Text(it, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
+            Text(it.resolve(), style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
         }
     }
 }

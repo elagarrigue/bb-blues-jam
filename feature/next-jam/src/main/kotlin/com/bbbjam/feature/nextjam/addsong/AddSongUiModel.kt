@@ -6,6 +6,7 @@ import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The catalog picker (`admin-add-song-to-setlist`, V1): a back control, the [title], the [search]
@@ -14,13 +15,13 @@ import com.bbbjam.core.ui.state.ListErrorUiModel
  */
 internal data class AddSongUiModel(
     val back: BackUiModel,
-    val title: String,
+    val title: UiText,
     val search: SearchFieldUiModel,
     val content: AddSongContentUiModel,
 ) : UiModel
 
 /** The search field: [query] as typed, [label] its label. Matching ignores case and accents. */
-internal data class SearchFieldUiModel(val query: String, val label: String, val events: EventHandler<Event>) :
+internal data class SearchFieldUiModel(val query: String, val label: UiText, val events: EventHandler<Event>) :
     UiModel {
     sealed interface Event : UiEvent {
         data class Changed(val query: String) : Event
@@ -29,7 +30,7 @@ internal data class SearchFieldUiModel(val query: String, val label: String, val
 
 internal sealed interface AddSongContentUiModel : UiModel {
     /** No catalog emission yet, or nothing cached and a read is running. */
-    data class Loading(val description: String) : AddSongContentUiModel
+    data class Loading(val description: UiText) : AddSongContentUiModel
 
     /** Nothing cached and the latest read failed. */
     data class Failed(val error: ListErrorUiModel) : AddSongContentUiModel
@@ -38,7 +39,7 @@ internal sealed interface AddSongContentUiModel : UiModel {
     data class Empty(val empty: EmptyStateUiModel) : AddSongContentUiModel
 
     /** The search matches no song: [message] names the query. */
-    data class NoResults(val message: String) : AddSongContentUiModel
+    data class NoResults(val message: UiText) : AddSongContentUiModel
 
     /** The matching songs, sorted by title ignoring case and accents. */
     data class Songs(val rows: List<CatalogRowUiModel>) : AddSongContentUiModel
@@ -55,10 +56,10 @@ internal data class CatalogRowUiModel(
     val title: String,
     val artist: String,
     val key: String,
-    val keyDescription: String,
+    val keyDescription: UiText,
     val isListed: Boolean,
-    val listedLabel: String?,
-    val pickLabel: String,
+    val listedLabel: UiText?,
+    val pickLabel: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {

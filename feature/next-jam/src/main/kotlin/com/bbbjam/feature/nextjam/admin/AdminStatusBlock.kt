@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.status.JamStatusBadge
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.nextjam.AdminStatusUiModel
 
@@ -27,7 +28,7 @@ internal fun AdminStatusBlock(model: AdminStatusUiModel) {
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs),
     ) {
         JamStatusBadge(model.badge)
-        Text(text = model.note, style = BluesJamTheme.typography.caption, color = style.note)
-        Text(text = model.hint, style = BluesJamTheme.typography.caption, color = style.note)
+        Text(text = model.note.resolve(), style = BluesJamTheme.typography.caption, color = style.note)
+        Text(text = model.hint.resolve(), style = BluesJamTheme.typography.caption, color = style.note)
     }
 }

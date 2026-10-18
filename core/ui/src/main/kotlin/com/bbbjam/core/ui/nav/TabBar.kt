@@ -10,7 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -36,7 +39,7 @@ fun TabBar(model: TabBarUiModel, modifier: Modifier = Modifier) {
                 icon = { Icon(imageVector = TabBarDefaults.icon(tab.icon), contentDescription = null) },
                 label = {
                     Text(
-                        text = tab.label,
+                        text = tab.label.resolve(),
                         style = BluesJamTheme.typography.caption,
                         maxLines = TabBarDefaults.LABEL_MAX_LINES,
                         overflow = TextOverflow.Ellipsis,
@@ -63,9 +66,21 @@ private fun TabBarPreview() {
         TabBar(
             TabBarUiModel(
                 listOf(
-                    TabUiModel("Próxima jam", TabIcon.SETLIST, selected = true, events = EventHandler {}),
-                    TabUiModel("Jams", TabIcon.ARCHIVE, selected = false, events = EventHandler {}),
-                    TabUiModel("Info", TabIcon.INFO, selected = false, events = EventHandler {}),
+                    TabUiModel(
+                        UiText.res(R.string.tab_next_jam),
+                        TabIcon.SETLIST,
+                        selected = true,
+                        events = EventHandler {
+                        },
+                    ),
+                    TabUiModel(
+                        UiText.res(R.string.tab_jams),
+                        TabIcon.ARCHIVE,
+                        selected = false,
+                        events = EventHandler {
+                        },
+                    ),
+                    TabUiModel(UiText.res(R.string.tab_info), TabIcon.INFO, selected = false, events = EventHandler {}),
                 ),
             ),
         )

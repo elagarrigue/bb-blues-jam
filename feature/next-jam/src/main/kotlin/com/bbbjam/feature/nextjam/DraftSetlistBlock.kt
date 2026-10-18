@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -35,19 +36,19 @@ internal fun DraftSetlistBlock(model: DraftSetlistUiModel, modifier: Modifier = 
         ) {
             Surface(color = style.badgeFill, contentColor = style.badgeText, shape = BluesJamTheme.shapes.sm) {
                 Text(
-                    text = model.label.uppercase(),
+                    text = model.label.resolve().uppercase(),
                     style = typography.caption,
                     color = style.badgeText,
                     modifier = Modifier.padding(horizontal = spacing.sm, vertical = spacing.xs),
                 )
             }
             Text(
-                text = model.title,
+                text = model.title.resolve(),
                 style = typography.songTitle,
                 color = style.title,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(text = model.message, style = typography.body, color = style.message)
+            Text(text = model.message.resolve(), style = typography.body, color = style.message)
         }
     }
 }

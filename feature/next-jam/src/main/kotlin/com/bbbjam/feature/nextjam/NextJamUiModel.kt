@@ -10,6 +10,7 @@ import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.status.JamStatusBadgeUiModel
 import com.bbbjam.core.ui.strip.InstrumentChipUiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * Everything Próxima jam draws, as plain values. A row opens the song detail
@@ -28,7 +29,7 @@ internal sealed interface NextJamUiModel : UiModel {
      * has failed yet). Drawn as skeleton rows; [description] is what a screen reader says for them.
      */
     data class Loading(
-        val description: String,
+        val description: UiText,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : NextJamUiModel
 
@@ -46,7 +47,7 @@ internal sealed interface NextJamUiModel : UiModel {
     data class NoUpcomingJam(
         val empty: EmptyStateUiModel,
         val staleness: StalenessNoticeUiModel?,
-        val adminHint: String? = null,
+        val adminHint: UiText? = null,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : NextJamUiModel
 
@@ -82,10 +83,10 @@ internal data class NextJamAdminUiModel(
  * D-27): the shared [badge], the [note] of what musicians see and the [hint] that points to the Jams
  * tab, where the status is changed and the list is published.
  */
-internal data class AdminStatusUiModel(val badge: JamStatusBadgeUiModel, val note: String, val hint: String) : UiModel
+internal data class AdminStatusUiModel(val badge: JamStatusBadgeUiModel, val note: UiText, val hint: UiText) : UiModel
 
 /** An add in flight: [title] and [status] ("Agregando…"), at the end of the list. */
-internal data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
+internal data class PendingRowUiModel(val id: Long, val title: String, val status: UiText) : UiModel
 
 /**
  * A failed add, remove or key change (`admin-remove-song-from-setlist` and `admin-set-key` reuse the
@@ -95,9 +96,9 @@ internal data class PendingRowUiModel(val id: Long, val title: String, val statu
  */
 internal data class AddFailureUiModel(
     val id: Long,
-    val title: String,
-    val message: String,
-    val dismissLabel: String,
+    val title: UiText,
+    val message: UiText,
+    val dismissLabel: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
@@ -107,14 +108,14 @@ internal data class AddFailureUiModel(
 }
 
 /** "Agregar tema": opens the catalog picker for the jam. Navigation only. */
-internal data class AddSongActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+internal data class AddSongActionUiModel(val label: UiText, val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
         data object Open : Event
     }
 }
 
 /** [date] is "Sábado 31 de octubre · 21:00"; [venue] is the Sheet's `lugar` as written. */
-internal data class JamHeaderUiModel(val date: String, val venue: String, val timeRemaining: String) : UiModel
+internal data class JamHeaderUiModel(val date: UiText, val venue: String, val timeRemaining: UiText) : UiModel
 
 internal sealed interface SetlistUiModel : UiModel {
     /**
@@ -125,7 +126,7 @@ internal sealed interface SetlistUiModel : UiModel {
      */
     data class Songs(
         val rows: List<SongRowUiModel>,
-        val droppedRowsNote: String?,
+        val droppedRowsNote: UiText?,
         val filterBar: InstrumentFilterBarUiModel?,
     ) : SetlistUiModel
 
@@ -139,14 +140,14 @@ internal sealed interface SetlistUiModel : UiModel {
     data class Withheld(val draft: DraftSetlistUiModel) : SetlistUiModel
 
     /** A published setlist that could not be read: one muted line instead of rows. */
-    data class Unavailable(val message: String) : SetlistUiModel
+    data class Unavailable(val message: UiText) : SetlistUiModel
 }
 
 /**
  * The draft card: [label] is the badge (drawn uppercase, "EN PREPARACIÓN"), [title] the heading and
  * [message] what the musician will see once the list is published. Nothing in it is clickable.
  */
-internal data class DraftSetlistUiModel(val label: String, val title: String, val message: String) : UiModel
+internal data class DraftSetlistUiModel(val label: UiText, val title: UiText, val message: UiText) : UiModel
 
 /**
  * One song row, always collapsed (`song-detail-replaces-row-expansion`; D-07). [position] is the
@@ -164,9 +165,9 @@ internal data class SongRowUiModel(
     val rowKey: String = "p$position",
     val title: String,
     val key: String,
-    val keyDescription: String,
+    val keyDescription: UiText,
     val instruments: List<InstrumentChipUiModel>,
-    val openDetailLabel: String,
+    val openDetailLabel: UiText,
     val events: EventHandler<Event>,
     val admin: SongRowAdminUiModel? = null,
 ) : UiModel {
@@ -188,7 +189,7 @@ internal data class SongRowUiModel(
 internal data class SongRowAdminUiModel(
     val removal: RemovalUiModel,
     val move: MoveUiModel? = null,
-    val saveStatus: String? = null,
+    val saveStatus: UiText? = null,
 ) : UiModel
 
 /**
@@ -205,9 +206,9 @@ internal data class ExtraParticipantEditorUiModel(
     val instrument: String,
     val submitEnabled: Boolean,
     val saving: Boolean,
-    val rowLabel: String,
-    val actionLabel: String,
-    val actionDescription: String,
+    val rowLabel: UiText,
+    val actionLabel: UiText,
+    val actionDescription: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
@@ -225,8 +226,8 @@ internal data class MoveUiModel(val up: MoveActionUiModel, val down: MoveActionU
 
 /** One visible one-place reorder action. Disabled actions remain drawn to keep the layout stable. */
 internal data class MoveActionUiModel(
-    val label: String,
-    val clickLabel: String,
+    val label: UiText,
+    val clickLabel: UiText,
     val enabled: Boolean,
     val events: EventHandler<Event>,
 ) : UiModel {
@@ -236,7 +237,7 @@ internal data class MoveActionUiModel(
 }
 
 /** "Cambiar tonalidad": opens the key picker for the detail's song. Navigation only. */
-internal data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+internal data class SetKeyActionUiModel(val label: UiText, val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
         data object Open : Event
     }
@@ -260,7 +261,7 @@ internal sealed interface RemovalUiModel : UiModel {
     }
 
     /** "Quitar de la lista". */
-    data class Idle(val label: String, val events: EventHandler<Event>) : RemovalUiModel
+    data class Idle(val label: UiText, val events: EventHandler<Event>) : RemovalUiModel
 
     /**
      * [prompt] ("¿Quitar «Crossroads» de la lista?"), then [details]: how many assigned musicians go
@@ -268,28 +269,28 @@ internal sealed interface RemovalUiModel : UiModel {
      * [confirmLabel] ("Quitar") and [cancelLabel] ("Cancelar").
      */
     data class Confirming(
-        val prompt: String,
-        val details: List<String>,
-        val confirmLabel: String,
-        val cancelLabel: String,
+        val prompt: UiText,
+        val details: List<UiText>,
+        val confirmLabel: UiText,
+        val cancelLabel: UiText,
         val events: EventHandler<Event>,
     ) : RemovalUiModel
 
     /** "Quitando…" while the removal is sent; no control. */
-    data class Removing(val status: String) : RemovalUiModel
+    data class Removing(val status: UiText) : RemovalUiModel
 }
 
 /** The song detail's always-visible admin lineup controls. */
-internal data class LineupEditorUiModel(val heading: String, val lines: List<LineupEditorLineUiModel>) : UiModel
+internal data class LineupEditorUiModel(val heading: UiText, val lines: List<LineupEditorLineUiModel>) : UiModel
 
 internal data class LineupEditorLineUiModel(
     val instrument: com.bbbjam.core.model.Instrument,
-    val countLabel: String,
-    val removeDescription: String,
-    val addDescription: String,
+    val countLabel: UiText,
+    val removeDescription: UiText,
+    val addDescription: UiText,
     val canRemove: Boolean,
     val canAdd: Boolean,
-    val blockedNote: String?,
+    val blockedNote: UiText?,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {

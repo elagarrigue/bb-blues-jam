@@ -1,5 +1,8 @@
 package com.bbbjam.core.ui.admin
 
+import com.bbbjam.core.ui.R
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.text
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -17,6 +20,6 @@ class AdminBannerDefaultsTest {
 
     @Test
     fun `the banner label is the approved copy`() {
-        assertEquals("MODO ADMIN", AdminBannerCopy.LABEL)
+        assertEquals("MODO ADMIN", UiText.res(R.string.admin_banner_label).text())
     }
 }

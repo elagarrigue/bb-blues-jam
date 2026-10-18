@@ -4,6 +4,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.status.JamStatusChipsUiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * Changing a future jam's status (`admin-set-jam-status`, D-26; single-select [chips] by
@@ -14,7 +15,7 @@ import com.bbbjam.core.ui.status.JamStatusChipsUiModel
  */
 internal data class JamStatusUiModel(
     val chips: JamStatusChipsUiModel,
-    val publishUnavailable: String?,
+    val publishUnavailable: UiText?,
     val confirming: StatusConfirmUiModel?,
     val failure: StatusFailureUiModel?,
     val events: EventHandler<Event>,
@@ -28,39 +29,39 @@ internal data class JamStatusUiModel(
 }
 
 internal data class StatusConfirmUiModel(
-    val prompt: String,
-    val body: String,
-    val confirmLabel: String,
-    val cancelLabel: String,
+    val prompt: UiText,
+    val body: UiText,
+    val confirmLabel: UiText,
+    val cancelLabel: UiText,
 ) : UiModel
 
 /** [retryLabel] is null when retrying is pointless (the script is outdated). */
 internal data class StatusFailureUiModel(
     val id: Long,
-    val title: String,
-    val message: String,
-    val consequence: String,
-    val retryLabel: String?,
-    val dismissLabel: String,
+    val title: UiText,
+    val message: UiText,
+    val consequence: UiText,
+    val retryLabel: UiText?,
+    val dismissLabel: UiText,
 ) : UiModel
 
 /** Publishing the upcoming jam: the modal confirmation (opened by the Publicada chip) and the failure card. */
 internal sealed interface PublishUiModel : UiModel {
     data class Confirming(
-        val prompt: String,
-        val details: String,
-        val reversibleNote: String,
-        val confirmLabel: String,
-        val cancelLabel: String,
+        val prompt: UiText,
+        val details: UiText,
+        val reversibleNote: UiText,
+        val confirmLabel: UiText,
+        val cancelLabel: UiText,
         val events: EventHandler<Event>,
     ) : PublishUiModel
     data class Failed(
         val id: Long,
-        val title: String,
-        val message: String,
-        val consequence: String,
-        val retryLabel: String,
-        val dismissLabel: String,
+        val title: UiText,
+        val message: UiText,
+        val consequence: UiText,
+        val retryLabel: UiText,
+        val dismissLabel: UiText,
         val events: EventHandler<Event>,
     ) : PublishUiModel
 

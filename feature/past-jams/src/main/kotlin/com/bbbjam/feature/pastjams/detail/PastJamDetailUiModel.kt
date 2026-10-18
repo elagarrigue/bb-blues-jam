@@ -3,6 +3,7 @@ package com.bbbjam.feature.pastjams.detail
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * Everything a past jam's detail draws, as plain values (`past-jam-detail`). Every state carries
@@ -14,7 +15,7 @@ internal sealed interface PastJamDetailUiModel : UiModel {
     val back: BackUiModel
 
     /** Nothing emitted yet (a local read). Only the back control is drawn; [description] is for screen readers. */
-    data class Loading(val description: String, override val back: BackUiModel) : PastJamDetailUiModel
+    data class Loading(val description: UiText, override val back: BackUiModel) : PastJamDetailUiModel
 
     /** No past jam has this date any more: the empty block. Never an error. */
     data class NotFound(val empty: EmptyStateUiModel, override val back: BackUiModel) : PastJamDetailUiModel
@@ -28,15 +29,15 @@ internal sealed interface PastJamDetailUiModel : UiModel {
  * [dateLabel] is "Sábado 25 de julio de 2026"; [venue] is the Sheet's `lugar` as written;
  * [countLabel] is "13 temas", only when there are songs to show.
  */
-internal data class PastJamHeaderUiModel(val dateLabel: String, val venue: String, val countLabel: String?) : UiModel
+internal data class PastJamHeaderUiModel(val dateLabel: UiText, val venue: String, val countLabel: UiText?) : UiModel
 
 /** What sits under the header. */
 internal sealed interface PastSetlistUiModel : UiModel {
     /** The songs in position order; [droppedRowsNote] says how many rows could not be read, or null. */
-    data class Songs(val rows: List<PastSongRowUiModel>, val droppedRowsNote: String?) : PastSetlistUiModel
+    data class Songs(val rows: List<PastSongRowUiModel>, val droppedRowsNote: UiText?) : PastSetlistUiModel
 
     /** The list was never published, cannot be read, or has no songs: one line (the Anteriores copy). */
-    data class NotShown(val message: String) : PastSetlistUiModel
+    data class NotShown(val message: UiText) : PastSetlistUiModel
 }
 
 /**
@@ -50,5 +51,5 @@ internal data class PastSongRowUiModel(
     val title: String,
     val artist: String?,
     val key: String,
-    val keyDescription: String,
+    val keyDescription: UiText,
 ) : UiModel

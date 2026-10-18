@@ -19,12 +19,15 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.MoveActionUiModel
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.SongRowUiModel
+import com.bbbjam.feature.nextjam.savingText
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
@@ -130,7 +133,7 @@ class NextJamMoveTest {
                 ((model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows.map { it.title },
             )
             assertEquals(1, model.row("thrill").position)
-            assertEquals("Guardando…", checkNotNull(model.row("thrill").admin).saveStatus)
+            assertEquals(savingText, checkNotNull(model.row("thrill").admin).saveStatus)
 
             session.isAdmin.value = false
             val musician = awaitModel { it is NextJamUiModel.Jam && it.row("thrill").admin == null }
@@ -155,11 +158,8 @@ class NextJamMoveTest {
                 ((failed as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows.map { it.title },
             )
             val card = failed.failures().single()
-            assertEquals("No se pudo mover «thrill»", card.title)
-            assertEquals(
-                "Las posiciones de la planilla están desordenadas. Corregilas ahí y probá de nuevo.",
-                card.message,
-            )
+            assertEquals(UiText.res(R.string.next_jam_move_failed, "thrill"), card.title)
+            assertEquals(UiText.res(R.string.next_jam_failure_unordered_setlist), card.message)
 
             setlist.removes.value =
                 listOf(SetlistRemove(10, jamDate, SongId("thrill"), "thrill", SetlistRemove.State.Sending))

@@ -1,6 +1,8 @@
 package com.bbbjam.feature.assistant.apply
 
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.run.ApplyRun
 import com.bbbjam.feature.assistant.run.SongApply
 
@@ -10,30 +12,30 @@ internal fun ApplyRun.addSummary(events: EventHandler<ApplySummaryUiModel.Event>
     val added = addedCount
     return when (val current = state) {
         ApplyRun.State.Running -> ApplySummaryUiModel(
-            text = ApplyOutcomeCopy.running(songs.count { it.state.isDone() } - skippedBeforeRun(), planned, date),
+            text = applyRunningText(songs.count { it.state.isDone() } - skippedBeforeRun(), planned, date),
             tone = ApplyTone.NEUTRAL,
-            stopLabel = ApplyCopy.APPLY_STOP,
+            stopLabel = UiText.res(R.string.assistant_apply_stop),
             events = events,
         )
 
         ApplyRun.State.Finished -> if (failedCount == 0) {
-            ApplySummaryUiModel(ApplyOutcomeCopy.success(added, skippedCount, date), ApplyTone.SUCCESS, null, events)
+            ApplySummaryUiModel(applySuccessText(added, skippedCount, date), ApplyTone.SUCCESS, null, events)
         } else {
-            ApplySummaryUiModel(ApplyOutcomeCopy.partial(added, planned, failedCount), ApplyTone.FAILURE, null, events)
+            ApplySummaryUiModel(applyPartialText(added, planned, failedCount), ApplyTone.FAILURE, null, events)
         }
 
         is ApplyRun.State.Aborted -> ApplySummaryUiModel(
-            ApplyOutcomeCopy.aborted(added, planned, ApplyOutcomeCopy.writeFailure(current.reason)),
+            applyAbortedText(added, planned, writeFailureText(current.reason)),
             ApplyTone.FAILURE,
             null,
             events,
         )
 
         ApplyRun.State.Stopped ->
-            ApplySummaryUiModel(ApplyOutcomeCopy.stopped(added, planned), ApplyTone.MUTED, null, events)
+            ApplySummaryUiModel(applyStoppedText(added, planned), ApplyTone.MUTED, null, events)
 
         ApplyRun.State.Interrupted, ApplyRun.State.ScriptOutdated ->
-            ApplySummaryUiModel(ApplyOutcomeCopy.interrupted(added, planned), ApplyTone.FAILURE, null, events)
+            ApplySummaryUiModel(applyInterruptedText(added, planned), ApplyTone.FAILURE, null, events)
     }
 }
 

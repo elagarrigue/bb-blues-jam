@@ -19,6 +19,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.jamform.JamFormDialog
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.assistant.AssistantDefaults
 import com.bbbjam.feature.assistant.chat.TextAction
@@ -32,7 +34,7 @@ internal fun ApplyContent(
     apply: ApplyUiModel,
     summary: ApplySummaryUiModel?,
     removals: List<ApplyStatusLineUiModel> = emptyList(),
-    order: String? = null,
+    order: UiText? = null,
 ) {
     when (apply) {
         ApplyUiModel.None -> Unit
@@ -42,7 +44,7 @@ internal fun ApplyContent(
                 apply.actions.forEach { TargetButton(it) }
             }
             apply.notes.forEach { note ->
-                Text(text = note, style = BluesJamTheme.typography.body, color = ApplyDefaults.applyNote())
+                Text(text = note.resolve(), style = BluesJamTheme.typography.body, color = ApplyDefaults.applyNote())
             }
             apply.confirmation?.let { ApplyConfirmationDialog(it) }
             apply.createForm?.let { JamFormDialog(it) }
@@ -50,7 +52,9 @@ internal fun ApplyContent(
     }
     summary?.let { ApplySummary(it) }
     removals.forEach { RemovalLine(it) }
-    order?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = ApplyDefaults.applyNote()) }
+    order?.let {
+        Text(text = it.resolve(), style = BluesJamTheme.typography.caption, color = ApplyDefaults.applyNote())
+    }
 }
 
 /** The secondary full-width button: opens the confirmation, writes nothing. */
@@ -70,7 +74,7 @@ private fun TargetButton(model: TargetActionUiModel) {
             .padding(horizontal = BluesJamTheme.spacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = model.label, style = BluesJamTheme.typography.body, color = style.content)
+        Text(text = model.label.resolve(), style = BluesJamTheme.typography.body, color = style.content)
     }
 }
 
@@ -79,7 +83,7 @@ private fun RemovalLine(line: ApplyStatusLineUiModel) {
     val typography = BluesJamTheme.typography
     Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(text = line.title, style = typography.body, color = ApplyDefaults.applyNote())
-        Text(text = line.text, style = typography.caption, color = ApplyDefaults.status(line.kind))
+        Text(text = line.text.resolve(), style = typography.caption, color = ApplyDefaults.status(line.kind))
     }
 }
 
@@ -87,12 +91,12 @@ private fun RemovalLine(line: ApplyStatusLineUiModel) {
 private fun ApplySummary(summary: ApplySummaryUiModel) {
     val notice = AssistantDefaults.notice()
     Text(
-        text = summary.text,
+        text = summary.text.resolve(),
         style = BluesJamTheme.typography.body,
         color = ApplyDefaults.summary(summary.tone),
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     )
     summary.stopLabel?.let { label ->
-        TextAction(label, notice.action) { summary.events(ApplySummaryUiModel.Event.Stop) }
+        TextAction(label.resolve(), notice.action) { summary.events(ApplySummaryUiModel.Event.Stop) }
     }
 }

@@ -4,6 +4,7 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.text.text
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -11,18 +12,24 @@ import org.junit.Test
 
 /**
  * Every string expected here is written out from the approved copy (`docs/specs/instrument-strip-component.md`,
- * C1 and E1), never read from [InstrumentStripCopy], so a change to the shipped copy fails this class.
+ * C1 and E1), compared with the text the chips resolve to in `strings.xml`, so a change to the shipped
+ * copy fails this class.
  */
 class LineupChipsTest {
 
-    private fun open(label: String, description: String) =
-        InstrumentChipUiModel(label, description, InstrumentChipKind.OPEN_SLOT)
+    /** A chip as the user reads it. */
+    private data class Chip(val label: String, val description: String, val kind: InstrumentChipKind) {
+        val isOpen: Boolean get() = kind == InstrumentChipKind.OPEN_SLOT
+    }
 
-    private fun filled(label: String, description: String) =
-        InstrumentChipUiModel(label, description, InstrumentChipKind.FILLED_SLOT)
+    private fun List<InstrumentChipUiModel>.resolved() =
+        map { Chip(it.label.text(), it.contentDescription.text(), it.kind) }
 
-    private fun extra(label: String, description: String) =
-        InstrumentChipUiModel(label, description, InstrumentChipKind.EXTRA)
+    private fun open(label: String, description: String) = Chip(label, description, InstrumentChipKind.OPEN_SLOT)
+
+    private fun filled(label: String, description: String) = Chip(label, description, InstrumentChipKind.FILLED_SLOT)
+
+    private fun extra(label: String, description: String) = Chip(label, description, InstrumentChipKind.EXTRA)
 
     /** Scenario 2: [GTR open, GTR Tincho, BAJO Nico, BAT open, VOZ open, ARM Mono], TEC removed. */
     private val mixed = Lineup(
@@ -57,7 +64,7 @@ class LineupChipsTest {
                 open("ARM: LIBRE", "Armónica: libre"),
                 open("TEC: LIBRE", "Teclados: libre"),
             ),
-            Lineup.default().toInstrumentChips(emptyList()),
+            Lineup.default().toInstrumentChips(emptyList()).resolved(),
         )
     }
 
@@ -75,18 +82,18 @@ class LineupChipsTest {
         expected.forEach { (instrument, copy) ->
             assertEquals(
                 listOf(open(copy[0], copy[1])),
-                Lineup(listOf(Slot(instrument))).toInstrumentChips(emptyList()),
+                Lineup(listOf(Slot(instrument))).toInstrumentChips(emptyList()).resolved(),
             )
             assertEquals(
                 listOf(filled(copy[2], copy[3])),
-                Lineup(listOf(Slot(instrument, "Ana"))).toInstrumentChips(emptyList()),
+                Lineup(listOf(Slot(instrument, "Ana"))).toInstrumentChips(emptyList()).resolved(),
             )
         }
     }
 
     @Test
     fun `a mixed lineup keeps its order and a removed slot gets no chip`() {
-        val chips = mixed.toInstrumentChips(emptyList())
+        val chips = mixed.toInstrumentChips(emptyList()).resolved()
         assertEquals(mixedChips, chips)
         assertTrue(chips.none { it.label.startsWith("TEC") || it.label.startsWith("Tec") })
     }
@@ -96,13 +103,13 @@ class LineupChipsTest {
         val lineup = Lineup(listOf(Slot(Instrument.GUITAR), Slot(Instrument.GUITAR, "Seba")))
         assertEquals(
             listOf(open("GTR: LIBRE", "Guitarra: libre"), filled("Gtr: Seba", "Guitarra: Seba")),
-            lineup.toInstrumentChips(emptyList()),
+            lineup.toInstrumentChips(emptyList()).resolved(),
         )
     }
 
     @Test
     fun `an empty lineup gives no chips`() {
-        assertEquals(emptyList<InstrumentChipUiModel>(), Lineup(emptyList()).toInstrumentChips(emptyList()))
+        assertEquals(emptyList<InstrumentChipUiModel>(), Lineup(emptyList()).toInstrumentChips(emptyList()).resolved())
     }
 
     @Test
@@ -110,7 +117,7 @@ class LineupChipsTest {
         val name = "Maximiliano Fernández de la Torre y Sotomayor"
         assertEquals(
             listOf(filled("Gtr: $name", "Guitarra: $name")),
-            Lineup(listOf(Slot(Instrument.GUITAR, name))).toInstrumentChips(emptyList()),
+            Lineup(listOf(Slot(Instrument.GUITAR, name))).toInstrumentChips(emptyList()).resolved(),
         )
     }
 
@@ -122,18 +129,18 @@ class LineupChipsTest {
                 extra("+ saxo: Juan", "Otros: saxo, Juan"),
                 extra("+ Trompeta: Ana", "Otros: Trompeta, Ana"),
             ),
-            mixed.toInstrumentChips(extras),
+            mixed.toInstrumentChips(extras).resolved(),
         )
     }
 
     @Test
     fun `without extras the chips are only the slots`() {
-        assertEquals(mixedChips, mixed.toInstrumentChips(emptyList()))
+        assertEquals(mixedChips, mixed.toInstrumentChips(emptyList()).resolved())
     }
 
     @Test
     fun `an extra never looks like an open slot`() {
-        val chips = Lineup(emptyList()).toInstrumentChips(listOf(ExtraParticipant("Juan", "guitarra")))
+        val chips = Lineup(emptyList()).toInstrumentChips(listOf(ExtraParticipant("Juan", "guitarra"))).resolved()
         assertEquals(listOf(extra("+ guitarra: Juan", "Otros: guitarra, Juan")), chips)
         chips.forEach { chip ->
             assertFalse(chip.isOpen)

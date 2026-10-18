@@ -9,10 +9,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.bbbjam.core.ui.lineup.LineupPanelActionRow
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
-import com.bbbjam.feature.nextjam.NextJamCopy
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.admin.AdminControlsDefaults
 import com.bbbjam.feature.nextjam.admin.SaveStatusLine
 import com.bbbjam.feature.nextjam.admin.textFieldColors
@@ -27,12 +30,12 @@ internal fun ExtraParticipantEditor(model: ExtraParticipantEditorUiModel) {
     val spacing = BluesJamTheme.spacing
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
         LineupPanelActionRow(
-            instrument = model.rowLabel,
-            actionLabel = model.actionLabel,
-            actionDescription = model.actionDescription,
+            instrument = model.rowLabel.resolve(),
+            actionLabel = model.actionLabel.resolve(),
+            actionDescription = model.actionDescription.resolve(),
             onAction = { model.events(ExtraParticipantEditorUiModel.Event.Open) },
         )
-        if (model.saving) SaveStatusLine(NextJamCopy.SAVING)
+        if (model.saving) SaveStatusLine(UiText.res(R.string.next_jam_saving))
     }
 }
 
@@ -48,13 +51,19 @@ internal fun AddExtraDialog(model: ExtraParticipantEditorUiModel) {
     AlertDialog(
         onDismissRequest = { model.events(ExtraParticipantEditorUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = NextJamCopy.ADD_EXTRA, style = BluesJamTheme.typography.body, color = style.title) },
+        title = {
+            Text(
+                text = stringResource(R.string.next_jam_add_extra),
+                style = BluesJamTheme.typography.body,
+                color = style.title,
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
-                ExtraTextField(NextJamCopy.EXTRA_NAME, model.name) {
+                ExtraTextField(stringResource(R.string.next_jam_extra_name), model.name) {
                     model.events(ExtraParticipantEditorUiModel.Event.NameChanged(it))
                 }
-                ExtraTextField(NextJamCopy.EXTRA_INSTRUMENT, model.instrument) {
+                ExtraTextField(stringResource(R.string.next_jam_extra_instrument), model.instrument) {
                     model.events(ExtraParticipantEditorUiModel.Event.InstrumentChanged(it))
                 }
             }
@@ -65,14 +74,14 @@ internal fun AddExtraDialog(model: ExtraParticipantEditorUiModel) {
                 onClick = { model.events(ExtraParticipantEditorUiModel.Event.Submit) },
             ) {
                 Text(
-                    text = NextJamCopy.SUBMIT_EXTRA,
+                    text = stringResource(R.string.next_jam_add_extra_submit),
                     color = if (model.submitEnabled) style.confirm else style.disabled,
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = { model.events(ExtraParticipantEditorUiModel.Event.Cancel) }) {
-                Text(text = NextJamCopy.CANCEL, color = style.cancel)
+                Text(text = stringResource(R.string.next_jam_cancel), color = style.cancel)
             }
         },
     )

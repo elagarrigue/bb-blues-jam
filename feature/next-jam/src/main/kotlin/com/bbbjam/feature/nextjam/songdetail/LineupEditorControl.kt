@@ -31,7 +31,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import com.bbbjam.core.ui.strip.fullName
+import com.bbbjam.core.ui.text.fullName
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
 import com.bbbjam.feature.nextjam.LineupEditorUiModel
@@ -47,7 +48,7 @@ internal fun LineupEditor(model: LineupEditorUiModel) {
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
     ) {
         Text(
-            text = model.heading,
+            text = model.heading.resolve(),
             style = BluesJamTheme.typography.caption,
             color = style.heading,
             modifier = Modifier
@@ -76,22 +77,26 @@ private fun LineupEditorLine(model: LineupEditorLineUiModel) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = model.instrument.fullName(),
+                        text = model.instrument.fullName().resolve(),
                         style = BluesJamTheme.typography.body,
                         color = style.instrument,
                     )
-                    Text(text = model.countLabel, style = BluesJamTheme.typography.caption, color = style.count)
+                    Text(
+                        text = model.countLabel.resolve(),
+                        style = BluesJamTheme.typography.caption,
+                        color = style.count,
+                    )
                 }
-                EditorCountButton("−", model.removeDescription, model.canRemove, style) {
+                EditorCountButton("−", model.removeDescription.resolve(), model.canRemove, style) {
                     model.events(LineupEditorLineUiModel.Event.Remove)
                 }
-                EditorCountButton("+", model.addDescription, model.canAdd, style) {
+                EditorCountButton("+", model.addDescription.resolve(), model.canAdd, style) {
                     model.events(LineupEditorLineUiModel.Event.Add)
                 }
             }
             model.blockedNote?.let { note ->
                 Text(
-                    text = note,
+                    text = note.resolve(),
                     style = BluesJamTheme.typography.caption,
                     color = style.blockedNote,
                     modifier = Modifier.padding(top = spacing.xs),

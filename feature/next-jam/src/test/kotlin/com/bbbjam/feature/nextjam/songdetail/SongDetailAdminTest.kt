@@ -29,18 +29,22 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.lineup.LineupLineEvent
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.strip.toInstrumentChips
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
+import com.bbbjam.feature.nextjam.keyDescription
+import com.bbbjam.feature.nextjam.savingText
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
@@ -61,7 +65,7 @@ import org.junit.Test
 
 /**
  * `song-detail-replaces-row-expansion`: the song detail holds everything the expanded row had. The
- * copy is written out from the approved tables, never read from [NextJamCopy] or [SongDetailCopy].
+ * texts are `UiText` values written out with their resource ids.
  * Several tests here moved from the list's tests (extras form, panel "Quitar", lineup editor,
  * the key block that opens the picker), now driven through [SongDetailPresenter].
  */
@@ -71,7 +75,7 @@ class SongDetailAdminTest {
     private val setlist = FakeSetlistRepository()
     private val jamDate = LocalDate.of(2026, 10, 31)
     private val fetched = Freshness(Instant.parse("2026-10-02T14:59:00Z"), lastFailure = null, isRefreshing = false)
-    private val hint = "Para tocar, anotate en la jam: la organización te suma a un tema."
+    private val hint = UiText.res(CoreR.string.lineup_hint)
 
     private val mixed =
         Lineup(listOf(Slot(Instrument.GUITAR, "Tincho"), Slot(Instrument.GUITAR), Slot(Instrument.BASS)))
@@ -110,8 +114,12 @@ class SongDetailAdminTest {
     private fun Pair<NextJamUiModel, SongDetailUiModel>.bothShowAna(): Boolean {
         val row = ((first as? NextJamUiModel.Jam)?.setlist as? SetlistUiModel.Songs)?.rows?.firstOrNull()
         val detail = second as? SongDetailUiModel.Song
-        return row?.key == "C" && row.instruments.any { it.label == "Gtr: Ana" } &&
-            detail?.key == "C" && detail.lineup.filledSlots.any { it.detail == "Ana" }
+        return row?.key == "C" &&
+            row.instruments.any {
+                it.label ==
+                    UiText.res(CoreR.string.strip_filled_label, UiText.res(CoreR.string.instrument_guitar_abbr), "Ana")
+            } &&
+            detail?.key == "C" && detail.lineup.filledSlots.any { it.detail == UiText.raw("Ana") }
     }
 
     @Test
@@ -122,9 +130,16 @@ class SongDetailAdminTest {
             val song = awaitSong()
             assertNull(song.admin)
             assertEquals(hint, song.lineup.hint)
-            assertEquals(listOf("LIBRE", "LIBRE"), song.lineup.openSlots.map { it.detail })
-            assertEquals(listOf("Tincho"), song.lineup.filledSlots.map { it.detail })
-            assertEquals(listOf("+ saxo", "+ trompeta"), song.lineup.extras.map { it.instrument })
+            val open = UiText.res(CoreR.string.lineup_open_detail)
+            assertEquals(listOf(open, open), song.lineup.openSlots.map { it.detail })
+            assertEquals(listOf(UiText.raw("Tincho")), song.lineup.filledSlots.map { it.detail })
+            assertEquals(
+                listOf(
+                    UiText.res(CoreR.string.lineup_extra_instrument, "saxo"),
+                    UiText.res(CoreR.string.lineup_extra_instrument, "trompeta"),
+                ),
+                song.lineup.extras.map { it.instrument },
+            )
             val lines = song.lineup.openSlots + song.lineup.filledSlots + song.lineup.extras
             assertTrue(lines.all { it.action == null && it.actionLabel == null })
             cancelAndIgnoreRemainingEvents()
@@ -137,17 +152,27 @@ class SongDetailAdminTest {
             jams.snapshots.emit(snapshot())
             val song = awaitSong()
             val controls = song.controls()
-            assertEquals("Cambiar tonalidad", controls.setKey.label)
-            assertEquals("FORMACIÓN", controls.lineup.heading)
+            assertEquals(UiText.res(R.string.next_jam_set_key), controls.setKey.label)
+            assertEquals(UiText.res(R.string.next_jam_lineup_heading), controls.lineup.heading)
             assertFalse(controls.extraParticipants.formVisible)
             assertNull(controls.saveStatus)
             assertTrue(controls.failures.isEmpty())
             assertNull(song.lineup.hint)
-            assertEquals(listOf("Anotar", "Anotar"), song.lineup.openSlots.map { it.actionLabel })
-            assertEquals(listOf("Liberar"), song.lineup.filledSlots.map { it.actionLabel })
-            assertEquals(listOf("Quitar", "Quitar"), song.lineup.extras.map { it.actionLabel })
+            val assign = UiText.res(CoreR.string.lineup_assign)
+            assertEquals(listOf(assign, assign), song.lineup.openSlots.map { it.actionLabel })
             assertEquals(
-                listOf("Quitar a Juan, saxo", "Quitar a Mora, trompeta"),
+                listOf(UiText.res(CoreR.string.lineup_clear_slot)),
+                song.lineup.filledSlots.map {
+                    it.actionLabel
+                },
+            )
+            val remove = UiText.res(CoreR.string.lineup_remove_extra)
+            assertEquals(listOf(remove, remove), song.lineup.extras.map { it.actionLabel })
+            assertEquals(
+                listOf(
+                    UiText.res(CoreR.string.lineup_remove_extra_description, "Juan", "saxo"),
+                    UiText.res(CoreR.string.lineup_remove_extra_description, "Mora", "trompeta"),
+                ),
                 song.lineup.extras.map { it.actionDescription },
             )
             cancelAndIgnoreRemainingEvents()
@@ -229,8 +254,8 @@ class SongDetailAdminTest {
             setlist.keyChanges.value =
                 listOf(KeyChange(5, jamDate, crossroads.songId, "Crossroads", Key("Bb"), KeyChange.State.Sending))
             val sending = awaitSong { it.key == "Bb" }
-            assertEquals("Tonalidad Bb", sending.keyDescription)
-            assertEquals("Guardando…", sending.controls().saveStatus)
+            assertEquals(keyDescription("Bb"), sending.keyDescription)
+            assertEquals(savingText, sending.controls().saveStatus)
 
             setlist.keyChanges.value = listOf(
                 KeyChange(
@@ -253,9 +278,9 @@ class SongDetailAdminTest {
             val failed = awaitSong { it.key == "A" }
             assertNull(failed.controls().saveStatus)
             val card = failed.controls().failures.single()
-            assertEquals("No se pudo cambiar la tonalidad de «Crossroads»", card.title)
-            assertEquals("No hay conexión. Probá de nuevo cuando tengas internet.", card.message)
-            assertEquals("Cerrar", card.dismissLabel)
+            assertEquals(UiText.res(R.string.next_jam_key_failed, "Crossroads"), card.title)
+            assertEquals(UiText.res(CoreR.string.write_failure_offline), card.message)
+            assertEquals(UiText.res(R.string.next_jam_close), card.dismissLabel)
             card.events(AddFailureUiModel.Event.Dismiss)
             assertEquals(listOf(5L), setlist.dismissed)
             assertEquals(listOf("KeyChange" to 5L), setlist.dismissCalls)
@@ -297,8 +322,8 @@ class SongDetailAdminTest {
             assertEquals(row.key, detail.key)
             assertEquals(row.keyDescription, detail.keyDescription)
             assertEquals(shown.toInstrumentChips(extras), row.instruments)
-            assertEquals(listOf("Tincho", "Ana"), detail.lineup.filledSlots.map { it.detail })
-            assertEquals("Guardando…", row.admin?.saveStatus)
+            assertEquals(listOf(UiText.raw("Tincho"), UiText.raw("Ana")), detail.lineup.filledSlots.map { it.detail })
+            assertEquals(savingText, row.admin?.saveStatus)
             assertEquals(row.admin?.saveStatus, detail.controls().saveStatus)
             cancelAndIgnoreRemainingEvents()
         }
@@ -347,9 +372,9 @@ class SongDetailAdminTest {
             jams.snapshots.emit(snapshot())
             val before = awaitSong()
             val editor = before.controls().extraParticipants
-            assertEquals("Otro", editor.rowLabel)
-            assertEquals("Agregar", editor.actionLabel)
-            assertEquals("Agregar a Otros", editor.actionDescription)
+            assertEquals(UiText.res(R.string.next_jam_other), editor.rowLabel)
+            assertEquals(UiText.res(R.string.next_jam_add_extra_submit), editor.actionLabel)
+            assertEquals(UiText.res(R.string.next_jam_add_extra), editor.actionDescription)
             // The editor lines are there with no event first; there is no opener or closer.
             assertTrue(before.controls().lineup.lines.isNotEmpty())
             editor.events(ExtraParticipantEditorUiModel.Event.Open)
@@ -374,9 +399,9 @@ class SongDetailAdminTest {
             jams.snapshots.emit(snapshot(listOf(full)))
             val song = awaitSong()
             assertTrue(song.lineup.openSlots.isEmpty())
-            assertEquals("No quedan cupos libres.", song.lineup.noOpenSlotsNote)
+            assertEquals(UiText.res(CoreR.string.lineup_no_open_slots), song.lineup.noOpenSlotsNote)
             assertNull(song.lineup.hint)
-            assertEquals("Agregar a Otros", song.controls().extraParticipants.actionDescription)
+            assertEquals(UiText.res(R.string.next_jam_add_extra), song.controls().extraParticipants.actionDescription)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -401,16 +426,16 @@ class SongDetailAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(params()) }.test {
             jams.snapshots.emit(snapshot(listOf(defaults)))
             val editing = awaitSong().controls().lineup
-            assertEquals("FORMACIÓN", editing.heading)
+            assertEquals(UiText.res(R.string.next_jam_lineup_heading), editing.heading)
             val retained = editing.lines.single { it.instrument == Instrument.GUITAR }.events
             retained(LineupEditorLineUiModel.Event.Remove)
             retained(LineupEditorLineUiModel.Event.Remove)
             retained(LineupEditorLineUiModel.Event.Remove)
             assertEquals(listOf(1, 0), setlist.lineupCalls.map { it.count })
             val empty = expectMostRecentItem() as SongDetailUiModel.Song
-            assertEquals("Guardando…", empty.controls().saveStatus)
+            assertEquals(savingText, empty.controls().saveStatus)
             val guitar = empty.controls().lineup.lines.first()
-            assertEquals("No va en este tema", guitar.countLabel)
+            assertEquals(UiText.res(R.string.next_jam_lineup_count_none), guitar.countLabel)
             assertFalse(guitar.canRemove)
             retained(LineupEditorLineUiModel.Event.Add)
             retained(LineupEditorLineUiModel.Event.Add)
@@ -418,7 +443,7 @@ class SongDetailAdminTest {
             assertEquals(listOf(1, 0, 1, 2, 3), setlist.lineupCalls.map { it.count })
             setlist.lineupHold?.complete(Unit)
             val afterWrites = awaitSong { it.controls().saveStatus == null }
-            assertEquals("FORMACIÓN", afterWrites.controls().lineup.heading)
+            assertEquals(UiText.res(R.string.next_jam_lineup_heading), afterWrites.controls().lineup.heading)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -438,19 +463,19 @@ class SongDetailAdminTest {
             )
             val one = awaitSong().controls().lineup
             val vocals = one.lines.single { it.instrument == Instrument.VOCALS }
-            assertEquals("1 cupo", vocals.countLabel)
+            assertEquals(UiText.plural(R.plurals.next_jam_lineup_count, 1), vocals.countLabel)
             assertTrue(vocals.canAdd)
             vocals.events(LineupEditorLineUiModel.Event.Add)
             assertEquals(Instrument.VOCALS to 2, setlist.lineupCalls.last().let { it.instrument to it.count })
             jams.snapshots.emit(snapshot(listOf(twoVocals)))
             val two = expectMostRecentItem().editor()
             val twoLine = two.lines.single { it.instrument == Instrument.VOCALS }
-            assertEquals("2 cupos", twoLine.countLabel)
+            assertEquals(UiText.plural(R.plurals.next_jam_lineup_count, 2), twoLine.countLabel)
             assertTrue(twoLine.canAdd)
             jams.snapshots.emit(snapshot(listOf(threeVocals)))
             val three = expectMostRecentItem().editor()
             val threeLine = three.lines.single { it.instrument == Instrument.VOCALS }
-            assertEquals("3 cupos", threeLine.countLabel)
+            assertEquals(UiText.plural(R.plurals.next_jam_lineup_count, 3), threeLine.countLabel)
             assertFalse(threeLine.canAdd)
             assertTrue(threeLine.canRemove)
             cancelAndIgnoreRemainingEvents()
@@ -482,7 +507,7 @@ class SongDetailAdminTest {
             val guitar = editor.lines.first()
             assertFalse(guitar.canRemove)
             assertTrue(guitar.canAdd)
-            assertEquals("Tiene músico anotado. Liberá el cupo antes de sacarlo.", guitar.blockedNote)
+            assertEquals(UiText.res(R.string.next_jam_lineup_blocked), guitar.blockedNote)
             cancelAndIgnoreRemainingEvents()
         }
     }

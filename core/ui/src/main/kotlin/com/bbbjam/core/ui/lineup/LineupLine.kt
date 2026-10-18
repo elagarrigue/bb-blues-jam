@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bbbjam.core.ui.strip.InstrumentChipKind
 import com.bbbjam.core.ui.strip.InstrumentStripDefaults
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /** A line's detail wraps to at most this many lines before it is cut with "…". */
@@ -42,6 +43,7 @@ private const val DETAIL_MAX_LINES = 2
 internal fun Line(line: LineupLineUiModel) {
     val spacing = BluesJamTheme.spacing
     val style = LineupPanelDefaults.style(line.kind)
+    val lineDescription = line.contentDescription.resolve()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -49,9 +51,9 @@ internal fun Line(line: LineupLineUiModel) {
             .padding(horizontal = spacing.sm, vertical = if (line.action == null) spacing.xs else 0.dp)
             .then(
                 if (line.action == null) {
-                    Modifier.clearAndSetSemantics { contentDescription = line.contentDescription }
+                    Modifier.clearAndSetSemantics { contentDescription = lineDescription }
                 } else {
-                    Modifier.semantics { contentDescription = line.contentDescription }
+                    Modifier.semantics { contentDescription = lineDescription }
                 },
             ),
         horizontalArrangement = Arrangement.spacedBy(spacing.sm),
@@ -75,18 +77,19 @@ internal fun Line(line: LineupLineUiModel) {
         }
         line.actionLabel?.let { label ->
             val action = requireNotNull(line.action)
+            val actionDescription = line.actionDescription?.resolve()
             TextButton(
                 onClick = { action(LineupLineEvent.Activate) },
                 modifier = Modifier
                     .heightIn(min = LocalMinimumInteractiveComponentSize.current)
                     .then(
-                        line.actionDescription?.let { description ->
+                        actionDescription?.let { description ->
                             Modifier.semantics { contentDescription = description }
                         } ?: Modifier,
                     ),
             ) {
                 Text(
-                    text = label,
+                    text = label.resolve(),
                     color = if (line.kind == InstrumentChipKind.OPEN_SLOT) {
                         BluesJamTheme.colors.slotOpen
                     } else {
@@ -105,7 +108,7 @@ private fun InstrumentText(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = line.instrument,
+        text = line.instrument.resolve(),
         style = BluesJamTheme.typography.body,
         color = style.textColor,
         maxLines = 1,
@@ -117,7 +120,7 @@ private fun InstrumentText(
 @Composable
 private fun DetailText(line: LineupLineUiModel, modifier: Modifier = Modifier) {
     Text(
-        text = line.detail,
+        text = line.detail.resolve(),
         style = BluesJamTheme.typography.body,
         color = LineupPanelDefaults.detailColor(line.kind),
         maxLines = DETAIL_MAX_LINES,

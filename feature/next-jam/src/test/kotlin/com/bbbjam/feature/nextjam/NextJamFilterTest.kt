@@ -99,13 +99,13 @@ class NextJamFilterTest {
 
     private fun NextJamUiModel.positions() = rows().map { it.position }
 
-    private fun NextJamUiModel.checked() = bar().chips.filter { it.isSelected }.map { it.label }
+    private fun NextJamUiModel.checked() = bar().chips.filter { it.isSelected }.map { it.label.chipName() }
 
     private fun NextJamUiModel.tap(label: String) =
-        bar().chips.single { it.label == label }.events(FilterChipUiModel.Event.Toggle)
+        bar().chips.single { it.label.chipName() == label }.events(FilterChipUiModel.Event.Toggle)
 
     private suspend fun ReceiveTurbine<NextJamUiModel>.start(songs: List<JamSong> = filterSongs): NextJamUiModel {
-        assertEquals(NextJamUiModel.Loading("Cargando la próxima jam"), awaitItem())
+        assertEquals(nextJamLoading, awaitItem())
         repository.snapshots.emit(snapshot(jam(Setlist.Available(songs))))
         return awaitItem()
     }
@@ -122,12 +122,12 @@ class NextJamFilterTest {
     @Test
     fun `each of the six instruments shows exactly its songs, and deselecting restores all`() = runTest {
         val expected = listOf(
-            Triple("Guitarra", listOf(1, 7), "2 de 7 temas con cupo libre para guitarra"),
-            Triple("Bajo", listOf(2, 3), "2 de 7 temas con cupo libre para bajo"),
-            Triple("Batería", listOf(4, 6), "2 de 7 temas con cupo libre para batería"),
-            Triple("Voz", listOf(3, 6), "2 de 7 temas con cupo libre para voz"),
-            Triple("Armónica", listOf(4), "1 de 7 temas con cupo libre para armónica"),
-            Triple("Teclados", listOf(1), "1 de 7 temas con cupo libre para teclados"),
+            Triple("Guitarra", listOf(1, 7), filterSummary(2, 7, Instrument.GUITAR)),
+            Triple("Bajo", listOf(2, 3), filterSummary(2, 7, Instrument.BASS)),
+            Triple("Batería", listOf(4, 6), filterSummary(2, 7, Instrument.DRUMS)),
+            Triple("Voz", listOf(3, 6), filterSummary(2, 7, Instrument.VOCALS)),
+            Triple("Armónica", listOf(4), filterSummary(1, 7, Instrument.HARMONICA)),
+            Triple("Teclados", listOf(1), filterSummary(1, 7, Instrument.KEYBOARDS)),
         )
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             var model = start()
@@ -137,7 +137,7 @@ class NextJamFilterTest {
                 assertEquals(bar(7, filterCounts, setOf(label), summary = summary), model.bar())
                 assertEquals(positions, model.positions())
                 // The number of rows is the selected chip's count.
-                assertEquals(model.bar().chips.single { it.label == label }.count, "${model.rows().size}")
+                assertEquals(model.bar().chips.single { it.label.chipName() == label }.count, "${model.rows().size}")
 
                 // Tapping a checked chip unchecks it (multi-select approval of F1).
                 model.tap(label)
@@ -160,19 +160,22 @@ class NextJamFilterTest {
             val bassOrVocals = awaitItem()
             assertEquals(listOf("Bajo", "Voz"), bassOrVocals.checked())
             assertEquals(listOf(2, 3, 6), bassOrVocals.positions())
-            assertEquals("3 de 7 temas con cupo libre para bajo o voz", bassOrVocals.bar().summary)
+            assertEquals(filterSummary(3, 7, Instrument.BASS, Instrument.VOCALS), bassOrVocals.bar().summary)
 
             // Chosen after the others, guitarra still comes first in the line (chip order).
             bassOrVocals.tap("Guitarra")
             val three = awaitItem()
             assertEquals(listOf("Guitarra", "Bajo", "Voz"), three.checked())
             assertEquals(listOf(1, 2, 3, 6, 7), three.positions())
-            assertEquals("5 de 7 temas con cupo libre para guitarra, bajo o voz", three.bar().summary)
+            assertEquals(
+                filterSummary(5, 7, Instrument.GUITAR, Instrument.BASS, Instrument.VOCALS),
+                three.bar().summary,
+            )
 
             three.tap("Bajo")
             val guitarOrVocals = awaitItem()
             assertEquals(listOf(1, 3, 6, 7), guitarOrVocals.positions())
-            assertEquals("4 de 7 temas con cupo libre para guitarra o voz", guitarOrVocals.bar().summary)
+            assertEquals(filterSummary(4, 7, Instrument.GUITAR, Instrument.VOCALS), guitarOrVocals.bar().summary)
 
             guitarOrVocals.tap("Todos")
             val all = awaitItem()
@@ -215,7 +218,7 @@ class NextJamFilterTest {
             first.tap("Armónica")
             val none = awaitItem()
             assertEquals(
-                bar(5, counts, setOf("Armónica"), noResults = "Ningún tema tiene cupo libre para armónica."),
+                bar(5, counts, setOf("Armónica"), noResults = filterNoResults(Instrument.HARMONICA)),
                 none.bar(),
             )
             assertEquals(emptyList<Int>(), none.positions())
@@ -229,7 +232,7 @@ class NextJamFilterTest {
             cleared.tap("Armónica")
             awaitItem().tap("Batería")
             val bothNone = awaitItem()
-            assertEquals("Ningún tema tiene cupo libre para batería o armónica.", bothNone.bar().noResults)
+            assertEquals(filterNoResults(Instrument.DRUMS, Instrument.HARMONICA), bothNone.bar().noResults)
             assertEquals(null, bothNone.bar().summary)
 
             bothNone.tap("Todos")
@@ -264,7 +267,7 @@ class NextJamFilterTest {
             repository.snapshots.emit(snapshot(jam(Setlist.Available(refreshed))))
             val afterRefresh = awaitItem()
             assertEquals(listOf(2), afterRefresh.positions())
-            assertEquals("1 de 7 temas con cupo libre para bajo", afterRefresh.bar().summary)
+            assertEquals(filterSummary(1, 7, Instrument.BASS), afterRefresh.bar().summary)
             assertEquals(listOf("Bajo"), afterRefresh.checked())
 
             // F5: the filter describes the musician, not the jam.

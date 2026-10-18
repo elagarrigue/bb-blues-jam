@@ -21,7 +21,8 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.text.SongListText
-import com.bbbjam.feature.nextjam.NextJamCopy
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 import com.bbbjam.feature.nextjam.admin.removalKey
 import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
@@ -100,7 +101,7 @@ internal class SongDetailPresenter(
         )
         val shown = snapshot
         return if (shown == null || isAdmin == null) {
-            SongDetailUiModel.Loading(SongDetailCopy.LOADING, backUiModel(onBack))
+            SongDetailUiModel.Loading(UiText.res(R.string.song_detail_loading), backUiModel(onBack))
         } else {
             shown.toSongDetail(params.jamDate, params.songId, params.position, admin, onBack)
         }
@@ -139,7 +140,10 @@ internal fun JamsSnapshot.toSongDetail(
         song != null -> song.toSongModel(song.key.value, song.lineup.toLineupPanel(song.extraParticipants), back)
 
         else -> SongDetailUiModel.NotFound(
-            EmptyStateUiModel(SongDetailCopy.NOT_FOUND_TITLE, SongDetailCopy.NOT_FOUND_MESSAGE),
+            EmptyStateUiModel(
+                UiText.res(R.string.song_detail_not_found_title),
+                UiText.res(R.string.song_detail_not_found_message),
+            ),
             back,
         )
     }
@@ -148,7 +152,7 @@ internal fun JamsSnapshot.toSongDetail(
 private fun JamSong.toSongModel(key: String, lineup: LineupPanelUiModel, back: BackUiModel) = SongDetailUiModel.Song(
     title = title,
     artist = artist.takeIf { it.isNotBlank() },
-    keyLabel = SongDetailCopy.KEY_LABEL,
+    keyLabel = UiText.res(R.string.song_detail_key_label),
     key = key,
     keyDescription = SongListText.keyDescription(key),
     lineup = lineup,
@@ -167,9 +171,9 @@ private fun SongAdminState.songDetail(date: LocalDate, cached: JamSong, back: Ba
     val saving = overlays.isSaving(date, id) || reservations.has(date, id)
     return song.toSongModel(key, lineupPanel(date, song, song.extraParticipants), back).copy(
         admin = SongDetailAdminUiModel(
-            saveStatus = if (saving) NextJamCopy.SAVING else null,
+            saveStatus = if (saving) UiText.res(R.string.next_jam_saving) else null,
             setKey = SetKeyActionUiModel(
-                NextJamCopy.SET_KEY,
+                UiText.res(R.string.next_jam_set_key),
                 EventHandler(key = "${removalKey(date, id)}|setKey") { onSetKey(date, id) },
             ),
             lineup = lineupEditor(date, song),

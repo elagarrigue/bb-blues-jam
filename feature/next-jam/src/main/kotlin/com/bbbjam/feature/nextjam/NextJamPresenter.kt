@@ -33,6 +33,7 @@ import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.state.stalenessNotice
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.admin.AdminState
 import com.bbbjam.feature.nextjam.admin.NextJamSetlistWrites
 import com.bbbjam.feature.nextjam.admin.RowAdmin
@@ -159,7 +160,7 @@ internal class NextJamPresenter(
         val onFilterChange: (InstrumentFilterChange) -> Unit = { change -> filter = filter.updatedBy(change) }
         val model = snapshot?.let { refreshes.shown(it) }
             ?.toUiModel(today, filter, onFilterChange, now, refreshes.onRetry, onOpenSong, admin)
-            ?: NextJamUiModel.Loading(NextJamCopy.LOADING)
+            ?: NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
         return model.withPullRefresh(refreshes.pullRefresh)
     }
 }
@@ -231,17 +232,20 @@ internal fun JamsSnapshot.toUiModel(
         )
 
         fetchedAt != null -> NextJamUiModel.NoUpcomingJam(
-            empty = EmptyStateUiModel(NextJamCopy.NO_UPCOMING_TITLE, NextJamCopy.NO_UPCOMING_JAM),
+            empty = EmptyStateUiModel(
+                UiText.res(R.string.next_jam_no_upcoming_title),
+                UiText.res(R.string.next_jam_no_upcoming_message),
+            ),
             staleness = staleness,
-            adminHint = if (admin == null) null else NextJamCopy.ADMIN_NO_UPCOMING,
+            adminHint = if (admin == null) null else UiText.res(R.string.next_jam_admin_no_upcoming),
         )
 
         // Nothing was ever read: never claim there is no jam. An error only once a read has failed
         // and no retry is running; while one runs, the skeleton again.
         failure != null && !freshness.isRefreshing ->
-            NextJamUiModel.Failed(listError(NextJamCopy.LOAD_FAILED, isOffline, onRetry))
+            NextJamUiModel.Failed(listError(UiText.res(R.string.next_jam_load_failed), isOffline, onRetry))
 
-        else -> NextJamUiModel.Loading(NextJamCopy.LOADING)
+        else -> NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
     }
 }
 
@@ -273,9 +277,15 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
         // empty list is a draft being built, not a published empty list.
         SetlistUiModel.Empty(
             if (state.isAdmin) {
-                EmptyStateUiModel(NextJamCopy.ADMIN_EMPTY_TITLE, NextJamCopy.ADMIN_EMPTY)
+                EmptyStateUiModel(
+                    UiText.res(R.string.next_jam_admin_empty_title),
+                    UiText.res(R.string.next_jam_admin_empty_message),
+                )
             } else {
-                EmptyStateUiModel(NextJamCopy.EMPTY_SETLIST_TITLE, NextJamCopy.EMPTY_SETLIST)
+                EmptyStateUiModel(
+                    UiText.res(R.string.next_jam_empty_title),
+                    UiText.res(R.string.next_jam_empty_message),
+                )
             },
         )
     } else {
@@ -309,11 +319,15 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
     }
 
     Setlist.Withheld -> SetlistUiModel.Withheld(
-        DraftSetlistUiModel(NextJamCopy.DRAFT_LABEL, NextJamCopy.DRAFT_TITLE, NextJamCopy.DRAFT_MESSAGE),
+        DraftSetlistUiModel(
+            UiText.res(R.string.next_jam_draft_label),
+            UiText.res(R.string.next_jam_draft_title),
+            UiText.res(R.string.next_jam_draft_message),
+        ),
     )
 
     // The problem is for logs and the admin, not for musicians.
-    is Setlist.Unavailable -> SetlistUiModel.Unavailable(NextJamCopy.SETLIST_UNAVAILABLE)
+    is Setlist.Unavailable -> SetlistUiModel.Unavailable(UiText.res(R.string.next_jam_setlist_unavailable))
 }
 
 private fun JamSong.toRow(position: Int, rowKey: String, openDetail: () -> Unit) = SongRowUiModel(
@@ -324,7 +338,7 @@ private fun JamSong.toRow(position: Int, rowKey: String, openDetail: () -> Unit)
     key = key.value,
     keyDescription = SongListText.keyDescription(key.value),
     instruments = lineup.toInstrumentChips(extraParticipants),
-    openDetailLabel = NextJamCopy.OPEN_DETAIL,
+    openDetailLabel = UiText.res(R.string.next_jam_open_detail),
     events = EventHandler { event ->
         when (event) {
             SongRowUiModel.Event.OpenDetail -> openDetail()

@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.nav
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /** The bottom bar (`bottom-navigation`): its tabs in bar order, exactly one of them selected. */
 data class TabBarUiModel(val tabs: List<TabUiModel>) : UiModel
@@ -12,7 +13,7 @@ data class TabBarUiModel(val tabs: List<TabUiModel>) : UiModel
  * reader; [events] receives [Event.Select]. Where a tab goes is the caller's (`:app` binds it to
  * navigation); nothing here knows the navigation library.
  */
-data class TabUiModel(val label: String, val icon: TabIcon, val selected: Boolean, val events: EventHandler<Event>) :
+data class TabUiModel(val label: UiText, val icon: TabIcon, val selected: Boolean, val events: EventHandler<Event>) :
     UiModel {
     sealed interface Event : UiEvent {
         /** Show this tab. Navigation only, never a write. */

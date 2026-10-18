@@ -7,6 +7,7 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.pastjams.admin.JamsAdminUiModel
 import java.time.LocalDate
 
@@ -19,26 +20,26 @@ import java.time.LocalDate
  * null for musicians, whose model is exactly what it was.
  */
 internal sealed interface PastJamsUiModel : UiModel {
-    val title: String
+    val title: UiText
     val pullRefresh: PullRefreshUiModel
 
     /** Nothing to show yet. Drawn as skeleton rows; [description] is what a screen reader says. */
     data class Loading(
-        override val title: String,
-        val description: String,
+        override val title: UiText,
+        val description: UiText,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : PastJamsUiModel
 
     /** Nothing was ever fetched and the latest read failed: the error block with a retry button. */
     data class Failed(
-        override val title: String,
+        override val title: UiText,
         val error: ListErrorUiModel,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
     ) : PastJamsUiModel
 
     /** The jams were read and none is past. [staleness] is set when the latest refresh failed. */
     data class Empty(
-        override val title: String,
+        override val title: UiText,
         val empty: EmptyStateUiModel,
         val staleness: StalenessNoticeUiModel?,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
@@ -47,7 +48,7 @@ internal sealed interface PastJamsUiModel : UiModel {
 
     /** The past jams, newest first. [staleness] is set exactly when the latest refresh failed. */
     data class Jams(
-        override val title: String,
+        override val title: UiText,
         val rows: List<PastJamRowUiModel>,
         val staleness: StalenessNoticeUiModel?,
         override val pullRefresh: PullRefreshUiModel = PullRefreshUiModel.IDLE,
@@ -63,10 +64,10 @@ internal sealed interface PastJamsUiModel : UiModel {
  */
 internal data class PastJamRowUiModel(
     val date: LocalDate,
-    val dateLabel: String,
+    val dateLabel: UiText,
     val venue: String,
     val summary: PastJamSummary,
-    val openLabel: String?,
+    val openLabel: UiText?,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {
@@ -78,8 +79,8 @@ internal data class PastJamRowUiModel(
 /** What a past jam row says under its date and venue. */
 internal sealed interface PastJamSummary : UiModel {
     /** [countLabel] is "13 temas"; [hook] is the first titles in position order, then "y n más". */
-    data class Songs(val countLabel: String, val hook: String) : PastJamSummary
+    data class Songs(val countLabel: UiText, val hook: UiText) : PastJamSummary
 
     /** The setlist was never published, cannot be read, or has no songs: one line instead. */
-    data class NotShown(val message: String) : PastJamSummary
+    data class NotShown(val message: UiText) : PastJamSummary
 }

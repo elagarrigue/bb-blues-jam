@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.assistant.AssistantDefaults
 import com.bbbjam.feature.assistant.ProposedSongUiModel
@@ -33,6 +34,7 @@ private fun SongRow(song: ProposedSongUiModel) {
     val spacing = BluesJamTheme.spacing
     val typography = BluesJamTheme.typography
     val style = AssistantDefaults.song()
+    val keyDescription = song.keyDescription.resolve()
     Column(
         modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
@@ -55,13 +57,13 @@ private fun SongRow(song: ProposedSongUiModel) {
                 text = song.key,
                 style = typography.songTitle,
                 color = style.key,
-                modifier = Modifier.semantics { contentDescription = song.keyDescription },
+                modifier = Modifier.semantics { contentDescription = keyDescription },
             )
         }
         Text(text = song.artist, style = typography.body, color = style.artist)
         Text(text = song.reason, style = typography.body, color = style.reason)
         song.applyStatus?.let { status ->
-            Text(text = status.text, style = typography.caption, color = ApplyDefaults.status(status.kind))
+            Text(text = status.text.resolve(), style = typography.caption, color = ApplyDefaults.status(status.kind))
         }
     }
 }

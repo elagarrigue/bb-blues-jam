@@ -1,6 +1,7 @@
 package com.bbbjam.core.ui.strip
 
 import com.bbbjam.core.ui.presenter.UiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * One chip of the instrument strip, fully formed: [label] is what the chip shows ("GTR: LIBRE",
@@ -8,7 +9,7 @@ import com.bbbjam.core.ui.presenter.UiModel
  * ("Guitarra: libre"). [kind] picks the chip's style; only [InstrumentChipKind.OPEN_SLOT] is a place
  * to play.
  */
-data class InstrumentChipUiModel(val label: String, val contentDescription: String, val kind: InstrumentChipKind) :
+data class InstrumentChipUiModel(val label: UiText, val contentDescription: UiText, val kind: InstrumentChipKind) :
     UiModel {
     /** True only for an open lineup slot. An extra participant is never open (D-18). */
     val isOpen: Boolean

@@ -6,7 +6,9 @@ import com.bbbjam.core.data.jams.JamHeldBack
 import com.bbbjam.core.data.jams.JamPlan
 import com.bbbjam.core.data.jams.jamCreationPlan
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantHandlers
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.apply.ApplyInputs
 import com.bbbjam.feature.assistant.apply.ApplyTone
 import com.bbbjam.feature.assistant.apply.ConfirmationUiModel
@@ -40,9 +42,9 @@ internal fun jamCard(
     val today = inputs.today
     val plan = if (isCreatable && today != null) jamCreationPlan(jam.date, inputs.snapshot, today) else JamPlan.Unknown
     return JamCardUiModel(
-        heading = JamCopy.HEADING,
-        date = JamCopy.dateInWords(jam.date),
-        detail = JamCopy.detail(jam.startTime, jam.venue),
+        heading = UiText.res(R.string.assistant_jam_card_heading),
+        date = jamDateInWordsText(jam.date),
+        detail = jamDetailText(jam.startTime, jam.venue),
         note = jamNote(plan, creation),
         // A proposal with songs creates its jam through the targets block (C5); the card is information.
         action = if (proposal.songs.isEmpty()) jamAction(turnId, jam, plan, creation, inputs, handlers) else null,
@@ -50,16 +52,24 @@ internal fun jamCard(
     )
 }
 
-private fun jamNote(plan: JamPlan, creation: JamCreation?): String? = when (plan) {
+private fun jamNote(plan: JamPlan, creation: JamCreation?): UiText? = when (plan) {
     JamPlan.Unknown -> null
 
     is JamPlan.Blocked -> when (plan.reason) {
-        JamPlan.Blocked.Reason.PAST -> JamCopy.BLOCKED_PAST
-        JamPlan.Blocked.Reason.EXISTS -> if (creation == JamCreation.Created) null else JamCopy.BLOCKED_EXISTS
-        JamPlan.Blocked.Reason.EARLIER -> plan.upcomingDate?.let(JamCopy::blockedEarlier)
+        JamPlan.Blocked.Reason.PAST -> UiText.res(R.string.assistant_jam_blocked_past)
+
+        JamPlan.Blocked.Reason.EXISTS -> if (creation ==
+            JamCreation.Created
+        ) {
+            null
+        } else {
+            UiText.res(R.string.assistant_jam_blocked_exists)
+        }
+
+        JamPlan.Blocked.Reason.EARLIER -> plan.upcomingDate?.let(::jamBlockedEarlierText)
     }
 
-    is JamPlan.Ready -> (plan.heldBack as? JamHeldBack.NewWaits)?.let { JamCopy.heldBackNote(it.upcomingDate) }
+    is JamPlan.Ready -> (plan.heldBack as? JamHeldBack.NewWaits)?.let { jamHeldBackNoteText(it.upcomingDate) }
 }
 
 private fun jamAction(
@@ -74,7 +84,15 @@ private fun jamAction(
     val busy = inputs.runs.values.any { it.state == ApplyRun.State.Running } ||
         inputs.creations.values.any { it == JamCreation.Creating }
     return JamActionUiModel(
-        label = if (creation == null) JamCopy.CREATE else JamCopy.CREATE_RETRY,
+        label = UiText.res(
+            if (creation ==
+                null
+            ) {
+                R.string.assistant_jam_create
+            } else {
+                R.string.assistant_jam_create_retry
+            },
+        ),
         enabled = !busy,
         events = handlers.jam(turnId),
         confirmation = if (inputs.confirmingJamTurnId == turnId) {
@@ -89,21 +107,21 @@ private fun JamPlan.Ready.confirmation(
     jam: ProposedJam,
     events: EventHandler<ConfirmationUiModel.Event>,
 ): ConfirmationUiModel = ConfirmationUiModel(
-    title = JamCopy.DIALOG_TITLE,
+    title = UiText.res(R.string.assistant_jam_dialog_title),
     lines = buildList {
-        add("Fecha: ${JamCopy.dateInWords(jam.date).lowercase()}")
-        add("Hora: ${JamCopy.time(jam.startTime)}")
-        add("Lugar: ${jam.venue}")
-        add(JamCopy.DRAFT_LINE)
-        (heldBack as? JamHeldBack.NewWaits)?.let { add(JamCopy.heldBackLine(it.upcomingDate)) }
+        add(UiText.res(R.string.assistant_jam_dialog_date, jamDateInWordsLowerText(jam.date)))
+        add(UiText.res(R.string.assistant_jam_dialog_time, jamTime(jam.startTime)))
+        add(UiText.res(R.string.assistant_jam_dialog_venue, jam.venue))
+        add(UiText.res(R.string.assistant_jam_draft_line))
+        (heldBack as? JamHeldBack.NewWaits)?.let { add(jamHeldBackLineText(it.upcomingDate)) }
     },
-    confirmLabel = JamCopy.CREATE,
-    cancelLabel = JamCopy.CANCEL,
+    confirmLabel = UiText.res(R.string.assistant_jam_create),
+    cancelLabel = UiText.res(R.string.assistant_cancel),
     events = events,
 )
 
 private fun JamCreation.result(): JamResultUiModel = when (this) {
-    JamCreation.Creating -> JamResultUiModel(JamCopy.CREATING, ApplyTone.NEUTRAL)
-    JamCreation.Created -> JamResultUiModel(JamCopy.CREATED, ApplyTone.SUCCESS)
-    is JamCreation.Failed -> JamResultUiModel(JamCopy.failure(reason), ApplyTone.FAILURE)
+    JamCreation.Creating -> JamResultUiModel(UiText.res(R.string.assistant_jam_creating), ApplyTone.NEUTRAL)
+    JamCreation.Created -> JamResultUiModel(UiText.res(R.string.assistant_jam_created), ApplyTone.SUCCESS)
+    is JamCreation.Failed -> JamResultUiModel(jamFailureText(reason), ApplyTone.FAILURE)
 }

@@ -11,10 +11,13 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -26,11 +29,11 @@ import org.junit.Test
 
 /**
  * The state table and the row mapping of `docs/specs/past-jams-list.md` (Technical Approach 3 and
- * 4), through the pure mapping. Strings are written out from the approved copy table (C1, P1),
- * never read from [PastJamsCopy].
+ * 4), through the pure mapping. Texts are the `UiText` (resource id and arguments) that the approved
+ * copy table (C1, P1) maps to.
  */
 class PastJamsStatesTest {
-    private val title = "Jams anteriores"
+    private val title = UiText.res(R.string.past_jams_title)
 
     /** 5 October 2026, 12:00 in Buenos Aires. */
     private val now = Instant.parse("2026-10-05T15:00:00Z")
@@ -38,27 +41,34 @@ class PastJamsStatesTest {
 
     private val fetched = Freshness(threeHoursAgo, lastFailure = null, isRefreshing = false)
 
-    private val loading = PastJamsUiModel.Loading(title, "Cargando las jams anteriores")
+    private val loading = PastJamsUiModel.Loading(title, UiText.res(R.string.past_jams_loading))
 
-    private val offlineMessage =
-        "No hay conexión y todavía no hay nada guardado. Revisá los datos o el wifi y probá de nuevo."
-    private val otherMessage =
-        "Algo falló al leer los datos. Probá de nuevo en un rato; si sigue fallando, avisale a la organización."
+    private val offlineTitle = UiText.res(CoreR.string.list_state_notice_offline)
+    private val offlineMessage = UiText.res(CoreR.string.list_state_error_offline)
+    private val otherMessage = UiText.res(CoreR.string.list_state_error_other)
 
-    private fun failed(message: String) = PastJamsUiModel.Failed(
+    private fun failed(message: UiText) = PastJamsUiModel.Failed(
         title,
-        ListErrorUiModel("No pudimos cargar las jams anteriores", message, "Reintentar", EventHandler {}),
+        ListErrorUiModel(
+            UiText.res(R.string.past_jams_load_failed),
+            message,
+            UiText.res(CoreR.string.list_state_retry),
+            EventHandler {},
+        ),
     )
 
     private val empty = EmptyStateUiModel(
-        "Todavía no hay jams anteriores",
-        "Después de cada jam, su lista queda guardada acá para que veas qué se tocó.",
+        UiText.res(R.string.past_jams_empty_title),
+        UiText.res(R.string.past_jams_empty_message),
     )
 
     private fun notice(
-        title: String,
-        detail: String = "Mostrando lo guardado hace 3 horas.",
-        retry: String? = "Reintentar",
+        title: UiText,
+        detail: UiText = UiText.res(
+            CoreR.string.list_state_showing_saved,
+            UiText.plural(CoreR.plurals.list_state_age_hours, 3),
+        ),
+        retry: UiText? = UiText.res(CoreR.string.list_state_retry),
     ) = StalenessNoticeUiModel(title, detail, retry, EventHandler {})
 
     /** The first titles of the 2026-07-25 tab, then filler titles. */
@@ -77,6 +87,14 @@ class PastJamsStatesTest {
         "Blues del Equipaje",
         "Walking Thru the Park",
     )
+
+    /** "Sábado 25 de julio de 2026": the shared date label and the year. */
+    private fun dateLabel(date: LocalDate) =
+        UiText.res(R.string.past_jams_date_with_year, SpanishDateNames.label(date), date.year)
+
+    private fun count(songs: Int) = UiText.plural(R.plurals.past_jams_song_count, songs)
+
+    private val openLabel = UiText.res(R.string.past_jams_open_jam)
 
     private fun songs(count: Int) = titles.take(count).mapIndexed { index, title ->
         JamSong(index + 1, SongId("song-$index"), title, "Someone", Key("A"), Lineup.default())
@@ -108,13 +126,17 @@ class PastJamsStatesTest {
         assertEquals(
             PastJamRowUiModel(
                 date = LocalDate.of(2026, 7, 25),
-                dateLabel = "Sábado 25 de julio de 2026",
+                dateLabel = dateLabel(LocalDate.of(2026, 7, 25)),
                 venue = "X",
                 summary = PastJamSummary.Songs(
-                    "13 temas",
-                    "Sweet Home Chicago, The Thrill Is Gone, Pride and Joy y 10 más",
+                    count(13),
+                    UiText.res(
+                        R.string.past_jams_hook_more,
+                        "Sweet Home Chicago, The Thrill Is Gone, Pride and Joy",
+                        10,
+                    ),
                 ),
-                openLabel = "ver la lista de temas",
+                openLabel = openLabel,
                 events = EventHandler {},
             ),
             onlyRow(jam("2026-07-25", Setlist.Available(songs(13)))),
@@ -124,15 +146,21 @@ class PastJamsStatesTest {
     @Test
     fun `short setlists say 1 tema and drop the tail when nothing is left`() {
         assertEquals(
-            PastJamSummary.Songs("1 tema", "Sweet Home Chicago"),
+            PastJamSummary.Songs(count(1), UiText.raw("Sweet Home Chicago")),
             onlyRow(jam("2026-07-25", Setlist.Available(songs(1)))).summary,
         )
         assertEquals(
-            PastJamSummary.Songs("3 temas", "Sweet Home Chicago, The Thrill Is Gone, Pride and Joy"),
+            PastJamSummary.Songs(
+                count(3),
+                UiText.raw("Sweet Home Chicago, The Thrill Is Gone, Pride and Joy"),
+            ),
             onlyRow(jam("2026-07-25", Setlist.Available(songs(3)))).summary,
         )
         assertEquals(
-            PastJamSummary.Songs("4 temas", "Sweet Home Chicago, The Thrill Is Gone, Pride and Joy y 1 más"),
+            PastJamSummary.Songs(
+                count(4),
+                UiText.res(R.string.past_jams_hook_more, "Sweet Home Chicago, The Thrill Is Gone, Pride and Joy", 1),
+            ),
             onlyRow(jam("2026-07-25", Setlist.Available(songs(4)))).summary,
         )
     }
@@ -140,7 +168,7 @@ class PastJamsStatesTest {
     @Test
     fun `dropped rows are not counted`() {
         assertEquals(
-            PastJamSummary.Songs("2 temas", "Sweet Home Chicago, The Thrill Is Gone"),
+            PastJamSummary.Songs(count(2), UiText.raw("Sweet Home Chicago, The Thrill Is Gone")),
             onlyRow(jam("2026-07-25", Setlist.Available(songs(2), droppedRows = 3))).summary,
         )
     }
@@ -151,20 +179,20 @@ class PastJamsStatesTest {
         assertEquals(
             PastJamRowUiModel(
                 LocalDate.of(2026, 8, 29),
-                "Sábado 29 de agosto de 2026",
+                dateLabel(LocalDate.of(2026, 8, 29)),
                 "La Macanuda",
-                PastJamSummary.NotShown("La lista de esta jam no se publicó."),
+                PastJamSummary.NotShown(UiText.res(R.string.past_jams_setlist_not_published)),
                 openLabel = null,
                 events = EventHandler {},
             ),
             draft,
         )
         assertEquals(
-            PastJamSummary.NotShown("No se pudo leer la lista de esta jam."),
+            PastJamSummary.NotShown(UiText.res(R.string.past_jams_setlist_unavailable)),
             onlyRow(jam("2026-07-25", Setlist.Unavailable(SetlistProblem.MISSING_TAB))).summary,
         )
         assertEquals(
-            PastJamSummary.NotShown("Esta jam no tiene temas cargados."),
+            PastJamSummary.NotShown(UiText.res(R.string.past_jams_empty_setlist)),
             onlyRow(jam("2026-07-25", Setlist.Available(emptyList()))).summary,
         )
     }
@@ -208,13 +236,16 @@ class PastJamsStatesTest {
     fun `the notice sits over cached rows and the empty block exactly when the latest refresh failed`() {
         val offline = Freshness(threeHoursAgo, DataFailure.Offline, isRefreshing = false)
         val withRows = model(listOf(jam("2026-07-25")), offline) as PastJamsUiModel.Jams
-        assertEquals(notice("Sin conexión"), withRows.staleness)
+        assertEquals(notice(offlineTitle), withRows.staleness)
         assertEquals(
-            PastJamsUiModel.Empty(title, empty, notice("No se pudo actualizar")),
+            PastJamsUiModel.Empty(title, empty, notice(UiText.res(CoreR.string.list_state_notice_other))),
             model(emptyList(), Freshness(threeHoursAgo, DataFailure.Service("internal"), isRefreshing = false)),
         )
         val refreshing = model(listOf(jam("2026-07-25")), offline.copy(isRefreshing = true)) as PastJamsUiModel.Jams
-        assertEquals(notice("Sin conexión", "Actualizando…", retry = null), refreshing.staleness)
+        assertEquals(
+            notice(offlineTitle, UiText.res(CoreR.string.list_state_refreshing), retry = null),
+            refreshing.staleness,
+        )
     }
 
     @Test
@@ -225,8 +256,8 @@ class PastJamsStatesTest {
 
     @Test
     fun `every state carries the title`() {
-        assertEquals("Jams anteriores", model(emptyList()).title)
-        assertEquals("Jams anteriores", model(listOf(jam("2026-07-25"))).title)
+        assertEquals(title, model(emptyList()).title)
+        assertEquals(title, model(listOf(jam("2026-07-25"))).title)
     }
 
     @Test
@@ -244,7 +275,7 @@ class PastJamsStatesTest {
             }) as PastJamsUiModel.Jams
             )
             .rows
-        assertEquals(listOf("ver la lista de temas", null, null, null), rows.map { it.openLabel })
+        assertEquals(listOf(openLabel, null, null, null), rows.map { it.openLabel })
         rows.first().events(PastJamRowUiModel.Event.Open)
         assertEquals(listOf(LocalDate.of(2026, 7, 25)), opened)
     }
@@ -263,7 +294,7 @@ class PastJamsStatesTest {
     @Test
     fun `a past created jam whose songs reached the app is still the not-published line and does not open`() {
         val row = onlyRow(jam("2026-08-29", Setlist.Available(songs(3)), JamStatus.CREATED))
-        assertEquals(PastJamSummary.NotShown("La lista de esta jam no se publicó."), row.summary)
+        assertEquals(PastJamSummary.NotShown(UiText.res(R.string.past_jams_setlist_not_published)), row.summary)
         assertNull(row.openLabel)
     }
 }

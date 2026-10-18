@@ -6,18 +6,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.ui.nav.backUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.nextjam.R
 
 @Preview
 @Composable
 private fun AssignMusicianPreview() {
     val model = AssignMusicianUiModel.Content(
-        back = backUiModel {}, title = AssignMusicianCopy.TITLE, songTitle = "Crossroads",
-        slotLabel = "Guitarra 2", instrument = Instrument.GUITAR, ordinal = 2, name = "",
-        nameLabel = AssignMusicianCopy.NAME, validationMessage = null,
-        currentSection = SuggestionSectionUiModel(AssignMusicianCopy.CURRENT, null, emptyList()),
-        pastSection = SuggestionSectionUiModel(AssignMusicianCopy.PAST, AssignMusicianCopy.PAST_EMPTY, emptyList()),
-        submitLabel = AssignMusicianCopy.SUBMIT, submitEnabled = false,
+        back = backUiModel {}, title = UiText.res(R.string.assign_musician_title), songTitle = "Crossroads",
+        slotLabel = AssignMusicianDefaults.slotName(Instrument.GUITAR, 2),
+        instrument = Instrument.GUITAR, ordinal = 2, name = "",
+        nameLabel = UiText.res(R.string.assign_musician_name), validationMessage = null,
+        currentSection = SuggestionSectionUiModel(UiText.res(R.string.assign_musician_current), null, emptyList()),
+        pastSection = SuggestionSectionUiModel(
+            UiText.res(R.string.assign_musician_past),
+            UiText.res(R.string.assign_musician_past_empty),
+            emptyList(),
+        ),
+        submitLabel = UiText.res(R.string.assign_musician_submit), submitEnabled = false,
         events = com.bbbjam.core.ui.presenter.EventHandler {},
     )
     BluesJamTheme { AssignMusicianContent(model, Modifier, PaddingValues()) }

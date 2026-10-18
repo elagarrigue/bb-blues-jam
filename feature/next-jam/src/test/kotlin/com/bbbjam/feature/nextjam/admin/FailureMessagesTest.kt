@@ -1,31 +1,32 @@
 package com.bbbjam.feature.nextjam.admin
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.R
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
  * Every server code against the text its card showed before the codes became typed
- * (`typed-write-rejections`). The expected strings are written out here, never read from the copy.
+ * (`typed-write-rejections`). The expected texts are `UiText` values written out here with their resource ids.
  */
 class FailureMessagesTest {
-    private val accessRefused =
-        "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar."
-    private val offline = "No hay conexión. Probá de nuevo cuando tengas internet."
-    private val unavailable = "El servidor no respondió. Probá de nuevo en un rato."
-    private val inCatalog = "Ese tema ya no está en el catálogo."
-    private val jamChanged = "La jam cambió en la planilla. Actualizá y probá de nuevo."
-    private val sheetRefused = "La planilla rechazó el cambio. Revisala y probá de nuevo."
-    private val alreadyListed = "Ese tema ya está en la lista."
-    private val notInSetlist = "Ese tema ya no estaba en la lista."
-    private val duplicateSong = "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo."
-    private val slotFilled = "Ese cupo tiene un músico anotado. Liberalo antes de sacarlo."
-    private val notExpandable =
-        "Esta hoja todavía no tiene columnas para ese cupo. Agregalas en el Sheet y volvé a probar."
-    private val invalidName = "La planilla no aceptó ese nombre."
-    private val slotTaken = "Ese cupo ya está ocupado. Actualizá la lista y probá de nuevo."
-    private val clearStale = "Ese cupo ya no está ocupado. Actualizá la lista para ver cómo quedó."
-    private val unordered = "Las posiciones de la planilla están desordenadas. Corregilas ahí y probá de nuevo."
+    private val accessRefused = UiText.res(CoreR.string.write_failure_access_refused)
+    private val offline = UiText.res(CoreR.string.write_failure_offline)
+    private val unavailable = UiText.res(CoreR.string.write_failure_unavailable)
+    private val inCatalog = UiText.res(CoreR.string.write_failure_not_in_catalog)
+    private val jamChanged = UiText.res(CoreR.string.write_failure_jam_changed)
+    private val sheetRefused = UiText.res(CoreR.string.write_failure_sheet_refused)
+    private val alreadyListed = UiText.res(R.string.next_jam_failure_already_listed)
+    private val notInSetlist = UiText.res(R.string.next_jam_failure_not_in_setlist)
+    private val duplicateSong = UiText.res(R.string.next_jam_failure_duplicate_song)
+    private val slotFilled = UiText.res(R.string.next_jam_failure_slot_filled)
+    private val notExpandable = UiText.res(R.string.next_jam_failure_not_expandable)
+    private val invalidName = UiText.res(R.string.next_jam_failure_invalid_name)
+    private val slotTaken = UiText.res(R.string.next_jam_failure_slot_taken)
+    private val clearStale = UiText.res(R.string.next_jam_failure_clear_stale)
+    private val unordered = UiText.res(R.string.next_jam_failure_unordered_setlist)
 
     private val allCodes = listOf(
         "song_already_in_setlist",
@@ -57,7 +58,7 @@ class FailureMessagesTest {
         "",
     )
 
-    private val families: List<(WriteOutcome) -> String> = listOf(
+    private val families: List<(WriteOutcome) -> UiText> = listOf(
         ::failureMessage,
         ::keyFailureMessage,
         ::lineupFailureMessage,
@@ -82,7 +83,7 @@ class FailureMessagesTest {
 
     private fun key(code: String) = keyOverrides[code] ?: failure(code)
 
-    private fun check(fn: (WriteOutcome) -> String, overrides: Map<String, String>, fallback: (String) -> String) {
+    private fun check(fn: (WriteOutcome) -> UiText, overrides: Map<String, UiText>, fallback: (String) -> UiText) {
         allCodes.forEach { code ->
             assertEquals(code, overrides[code] ?: fallback(code), fn(WriteOutcome.Rejected(code)))
         }

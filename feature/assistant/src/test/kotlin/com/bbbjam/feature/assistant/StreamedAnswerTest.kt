@@ -7,6 +7,8 @@ import app.cash.turbine.test
 import com.bbbjam.core.assistant.AssistantFailure
 import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.core.assistant.AssistantStatus
+import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.apply.ApplyUiModel
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.chat.ChatTurn
@@ -27,15 +29,17 @@ class StreamedAnswerTest {
     private val assistant = FakeSetlistAssistant()
     private val handlers = testHandlers()
     private val available = ServiceState.Known(AssistantStatus.Available)
-    private val lost = "La respuesta se cortó antes de terminar. Esto es lo que llegó; no está completa."
-    private val notComplete = " Lo que llegó no está completo."
+    private val lost = UiText.res(R.string.assistant_incomplete)
+
+    private fun notComplete(reason: Int) = UiText.res(R.string.assistant_not_complete_suffix, UiText.res(reason))
 
     private fun model(turns: List<ChatTurn>) =
         assistantModel(true, turns, available, "", handlers) as AssistantUiModel.Chat
 
     private fun reply(turn: ChatTurn) = model(listOf(turn)).turns.single().reply
 
-    private fun row(n: Int) = ProposedSongUiModel("0$n", "Tema $n", "Artista $n", "Bm", "Tonalidad Bm", "Razón $n")
+    private fun row(n: Int) =
+        ProposedSongUiModel("0$n", "Tema $n", "Artista $n", "Bm", SongListText.keyDescription("Bm"), "Razón $n")
 
     // --- C1: the chat ---
 
@@ -93,12 +97,12 @@ class StreamedAnswerTest {
     fun `a pending turn lists the songs that arrived under the proposal heading`() {
         val songs = listOf(song(1), song(2))
         val pending = reply(ChatTurn(1, "uno", ChatTurn.State.Pending, songs)) as ReplyUiModel.Pending
-        assertEquals("PROPUESTA · 2 temas", pending.songsHeading)
+        assertEquals(UiText.plural(R.plurals.assistant_proposal_heading, 2), pending.songsHeading)
         assertEquals(listOf(row(1), row(2)), pending.songs)
-        assertEquals("El asistente está armando la propuesta. Puede tardar unos segundos.", pending.loadingLabel)
-        assertEquals("Cancelar", pending.cancelLabel)
+        assertEquals(UiText.res(R.string.assistant_pending_label), pending.loadingLabel)
+        assertEquals(UiText.res(R.string.assistant_cancel), pending.cancelLabel)
         val one = reply(ChatTurn(1, "uno", ChatTurn.State.Pending, listOf(song(1)))) as ReplyUiModel.Pending
-        assertEquals("PROPUESTA · 1 tema", one.songsHeading)
+        assertEquals(UiText.plural(R.plurals.assistant_proposal_heading, 1), one.songsHeading)
         val none = reply(ChatTurn(1, "uno", ChatTurn.State.Pending)) as ReplyUiModel.Pending
         assertNull(none.songsHeading)
         assertTrue(none.songs.isEmpty())
@@ -120,7 +124,7 @@ class StreamedAnswerTest {
         val answer = ChatTurn.State.Answered(proposal(songs = 1))
         val turn = ChatTurn(1, "uno", answer, listOf(song(1), song(2), song(3)))
         val shown = reply(turn) as ReplyUiModel.Proposal
-        assertEquals("PROPUESTA · 1 tema", shown.heading)
+        assertEquals(UiText.plural(R.plurals.assistant_proposal_heading, 1), shown.heading)
         assertEquals(listOf(row(1)), shown.songs)
     }
 
@@ -130,32 +134,29 @@ class StreamedAnswerTest {
         val expected = mapOf(
             AssistantFailure.Incomplete to lost,
             AssistantFailure.InvalidResponse to lost,
-            AssistantFailure.Offline to
-                "No hay conexión. Para usar el asistente necesitás internet.$notComplete",
-            AssistantFailure.Unauthorized to "El servicio rechazó la clave del asistente.$notComplete",
-            AssistantFailure.Unavailable(502) to
-                "El servicio del asistente no respondió. Probá de nuevo en un rato.$notComplete",
-            AssistantFailure.TooManySteps to
-                "El asistente no llegó a una propuesta. Probá con un pedido más concreto.$notComplete",
+            AssistantFailure.Offline to notComplete(R.string.assistant_offline),
+            AssistantFailure.Unauthorized to notComplete(R.string.assistant_unauthorized),
+            AssistantFailure.Unavailable(502) to notComplete(R.string.assistant_unavailable),
+            AssistantFailure.TooManySteps to notComplete(R.string.assistant_too_many_steps),
         )
         expected.forEach { (failure, line) ->
             val state = ChatTurn.State.Answered(AssistantReply.Failed(failure))
             val incomplete = reply(ChatTurn(1, "uno", state, songs)) as ReplyUiModel.Incomplete
-            assertEquals("PROPUESTA INCOMPLETA · 2 temas", incomplete.heading)
+            assertEquals(UiText.plural(R.plurals.assistant_incomplete_heading, 2), incomplete.heading)
             assertEquals(listOf(row(1), row(2)), incomplete.songs)
             assertEquals(line, incomplete.message)
             assertFalse(incomplete.isCancelled)
-            assertEquals("Reintentar", incomplete.retry?.label)
+            assertEquals(UiText.res(R.string.assistant_retry), incomplete.retry?.label)
         }
     }
 
     @Test
     fun `a cancelled or interrupted turn with songs is incomplete and one song reads singular`() {
         val cancelled = reply(ChatTurn(1, "uno", ChatTurn.State.Cancelled, listOf(song(1)))) as ReplyUiModel.Incomplete
-        assertEquals("PROPUESTA INCOMPLETA · 1 tema", cancelled.heading)
-        assertEquals("Cancelaste este pedido.", cancelled.message)
+        assertEquals(UiText.plural(R.plurals.assistant_incomplete_heading, 1), cancelled.heading)
+        assertEquals(UiText.res(R.string.assistant_cancelled), cancelled.message)
         assertTrue(cancelled.isCancelled)
-        assertEquals("Reintentar", cancelled.retry?.label)
+        assertEquals(UiText.res(R.string.assistant_retry), cancelled.retry?.label)
 
         val turn = ChatTurn(1, "uno", ChatTurn.State.Interrupted, listOf(song(1)))
         assertEquals(lost, (reply(turn) as ReplyUiModel.Incomplete).message)
@@ -167,8 +168,8 @@ class StreamedAnswerTest {
         assertTrue(reply(ChatTurn(1, "u", ChatTurn.State.Interrupted)) is ReplyUiModel.Failed)
         val state = ChatTurn.State.Answered(failed(AssistantFailure.Incomplete))
         val shown = reply(ChatTurn(1, "u", state)) as ReplyUiModel.Failed
-        assertEquals("La respuesta se cortó antes de terminar. Probá de nuevo.", shown.message)
-        assertEquals("Reintentar", shown.retry?.label)
+        assertEquals(UiText.res(R.string.assistant_incomplete_retry), shown.message)
+        assertEquals(UiText.res(R.string.assistant_retry), shown.retry?.label)
     }
 
     @Test
@@ -179,7 +180,7 @@ class StreamedAnswerTest {
         )
         val replies = model(turns).turns.map { it.reply as ReplyUiModel.Incomplete }
         assertNull(replies[0].retry)
-        assertEquals("Reintentar", replies[1].retry?.label)
+        assertEquals(UiText.res(R.string.assistant_retry), replies[1].retry?.label)
     }
 
     // --- C3: the presenter ---
@@ -213,7 +214,7 @@ class StreamedAnswerTest {
 
             assistant.draft(song(1), song(2))
             val streaming = awaitReply { it is ReplyUiModel.Pending && it.songs.size == 2 } as ReplyUiModel.Pending
-            assertEquals("PROPUESTA · 2 temas", streaming.songsHeading)
+            assertEquals(UiText.plural(R.plurals.assistant_proposal_heading, 2), streaming.songsHeading)
 
             reply.complete(proposal(songs = 2))
             val done = awaitReply { it is ReplyUiModel.Proposal && it.apply is ApplyUiModel.Targets }
@@ -236,7 +237,7 @@ class StreamedAnswerTest {
             reply.complete(failed(AssistantFailure.Incomplete))
             val incomplete = awaitReply { it is ReplyUiModel.Incomplete } as ReplyUiModel.Incomplete
             assertEquals(2, incomplete.songs.size)
-            assertEquals("Reintentar", incomplete.retry?.label)
+            assertEquals(UiText.res(R.string.assistant_retry), incomplete.retry?.label)
             cancelAndIgnoreRemainingEvents()
         }
     }

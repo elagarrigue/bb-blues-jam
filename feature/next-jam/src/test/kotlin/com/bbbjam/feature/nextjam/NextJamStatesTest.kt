@@ -11,10 +11,12 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
+import com.bbbjam.core.ui.text.UiText
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -26,7 +28,7 @@ import org.junit.Test
 
 /**
  * Every row of Decision 1's state table in `docs/specs/list-states.md`, through the pure mapping.
- * Strings are written out from the approved copy table (C1), never read from [NextJamCopy].
+ * Texts are `UiText` values written out with their resource ids (C1).
  */
 class NextJamStatesTest {
     private val today = LocalDate.of(2026, 10, 2)
@@ -35,36 +37,44 @@ class NextJamStatesTest {
     private val now = Instant.parse("2026-10-02T15:00:00Z")
     private val threeHoursAgo = now.minus(Duration.ofHours(3))
 
-    private val loading = NextJamUiModel.Loading("Cargando la próxima jam")
+    private val loading = nextJamLoading
 
-    private val offlineMessage =
-        "No hay conexión y todavía no hay nada guardado. Revisá los datos o el wifi y probá de nuevo."
-    private val otherMessage =
-        "Algo falló al leer los datos. Probá de nuevo en un rato; si sigue fallando, avisale a la organización."
+    private val offlineMessage = UiText.res(CoreR.string.list_state_error_offline)
+    private val otherMessage = UiText.res(CoreR.string.list_state_error_other)
+    private val offlineTitle = UiText.res(CoreR.string.list_state_notice_offline)
 
-    private fun failed(message: String) = NextJamUiModel.Failed(
-        ListErrorUiModel("No pudimos cargar la próxima jam", message, "Reintentar", EventHandler {}),
+    private fun failed(message: UiText) = NextJamUiModel.Failed(
+        ListErrorUiModel(
+            UiText.res(R.string.next_jam_load_failed),
+            message,
+            UiText.res(CoreR.string.list_state_retry),
+            EventHandler {},
+        ),
     )
 
-    private val noUpcoming = EmptyStateUiModel(
-        "Todavía no hay fecha",
-        "La próxima jam todavía no tiene fecha. Cuando se confirme, la vas a ver acá.",
-    )
+    private val noUpcoming =
+        EmptyStateUiModel(
+            UiText.res(R.string.next_jam_no_upcoming_title),
+            UiText.res(R.string.next_jam_no_upcoming_message),
+        )
 
     private val emptySetlist = SetlistUiModel.Empty(
         EmptyStateUiModel(
-            "Todavía no hay temas",
-            "La lista está publicada pero todavía no tiene temas. ¿Tenés uno en mente? Contáselo a la organización.",
+            UiText.res(R.string.next_jam_empty_title),
+            UiText.res(R.string.next_jam_empty_message),
         ),
     )
 
     private fun notice(
-        title: String,
-        detail: String = "Mostrando lo guardado hace 3 horas.",
-        retry: String? = "Reintentar",
+        title: UiText,
+        detail: UiText = UiText.res(
+            CoreR.string.list_state_showing_saved,
+            UiText.plural(CoreR.plurals.list_state_age_hours, 3),
+        ),
+        retry: UiText? = UiText.res(CoreR.string.list_state_retry),
     ) = StalenessNoticeUiModel(title, detail, retry, EventHandler {})
 
-    private val header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días")
+    private val header = octoberThirtyFirstHeader
 
     private fun jam(setlist: Setlist, status: JamStatus = JamStatus.PUBLISHED) = Jam(
         date = LocalDate.of(2026, 10, 31),
@@ -112,11 +122,11 @@ class NextJamStatesTest {
             model(null, Freshness(threeHoursAgo, null, isRefreshing = false)),
         )
         assertEquals(
-            NextJamUiModel.NoUpcomingJam(noUpcoming, notice("Sin conexión")),
+            NextJamUiModel.NoUpcomingJam(noUpcoming, notice(offlineTitle)),
             model(null, Freshness(threeHoursAgo, DataFailure.Offline, isRefreshing = false)),
         )
         assertEquals(
-            NextJamUiModel.NoUpcomingJam(noUpcoming, notice("No se pudo actualizar")),
+            NextJamUiModel.NoUpcomingJam(noUpcoming, notice(UiText.res(CoreR.string.list_state_notice_other))),
             model(null, Freshness(threeHoursAgo, DataFailure.Service("internal"), isRefreshing = false)),
         )
     }
@@ -128,7 +138,7 @@ class NextJamStatesTest {
             model(jam(Setlist.Available(emptyList())), Freshness(threeHoursAgo, null, isRefreshing = false)),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, emptySetlist, notice("Sin conexión")),
+            NextJamUiModel.Jam(header, emptySetlist, notice(offlineTitle)),
             model(jam(Setlist.Available(emptyList())), Freshness(threeHoursAgo, DataFailure.Offline, false)),
         )
     }
@@ -144,24 +154,18 @@ class NextJamStatesTest {
     @Test
     fun `songs keep their rows and gain the notice when the refresh failed, refreshing has no action`() {
         val offline = model(jam(Setlist.Available(listOf(song))), Freshness(threeHoursAgo, DataFailure.Offline, false))
-        assertEquals(notice("Sin conexión"), (offline as NextJamUiModel.Jam).staleness)
+        assertEquals(notice(offlineTitle), (offline as NextJamUiModel.Jam).staleness)
         assertEquals(listOf("Sweet Little Angel"), (offline.setlist as SetlistUiModel.Songs).rows.map { it.title })
 
         val refreshing =
             model(jam(Setlist.Available(listOf(song))), Freshness(threeHoursAgo, DataFailure.Offline, true))
         assertEquals(
-            notice("Sin conexión", "Actualizando…", retry = null),
+            notice(offlineTitle, UiText.res(CoreR.string.list_state_refreshing), retry = null),
             (refreshing as NextJamUiModel.Jam).staleness,
         )
     }
 
-    private val draftCard = SetlistUiModel.Withheld(
-        DraftSetlistUiModel(
-            "En preparación",
-            "La lista se está armando",
-            "Cuando la organización la publique, vas a ver acá los temas, las tonalidades y los cupos libres.",
-        ),
-    )
+    private val withheldDraft = SetlistUiModel.Withheld(draftCard)
 
     @Test
     fun `a draft jam exposes no song, withheld or available, plus the notice when failing`() {
@@ -169,11 +173,11 @@ class NextJamStatesTest {
         val failing = Freshness(threeHoursAgo, DataFailure.Offline, isRefreshing = false)
         listOf(Setlist.Withheld, Setlist.Available(listOf(song))).forEach { setlist ->
             val draft = model(jam(setlist, JamStatus.CREATED), fresh)
-            assertEquals(NextJamUiModel.Jam(header, draftCard, staleness = null), draft)
+            assertEquals(NextJamUiModel.Jam(header, withheldDraft, staleness = null), draft)
             assertFalse("a song leaked: $draft", draft.toString().contains("Sweet Little Angel"))
             // Scenario 6: offline with a cached draft, the notice above the header, then the card.
             assertEquals(
-                NextJamUiModel.Jam(header, draftCard, notice("Sin conexión")),
+                NextJamUiModel.Jam(header, withheldDraft, notice(offlineTitle)),
                 model(jam(setlist, JamStatus.CREATED), failing),
             )
         }
@@ -185,25 +189,20 @@ class NextJamStatesTest {
         val empty = model(jam(Setlist.Available(emptyList())), fresh) as NextJamUiModel.Jam
         val draft = model(jam(Setlist.Withheld, JamStatus.CREATED), fresh) as NextJamUiModel.Jam
         assertEquals(emptySetlist, empty.setlist)
-        assertEquals(draftCard, draft.setlist)
-        val emptyText = emptySetlist.empty.title + " " + emptySetlist.empty.message
-        val card = draftCard.draft
-        listOf(card.label, card.title, card.message).forEach { line ->
-            sentences(line).forEach { sentence ->
-                assertFalse("'$sentence' is also in the empty block", emptyText.contains(sentence))
-            }
+        assertEquals(withheldDraft, draft.setlist)
+        // Different resources, so no sentence is shared with the empty block.
+        val emptyTexts = listOf(emptySetlist.empty.title, emptySetlist.empty.message)
+        listOf(draftCard.label, draftCard.title, draftCard.message).forEach { line ->
+            assertFalse("$line is also in the empty block", line in emptyTexts)
         }
-        assertFalse(card.message.contains("no hay"))
     }
-
-    private fun sentences(text: String) = text.split('.', '?', '¿').map { it.trim() }.filter { it.isNotEmpty() }
 
     @Test
     fun `an unavailable setlist keeps its one line`() {
         assertEquals(
             NextJamUiModel.Jam(
                 header,
-                SetlistUiModel.Unavailable("No se pudo leer la lista de temas de esta jam. Avisale a la organización."),
+                SetlistUiModel.Unavailable(UiText.res(R.string.next_jam_setlist_unavailable)),
                 staleness = null,
             ),
             model(jam(Setlist.Unavailable(SetlistProblem.MISSING_TAB)), Freshness(threeHoursAgo, null, false)),
@@ -216,7 +215,13 @@ class NextJamStatesTest {
         assertEquals(
             NextJamUiModel.NoUpcomingJam(
                 noUpcoming,
-                notice("Sin conexión", "Mostrando lo guardado hace menos de un minuto."),
+                notice(
+                    offlineTitle,
+                    UiText.res(
+                        CoreR.string.list_state_showing_saved,
+                        UiText.res(CoreR.string.list_state_age_under_a_minute),
+                    ),
+                ),
             ),
             ahead,
         )

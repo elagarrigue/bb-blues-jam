@@ -4,6 +4,7 @@ import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.text
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,7 +14,7 @@ import org.junit.Test
 /**
  * The filter bar's chips, counts, selection and copy. Every string is written out from the approved
  * copy table in `docs/specs/instrument-filter-chips.md` (C1 and the multi-select approval of F1),
- * never read from [InstrumentFilterCopy], so a copy change fails here.
+ * compared with the text the models resolve to in `strings.xml`, so a copy change fails here.
  */
 class InstrumentFilterMapperTest {
 
@@ -35,14 +36,36 @@ class InstrumentFilterMapperTest {
         allFilled,
     )
 
+    /** A chip as the user reads it. */
+    private data class Chip(val label: String, val count: String, val description: String, val selected: Boolean)
+
+    /** The bar as the user reads it. */
+    private data class Bar(
+        val heading: String,
+        val chips: List<Chip>,
+        val summary: String?,
+        val noResults: String?,
+        val clearLabel: String,
+    )
+
+    private fun FilterChipUiModel.resolved() = Chip(label.text(), count, contentDescription.text(), isSelected)
+
+    private fun InstrumentFilterBarUiModel.resolved() = Bar(
+        heading.text(),
+        chips.map { it.resolved() },
+        summary?.text(),
+        noResults?.text(),
+        clearLabel.text(),
+    )
+
     private fun chip(label: String, count: String, description: String, selected: Boolean = false) =
-        FilterChipUiModel(label, count, description, selected, EventHandler {})
+        Chip(label, count, description, selected)
 
     @Test
     fun `nothing selected, Todos is checked and every chip carries its count and description`() {
         val bar = instrumentFilterBar(lineups, emptySet()) {}
         assertEquals(
-            InstrumentFilterBarUiModel(
+            Bar(
                 heading = "Filtrá por cupo libre",
                 chips = listOf(
                     chip("Todos", "5", "Todos los temas: 5", selected = true),
@@ -56,9 +79,8 @@ class InstrumentFilterMapperTest {
                 summary = null,
                 noResults = null,
                 clearLabel = "Ver todos los temas",
-                events = EventHandler {},
             ),
-            bar,
+            bar.resolved(),
         )
     }
 
@@ -66,8 +88,8 @@ class InstrumentFilterMapperTest {
     fun `one instrument selected checks only its chip and writes the count line`() {
         val bar = instrumentFilterBar(lineups, setOf(Instrument.BASS)) {}
         assertEquals(listOf(false, false, true, false, false, false, false), bar.chips.map { it.isSelected })
-        assertEquals("2 de 5 temas con cupo libre para bajo", bar.summary)
-        assertNull(bar.noResults)
+        assertEquals("2 de 5 temas con cupo libre para bajo", bar.summary?.text())
+        assertNull(bar.noResults?.text())
     }
 
     @Test
@@ -80,17 +102,17 @@ class InstrumentFilterMapperTest {
         )
         expected.forEach { (instrument, summary) ->
             val bar = instrumentFilterBar(lineups, setOf(instrument)) {}
-            assertEquals(summary, bar.summary)
+            assertEquals(summary, bar.summary?.text())
             assertEquals(listOf(instrument), Instrument.entries.filterIndexed { i, _ -> bar.chips[i + 1].isSelected })
             assertFalse(bar.chips[0].isSelected)
         }
         assertEquals(
             "Ningún tema tiene cupo libre para batería.",
-            instrumentFilterBar(lineups, setOf(Instrument.DRUMS)) {}.noResults,
+            instrumentFilterBar(lineups, setOf(Instrument.DRUMS)) {}.noResults?.text(),
         )
         assertEquals(
             "Ningún tema tiene cupo libre para armónica.",
-            instrumentFilterBar(lineups, setOf(Instrument.HARMONICA)) {}.noResults,
+            instrumentFilterBar(lineups, setOf(Instrument.HARMONICA)) {}.noResults?.text(),
         )
     }
 
@@ -98,15 +120,15 @@ class InstrumentFilterMapperTest {
     fun `two and three instruments count songs open for any of them, names joined with o`() {
         // Bajo or voz: songs 2, 3 and 4 (song 3 counted once).
         val two = instrumentFilterBar(lineups, setOf(Instrument.VOCALS, Instrument.BASS)) {}
-        assertEquals("3 de 5 temas con cupo libre para bajo o voz", two.summary)
+        assertEquals("3 de 5 temas con cupo libre para bajo o voz", two.summary?.text())
         assertEquals(listOf(false, false, true, false, true, false, false), two.chips.map { it.isSelected })
 
         val three = instrumentFilterBar(lineups, setOf(Instrument.VOCALS, Instrument.GUITAR, Instrument.BASS)) {}
-        assertEquals("4 de 5 temas con cupo libre para guitarra, bajo o voz", three.summary)
+        assertEquals("4 de 5 temas con cupo libre para guitarra, bajo o voz", three.summary?.text())
 
         val none = instrumentFilterBar(lineups, setOf(Instrument.HARMONICA, Instrument.DRUMS)) {}
-        assertEquals("Ningún tema tiene cupo libre para batería o armónica.", none.noResults)
-        assertNull(none.summary)
+        assertEquals("Ningún tema tiene cupo libre para batería o armónica.", none.noResults?.text())
+        assertNull(none.summary?.text())
     }
 
     @Test
@@ -116,15 +138,15 @@ class InstrumentFilterMapperTest {
             assertTrue((bar.summary == null) != (bar.noResults == null))
         }
         val bar = instrumentFilterBar(lineups, emptySet()) {}
-        assertNull(bar.summary)
-        assertNull(bar.noResults)
+        assertNull(bar.summary?.text())
+        assertNull(bar.noResults?.text())
     }
 
     @Test
     fun `a one-song setlist is singular`() {
         val bar = instrumentFilterBar(listOf(openFor(Instrument.BASS)), setOf(Instrument.BASS)) {}
-        assertEquals("1 de 1 tema con cupo libre para bajo", bar.summary)
-        assertEquals("Todos los temas: 1", bar.chips[0].contentDescription)
+        assertEquals("1 de 1 tema con cupo libre para bajo", bar.summary?.text())
+        assertEquals("Todos los temas: 1", bar.chips[0].contentDescription.text())
     }
 
     @Test
@@ -133,7 +155,7 @@ class InstrumentFilterMapperTest {
         val bassFilled = Lineup(listOf(Slot(Instrument.BASS, "Nico"), Slot(Instrument.VOCALS)))
         val bar = instrumentFilterBar(listOf(bassFilled, allFilled), setOf(Instrument.BASS)) {}
         assertEquals("0", bar.chips[2].count)
-        assertEquals("Ningún tema tiene cupo libre para bajo.", bar.noResults)
+        assertEquals("Ningún tema tiene cupo libre para bajo.", bar.noResults?.text())
         Instrument.entries.forEach { assertFalse(allFilled.matchesInstrumentFilter(setOf(it))) }
         assertTrue(allFilled.matchesInstrumentFilter(emptySet()))
     }

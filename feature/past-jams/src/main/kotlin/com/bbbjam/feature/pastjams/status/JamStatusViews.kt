@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.status.JamStatusChips
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.pastjams.admin.JamsAdminDefaults
 import com.bbbjam.feature.pastjams.admin.PublishTextAction
@@ -32,7 +33,7 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
     val note = JamsAdminDefaults.status()
     val actionColor = JamStatusDefaults.action().action
     JamStatusChips(model.chips)
-    model.publishUnavailable?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = note) }
+    model.publishUnavailable?.let { Text(text = it.resolve(), style = BluesJamTheme.typography.caption, color = note) }
     model.failure?.let { failure ->
         Surface(
             color = failureStyle.container,
@@ -45,10 +46,14 @@ internal fun JamStatusActions(model: JamStatusUiModel) {
                 modifier = Modifier.padding(start = spacing.md, end = spacing.md, top = spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
-                Text(text = failure.title, style = BluesJamTheme.typography.body, color = failureStyle.title)
-                Text(text = failure.message, style = BluesJamTheme.typography.body, color = failureStyle.message)
+                Text(text = failure.title.resolve(), style = BluesJamTheme.typography.body, color = failureStyle.title)
                 Text(
-                    text = failure.consequence,
+                    text = failure.message.resolve(),
+                    style = BluesJamTheme.typography.body,
+                    color = failureStyle.message,
+                )
+                Text(
+                    text = failure.consequence.resolve(),
                     style = BluesJamTheme.typography.caption,
                     color = failureStyle.message,
                 )
@@ -78,16 +83,16 @@ internal fun UnpublishDialog(model: StatusConfirmUiModel, events: EventHandler<J
     AlertDialog(
         onDismissRequest = { events(JamStatusUiModel.Event.Cancel) },
         containerColor = style.container,
-        title = { Text(text = model.prompt, style = BluesJamTheme.typography.body, color = style.title) },
-        text = { Text(text = model.body, style = BluesJamTheme.typography.caption, color = style.body) },
+        title = { Text(text = model.prompt.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
+        text = { Text(text = model.body.resolve(), style = BluesJamTheme.typography.caption, color = style.body) },
         confirmButton = {
             TextButton(onClick = { events(JamStatusUiModel.Event.Confirm) }) {
-                Text(text = model.confirmLabel, color = style.confirm)
+                Text(text = model.confirmLabel.resolve(), color = style.confirm)
             }
         },
         dismissButton = {
             TextButton(onClick = { events(JamStatusUiModel.Event.Cancel) }) {
-                Text(text = model.cancelLabel, color = style.cancel)
+                Text(text = model.cancelLabel.resolve(), color = style.cancel)
             }
         },
     )

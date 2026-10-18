@@ -30,6 +30,8 @@ import com.bbbjam.core.ui.state.RefreshableContent
 import com.bbbjam.core.ui.state.SkeletonList
 import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.state.rememberRevealingLazyListState
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.pastjams.admin.adminPastHeading
 import com.bbbjam.feature.pastjams.admin.adminUpcomingItems
@@ -104,7 +106,9 @@ private fun PastJamsList(model: PastJamsUiModel, padding: PaddingValues) {
     ) {
         item(key = TITLE_KEY) { Title(model.title) }
         when (model) {
-            is PastJamsUiModel.Loading -> item(key = LOADING_KEY) { SkeletonList(description = model.description) }
+            is PastJamsUiModel.Loading -> item(key = LOADING_KEY) {
+                SkeletonList(description = model.description.resolve())
+            }
 
             is PastJamsUiModel.Failed -> item(key = ERROR_KEY) { ListErrorBlock(model.error) }
 
@@ -138,9 +142,9 @@ private const val EMPTY_KEY = "empty"
 
 /** Screen chrome, not archive content: `text`, drawn in every state. */
 @Composable
-private fun Title(title: String) {
+private fun Title(title: UiText) {
     Text(
-        text = title,
+        text = title.resolve(),
         style = BluesJamTheme.typography.h1,
         color = BluesJamTheme.colors.text,
         modifier = Modifier.semantics { heading() },
@@ -163,7 +167,9 @@ private fun PastJamRow(row: PastJamRowUiModel) {
     // clickable merges its descendants, the plain row merges them explicitly.
     val node = if (openLabel != null) {
         Modifier
-            .clickable(onClickLabel = openLabel, role = Role.Button) { row.events(PastJamRowUiModel.Event.Open) }
+            .clickable(onClickLabel = openLabel.resolve(), role = Role.Button) {
+                row.events(PastJamRowUiModel.Event.Open)
+            }
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
     } else {
         Modifier.semantics(mergeDescendants = true) {}
@@ -181,7 +187,7 @@ private fun PastJamRow(row: PastJamRowUiModel) {
                 .padding(horizontal = spacing.md, vertical = spacing.sm),
             verticalArrangement = Arrangement.spacedBy(spacing.xs),
         ) {
-            Text(text = row.dateLabel, style = typography.songTitle, color = style.date)
+            Text(text = row.dateLabel.resolve(), style = typography.songTitle, color = style.date)
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 Text(
                     text = row.venue,
@@ -192,12 +198,12 @@ private fun PastJamRow(row: PastJamRowUiModel) {
                     modifier = Modifier.weight(1f),
                 )
                 (row.summary as? PastJamSummary.Songs)?.let { songs ->
-                    Text(text = songs.countLabel, style = typography.body, color = style.count)
+                    Text(text = songs.countLabel.resolve(), style = typography.body, color = style.count)
                 }
             }
             when (val summary = row.summary) {
                 is PastJamSummary.Songs -> Text(
-                    text = summary.hook,
+                    text = summary.hook.resolve(),
                     style = typography.body,
                     color = style.hook,
                     maxLines = HOOK_MAX_LINES,
@@ -205,7 +211,7 @@ private fun PastJamRow(row: PastJamRowUiModel) {
                 )
 
                 is PastJamSummary.NotShown -> Text(
-                    text = summary.message,
+                    text = summary.message.resolve(),
                     style = typography.body,
                     color = style.message,
                 )

@@ -16,14 +16,17 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.status.JamStatusChipsUiModel
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.pastjams.FakeJamCreator
 import com.bbbjam.feature.pastjams.FakeJamEditRepository
 import com.bbbjam.feature.pastjams.FakeJamStatusRepository
 import com.bbbjam.feature.pastjams.FakePublishRepository
-import com.bbbjam.feature.pastjams.PastJamsCopy
 import com.bbbjam.feature.pastjams.PastJamsPresenter
 import com.bbbjam.feature.pastjams.PastJamsUiModel
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.status.JamStatusUiModel
 import com.bbbjam.feature.pastjams.status.PublishUiModel
 import java.time.Clock
@@ -41,8 +44,8 @@ import org.junit.Test
 
 /**
  * `admin-jams-tab`: what the Jams tab draws for the admin (the upcoming and held-back jams above the
- * past ones) and for a musician (the past jams, nothing else). Copy is written out from the spec, never
- * read from [PastJamsCopy].
+ * past ones) and for a musician (the past jams, nothing else). Texts are the `UiText` (resource id and
+ * arguments) the spec's copy maps to.
  */
 class JamsAdminTest {
     private val repository = FakeJamsRepository()
@@ -86,8 +89,26 @@ class JamsAdminTest {
 
     private fun PastJamsUiModel.controls(): JamControlsUiModel = card().controls
 
+    private val draftChip = UiText.res(CoreR.string.jam_status_draft)
+    private val createdChip = UiText.res(CoreR.string.jam_status_created)
+    private val publishedChip = UiText.res(CoreR.string.jam_status_published)
+    private val cancel = UiText.res(CoreR.string.jam_form_cancel)
+    private val retry = UiText.res(CoreR.string.list_state_retry)
+    private val close = UiText.res(R.string.past_jams_close)
+
+    /** "sábado 31 de octubre": a date inside a sentence. */
+    private fun sentence(date: LocalDate) = SpanishDateNames.sentence(date)
+
+    /** "Sábado 31 de octubre · 21:00". */
+    private fun dateTime(date: LocalDate) =
+        UiText.res(R.string.past_jams_date_with_time, SpanishDateNames.label(date), "21:00")
+
+    private fun count(songs: Int) = UiText.plural(R.plurals.past_jams_song_count, songs)
+
     /** The labels of the chips the admin can tap to change the status (the selected one is not a change). */
-    private fun JamStatusUiModel.labels() = chips.chips.filter { it.enabled && !it.selected }.map { it.label }
+    private fun JamStatusUiModel.labels() = chips.chips.filter {
+        it.enabled && !it.selected
+    }.map { it.label }
 
     private fun JamStatusUiModel.selected() = chips.chips.single { it.selected }.label
 
@@ -117,7 +138,7 @@ class JamsAdminTest {
                     ),
                 )
                 val model = expectMostRecentItem() as PastJamsUiModel.Jams
-                assertEquals("Jams anteriores", model.title)
+                assertEquals(UiText.res(R.string.past_jams_title), model.title)
                 assertNull(model.admin)
                 assertEquals(listOf(LocalDate.of(2026, 7, 25)), model.rows.map { it.date })
                 cancelAndIgnoreRemainingEvents()
@@ -137,32 +158,35 @@ class JamsAdminTest {
                     ),
                 )
                 val model = expectMostRecentItem() as PastJamsUiModel.Jams
-                assertEquals("Jams", model.title)
+                assertEquals(UiText.res(R.string.past_jams_title_admin), model.title)
                 val admin = checkNotNull(model.admin)
-                assertEquals("PRÓXIMAS", admin.upcomingHeading)
-                assertEquals("ANTERIORES", admin.pastHeading)
+                assertEquals(UiText.res(R.string.past_jams_upcoming_heading), admin.upcomingHeading)
+                assertEquals(UiText.res(R.string.past_jams_past_heading), admin.pastHeading)
                 assertNull(admin.noFuture)
                 assertEquals(listOf(upcomingDate, LocalDate.of(2026, 11, 28)), admin.future.map { it.date })
 
                 val first = admin.future[0]
-                assertEquals("Sábado 31 de octubre · 21:00", first.dateLabel)
+                assertEquals(dateTime(upcomingDate), first.dateLabel)
                 assertEquals("La Macanuda", first.venue)
-                assertEquals("Creada", first.controls.status.selected())
-                assertEquals("Los músicos ven la fecha, pero todavía no la lista.", first.note)
-                assertEquals("12 temas", first.songCount)
+                assertEquals(createdChip, first.controls.status.selected())
+                assertEquals(UiText.res(R.string.past_jams_created_note), first.note)
+                assertEquals(count(12), first.songCount)
                 assertNull(first.heldBack)
-                assertEquals(listOf("Borrador", "Publicada"), first.controls.status.labels())
+                assertEquals(listOf(draftChip, publishedChip), first.controls.status.labels())
                 assertNull(first.controls.status.publishUnavailable)
                 assertNull(first.controls.publish)
 
                 val second = admin.future[1]
-                assertEquals("Sábado 28 de noviembre · 21:00", second.dateLabel)
-                assertEquals("Borrador", second.controls.status.selected())
-                assertEquals("Los músicos todavía no ven esta jam.", second.note)
-                assertEquals("Sin temas todavía", second.songCount)
-                assertEquals("En espera: la próxima jam es la del sábado 31 de octubre.", second.heldBack)
-                assertEquals(listOf("Creada"), second.controls.status.labels())
-                assertEquals("Solo la próxima jam se puede publicar.", second.controls.status.publishUnavailable)
+                assertEquals(dateTime(LocalDate.of(2026, 11, 28)), second.dateLabel)
+                assertEquals(draftChip, second.controls.status.selected())
+                assertEquals(UiText.res(R.string.past_jams_draft_note), second.note)
+                assertEquals(UiText.res(R.string.past_jams_no_songs_yet), second.songCount)
+                assertEquals(UiText.res(R.string.past_jams_held_back, sentence(upcomingDate)), second.heldBack)
+                assertEquals(listOf(createdChip), second.controls.status.labels())
+                assertEquals(
+                    UiText.res(R.string.past_jams_publish_only_upcoming),
+                    second.controls.status.publishUnavailable,
+                )
                 assertNull(second.controls.publish)
 
                 // The past rows are what a musician sees, under ANTERIORES.
@@ -186,7 +210,10 @@ class JamsAdminTest {
             )
             val model = expectMostRecentItem()
             val admin = checkNotNull(model.admin())
-            assertEquals(listOf("1 tema", "No se pudo leer la lista"), admin.future.map { it.songCount })
+            assertEquals(
+                listOf(count(1), UiText.res(R.string.past_jams_future_unavailable)),
+                admin.future.map { it.songCount },
+            )
             // Only a past draft: nothing to list below ANTERIORES, so the empty block, with the admin section.
             assertTrue(model is PastJamsUiModel.Empty)
             cancelAndIgnoreRemainingEvents()
@@ -196,11 +223,14 @@ class JamsAdminTest {
     @Test
     fun `with no future jam the admin gets the line, and the loading title is Jams for the admin`() = runTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
-            assertEquals("Jams", (expectMostRecentItem() as PastJamsUiModel.Loading).title)
+            assertEquals(
+                UiText.res(R.string.past_jams_title_admin),
+                (expectMostRecentItem() as PastJamsUiModel.Loading).title,
+            )
             repository.snapshots.emit(snapshot(past = listOf(pastJam)))
             val model = expectMostRecentItem() as PastJamsUiModel.Jams
             val admin = checkNotNull(model.admin)
-            assertEquals("No hay ninguna jam programada.", admin.noFuture)
+            assertEquals(UiText.res(R.string.past_jams_no_future), admin.noFuture)
             assertEquals(emptyList<FutureJamUiModel>(), admin.future)
             cancelAndIgnoreRemainingEvents()
         }
@@ -211,20 +241,20 @@ class JamsAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
             val draft = expectMostRecentItem().controls()
-            assertEquals(listOf("Creada", "Publicada"), draft.status.labels())
-            assertEquals("Borrador", draft.status.selected())
+            assertEquals(listOf(createdChip, publishedChip), draft.status.labels())
+            assertEquals(draftChip, draft.status.selected())
             assertNull(draft.publish)
 
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED)))
             val created = expectMostRecentItem().controls()
-            assertEquals(listOf("Borrador", "Publicada"), created.status.labels())
-            assertEquals("Creada", created.status.selected())
+            assertEquals(listOf(draftChip, publishedChip), created.status.labels())
+            assertEquals(createdChip, created.status.selected())
             assertNull(created.publish)
 
             repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
             val published = expectMostRecentItem().controls()
-            assertEquals(listOf("Borrador", "Creada"), published.status.labels())
-            assertEquals("Publicada", published.status.selected())
+            assertEquals(listOf(draftChip, createdChip), published.status.labels())
+            assertEquals(publishedChip, published.status.selected())
             assertNull(published.publish)
             cancelAndIgnoreRemainingEvents()
         }
@@ -254,13 +284,10 @@ class JamsAdminTest {
             val asking = awaitItem().controls().status
             assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
             val dialog = checkNotNull(asking.confirming)
-            assertEquals("¿Dejar de publicar la lista?", dialog.prompt)
-            assertEquals(
-                "Los músicos van a dejar de ver esta jam, con su fecha y su lista, cuando actualicen la app.",
-                dialog.body,
-            )
-            assertEquals("Pasar a borrador", dialog.confirmLabel)
-            assertEquals("Cancelar", dialog.cancelLabel)
+            assertEquals(UiText.res(R.string.past_jams_unpublish_prompt), dialog.prompt)
+            assertEquals(UiText.res(R.string.past_jams_unpublish_to_draft_body), dialog.body)
+            assertEquals(UiText.res(R.string.past_jams_to_draft), dialog.confirmLabel)
+            assertEquals(cancel, dialog.cancelLabel)
 
             asking.events(JamStatusUiModel.Event.Cancel)
             assertNull(awaitItem().controls().status.confirming)
@@ -269,7 +296,7 @@ class JamsAdminTest {
             asking.select(JamStatus.CREATED)
             val toCreated = awaitItem().controls().status
             assertEquals(
-                "Los músicos van a dejar de ver la lista cuando actualicen la app. Van a seguir viendo la fecha.",
+                UiText.res(R.string.past_jams_unpublish_to_created_body),
                 checkNotNull(toCreated.confirming).body,
             )
             toCreated.events(JamStatusUiModel.Event.Confirm)
@@ -287,23 +314,22 @@ class JamsAdminTest {
             moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
                 repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
                 val sending = expectMostRecentItem()
-                assertEquals("Publicada", sending.controls().status.selected())
+                assertEquals(publishedChip, sending.controls().status.selected())
                 val change = sending.controls().status
-                assertEquals(listOf("Borrador"), change.pending())
+                assertEquals(listOf(draftChip), change.pending())
                 assertEquals(
-                    "Cambiando el estado a Borrador…",
+                    UiText.res(R.string.past_jams_status_changing, draftChip),
                     change.chips.chips.single { it.pending }.description,
                 )
                 assertTrue(change.allDisabled())
-                assertFalse(sending.toString().contains("Cambiando el estado…"))
                 assertNull(sending.controls().publish)
 
                 statuses.changes.value = emptyList()
                 repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
                 val done = expectMostRecentItem()
-                assertEquals("Borrador", done.controls().status.selected())
-                assertEquals(listOf("Creada", "Publicada"), done.controls().status.labels())
-                assertEquals(emptyList<String>(), done.controls().status.pending())
+                assertEquals(draftChip, done.controls().status.selected())
+                assertEquals(listOf(createdChip, publishedChip), done.controls().status.labels())
+                assertEquals(emptyList<UiText>(), done.controls().status.pending())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -322,9 +348,12 @@ class JamsAdminTest {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED)))
             val controls = expectMostRecentItem().controls()
             assertTrue(controls.status.allDisabled())
-            assertEquals("Creada", controls.status.selected())
-            assertEquals(listOf("Publicada"), controls.status.pending())
-            assertEquals("Publicando la lista…", controls.status.chips.chips.single { it.pending }.description)
+            assertEquals(createdChip, controls.status.selected())
+            assertEquals(listOf(publishedChip), controls.status.pending())
+            assertEquals(
+                UiText.res(R.string.past_jams_publishing_announcement),
+                controls.status.chips.chips.single { it.pending }.description,
+            )
             assertNull(controls.publish)
             cancelAndIgnoreRemainingEvents()
         }
@@ -341,11 +370,11 @@ class JamsAdminTest {
                 repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
                 val change = expectMostRecentItem().controls().status
                 val card = checkNotNull(change.failure)
-                assertEquals("No se pudo cambiar el estado", card.title)
-                assertEquals("No hay conexión. Probá de nuevo cuando tengas internet.", card.message)
-                assertEquals("La jam sigue como estaba.", card.consequence)
-                assertEquals("Reintentar", card.retryLabel)
-                assertEquals("Cerrar", card.dismissLabel)
+                assertEquals(UiText.res(R.string.past_jams_status_failed), card.title)
+                assertEquals(UiText.res(CoreR.string.write_failure_offline), card.message)
+                assertEquals(UiText.res(R.string.past_jams_jam_unchanged), card.consequence)
+                assertEquals(retry, card.retryLabel)
+                assertEquals(close, card.dismissLabel)
                 change.events(JamStatusUiModel.Event.Retry(3))
                 assertEquals(listOf(upcomingDate to JamStatus.DRAFT), statuses.calls)
                 assertTrue(statuses.dismissed.contains(3L))
@@ -355,11 +384,7 @@ class JamsAdminTest {
                 )
                 val outdated = expectMostRecentItem().controls().status
                 val outdatedCard = checkNotNull(outdated.failure)
-                assertEquals(
-                    "El script de la planilla todavía no sabe cambiar el estado. " +
-                        "Actualizalo con la guía y probá de nuevo.",
-                    outdatedCard.message,
-                )
+                assertEquals(UiText.res(R.string.past_jams_status_script_outdated), outdatedCard.message)
                 assertNull(outdatedCard.retryLabel)
                 outdated.events(JamStatusUiModel.Event.Dismiss(4))
                 assertTrue(statuses.dismissed.contains(4L))
@@ -377,11 +402,11 @@ class JamsAdminTest {
             idle.status.select(JamStatus.PUBLISHED)
             assertEquals(emptyList<LocalDate>(), publishes.calls)
             val confirmation = awaitItem().controls().publish as PublishUiModel.Confirming
-            assertEquals("¿Publicar la lista?", confirmation.prompt)
-            assertEquals("Los músicos van a ver los 2 temas cuando abran o actualicen la app.", confirmation.details)
-            assertEquals("Después podés volver a cambiar el estado desde acá.", confirmation.reversibleNote)
-            assertEquals("Publicar", confirmation.confirmLabel)
-            assertEquals("Cancelar", confirmation.cancelLabel)
+            assertEquals(UiText.res(R.string.past_jams_publish_prompt), confirmation.prompt)
+            assertEquals(UiText.plural(R.plurals.past_jams_publish_details, 2), confirmation.details)
+            assertEquals(UiText.res(R.string.past_jams_publish_reversible), confirmation.reversibleNote)
+            assertEquals(UiText.res(R.string.past_jams_publish_confirm), confirmation.confirmLabel)
+            assertEquals(cancel, confirmation.cancelLabel)
 
             confirmation.events(PublishUiModel.Event.Cancel)
             val idleAgain = awaitItem().controls()
@@ -393,8 +418,8 @@ class JamsAdminTest {
             confirm.events(PublishUiModel.Event.Confirm)
             val sending = awaitItem()
             assertEquals(listOf(upcomingDate), publishes.calls)
-            assertEquals("Borrador", sending.controls().status.selected())
-            assertEquals(listOf("Publicada"), sending.controls().status.pending())
+            assertEquals(draftChip, sending.controls().status.selected())
+            assertEquals(listOf(publishedChip), sending.controls().status.pending())
             assertNull(sending.controls().publish)
             hold.complete(Unit)
             cancelAndIgnoreRemainingEvents()
@@ -438,7 +463,7 @@ class JamsAdminTest {
             )
             val sending = expectMostRecentItem().controls()
             assertNull(sending.publish)
-            assertEquals(listOf("Publicada"), sending.status.pending())
+            assertEquals(listOf(publishedChip), sending.status.pending())
             publishes.entries.value = emptyList()
             val idleAgain = expectMostRecentItem().controls()
             assertNull(idleAgain.publish)
@@ -460,13 +485,13 @@ class JamsAdminTest {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.CREATED, 1)))
             expectMostRecentItem().controls().status.select(JamStatus.PUBLISHED)
             val confirming = awaitItem().controls().publish as PublishUiModel.Confirming
-            assertEquals("Los músicos van a ver el tema cuando abran o actualicen la app.", confirming.details)
+            assertEquals(UiText.plural(R.plurals.past_jams_publish_details, 1), confirming.details)
 
             repository.snapshots.emit(snapshot(jam(upcomingDate, JamStatus.DRAFT, Setlist.Available(emptyList()))))
             val empty = expectMostRecentItem().controls()
             assertNull(empty.publish)
-            assertEquals(listOf("Creada"), empty.status.labels())
-            assertEquals("Para publicar, agregá al menos un tema en Próxima jam.", empty.status.publishUnavailable)
+            assertEquals(listOf(createdChip), empty.status.labels())
+            assertEquals(UiText.res(R.string.past_jams_publish_needs_song), empty.status.publishUnavailable)
             empty.status.select(JamStatus.PUBLISHED)
             expectNoEvents()
             assertEquals(emptyList<LocalDate>(), publishes.calls)
@@ -475,8 +500,8 @@ class JamsAdminTest {
             )
             val unreadable = expectMostRecentItem().controls()
             assertNull(unreadable.publish)
-            assertEquals(listOf("Creada"), unreadable.status.labels())
-            assertEquals("Para publicar, la lista se tiene que poder leer.", unreadable.status.publishUnavailable)
+            assertEquals(listOf(createdChip), unreadable.status.labels())
+            assertEquals(UiText.res(R.string.past_jams_publish_needs_readable), unreadable.status.publishUnavailable)
             unreadable.status.select(JamStatus.PUBLISHED)
             expectNoEvents()
             assertEquals(emptyList<LocalDate>(), publishes.calls)
@@ -502,13 +527,9 @@ class JamsAdminTest {
             moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
                 repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT)))
                 val failed = expectMostRecentItem().controls().publish as PublishUiModel.Failed
-                assertEquals("No se pudo publicar la lista", failed.title)
-                assertEquals(
-                    "No pudimos confirmar la publicación: no hay conexión o el servidor tardó. " +
-                        "Reintentá; si ya estaba publicada, no pasa nada.",
-                    failed.message,
-                )
-                assertEquals("Los músicos siguen sin ver la lista.", failed.consequence)
+                assertEquals(UiText.res(R.string.past_jams_publish_failed), failed.title)
+                assertEquals(UiText.res(R.string.past_jams_publish_offline), failed.message)
+                assertEquals(UiText.res(R.string.past_jams_publish_consequence), failed.consequence)
                 failed.events(PublishUiModel.Event.Retry)
                 assertEquals(listOf(upcomingDate), publishes.calls)
                 assertTrue(publishes.dismissed.contains(51L))
@@ -539,8 +560,8 @@ class JamsAdminTest {
                 assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
 
                 val held = checkNotNull(model.admin()).future[1].controls.status
-                assertEquals(listOf("Creada"), held.labels())
-                assertEquals("Solo la próxima jam se puede publicar.", held.publishUnavailable)
+                assertEquals(listOf(createdChip), held.labels())
+                assertEquals(UiText.res(R.string.past_jams_publish_only_upcoming), held.publishUnavailable)
                 held.select(JamStatus.PUBLISHED)
                 assertEquals(emptyList<LocalDate>(), publishes.calls)
                 assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
@@ -560,7 +581,7 @@ class JamsAdminTest {
             // Publicada again while confirming is a no-op, and the selection has not moved.
             confirming.status.select(JamStatus.PUBLISHED)
             expectNoEvents()
-            assertEquals("Borrador", confirming.status.selected())
+            assertEquals(draftChip, confirming.status.selected())
             assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
             assertEquals(emptyList<LocalDate>(), publishes.calls)
             cancelAndIgnoreRemainingEvents()
@@ -576,9 +597,9 @@ class JamsAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 1)))
             val status = expectMostRecentItem().controls().status
-            assertEquals("Borrador", status.selected())
-            assertEquals(listOf("Creada", "Publicada"), status.labels())
-            assertEquals("No se pudo cambiar el estado", checkNotNull(status.failure).title)
+            assertEquals(draftChip, status.selected())
+            assertEquals(listOf(createdChip, publishedChip), status.labels())
+            assertEquals(UiText.res(R.string.past_jams_status_failed), checkNotNull(status.failure).title)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -597,8 +618,8 @@ class JamsAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
             val status = expectMostRecentItem().controls().status
-            assertEquals(emptyList<String>(), status.pending())
-            assertEquals("No se pudo cambiar el estado", checkNotNull(status.failure).title)
+            assertEquals(emptyList<UiText>(), status.pending())
+            assertEquals(UiText.res(R.string.past_jams_status_failed), checkNotNull(status.failure).title)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -626,8 +647,7 @@ class JamsAdminTest {
             session.isAdmin.value = false
             val musician = expectMostRecentItem() as PastJamsUiModel.Jams
             assertNull(musician.admin)
-            assertEquals("Jams anteriores", musician.title)
-            assertFalse(musician.toString().contains("Estado:"))
+            assertEquals(UiText.res(R.string.past_jams_title), musician.title)
             cancelAndIgnoreRemainingEvents()
         }
     }

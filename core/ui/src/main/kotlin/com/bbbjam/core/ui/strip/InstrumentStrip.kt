@@ -26,6 +26,7 @@ import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -53,11 +54,12 @@ private fun InstrumentChip(chip: InstrumentChipUiModel) {
     val style = InstrumentStripDefaults.style(chip.kind)
     // Glyphs follow the label's font size, so they scale with the system font like the text does.
     val em = with(LocalDensity.current) { textStyle.fontSize.toDp() }
+    val description = chip.contentDescription.resolve()
     Row(
         modifier = Modifier
             .background(style.fill, BluesJamTheme.shapes.sm)
             .padding(horizontal = spacing.sm, vertical = spacing.xs)
-            .clearAndSetSemantics { contentDescription = chip.contentDescription },
+            .clearAndSetSemantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -78,7 +80,7 @@ private fun InstrumentChip(chip: InstrumentChipUiModel) {
             InstrumentStripDefaults.Glyph.NONE -> Unit
         }
         Text(
-            text = chip.label,
+            text = chip.label.resolve(),
             style = textStyle,
             color = style.textColor,
             maxLines = 1,

@@ -23,6 +23,9 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.run.ProposalApplier
 import com.bbbjam.feature.assistant.run.RunLock
 import java.time.Clock
@@ -36,6 +39,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 
 internal val JAM_DATE: LocalDate = LocalDate.of(2026, 10, 31)
+
+/** [JAM_DATE] as the summaries name it inside a sentence. */
+internal val JAM_DAY: UiText = SpanishDateNames.sentence(JAM_DATE)
+
+/** "3 temas" as the apply texts write it. */
+internal fun themesOf(count: Int): UiText = UiText.plural(R.plurals.assistant_apply_themes, count)
 
 internal data class AddCall(val date: LocalDate, val songId: SongId, val key: Key)
 

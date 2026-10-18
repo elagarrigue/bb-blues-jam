@@ -1,7 +1,9 @@
 package com.bbbjam.navigation
 
+import com.bbbjam.core.ui.R
 import com.bbbjam.core.ui.nav.TabIcon
 import com.bbbjam.core.ui.nav.TabUiModel
+import com.bbbjam.core.ui.text.UiText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -15,7 +17,10 @@ class AppTabTest {
     fun `the tabs are in bar order with the approved labels, routes and icons, Asistente last`() {
         val all = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO, AppTab.ASSISTANT)
         assertEquals(all, AppTab.entries.toList())
-        assertEquals(listOf("Próxima jam", "Jams", "Info", "Asistente"), AppTab.entries.map { it.label })
+        assertEquals(
+            listOf(R.string.tab_next_jam, R.string.tab_jams, R.string.tab_info, R.string.tab_assistant),
+            AppTab.entries.map { it.label },
+        )
         assertEquals(
             listOf(AppRoutes.NEXT_JAM, AppRoutes.PAST_JAMS, AppRoutes.INFO, AppRoutes.ASSISTANT),
             AppTab.entries.map { it.route },
@@ -62,7 +67,7 @@ class AppTabTest {
             visible.forEach { selected ->
                 val model = tabBarModel(selected, admin) {}
                 assertEquals(visible.map { it == selected }, model.tabs.map { it.selected })
-                assertEquals(visible.map { it.label }, model.tabs.map { it.label })
+                assertEquals(visible.map { UiText.res(it.label) }, model.tabs.map { it.label })
                 assertEquals(visible.map { it.icon }, model.tabs.map { it.icon })
             }
         }

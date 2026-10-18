@@ -13,6 +13,7 @@ import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
+import com.bbbjam.core.ui.text.UiText
 import kotlinx.coroutines.launch
 
 /**
@@ -36,7 +37,7 @@ internal class AdminLoginPresenter(private val adminSession: AdminSession) :
 
         data object Verifying : Phase
 
-        data class Failed(val message: String) : Phase
+        data class Failed(val message: UiText) : Phase
     }
 
     @Composable
@@ -50,12 +51,12 @@ internal class AdminLoginPresenter(private val adminSession: AdminSession) :
 
         val verifying = phase == Phase.Verifying
         return AdminLoginUiModel(
-            title = AdminLoginCopy.TITLE,
-            fieldLabel = AdminLoginCopy.FIELD_LABEL,
+            title = UiText.res(R.string.admin_login_title),
+            fieldLabel = UiText.res(R.string.admin_login_field_label),
             passphrase = passphrase,
             masked = masked,
-            visibilityToggleLabel = if (masked) AdminLoginCopy.SHOW else AdminLoginCopy.HIDE,
-            submitLabel = if (verifying) AdminLoginCopy.VERIFYING else AdminLoginCopy.SUBMIT,
+            visibilityToggleLabel = UiText.res(if (masked) R.string.admin_login_show else R.string.admin_login_hide),
+            submitLabel = UiText.res(if (verifying) R.string.admin_login_verifying else R.string.admin_login_submit),
             submitEnabled = !verifying && passphrase.isNotBlank(),
             isVerifying = verifying,
             error = (phase as? Phase.Failed)?.message,
@@ -96,9 +97,9 @@ internal class AdminLoginPresenter(private val adminSession: AdminSession) :
         )
     }
 
-    private fun LoginOutcome.message(): String = when (this) {
-        LoginOutcome.WrongPassphrase -> AdminLoginCopy.WRONG
-        LoginOutcome.Offline -> AdminLoginCopy.OFFLINE
-        LoginOutcome.Unavailable, LoginOutcome.Success -> AdminLoginCopy.UNAVAILABLE
+    private fun LoginOutcome.message(): UiText = when (this) {
+        LoginOutcome.WrongPassphrase -> UiText.res(R.string.admin_login_wrong)
+        LoginOutcome.Offline -> UiText.res(R.string.admin_login_offline)
+        LoginOutcome.Unavailable, LoginOutcome.Success -> UiText.res(R.string.admin_login_unavailable)
     }
 }

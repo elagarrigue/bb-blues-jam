@@ -21,15 +21,19 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
 import com.bbbjam.feature.nextjam.PendingRowUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
+import com.bbbjam.feature.nextjam.savingText
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
@@ -54,8 +58,8 @@ import org.junit.Test
 
 /**
  * `live-refresh-during-jam` on Próxima jam, in virtual time: the clock is [base] plus the test
- * scheduler's, so the presenter's "now" and its delays move together. The copy is written out from
- * the approved tables, never read from a `…Copy` object.
+ * scheduler's, so the presenter's "now" and its delays move together. The texts are written out from
+ * the approved tables as `UiText` values with their resource ids.
  */
 class NextJamLiveRefreshTest {
     private val repository = FakeJamsRepository()
@@ -212,9 +216,12 @@ class NextJamLiveRefreshTest {
         runCurrent()
 
         val notice = checkNotNull((screen.model as NextJamUiModel.Jam).staleness)
-        assertEquals("Sin conexión", notice.title)
-        assertEquals("Mostrando lo guardado hace 3 horas.", notice.detail)
-        assertEquals("Reintentar", notice.retryLabel)
+        assertEquals(UiText.res(CoreR.string.list_state_notice_offline), notice.title)
+        assertEquals(
+            UiText.res(CoreR.string.list_state_showing_saved, UiText.plural(CoreR.plurals.list_state_age_hours, 3)),
+            notice.detail,
+        )
+        assertEquals(UiText.res(CoreR.string.list_state_retry), notice.retryLabel)
         assertFalse(screen.model.pullRefresh.isRefreshing)
     }
 
@@ -230,7 +237,10 @@ class NextJamLiveRefreshTest {
         checkNotNull((screen.model as NextJamUiModel.Jam).staleness).events(StalenessNoticeUiModel.Event.Retry)
         runCurrent()
 
-        assertEquals("Actualizando…", checkNotNull((screen.model as NextJamUiModel.Jam).staleness).detail)
+        assertEquals(
+            UiText.res(CoreR.string.list_state_refreshing),
+            checkNotNull((screen.model as NextJamUiModel.Jam).staleness).detail,
+        )
         // The Retry joined the periodic read.
         assertEquals(2, repository.refreshCalls)
         assertEquals(1, repository.fetches)
@@ -251,7 +261,7 @@ class NextJamLiveRefreshTest {
         runCurrent()
 
         val error = (screen.model as NextJamUiModel.Failed).error
-        assertEquals("No pudimos cargar la próxima jam", error.title)
+        assertEquals(UiText.res(R.string.next_jam_load_failed), error.title)
         error.events(ListErrorUiModel.Event.Retry)
         runCurrent()
         // A Retry is a user refresh: the skeleton while it runs, as before.
@@ -344,9 +354,9 @@ class NextJamLiveRefreshTest {
         runCurrent()
 
         assertEquals("Bb", screen.model.row("Crossroads").key)
-        assertEquals("Guardando…", checkNotNull(screen.model.row("Crossroads").admin).saveStatus)
+        assertEquals(savingText, checkNotNull(screen.model.row("Crossroads").admin).saveStatus)
         assertEquals(
-            RemovalUiModel.Removing("Quitando…"),
+            RemovalUiModel.Removing(UiText.res(R.string.next_jam_removing)),
             checkNotNull(screen.model.row("Hoochie Coochie Man").admin).removal,
         )
 

@@ -1,6 +1,7 @@
 package com.bbbjam.core.ui.state
 
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -11,9 +12,9 @@ import org.junit.Test
 class NoticeVisibilityTest {
 
     private fun notice(detail: String = "Mostrando lo guardado hace menos de un minuto.") = StalenessNoticeUiModel(
-        title = "Sin conexión",
-        detail = detail,
-        retryLabel = "Reintentar",
+        title = UiText.raw("Sin conexión"),
+        detail = UiText.raw(detail),
+        retryLabel = UiText.raw("Reintentar"),
         events = EventHandler {},
     )
 

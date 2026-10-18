@@ -13,7 +13,8 @@ import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.text.SongListText
-import com.bbbjam.feature.pastjams.PastJamsCopy
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.pastJamDateLabel
 import java.time.LocalDate
 
@@ -39,7 +40,7 @@ internal class PastJamDetailPresenter(private val jams: JamsRepository) :
         val currentOnBack by rememberUpdatedState(params.onBack)
         val onBack: () -> Unit = { currentOnBack() }
         return snapshot?.toPastJamDetail(params.jamDate, onBack)
-            ?: PastJamDetailUiModel.Loading(PastJamsCopy.DETAIL_LOADING, backUiModel(onBack))
+            ?: PastJamDetailUiModel.Loading(UiText.res(R.string.past_jams_detail_loading), backUiModel(onBack))
     }
 }
 
@@ -53,11 +54,16 @@ internal fun JamsSnapshot.toPastJamDetail(jamDate: LocalDate, onBack: () -> Unit
     val back = backUiModel(onBack)
     val jam = forMusicians().past.firstOrNull { it.date == jamDate }
         ?: return PastJamDetailUiModel.NotFound(
-            EmptyStateUiModel(PastJamsCopy.NOT_FOUND_TITLE, PastJamsCopy.NOT_FOUND_MESSAGE),
+            EmptyStateUiModel(
+                UiText.res(R.string.past_jams_not_found_title),
+                UiText.res(R.string.past_jams_not_found_message),
+            ),
             back,
         )
     val setlist = jam.setlistForMusicians().toPastSetlist()
-    val countLabel = (setlist as? PastSetlistUiModel.Songs)?.let { PastJamsCopy.songCount(it.rows.size) }
+    val countLabel = (setlist as? PastSetlistUiModel.Songs)?.let {
+        UiText.plural(R.plurals.past_jams_song_count, it.rows.size)
+    }
     return PastJamDetailUiModel.Jam(
         header = PastJamHeaderUiModel(pastJamDateLabel(jam.date), jam.venue, countLabel),
         setlist = setlist,
@@ -67,7 +73,7 @@ internal fun JamsSnapshot.toPastJamDetail(jamDate: LocalDate, onBack: () -> Unit
 
 private fun Setlist.toPastSetlist(): PastSetlistUiModel = when (this) {
     is Setlist.Available -> if (songs.isEmpty()) {
-        PastSetlistUiModel.NotShown(PastJamsCopy.EMPTY_SETLIST)
+        PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_empty_setlist))
     } else {
         PastSetlistUiModel.Songs(
             // Songs are already in position order (a Setlist invariant).
@@ -76,9 +82,9 @@ private fun Setlist.toPastSetlist(): PastSetlistUiModel = when (this) {
         )
     }
 
-    Setlist.Withheld -> PastSetlistUiModel.NotShown(PastJamsCopy.SETLIST_NOT_PUBLISHED)
+    Setlist.Withheld -> PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_setlist_not_published))
 
-    is Setlist.Unavailable -> PastSetlistUiModel.NotShown(PastJamsCopy.SETLIST_UNAVAILABLE)
+    is Setlist.Unavailable -> PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_setlist_unavailable))
 }
 
 private fun JamSong.toPastRow() = PastSongRowUiModel(

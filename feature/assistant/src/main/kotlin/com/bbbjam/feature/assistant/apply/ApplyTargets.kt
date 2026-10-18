@@ -1,8 +1,9 @@
 package com.bbbjam.feature.assistant.apply
 
 import com.bbbjam.core.assistant.AssistantReply
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantHandlers
-import com.bbbjam.feature.assistant.create.CreateCopy
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.create.createForm
 import com.bbbjam.feature.assistant.run.ApplyMode
 import com.bbbjam.feature.assistant.run.ApplyPlan
@@ -48,7 +49,7 @@ private fun standardTargets(
     val unusable = (add as? ApplyPlan.Blocked)?.reason?.takeIf { it != ApplyPlan.Blocked.Reason.ALL_PRESENT }
     val create = TargetActionUiModel(
         target = ApplyMode.CREATE,
-        label = CreateCopy.CREATE,
+        label = UiText.res(R.string.assistant_create_action),
         enabled = !anyRunning,
         events = handlers.apply(turnId, ApplyMode.CREATE),
     )
@@ -58,13 +59,29 @@ private fun standardTargets(
         listOf(
             TargetActionUiModel(
                 target = ApplyMode.ADD,
-                label = if (run?.mode == ApplyMode.ADD) ApplyCopy.APPLY_RETRY else ApplyCopy.APPLY,
+                label = UiText.res(
+                    if (run?.mode ==
+                        ApplyMode.ADD
+                    ) {
+                        R.string.assistant_apply_add_retry
+                    } else {
+                        R.string.assistant_apply_add
+                    },
+                ),
                 enabled = add is ApplyPlan.Ready && !anyRunning,
                 events = handlers.apply(turnId, ApplyMode.ADD),
             ),
             TargetActionUiModel(
                 target = ApplyMode.REPLACE,
-                label = if (run?.mode == ApplyMode.REPLACE) ReplaceCopy.REPLACE_RETRY else ReplaceCopy.REPLACE,
+                label = UiText.res(
+                    if (run?.mode ==
+                        ApplyMode.REPLACE
+                    ) {
+                        R.string.assistant_replace_retry
+                    } else {
+                        R.string.assistant_replace_action
+                    },
+                ),
                 enabled = replace is ReplacePlan.Ready && !anyRunning,
                 events = handlers.apply(turnId, ApplyMode.REPLACE),
             ),
@@ -92,7 +109,7 @@ private fun retryLoad(
     val ready = plan as? ApplyPlan.Ready
     val retry = TargetActionUiModel(
         target = ApplyMode.ADD,
-        label = ApplyCopy.APPLY_RETRY,
+        label = UiText.res(R.string.assistant_apply_add_retry),
         enabled = !anyRunning,
         events = handlers.apply(turnId, ApplyMode.ADD),
     )
@@ -108,19 +125,21 @@ private fun retryLoad(
     )
 }
 
-private fun ApplyPlan.Blocked.Reason.note(): String = when (this) {
-    ApplyPlan.Blocked.Reason.NO_UPCOMING -> CreateCopy.NOTE_NO_UPCOMING
-    ApplyPlan.Blocked.Reason.UNREADABLE -> ApplyCopy.BLOCKED_UNREADABLE
-    ApplyPlan.Blocked.Reason.ALL_PRESENT -> ApplyCopy.BLOCKED_ALL_PRESENT
-}
+private fun ApplyPlan.Blocked.Reason.note(): UiText = UiText.res(
+    when (this) {
+        ApplyPlan.Blocked.Reason.NO_UPCOMING -> R.string.assistant_create_note_no_upcoming
+        ApplyPlan.Blocked.Reason.UNREADABLE -> R.string.assistant_apply_blocked_unreadable
+        ApplyPlan.Blocked.Reason.ALL_PRESENT -> R.string.assistant_apply_blocked_all_present
+    },
+)
 
 // An equal list says it all: "all present" would only repeat it.
-private fun notes(add: ApplyPlan, replace: ReplacePlan): List<String> = buildList {
+private fun notes(add: ApplyPlan, replace: ReplacePlan): List<UiText> = buildList {
     val equal = (replace as? ReplacePlan.Blocked)?.reason == ReplacePlan.Blocked.Reason.ALREADY_EQUAL
-    if (add is ApplyPlan.Blocked && !equal) add(ApplyCopy.BLOCKED_ALL_PRESENT)
+    if (add is ApplyPlan.Blocked && !equal) add(UiText.res(R.string.assistant_apply_blocked_all_present))
     when ((replace as? ReplacePlan.Blocked)?.reason) {
-        ReplacePlan.Blocked.Reason.ALREADY_EQUAL -> add(ReplaceCopy.NOTE_EQUAL)
-        ReplacePlan.Blocked.Reason.REPEATED_IDS -> add(ReplaceCopy.NOTE_REPEATED)
+        ReplacePlan.Blocked.Reason.ALREADY_EQUAL -> add(UiText.res(R.string.assistant_replace_note_equal))
+        ReplacePlan.Blocked.Reason.REPEATED_IDS -> add(UiText.res(R.string.assistant_replace_note_repeated))
         else -> Unit
     }
 }

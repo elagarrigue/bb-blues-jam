@@ -12,6 +12,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
+import com.bbbjam.core.ui.text.UiText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,21 +37,21 @@ internal class InfoPresenter(private val linkOpener: ExternalLinkOpener, private
     override fun present(params: Params): InfoUiModel {
         val scope = rememberCoroutineScope()
         val currentOnOpenAdminLogin by rememberUpdatedState(params.onOpenAdminLogin)
-        var linkError by remember { mutableStateOf<String?>(null) }
+        var linkError by remember { mutableStateOf<UiText?>(null) }
         val counter = remember { LogoTapCounter() }
         val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
 
         return InfoUiModel(
-            title = InfoCopy.TITLE,
-            tagline = InfoCopy.TAGLINE,
+            title = UiText.res(R.string.info_title),
+            tagline = UiText.res(R.string.info_tagline),
             sections = SECTIONS,
-            linksTitle = InfoCopy.LINKS_TITLE,
+            linksTitle = UiText.res(R.string.info_links_title),
             links = LINKS,
             linkError = linkError,
             events = EventHandler { event ->
                 when (event) {
                     is InfoUiModel.Event.OpenLink ->
-                        linkError = if (linkOpener.open(event.link.url)) null else InfoCopy.LINK_ERROR
+                        linkError = if (linkOpener.open(event.link.url)) null else UiText.res(R.string.info_link_error)
 
                     InfoUiModel.Event.DismissLinkError -> linkError = null
 
@@ -64,32 +65,32 @@ internal class InfoPresenter(private val linkOpener: ExternalLinkOpener, private
 
     private companion object {
         val SECTIONS = listOf(
-            InfoSectionUiModel(InfoCopy.ORGANIZER_TITLE, InfoCopy.ORGANIZER_BODY),
-            InfoSectionUiModel(InfoCopy.JAM_TITLE, InfoCopy.JAM_BODY),
-            InfoSectionUiModel(InfoCopy.HIDEAWAY_TITLE, InfoCopy.HIDEAWAY_BODY),
-            InfoSectionUiModel(InfoCopy.JOIN_TITLE, InfoCopy.JOIN_BODY),
+            section(R.string.info_organizer_title, R.string.info_organizer_body),
+            section(R.string.info_jam_title, R.string.info_jam_body),
+            section(R.string.info_hideaway_title, R.string.info_hideaway_body),
+            section(R.string.info_join_title, R.string.info_join_body),
         )
 
         val LINKS = listOf(
-            InfoLinkUiModel(
+            link(
                 SocialLink.INSTAGRAM,
-                InfoCopy.INSTAGRAM_LABEL,
-                InfoCopy.INSTAGRAM_DESTINATION,
-                InfoCopy.INSTAGRAM_OPEN,
+                R.string.info_instagram_label,
+                "@bahiablancablues",
+                R.string.info_instagram_open,
             ),
-            InfoLinkUiModel(
-                SocialLink.YOUTUBE,
-                InfoCopy.YOUTUBE_LABEL,
-                InfoCopy.YOUTUBE_DESTINATION,
-                InfoCopy.YOUTUBE_OPEN,
-            ),
-            InfoLinkUiModel(
+            link(SocialLink.YOUTUBE, R.string.info_youtube_label, "youtube.com", R.string.info_youtube_open),
+            link(
                 SocialLink.LINKTREE,
-                InfoCopy.LINKTREE_LABEL,
-                InfoCopy.LINKTREE_DESTINATION,
-                InfoCopy.LINKTREE_OPEN,
+                R.string.info_linktree_label,
+                "linktr.ee/bahiablancablues",
+                R.string.info_linktree_open,
             ),
         )
+
+        fun section(title: Int, body: Int) = InfoSectionUiModel(UiText.res(title), UiText.res(body))
+
+        fun link(link: SocialLink, label: Int, destination: String, open: Int) =
+            InfoLinkUiModel(link, UiText.res(label), destination, UiText.res(open))
     }
 }
 

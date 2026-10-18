@@ -15,8 +15,9 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
-import com.bbbjam.feature.nextjam.NextJamCopy
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.admin.assignmentFailureMessage
 import com.bbbjam.feature.nextjam.admin.failureMessage
 import com.bbbjam.feature.nextjam.admin.keyFailureMessage
@@ -77,7 +78,7 @@ internal class SongOverlays(
             (change.state as? KeyChange.State.Failed)?.let {
                 OverlayFailure(
                     change.id,
-                    NextJamCopy.keyFailed(change.title),
+                    UiText.res(R.string.next_jam_key_failed, change.title),
                     keyFailureMessage(it.reason),
                     sources.dismissOf { keyRepository::dismissKeyChange },
                 )
@@ -87,7 +88,7 @@ internal class SongOverlays(
             (change.state as? LineupChange.State.Failed)?.let {
                 OverlayFailure(
                     change.id,
-                    NextJamCopy.lineupFailed(change.title),
+                    UiText.res(R.string.next_jam_lineup_failed, change.title),
                     lineupFailureMessage(it.reason),
                     sources.dismissOf { lineupRepository::dismissLineupChange },
                 )
@@ -97,7 +98,7 @@ internal class SongOverlays(
             (assignment.state as? Assignment.State.Failed)?.let {
                 OverlayFailure(
                     assignment.id,
-                    NextJamCopy.assignmentFailed(assignment.musicianName.value, assignment.title),
+                    UiText.res(R.string.next_jam_assignment_failed, assignment.musicianName.value, assignment.title),
                     assignmentFailureMessage(it.reason),
                     sources.dismissOf { assignmentRepository::dismissAssignment },
                 )
@@ -107,7 +108,7 @@ internal class SongOverlays(
             (clear.state as? SlotClear.State.Failed)?.let {
                 OverlayFailure(
                     clear.id,
-                    NextJamCopy.CLEAR_FAILED,
+                    UiText.res(R.string.next_jam_clear_failed),
                     slotClearFailureMessage(it.reason),
                     sources.dismissOf { slotRepository::dismissSlotClear },
                 )
@@ -117,7 +118,7 @@ internal class SongOverlays(
             (change.state as? ExtraParticipantChange.State.Failed)?.let {
                 OverlayFailure(
                     change.id,
-                    NextJamCopy.EXTRA_FAILED,
+                    UiText.res(R.string.next_jam_extra_failed),
                     failureMessage(it.reason),
                     sources.dismissOf { extraRepository::dismissExtraParticipantChange },
                 )
@@ -137,7 +138,7 @@ private fun SongOverlaySources?.dismissOf(dismiss: SongOverlaySources.() -> (Lon
  * One failed write, before it becomes an [AddFailureUiModel] card. [dismiss] is the dismiss of the
  * contract that owns the entry (D6 of `setlist-mutation-contracts`), called with [id].
  */
-internal data class OverlayFailure(val id: Long, val title: String, val message: String, val dismiss: (Long) -> Unit)
+internal data class OverlayFailure(val id: Long, val title: UiText, val message: UiText, val dismiss: (Long) -> Unit)
 
 /** [failures] as dismissible cards in id (call) order; "Cerrar" calls each failure's own dismiss with its id. */
 internal fun failureCards(failures: List<OverlayFailure>): List<AddFailureUiModel> =
@@ -146,7 +147,7 @@ internal fun failureCards(failures: List<OverlayFailure>): List<AddFailureUiMode
             id = failure.id,
             title = failure.title,
             message = failure.message,
-            dismissLabel = NextJamCopy.CLOSE,
+            dismissLabel = UiText.res(R.string.next_jam_close),
             events = EventHandler(key = failure.id) { failure.dismiss(failure.id) },
         )
     }

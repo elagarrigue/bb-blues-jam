@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
@@ -15,21 +16,19 @@ private const val TIME_DIGITS = 2
  * [today] must come from `JamCalendar.today()` (Buenos Aires, P7), never from the device or UTC.
  * A negative distance, only possible in a race at midnight, counts as the jam's own date.
  */
-internal fun timeRemaining(today: LocalDate, date: LocalDate, startTime: LocalTime): String {
+internal fun timeRemaining(today: LocalDate, date: LocalDate, startTime: LocalTime): UiText {
     val days = ChronoUnit.DAYS.between(today, date).coerceAtLeast(0)
     return when (days) {
-        0L -> if (startTime >= EVENING_STARTS) NextJamCopy.TONIGHT else NextJamCopy.TODAY
-        1L -> NextJamCopy.TOMORROW
-        else -> NextJamCopy.inDays(days)
+        0L -> UiText.res(if (startTime >= EVENING_STARTS) R.string.next_jam_tonight else R.string.next_jam_today)
+        1L -> UiText.res(R.string.next_jam_tomorrow)
+        else -> UiText.res(R.string.next_jam_in_days, days.toInt())
     }
 }
 
 /** "Sábado 31 de octubre · 21:00": day, date and start time, no year. */
-internal fun jamDateLabel(date: LocalDate, startTime: LocalTime): String {
-    val day = SpanishDateNames.day(date.dayOfWeek)
-    val month = SpanishDateNames.month(date.month)
+internal fun jamDateLabel(date: LocalDate, startTime: LocalTime): UiText {
     val time = "${startTime.hour.twoDigits()}:${startTime.minute.twoDigits()}"
-    return "$day ${date.dayOfMonth} de $month · $time"
+    return UiText.res(R.string.next_jam_date_time, SpanishDateNames.label(date), time)
 }
 
 /** Not `String.format`, which is locale-sensitive. */

@@ -1,0 +1,169 @@
+<resources>
+    <!-- Tab bar -->
+    <string name="tab_next_jam">Próxima jam</string>
+    <string name="tab_jams">Jams</string>
+    <string name="tab_info">Info</string>
+    <string name="tab_assistant">Asistente</string>
+
+    <!-- Shell -->
+    <string name="admin_banner_label">MODO ADMIN</string>
+    <string name="nav_back">Volver</string>
+    <string name="pull_refresh_action">Actualizar</string>
+    <string name="brand_logo_description">Logo de Bahía Blanca Blues</string>
+
+    <!-- List states -->
+    <string name="list_state_error_offline">No hay conexión y todavía no hay nada guardado. Revisá los datos o el wifi y probá de nuevo.</string>
+    <string name="list_state_error_other">Algo falló al leer los datos. Probá de nuevo en un rato; si sigue fallando, avisale a la organización.</string>
+    <string name="list_state_retry">Reintentar</string>
+    <string name="list_state_notice_offline">Sin conexión</string>
+    <string name="list_state_notice_other">No se pudo actualizar</string>
+    <string name="list_state_refreshing">Actualizando…</string>
+    <string name="list_state_showing_saved">Mostrando lo guardado %1$s.</string>
+    <string name="list_state_age_under_a_minute">hace menos de un minuto</string>
+    <plurals name="list_state_age_minutes">
+        <item quantity="one">hace %1$d minuto</item>
+        <item quantity="other">hace %1$d minutos</item>
+    </plurals>
+    <plurals name="list_state_age_hours">
+        <item quantity="one">hace %1$d hora</item>
+        <item quantity="other">hace %1$d horas</item>
+    </plurals>
+    <plurals name="list_state_age_days">
+        <item quantity="one">hace %1$d día</item>
+        <item quantity="other">hace %1$d días</item>
+    </plurals>
+
+    <!-- Jam status -->
+    <string name="jam_status_draft">Borrador</string>
+    <string name="jam_status_created">Creada</string>
+    <string name="jam_status_published">Publicada</string>
+    <string name="jam_status_chip_description">Estado: %1$s</string>
+
+    <!-- Instruments: full name, lower case for sentences, abbreviation, abbreviation in capitals -->
+    <string name="instrument_guitar">Guitarra</string>
+    <string name="instrument_bass">Bajo</string>
+    <string name="instrument_drums">Batería</string>
+    <string name="instrument_vocals">Voz</string>
+    <string name="instrument_harmonica">Armónica</string>
+    <string name="instrument_keyboards">Teclados</string>
+    <string name="instrument_guitar_lower">guitarra</string>
+    <string name="instrument_bass_lower">bajo</string>
+    <string name="instrument_drums_lower">batería</string>
+    <string name="instrument_vocals_lower">voz</string>
+    <string name="instrument_harmonica_lower">armónica</string>
+    <string name="instrument_keyboards_lower">teclados</string>
+    <string name="instrument_guitar_abbr">Gtr</string>
+    <string name="instrument_bass_abbr">Bajo</string>
+    <string name="instrument_drums_abbr">Bat</string>
+    <string name="instrument_vocals_abbr">Voz</string>
+    <string name="instrument_harmonica_abbr">Arm</string>
+    <string name="instrument_keyboards_abbr">Tec</string>
+    <string name="instrument_guitar_abbr_caps">GTR</string>
+    <string name="instrument_bass_abbr_caps">BAJO</string>
+    <string name="instrument_drums_abbr_caps">BAT</string>
+    <string name="instrument_vocals_abbr_caps">VOZ</string>
+    <string name="instrument_harmonica_abbr_caps">ARM</string>
+    <string name="instrument_keyboards_abbr_caps">TEC</string>
+
+    <!-- Instrument strip -->
+    <string name="strip_open_label">%1$s: LIBRE</string>
+    <string name="strip_filled_label">%1$s: %2$s</string>
+    <string name="strip_open_description">%1$s: libre</string>
+    <string name="strip_filled_description">%1$s: %2$s</string>
+    <string name="strip_extra_label">+ %1$s: %2$s</string>
+    <string name="strip_extra_description">Otros: %1$s, %2$s</string>
+
+    <!-- Lineup panel -->
+    <string name="lineup_open_heading">Cupos libres</string>
+    <string name="lineup_filled_heading">Cupos cubiertos</string>
+    <string name="lineup_extras_heading">Otros</string>
+    <string name="lineup_open_detail">LIBRE</string>
+    <string name="lineup_assign">Anotar</string>
+    <string name="lineup_clear_slot">Liberar</string>
+    <string name="lineup_remove_extra">Quitar</string>
+    <string name="lineup_remove_extra_description">Quitar a %1$s, %2$s</string>
+    <string name="lineup_no_open_slots">No quedan cupos libres.</string>
+    <string name="lineup_hint">Para tocar, anotate en la jam: la organización te suma a un tema.</string>
+    <string name="lineup_extra_instrument">+ %1$s</string>
+    <string name="lineup_clearing">Quitando…</string>
+    <string name="lineup_filled_clearable_description">%1$s: %2$s. Liberar</string>
+
+    <!-- Instrument filter -->
+    <string name="filter_heading">Filtrá por cupo libre</string>
+    <string name="filter_all">Todos</string>
+    <string name="filter_clear">Ver todos los temas</string>
+    <string name="filter_all_description">Todos los temas: %1$d</string>
+    <string name="filter_instrument_description">%1$s: %2$s con cupo libre</string>
+    <string name="filter_songs_none">ningún tema</string>
+    <plurals name="filter_songs_count">
+        <item quantity="one">%1$d tema</item>
+        <item quantity="other">%1$d temas</item>
+    </plurals>
+    <plurals name="filter_summary">
+        <item quantity="one">%1$d de %2$d tema con cupo libre para %3$s</item>
+        <item quantity="other">%1$d de %2$d temas con cupo libre para %3$s</item>
+    </plurals>
+    <string name="filter_no_results">Ningún tema tiene cupo libre para %1$s.</string>
+    <string name="filter_names_comma">%1$s, %2$s</string>
+    <string name="filter_names_or">%1$s o %2$s</string>
+
+    <!-- Song rows -->
+    <string name="song_list_key_description">Tonalidad %1$s</string>
+    <plurals name="song_list_dropped_rows">
+        <item quantity="one">Falta %1$d tema: no se pudo leer.</item>
+        <item quantity="other">Faltan %1$d temas: no se pudieron leer.</item>
+    </plurals>
+
+    <!-- Dates -->
+    <string name="date_sentence">%1$s %2$d de %3$s</string>
+    <string name="date_day_monday">Lunes</string>
+    <string name="date_day_tuesday">Martes</string>
+    <string name="date_day_wednesday">Miércoles</string>
+    <string name="date_day_thursday">Jueves</string>
+    <string name="date_day_friday">Viernes</string>
+    <string name="date_day_saturday">Sábado</string>
+    <string name="date_day_sunday">Domingo</string>
+    <string name="date_day_monday_lower">lunes</string>
+    <string name="date_day_tuesday_lower">martes</string>
+    <string name="date_day_wednesday_lower">miércoles</string>
+    <string name="date_day_thursday_lower">jueves</string>
+    <string name="date_day_friday_lower">viernes</string>
+    <string name="date_day_saturday_lower">sábado</string>
+    <string name="date_day_sunday_lower">domingo</string>
+    <string name="date_month_january">enero</string>
+    <string name="date_month_february">febrero</string>
+    <string name="date_month_march">marzo</string>
+    <string name="date_month_april">abril</string>
+    <string name="date_month_may">mayo</string>
+    <string name="date_month_june">junio</string>
+    <string name="date_month_july">julio</string>
+    <string name="date_month_august">agosto</string>
+    <string name="date_month_september">septiembre</string>
+    <string name="date_month_october">octubre</string>
+    <string name="date_month_november">noviembre</string>
+    <string name="date_month_december">diciembre</string>
+
+    <!-- Jam form -->
+    <string name="jam_form_date_label">Fecha</string>
+    <string name="jam_form_date_hint">DD/MM/AAAA</string>
+    <string name="jam_form_time_label">Hora</string>
+    <string name="jam_form_time_hint">HH:MM</string>
+    <string name="jam_form_venue_label">Lugar</string>
+    <string name="jam_form_cancel">Cancelar</string>
+    <string name="jam_form_date_format_error">Escribí la fecha como DD/MM/AAAA.</string>
+    <string name="jam_form_date_past_error">Esa fecha ya pasó.</string>
+    <string name="jam_form_date_exists_error">Ya hay una jam ese día.</string>
+    <string name="jam_form_time_error">Escribí la hora como HH:MM, por ejemplo 21:00.</string>
+    <string name="jam_form_venue_empty_error">Escribí el lugar.</string>
+    <string name="jam_form_venue_long_error">El lugar puede tener hasta 80 letras.</string>
+    <string name="jam_form_venue_formula_error">El lugar no puede empezar con =, +, - o @.</string>
+    <string name="jam_form_earlier_error">Es antes de la próxima jam (%1$s). Si querés adelantar esa jam, editá su fecha en Jams.</string>
+
+    <!-- Failed admin writes shared by several features -->
+    <string name="write_failure_access_refused">La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar.</string>
+    <string name="write_failure_offline">No hay conexión. Probá de nuevo cuando tengas internet.</string>
+    <string name="write_failure_unavailable">El servidor no respondió. Probá de nuevo en un rato.</string>
+    <string name="write_failure_jam_changed">La jam cambió en la planilla. Actualizá y probá de nuevo.</string>
+    <string name="write_failure_sheet_refused">La planilla rechazó el cambio. Revisala y probá de nuevo.</string>
+    <string name="write_failure_not_in_catalog">Ese tema ya no está en el catálogo.</string>
+</resources>

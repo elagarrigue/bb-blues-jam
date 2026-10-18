@@ -1,5 +1,9 @@
 package com.bbbjam.core.ui.jamform
 
+import com.bbbjam.core.ui.R
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.text
 import com.bbbjam.core.ui.theme.BluesJamColors
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
@@ -28,10 +32,10 @@ class JamFormDefaultsTest {
 
     @Test
     fun `the copy is written with vos and names the upcoming jam in a sentence`() {
-        assertEquals("sábado 31 de octubre", JamFormText.sentenceDate(LocalDate.of(2026, 10, 31)))
-        val earlier = JamFormText.earlierError(LocalDate.of(2026, 10, 31))
+        assertEquals("sábado 31 de octubre", SpanishDateNames.sentence(LocalDate.of(2026, 10, 31)).text())
+        val earlier = jamFormEarlierError(LocalDate.of(2026, 10, 31)).text()
         assertTrue(earlier.contains("sábado 31 de octubre"))
         assertFalse(earlier.contains("planilla"))
-        assertEquals("Escribí la fecha como DD/MM/AAAA.", JamFormText.DATE_FORMAT_ERROR)
+        assertEquals("Escribí la fecha como DD/MM/AAAA.", UiText.res(R.string.jam_form_date_format_error).text())
     }
 }

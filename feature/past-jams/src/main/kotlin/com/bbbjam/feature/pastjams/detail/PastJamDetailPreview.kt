@@ -14,8 +14,9 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.backUiModel
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.theme.BluesJamTheme
-import com.bbbjam.feature.pastjams.PastJamsCopy
+import com.bbbjam.feature.pastjams.R
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -55,7 +56,13 @@ private fun previewSnapshot(status: JamStatus, setlist: Setlist) = JamsSnapshot(
 
 @Preview
 @Composable
-private fun LoadingPreview() = DetailPreview(PastJamDetailUiModel.Loading(PastJamsCopy.DETAIL_LOADING, backUiModel {}))
+private fun LoadingPreview() = DetailPreview(
+    PastJamDetailUiModel.Loading(
+        UiText.res(R.string.past_jams_detail_loading),
+        backUiModel {
+        },
+    ),
+)
 
 @Preview
 @Composable

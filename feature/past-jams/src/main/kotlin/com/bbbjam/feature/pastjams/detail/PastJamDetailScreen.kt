@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.bbbjam.core.ui.nav.BackButton
 import com.bbbjam.core.ui.state.EmptyStateBlock
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -76,11 +77,12 @@ internal fun PastJamDetailContent(model: PastJamDetailUiModel, modifier: Modifie
         bottom = contentPadding.calculateBottomPadding() + spacing.lg,
     )
     val inset = Modifier.padding(start = spacing.sm)
+    val loadingDescription = (model as? PastJamDetailUiModel.Loading)?.description?.resolve()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(BluesJamTheme.colors.background)
-            .semantics { if (model is PastJamDetailUiModel.Loading) contentDescription = model.description },
+            .semantics { if (loadingDescription != null) contentDescription = loadingDescription },
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
@@ -98,7 +100,7 @@ internal fun PastJamDetailContent(model: PastJamDetailUiModel, modifier: Modifie
                         setlist.droppedRowsNote?.let { note ->
                             item(key = NOTE_KEY) {
                                 Text(
-                                    text = note,
+                                    text = note.resolve(),
                                     style = BluesJamTheme.typography.caption,
                                     color = PastJamDetailDefaults.rowStyle().droppedNote,
                                     modifier = inset,
@@ -109,7 +111,7 @@ internal fun PastJamDetailContent(model: PastJamDetailUiModel, modifier: Modifie
 
                     is PastSetlistUiModel.NotShown -> item(key = MESSAGE_KEY) {
                         Text(
-                            text = setlist.message,
+                            text = setlist.message.resolve(),
                             style = BluesJamTheme.typography.body,
                             color = PastJamDetailDefaults.headerStyle().message,
                             modifier = inset,
@@ -138,7 +140,7 @@ private fun Header(header: PastJamHeaderUiModel, modifier: Modifier) {
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
     ) {
         Text(
-            text = header.dateLabel,
+            text = header.dateLabel.resolve(),
             style = typography.h1,
             color = style.date,
             modifier = Modifier.semantics { heading() },
@@ -152,7 +154,9 @@ private fun Header(header: PastJamHeaderUiModel, modifier: Modifier) {
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            header.countLabel?.let { count -> Text(text = count, style = typography.body, color = style.count) }
+            header.countLabel?.let { count ->
+                Text(text = count.resolve(), style = typography.body, color = style.count)
+            }
         }
     }
 }
@@ -166,6 +170,7 @@ private fun PastSongRow(row: PastSongRowUiModel, modifier: Modifier) {
     val spacing = BluesJamTheme.spacing
     val typography = BluesJamTheme.typography
     val style = PastJamDetailDefaults.rowStyle()
+    val keyDescription = row.keyDescription.resolve()
     Surface(
         color = style.fill,
         contentColor = style.title,
@@ -196,7 +201,7 @@ private fun PastSongRow(row: PastSongRowUiModel, modifier: Modifier) {
                     text = row.key,
                     style = typography.key,
                     color = style.key,
-                    modifier = Modifier.semantics { contentDescription = row.keyDescription },
+                    modifier = Modifier.semantics { contentDescription = keyDescription },
                 )
             }
             row.artist?.let { artist -> Text(text = artist, style = typography.body, color = style.artist) }

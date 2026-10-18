@@ -9,7 +9,10 @@ import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.lineup.toLineupPanel
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.fullName
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -109,8 +112,16 @@ class AssignmentOverlayTest {
             },
         )
 
-        assertEquals(listOf("Quitando…", "LIBRE"), panel.openSlots.map { it.detail })
-        assertEquals(listOf("Guitarra: Quitando…", "Guitarra: libre"), panel.openSlots.map { it.contentDescription })
+        val clearing = UiText.res(CoreR.string.lineup_clearing)
+        val guitar = Instrument.GUITAR.fullName()
+        assertEquals(listOf(clearing, UiText.res(CoreR.string.lineup_open_detail)), panel.openSlots.map { it.detail })
+        assertEquals(
+            listOf(
+                UiText.res(CoreR.string.strip_filled_description, guitar, clearing),
+                UiText.res(CoreR.string.strip_open_description, guitar),
+            ),
+            panel.openSlots.map { it.contentDescription },
+        )
         assertEquals(null, panel.openSlots.first().action)
         assertTrue(panel.openSlots.last().action != null)
         assertTrue(panel.filledSlots.isEmpty())

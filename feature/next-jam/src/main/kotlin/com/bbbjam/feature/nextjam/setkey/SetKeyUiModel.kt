@@ -5,6 +5,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
 
 /**
  * The key picker (`admin-set-key`, V1): full screen over the tabs, reached from the song detail's
@@ -26,17 +27,17 @@ internal sealed interface SetKeyUiModel : UiModel {
      */
     data class Content(
         override val back: BackUiModel,
-        val title: String,
+        val title: UiText,
         val songTitle: String,
-        val currentLabel: String,
+        val currentLabel: UiText,
         val currentKey: String,
-        val currentKeyDescription: String,
+        val currentKeyDescription: UiText,
         val sections: List<KeySectionUiModel>,
     ) : SetKeyUiModel
 }
 
 /** One section ([label] "Mayores" or "Menores", drawn uppercase): 12 cells as [rows] of 4. */
-internal data class KeySectionUiModel(val label: String, val rows: List<List<KeyCellUiModel>>) : UiModel
+internal data class KeySectionUiModel(val label: UiText, val rows: List<List<KeyCellUiModel>>) : UiModel
 
 /**
  * One key. [description] is what a screen reader says ("Tonalidad Bb"). The cell equal to the
@@ -45,10 +46,10 @@ internal data class KeySectionUiModel(val label: String, val rows: List<List<Key
  */
 internal data class KeyCellUiModel(
     val key: String,
-    val description: String,
+    val description: UiText,
     val isCurrent: Boolean,
-    val currentLabel: String?,
-    val pickLabel: String,
+    val currentLabel: UiText?,
+    val pickLabel: UiText,
     val events: EventHandler<Event>,
 ) : UiModel {
     sealed interface Event : UiEvent {

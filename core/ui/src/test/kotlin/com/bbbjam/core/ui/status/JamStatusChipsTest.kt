@@ -4,6 +4,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.text
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,10 +20,10 @@ class JamStatusChipsTest {
     @Test
     fun `the chips come in order with labels and state descriptions`() {
         val model = jamStatusChips(JamStatus.CREATED, enabled = setOf(JamStatus.DRAFT), events = none)
-        assertEquals(listOf("Borrador", "Creada", "Publicada"), model.chips.map { it.label })
+        assertEquals(listOf("Borrador", "Creada", "Publicada"), model.chips.map { it.label.text() })
         assertEquals(
             listOf("Estado: Borrador", "Estado: Creada", "Estado: Publicada"),
-            model.chips.map { it.description },
+            model.chips.map { it.description.text() },
         )
         assertEquals(listOf(JamStatus.DRAFT, JamStatus.CREATED, JamStatus.PUBLISHED), model.chips.map { it.status })
     }
@@ -119,19 +121,19 @@ class JamStatusChipsTest {
         val model = jamStatusChips(
             JamStatus.CREATED,
             enabled = JamStatus.entries.toSet(),
-            pending = PendingChip(JamStatus.DRAFT, "Cambiando el estado a Borrador…"),
+            pending = PendingChip(JamStatus.DRAFT, UiText.raw("Cambiando el estado a Borrador…")),
             events = none,
         )
         val pending = model.chips.filter { it.pending }
         assertEquals(listOf(JamStatus.DRAFT), pending.map { it.status })
-        assertEquals("Cambiando el estado a Borrador…", pending.single().description)
+        assertEquals("Cambiando el estado a Borrador…", pending.single().description.text())
         assertFalse(pending.single().enabled)
         assertFalse(pending.single().selected)
         assertEquals(
             listOf("Estado: Creada", "Estado: Publicada"),
             model.chips.filter {
                 !it.pending
-            }.map { it.description },
+            }.map { it.description.text() },
         )
         assertTrue(model.chips.none { it.pending && it.selected })
     }

@@ -12,27 +12,31 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
-import com.bbbjam.feature.pastjams.PastJamsCopy
+import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Shared fixtures of the detail tests. Every user-facing string is written out from the approved
- * copy table of `docs/specs/past-jam-detail.md` (C1), never read from [PastJamsCopy].
+ * Shared fixtures of the detail tests. Every user-facing text is the `UiText` (resource id and
+ * arguments) that the approved copy table of `docs/specs/past-jam-detail.md` (C1) maps to.
  */
 internal object PastJamDetailFixtures {
     val julyDate: LocalDate = LocalDate.of(2026, 7, 25)
 
-    val back = BackUiModel("Volver", EventHandler {})
-    val loading = PastJamDetailUiModel.Loading("Cargando la jam", back)
+    val back = BackUiModel(UiText.res(CoreR.string.nav_back), EventHandler {})
+    val loading = PastJamDetailUiModel.Loading(UiText.res(R.string.past_jams_detail_loading), back)
     val notFound = PastJamDetailUiModel.NotFound(
         EmptyStateUiModel(
-            "Esta jam ya no está en el archivo",
-            "Puede que la organización la haya cambiado. Volvé a Jams para ver las jams guardadas.",
+            UiText.res(R.string.past_jams_not_found_title),
+            UiText.res(R.string.past_jams_not_found_message),
         ),
         back,
     )
@@ -69,7 +73,12 @@ internal object PastJamDetailFixtures {
 
     fun snapshot(past: List<Jam>, upcoming: Jam? = null) = JamsSnapshot(upcoming, past, fetched)
 
-    fun header(count: String? = "1 tema") = PastJamHeaderUiModel("Sábado 25 de julio de 2026", "La Macanuda", count)
+    /** The header of the July jam; [songs] is the count it shows, null when there is none. */
+    fun header(songs: Int? = 1) = PastJamHeaderUiModel(
+        UiText.res(R.string.past_jams_date_with_year, SpanishDateNames.label(julyDate), julyDate.year),
+        "La Macanuda",
+        songs?.let { UiText.plural(R.plurals.past_jams_song_count, it) },
+    )
 
     fun row(position: Int, label: String, key: String = "A") = PastSongRowUiModel(
         position = position,
@@ -77,6 +86,6 @@ internal object PastJamDetailFixtures {
         title = "Song $position",
         artist = "Artist $position",
         key = key,
-        keyDescription = "Tonalidad $key",
+        keyDescription = SongListText.keyDescription(key),
     )
 }

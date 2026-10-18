@@ -12,10 +12,13 @@ import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.jamform.JamFormField
-import com.bbbjam.core.ui.jamform.JamFormText
+import com.bbbjam.core.ui.jamform.jamFormEarlierError
 import com.bbbjam.core.ui.presenter.EventHandler
-import com.bbbjam.feature.pastjams.PastJamsCopy
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.admin.JamsAdminState
 import com.bbbjam.feature.pastjams.admin.editFailureMessage
 import com.bbbjam.feature.pastjams.create.venueError
@@ -37,11 +40,19 @@ internal fun JamsAdminState.manageUiModel(jam: Jam): JamManageUiModel {
         publishes.any { it.jamDate == jam.date && it.state == SetlistPublish.State.Sending }
     val idle = editSending == null && !statusBusy
     return JamManageUiModel(
-        edit = IconActionUiModel(JamEditCopy.editDescription(jam.date), enabled = idle),
-        delete = IconActionUiModel(JamEditCopy.deleteDescription(jam.date), enabled = idle)
+        edit = IconActionUiModel(
+            UiText.res(R.string.past_jams_edit_description, SpanishDateNames.sentence(jam.date)),
+            enabled = idle,
+        ),
+        delete = IconActionUiModel(
+            UiText.res(R.string.past_jams_delete_description, SpanishDateNames.sentence(jam.date)),
+            enabled = idle,
+        )
             .takeIf { jam.knownSongCount() != null },
         sending = editSending?.let {
-            if (it.change is JamEdit.Change.Delete) JamEditCopy.DELETING else JamEditCopy.SAVING
+            UiText.res(
+                if (it.change is JamEdit.Change.Delete) R.string.past_jams_deleting else R.string.past_jams_saving,
+            )
         },
         failure = failed?.toFailure(),
         events = EventHandler(key = "${jam.date}|${jam.venue}|${jam.startTime}|${failed?.id}|$idle") { event ->
@@ -66,11 +77,17 @@ private fun JamEdit.toFailure(): JamEditFailureUiModel {
     val listChanged = (reason as? WriteOutcome.Rejected)?.rejection == WriteRejection.SETLIST_CHANGED
     return JamEditFailureUiModel(
         id = id,
-        title = if (change is JamEdit.Change.Delete) JamEditCopy.DELETE_FAILED else JamEditCopy.UPDATE_FAILED,
-        message = if (reason == null) JamEditCopy.SCRIPT_OUTDATED else editFailureMessage(reason),
-        consequence = JamEditCopy.CONSEQUENCE,
-        retryLabel = PastJamsCopy.PUBLISH_RETRY.takeIf { reason != null && !listChanged },
-        dismissLabel = PastJamsCopy.CLOSE,
+        title = UiText.res(
+            if (change is JamEdit.Change.Delete) R.string.past_jams_delete_failed else R.string.past_jams_update_failed,
+        ),
+        message = if (reason == null) {
+            UiText.res(R.string.past_jams_edit_script_outdated)
+        } else {
+            editFailureMessage(reason)
+        },
+        consequence = UiText.res(R.string.past_jams_jam_unchanged),
+        retryLabel = UiText.res(CoreR.string.list_state_retry).takeIf { reason != null && !listChanged },
+        dismissLabel = UiText.res(R.string.past_jams_close),
     )
 }
 
@@ -81,25 +98,25 @@ internal fun JamsSnapshot.toEditForm(admin: JamsAdminState, future: List<Jam>): 
     val check = checkJamEdit(jam, input, this, admin.today)
     val controls = admin.editing
     return EditJamFormUiModel(
-        title = JamEditCopy.EDIT,
+        title = UiText.res(R.string.past_jams_edit),
         jamDate = jam.date,
-        dateLabel = JamFormText.DATE_LABEL,
-        dateHint = JamFormText.DATE_HINT,
-        timeLabel = JamFormText.TIME_LABEL,
-        timeHint = JamFormText.TIME_HINT,
-        venueLabel = JamFormText.VENUE_LABEL,
+        dateLabel = UiText.res(CoreR.string.jam_form_date_label),
+        dateHint = UiText.res(CoreR.string.jam_form_date_hint),
+        timeLabel = UiText.res(CoreR.string.jam_form_time_label),
+        timeHint = UiText.res(CoreR.string.jam_form_time_hint),
+        venueLabel = UiText.res(CoreR.string.jam_form_venue_label),
         date = input.date,
         time = input.time,
         venue = input.venue,
         dateError = editDateError(check, shown = input.date.isNotBlank() || controls.isTouched(JamFormField.DATE)),
-        timeError = JamFormText.TIME_ERROR.takeIf {
+        timeError = UiText.res(CoreR.string.jam_form_time_error).takeIf {
             check.timeInvalid && (input.time.isNotBlank() || controls.isTouched(JamFormField.TIME))
         },
         venueError = venueError(check.venueProblem, touched = controls.isTouched(JamFormField.VENUE)),
-        dateNote = JamEditCopy.DATE_MOVES_NOTE.takeIf { check.dateChanged },
-        visibilityNote = JamEditCopy.VISIBLE_NOTE.takeIf { jam.status != JamStatus.DRAFT },
-        saveLabel = JamEditCopy.SAVE,
-        cancelLabel = PastJamsCopy.CANCEL,
+        dateNote = UiText.res(R.string.past_jams_date_moves_note).takeIf { check.dateChanged },
+        visibilityNote = UiText.res(R.string.past_jams_visible_note).takeIf { jam.status != JamStatus.DRAFT },
+        saveLabel = UiText.res(R.string.past_jams_save),
+        cancelLabel = UiText.res(CoreR.string.jam_form_cancel),
         canSave = check.canSave,
         events = EventHandler(key = "${jam.date}|${check.values}") { event ->
             when (event) {
@@ -111,15 +128,23 @@ internal fun JamsSnapshot.toEditForm(admin: JamsAdminState, future: List<Jam>): 
     )
 }
 
-private fun editDateError(check: JamEditCheck, shown: Boolean): String? {
+private fun editDateError(check: JamEditCheck, shown: Boolean): UiText? {
     val other = check.otherDate
     return when {
         !shown -> null
-        check.dateProblem == JamEditDateProblem.FORMAT -> JamFormText.DATE_FORMAT_ERROR
-        check.dateProblem == JamEditDateProblem.PAST -> JamFormText.DATE_PAST_ERROR
-        check.dateProblem == JamEditDateProblem.EXISTS -> JamFormText.DATE_EXISTS_ERROR
-        check.dateProblem == JamEditDateProblem.LATER -> other?.let(JamEditCopy::laterError)
-        check.dateProblem == JamEditDateProblem.EARLIER -> other?.let(JamEditCopy::earlierThanUpcomingError)
+
+        check.dateProblem == JamEditDateProblem.FORMAT -> UiText.res(CoreR.string.jam_form_date_format_error)
+
+        check.dateProblem == JamEditDateProblem.PAST -> UiText.res(CoreR.string.jam_form_date_past_error)
+
+        check.dateProblem == JamEditDateProblem.EXISTS -> UiText.res(CoreR.string.jam_form_date_exists_error)
+
+        check.dateProblem == JamEditDateProblem.LATER ->
+            other?.let { UiText.res(R.string.past_jams_later_error, SpanishDateNames.sentence(it)) }
+
+        check.dateProblem == JamEditDateProblem.EARLIER ->
+            other?.let { UiText.res(R.string.past_jams_earlier_than_upcoming_error, SpanishDateNames.sentence(it)) }
+
         else -> null
     }
 }
@@ -134,21 +159,23 @@ internal fun JamsAdminState.toDeleteConfirm(future: List<Jam>): DeleteJamUiModel
 private fun JamsAdminState.deleteConfirmation(jam: Jam, songs: Int, future: List<Jam>): DeleteJamUiModel {
     val upcoming = future.first()
     val nextLine = if (jam.date == upcoming.date) {
-        future.getOrNull(1)?.let { JamEditCopy.nextJamBecomes(it.date) } ?: JamEditCopy.NO_JAM_LEFT
+        future.getOrNull(1)?.let {
+            UiText.res(R.string.past_jams_next_jam_becomes, SpanishDateNames.sentence(it.date))
+        } ?: UiText.res(R.string.past_jams_no_jam_left)
     } else {
-        JamEditCopy.nextJamStays(upcoming.date)
+        UiText.res(R.string.past_jams_next_jam_stays, SpanishDateNames.sentence(upcoming.date))
     }
     val statusLine = when (jam.status) {
-        JamStatus.PUBLISHED -> JamEditCopy.PUBLISHED_LOST
-        JamStatus.CREATED -> JamEditCopy.CREATED_LOST
+        JamStatus.PUBLISHED -> UiText.res(R.string.past_jams_published_lost)
+        JamStatus.CREATED -> UiText.res(R.string.past_jams_created_lost)
         JamStatus.DRAFT -> null
     }
     return DeleteJamUiModel(
-        title = JamEditCopy.deleteTitle(jam.date),
+        title = UiText.res(R.string.past_jams_delete_title, SpanishDateNames.sentence(jam.date)),
         jamDate = jam.date,
-        lines = listOfNotNull(JamEditCopy.songsLost(songs), statusLine, nextLine, JamEditCopy.UNDO_WARNING),
-        confirmLabel = JamEditCopy.DELETE,
-        cancelLabel = PastJamsCopy.CANCEL,
+        lines = listOfNotNull(songsLost(songs), statusLine, nextLine, UiText.res(R.string.past_jams_undo_warning)),
+        confirmLabel = UiText.res(R.string.past_jams_delete),
+        cancelLabel = UiText.res(CoreR.string.jam_form_cancel),
         events = EventHandler(key = "${jam.date}|$songs") { event ->
             when (event) {
                 DeleteJamUiModel.Event.Confirm -> editing.onConfirmDelete(jam.date, songs)
@@ -157,3 +184,7 @@ private fun JamsAdminState.deleteConfirmation(jam: Jam, songs: Int, future: List
         },
     )
 }
+
+/** What deleting loses: an empty list is a line of its own, never "0 temas". */
+private fun songsLost(count: Int): UiText =
+    if (count == 0) UiText.res(R.string.past_jams_empty_list) else UiText.plural(R.plurals.past_jams_songs_lost, count)

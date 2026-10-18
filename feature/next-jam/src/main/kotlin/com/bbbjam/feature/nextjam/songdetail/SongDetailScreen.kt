@@ -41,6 +41,8 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.lineup.LineupPanel
 import com.bbbjam.core.ui.nav.BackButton
 import com.bbbjam.core.ui.state.EmptyStateBlock
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 import com.bbbjam.feature.nextjam.admin.AddFailureCard
@@ -100,11 +102,12 @@ internal fun SongDetailContent(model: SongDetailUiModel, modifier: Modifier, con
     (model as? SongDetailUiModel.Song)?.admin?.extraParticipants?.takeIf { it.formVisible }?.let {
         AddExtraDialog(it)
     }
+    val loadingDescription = (model as? SongDetailUiModel.Loading)?.description?.resolve()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(BluesJamTheme.colors.background)
-            .semantics { if (model is SongDetailUiModel.Loading) contentDescription = model.description },
+            .semantics { if (loadingDescription != null) contentDescription = loadingDescription },
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
@@ -189,18 +192,20 @@ private fun KeyBlock(
     model: SongDetailUiModel.Song,
     modifier: Modifier,
     onClick: (() -> Unit)? = null,
-    clickLabel: String? = null,
+    clickLabel: UiText? = null,
 ) {
+    val keyDescription = model.keyDescription.resolve()
+    val clickLabelText = clickLabel?.resolve()
     val keyModifier = if (onClick != null) {
         Modifier
-            .clickable(role = Role.Button, onClickLabel = clickLabel, onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = model.keyDescription }
+            .clickable(role = Role.Button, onClickLabel = clickLabelText, onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = keyDescription }
     } else {
-        Modifier.clearAndSetSemantics { contentDescription = model.keyDescription }
+        Modifier.clearAndSetSemantics { contentDescription = keyDescription }
     }
     Column(modifier = modifier.then(keyModifier)) {
         Text(
-            text = model.keyLabel.uppercase(),
+            text = model.keyLabel.resolve().uppercase(),
             style = SongDetailDefaults.captionStyle,
             color = BluesJamTheme.colors.textMuted,
         )

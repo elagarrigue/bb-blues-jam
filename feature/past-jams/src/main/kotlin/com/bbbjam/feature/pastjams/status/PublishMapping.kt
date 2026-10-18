@@ -6,8 +6,10 @@ import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.presenter.EventHandler
-import com.bbbjam.feature.pastjams.PastJamsCopy
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.admin.JamsAdminState
 import com.bbbjam.feature.pastjams.admin.publishFailureMessage
 import java.time.LocalDate
@@ -32,11 +34,11 @@ private fun JamsAdminState.toPublishFailure(date: LocalDate, failed: SetlistPubl
     val reason = (failed.state as SetlistPublish.State.Failed).reason
     return PublishUiModel.Failed(
         id = failed.id,
-        title = PastJamsCopy.PUBLISH_FAILED,
+        title = UiText.res(R.string.past_jams_publish_failed),
         message = publishFailureMessage(reason),
-        consequence = PastJamsCopy.PUBLISH_CONSEQUENCE,
-        retryLabel = PastJamsCopy.PUBLISH_RETRY,
-        dismissLabel = PastJamsCopy.CLOSE,
+        consequence = UiText.res(R.string.past_jams_publish_consequence),
+        retryLabel = UiText.res(CoreR.string.list_state_retry),
+        dismissLabel = UiText.res(R.string.past_jams_close),
         events = EventHandler(key = failed.id) { event ->
             when (event) {
                 PublishUiModel.Event.Retry -> publish.onRetry(date, failed.id)
@@ -49,11 +51,11 @@ private fun JamsAdminState.toPublishFailure(date: LocalDate, failed: SetlistPubl
 
 private fun JamsAdminState.confirmingPublish(date: LocalDate, songCount: Int): PublishUiModel.Confirming =
     PublishUiModel.Confirming(
-        prompt = PastJamsCopy.PUBLISH_PROMPT,
-        details = publishDetails(songCount),
-        reversibleNote = PastJamsCopy.PUBLISH_REVERSIBLE,
-        confirmLabel = PastJamsCopy.PUBLISH_CONFIRM,
-        cancelLabel = PastJamsCopy.CANCEL,
+        prompt = UiText.res(R.string.past_jams_publish_prompt),
+        details = UiText.plural(R.plurals.past_jams_publish_details, songCount),
+        reversibleNote = UiText.res(R.string.past_jams_publish_reversible),
+        confirmLabel = UiText.res(R.string.past_jams_publish_confirm),
+        cancelLabel = UiText.res(CoreR.string.jam_form_cancel),
         events = EventHandler(key = date) { event ->
             when (event) {
                 PublishUiModel.Event.Confirm -> publish.onConfirm(date)

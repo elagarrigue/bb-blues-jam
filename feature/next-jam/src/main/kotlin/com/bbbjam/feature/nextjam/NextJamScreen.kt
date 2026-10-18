@@ -58,7 +58,8 @@ import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.state.rememberRevealingLazyListState
 import com.bbbjam.core.ui.strip.InstrumentStrip
 import com.bbbjam.core.ui.strip.toInstrumentChips
-import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.nextjam.admin.AdminRowBar
 import com.bbbjam.feature.nextjam.admin.SaveStatusLine
@@ -146,7 +147,7 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
                 verticalArrangement = Arrangement.spacedBy(spacing.md),
             ) {
                 BandLogo()
-                SkeletonList(description = model.description)
+                SkeletonList(description = model.description.resolve())
             }
 
             // At the top of the padded area, like the other messages, not vertically centred.
@@ -179,7 +180,7 @@ internal fun LazyListScope.setlistItems(
             setlist.droppedRowsNote?.let { note ->
                 item(key = NOTE_KEY) {
                     Text(
-                        text = note,
+                        text = note.resolve(),
                         style = BluesJamTheme.typography.caption,
                         color = BluesJamTheme.colors.textMuted,
                     )
@@ -209,14 +210,14 @@ internal const val ADMIN_HINT_KEY = "admin-hint"
 internal fun Header(header: JamHeaderUiModel) {
     Column {
         Text(
-            text = header.date,
+            text = header.date.resolve(),
             style = BluesJamTheme.typography.h1,
             color = BluesJamTheme.colors.text,
             modifier = Modifier.semantics { heading() },
         )
         Text(text = header.venue, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.text)
         Text(
-            text = header.timeRemaining,
+            text = header.timeRemaining.resolve(),
             style = BluesJamTheme.typography.body,
             color = BluesJamTheme.colors.textMuted,
         )
@@ -224,8 +225,8 @@ internal fun Header(header: JamHeaderUiModel) {
 }
 
 @Composable
-private fun Message(text: String) {
-    Text(text = text, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
+private fun Message(text: UiText) {
+    Text(text = text.resolve(), style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
 }
 
 /**
@@ -262,7 +263,7 @@ private fun RowHeader(row: SongRowUiModel) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClickLabel = row.openDetailLabel, role = Role.Button) {
+            .clickable(onClickLabel = row.openDetailLabel.resolve(), role = Role.Button) {
                 row.events(SongRowUiModel.Event.OpenDetail)
             }
             .padding(horizontal = spacing.md, vertical = spacing.sm),
@@ -279,6 +280,7 @@ private const val TITLE_MAX_LINES = 2
 
 @Composable
 private fun TitleLine(row: SongRowUiModel) {
+    val keyDescription = row.keyDescription.resolve()
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -301,7 +303,7 @@ private fun TitleLine(row: SongRowUiModel) {
             text = row.key,
             style = BluesJamTheme.typography.key,
             color = BluesJamTheme.colors.key,
-            modifier = Modifier.semantics { contentDescription = row.keyDescription },
+            modifier = Modifier.semantics { contentDescription = keyDescription },
         )
     }
 }

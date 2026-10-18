@@ -23,6 +23,8 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.overlay.pendingKey
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
@@ -98,7 +100,15 @@ internal fun setKeyModel(
     val song = (jam?.setlist as? Setlist.Available)?.songs?.firstOrNull { it.songId == songId }
     return when {
         isAdmin == null || snapshot == null -> SetKeyUiModel.Loading(back)
-        song == null -> SetKeyUiModel.Gone(back, EmptyStateUiModel(SetKeyCopy.GONE_TITLE, SetKeyCopy.GONE_MESSAGE))
+
+        song == null -> SetKeyUiModel.Gone(
+            back,
+            EmptyStateUiModel(
+                UiText.res(R.string.set_key_gone_title),
+                UiText.res(R.string.set_key_gone_message),
+            ),
+        )
+
         else -> pickerContent(song, (keyChanges.pendingKey(jamDate, songId) ?: song.key).value, back, onPick)
     }
 }
@@ -107,19 +117,19 @@ internal fun setKeyModel(
 private fun pickerContent(song: JamSong, current: String, back: BackUiModel, onPick: (Key) -> Unit) =
     SetKeyUiModel.Content(
         back = back,
-        title = SetKeyCopy.TITLE,
+        title = UiText.res(R.string.set_key_title),
         songTitle = song.title,
-        currentLabel = SetKeyCopy.CURRENT,
+        currentLabel = UiText.res(R.string.set_key_current),
         currentKey = current,
         currentKeyDescription = SongListText.keyDescription(current),
         sections = listOf(
-            keySection(SetKeyCopy.MAJORS, SetKeyDefaults.MAJORS, current, onPick),
-            keySection(SetKeyCopy.MINORS, SetKeyDefaults.MINORS, current, onPick),
+            keySection(UiText.res(R.string.set_key_majors), SetKeyDefaults.MAJORS, current, onPick),
+            keySection(UiText.res(R.string.set_key_minors), SetKeyDefaults.MINORS, current, onPick),
         ),
     )
 
 /** A section of [keys] as rows of [SetKeyDefaults.COLUMNS]; only the cell spelled exactly [current] is current. */
-internal fun keySection(label: String, keys: List<Key>, current: String, onPick: (Key) -> Unit) = KeySectionUiModel(
+internal fun keySection(label: UiText, keys: List<Key>, current: String, onPick: (Key) -> Unit) = KeySectionUiModel(
     label = label,
     rows = keys.map { key ->
         val isCurrent = key.value == current
@@ -127,8 +137,8 @@ internal fun keySection(label: String, keys: List<Key>, current: String, onPick:
             key = key.value,
             description = SongListText.keyDescription(key.value),
             isCurrent = isCurrent,
-            currentLabel = if (isCurrent) SetKeyCopy.CURRENT_CELL else null,
-            pickLabel = SetKeyCopy.PICK_LABEL,
+            currentLabel = if (isCurrent) UiText.res(R.string.set_key_current_cell) else null,
+            pickLabel = UiText.res(R.string.set_key_pick_label),
             events = EventHandler(key = "${key.value}|$isCurrent") { event ->
                 when (event) {
                     KeyCellUiModel.Event.Pick -> if (!isCurrent) onPick(key)

@@ -25,6 +25,8 @@ import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.R
 import java.text.Normalizer
 import java.time.LocalDate
 import java.util.Locale
@@ -83,7 +85,10 @@ internal class AssignMusicianPresenter(
 
 private fun gone(back: BackUiModel) = AssignMusicianUiModel.Gone(
     back,
-    EmptyStateUiModel(AssignMusicianCopy.GONE_TITLE, AssignMusicianCopy.GONE_MESSAGE),
+    EmptyStateUiModel(
+        UiText.res(R.string.assign_musician_gone_title),
+        UiText.res(R.string.assign_musician_gone_message),
+    ),
 )
 
 private fun buildContent(
@@ -99,27 +104,27 @@ private fun buildContent(
     val suggestions = musicianSuggestions(snapshot, params.jamDate, name)
     return AssignMusicianUiModel.Content(
         back = back,
-        title = AssignMusicianCopy.TITLE,
+        title = UiText.res(R.string.assign_musician_title),
         songTitle = targetSong.title,
         slotLabel = AssignMusicianDefaults.slotName(params.instrument, params.ordinal.value),
         instrument = params.instrument,
         ordinal = params.ordinal.value,
         name = name,
-        nameLabel = AssignMusicianCopy.NAME,
+        nameLabel = UiText.res(R.string.assign_musician_name),
         validationMessage = validation,
         currentSection = suggestionSection(
-            AssignMusicianCopy.CURRENT,
+            UiText.res(R.string.assign_musician_current),
             suggestions.current,
-            AssignMusicianCopy.CURRENT_EMPTY,
+            UiText.res(R.string.assign_musician_current_empty),
             submit,
         ),
         pastSection = suggestionSection(
-            AssignMusicianCopy.PAST,
+            UiText.res(R.string.assign_musician_past),
             suggestions.past,
-            AssignMusicianCopy.PAST_EMPTY,
+            UiText.res(R.string.assign_musician_past_empty),
             submit,
         ),
-        submitLabel = AssignMusicianCopy.SUBMIT,
+        submitLabel = UiText.res(R.string.assign_musician_submit),
         submitEnabled = MusicianName.parseOrNull(name) != null,
         events = EventHandler { event ->
             when (event) {
@@ -196,14 +201,14 @@ private fun String.matchesWords(query: String): Boolean {
 private fun String.nameKey(): String =
     MARKS.replace(Normalizer.normalize(trim(), Normalizer.Form.NFD), "").lowercase(Locale.ROOT)
 
-private fun suggestionSection(label: String, names: List<String>, empty: String, submit: (String) -> Unit) =
+private fun suggestionSection(label: UiText, names: List<String>, empty: UiText, submit: (String) -> Unit) =
     SuggestionSectionUiModel(
         label = label,
         emptyMessage = empty.takeIf { names.isEmpty() },
         rows = names.map { name ->
             SuggestionRowUiModel(
                 name,
-                "anotar $name",
+                UiText.res(R.string.assign_musician_pick_description, name),
                 EventHandler(key = name.nameKey()) { event ->
                     when (event) {
                         SuggestionRowUiModel.Event.Select -> submit(name)

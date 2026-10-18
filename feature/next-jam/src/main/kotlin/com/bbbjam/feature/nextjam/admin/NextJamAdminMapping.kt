@@ -16,13 +16,14 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.status.jamStatusBadge
 import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.AddSongActionUiModel
 import com.bbbjam.feature.nextjam.AdminStatusUiModel
 import com.bbbjam.feature.nextjam.NextJamAdminUiModel
-import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.PendingRowUiModel
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SongRowAdminUiModel
 import com.bbbjam.feature.nextjam.SongRowUiModel
@@ -103,18 +104,25 @@ internal fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
     return NextJamAdminUiModel(
         status = AdminStatusUiModel(
             badge = jamStatusBadge(jam.status),
-            note = when (jam.status) {
-                JamStatus.DRAFT -> NextJamCopy.DRAFT_NOTE
-                JamStatus.CREATED -> NextJamCopy.CREATED_NOTE
-                JamStatus.PUBLISHED -> NextJamCopy.PUBLISHED_NOTE
-            },
-            hint = NextJamCopy.STATUS_HINT,
+            note = UiText.res(
+                when (jam.status) {
+                    JamStatus.DRAFT -> R.string.next_jam_note_draft
+                    JamStatus.CREATED -> R.string.next_jam_note_created
+                    JamStatus.PUBLISHED -> R.string.next_jam_note_published
+                },
+            ),
+            hint = UiText.res(R.string.next_jam_status_hint),
         ),
         pending = mine.filter { it.state == SetlistAdd.State.Sending }
-            .map { PendingRowUiModel(it.id, it.title, NextJamCopy.ADDING) },
+            .map { PendingRowUiModel(it.id, it.title, UiText.res(R.string.next_jam_adding)) },
         failures = failures(jam.date),
         addSong = if (jam.setlist is Setlist.Available) {
-            AddSongActionUiModel(NextJamCopy.ADD_SONG, EventHandler(key = jam.date) { onAddSong(jam.date) })
+            AddSongActionUiModel(
+                UiText.res(R.string.next_jam_add_song),
+                EventHandler(key = jam.date) {
+                    onAddSong(jam.date)
+                },
+            )
         } else {
             null
         },
@@ -128,14 +136,19 @@ internal fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
 private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
     val failedAdds = adds.filter { it.jamDate == date }.mapNotNull { add ->
         (add.state as? SetlistAdd.State.Failed)?.let {
-            OverlayFailure(add.id, NextJamCopy.addFailed(add.title), failureMessage(it.reason), onDismissAdd)
+            OverlayFailure(
+                add.id,
+                UiText.res(R.string.next_jam_add_failed, add.title),
+                failureMessage(it.reason),
+                onDismissAdd,
+            )
         }
     }
     val failedRemoves = removal.removes.filter { it.jamDate == date }.mapNotNull { remove ->
         (remove.state as? SetlistRemove.State.Failed)?.let {
             OverlayFailure(
                 remove.id,
-                NextJamCopy.removeFailed(remove.title),
+                UiText.res(R.string.next_jam_remove_failed, remove.title),
                 failureMessage(it.reason),
                 onDismissRemove,
             )
@@ -143,7 +156,12 @@ private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
     }
     val failedMoves = moves.filter { it.jamDate == date }.mapNotNull { move ->
         (move.state as? SetlistMove.State.Failed)?.let {
-            OverlayFailure(move.id, MoveCopy.failed(move.title), moveFailureMessage(it.reason), onDismissMove)
+            OverlayFailure(
+                move.id,
+                UiText.res(R.string.next_jam_move_failed, move.title),
+                moveFailureMessage(it.reason),
+                onDismissMove,
+            )
         }
     }
     return failureCards(failedAdds + failedRemoves + failedMoves + overlays.failures(date))
@@ -164,7 +182,7 @@ internal fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): 
         admin = SongRowAdminUiModel(
             removal = removal,
             move = moveModel(row, song, total, removal),
-            saveStatus = if (saving) NextJamCopy.SAVING else null,
+            saveStatus = if (saving) UiText.res(R.string.next_jam_saving) else null,
         ),
     )
 }
@@ -183,25 +201,25 @@ private fun RowAdmin.removalModel(song: JamSong): RemovalUiModel {
         EventHandler(key = "$key|$step") { event -> removal.onEvent(jam.date, song.songId, event) }
     }
     return when {
-        sending -> RemovalUiModel.Removing(NextJamCopy.REMOVING)
+        sending -> RemovalUiModel.Removing(UiText.res(R.string.next_jam_removing))
 
         removal.confirming == key -> RemovalUiModel.Confirming(
-            prompt = NextJamCopy.removePrompt(song.title),
+            prompt = UiText.res(R.string.next_jam_remove_prompt, song.title),
             details = removalDetails(song),
-            confirmLabel = NextJamCopy.OK,
-            cancelLabel = NextJamCopy.CANCEL,
+            confirmLabel = UiText.res(R.string.next_jam_remove_ok),
+            cancelLabel = UiText.res(R.string.next_jam_cancel),
             events = handler("confirming"),
         )
 
-        else -> RemovalUiModel.Idle(NextJamCopy.REMOVE, handler("idle"))
+        else -> RemovalUiModel.Idle(UiText.res(R.string.next_jam_remove), handler("idle"))
     }
 }
 
 /** The confirmation's lines: assigned musicians (filled slots plus extras), then the published note. */
-private fun RowAdmin.removalDetails(song: JamSong): List<String> {
+private fun RowAdmin.removalDetails(song: JamSong): List<UiText> {
     val assigned = song.lineup.slots.count { it.isFilled } + song.extraParticipants.size
     return listOfNotNull(
-        if (assigned > 0) NextJamCopy.assignedMusicians(assigned) else null,
-        if (jam.status == JamStatus.PUBLISHED) NextJamCopy.PUBLISHED_REMOVE_NOTE else null,
+        if (assigned > 0) UiText.plural(R.plurals.next_jam_remove_assigned, assigned) else null,
+        if (jam.status == JamStatus.PUBLISHED) UiText.res(R.string.next_jam_remove_published_note) else null,
     )
 }

@@ -2,6 +2,11 @@ package com.bbbjam.core.ui.strip
 
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Lineup
+import com.bbbjam.core.ui.R
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.abbreviation
+import com.bbbjam.core.ui.text.abbreviationInCaps
+import com.bbbjam.core.ui.text.fullName
 
 /**
  * The chips of one song: one per slot of this lineup **in list order**, which is the Sheet's column
@@ -16,22 +21,22 @@ fun Lineup.toInstrumentChips(extras: List<ExtraParticipant>): List<InstrumentChi
         val name = slot.musicianName
         if (name == null) {
             InstrumentChipUiModel(
-                label = InstrumentStripCopy.openLabel(slot.instrument),
-                contentDescription = InstrumentStripCopy.openDescription(slot.instrument),
+                label = UiText.res(R.string.strip_open_label, slot.instrument.abbreviationInCaps()),
+                contentDescription = UiText.res(R.string.strip_open_description, slot.instrument.fullName()),
                 kind = InstrumentChipKind.OPEN_SLOT,
             )
         } else {
             InstrumentChipUiModel(
-                label = InstrumentStripCopy.filledLabel(slot.instrument, name),
-                contentDescription = InstrumentStripCopy.filledDescription(slot.instrument, name),
+                label = UiText.res(R.string.strip_filled_label, slot.instrument.abbreviation(), name),
+                contentDescription = UiText.res(R.string.strip_filled_description, slot.instrument.fullName(), name),
                 kind = InstrumentChipKind.FILLED_SLOT,
             )
         }
     }
     val extraChips = extras.map { extra ->
         InstrumentChipUiModel(
-            label = InstrumentStripCopy.extraLabel(extra.instrument, extra.name),
-            contentDescription = InstrumentStripCopy.extraDescription(extra.instrument, extra.name),
+            label = UiText.res(R.string.strip_extra_label, extra.instrument, extra.name),
+            contentDescription = UiText.res(R.string.strip_extra_description, extra.instrument, extra.name),
             kind = InstrumentChipKind.EXTRA,
         )
     }

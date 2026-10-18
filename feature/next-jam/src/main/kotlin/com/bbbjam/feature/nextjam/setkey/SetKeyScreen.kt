@@ -32,7 +32,7 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackButton
 import com.bbbjam.core.ui.nav.backUiModel
 import com.bbbjam.core.ui.state.EmptyStateBlock
-import com.bbbjam.core.ui.text.SongListText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import java.time.LocalDate
 import org.koin.compose.koinInject
@@ -107,8 +107,9 @@ internal fun SetKeyContent(model: SetKeyUiModel, modifier: Modifier, contentPadd
 private fun PickerBody(model: SetKeyUiModel.Content) {
     val spacing = BluesJamTheme.spacing
     val style = SetKeyDefaults.header()
+    val currentKeyDescription = model.currentKeyDescription.resolve()
     Text(
-        text = model.title,
+        text = model.title.resolve(),
         style = BluesJamTheme.typography.h1,
         color = BluesJamTheme.colors.text,
         modifier = Modifier.semantics { heading() },
@@ -121,12 +122,16 @@ private fun PickerBody(model: SetKeyUiModel.Content) {
         overflow = TextOverflow.Ellipsis,
     )
     Column(modifier = Modifier.padding(top = spacing.sm)) {
-        Text(text = model.currentLabel.uppercase(), style = BluesJamTheme.typography.caption, color = style.label)
+        Text(
+            text = model.currentLabel.resolve().uppercase(),
+            style = BluesJamTheme.typography.caption,
+            color = style.label,
+        )
         Text(
             text = model.currentKey,
             style = BluesJamTheme.typography.key,
             color = style.currentKey,
-            modifier = Modifier.semantics { contentDescription = model.currentKeyDescription },
+            modifier = Modifier.semantics { contentDescription = currentKeyDescription },
         )
     }
     model.sections.forEach { section -> KeySection(section) }
@@ -140,7 +145,7 @@ private fun KeySection(section: KeySectionUiModel) {
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         Text(
-            text = section.label.uppercase(),
+            text = section.label.resolve().uppercase(),
             style = BluesJamTheme.typography.caption,
             color = SetKeyDefaults.header().label,
             modifier = Modifier.semantics { heading() },
@@ -160,15 +165,19 @@ private fun KeySection(section: KeySectionUiModel) {
 @Composable
 private fun KeyCell(cell: KeyCellUiModel, modifier: Modifier) {
     val style = SetKeyDefaults.cell(cell.isCurrent)
+    val description = cell.description.resolve()
+    val currentLabel = cell.currentLabel?.resolve()
     val node = if (cell.isCurrent) {
         Modifier.semantics(mergeDescendants = true) {
-            contentDescription = cell.description
-            cell.currentLabel?.let { stateDescription = it }
+            contentDescription = description
+            currentLabel?.let { stateDescription = it }
         }
     } else {
         Modifier
-            .clickable(onClickLabel = cell.pickLabel, role = Role.Button) { cell.events(KeyCellUiModel.Event.Pick) }
-            .semantics { contentDescription = cell.description }
+            .clickable(onClickLabel = cell.pickLabel.resolve(), role = Role.Button) {
+                cell.events(KeyCellUiModel.Event.Pick)
+            }
+            .semantics { contentDescription = description }
     }
     Surface(
         color = style.container,
@@ -185,7 +194,7 @@ private fun KeyCell(cell: KeyCellUiModel, modifier: Modifier) {
             verticalArrangement = Arrangement.Center,
         ) {
             Text(text = cell.key, style = BluesJamTheme.typography.songTitle, color = style.content)
-            cell.currentLabel?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.caption) }
+            currentLabel?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.caption) }
         }
     }
 }

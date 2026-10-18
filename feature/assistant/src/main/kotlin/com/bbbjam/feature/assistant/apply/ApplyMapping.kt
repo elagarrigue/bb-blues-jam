@@ -6,7 +6,9 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantHandlers
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.chat.ChatTurn
 import com.bbbjam.feature.assistant.create.CreateFormInputs
 import com.bbbjam.feature.assistant.create.createSummary
@@ -59,7 +61,7 @@ internal class ApplyParts(
     val summary: ApplySummaryUiModel?,
     val statuses: Map<SongId, ApplyStatusUiModel>,
     val removals: List<ApplyStatusLineUiModel> = emptyList(),
-    val order: String? = null,
+    val order: UiText? = null,
 )
 
 internal fun applyParts(
@@ -90,19 +92,31 @@ internal fun applyParts(
 private fun SongApply.status(): ApplyStatusUiModel? = when (val current = state) {
     SongApply.State.Waiting -> null
 
-    SongApply.State.Adding -> ApplyStatusUiModel(ApplyCopy.STATUS_ADDING, ApplyStatusKind.PROGRESS)
+    SongApply.State.Adding -> ApplyStatusUiModel(
+        UiText.res(R.string.assistant_apply_status_adding),
+        ApplyStatusKind.PROGRESS,
+    )
 
-    is SongApply.State.Added -> ApplyStatusUiModel(ApplyCopy.STATUS_ADDED, ApplyStatusKind.DONE)
+    is SongApply.State.Added -> ApplyStatusUiModel(
+        UiText.res(R.string.assistant_apply_status_added),
+        ApplyStatusKind.DONE,
+    )
 
-    SongApply.State.Skipped -> ApplyStatusUiModel(ApplyCopy.STATUS_SKIPPED, ApplyStatusKind.SKIPPED)
+    SongApply.State.Skipped -> ApplyStatusUiModel(
+        UiText.res(R.string.assistant_apply_status_skipped),
+        ApplyStatusKind.SKIPPED,
+    )
 
-    SongApply.State.Kept -> ApplyStatusUiModel(ReplaceCopy.KEPT, ApplyStatusKind.SKIPPED)
+    SongApply.State.Kept -> ApplyStatusUiModel(
+        UiText.res(R.string.assistant_replace_kept_status),
+        ApplyStatusKind.SKIPPED,
+    )
 
     is SongApply.State.Failed ->
-        ApplyStatusUiModel(ApplyOutcomeCopy.songFailure(current.reason), ApplyStatusKind.FAILED)
+        ApplyStatusUiModel(songFailureText(current.reason), ApplyStatusKind.FAILED)
 
     SongApply.State.NotAttempted ->
-        ApplyStatusUiModel(ApplyCopy.STATUS_NOT_ATTEMPTED, ApplyStatusKind.NOT_ATTEMPTED)
+        ApplyStatusUiModel(UiText.res(R.string.assistant_apply_status_not_attempted), ApplyStatusKind.NOT_ATTEMPTED)
 }
 
 /**

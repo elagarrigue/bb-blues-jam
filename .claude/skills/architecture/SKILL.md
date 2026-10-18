@@ -1067,10 +1067,17 @@ them.
   pinned BOM 2025.09.00 (the stdlib reason went away with Kotlin 2.3.21); upgrade Koin together with the BOM. 4.1.1
   only moves lifecycle 2.9.0 → 2.9.3. `koin-android` brings `koin-core-viewmodel` and the lifecycle
   ViewModel artifacts transitively; that does not relax the ViewModel ban (D-02).
-- **UI copy lives in Kotlin, not string resources** (set by `info-screen`, Decision 6): an
-  `internal object <Name>Copy` in the feature, read by the presenter into the `UiModel`. The app is
-  Spanish-only (D-12), the copy must be in the `UiModel` for the assistant, and presenters stay
-  Android-free and JVM-testable. `app_name` stays a resource.
+- **UI copy lives in `strings.xml`** (user decision of 18 October 2026, reversing `info-screen`
+  Decision 6, which kept copy in `internal object <Name>Copy`s; every `*Copy` object was deleted).
+  Each module owns its `src/main/res/values/strings.xml` (Rioplatense Spanish, D-12), with names
+  prefixed by the module's flow so they stay unique once merged. A `UiModel` carries
+  `com.bbbjam.core.ui.text.UiText` (`res(id, args…)`, `plural(id, count, args…)`, `raw(data)`;
+  arguments may be nested `UiText`) and the screen resolves it with `UiText.resolve()`; data (titles,
+  names, keys) stays `String` or goes in through `raw`. Presenters stay Android-free: they only build
+  `UiText` values, and JVM tests assert `UiText` equality (ids, args), never resolved text. Accepted
+  cost: the phase 2 assistant no longer reads plain copy from a `UiModel`. Not copy, kept in Kotlin:
+  logs, `require` messages, Sheet and wire names, the agent prompt and tool output, routes, preview
+  fixtures. Never interpolate a `UiText` in a string template (it prints `Res(...)`).
 - **48dp touch targets without a literal**: clickable rows use
   `Modifier.heightIn(min = LocalMinimumInteractiveComponentSize.current)` (Material 3, 48dp), with
   `Role.Button` and an `onClickLabel` when the row's action is not obvious from its text.

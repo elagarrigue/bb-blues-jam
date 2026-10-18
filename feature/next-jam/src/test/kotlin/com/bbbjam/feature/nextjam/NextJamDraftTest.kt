@@ -20,6 +20,7 @@ import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.filter.FilterChipUiModel
+import com.bbbjam.core.ui.text.UiText
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -33,8 +34,7 @@ import org.junit.Test
 /**
  * `unpublished-setlist-state`: a draft upcoming jam exposes no song to a musician, whether its
  * setlist arrived withheld (scenario 1) or available (scenario 2), through the pure mapping and
- * through the presenter. The copy is written out from the approved table (C1), never read from
- * [NextJamCopy].
+ * through the presenter. The texts are `UiText` values written out with their resource ids (C1).
  */
 class NextJamDraftTest {
     private val repository = FakeJamsRepository()
@@ -46,18 +46,12 @@ class NextJamDraftTest {
     private val jamDate = LocalDate.of(2026, 10, 31)
     private val fetched = Freshness(Instant.parse("2026-10-02T14:59:00Z"), lastFailure = null, isRefreshing = false)
 
-    private val loading = NextJamUiModel.Loading("Cargando la próxima jam")
-    private val header = JamHeaderUiModel("Sábado 31 de octubre · 21:00", "La Macanuda", "En 29 días")
+    private val loading = nextJamLoading
+    private val header = octoberThirtyFirstHeader
 
     private val withheldDraft = NextJamUiModel.Jam(
         header,
-        SetlistUiModel.Withheld(
-            DraftSetlistUiModel(
-                "En preparación",
-                "La lista se está armando",
-                "Cuando la organización la publique, vas a ver acá los temas, las tonalidades y los cupos libres.",
-            ),
-        ),
+        SetlistUiModel.Withheld(draftCard),
         staleness = null,
     )
 
@@ -128,12 +122,12 @@ class NextJamDraftTest {
             repository.snapshots.emit(snapshot(jam(Setlist.Available(listOf(otherSong)), JamStatus.PUBLISHED)))
             val published = awaitItem() as NextJamUiModel.Jam
             checkNotNull((published.setlist as SetlistUiModel.Songs).filterBar)
-                .chips.single { it.label == "Bajo" }.events(FilterChipUiModel.Event.Toggle)
+                .chips.single { it.label.chipName() == "Bajo" }.events(FilterChipUiModel.Event.Toggle)
             val filtered = awaitItem() as NextJamUiModel.Jam
             assertEquals(
                 listOf("Bajo"),
                 checkNotNull((filtered.setlist as SetlistUiModel.Songs).filterBar).chips.filter { it.isSelected }
-                    .map { it.label },
+                    .map { it.label.chipName() },
             )
 
             // The same jam turns into a draft: the card, nothing else.
@@ -147,7 +141,7 @@ class NextJamDraftTest {
 
     private val unavailable = NextJamUiModel.Jam(
         header,
-        SetlistUiModel.Unavailable("No se pudo leer la lista de temas de esta jam. Avisale a la organización."),
+        SetlistUiModel.Unavailable(UiText.res(R.string.next_jam_setlist_unavailable)),
         staleness = null,
     )
 

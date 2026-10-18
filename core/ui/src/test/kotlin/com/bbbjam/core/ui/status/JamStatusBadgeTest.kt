@@ -1,6 +1,7 @@
 package com.bbbjam.core.ui.status
 
 import com.bbbjam.core.model.JamStatus
+import com.bbbjam.core.ui.text.text
 import com.bbbjam.core.ui.theme.BluesJamColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -9,9 +10,9 @@ import org.junit.Test
 class JamStatusBadgeTest {
     @Test
     fun `each status has its label and only publicada is published`() {
-        assertEquals(JamStatusBadgeUiModel("Borrador", isPublished = false), jamStatusBadge(JamStatus.DRAFT))
-        assertEquals(JamStatusBadgeUiModel("Creada", isPublished = false), jamStatusBadge(JamStatus.CREATED))
-        assertEquals(JamStatusBadgeUiModel("Publicada", isPublished = true), jamStatusBadge(JamStatus.PUBLISHED))
+        val badges = JamStatus.entries.map { jamStatusBadge(it) }
+        assertEquals(listOf("Borrador", "Creada", "Publicada"), badges.map { it.label.text() })
+        assertEquals(listOf(false, false, true), badges.map { it.isPublished })
     }
 
     @Test

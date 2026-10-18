@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.bbbjam.core.ui.action.IconRowAction
 import com.bbbjam.core.ui.action.IconRowActionIcon
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.feature.nextjam.MoveActionUiModel
 
 /**
@@ -19,7 +20,7 @@ internal fun MoveAction(model: MoveActionUiModel, icon: IconRowActionIcon, modif
     val style = AdminControlsDefaults.move()
     IconRowAction(
         icon = icon,
-        contentDescription = model.clickLabel,
+        contentDescription = model.clickLabel.resolve(),
         tint = style.action,
         mutedTint = style.disabled,
         modifier = modifier,

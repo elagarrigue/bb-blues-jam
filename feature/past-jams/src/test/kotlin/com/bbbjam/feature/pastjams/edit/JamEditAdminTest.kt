@@ -18,14 +18,17 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.jamform.JamFormField
+import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.pastjams.FakeJamCreator
 import com.bbbjam.feature.pastjams.FakeJamEditRepository
 import com.bbbjam.feature.pastjams.FakeJamStatusRepository
 import com.bbbjam.feature.pastjams.FakePublishRepository
-import com.bbbjam.feature.pastjams.PastJamsCopy
 import com.bbbjam.feature.pastjams.PastJamsPresenter
 import com.bbbjam.feature.pastjams.PastJamsUiModel
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.admin.JamsAdminUiModel
 import com.bbbjam.feature.pastjams.admin.JamsAdminWrites
 import java.time.Clock
@@ -43,7 +46,7 @@ import org.junit.Test
 
 /**
  * `admin-edit-delete-jam`: the edit and delete controls of the Jams tab's future cards, the dialogs and the
- * results. Copy is written out from the spec, never read from [PastJamsCopy].
+ * results. Texts are the `UiText` (resource id and arguments) the spec's copy maps to.
  */
 class JamEditAdminTest {
     private val repository = FakeJamsRepository()
@@ -89,6 +92,18 @@ class JamEditAdminTest {
 
     private fun PastJamsUiModel.card(index: Int) = admin().future[index]
 
+    private val createdChip = UiText.res(CoreR.string.jam_status_created)
+    private val cancel = UiText.res(CoreR.string.jam_form_cancel)
+    private val retry = UiText.res(CoreR.string.list_state_retry)
+    private val close = UiText.res(R.string.past_jams_close)
+    private val unchanged = UiText.res(R.string.past_jams_jam_unchanged)
+    private val undoWarning = UiText.res(R.string.past_jams_undo_warning)
+
+    /** "sábado 31 de octubre": a date inside a sentence. */
+    private fun sentence(date: LocalDate) = SpanishDateNames.sentence(date)
+
+    private fun behindDraft(date: LocalDate) = UiText.res(R.string.past_jams_visible_behind_draft, sentence(date))
+
     private fun JamEdit.Change.at(id: Long, date: LocalDate, state: JamEdit.State) = JamEdit(id, date, this, state)
 
     @Test
@@ -99,23 +114,32 @@ class JamEditAdminTest {
             val first = model.card(0)
             val second = model.card(1)
             assertEquals(
-                IconActionUiModel("Editar la jam del sábado 31 de octubre", enabled = true),
+                IconActionUiModel(
+                    UiText.res(R.string.past_jams_edit_description, sentence(upcomingDate)),
+                    enabled = true,
+                ),
                 first.manage.edit,
             )
             assertEquals(
-                IconActionUiModel("Borrar la jam del sábado 31 de octubre", enabled = true),
+                IconActionUiModel(
+                    UiText.res(R.string.past_jams_delete_description, sentence(upcomingDate)),
+                    enabled = true,
+                ),
                 first.manage.delete,
             )
             assertEquals(
-                IconActionUiModel("Editar la jam del viernes 13 de noviembre", enabled = true),
+                IconActionUiModel(UiText.res(R.string.past_jams_edit_description, sentence(heldDate)), enabled = true),
                 second.manage.edit,
             )
             assertEquals(
-                IconActionUiModel("Borrar la jam del viernes 13 de noviembre", enabled = true),
+                IconActionUiModel(
+                    UiText.res(R.string.past_jams_delete_description, sentence(heldDate)),
+                    enabled = true,
+                ),
                 second.manage.delete,
             )
             assertEquals(
-                listOf("Creada"),
+                listOf(createdChip),
                 second.controls.status.chips.chips.filter { it.enabled && !it.selected }.map { it.label },
             )
             assertNull(second.controls.publish)
@@ -140,11 +164,8 @@ class JamEditAdminTest {
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(heldBack = listOf(held(JamStatus.CREATED))))
             val model = expectMostRecentItem()
-            assertEquals("En espera: la próxima jam es la del sábado 31 de octubre.", model.card(1).heldBack)
-            assertEquals(
-                "Los músicos la ven como la próxima jam, porque la del sábado 31 de octubre está en borrador.",
-                model.card(1).musicianNote,
-            )
+            assertEquals(UiText.res(R.string.past_jams_held_back, sentence(upcomingDate)), model.card(1).heldBack)
+            assertEquals(behindDraft(upcomingDate), model.card(1).musicianNote)
             assertNull(model.card(0).heldBack)
             assertNull(model.card(0).musicianNote)
 
@@ -166,19 +187,13 @@ class JamEditAdminTest {
                 repository.snapshots.emit(snapshot(heldBack = listOf(held(JamStatus.CREATED), third)))
                 val model = expectMostRecentItem()
                 assertNull(model.card(0).musicianNote)
-                assertEquals(
-                    "Los músicos la ven como la próxima jam, porque la del sábado 31 de octubre está en borrador.",
-                    model.card(1).musicianNote,
-                )
+                assertEquals(behindDraft(upcomingDate), model.card(1).musicianNote)
                 assertNull(model.card(2).musicianNote)
 
                 repository.snapshots.emit(snapshot(heldBack = listOf(held(JamStatus.DRAFT), third)))
                 val skipped = expectMostRecentItem()
                 assertNull(skipped.card(1).musicianNote)
-                assertEquals(
-                    "Los músicos la ven como la próxima jam, porque la del sábado 31 de octubre está en borrador.",
-                    skipped.card(2).musicianNote,
-                )
+                assertEquals(behindDraft(upcomingDate), skipped.card(2).musicianNote)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -204,17 +219,17 @@ class JamEditAdminTest {
             closed.card(0).manage.events(JamManageUiModel.Event.Edit)
             val open = expectMostRecentItem()
             val form = checkNotNull(open.admin().editForm)
-            assertEquals("Editar la jam", form.title)
-            assertEquals("Fecha", form.dateLabel)
-            assertEquals("DD/MM/AAAA", form.dateHint)
-            assertEquals("Hora", form.timeLabel)
-            assertEquals("Lugar", form.venueLabel)
+            assertEquals(UiText.res(R.string.past_jams_edit), form.title)
+            assertEquals(UiText.res(CoreR.string.jam_form_date_label), form.dateLabel)
+            assertEquals(UiText.res(CoreR.string.jam_form_date_hint), form.dateHint)
+            assertEquals(UiText.res(CoreR.string.jam_form_time_label), form.timeLabel)
+            assertEquals(UiText.res(CoreR.string.jam_form_venue_label), form.venueLabel)
             assertEquals("31/10/2026", form.date)
             assertEquals("21:00", form.time)
             assertEquals("La Macanuda", form.venue)
             assertEquals(false, form.canSave)
-            assertEquals("Guardar", form.saveLabel)
-            assertEquals("Cancelar", form.cancelLabel)
+            assertEquals(UiText.res(R.string.past_jams_save), form.saveLabel)
+            assertEquals(cancel, form.cancelLabel)
             assertNull(form.dateNote)
             assertNull(form.visibilityNote)
 
@@ -231,19 +246,16 @@ class JamEditAdminTest {
             repository.snapshots.emit(snapshot(upcoming = upcoming(JamStatus.CREATED)))
             expectMostRecentItem().card(0).manage.events(JamManageUiModel.Event.Edit)
             var form = checkNotNull(expectMostRecentItem().admin().editForm)
-            assertEquals("Los músicos ven el cambio cuando actualicen la app.", form.visibilityNote)
+            assertEquals(UiText.res(R.string.past_jams_visible_note), form.visibilityNote)
 
             form.events(EditJamFormUiModel.Event.Edit(JamFormField.DATE, "14/11/2026"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
-            assertEquals(
-                "Tiene que ser antes de la jam del viernes 13 de noviembre: si no, esa pasaría a ser la próxima.",
-                form.dateError,
-            )
+            assertEquals(UiText.res(R.string.past_jams_later_error, sentence(heldDate)), form.dateError)
             assertEquals(false, form.canSave)
 
             form.events(EditJamFormUiModel.Event.Edit(JamFormField.TIME, "25:00"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
-            assertEquals("Escribí la hora como HH:MM, por ejemplo 21:00.", form.timeError)
+            assertEquals(UiText.res(CoreR.string.jam_form_time_error), form.timeError)
 
             form.events(EditJamFormUiModel.Event.Edit(JamFormField.DATE, "7/11/2026"))
             form = checkNotNull(expectMostRecentItem().admin().editForm)
@@ -251,7 +263,7 @@ class JamEditAdminTest {
             form = checkNotNull(expectMostRecentItem().admin().editForm)
             assertNull(form.dateError)
             assertNull(form.timeError)
-            assertEquals("La lista y los músicos anotados pasan a la nueva fecha.", form.dateNote)
+            assertEquals(UiText.res(R.string.past_jams_date_moves_note), form.dateNote)
             assertEquals(true, form.canSave)
 
             form.events(EditJamFormUiModel.Event.Save)
@@ -282,7 +294,7 @@ class JamEditAdminTest {
             form.events(EditJamFormUiModel.Event.Edit(JamFormField.DATE, "30/10/2026"))
             val blocked = checkNotNull(expectMostRecentItem().admin().editForm)
             assertEquals(
-                "Tiene que ser después de la próxima jam (sábado 31 de octubre): si no, la dejaría en espera.",
+                UiText.res(R.string.past_jams_earlier_than_upcoming_error, sentence(upcomingDate)),
                 blocked.dateError,
             )
             cancelAndIgnoreRemainingEvents()
@@ -296,18 +308,18 @@ class JamEditAdminTest {
                 repository.snapshots.emit(snapshot(upcoming = upcoming(JamStatus.PUBLISHED, 12)))
                 expectMostRecentItem().card(0).manage.events(JamManageUiModel.Event.Delete)
                 val dialog = checkNotNull(expectMostRecentItem().admin().deleteConfirm)
-                assertEquals("¿Borrar la jam del sábado 31 de octubre?", dialog.title)
+                assertEquals(UiText.res(R.string.past_jams_delete_title, sentence(upcomingDate)), dialog.title)
                 assertEquals(
                     listOf(
-                        "Se pierden los 12 temas de la lista y los músicos anotados.",
-                        "Los músicos ya ven esta jam y su lista: la van a dejar de ver cuando actualicen la app.",
-                        "La próxima jam pasa a ser la del viernes 13 de noviembre.",
-                        "No se puede deshacer.",
+                        UiText.plural(R.plurals.past_jams_songs_lost, 12),
+                        UiText.res(R.string.past_jams_published_lost),
+                        UiText.res(R.string.past_jams_next_jam_becomes, sentence(heldDate)),
+                        undoWarning,
                     ),
                     dialog.lines,
                 )
-                assertEquals("Borrar la jam", dialog.confirmLabel)
-                assertEquals("Cancelar", dialog.cancelLabel)
+                assertEquals(UiText.res(R.string.past_jams_delete), dialog.confirmLabel)
+                assertEquals(cancel, dialog.cancelLabel)
 
                 dialog.events(DeleteJamUiModel.Event.Cancel)
                 val cancelled = expectMostRecentItem()
@@ -330,10 +342,10 @@ class JamEditAdminTest {
             expectMostRecentItem().card(0).manage.events(JamManageUiModel.Event.Delete)
             assertEquals(
                 listOf(
-                    "Se pierde el tema de la lista y los músicos anotados.",
-                    "Los músicos ven la fecha: la van a dejar de ver cuando actualicen la app.",
-                    "No va a quedar ninguna jam programada.",
-                    "No se puede deshacer.",
+                    UiText.plural(R.plurals.past_jams_songs_lost, 1),
+                    UiText.res(R.string.past_jams_created_lost),
+                    UiText.res(R.string.past_jams_no_jam_left),
+                    undoWarning,
                 ),
                 checkNotNull(expectMostRecentItem().admin().deleteConfirm).lines,
             )
@@ -343,12 +355,12 @@ class JamEditAdminTest {
             checkNotNull(model.admin().deleteConfirm).events(DeleteJamUiModel.Event.Cancel)
             expectMostRecentItem().card(1).manage.events(JamManageUiModel.Event.Delete)
             val held = checkNotNull(expectMostRecentItem().admin().deleteConfirm)
-            assertEquals("¿Borrar la jam del viernes 13 de noviembre?", held.title)
+            assertEquals(UiText.res(R.string.past_jams_delete_title, sentence(heldDate)), held.title)
             assertEquals(
                 listOf(
-                    "La lista está vacía.",
-                    "La próxima jam sigue siendo la del sábado 31 de octubre.",
-                    "No se puede deshacer.",
+                    UiText.res(R.string.past_jams_empty_list),
+                    UiText.res(R.string.past_jams_next_jam_stays, sentence(upcomingDate)),
+                    undoWarning,
                 ),
                 held.lines,
             )
@@ -367,12 +379,12 @@ class JamEditAdminTest {
                 repository.snapshots.emit(snapshot(upcoming = upcoming(JamStatus.CREATED)))
                 val model = expectMostRecentItem()
                 val sending = model.card(0)
-                assertEquals("Guardando los cambios…", sending.manage.sending)
+                assertEquals(UiText.res(R.string.past_jams_saving), sending.manage.sending)
                 assertFalse(sending.manage.edit.enabled)
                 assertFalse(checkNotNull(sending.manage.delete).enabled)
                 assertTrue(sending.controls.status.chips.chips.none { it.enabled })
                 assertTrue(sending.controls.status.chips.chips.none { it.pending })
-                assertEquals("Creada", sending.controls.status.chips.chips.single { it.selected }.label)
+                assertEquals(createdChip, sending.controls.status.chips.chips.single { it.selected }.label)
                 assertNull(checkNotNull(sending.controls).publish)
                 val other = model.card(1)
                 assertNull(other.manage.sending)
@@ -382,7 +394,7 @@ class JamEditAdminTest {
                     JamEdit.Change.Delete(0).at(6, heldDate, JamEdit.State.Sending),
                 )
                 val deleting = expectMostRecentItem().card(1)
-                assertEquals("Borrando la jam…", deleting.manage.sending)
+                assertEquals(UiText.res(R.string.past_jams_deleting), deleting.manage.sending)
                 assertFalse(deleting.manage.edit.enabled)
                 cancelAndIgnoreRemainingEvents()
             }
@@ -418,11 +430,11 @@ class JamEditAdminTest {
             repository.snapshots.emit(snapshot())
             val manage = expectMostRecentItem().card(0).manage
             val failure = checkNotNull(manage.failure)
-            assertEquals("No se pudo guardar la jam", failure.title)
-            assertEquals("Ya hay una jam o una pestaña con esa fecha en la planilla.", failure.message)
-            assertEquals("La jam sigue como estaba.", failure.consequence)
-            assertEquals("Reintentar", failure.retryLabel)
-            assertEquals("Cerrar", failure.dismissLabel)
+            assertEquals(UiText.res(R.string.past_jams_update_failed), failure.title)
+            assertEquals(UiText.res(R.string.past_jams_create_exists), failure.message)
+            assertEquals(unchanged, failure.consequence)
+            assertEquals(retry, failure.retryLabel)
+            assertEquals(close, failure.dismissLabel)
 
             manage.events(JamManageUiModel.Event.Retry(3))
             assertEquals(listOf(3L), edits.dismissed)
@@ -458,16 +470,12 @@ class JamEditAdminTest {
             repository.snapshots.emit(snapshot())
             val model = expectMostRecentItem()
             val delete = checkNotNull(model.card(0).manage.failure)
-            assertEquals("No se pudo borrar la jam", delete.title)
-            assertEquals("La lista cambió mientras tanto. Revisala y probá de nuevo.", delete.message)
+            assertEquals(UiText.res(R.string.past_jams_delete_failed), delete.title)
+            assertEquals(UiText.res(R.string.past_jams_setlist_changed), delete.message)
             assertNull(delete.retryLabel)
             val outdated = checkNotNull(model.card(1).manage.failure)
-            assertEquals("No se pudo guardar la jam", outdated.title)
-            assertEquals(
-                "El script de la planilla todavía no sabe editar ni borrar jams. " +
-                    "Actualizalo con la guía y probá de nuevo.",
-                outdated.message,
-            )
+            assertEquals(UiText.res(R.string.past_jams_update_failed), outdated.title)
+            assertEquals(UiText.res(R.string.past_jams_edit_script_outdated), outdated.message)
             assertNull(outdated.retryLabel)
             cancelAndIgnoreRemainingEvents()
         }
@@ -495,7 +503,14 @@ class JamEditAdminTest {
                 )
                 val moved = expectMostRecentItem()
                 assertNull(moved.admin().editForm)
-                assertEquals("Viernes 20 de noviembre · 21:00", moved.card(1).dateLabel)
+                assertEquals(
+                    UiText.res(
+                        R.string.past_jams_date_with_time,
+                        SpanishDateNames.label(LocalDate.of(2026, 11, 20)),
+                        "21:00",
+                    ),
+                    moved.card(1).dateLabel,
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }

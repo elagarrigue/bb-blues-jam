@@ -23,6 +23,7 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.state.stalenessNotice
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.pastjams.admin.JamsAdminState
 import com.bbbjam.feature.pastjams.admin.JamsAdminUiModel
 import com.bbbjam.feature.pastjams.admin.JamsAdminWrites
@@ -101,9 +102,9 @@ internal class PastJamsPresenter(
             }
         }
         val pullRefresh = PullRefreshUiModel(isRefreshing = pulling, events = EventHandler { onPull() })
-        val title = if (isAdmin) PastJamsCopy.TITLE_ADMIN else PastJamsCopy.TITLE
+        val title = UiText.res(if (isAdmin) R.string.past_jams_title_admin else R.string.past_jams_title)
         val model = snapshot?.toUiModel(now, onRetry, onOpenJam, admin)
-            ?: PastJamsUiModel.Loading(title, PastJamsCopy.LOADING)
+            ?: PastJamsUiModel.Loading(title, UiText.res(R.string.past_jams_loading))
         return model.withPullRefresh(pullRefresh)
     }
 }
@@ -140,7 +141,7 @@ internal fun JamsSnapshot.toUiModel(
     } else {
         null
     }
-    val title = if (admin == null) PastJamsCopy.TITLE else PastJamsCopy.TITLE_ADMIN
+    val title = UiText.res(if (admin == null) R.string.past_jams_title else R.string.past_jams_title_admin)
     // A past BORRADOR jam is hidden for everyone (D-26); the admin's extra section lists only the
     // jams to come (`admin-jams-tab`), from the raw snapshot.
     val visiblePast = forMusicians().past
@@ -155,7 +156,10 @@ internal fun JamsSnapshot.toUiModel(
 
         fetchedAt != null -> PastJamsUiModel.Empty(
             title = title,
-            empty = EmptyStateUiModel(PastJamsCopy.EMPTY_TITLE, PastJamsCopy.EMPTY_MESSAGE),
+            empty = EmptyStateUiModel(
+                UiText.res(R.string.past_jams_empty_title),
+                UiText.res(R.string.past_jams_empty_message),
+            ),
             staleness = staleness,
             admin = adminSection,
         )
@@ -163,9 +167,9 @@ internal fun JamsSnapshot.toUiModel(
         // Nothing was ever read: never claim there is no history. An error only once a read has
         // failed and no retry is running; while one runs, the skeleton again.
         failure != null && !freshness.isRefreshing ->
-            PastJamsUiModel.Failed(title, listError(PastJamsCopy.LOAD_FAILED, isOffline, onRetry))
+            PastJamsUiModel.Failed(title, listError(UiText.res(R.string.past_jams_load_failed), isOffline, onRetry))
 
-        else -> PastJamsUiModel.Loading(title, PastJamsCopy.LOADING)
+        else -> PastJamsUiModel.Loading(title, UiText.res(R.string.past_jams_loading))
     }
 }
 
@@ -181,7 +185,7 @@ private fun Jam.toRow(onOpenJam: (LocalDate) -> Unit): PastJamRowUiModel {
         venue = venue,
         summary = summary,
         // Only a row with songs opens: a NotShown row would open on the same line.
-        openLabel = PastJamsCopy.OPEN_JAM.takeIf { summary is PastJamSummary.Songs },
+        openLabel = UiText.res(R.string.past_jams_open_jam).takeIf { summary is PastJamSummary.Songs },
         events = EventHandler { event ->
             when (event) {
                 PastJamRowUiModel.Event.Open -> onOpenJam(date)
@@ -196,21 +200,21 @@ private fun Jam.toRow(onOpenJam: (LocalDate) -> Unit): PastJamRowUiModel {
  */
 private fun Setlist.toSummary(): PastJamSummary = when (this) {
     is Setlist.Available -> if (songs.isEmpty()) {
-        PastJamSummary.NotShown(PastJamsCopy.EMPTY_SETLIST)
+        PastJamSummary.NotShown(UiText.res(R.string.past_jams_empty_setlist))
     } else {
         // Songs are already in position order (a Setlist invariant).
         val titles = songs.map { it.title }
         val shown = titles.take(HOOK_TITLES).joinToString(", ")
         val rest = titles.size - HOOK_TITLES
         PastJamSummary.Songs(
-            countLabel = PastJamsCopy.songCount(titles.size),
-            hook = if (rest > 0) "$shown ${PastJamsCopy.andMore(rest)}" else shown,
+            countLabel = UiText.plural(R.plurals.past_jams_song_count, titles.size),
+            hook = if (rest > 0) UiText.res(R.string.past_jams_hook_more, shown, rest) else UiText.raw(shown),
         )
     }
 
     // A past created jam (P1, D-26): the jam happened, so it is listed with its line.
-    Setlist.Withheld -> PastJamSummary.NotShown(PastJamsCopy.SETLIST_NOT_PUBLISHED)
+    Setlist.Withheld -> PastJamSummary.NotShown(UiText.res(R.string.past_jams_setlist_not_published))
 
     // The problem is for logs and the admin, not for musicians.
-    is Setlist.Unavailable -> PastJamSummary.NotShown(PastJamsCopy.SETLIST_UNAVAILABLE)
+    is Setlist.Unavailable -> PastJamSummary.NotShown(UiText.res(R.string.past_jams_setlist_unavailable))
 }

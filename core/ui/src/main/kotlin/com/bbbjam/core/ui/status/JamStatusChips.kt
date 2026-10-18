@@ -38,6 +38,8 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.rememberDotsClock
 import com.bbbjam.core.ui.state.rememberReducedMotion
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 private val GlyphSize = 18.dp
@@ -70,6 +72,7 @@ private fun StatusChip(chip: JamStatusChipUiModel, onSelect: () -> Unit) {
     val reduced = rememberReducedMotion()
     // The transition exists only while the chip is pending and motion is on; it leaves with the chip.
     val clock = if (chip.pending && !reduced) rememberDotsClock() else null
+    val description = chip.description.resolve()
     val target = LocalMinimumInteractiveComponentSize.current
     Row(
         modifier = Modifier
@@ -85,7 +88,7 @@ private fun StatusChip(chip: JamStatusChipUiModel, onSelect: () -> Unit) {
                 },
             )
             .semantics {
-                contentDescription = chip.description
+                contentDescription = description
                 if (chip.pending) liveRegion = LiveRegionMode.Polite
             }
             .selectable(
@@ -107,7 +110,7 @@ private fun StatusChip(chip: JamStatusChipUiModel, onSelect: () -> Unit) {
             )
         }
         Text(
-            text = chip.label,
+            text = chip.label.resolve(),
             style = BluesJamTheme.typography.body,
             color = style.label,
             maxLines = 1,
@@ -166,10 +169,13 @@ private fun PublishedDisabledPreview() = ChipsPreview(JamStatus.DRAFT, setOf(Jam
 
 @Preview
 @Composable
-private fun SendingPreview() =
-    ChipsPreview(JamStatus.CREATED, emptySet(), PendingChip(JamStatus.DRAFT, "Cambiando el estado a Borrador…"))
+private fun SendingPreview() = ChipsPreview(
+    JamStatus.CREATED,
+    emptySet(),
+    PendingChip(JamStatus.DRAFT, UiText.raw("Cambiando el estado a Borrador…")),
+)
 
 @Preview
 @Composable
 private fun PublishingPreview() =
-    ChipsPreview(JamStatus.CREATED, emptySet(), PendingChip(JamStatus.PUBLISHED, "Publicando la lista…"))
+    ChipsPreview(JamStatus.CREATED, emptySet(), PendingChip(JamStatus.PUBLISHED, UiText.raw("Publicando la lista…")))

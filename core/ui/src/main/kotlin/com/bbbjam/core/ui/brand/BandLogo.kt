@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.bbbjam.core.ui.R
 
@@ -23,7 +24,7 @@ fun BandLogo(modifier: Modifier = Modifier) {
     ) {
         Image(
             painter = painterResource(R.drawable.bbb_blues_band_logo),
-            contentDescription = "Logo de Bahía Blanca Blues",
+            contentDescription = stringResource(R.string.brand_logo_description),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth()

@@ -5,13 +5,15 @@ import com.bbbjam.core.data.jams.JamDateProblem
 import com.bbbjam.core.data.jams.JamFormCheck
 import com.bbbjam.core.data.jams.VenueProblem
 import com.bbbjam.core.data.jams.checkJamForm
+import com.bbbjam.core.ui.R as CoreR
 import com.bbbjam.core.ui.jamform.JamFormField
 import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
-import com.bbbjam.core.ui.jamform.JamFormText
 import com.bbbjam.core.ui.jamform.JamFormUiModel
+import com.bbbjam.core.ui.jamform.jamFormEarlierError
+import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.assistant.AssistantHandlers
+import com.bbbjam.feature.assistant.R
 import com.bbbjam.feature.assistant.apply.ApplyInputs
-import com.bbbjam.feature.assistant.jam.JamCopy
 
 /**
  * The form of "Crear una jam nueva con esta lista" while it is open for [turnId], or null. It is the shared
@@ -30,52 +32,52 @@ internal fun createForm(
     val check = checkJamForm(form.input, inputs.snapshot, today)
     val input = form.input
     return JamFormUiModel(
-        title = CreateCopy.FORM_TITLE,
+        title = UiText.res(R.string.assistant_create_form_title),
         date = JamFormFieldUiModel(
-            label = JamFormText.DATE_LABEL,
+            label = UiText.res(CoreR.string.jam_form_date_label),
             value = input.date,
-            hint = JamFormText.DATE_HINT,
+            hint = UiText.res(CoreR.string.jam_form_date_hint),
             error = dateError(check, shown = input.date.isNotBlank() || form.isTouched(JamFormField.DATE)),
         ),
         time = JamFormFieldUiModel(
-            label = JamFormText.TIME_LABEL,
+            label = UiText.res(CoreR.string.jam_form_time_label),
             value = input.time,
-            hint = JamFormText.TIME_HINT,
-            error = JamFormText.TIME_ERROR.takeIf {
+            hint = UiText.res(CoreR.string.jam_form_time_hint),
+            error = UiText.res(CoreR.string.jam_form_time_error).takeIf {
                 check.timeInvalid && (input.time.isNotBlank() || form.isTouched(JamFormField.TIME))
             },
         ),
         venue = JamFormFieldUiModel(
-            label = JamFormText.VENUE_LABEL,
+            label = UiText.res(CoreR.string.jam_form_venue_label),
             value = input.venue,
             hint = null,
             error = venueError(check, touched = form.isTouched(JamFormField.VENUE)),
         ),
         notes = listOfNotNull(
-            CreateCopy.formNote(proposal.songs.size),
-            JamCopy.DRAFT_LINE,
-            check.waitsBehind?.let(CreateCopy::waitsNote),
+            createFormNoteText(proposal.songs.size),
+            UiText.res(R.string.assistant_jam_draft_line),
+            check.waitsBehind?.let(::createWaitsNoteText),
         ),
-        submitLabel = CreateCopy.submit(proposal.songs.size),
-        cancelLabel = JamFormText.CANCEL,
+        submitLabel = createSubmitText(proposal.songs.size),
+        cancelLabel = UiText.res(CoreR.string.jam_form_cancel),
         canSubmit = check.canCreate,
         events = handlers.createForm(turnId),
     )
 }
 
-private fun dateError(check: JamFormCheck, shown: Boolean): String? = when {
+private fun dateError(check: JamFormCheck, shown: Boolean): UiText? = when {
     !shown -> null
-    check.dateProblem == JamDateProblem.FORMAT -> JamFormText.DATE_FORMAT_ERROR
-    check.dateProblem == JamDateProblem.PAST -> JamFormText.DATE_PAST_ERROR
-    check.dateProblem == JamDateProblem.EXISTS -> JamFormText.DATE_EXISTS_ERROR
-    check.dateProblem == JamDateProblem.EARLIER -> check.earlierThan?.let(JamFormText::earlierError)
+    check.dateProblem == JamDateProblem.FORMAT -> UiText.res(CoreR.string.jam_form_date_format_error)
+    check.dateProblem == JamDateProblem.PAST -> UiText.res(CoreR.string.jam_form_date_past_error)
+    check.dateProblem == JamDateProblem.EXISTS -> UiText.res(CoreR.string.jam_form_date_exists_error)
+    check.dateProblem == JamDateProblem.EARLIER -> check.earlierThan?.let(::jamFormEarlierError)
     else -> null
 }
 
-private fun venueError(check: JamFormCheck, touched: Boolean): String? = when (check.venueProblem) {
+private fun venueError(check: JamFormCheck, touched: Boolean): UiText? = when (check.venueProblem) {
     null -> null
-    VenueProblem.EMPTY -> JamFormText.VENUE_EMPTY_ERROR.takeIf { touched }
-    VenueProblem.TOO_LONG -> JamFormText.VENUE_LONG_ERROR
-    VenueProblem.FORMULA -> JamFormText.VENUE_FORMULA_ERROR
-    VenueProblem.CONTROL -> JamFormText.VENUE_EMPTY_ERROR
+    VenueProblem.EMPTY -> UiText.res(CoreR.string.jam_form_venue_empty_error).takeIf { touched }
+    VenueProblem.TOO_LONG -> UiText.res(CoreR.string.jam_form_venue_long_error)
+    VenueProblem.FORMULA -> UiText.res(CoreR.string.jam_form_venue_formula_error)
+    VenueProblem.CONTROL -> UiText.res(CoreR.string.jam_form_venue_empty_error)
 }

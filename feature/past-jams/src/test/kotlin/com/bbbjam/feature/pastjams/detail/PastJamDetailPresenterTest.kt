@@ -10,6 +10,8 @@ import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.nav.BackUiModel
+import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.pastjams.R
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.back
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.header
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.jam
@@ -37,7 +39,7 @@ class PastJamDetailPresenterTest {
                 repository.snapshots.emit(snapshot(listOf(jam(setlist = Setlist.Available(listOf(song(1), song(2)))))))
                 assertEquals(
                     PastJamDetailUiModel.Jam(
-                        header("2 temas"),
+                        header(2),
                         PastSetlistUiModel.Songs(listOf(row(1, "01"), row(2, "02")), droppedRowsNote = null),
                         back,
                     ),
@@ -47,7 +49,7 @@ class PastJamDetailPresenterTest {
                 assertEquals(
                     PastJamDetailUiModel.Jam(
                         header(null),
-                        PastSetlistUiModel.NotShown("La lista de esta jam no se publicó."),
+                        PastSetlistUiModel.NotShown(UiText.res(R.string.past_jams_setlist_not_published)),
                         back,
                     ),
                     awaitItem(),
