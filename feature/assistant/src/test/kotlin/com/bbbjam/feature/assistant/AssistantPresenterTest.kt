@@ -25,7 +25,7 @@ class AssistantPresenterTest {
                 FakeSetlistSongAdder(),
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
             ),
-            FakeJamsRepository(),
+            SettableJamsRepository(),
         ).present(Unit)
     }
 

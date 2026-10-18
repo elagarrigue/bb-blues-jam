@@ -7,6 +7,7 @@ import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
 import com.bbbjam.core.data.admin.LoginOutcome
+import com.bbbjam.core.data.testing.FakeAdminSession
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import kotlinx.coroutines.CompletableDeferred

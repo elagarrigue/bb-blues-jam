@@ -1,0 +1,15 @@
+Spike (AGP 9.4.1, built-in Kotlin):
+1. `android { testFixtures { enable = true } }` in core/data/build.gradle.kts works; no gradle.properties flag needed.
+   :core:data:compileDebugTestFixturesKotlin BUILD SUCCESSFUL (after adding catalog alias kotlinx-coroutines-core;
+   the catalog had only -test, main :core:data gets coroutines transitively via koog/ktor, not as api).
+2. Consumers: testImplementation(testFixtures(project(":core:data"))) resolves in feature:next-jam, past-jams, info and app.
+3. Konsist scopeFromProject includes src/testFixtures: a Violation.kt with a wrong package failed package-under-module-root
+   (tool-konsist-fails.txt, tool-konsist-detail.txt).
+4. ktlint covers it: ktlintTestFixturesSourceSetCheck listed the violations (tool-ktlint-detekt-fails.txt).
+5. detekt did NOT cover it: detektDebugTestFixtures exists but is not in check, and the `detekt` task that check runs only
+   scans src/main|test (a swallowed-exception Violation.kt left :core:data:detekt UP-TO-DATE/green).
+   Fix, one line in the root build.gradle.kts detekt block: `source.from("src/testFixtures/kotlin")`. Then the same
+   violation fails :core:data:detekt with SwallowedException + TooGenericExceptionCaught (tool-detekt-plain-task-fails.txt).
+6. Android lint: runs on main/unit-test variants through check (lintDebug); not separately proven for testFixtures.
+7. Note: a stale ktlint report from the violation run made one gate attempt fail after the file was deleted; clearing
+   core/data/build/reports/ktlint and re-running fixed it (local build state, no source involved).

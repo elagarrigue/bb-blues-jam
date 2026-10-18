@@ -12,6 +12,7 @@ dependencies {
     // brings JamsRepository, JamCalendar and, through its api, :core:model.
     implementation(project(":core:ui"))
     implementation(project(":core:data"))
+    testImplementation(testFixtures(project(":core:data")))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)

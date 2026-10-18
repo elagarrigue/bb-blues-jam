@@ -17,14 +17,14 @@ import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.CallLog
 import com.bbbjam.feature.assistant.ChatScope
-import com.bbbjam.feature.assistant.FakeJamCreator
-import com.bbbjam.feature.assistant.FakeJamsRepository
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
 import com.bbbjam.feature.assistant.FakeSetlistSongMover
 import com.bbbjam.feature.assistant.FakeSetlistSongRemover
 import com.bbbjam.feature.assistant.JAM_DATE
 import com.bbbjam.feature.assistant.ReplyUiModel
+import com.bbbjam.feature.assistant.ScriptedJamCreator
+import com.bbbjam.feature.assistant.SettableJamsRepository
 import com.bbbjam.feature.assistant.apply.ApplyTone
 import com.bbbjam.feature.assistant.apply.ApplyUiModel
 import com.bbbjam.feature.assistant.apply.ConfirmationUiModel
@@ -62,8 +62,8 @@ class CreatePresenterTest {
     private val assistant = FakeSetlistAssistant()
     private val log: CallLog = mutableListOf()
     private val adder = FakeSetlistSongAdder(log)
-    private val creator = FakeJamCreator(log)
-    private val jams = FakeJamsRepository()
+    private val creator = ScriptedJamCreator(log)
+    private val jams = SettableJamsRepository()
     private val lock = RunLock()
     private val applier = ProposalApplier(
         adder,

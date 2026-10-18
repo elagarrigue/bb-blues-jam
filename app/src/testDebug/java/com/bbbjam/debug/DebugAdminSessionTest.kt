@@ -7,11 +7,11 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRefreshOutcome
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.testing.FakeAdminSession
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -25,25 +25,7 @@ import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
 class DebugAdminSessionTest {
-    private class FakeAdminSession(isAdmin: Boolean) : AdminSession {
-        val isAdmin = MutableStateFlow(isAdmin)
-        val logInCalls = mutableListOf<String>()
-        var logOutCalls = 0
-
-        override fun observeIsAdmin(): Flow<Boolean> = isAdmin
-
-        override suspend fun logIn(passphrase: String): LoginOutcome {
-            logInCalls += passphrase
-            return LoginOutcome.WrongPassphrase
-        }
-
-        override suspend fun logOut() {
-            logOutCalls++
-            isAdmin.value = false
-        }
-    }
-
-    private class FakeJams : JamsRepository {
+    private class FakeEmptyJams : JamsRepository {
         override fun observeJams(): Flow<JamsSnapshot> = emptyFlow()
 
         override suspend fun refresh(): JamsRefreshOutcome = JamsRefreshOutcome.Failed(DataFailure.Offline)
@@ -63,7 +45,7 @@ class DebugAdminSessionTest {
 
         session.logOut()
 
-        assertEquals(1, real.logOutCalls)
+        assertEquals(1, real.logOuts)
         assertFalse(session.observeIsAdmin().first())
         real.isAdmin.value = true
         assertTrue("after logout it follows the real value", session.observeIsAdmin().first())
@@ -72,10 +54,11 @@ class DebugAdminSessionTest {
     @Test
     fun logInDelegatesOnceWithTheSameArgument() = runBlocking {
         val real = FakeAdminSession(isAdmin = false)
+        real.answer.complete(LoginOutcome.WrongPassphrase)
 
         val outcome = DebugAdminSession(real).logIn("typed text")
 
-        assertEquals(listOf("typed text"), real.logInCalls)
+        assertEquals(listOf("typed text"), real.logIns)
         assertSame(LoginOutcome.WrongPassphrase, outcome)
     }
 
@@ -133,7 +116,7 @@ class DebugAdminSessionTest {
         modules(
             module {
                 single<AdminSession> { FakeAdminSession(isAdmin = false) }
-                single<JamsRepository> { FakeJams() }
+                single<JamsRepository> { FakeEmptyJams() }
                 single {
                     JamCalendar(
                         Clock.fixed(Instant.parse("2026-10-05T12:00:00Z"), ZoneOffset.UTC),

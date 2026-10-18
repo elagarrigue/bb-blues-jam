@@ -44,7 +44,7 @@ class DemoUpcomingJamRepositoryTest {
     private val realUpcoming = pastJam.copy(date = LocalDate.parse("2026-10-31"), venue = "Real upcoming")
     private val freshness = Freshness(Instant.parse("2026-10-05T11:00:00Z"), DataFailure.Offline, isRefreshing = false)
 
-    private class FakeJams(private vararg val snapshots: JamsSnapshot) : JamsRepository {
+    private class FakeSnapshotJams(private vararg val snapshots: JamsSnapshot) : JamsRepository {
         var refreshCalls = 0
         val outcome = JamsRefreshOutcome.Failed(DataFailure.Offline)
 
@@ -66,7 +66,7 @@ class DemoUpcomingJamRepositoryTest {
             created -> JamStatus.CREATED
             else -> JamStatus.PUBLISHED
         }
-        DemoUpcomingJamRepository(FakeJams(*snapshots), calendar, status).observeJams().toList()
+        DemoUpcomingJamRepository(FakeSnapshotJams(*snapshots), calendar, status).observeJams().toList()
     }
 
     @Test
@@ -93,7 +93,7 @@ class DemoUpcomingJamRepositoryTest {
         val later = realUpcoming.copy(date = LocalDate.parse("2026-11-28"))
         val real = JamsSnapshot(realUpcoming, listOf(pastJam), freshness, heldBack = listOf(later))
 
-        val emitted = DemoUpcomingJamRepository(FakeJams(real), calendar, JamStatus.DRAFT, live = true)
+        val emitted = DemoUpcomingJamRepository(FakeSnapshotJams(real), calendar, JamStatus.DRAFT, live = true)
             .observeJams().toList().single()
 
         assertEquals(JamStatus.DRAFT, emitted.upcoming!!.status)
@@ -103,7 +103,7 @@ class DemoUpcomingJamRepositoryTest {
         // A real jam on the demo's own date is replaced, not duplicated.
         val sameDay = real.copy(upcoming = realUpcoming.copy(date = today), heldBack = emptyList())
         val replaced = DemoUpcomingJamRepository(
-            FakeJams(sameDay),
+            FakeSnapshotJams(sameDay),
             calendar,
             live = true,
         ).observeJams().toList().single()
@@ -169,7 +169,7 @@ class DemoUpcomingJamRepositoryTest {
 
     @Test
     fun refreshDelegatesOnce() = runBlocking {
-        val real = FakeJams()
+        val real = FakeSnapshotJams()
 
         val outcome = DemoUpcomingJamRepository(real, calendar).refresh()
 
@@ -184,7 +184,7 @@ class DemoUpcomingJamRepositoryTest {
             JamCalendar(Clock.fixed(Instant.parse("2026-10-05T12:00:42Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
         val real = JamsSnapshot(realUpcoming, listOf(pastJam), freshness)
 
-        val emitted = DemoUpcomingJamRepository(FakeJams(real, real), clock, live = true).observeJams().toList()
+        val emitted = DemoUpcomingJamRepository(FakeSnapshotJams(real, real), clock, live = true).observeJams().toList()
 
         val upcoming = emitted.first().upcoming!!
         assertTrue(upcoming.isDemo())
@@ -208,7 +208,7 @@ class DemoUpcomingJamRepositoryTest {
             override fun instant(): Instant = instant
         }
         val repository = DemoUpcomingJamRepository(
-            FakeJams(JamsSnapshot(null, emptyList(), freshness)),
+            FakeSnapshotJams(JamsSnapshot(null, emptyList(), freshness)),
             JamCalendar(moving, JamCalendar.BUENOS_AIRES),
             live = true,
         )
@@ -224,7 +224,7 @@ class DemoUpcomingJamRepositoryTest {
     @Test
     fun liveDemoLogsEveryRefreshAndTheDefaultNever() = runBlocking {
         val lines = mutableListOf<String>()
-        val real = FakeJams()
+        val real = FakeSnapshotJams()
 
         DemoUpcomingJamRepository(real, calendar, live = true, log = { lines += it }).refresh()
         DemoUpcomingJamRepository(real, calendar, log = { lines += it }).refresh()

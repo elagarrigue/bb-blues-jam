@@ -1874,13 +1874,18 @@
     "depends_on": [
       "setlist-mutation-engine"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "No duplicated fake class across modules (grep)",
       "Konsist build-file rules still pass, amended only if the new test-only dependency needs it, shown failing first",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Mechanism: AGP testFixtures in :core:data (built-in Kotlin, no gradle.properties flag). Spike and tool proofs (Konsist and ktlint read src/testFixtures; detekt did not and now does via one line in the root build.gradle.kts, shown failing first): docs/evidence/shared-test-fixtures/spike-notes.txt, tool-konsist-fails.txt, tool-ktlint-detekt-fails.txt, tool-detekt-plain-task-fails.txt",
+      "Baseline CI=true ./init.sh exit 0, 1153 testcases; final exit 0, konsist/detekt/ktlint wired, 1153 testcases (none added or removed), 20 Konsist rules, konsist-test diff empty: baseline-init.txt, final-init.txt, baseline-count.txt, final-count.txt",
+      "Duplicate-name grep clean, FakeJamsRepository and FakeAdminSession declared once each under src/testFixtures: grep-gates.txt; release APK has no core/data/testing class: release-apk.txt",
+      "Accepted on 17 October 2026 by the independent validator: gate rerun exit 0 (konsist, detekt, ktlint wired, 1153 testcases), duplicate fake-name grep empty, planted detekt violation in src/testFixtures red then removed, assertions unchanged, feature/assistant diff only the planned renames."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 5); the organizer asked to fix all nine findings with sonnet subagents."
   },
   {

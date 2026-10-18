@@ -32,19 +32,6 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** An admin flag the test sets; it never stores or sends anything. Musician (false) by default. */
-class FakeAdminSession(isAdmin: Boolean = false) : AdminSession {
-    val isAdmin = MutableStateFlow(isAdmin)
-
-    override fun observeIsAdmin(): Flow<Boolean> = isAdmin
-
-    override suspend fun logIn(passphrase: String): LoginOutcome = LoginOutcome.Unavailable
-
-    override suspend fun logOut() {
-        isAdmin.value = false
-    }
-}
-
 /**
  * Records every add, remove and dismiss; [adds] and [removes] are what `observeAdds` and
  * `observeRemoves` emit, set by the test.

@@ -1,0 +1,20 @@
+Successfully generated sarif at file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/build/reports/detekt/debugTestFixtures.sarif
+Successfully generated checkstyle at file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/build/reports/detekt/debugTestFixtures.xml
+e: C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:7:18 The caught exception is swallowed. The original exception could be lost. [SwallowedException]
+e: C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:7:18 The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled. [TooGenericExceptionCaught]
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:data:detektDebugTestFixtures'.
+> Analysis failed with 2 issues.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3s
+19 actionable tasks: 3 executed, 16 up-to-date
+Configuration cache entry stored.

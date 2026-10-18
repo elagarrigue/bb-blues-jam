@@ -1,4 +1,4 @@
-package com.bbbjam.feature.info
+package com.bbbjam.core.data.testing
 
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * can observe the Verifying state, and records what it was asked; success flips [isAdmin] as the
  * real session does.
  */
-internal class FakeAdminSession(initiallyAdmin: Boolean = false) : AdminSession {
-    val isAdmin = MutableStateFlow(initiallyAdmin)
+class FakeAdminSession(isAdmin: Boolean = false) : AdminSession {
+    val isAdmin = MutableStateFlow(isAdmin)
     val logIns = mutableListOf<String>()
     var logOuts = 0
         private set

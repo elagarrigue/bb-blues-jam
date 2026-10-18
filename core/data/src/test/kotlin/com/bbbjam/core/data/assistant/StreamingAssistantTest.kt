@@ -60,7 +60,7 @@ class StreamingAssistantTest {
         DefaultSetlistAssistant(
             AssistantCredentials.of(key),
             catalog,
-            FakeJams(),
+            FakePastJams(),
             fixedCalendar(),
             AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
         )

@@ -16,6 +16,8 @@ import com.bbbjam.core.data.cache.JamsDao
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.AppsScriptTransport
+import com.bbbjam.core.data.remote.FakePost
+import com.bbbjam.core.data.remote.FakeTransport
 import com.bbbjam.core.data.remote.JamDto
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
 import com.bbbjam.core.data.remote.TransportResult
@@ -691,32 +693,6 @@ class DefaultJamsRepositoryTest {
         override suspend fun recordFailure(resource: String, attemptedAt: Long, failure: String) {
             if (failRecord) throw SQLiteFullException("disk full")
             real.recordFailure(resource, attemptedAt, failure)
-        }
-    }
-
-    private class FakePost(var answer: TransportResult) : AppsScriptPostTransport {
-        val bodies = mutableListOf<String>()
-
-        fun actions(): List<String> = bodies.map { Regex("\"action\":\"([^\"]+)\"").find(it)!!.groupValues[1] }
-
-        override suspend fun post(json: String): TransportResult {
-            bodies += json
-            return answer
-        }
-    }
-
-    private class FakeTransport(var result: TransportResult) : AppsScriptTransport {
-        var calls = 0
-        val resources = mutableListOf<String>()
-        val queries = mutableListOf<Map<String, String>>()
-        var gate: CompletableDeferred<Unit>? = null
-
-        override suspend fun get(resource: String, parameters: Map<String, String>): TransportResult {
-            calls++
-            resources += resource
-            queries += parameters
-            gate?.await()
-            return result
         }
     }
 

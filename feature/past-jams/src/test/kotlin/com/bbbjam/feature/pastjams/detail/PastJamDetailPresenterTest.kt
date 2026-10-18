@@ -6,10 +6,10 @@ import androidx.compose.runtime.setValue
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.nav.BackUiModel
-import com.bbbjam.feature.pastjams.FakeJamsRepository
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.back
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.header
 import com.bbbjam.feature.pastjams.detail.PastJamDetailFixtures.jam

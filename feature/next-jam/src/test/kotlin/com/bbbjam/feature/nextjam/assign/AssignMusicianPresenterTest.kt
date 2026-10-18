@@ -5,6 +5,8 @@ import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
@@ -17,8 +19,6 @@ import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackUiModel
-import com.bbbjam.feature.nextjam.FakeAdminSession
-import com.bbbjam.feature.nextjam.FakeJamsRepository
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import java.time.Instant
 import java.time.LocalDate

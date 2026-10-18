@@ -72,7 +72,7 @@ class JamScheduleToolTest {
 
     @Test
     fun `the tool reads the repository and the calendar`() = runBlocking {
-        val tool = JamScheduleTool(FakeJams(listOf(past), upcoming), fixedCalendar())
+        val tool = JamScheduleTool(FakePastJams(listOf(past), upcoming), fixedCalendar())
 
         val text = tool.execute(JamScheduleTool.Args())
 

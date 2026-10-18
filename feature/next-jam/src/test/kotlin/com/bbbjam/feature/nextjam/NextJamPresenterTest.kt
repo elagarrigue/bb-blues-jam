@@ -11,6 +11,8 @@ import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam

@@ -11,6 +11,7 @@ import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -22,7 +23,6 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.ListErrorUiModel
-import com.bbbjam.feature.nextjam.FakeJamsRepository
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import java.time.Instant
 import java.time.LocalDate

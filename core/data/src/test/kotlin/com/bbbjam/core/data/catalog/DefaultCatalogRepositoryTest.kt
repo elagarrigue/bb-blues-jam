@@ -10,6 +10,7 @@ import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.CatalogSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.AppsScriptTransport
+import com.bbbjam.core.data.remote.FakeTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
 import com.bbbjam.core.data.remote.SongDto
 import com.bbbjam.core.data.remote.TransportResult
@@ -337,21 +338,6 @@ class DefaultCatalogRepositoryTest {
         override suspend fun replaceCatalog(songs: List<CatalogSongEntity>, state: SyncStateEntity) {
             if (failReplace) throw SQLiteFullException("disk full")
             real.replaceCatalog(songs, state)
-        }
-    }
-
-    private class FakeTransport(var result: TransportResult) : AppsScriptTransport {
-        var calls = 0
-        val resources = mutableListOf<String>()
-        val queries = mutableListOf<Map<String, String>>()
-        var gate: CompletableDeferred<Unit>? = null
-
-        override suspend fun get(resource: String, parameters: Map<String, String>): TransportResult {
-            calls++
-            resources += resource
-            queries += parameters
-            gate?.await()
-            return result
         }
     }
 

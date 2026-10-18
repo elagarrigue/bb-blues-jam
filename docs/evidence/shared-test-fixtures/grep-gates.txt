@@ -1,0 +1,26 @@
+# every Fake*/Scripted*/Settable* declaration in test source sets, simple name per line
+FakeAdminSession
+FakeCatalog
+FakeCatalogRepository
+FakeEmptyJams
+FakeJamCreator
+FakeJamEditRepository
+FakeJamStatusRepository
+FakeJamsRepository
+FakeLinkOpener
+FakePastJams
+FakePost
+FakePublishRepository
+FakeSetlistAssistant
+FakeSetlistRepository
+FakeSetlistSongAdder
+FakeSetlistSongMover
+FakeSetlistSongRemover
+FakeSnapshotJams
+FakeTransport
+ScriptedJamCreator
+SettableJamsRepository
+# duplicates (expect none):
+# declarations of FakeJamsRepository / FakeAdminSession:
+./core/data/src/testFixtures/kotlin/com/bbbjam/core/data/testing/FakeAdminSession.kt:14:class FakeAdminSession(isAdmin: Boolean = false) : AdminSession {
+./core/data/src/testFixtures/kotlin/com/bbbjam/core/data/testing/FakeJamsRepository.kt:20:class FakeJamsRepository : JamsRepository {

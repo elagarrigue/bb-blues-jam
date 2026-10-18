@@ -1,6 +1,7 @@
 package com.bbbjam.feature.info
 
 import com.bbbjam.core.data.admin.AdminSession
+import com.bbbjam.core.data.testing.FakeAdminSession
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.feature.info.di.infoModule
 import org.junit.Assert.assertNotSame

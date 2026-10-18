@@ -8,6 +8,8 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.jamedit.JamEdit
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -17,11 +19,9 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.jamform.JamFormField
-import com.bbbjam.feature.pastjams.FakeAdminSession
 import com.bbbjam.feature.pastjams.FakeJamCreator
 import com.bbbjam.feature.pastjams.FakeJamEditRepository
 import com.bbbjam.feature.pastjams.FakeJamStatusRepository
-import com.bbbjam.feature.pastjams.FakeJamsRepository
 import com.bbbjam.feature.pastjams.FakePublishRepository
 import com.bbbjam.feature.pastjams.PastJamsCopy
 import com.bbbjam.feature.pastjams.PastJamsPresenter

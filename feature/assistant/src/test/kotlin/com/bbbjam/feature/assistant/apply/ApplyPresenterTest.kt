@@ -9,10 +9,10 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.ChatScope
-import com.bbbjam.feature.assistant.FakeJamsRepository
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
 import com.bbbjam.feature.assistant.ReplyUiModel
+import com.bbbjam.feature.assistant.SettableJamsRepository
 import com.bbbjam.feature.assistant.TurnUiModel
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.jam
@@ -39,7 +39,7 @@ import org.junit.Test
 class ApplyPresenterTest {
     private val assistant = FakeSetlistAssistant()
     private val adder = FakeSetlistSongAdder()
-    private val jams = FakeJamsRepository()
+    private val jams = SettableJamsRepository()
     private val applier = testApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
 
     private fun TestScope.chat() = AssistantChat(assistant, ChatScope(testScheduler).scope)
@@ -266,7 +266,7 @@ class ApplyPresenterTest {
                 "No pude leer la lista de la próxima jam. Abrí Próxima jam para actualizarla y volvé.",
         )
         for ((snapshot, note) in cases) {
-            val blockedJams = FakeJamsRepository(snapshot)
+            val blockedJams = SettableJamsRepository(snapshot)
             val chat = chat()
             chat.ask("dos", proposal(songs = 2))
             moleculeFlow(RecompositionMode.Immediate) {
@@ -277,7 +277,7 @@ class ApplyPresenterTest {
                 assertEquals(listOf(note), targets.notes)
             }
         }
-        val equalJams = FakeJamsRepository(snapshot(jam(setlist = listedOrder(1, 2))))
+        val equalJams = SettableJamsRepository(snapshot(jam(setlist = listedOrder(1, 2))))
         val equalChat = chat()
         equalChat.ask("dos", proposal(songs = 2))
         moleculeFlow(RecompositionMode.Immediate) {
@@ -290,7 +290,7 @@ class ApplyPresenterTest {
             )
             assertEquals(listOf("La lista de la próxima jam ya es igual a esta."), targets.notes)
         }
-        val unread = FakeJamsRepository(null)
+        val unread = SettableJamsRepository(null)
         val chat = chat()
         chat.ask("dos", proposal(songs = 2))
         moleculeFlow(RecompositionMode.Immediate) {

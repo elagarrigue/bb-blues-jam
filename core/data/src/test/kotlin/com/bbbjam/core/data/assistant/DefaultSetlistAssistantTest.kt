@@ -50,7 +50,7 @@ class DefaultSetlistAssistantTest {
             song("crossroads", "Crossroads", "Robert Johnson", "A"),
         ),
     )
-    private val jams = FakeJams(
+    private val jams = FakePastJams(
         past = listOf(
             jam(
                 "2026-07-25",

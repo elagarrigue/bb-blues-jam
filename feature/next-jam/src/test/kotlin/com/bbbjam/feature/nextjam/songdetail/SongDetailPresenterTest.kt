@@ -7,10 +7,10 @@ import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.nav.BackUiModel
-import com.bbbjam.feature.nextjam.FakeAdminSession
-import com.bbbjam.feature.nextjam.FakeJamsRepository
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.id
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.jam

@@ -1,0 +1,1 @@
+testcases 1153 (sum of tests= over build/test-results/**/TEST-*.xml)

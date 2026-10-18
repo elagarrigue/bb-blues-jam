@@ -1,0 +1,25 @@
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+
+> Task :konsist-test:test
+
+ModuleIsolationTest > core and feature files declare a package under their module root FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'package-under-module-root' was violated (1 time). Invalid files:
+    ??? File Violation.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt
+
+20 tests completed, 1 failed
+
+> Task :konsist-test:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':konsist-test:test'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/konsist-test/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 8s
+7 actionable tasks: 2 executed, 5 up-to-date
+Configuration cache entry stored.

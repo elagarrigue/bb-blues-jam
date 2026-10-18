@@ -94,7 +94,7 @@ class PastJamsToolTest {
     @Test
     fun `the tool lists past jams only, never the upcoming one`() = runBlocking {
         val upcoming = jam("2026-11-28", listOf(jamSong(1, "crossroads", "Crossroads", "Robert Johnson")))
-        val tool = PastJamsTool(FakeJams(past = listOf(june), upcoming = upcoming))
+        val tool = PastJamsTool(FakePastJams(past = listOf(june), upcoming = upcoming))
 
         val text = tool.execute(PastJamsTool.Args(""))
 

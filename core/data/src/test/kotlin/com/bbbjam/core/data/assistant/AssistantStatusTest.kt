@@ -33,7 +33,7 @@ class AssistantStatusTest {
         DefaultSetlistAssistant(
             AssistantCredentials.of(raw),
             FakeCatalog(emptyList()),
-            FakeJams(emptyList()),
+            FakePastJams(emptyList()),
             fixedCalendar(),
             AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
             AssistantStatusProbe(baseUrl, OkHttpClient()),

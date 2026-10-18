@@ -188,7 +188,7 @@ class StreamedAnswerTest {
         testPresenter(
             chat,
             testApplier(FakeSetlistSongAdder(), CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)),
-            FakeJamsRepository(),
+            SettableJamsRepository(),
         ).present(Unit)
     }
 

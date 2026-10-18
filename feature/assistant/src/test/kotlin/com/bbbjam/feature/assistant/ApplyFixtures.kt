@@ -116,7 +116,7 @@ internal fun listed(vararg ids: Int) = Setlist.Available(ids.map { jamSong(it) }
 internal val unreadable = Setlist.Unavailable(SetlistProblem.MISSING_TAB)
 
 /** A [JamsRepository] whose snapshot the test sets; null means "nothing emitted yet". */
-internal class FakeJamsRepository(initial: JamsSnapshot? = snapshot()) : JamsRepository {
+internal class SettableJamsRepository(initial: JamsSnapshot? = snapshot()) : JamsRepository {
     private val state = MutableStateFlow(initial)
     var snapshot: JamsSnapshot?
         get() = state.value
@@ -146,7 +146,7 @@ internal fun testCalendar() =
 internal data class CreateCall(val date: LocalDate, val time: LocalTime, val venue: String)
 
 /** A [JamCreator] with a scripted outcome (default: Created as asked) and an optional gate. */
-internal class FakeJamCreator(val log: CallLog = mutableListOf()) : JamCreator {
+internal class ScriptedJamCreator(val log: CallLog = mutableListOf()) : JamCreator {
     val calls = mutableListOf<CreateCall>()
     var outcome: CreateJamOutcome? = null
     var gate: CompletableDeferred<Unit>? = null
@@ -165,5 +165,5 @@ internal fun testApplier(
     scope: kotlinx.coroutines.CoroutineScope,
     remover: SetlistSongRemover = FakeSetlistSongRemover(),
     mover: SetlistSongMover = FakeSetlistSongMover(),
-    creator: JamCreator = FakeJamCreator(),
+    creator: JamCreator = ScriptedJamCreator(),
 ) = ProposalApplier(adder, remover, mover, creator, scope)

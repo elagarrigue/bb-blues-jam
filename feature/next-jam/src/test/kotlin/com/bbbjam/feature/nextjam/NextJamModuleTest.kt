@@ -15,6 +15,8 @@ import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
 import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
 import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
 import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.feature.nextjam.addsong.AddSongPresenter
 import com.bbbjam.feature.nextjam.assign.AssignMusicianPresenter
 import com.bbbjam.feature.nextjam.di.nextJamModule

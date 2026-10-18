@@ -4,8 +4,8 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.assistant.ProposedJam
 import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.feature.assistant.CreateCall
-import com.bbbjam.feature.assistant.FakeJamCreator
-import com.bbbjam.feature.assistant.FakeJamsRepository
+import com.bbbjam.feature.assistant.ScriptedJamCreator
+import com.bbbjam.feature.assistant.SettableJamsRepository
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.CompletableDeferred
@@ -20,8 +20,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class JamCreationRunnerTest {
-    private val creator = FakeJamCreator()
-    private val jams = FakeJamsRepository()
+    private val creator = ScriptedJamCreator()
+    private val jams = SettableJamsRepository()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val runner = JamCreationRunner(creator, jams, scope)
     private val jam = ProposedJam(LocalDate.of(2026, 11, 28), LocalTime.of(21, 0), "La Macanuda")

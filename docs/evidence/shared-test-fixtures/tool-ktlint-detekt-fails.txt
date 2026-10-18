@@ -1,0 +1,30 @@
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:68 Missing spacing around "}"
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:68 Missing newline before '}'
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:69 Expected a whitespace after 'then' block
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:73 Missing spacing around "{"
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:73 Missing spacing after "else"
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:74 Missing newline after '{'
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:82 Missing spacing before "}"
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:82 Missing newline before '}'
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:84 Missing newline before '}'
+C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violation.kt:5:86 Missing newline before '}'
+
+> Task :core:data:detekt
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:data:ktlintTestFixturesSourceSetCheck' (registered by plugin 'org.jlleitschuh.gradle.ktlint').
+> A failure occurred while executing org.jlleitschuh.gradle.ktlint.worker.ConsoleReportWorkAction
+   > KtLint found code style violations. Please see the following reports:
+     - C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\build\reports\ktlint\ktlintTestFixturesSourceSetCheck\ktlintTestFixturesSourceSetCheck.txt
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 5s
+8 actionable tasks: 4 executed, 4 up-to-date
+Configuration cache entry stored.

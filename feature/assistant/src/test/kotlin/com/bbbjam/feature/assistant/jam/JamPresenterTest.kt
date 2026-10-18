@@ -13,12 +13,12 @@ import com.bbbjam.core.model.JamStatus
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.ChatScope
 import com.bbbjam.feature.assistant.CreateCall
-import com.bbbjam.feature.assistant.FakeJamCreator
-import com.bbbjam.feature.assistant.FakeJamsRepository
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
 import com.bbbjam.feature.assistant.JAM_DATE
 import com.bbbjam.feature.assistant.ReplyUiModel
+import com.bbbjam.feature.assistant.ScriptedJamCreator
+import com.bbbjam.feature.assistant.SettableJamsRepository
 import com.bbbjam.feature.assistant.TurnUiModel
 import com.bbbjam.feature.assistant.apply.ApplyTone
 import com.bbbjam.feature.assistant.apply.ApplyUiModel
@@ -48,8 +48,8 @@ import org.junit.Test
 class JamPresenterTest {
     private val assistant = FakeSetlistAssistant()
     private val adder = FakeSetlistSongAdder()
-    private val creator = FakeJamCreator()
-    private val jams = FakeJamsRepository()
+    private val creator = ScriptedJamCreator()
+    private val jams = SettableJamsRepository()
     private val applier = testApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
     private val runner = JamCreationRunner(creator, jams, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
     private val newDate = LocalDate.of(2026, 11, 28)

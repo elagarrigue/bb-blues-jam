@@ -845,7 +845,8 @@ them.
   (`apply`, `chat`, `create`, `jam`, `run`) group files by flow or screen, never by layer. The
   module's primary presenter, UiModel, screen, copy and defaults (for example `NextJamPresenter`,
   `NextJamCopy`) and the `di/` package stay at the module root; main and test sources mirror each
-  other, and the shared test fakes live at the test root. `:feature:info` stays flat. **A new file
+  other, and a fake used by one module's tests lives at that module's test root (a fake shared across
+  modules goes to the test fixtures, below). `:feature:info` stays flat. **A new file
   goes in the subpackage of its flow**, and `package` equals the directory. Visibility is
   unchanged (`internal` is module-wide), so crossing a subpackage only needs an import. The
   packages are an organization aid, not a boundary: package-level cycles inside a module (for
@@ -853,6 +854,19 @@ them.
 - **Dependencies**: `:core:ui` and `:core:data` use `api(project(":core:model"))`, because their
   public contracts expose domain types. `:app` lists each module it uses with
   `implementation(project(...))`. Use `project(":…")`, not type-safe project accessors.
+- **Shared test fixtures** (`shared-test-fixtures`, 17 October 2026). A fake of a `:core:data` contract
+  that tests in more than one module need lives once in the `testFixtures` source set of `:core:data`
+  (`core/data/src/testFixtures/kotlin/com/bbbjam/core/data/testing/`, package
+  `com.bbbjam.core.data.testing`; today `FakeJamsRepository` and `FakeAdminSession`). A consumer adds
+  `testImplementation(testFixtures(project(":core:data")))`; no new module, and the Konsist build-file
+  rules accept it as a `:core:data` dependency. The source set is enabled in `core/data/build.gradle.kts`
+  with `android { testFixtures { enable = true } }`; the root `build.gradle.kts` adds
+  `src/testFixtures/kotlin` to detekt's source (its default skips it), and ktlint and Konsist already read
+  it. Rules: a fake belongs there only when two or more modules use the same shape; a fake with one
+  consumer, or implementing an `internal` type (for example `FakePost`, `FakeTransport`, which stay in
+  `:core:data` tests under `remote/`), stays beside its tests. Fixtures use only `:core:model`,
+  `:core:data`, coroutines and `java.time`. Fake class names are unique across all test source sets
+  (a different shape gets a different name: `SettableJamsRepository`, `ScriptedJamCreator`).
 - **Each module has its own `.gitignore`** with `/build`; the root one only ignores the root build.
 - **Quality tools come from the root build file** (set by `detekt-ktlint-gate`, spec
   `docs/specs/detekt-ktlint-gate.md`). The root `build.gradle.kts` applies detekt and ktlint to

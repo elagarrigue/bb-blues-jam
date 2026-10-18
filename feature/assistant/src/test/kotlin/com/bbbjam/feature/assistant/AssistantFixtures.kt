@@ -55,7 +55,7 @@ internal fun testPresenter(
     applier: ProposalApplier,
     jams: JamsRepository,
     runner: JamCreationRunner = JamCreationRunner(
-        FakeJamCreator(),
+        ScriptedJamCreator(),
         jams,
         CoroutineScope(SupervisorJob() + kotlinx.coroutines.Dispatchers.Unconfined),
     ),

@@ -1,0 +1,5 @@
+BUILD SUCCESSFUL in 2s
+268 actionable tasks: 2 executed, 266 up-to-date
+Configuration cache entry stored.
+apk app/build/outputs/apk/release/app-release-unsigned.apk
+dex matches for core/data/testing: 0

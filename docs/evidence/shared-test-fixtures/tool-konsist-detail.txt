@@ -1,0 +1,3 @@
+package-under-module-root' was violated (1 time). Invalid files:&#10;└── File Violation.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\bbbjam\core\data\testing\Violati
+package-under-module-root' was violated (1 time). Invalid files:
+Violation.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\data\src\testFixtures\kotlin\com\

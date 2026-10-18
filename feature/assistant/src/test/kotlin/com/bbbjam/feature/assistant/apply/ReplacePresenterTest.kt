@@ -15,12 +15,12 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.CallLog
 import com.bbbjam.feature.assistant.ChatScope
-import com.bbbjam.feature.assistant.FakeJamsRepository
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
 import com.bbbjam.feature.assistant.FakeSetlistSongMover
 import com.bbbjam.feature.assistant.FakeSetlistSongRemover
 import com.bbbjam.feature.assistant.ReplyUiModel
+import com.bbbjam.feature.assistant.SettableJamsRepository
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.jam
 import com.bbbjam.feature.assistant.jamSong
@@ -49,7 +49,7 @@ class ReplacePresenterTest {
     private val adder = FakeSetlistSongAdder(log)
     private val remover = FakeSetlistSongRemover(log)
     private val mover = FakeSetlistSongMover(log)
-    private val jams = FakeJamsRepository()
+    private val jams = SettableJamsRepository()
     private val applier = testApplier(
         adder,
         CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),

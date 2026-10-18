@@ -7,6 +7,8 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -16,8 +18,6 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
-import com.bbbjam.feature.nextjam.FakeAdminSession
-import com.bbbjam.feature.nextjam.FakeJamsRepository
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import java.time.Instant
 import java.time.LocalDate

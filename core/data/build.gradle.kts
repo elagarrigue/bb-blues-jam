@@ -4,6 +4,10 @@ plugins {
 
 android {
     namespace = "com.bbbjam.core.data"
+    // Fakes of the contracts in this module that several modules' tests share (architecture skill, Shared test fixtures).
+    testFixtures {
+        enable = true
+    }
 }
 
 val koogWithoutJackson: ExternalModuleDependency.() -> Unit = {
@@ -28,6 +32,7 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
+    testFixturesApi(libs.kotlinx.coroutines.core)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.sqlite.bundled.jvm)
     testImplementation(platform(libs.koin.bom))

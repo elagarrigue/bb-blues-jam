@@ -76,7 +76,7 @@ class AssistantLiveCallTest {
         val assistant = DefaultSetlistAssistant(
             AssistantCredentials.of(key),
             FakeCatalog(songs),
-            FakeJams(past = listOf(juanJam) + seeded),
+            FakePastJams(past = listOf(juanJam) + seeded),
             fixedCalendar(),
             AssistantHttp.executorFactory(AssistantModel.BASE_URL, client),
         )

@@ -2,6 +2,7 @@ package com.bbbjam.core.data.admin
 
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
+import com.bbbjam.core.data.remote.FakePost
 import com.bbbjam.core.data.remote.TransportResult
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -21,15 +22,6 @@ import org.junit.rules.TemporaryFolder
 class AdminWriterTest {
     @get:Rule
     val folder = TemporaryFolder()
-
-    private class FakePost(private val answer: TransportResult) : AppsScriptPostTransport {
-        val bodies = mutableListOf<String>()
-
-        override suspend fun post(json: String): TransportResult {
-            bodies += json
-            return answer
-        }
-    }
 
     /** A fresh store (holding [stored], when not null) and a writer over it, for one [block]. */
     private fun withWriter(

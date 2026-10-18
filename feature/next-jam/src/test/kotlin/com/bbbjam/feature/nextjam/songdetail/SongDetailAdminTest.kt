@@ -15,6 +15,8 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.assign.Assignment
 import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
@@ -32,8 +34,6 @@ import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
-import com.bbbjam.feature.nextjam.FakeAdminSession
-import com.bbbjam.feature.nextjam.FakeJamsRepository
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
 import com.bbbjam.feature.nextjam.NextJamCopy

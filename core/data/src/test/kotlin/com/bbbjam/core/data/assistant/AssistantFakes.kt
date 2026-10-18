@@ -53,7 +53,7 @@ internal class FakeCatalog(private val songs: List<Song>) : CatalogRepository {
 }
 
 /** A read-only jams fake holding an upcoming jam and past jams (newest first). */
-internal class FakeJams(private val past: List<Jam> = emptyList(), private val upcoming: Jam? = null) :
+internal class FakePastJams(private val past: List<Jam> = emptyList(), private val upcoming: Jam? = null) :
     JamsRepository {
     override fun observeJams(): Flow<JamsSnapshot> = flowOf(JamsSnapshot(upcoming, past, FRESH))
 

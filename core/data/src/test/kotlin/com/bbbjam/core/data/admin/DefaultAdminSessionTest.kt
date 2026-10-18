@@ -3,6 +3,7 @@ package com.bbbjam.core.data.admin
 import app.cash.turbine.test
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
+import com.bbbjam.core.data.remote.FakePost
 import com.bbbjam.core.data.remote.TransportResult
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -21,15 +22,6 @@ import org.junit.rules.TemporaryFolder
 class DefaultAdminSessionTest {
     @get:Rule
     val folder = TemporaryFolder()
-
-    private class FakePost(private val answer: TransportResult) : AppsScriptPostTransport {
-        val bodies = mutableListOf<String>()
-
-        override suspend fun post(json: String): TransportResult {
-            bodies += json
-            return answer
-        }
-    }
 
     private fun withSession(
         answer: TransportResult,

@@ -22,6 +22,8 @@ subprojects {
         extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
             buildUponDefaultConfig.set(true)
             config.setFrom(detektConfig)
+            // detekt's default source skips src/testFixtures (shared-test-fixtures); ktlint and Konsist read it already.
+            source.from("src/testFixtures/kotlin")
         }
         extensions.configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
             version.set(ktlintVersion)

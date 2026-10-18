@@ -1,4 +1,4 @@
-package com.bbbjam.feature.pastjams
+package com.bbbjam.core.data.testing
 
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.jams.JamsRefreshOutcome

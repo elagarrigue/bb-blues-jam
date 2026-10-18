@@ -54,7 +54,7 @@ class AppModuleBindingsTest {
 
     @Test
     fun `app module binds the narrow status and publish contracts to the same SetlistRepository instance`() {
-        val repository = FakeSetlistRepository()
+        val repository = BindingsSetlistRepository()
         val application = koinApplication {
             allowOverride(true)
             modules(appModule, module { single<SetlistRepository> { repository } })
@@ -70,7 +70,7 @@ class AppModuleBindingsTest {
 
     @Test
     fun `every setlist contract resolves to the one SetlistRepository instance, entries and dismisses shared`() {
-        val repository = FakeSetlistRepository()
+        val repository = BindingsSetlistRepository()
         val application = koinApplication {
             allowOverride(true)
             modules(appModule, module { single<SetlistRepository> { repository } })
@@ -104,7 +104,7 @@ class AppModuleBindingsTest {
 
     @Test
     fun `narrow write contracts delegate to the same SetlistRepository with outcomes unchanged`() {
-        val repository = FakeSetlistRepository()
+        val repository = BindingsSetlistRepository()
         val application = koinApplication {
             allowOverride(true)
             modules(appModule, module { single<SetlistRepository> { repository } })
@@ -132,7 +132,7 @@ class AppModuleBindingsTest {
     }
 }
 
-internal class FakeSetlistRepository : SetlistRepository {
+internal class BindingsSetlistRepository : SetlistRepository {
     val addOutcome: AddSongOutcome = AddSongOutcome.Added(7)
     val removeOutcome: RemoveSongOutcome = RemoveSongOutcome.NotRemoved(WriteOutcome.Rejected("song_not_in_setlist"))
     val moveOutcome: MoveSongOutcome = MoveSongOutcome.NotMoved(WriteOutcome.Rejected("position_changed"))

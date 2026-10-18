@@ -7,6 +7,8 @@ import com.bbbjam.core.data.setlist.jamcreate.JamCreator
 import com.bbbjam.core.data.setlist.jamedit.SetlistJamEditRepository
 import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
 import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.feature.pastjams.detail.PastJamDetailPresenter
 import com.bbbjam.feature.pastjams.di.pastJamsModule
 import java.time.Clock

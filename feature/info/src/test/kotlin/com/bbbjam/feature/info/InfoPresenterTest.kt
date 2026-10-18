@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
+import com.bbbjam.core.data.testing.FakeAdminSession
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.core.ui.presenter.EventHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -139,7 +140,7 @@ class InfoPresenterTest {
 
     @Test
     fun `an admin leaves with five taps, never opening the login`() = runTest {
-        val admin = FakeAdminSession(initiallyAdmin = true)
+        val admin = FakeAdminSession(isAdmin = true)
         val calls = mutableListOf<String>()
         moleculeFlow(RecompositionMode.Immediate) {
             InfoPresenter(FakeLinkOpener(true), admin).present(InfoPresenter.Params { calls += "login" })
@@ -220,7 +221,7 @@ class InfoPresenterTest {
 
     @Test
     fun `an admin device shows the same Info`() = runTest {
-        val admin = FakeAdminSession(initiallyAdmin = true)
+        val admin = FakeAdminSession(isAdmin = true)
         val opener = FakeLinkOpener(true)
         moleculeFlow(RecompositionMode.Immediate) {
             InfoPresenter(opener, admin).present(InfoPresenter.Params())

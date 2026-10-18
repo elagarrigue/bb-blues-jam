@@ -6,11 +6,11 @@ import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.assistant.CallLog
 import com.bbbjam.feature.assistant.ChatScope
-import com.bbbjam.feature.assistant.FakeJamCreator
 import com.bbbjam.feature.assistant.FakeSetlistSongAdder
 import com.bbbjam.feature.assistant.FakeSetlistSongMover
 import com.bbbjam.feature.assistant.FakeSetlistSongRemover
 import com.bbbjam.feature.assistant.JAM_DATE
+import com.bbbjam.feature.assistant.ScriptedJamCreator
 import com.bbbjam.feature.assistant.jam
 import com.bbbjam.feature.assistant.listedOrder
 import com.bbbjam.feature.assistant.snapshot
@@ -34,7 +34,7 @@ class ProposalApplierReplaceTest {
     private val adder = FakeSetlistSongAdder(log)
     private val remover = FakeSetlistSongRemover(log)
     private val mover = FakeSetlistSongMover(log)
-    private val creator = FakeJamCreator(log)
+    private val creator = ScriptedJamCreator(log)
 
     // The list holds 7, 1, 8, 2; the proposal is 3, 1, 5, 2.
     private val proposal = listOf(3, 1, 5, 2).map { song(it) }

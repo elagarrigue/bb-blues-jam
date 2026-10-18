@@ -24,9 +24,9 @@ class AssistantModuleTest {
             single<SetlistSongAdder> { FakeSetlistSongAdder() }
             single<SetlistSongRemover> { FakeSetlistSongRemover() }
             single<SetlistSongMover> { FakeSetlistSongMover() }
-            single<JamCreator> { FakeJamCreator() }
+            single<JamCreator> { ScriptedJamCreator() }
             single { testCalendar() }
-            single<JamsRepository> { FakeJamsRepository() }
+            single<JamsRepository> { SettableJamsRepository() }
         }
         val app = koinApplication { modules(assistantModule, dataBindings) }
         try {

@@ -10,6 +10,8 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.move.SetlistMove
 import com.bbbjam.core.data.setlist.remove.SetlistRemove
+import com.bbbjam.core.data.testing.FakeAdminSession
+import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -17,8 +19,6 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
-import com.bbbjam.feature.nextjam.FakeAdminSession
-import com.bbbjam.feature.nextjam.FakeJamsRepository
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.MoveActionUiModel
 import com.bbbjam.feature.nextjam.NextJamPresenter
