@@ -27,6 +27,7 @@ import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SongRowAdminUiModel
 import com.bbbjam.feature.nextjam.SongRowUiModel
 import com.bbbjam.feature.nextjam.overlay.OverlayFailure
+import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.overlay.failureCards
 import com.bbbjam.feature.nextjam.overlay.pendingKey
@@ -45,7 +46,7 @@ internal class RowAdmin(val state: AdminState, val jam: DomainJam) {
 }
 
 /**
- * What the presenter knows only for an admin: the adds of `SetlistRepository.observeAdds()`, the
+ * What the presenter knows only for an admin: the adds of `SetlistSongAddRepository.observeAdds()`, the
  * admin callbacks, the [removal] state, the [moves] and the song-level entry lists the rows overlay
  * ([overlays], the rule shared with the song detail). Null for musicians. Since
  * `song-detail-replaces-row-expansion` the song-level controls (key, lineup, slots, extras) live in
@@ -54,7 +55,7 @@ internal class RowAdmin(val state: AdminState, val jam: DomainJam) {
 internal class AdminState(
     val adds: List<SetlistAdd>,
     val onAddSong: (LocalDate) -> Unit,
-    val onDismiss: (Long) -> Unit,
+    val onDismissAdd: (Long) -> Unit,
     val removal: RemovalState = RemovalState(),
     val keyChanges: List<KeyChange> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
@@ -63,14 +64,24 @@ internal class AdminState(
     val moves: List<SetlistMove> = emptyList(),
     val lineupChanges: List<LineupChange> = emptyList(),
     val onMove: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
+    val onDismissRemove: (Long) -> Unit = {},
+    val onDismissMove: (Long) -> Unit = {},
+    val overlaySources: SongOverlaySources? = null,
 ) {
     /** The song-level overlay rule this list shares with the song detail. */
     val overlays: SongOverlays
-        get() = SongOverlays(keyChanges, lineupChanges, assignments, slotClears, extraParticipantChanges)
+        get() = SongOverlays(
+            keyChanges,
+            lineupChanges,
+            assignments,
+            slotClears,
+            extraParticipantChanges,
+            overlaySources,
+        )
 }
 
 /**
- * The removals of `SetlistRepository.observeRemoves()`, the row that is [confirming] (its
+ * The removals of `SetlistSongRemoveRepository.observeRemoves()`, the row that is [confirming] (its
  * [removalKey], or null) and the one handler every row's removal events go to.
  */
 internal class RemovalState(
@@ -117,20 +128,25 @@ internal fun AdminState.toUiModel(jam: DomainJam): NextJamAdminUiModel {
 private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
     val failedAdds = adds.filter { it.jamDate == date }.mapNotNull { add ->
         (add.state as? SetlistAdd.State.Failed)?.let {
-            OverlayFailure(add.id, NextJamCopy.addFailed(add.title), failureMessage(it.reason))
+            OverlayFailure(add.id, NextJamCopy.addFailed(add.title), failureMessage(it.reason), onDismissAdd)
         }
     }
     val failedRemoves = removal.removes.filter { it.jamDate == date }.mapNotNull { remove ->
         (remove.state as? SetlistRemove.State.Failed)?.let {
-            OverlayFailure(remove.id, NextJamCopy.removeFailed(remove.title), failureMessage(it.reason))
+            OverlayFailure(
+                remove.id,
+                NextJamCopy.removeFailed(remove.title),
+                failureMessage(it.reason),
+                onDismissRemove,
+            )
         }
     }
     val failedMoves = moves.filter { it.jamDate == date }.mapNotNull { move ->
         (move.state as? SetlistMove.State.Failed)?.let {
-            OverlayFailure(move.id, MoveCopy.failed(move.title), moveFailureMessage(it.reason))
+            OverlayFailure(move.id, MoveCopy.failed(move.title), moveFailureMessage(it.reason), onDismissMove)
         }
     }
-    return failureCards(failedAdds + failedRemoves + failedMoves + overlays.failures(date), onDismiss)
+    return failureCards(failedAdds + failedRemoves + failedMoves + overlays.failures(date))
 }
 
 /**

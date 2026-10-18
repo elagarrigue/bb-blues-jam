@@ -5,8 +5,8 @@ import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 
 /**
- * One call of [SetlistRepository.removeSong] that is still sending or has failed. [id] is unique in
- * the process and shares its counter with [SetlistAdd.id], so [SetlistRepository.dismiss] takes
+ * One call of [SetlistSongRemoveRepository.removeSong] that is still sending or has failed. [id] is unique in
+ * the process and shares its counter with [SetlistAdd.id], so it is told apart from it by
  * either. [title] is the displayed title when the call was made: the catalog's, else the tab's copy,
  * else the id.
  */

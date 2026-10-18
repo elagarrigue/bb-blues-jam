@@ -8,7 +8,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
@@ -25,6 +24,7 @@ import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.feature.nextjam.NextJamCopy
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 import com.bbbjam.feature.nextjam.admin.removalKey
+import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.overlay.failureCards
 import com.bbbjam.feature.nextjam.overlay.pendingKey
@@ -45,10 +45,10 @@ import java.time.LocalDate
  * so the detail stays [SongDetailUiModel.Loading] until both the flag and the jams are read: an
  * admin opening a draft's song never sees a not-found frame. For the admin the song is looked up in
  * the upcoming jam's `jam.setlist` (drafts included) and gains [SongDetailAdminUiModel]: the
- * [SongOverlays] of [setlist] (the same rule the list applies), the inline lineup editor, the
+ * [SongOverlays] of [sources] (the same rule the list applies), the inline lineup editor, the
  * "Otros" form, "Anotar"/"Liberar"/"Quitar" on the panel lines and the song's failure cards.
  * Tapping the key calls [Params.onSetKey] and "Anotar" calls [Params.onAssignSlot] (navigation, bound
- * by `:app`); every write is an existing [SetlistRepository] function (D-13).
+ * by `:app`); every write is an existing setlist repository function (D-13).
  *
  * Every callback is read through `rememberUpdatedState`, so an earlier model's handler calls the
  * current one.
@@ -56,7 +56,7 @@ import java.time.LocalDate
 class SongDetailPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
-    private val setlist: SetlistRepository,
+    private val sources: SongOverlaySources,
 ) : Presenter<SongDetailUiModel, SongDetailPresenter.Params> {
 
     /**
@@ -87,9 +87,9 @@ class SongDetailPresenter(
         val currentOnSetKey by rememberUpdatedState(params.onSetKey)
         val currentOnAssignSlot by rememberUpdatedState(params.onAssignSlot)
         val onBack: () -> Unit = { currentOnBack() }
-        val overlays = rememberSongOverlays(setlist)
+        val overlays = rememberSongOverlays(sources)
         val admin = rememberSongAdminState(
-            setlist = setlist,
+            sources = sources,
             snapshot = snapshot,
             isAdmin = isAdmin == true,
             overlays = overlays,
@@ -174,7 +174,7 @@ private fun SongAdminState.songDetail(date: LocalDate, cached: JamSong, back: Ba
             ),
             lineup = lineupEditor(date, song),
             extraParticipants = extraEditor(date, song),
-            failures = failureCards(overlays.failures(date, id), onDismiss),
+            failures = failureCards(overlays.failures(date, id)),
         ),
     )
 }

@@ -199,7 +199,7 @@ internal class SetlistExtraParticipants(
         return ExtraParticipantOutcome.Changed
     }
 
-    fun dismiss(id: Long) {
+    override fun dismissExtraParticipantChange(id: Long) {
         entries.update {
             it.filterNot { e ->
                 e.id == id &&

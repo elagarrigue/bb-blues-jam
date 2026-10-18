@@ -6,8 +6,17 @@ import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.SetlistLineupRepository
+import com.bbbjam.core.data.setlist.SetlistMoveRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.SetlistSongAddRepository
+import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
 import com.bbbjam.feature.nextjam.addsong.AddSongPresenter
+import com.bbbjam.feature.nextjam.assign.AssignMusicianPresenter
 import com.bbbjam.feature.nextjam.di.nextJamModule
 import com.bbbjam.feature.nextjam.setkey.SetKeyPresenter
 import com.bbbjam.feature.nextjam.songdetail.SongDetailPresenter
@@ -26,7 +35,16 @@ class NextJamModuleTest {
             single<JamsRepository> { FakeJamsRepository() }
             single { JamCalendar(Clock.systemUTC(), JamCalendar.BUENOS_AIRES) }
             single<AdminSession> { FakeAdminSession() }
+            // `:app` binds each narrow contract to the one SetlistRepository instance; so does this test.
             single<SetlistRepository> { FakeSetlistRepository() }
+            single<SetlistAssignmentRepository> { get<SetlistRepository>() }
+            single<SetlistExtraParticipantRepository> { get<SetlistRepository>() }
+            single<SetlistKeyChangeRepository> { get<SetlistRepository>() }
+            single<SetlistLineupRepository> { get<SetlistRepository>() }
+            single<SetlistMoveRepository> { get<SetlistRepository>() }
+            single<SetlistSlotClearRepository> { get<SetlistRepository>() }
+            single<SetlistSongAddRepository> { get<SetlistRepository>() }
+            single<SetlistSongRemoveRepository> { get<SetlistRepository>() }
             single<CatalogRepository> { NoCatalog }
         }
         val app = koinApplication { modules(nextJamModule, dataBindings) }
@@ -35,6 +53,7 @@ class NextJamModuleTest {
             val second = app.koin.get<NextJamPresenter>()
             // factory, not single: presenters hold no state; the composition does.
             assertNotSame(first, second)
+            assertNotSame(app.koin.get<AssignMusicianPresenter>(), app.koin.get<AssignMusicianPresenter>())
             assertNotSame(app.koin.get<AddSongPresenter>(), app.koin.get<AddSongPresenter>())
             assertNotSame(app.koin.get<SetKeyPresenter>(), app.koin.get<SetKeyPresenter>())
             assertNotSame(app.koin.get<SongDetailPresenter>(), app.koin.get<SongDetailPresenter>())

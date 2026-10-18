@@ -19,7 +19,7 @@ cada decisión. La funcionalidad de la app está en el [README](../README.md).
 | Decisiones registradas con su fundamento | 29 (D-01 … D-29) |
 | Commits | más de 220 |
 | Tests JVM en la última corrida del gate | 1135 |
-| Reglas de arquitectura ejecutables (Konsist) | 19 |
+| Reglas de arquitectura ejecutables (Konsist) | 20 |
 | Módulos Gradle | 8, más `:konsist-test` y el build incluido `build-logic` |
 | Acciones del backend (Apps Script) | más de 20, todas validadas en el servidor |
 | Líneas de código de producto escritas a mano | ninguna |
@@ -178,7 +178,7 @@ de baseline que escondan problemas y sin reglas apagadas para que pase. Cuando d
 
 ### 3.5 Reglas de arquitectura como código (Konsist)
 
-Las decisiones que un build en verde no detecta se volvieron tests. Algunas de las 19 reglas:
+Las decisiones que un build en verde no detecta se volvieron tests. Algunas de las 20 reglas:
 
 | Regla | Decisión |
 |---|---|

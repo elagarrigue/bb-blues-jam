@@ -20,6 +20,7 @@ import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.snapshot
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.song
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.songModel
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.upcomingDate
+import com.bbbjam.feature.nextjam.sources
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -36,7 +37,7 @@ class SongDetailPresenterTest {
     }
 
     private val repository = FakeJamsRepository()
-    private val presenter = SongDetailPresenter(repository, FakeAdminSession(), FakeSetlistRepository())
+    private val presenter = SongDetailPresenter(repository, FakeAdminSession(), FakeSetlistRepository().sources())
 
     @Test
     fun `loading, then the song, then not found when a refresh drops the row`() = runTest {

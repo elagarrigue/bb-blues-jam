@@ -44,7 +44,9 @@ class NextJamFilterTest {
 
     private val fetched = Freshness(Instant.parse("2026-10-02T14:59:00Z"), lastFailure = null, isRefreshing = false)
 
-    private fun presenter() = NextJamPresenter(repository, calendar, FakeAdminSession(), FakeSetlistRepository())
+    private fun presenter() = FakeSetlistRepository().let {
+        NextJamPresenter(repository, calendar, FakeAdminSession(), it.writes(), it.sources())
+    }
 
     private fun jam(setlist: Setlist, date: LocalDate = LocalDate.of(2026, 10, 31)) = Jam(
         date = date,

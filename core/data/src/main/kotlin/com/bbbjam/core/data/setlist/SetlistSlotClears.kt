@@ -145,7 +145,7 @@ internal class SetlistSlotClears(
         }
     }
 
-    fun dismiss(id: Long) {
+    override fun dismissSlotClear(id: Long) {
         entries.update { list -> list.filterNot { it.id == id && it.state is SlotClear.State.Failed } }
     }
 

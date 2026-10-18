@@ -79,7 +79,7 @@ internal class SetlistMoves(
         }
     }
 
-    fun dismiss(id: Long) {
+    override fun dismissMove(id: Long) {
         entries.update { list -> list.filterNot { it.id == id && it.state is SetlistMove.State.Failed } }
     }
 

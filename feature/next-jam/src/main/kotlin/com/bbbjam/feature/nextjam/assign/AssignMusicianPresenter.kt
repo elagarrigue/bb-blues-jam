@@ -12,7 +12,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamSong
@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 class AssignMusicianPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
-    private val setlist: SetlistRepository,
+    private val setlist: SetlistAssignmentRepository,
 ) : Presenter<AssignMusicianUiModel, AssignMusicianPresenter.Params> {
     data class Params(
         val jamDate: LocalDate,

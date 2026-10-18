@@ -30,7 +30,9 @@ import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
+import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.toUiModel
+import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -81,7 +83,7 @@ class NextJamRemoveTest {
 
     private fun snapshot(jam: Jam) = JamsSnapshot(upcoming = jam, past = emptyList(), freshness = fetched)
 
-    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist)
+    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist.writes(), setlist.sources())
 
     private fun NextJamUiModel.rows() = ((this as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
 
@@ -238,6 +240,7 @@ class NextJamRemoveTest {
 
             failures.first().events(AddFailureUiModel.Event.Dismiss)
             assertEquals(listOf(5L), setlist.dismissed)
+            assertEquals(listOf("Remove" to 5L), setlist.dismissCalls)
             cancelAndIgnoreRemainingEvents()
         }
     }

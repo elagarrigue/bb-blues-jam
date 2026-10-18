@@ -19,4 +19,7 @@ interface SetlistExtraParticipantRepository {
         expectedInstrument: String,
     ): ExtraParticipantOutcome
     fun observeExtraParticipantChanges(): Flow<List<ExtraParticipantChange>>
+
+    /** Removes a failed extra-participant change [id]; a sending entry, unknown id or other kind's id stays. */
+    fun dismissExtraParticipantChange(id: Long)
 }

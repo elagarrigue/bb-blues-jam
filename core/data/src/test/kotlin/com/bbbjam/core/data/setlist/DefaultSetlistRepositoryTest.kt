@@ -235,10 +235,10 @@ class DefaultSetlistRepositoryTest {
         val add = async { repository.addSong(DATE, CROSSROADS, Key("A")) }
         val sending = repository.observeAdds().first { it.size == 2 }.last()
 
-        repository.dismiss(sending.id)
-        repository.dismiss(999)
+        repository.dismissAdd(sending.id)
+        repository.dismissAdd(999)
         assertEquals(listOf(failed.id, sending.id), repository.observeAdds().first().map { it.id })
-        repository.dismiss(failed.id)
+        repository.dismissAdd(failed.id)
         assertEquals(listOf(sending.id), repository.observeAdds().first().map { it.id })
         gate.complete(Unit)
         add.await()
@@ -456,7 +456,7 @@ class DefaultSetlistRepositoryTest {
 
         assertEquals(emptyList<SetlistAdd>(), repository.observeAdds().first())
         assertEquals(listOf(failedRemove.id), repository.observeRemoves().first().map { it.id })
-        repository.dismiss(failedRemove.id)
+        repository.dismissRemove(failedRemove.id)
         assertEquals(emptyList<SetlistRemove>(), repository.observeRemoves().first())
     }
 
@@ -631,7 +631,7 @@ class DefaultSetlistRepositoryTest {
             assertEquals(listOf(CROSSROADS to Key("G")), cachedSongs().map { it.songId to it.key })
 
             assertEquals(listOf(failedKey.id), repository.observeKeyChanges().first().map { it.id })
-            repository.dismiss(failedKey.id)
+            repository.dismissKeyChange(failedKey.id)
             assertEquals(emptyList<KeyChange>(), repository.observeKeyChanges().first())
         }
 
@@ -670,10 +670,10 @@ class DefaultSetlistRepositoryTest {
         val change = async { repository.setKey(DATE, SongId("red-house"), Key("D")) }
         val sending = repository.observeKeyChanges().first { it.size == 2 }.last()
 
-        repository.dismiss(sending.id)
-        repository.dismiss(999)
+        repository.dismissKeyChange(sending.id)
+        repository.dismissKeyChange(999)
         assertEquals(listOf(failed.id, sending.id), repository.observeKeyChanges().first().map { it.id })
-        repository.dismiss(failed.id)
+        repository.dismissKeyChange(failed.id)
         assertEquals(listOf(sending.id), repository.observeKeyChanges().first().map { it.id })
         gate.complete(Unit)
         change.await()

@@ -3,6 +3,7 @@ package com.bbbjam.feature.nextjam.songdetail
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import java.lang.reflect.Modifier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -30,11 +31,11 @@ class SongDetailModelShapeTest {
     }
 
     @Test
-    fun `the presenter takes the jams, the admin flag and the setlist writes, never the catalog`() {
+    fun `the presenter takes the jams, the admin flag and the song-level setlist contracts, never the catalog`() {
         val constructors = SongDetailPresenter::class.java.constructors
         assertEquals(1, constructors.size)
         assertEquals(
-            listOf(JamsRepository::class.java, AdminSession::class.java, SetlistRepository::class.java),
+            listOf(JamsRepository::class.java, AdminSession::class.java, SongOverlaySources::class.java),
             constructors.single().parameterTypes.toList(),
         )
     }

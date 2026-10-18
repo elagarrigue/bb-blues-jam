@@ -12,7 +12,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.KeyChange
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Setlist
@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
  * Presents the key picker (`admin-set-key`, V1, O1). It finds the song by id in the upcoming jam's
  * setlist (the admin's view, drafts included), only while the admin flag is on, and shows its
  * current key: the latest pending change when one is still saving, so the picker agrees with the
- * row, else the cached key. Picking a key calls [SetlistRepository.setKey] undispatched and then
+ * row, else the cached key. Picking a key calls [SetlistKeyChangeRepository.setKey] undispatched and then
  * [Params.onDone] at once: the write runs in the data layer, and Próxima jam shows the new key with
  * "Guardando…" until the server answers. Only the first pick counts, and the current key's cell
  * does nothing, so nothing is sent for the same key.
@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 class SetKeyPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
-    private val setlist: SetlistRepository,
+    private val setlist: SetlistKeyChangeRepository,
 ) : Presenter<SetKeyUiModel, SetKeyPresenter.Params> {
 
     /** [jamDate] and [songId] name the song; [onBack] leaves without a change; [onDone] closes after a pick. */

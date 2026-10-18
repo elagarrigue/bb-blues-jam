@@ -223,7 +223,7 @@ class SetlistLineupChangesTest {
             assertEquals(before, jamsDao.observeJams().first())
             val entry = repository.observeLineupChanges().first().last()
             assertEquals(LineupChange.State.Failed(reason), entry.state)
-            repository.dismiss(entry.id)
+            repository.dismissLineupChange(entry.id)
             assertTrue(repository.observeLineupChanges().first().isEmpty())
         }
         assertEquals(
@@ -267,7 +267,7 @@ class SetlistLineupChangesTest {
         val lineupId = repository.observeLineupChanges().first().single().id
         val keyId = repository.observeKeyChanges().first { it.isNotEmpty() }.single().id
         assertTrue(keyId > lineupId)
-        repository.dismiss(lineupId)
+        repository.dismissLineupChange(lineupId)
         assertEquals(1, repository.observeLineupChanges().first().size)
         first.cancel()
         gate.complete(Unit)
@@ -342,7 +342,7 @@ class SetlistLineupChangesTest {
             assertEquals(before, jamsDao.observeJams().first())
             val entry = repository.observeAssignments().first().last()
             assertEquals(Assignment.State.Failed(reason), entry.state)
-            repository.dismiss(entry.id)
+            repository.dismissAssignment(entry.id)
             assertTrue(repository.observeAssignments().first().isEmpty())
         }
     }

@@ -163,6 +163,21 @@ class ModuleIsolationTest {
             }
     }
 
+    /**
+     * Rule 20, `next-jam-injects-narrow-setlist-contracts`: the next-jam and past-jams main sources take
+     * only the narrow `Setlist...Repository` contracts they call, never the `SetlistRepository` union.
+     * Test sources are exempt so a fake may implement the union. Known limit: a text match, so an
+     * import alias or a bare `[SetlistRepository]` mention in a comment (no import) escapes.
+     */
+    @Test
+    fun `next-jam and past-jams main sources do not take the whole setlist repository`() {
+        scope.files
+            .filter { (it.modulePath == FEATURE_NEXT_JAM || it.modulePath == FEATURE_PAST_JAMS) && it.isMainSource() }
+            .assertFalse(testName = "next-jam-injects-narrow-setlist-contracts") { file ->
+                WHOLE_SETLIST_REPOSITORY.containsMatchIn(file.text)
+            }
+    }
+
     @Test
     fun `only the app imports the navigation library`() {
         scope.files
@@ -239,6 +254,8 @@ class ModuleIsolationTest {
             )
         }
     }
+
+    private fun KoFileDeclaration.isMainSource(): Boolean = path.replace('\\', '/').contains("/src/main/")
 
     private fun conventionViolations(modulePath: String): List<String> {
         val display = "$modulePath/build.gradle.kts"
@@ -367,6 +384,12 @@ class ModuleIsolationTest {
             Regex("""\bcom\.bbbjam\.core\.data\.(setlist|admin|remote|cache)\b""")
 
         const val FEATURE_ASSISTANT = "feature/assistant"
+
+        const val FEATURE_NEXT_JAM = "feature/next-jam"
+        const val FEATURE_PAST_JAMS = "feature/past-jams"
+
+        /** The whole-repository union, as an import or a fully qualified use (rule 20). */
+        val WHOLE_SETLIST_REPOSITORY = Regex("""\bcom\.bbbjam\.core\.data\.setlist\.SetlistRepository\b""")
 
         /**
          * The repositories and the writer the assistant feature must never reach (D-13, D-24): imports

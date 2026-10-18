@@ -34,7 +34,9 @@ import com.bbbjam.feature.nextjam.PendingRowUiModel
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.SongRowAdminUiModel
+import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.toUiModel
+import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -73,7 +75,7 @@ class NextJamAdminTest {
 
     private fun snapshot(upcoming: Jam?) = JamsSnapshot(upcoming = upcoming, past = emptyList(), freshness = fetched)
 
-    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist)
+    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist.writes(), setlist.sources())
 
     private fun add(id: Long, state: SetlistAdd.State, date: LocalDate = jamDate, title: String = "Crossroads") =
         SetlistAdd(id, date, SongId("crossroads"), title, "Eric Clapton", Key("A"), state)
@@ -253,8 +255,10 @@ class NextJamAdminTest {
                 model = awaitItem().asJam()
                 checkNotNull(model.admin).failures.single().events(AddFailureUiModel.Event.Dismiss)
                 checkNotNull(model.admin?.addSong).events(AddSongActionUiModel.Event.Open)
+                assertEquals(listOf("Add" to 4L), setlist.dismissCalls)
                 assertEquals(listOf(4L), setlist.dismissed)
                 assertEquals(listOf(jamDate), opened)
+                assertEquals(emptyList<Long>(), awaitItem().asJam().admin?.failures?.map { it.id })
 
                 // Logging out hides the BORRADOR jam from the same cache altogether (D-26).
                 session.isAdmin.value = false

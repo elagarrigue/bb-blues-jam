@@ -11,7 +11,6 @@ import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.SetlistAdd
 import com.bbbjam.core.data.setlist.SetlistMove
 import com.bbbjam.core.data.setlist.SetlistRemove
-import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.refresh.AdminRefreshEffect
@@ -26,7 +25,7 @@ import java.time.LocalDate
 internal fun rememberNextJamAdminState(
     adminSession: AdminSession,
     jams: JamsRepository,
-    setlist: SetlistRepository,
+    writes: NextJamSetlistWrites,
     isAdmin: Boolean,
     adds: List<SetlistAdd>,
     removes: List<SetlistRemove>,
@@ -38,12 +37,12 @@ internal fun rememberNextJamAdminState(
     AdminRefreshEffect(adminSession, jams)
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val onRemoval = removalHandler(setlist, scope, { confirming == it }) { confirming = it }
+    val onRemoval = removalHandler(writes.removals, scope, { confirming == it }) { confirming = it }
     if (!isAdmin) return null
     return AdminState(
         adds,
         onAddSong = onAddSong,
-        onDismiss = setlist::dismiss,
+        onDismissAdd = writes.adds::dismissAdd,
         removal = RemovalState(removes, confirming, onRemoval),
         keyChanges = overlays.keyChanges,
         assignments = overlays.assignments,
@@ -52,5 +51,8 @@ internal fun rememberNextJamAdminState(
         moves = moves,
         lineupChanges = overlays.lineupChanges,
         onMove = onMove,
+        onDismissRemove = writes.removals::dismissRemove,
+        onDismissMove = writes.moves::dismissMove,
+        overlaySources = overlays.sources,
     )
 }

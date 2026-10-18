@@ -1,7 +1,7 @@
 package com.bbbjam.feature.nextjam.songdetail
 
 import androidx.compose.runtime.MutableState
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.admin.removalKey
@@ -20,7 +20,7 @@ internal class ExtraParticipantFormState(
         date: LocalDate,
         songId: SongId,
         event: ExtraParticipantEditorUiModel.Event,
-        setlist: SetlistRepository,
+        setlist: SetlistExtraParticipantRepository,
         scope: CoroutineScope,
     ) {
         val key = removalKey(date, songId)
@@ -63,7 +63,7 @@ internal class ExtraParticipantFormState(
         date: LocalDate,
         songId: SongId,
         key: String,
-        setlist: SetlistRepository,
+        setlist: SetlistExtraParticipantRepository,
         scope: CoroutineScope,
     ) {
         if (formKey.value != key || consumed.value) return

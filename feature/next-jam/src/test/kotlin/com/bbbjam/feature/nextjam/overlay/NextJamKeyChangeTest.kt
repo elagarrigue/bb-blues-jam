@@ -7,15 +7,23 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.setlist.Assignment
+import com.bbbjam.core.data.setlist.ExtraParticipantChange
 import com.bbbjam.core.data.setlist.KeyChange
+import com.bbbjam.core.data.setlist.LineupChange
 import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.SetlistMove
 import com.bbbjam.core.data.setlist.SetlistRemove
+import com.bbbjam.core.data.setlist.SlotClear
+import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
+import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.Setlist
+import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.FakeAdminSession
@@ -28,7 +36,9 @@ import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.admin.AdminState
 import com.bbbjam.feature.nextjam.admin.RemovalState
 import com.bbbjam.feature.nextjam.admin.keyFailureMessage
+import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.toUiModel
+import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -65,7 +75,7 @@ class NextJamKeyChangeTest {
         freshness = fetched,
     )
 
-    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist)
+    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist.writes(), setlist.sources())
 
     private fun NextJamUiModel.rows() = ((this as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
 
@@ -128,6 +138,7 @@ class NextJamKeyChangeTest {
             assertEquals("Cerrar", card.dismissLabel)
             card.events(AddFailureUiModel.Event.Dismiss)
             assertEquals(listOf(4L), setlist.dismissed)
+            assertEquals(listOf("KeyChange" to 4L), setlist.dismissCalls)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -194,7 +205,7 @@ class NextJamKeyChangeTest {
                 ),
             ),
             onAddSong = {},
-            onDismiss = {},
+            onDismissAdd = {},
             removal = RemovalState(
                 listOf(
                     SetlistRemove(
@@ -224,6 +235,86 @@ class NextJamKeyChangeTest {
                     "Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo.",
             ),
             failures.map { it.title to it.message },
+        )
+    }
+
+    private fun everyKindFailed(): AdminState {
+        val reason = WriteOutcome.Unavailable
+        val song = SongId("crossroads")
+        return AdminState(
+            adds = listOf(
+                SetlistAdd(1, jamDate, song, "Crossroads", "Cream", Key("A"), SetlistAdd.State.Failed(reason)),
+            ),
+            onAddSong = {},
+            onDismissAdd = setlist::dismissAdd,
+            removal = RemovalState(
+                listOf(SetlistRemove(2, jamDate, song, "Crossroads", SetlistRemove.State.Failed(reason))),
+            ),
+            moves = listOf(SetlistMove(3, jamDate, song, "Crossroads", 2, SetlistMove.State.Failed(reason))),
+            onDismissRemove = setlist::dismissRemove,
+            onDismissMove = setlist::dismissMove,
+            overlaySources = setlist.sources(),
+            keyChanges = listOf(change(4, "C", KeyChange.State.Failed(reason))),
+            lineupChanges = listOf(
+                LineupChange(5, jamDate, song, "Crossroads", Instrument.BASS, 1, LineupChange.State.Failed(reason)),
+            ),
+            assignments = listOf(
+                Assignment(
+                    6,
+                    jamDate,
+                    song,
+                    "Crossroads",
+                    Instrument.BASS,
+                    SlotPosition(1),
+                    MusicianName.parseOrNull("Ana")!!,
+                    Assignment.State.Failed(reason),
+                ),
+            ),
+            slotClears = listOf(
+                SlotClear(
+                    7,
+                    jamDate,
+                    song,
+                    "Crossroads",
+                    Instrument.BASS,
+                    SlotPosition(1),
+                    "Ana",
+                    SlotClear.State.Failed(reason),
+                ),
+            ),
+            extraParticipantChanges = listOf(
+                ExtraParticipantChange(
+                    8,
+                    jamDate,
+                    song,
+                    "Crossroads",
+                    emptyList(),
+                    ExtraParticipantChange.State.Failed(reason),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `each failure card's Cerrar goes through the dismiss of the contract that owns it, with its own id`() {
+        val state = everyKindFailed()
+
+        val failures = snapshot().toUiModel(today, admin = state).failures()
+        assertEquals((1L..8L).toList(), failures.map { it.id })
+        failures.forEach { it.events(AddFailureUiModel.Event.Dismiss) }
+
+        assertEquals(
+            listOf(
+                "Add" to 1L,
+                "Remove" to 2L,
+                "Move" to 3L,
+                "KeyChange" to 4L,
+                "LineupChange" to 5L,
+                "Assignment" to 6L,
+                "SlotClear" to 7L,
+                "ExtraParticipantChange" to 8L,
+            ),
+            setlist.dismissCalls,
         )
     }
 

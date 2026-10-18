@@ -142,7 +142,7 @@ class SetlistJamEditsTest {
         val entries = repository.observeJamEdits().first()
         assertEquals(listOf(JamEdit.State.Outdated, JamEdit.State.Outdated), entries.map { it.state })
         assertEquals(listOf(DATE.toString(), LATER.toString()), dates())
-        entries.forEach { repository.dismiss(it.id) }
+        entries.forEach { repository.dismissJamEdit(it.id) }
         assertEquals(emptyList<JamEdit>(), repository.observeJamEdits().first())
     }
 

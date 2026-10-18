@@ -19,4 +19,7 @@ interface SetlistSlotClearRepository {
 
     /** Pending and failed clears, in call order. */
     fun observeSlotClears(): Flow<List<SlotClear>>
+
+    /** Removes a failed clear [id]; a sending entry, an unknown id or an id of another mutation is left alone. */
+    fun dismissSlotClear(id: Long)
 }

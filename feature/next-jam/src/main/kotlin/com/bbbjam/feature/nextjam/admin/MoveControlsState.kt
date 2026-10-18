@@ -8,7 +8,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistMoveRepository
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 internal data class MoveControlsState(val moves: List<SetlistMove>, val onMove: (LocalDate, SongId, Int) -> Unit)
 
 @Composable
-internal fun rememberMoveControls(setlist: SetlistRepository, snapshot: JamsSnapshot?): MoveControlsState {
+internal fun rememberMoveControls(setlist: SetlistMoveRepository, snapshot: JamsSnapshot?): MoveControlsState {
     val moves by remember { setlist.observeMoves() }.collectAsState(initial = emptyList())
     val currentSnapshot by rememberUpdatedState(snapshot)
     val currentMoves by rememberUpdatedState(moves)

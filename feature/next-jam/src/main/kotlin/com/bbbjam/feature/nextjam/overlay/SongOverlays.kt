@@ -8,7 +8,6 @@ import com.bbbjam.core.data.setlist.Assignment
 import com.bbbjam.core.data.setlist.ExtraParticipantChange
 import com.bbbjam.core.data.setlist.KeyChange
 import com.bbbjam.core.data.setlist.LineupChange
-import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.SlotClear
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.JamSong
@@ -39,6 +38,7 @@ internal class SongOverlays(
     val assignments: List<Assignment> = emptyList(),
     val slotClears: List<SlotClear> = emptyList(),
     val extraParticipantChanges: List<ExtraParticipantChange> = emptyList(),
+    val sources: SongOverlaySources? = null,
 ) {
     /**
      * [song] as the admin sees it: the pending lineup counts, then [reserve] (the detail's
@@ -75,12 +75,22 @@ internal class SongOverlays(
         fun mine(entryDate: LocalDate, entryId: SongId) = entryDate == date && (songId == null || entryId == songId)
         val keys = keyChanges.filter { mine(it.jamDate, it.songId) }.mapNotNull { change ->
             (change.state as? KeyChange.State.Failed)?.let {
-                OverlayFailure(change.id, NextJamCopy.keyFailed(change.title), keyFailureMessage(it.reason))
+                OverlayFailure(
+                    change.id,
+                    NextJamCopy.keyFailed(change.title),
+                    keyFailureMessage(it.reason),
+                    sources.dismissOf { keyRepository::dismissKeyChange },
+                )
             }
         }
         val lineups = lineupChanges.filter { mine(it.jamDate, it.songId) }.mapNotNull { change ->
             (change.state as? LineupChange.State.Failed)?.let {
-                OverlayFailure(change.id, NextJamCopy.lineupFailed(change.title), lineupFailureMessage(it.reason))
+                OverlayFailure(
+                    change.id,
+                    NextJamCopy.lineupFailed(change.title),
+                    lineupFailureMessage(it.reason),
+                    sources.dismissOf { lineupRepository::dismissLineupChange },
+                )
             }
         }
         val assigned = assignments.filter { mine(it.jamDate, it.songId) }.mapNotNull { assignment ->
@@ -89,17 +99,28 @@ internal class SongOverlays(
                     assignment.id,
                     NextJamCopy.assignmentFailed(assignment.musicianName.value, assignment.title),
                     assignmentFailureMessage(it.reason),
+                    sources.dismissOf { assignmentRepository::dismissAssignment },
                 )
             }
         }
         val clears = slotClears.filter { mine(it.jamDate, it.songId) }.mapNotNull { clear ->
             (clear.state as? SlotClear.State.Failed)?.let {
-                OverlayFailure(clear.id, NextJamCopy.CLEAR_FAILED, slotClearFailureMessage(it.reason))
+                OverlayFailure(
+                    clear.id,
+                    NextJamCopy.CLEAR_FAILED,
+                    slotClearFailureMessage(it.reason),
+                    sources.dismissOf { slotRepository::dismissSlotClear },
+                )
             }
         }
         val extras = extraParticipantChanges.filter { mine(it.jamDate, it.songId) }.mapNotNull { change ->
             (change.state as? ExtraParticipantChange.State.Failed)?.let {
-                OverlayFailure(change.id, NextJamCopy.EXTRA_FAILED, failureMessage(it.reason))
+                OverlayFailure(
+                    change.id,
+                    NextJamCopy.EXTRA_FAILED,
+                    failureMessage(it.reason),
+                    sources.dismissOf { extraRepository::dismissExtraParticipantChange },
+                )
             }
         }
         return keys + lineups + assigned + clears + extras
@@ -108,30 +129,43 @@ internal class SongOverlays(
     private fun LineupChange.matches(date: LocalDate, id: SongId) = jamDate == date && songId == id
 }
 
-/** One failed write, before it becomes an [AddFailureUiModel] card. */
-internal data class OverlayFailure(val id: Long, val title: String, val message: String)
+/** The dismiss of the contract that owns the entry, or none when the overlays were built from lists only. */
+private fun SongOverlaySources?.dismissOf(dismiss: SongOverlaySources.() -> (Long) -> Unit): (Long) -> Unit =
+    this?.dismiss() ?: {}
 
-/** [failures] as dismissible cards in id (call) order; "Cerrar" calls [onDismiss] with the entry's id. */
-internal fun failureCards(failures: List<OverlayFailure>, onDismiss: (Long) -> Unit): List<AddFailureUiModel> =
-    failures.sortedBy { it.id }.map { (id, title, message) ->
+/**
+ * One failed write, before it becomes an [AddFailureUiModel] card. [dismiss] is the dismiss of the
+ * contract that owns the entry (D6 of `setlist-mutation-contracts`), called with [id].
+ */
+internal data class OverlayFailure(val id: Long, val title: String, val message: String, val dismiss: (Long) -> Unit)
+
+/** [failures] as dismissible cards in id (call) order; "Cerrar" calls each failure's own dismiss with its id. */
+internal fun failureCards(failures: List<OverlayFailure>): List<AddFailureUiModel> =
+    failures.sortedBy { it.id }.map { failure ->
         AddFailureUiModel(
-            id = id,
-            title = title,
-            message = message,
+            id = failure.id,
+            title = failure.title,
+            message = failure.message,
             dismissLabel = NextJamCopy.CLOSE,
-            events = EventHandler(key = id) { onDismiss(id) },
+            events = EventHandler(key = failure.id) { failure.dismiss(failure.id) },
         )
     }
 
-/** Collects the five song-level entry lists of [setlist] once (the flows are created once). */
+/** Collects the five song-level entry lists of [sources] once (the flows are created once). */
 @Composable
-internal fun rememberSongOverlays(setlist: SetlistRepository): SongOverlays {
-    val keyChanges by remember { setlist.observeKeyChanges() }.collectAsState(initial = emptyList())
-    val lineupChanges by remember { setlist.observeLineupChanges() }.collectAsState(initial = emptyList())
-    val assignments by remember { setlist.observeAssignments() }.collectAsState(initial = emptyList())
-    val slotClears by remember { setlist.observeSlotClears() }.collectAsState(initial = emptyList())
-    val extras by remember { setlist.observeExtraParticipantChanges() }.collectAsState(initial = emptyList())
-    return SongOverlays(keyChanges, lineupChanges, assignments, slotClears, extras)
+internal fun rememberSongOverlays(sources: SongOverlaySources): SongOverlays {
+    val keyChanges by remember { sources.keyRepository.observeKeyChanges() }.collectAsState(initial = emptyList())
+    val lineupChanges by remember {
+        sources.lineupRepository.observeLineupChanges()
+    }.collectAsState(initial = emptyList())
+    val assignments by remember {
+        sources.assignmentRepository.observeAssignments()
+    }.collectAsState(initial = emptyList())
+    val slotClears by remember { sources.slotRepository.observeSlotClears() }.collectAsState(initial = emptyList())
+    val extras by remember {
+        sources.extraRepository.observeExtraParticipantChanges()
+    }.collectAsState(initial = emptyList())
+    return SongOverlays(keyChanges, lineupChanges, assignments, slotClears, extras, sources)
 }
 
 /** The latest sending change's list of extras, else the confirmed one. */

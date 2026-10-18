@@ -16,7 +16,7 @@ import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistSongAddRepository
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Song
 import com.bbbjam.core.model.SongId
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  * Presents the catalog picker (`admin-add-song-to-setlist`, V1). It follows the cached catalog
  * (collecting it may start the repository's own refresh; Retry re-subscribes and refreshes, as on
  * Próxima jam), filters it by the search and marks the songs already in the jam's setlist or being
- * added. Picking a song calls [SetlistRepository.addSong] with the catalog's default key (K1 (a);
+ * added. Picking a song calls [SetlistSongAddRepository.addSong] with the catalog's default key (K1 (a);
  * the admin changes it later with `admin-set-key`, D-08) and then [Params.onAdded] at once: the add
  * runs in the data layer and shows on Próxima jam as a pending row. Only the first pick counts, so
  * a double tap before the screen closes adds once.
@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 class AddSongPresenter(
     private val catalog: CatalogRepository,
     private val jams: JamsRepository,
-    private val setlist: SetlistRepository,
+    private val setlist: SetlistSongAddRepository,
 ) : Presenter<AddSongUiModel, AddSongPresenter.Params> {
 
     /** [jamDate] is the jam to add to; [onBack] leaves without adding; [onAdded] closes after a pick. */

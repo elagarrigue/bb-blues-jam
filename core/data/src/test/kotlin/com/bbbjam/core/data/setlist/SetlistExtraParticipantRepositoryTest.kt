@@ -76,7 +76,7 @@ class SetlistExtraParticipantRepositoryTest {
         assertEquals(before, cachedExtras())
         val failure = repository.observeExtraParticipantChanges().first().single()
         assertEquals(ExtraParticipantChange.State.Failed(WriteOutcome.Unavailable), failure.state)
-        repository.dismiss(failure.id)
+        repository.dismissExtraParticipantChange(failure.id)
         assertTrue(repository.observeExtraParticipantChanges().first().isEmpty())
     }
 

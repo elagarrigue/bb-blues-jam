@@ -14,12 +14,21 @@ import com.bbbjam.core.data.setlist.RemoveSongOutcome
 import com.bbbjam.core.data.setlist.SetJamStatusOutcome
 import com.bbbjam.core.data.setlist.SetKeyOutcome
 import com.bbbjam.core.data.setlist.SetSlotCountOutcome
+import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.SetlistJamCreationRepository
 import com.bbbjam.core.data.setlist.SetlistJamEditRepository
 import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.SetlistLineupRepository
+import com.bbbjam.core.data.setlist.SetlistMoveRepository
 import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.SetlistSongAddRepository
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.core.data.setlist.SetlistSongMover
+import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
 import com.bbbjam.core.data.setlist.SetlistSongRemover
 import com.bbbjam.core.data.setlist.UpdateJamOutcome
 import com.bbbjam.core.model.Instrument
@@ -30,6 +39,7 @@ import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import java.time.LocalTime
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -53,6 +63,40 @@ class AppModuleBindingsTest {
             assertSame(repository, application.koin.get<SetlistJamStatusRepository>())
             assertSame(repository, application.koin.get<SetlistPublishRepository>())
             assertSame(repository, application.koin.get<SetlistJamEditRepository>())
+        } finally {
+            application.close()
+        }
+    }
+
+    @Test
+    fun `every setlist contract resolves to the one SetlistRepository instance, entries and dismisses shared`() {
+        val repository = FakeSetlistRepository()
+        val application = koinApplication {
+            allowOverride(true)
+            modules(appModule, module { single<SetlistRepository> { repository } })
+        }
+        try {
+            val koin = application.koin
+            val resolved = listOf(
+                koin.get<SetlistSongAddRepository>(),
+                koin.get<SetlistSongRemoveRepository>(),
+                koin.get<SetlistKeyChangeRepository>(),
+                koin.get<SetlistLineupRepository>(),
+                koin.get<SetlistAssignmentRepository>(),
+                koin.get<SetlistSlotClearRepository>(),
+                koin.get<SetlistMoveRepository>(),
+                koin.get<SetlistExtraParticipantRepository>(),
+                koin.get<SetlistPublishRepository>(),
+                koin.get<SetlistJamStatusRepository>(),
+                koin.get<SetlistJamEditRepository>(),
+                koin.get<SetlistJamCreationRepository>(),
+            )
+            assertEquals(12, resolved.size)
+            resolved.forEach { assertSame(repository, it) }
+            assertSame(repository.observeKeyChanges(), koin.get<SetlistKeyChangeRepository>().observeKeyChanges())
+            koin.get<SetlistKeyChangeRepository>().dismissKeyChange(5)
+            koin.get<SetlistMoveRepository>().dismissMove(6)
+            assertEquals(listOf("KeyChange:5", "Move:6"), repository.dismissed)
         } finally {
             application.close()
         }
@@ -118,7 +162,10 @@ internal class FakeSetlistRepository : SetlistRepository {
 
     override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome = SetKeyOutcome.KeySet
 
-    override fun observeKeyChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.KeyChange>>()
+    val keyChangesFlow = MutableStateFlow(emptyList<com.bbbjam.core.data.setlist.KeyChange>())
+    val dismissed = mutableListOf<String>()
+
+    override fun observeKeyChanges() = keyChangesFlow
 
     override suspend fun setSlotCount(
         jamDate: LocalDate,
@@ -138,8 +185,6 @@ internal class FakeSetlistRepository : SetlistRepository {
     ): AssignSlotOutcome = AssignSlotOutcome.Assigned
 
     override fun observeAssignments() = emptyFlow<List<com.bbbjam.core.data.setlist.Assignment>>()
-
-    override fun dismiss(id: Long) = Unit
 
     override suspend fun clearSlot(
         jamDate: LocalDate,
@@ -164,6 +209,38 @@ internal class FakeSetlistRepository : SetlistRepository {
     override fun observePublishes() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistPublish>>()
 
     override fun dismissPublish(id: Long) = Unit
+
+    override fun dismissAdd(id: Long) {
+        dismissed += "Add:$id"
+    }
+
+    override fun dismissRemove(id: Long) {
+        dismissed += "Remove:$id"
+    }
+
+    override fun dismissKeyChange(id: Long) {
+        dismissed += "KeyChange:$id"
+    }
+
+    override fun dismissLineupChange(id: Long) {
+        dismissed += "LineupChange:$id"
+    }
+
+    override fun dismissAssignment(id: Long) {
+        dismissed += "Assignment:$id"
+    }
+
+    override fun dismissSlotClear(id: Long) {
+        dismissed += "SlotClear:$id"
+    }
+
+    override fun dismissMove(id: Long) {
+        dismissed += "Move:$id"
+    }
+
+    override fun dismissExtraParticipantChange(id: Long) {
+        dismissed += "ExtraParticipantChange:$id"
+    }
 
     override suspend fun createJam(date: LocalDate, startTime: LocalTime, venue: String): CreateJamOutcome {
         createCalls += listOf(date, startTime, venue)

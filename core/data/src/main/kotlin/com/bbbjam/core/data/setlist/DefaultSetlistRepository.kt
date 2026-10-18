@@ -33,6 +33,10 @@ internal class DefaultSetlistRepository(
     private val scope: DataScope,
     private val queue: SetlistMutationQueue = SetlistMutationQueue(),
     failureLog: WriteFailureLog = WriteFailureLog { },
+    private val additions: SetlistSongAdds =
+        SetlistSongAdds(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
+    private val lineupChanges: SetlistLineupChanges =
+        SetlistLineupChanges(writer, setlistDao, catalogDao, scope, queue),
     private val slotClears: SetlistSlotClears = SetlistSlotClears(writer, setlistDao, catalogDao, scope, queue),
     private val moves: SetlistMoves =
         SetlistMoves(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
@@ -41,6 +45,8 @@ internal class DefaultSetlistRepository(
     private val jamStatuses: SetlistJamStatuses = SetlistJamStatuses(writer, setlistDao, scope, queue, failureLog),
     private val jamEdits: SetlistJamEdits = SetlistJamEdits(writer, setlistDao, scope, queue, failureLog),
 ) : SetlistRepository,
+    SetlistSongAddRepository by additions,
+    SetlistLineupRepository by lineupChanges,
     SetlistJamStatusRepository by jamStatuses,
     SetlistJamEditRepository by jamEdits,
     SetlistSlotClearRepository by slotClears,
@@ -57,38 +63,12 @@ internal class DefaultSetlistRepository(
         failureLog,
     ) {
 
-    private val additions = SetlistSongAdds(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes)
     private val removals = SetlistRemovals(writer, setlistDao, catalogDao)
     private val keyChanges = SetlistKeyChanges(writer, setlistDao, catalogDao)
-    private val lineupChanges = SetlistLineupChanges(writer, setlistDao, catalogDao)
     private val assignments = SetlistAssignments(writer, setlistDao, catalogDao)
 
     /**
-     * Runs in [scope] from the first instruction (undispatched), so a caller cancelled at any point,
-     * even before the song is resolved, never cancels an add it started: a presenter may launch it
-     * and close its screen at once.
-     */
-    override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome =
-        additions.addSong(jamDate, songId, key)
-
-    override fun observeAdds(): Flow<List<SetlistAdd>> = additions.observe()
-
-    override fun dismiss(id: Long) {
-        additions.dismiss(id)
-        removals.dismiss(id)
-        keyChanges.dismiss(id)
-        lineupChanges.dismiss(id)
-        assignments.dismiss(id)
-        extraChanges.dismiss(id)
-        slotClears.dismiss(id)
-        moves.dismiss(id)
-        dismissPublish(id)
-        dismissJamStatusChange(id)
-        dismissJamEdit(id)
-    }
-
-    /**
-     * Runs in [scope] from the first instruction, like [addSong], and queues behind earlier writes of
+     * Runs in [scope] from the first instruction, like the add, and queues behind earlier writes of
      * either kind: the entry is published under [order] and the request sent under [writes].
      */
     override suspend fun removeSong(jamDate: LocalDate, songId: SongId): RemoveSongOutcome =
@@ -101,8 +81,10 @@ internal class DefaultSetlistRepository(
 
     override fun observeRemoves(): Flow<List<SetlistRemove>> = removals.observe()
 
+    override fun dismissRemove(id: Long) = removals.dismiss(id)
+
     /**
-     * Runs in [scope] from the first instruction, like [addSong], and queues behind earlier writes of
+     * Runs in [scope] from the first instruction, like the add, and queues behind earlier writes of
      * any kind: the entry is published under [order] and the request sent under [writes].
      */
     override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome =
@@ -115,19 +97,7 @@ internal class DefaultSetlistRepository(
 
     override fun observeKeyChanges(): Flow<List<KeyChange>> = keyChanges.observe()
 
-    override suspend fun setSlotCount(
-        jamDate: LocalDate,
-        songId: SongId,
-        instrument: Instrument,
-        count: Int,
-    ): SetSlotCountOutcome = scope.async(start = CoroutineStart.UNDISPATCHED) {
-        queue.order.withLock {
-            val entry = lineupChanges.start(queue.ids.incrementAndGet(), jamDate, songId, instrument, count)
-            scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { lineupChanges.send(entry) } }
-        }.await()
-    }.await()
-
-    override fun observeLineupChanges(): Flow<List<LineupChange>> = lineupChanges.observe()
+    override fun dismissKeyChange(id: Long) = keyChanges.dismiss(id)
 
     override suspend fun assignSlot(
         jamDate: LocalDate,
@@ -152,4 +122,6 @@ internal class DefaultSetlistRepository(
     }.await()
 
     override fun observeAssignments(): Flow<List<Assignment>> = assignments.observe()
+
+    override fun dismissAssignment(id: Long) = assignments.dismiss(id)
 }

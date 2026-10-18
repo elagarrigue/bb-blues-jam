@@ -30,6 +30,8 @@ import com.bbbjam.feature.nextjam.NextJamUiModel
 import com.bbbjam.feature.nextjam.PendingRowUiModel
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
+import com.bbbjam.feature.nextjam.sources
+import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -98,7 +100,14 @@ class NextJamLiveRefreshTest {
         start: Instant = base,
         params: () -> NextJamPresenter.Params = { NextJamPresenter.Params(isResumed = true) },
     ): Screen {
-        val presenter = NextJamPresenter(repository, calendar(start), FakeAdminSession(isAdmin), setlist, Random(SEED))
+        val presenter = NextJamPresenter(
+            repository,
+            calendar(start),
+            FakeAdminSession(isAdmin),
+            setlist.writes(),
+            setlist.sources(),
+            Random(SEED),
+        )
         val screen = Screen()
         backgroundScope.launch {
             moleculeFlow(RecompositionMode.Immediate) { presenter.present(params()) }.collect { screen.latest = it }

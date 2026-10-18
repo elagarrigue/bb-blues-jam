@@ -1,0 +1,2 @@
+tests="20" skipped="0" failures="0"
+testcase name="next-jam and past-jams main sources do not take the whole setlist repository"

@@ -85,7 +85,9 @@ class NextJamDraftTest {
 
     private fun snapshot(upcoming: Jam) = JamsSnapshot(upcoming = upcoming, past = emptyList(), freshness = fetched)
 
-    private fun presenter() = NextJamPresenter(repository, calendar, FakeAdminSession(), FakeSetlistRepository())
+    private fun presenter() = FakeSetlistRepository().let {
+        NextJamPresenter(repository, calendar, FakeAdminSession(), it.writes(), it.sources())
+    }
 
     @Test
     fun `scenario 1, a withheld draft is the header and the draft card, no rows and no bar`() = runTest {

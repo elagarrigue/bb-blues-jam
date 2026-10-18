@@ -130,7 +130,7 @@ class SetlistJamStatusesTest {
         val entry = repository.observeJamStatusChanges().first().single()
         assertEquals(JamStatusChange.State.Outdated, entry.state)
         assertEquals("PUBLISHED", status())
-        repository.dismiss(entry.id)
+        repository.dismissJamStatusChange(entry.id)
         assertEquals(emptyList<JamStatusChange>(), repository.observeJamStatusChanges().first())
     }
 

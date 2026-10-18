@@ -1,6 +1,6 @@
 package com.bbbjam.feature.nextjam.admin
 
-import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import java.time.LocalDate
@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 internal fun removalHandler(
-    setlist: SetlistRepository,
+    setlist: SetlistSongRemoveRepository,
     scope: CoroutineScope,
     isConfirming: (String) -> Boolean,
     updateConfirmation: (String?) -> Unit,

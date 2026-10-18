@@ -1820,14 +1820,24 @@
     "depends_on": [
       "typed-write-rejections"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "No :feature:next-jam class depends on SetlistRepository itself (Konsist or grep check)",
       "All interfaces resolve to the same instance (Koin test)",
       "Behavior unchanged: existing presenter tests pass",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1146 testcases; final exit 0, wired, 1150 testcases (+4: SetlistDismissTest, the 12-contract AppModuleBindingsTest, the per-card Cerrar test, Konsist rule 20; none removed): docs/evidence/setlist-mutation-contracts/baseline-init.txt, final-init.txt",
+      "Konsist rule 20 (next-jam-injects-narrow-setlist-contracts) shown failing first against the unchanged tree, 12 main files in :feature:next-jam (konsist-failing-run.txt), then green with 20 of 20 rules passing after the feature module was re-typed (konsist-green-run.txt)",
+      "Dismiss test: SetlistDismissTest creates one entry of each of the 11 kinds with entries, checks a sending entry, id 999 and another kind's id are left alone, then each typed dismiss removes only its own; mutant dismissKeyChange -> removals.dismiss failed it (dismiss-mutant-failing-run.txt), reverted and green",
+      "AppModuleBindingsTest assertSame for all 12 contracts against the one bound SetlistRepository, the key-change flow is the same instance through the narrow binding, and two typed dismisses reach the same fake; NextJamModuleTest binds the eight narrow interfaces and resolves all five presenters",
+      "Per-source Cerrar: NextJamKeyChangeTest 'each failure card's Cerrar goes through the dismiss of the contract that owns it' dismisses cards of all eight sources (add, remove, move, key, lineup, assignment, clear, extras) and asserts the typed dismiss and id of each; existing add, remove and key tests also assert dismissCalls",
+      "Grep gates print nothing for SetlistRepository in next-jam/past-jams main (outside comments), nor for the qualified form, nor for a shared dismiss(id) in SetlistRepository.kt; the only .dismiss( in features main is the OverlayFailure lambda (grep-gates.txt)",
+      "Behavior unchanged: every pre-existing presenter test passes; changes to them are construction and fake plumbing, plus the dismissCalls asserts and one awaitItem after Cerrar in NextJamAdminTest because the fake now removes a dismissed failed entry. DefaultSetlistRepository delegates SetlistSongAddRepository and SetlistLineupRepository to their managers (by) to stay under detekt TooManyFunctions; no suppression, no baseline",
+      "Docs: architecture SKILL.md (new as-built paragraph, rule count 20, :app row), docs/entregable-harness-ia.md rule count 20. No device needed",
+      "Accepted on 17 October 2026 by the independent validator: gate rerun exit 0 (konsist 20 rules, detekt, ktlint wired), rule 20 shown failing on a re-added import, own mutant on the assignment card's dismiss red then restored, moved add and lineup code identical to HEAD, no whitespace-hidden changes."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 2); the organizer asked to fix all nine findings with sonnet subagents."
   },
   {

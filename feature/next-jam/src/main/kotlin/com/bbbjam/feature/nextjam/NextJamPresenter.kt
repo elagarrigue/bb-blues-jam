@@ -16,7 +16,6 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
@@ -35,12 +34,14 @@ import com.bbbjam.core.ui.state.stalenessNotice
 import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.feature.nextjam.admin.AdminState
+import com.bbbjam.feature.nextjam.admin.NextJamSetlistWrites
 import com.bbbjam.feature.nextjam.admin.RowAdmin
 import com.bbbjam.feature.nextjam.admin.decorate
 import com.bbbjam.feature.nextjam.admin.rememberMoveControls
 import com.bbbjam.feature.nextjam.admin.rememberNextJamAdminState
 import com.bbbjam.feature.nextjam.admin.toUiModel
 import com.bbbjam.feature.nextjam.overlay.DisplayedJamSong
+import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.overlay.displayEntries
 import com.bbbjam.feature.nextjam.overlay.rememberSongOverlays
@@ -75,7 +76,7 @@ import kotlin.random.Random
  * Admin (`admin-add-song-to-setlist`, D-15): the flag comes from [adminSession]; it only decides
  * what is drawn, never what is allowed (Apps Script authorizes every write). For the admin the
  * list maps `jam.setlist`, draft songs included, and the model gains [NextJamAdminUiModel]: the
- * draft badge, the pending and failed adds of [setlist] and "Agregar tema", which calls
+ * draft badge, the pending and failed adds of [writes] and "Agregar tema", which calls
  * [Params.onAddSong]. Musicians keep `setlistForMusicians()` and a model with no admin part. When
  * the flag turns on, the presenter asks for one refresh, which is the admin read (draft songs);
  * whether it already did is saveable, so returning to the tab does not repeat it.
@@ -83,7 +84,7 @@ import kotlin.random.Random
  * Removing a song (`admin-remove-song-from-setlist`, U1): which row is confirming is one saveable
  * key ("date|songId"), so the confirmation survives rotation and only one row confirms at a time.
  * Confirm acts only while that key is still the row's, clears it and launches
- * [SetlistRepository.removeSong] undispatched, so the `Sending` entry exists before the next frame
+ * `removeSong` undispatched, so the `Sending` entry exists before the next frame
  * and a double tap removes once. The row shows "Quitando…" while a `Sending` removal exists for its
  * (date, songId); a failed one is a card, and the row is drawn as before.
  *
@@ -105,7 +106,8 @@ class NextJamPresenter(
     private val jams: JamsRepository,
     private val calendar: JamCalendar,
     private val adminSession: AdminSession,
-    private val setlist: SetlistRepository,
+    private val writes: NextJamSetlistWrites,
+    private val overlaySources: SongOverlaySources,
     private val random: Random = Random.Default,
 ) : Presenter<NextJamUiModel, NextJamPresenter.Params> {
 
@@ -131,16 +133,16 @@ class NextJamPresenter(
         }
         val currentOnAddSong by rememberUpdatedState(params.onAddSong)
         val isAdmin by remember { adminSession.observeIsAdmin() }.collectAsState(initial = false)
-        val adds by remember { setlist.observeAdds() }.collectAsState(initial = emptyList())
-        val removes by remember { setlist.observeRemoves() }.collectAsState(initial = emptyList())
-        val overlays = rememberSongOverlays(setlist)
+        val adds by remember { writes.adds.observeAdds() }.collectAsState(initial = emptyList())
+        val removes by remember { writes.removals.observeRemoves() }.collectAsState(initial = emptyList())
+        val overlays = rememberSongOverlays(overlaySources)
         var subscription by remember { mutableIntStateOf(0) }
         val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
-        val moveControls = rememberMoveControls(setlist, snapshot)
+        val moveControls = rememberMoveControls(writes.moves, snapshot)
         val admin = rememberNextJamAdminState(
             adminSession = adminSession,
             jams = jams,
-            setlist = setlist,
+            writes = writes,
             isAdmin = isAdmin,
             adds = adds,
             removes = removes,

@@ -232,7 +232,7 @@ private fun RemovalControl(model: RemovalUiModel.Removing) {
  * D-17). Title is the existing prompt; body is the existing detail lines, only when they apply.
  * Back or a tap outside dismisses exactly as "Cancelar" does — [AlertDialog]'s own
  * `onDismissRequest`. "OK" calls the same confirm handler, which calls
- * `SetlistRepository.removeSong` (D-13); nothing is written by "Cancelar", back or outside.
+ * `SetlistSongRemoveRepository.removeSong` (D-13); nothing is written by "Cancelar", back or outside.
  */
 @Composable
 private fun RemovalConfirmationDialog(model: RemovalUiModel.Confirming) {

@@ -4,12 +4,21 @@ import com.bbbjam.BuildConfig
 import com.bbbjam.core.data.AppsScriptEndpoint
 import com.bbbjam.core.data.assistant.AssistantCredentials
 import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.SetlistJamCreationRepository
 import com.bbbjam.core.data.setlist.SetlistJamEditRepository
 import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.SetlistLineupRepository
+import com.bbbjam.core.data.setlist.SetlistMoveRepository
 import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
+import com.bbbjam.core.data.setlist.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.SetlistSongAddRepository
 import com.bbbjam.core.data.setlist.SetlistSongAdder
 import com.bbbjam.core.data.setlist.SetlistSongMover
+import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
 import com.bbbjam.core.data.setlist.SetlistSongRemover
 import com.bbbjam.core.ui.link.ExternalLinkOpener
 import com.bbbjam.link.IntentLinkOpener
@@ -43,9 +52,19 @@ val appModule = module {
         JamCreator { date, startTime, venue -> repository.createJam(date, startTime, venue) }
     }
 
-    // The Jams tab sees only the narrow contracts (J1), over the same instance as Próxima jam, so the
-    // in-memory sending and failure entries are shared.
+    // Every feature sees only the narrow setlist contracts it calls (`setlist-mutation-contracts`), all bound
+    // to the one SetlistRepository instance, so the in-memory sending and failure entries are shared
+    // between Próxima jam, the song detail, the Jams tab and the assistant.
     single<SetlistJamStatusRepository> { get<SetlistRepository>() }
     single<SetlistJamEditRepository> { get<SetlistRepository>() }
     single<SetlistPublishRepository> { get<SetlistRepository>() }
+    single<SetlistAssignmentRepository> { get<SetlistRepository>() }
+    single<SetlistExtraParticipantRepository> { get<SetlistRepository>() }
+    single<SetlistJamCreationRepository> { get<SetlistRepository>() }
+    single<SetlistKeyChangeRepository> { get<SetlistRepository>() }
+    single<SetlistLineupRepository> { get<SetlistRepository>() }
+    single<SetlistMoveRepository> { get<SetlistRepository>() }
+    single<SetlistSlotClearRepository> { get<SetlistRepository>() }
+    single<SetlistSongAddRepository> { get<SetlistRepository>() }
+    single<SetlistSongRemoveRepository> { get<SetlistRepository>() }
 }

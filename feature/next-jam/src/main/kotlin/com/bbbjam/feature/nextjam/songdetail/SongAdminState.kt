@@ -6,12 +6,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
+import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
  */
 internal class SongAdminState(
     val overlays: SongOverlays = SongOverlays(),
-    val onDismiss: (Long) -> Unit = {},
     val onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> },
     val reservations: LineupReservations = LineupReservations(),
     val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit = { _, _, _, _ -> },
@@ -46,36 +45,35 @@ internal class SongAdminState(
  */
 @Composable
 internal fun rememberSongAdminState(
-    setlist: SetlistRepository,
+    sources: SongOverlaySources,
     snapshot: JamsSnapshot?,
     isAdmin: Boolean,
     overlays: SongOverlays,
     onSetKey: (LocalDate, SongId) -> Unit,
     onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit,
 ): SongAdminState? {
-    val lineup = rememberLineupControls(setlist, snapshot, isAdmin)
+    val lineup = rememberLineupControls(sources.lineupRepository, snapshot, isAdmin)
     val extraFormKey = rememberSaveable { mutableStateOf<String?>(null) }
     val extraName = rememberSaveable { mutableStateOf("") }
     val extraInstrument = rememberSaveable { mutableStateOf("") }
     val extraAddConsumed = remember { mutableStateOf(false) }
     val extraForm =
-        remember(setlist) { ExtraParticipantFormState(extraFormKey, extraName, extraInstrument, extraAddConsumed) }
+        remember(sources) { ExtraParticipantFormState(extraFormKey, extraName, extraInstrument, extraAddConsumed) }
     val scope = rememberCoroutineScope()
     if (!isAdmin) return null
     return SongAdminState(
         overlays = overlays,
-        onDismiss = setlist::dismiss,
         onSetKey = onSetKey,
         reservations = lineup.reservations,
         onLineupCount = lineup.onLineupCount,
         extraFormKey = extraFormKey.value,
         extraName = extraName.value,
         extraInstrument = extraInstrument.value,
-        onExtraEvent = { date, songId, event -> extraForm.handle(date, songId, event, setlist, scope) },
+        onExtraEvent = { date, songId, event -> extraForm.handle(date, songId, event, sources.extraRepository, scope) },
         onAssignSlot = onAssignSlot,
         onClearSlot = { date, songId, instrument, position, name ->
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
-                setlist.clearSlot(date, songId, instrument, position, name)
+                sources.slotRepository.clearSlot(date, songId, instrument, position, name)
             }
         },
     )

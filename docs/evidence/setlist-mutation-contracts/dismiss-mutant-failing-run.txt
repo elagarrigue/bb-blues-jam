@@ -1,0 +1,13 @@
+> Task :core:data:testDebugUnitTest FAILED
+
+SetlistDismissTest > a dismiss removes a failed entry of its own kind only, never a sending one FAILED
+    java.lang.AssertionError at SetlistDismissTest.kt:177
+
+1 test completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+--
+BUILD FAILED in 3s
+19 actionable tasks: 5 executed, 14 up-to-date
+Configuration cache entry reused.

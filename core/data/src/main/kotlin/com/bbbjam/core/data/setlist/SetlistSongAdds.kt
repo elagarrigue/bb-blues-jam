@@ -34,15 +34,20 @@ internal class SetlistSongAdds(
     private val ids: AtomicLong,
     private val order: Mutex,
     private val writes: Mutex,
-) {
+) : SetlistSongAddRepository {
     private val entries = MutableStateFlow<List<SetlistAdd>>(emptyList())
 
-    suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome =
+    /**
+     * Runs in the data scope from the first instruction (undispatched), so a caller cancelled at any
+     * point, even before the song is resolved, never cancels an add it started: a presenter may launch
+     * it and close its screen at once.
+     */
+    override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome =
         scope.async(start = CoroutineStart.UNDISPATCHED) { enqueue(jamDate, songId, key) }.await()
 
-    fun observe() = entries.asStateFlow()
+    override fun observeAdds() = entries.asStateFlow()
 
-    fun dismiss(id: Long) {
+    override fun dismissAdd(id: Long) {
         entries.update { list -> list.filterNot { it.id == id && it.state is SetlistAdd.State.Failed } }
     }
 

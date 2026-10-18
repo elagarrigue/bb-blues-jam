@@ -98,7 +98,7 @@ class SetlistMoveRepositoryTest {
         )
         assertEquals("the locally invalid target must not be sent", 1, post.bodies.size)
         assertTrue(repository.observeMoves().first().all { it.state is SetlistMove.State.Failed })
-        repository.dismiss(failed.id)
+        repository.dismissMove(failed.id)
         assertEquals(1, repository.observeMoves().first().size)
     }
 

@@ -80,7 +80,7 @@ class SetlistPublishRepositoryTest {
             (repository.observePublishes().first().single().state as SetlistPublish.State.Failed).reason,
         )
         assertEquals(listOf("publishSetlist failed: date=2026-10-31 outcome=Rejected(empty_setlist)"), log)
-        repository.dismiss(repository.observePublishes().first().single().id)
+        repository.dismissPublish(repository.observePublishes().first().single().id)
         assertEquals(emptyList<SetlistPublish>(), repository.observePublishes().first())
     }
 

@@ -21,7 +21,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
-| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the direct Koin bindings of the narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover`, `JamCreator`) to the one `SetlistRepository` (D-13; there is no action registry since `remove-action-registry`). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
+| `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the direct Koin bindings of the narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover`, `JamCreator`, and since `setlist-mutation-contracts` every one of the twelve `Setlist...Repository` contracts) to the one `SetlistRepository` (D-13; there is no action registry since `remove-action-registry`). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
 | `backend/apps-script` | Not a Gradle module. The Apps Script web app (`src/*.js`, `appsscript.json`), its Node tests and `tools/`. The only code that touches the Sheet; its contract is `docs/apps-script-api.md`. | nothing |
 | `:konsist-test` | Test-only JVM module (`bluesjam.jvm.library`, no `src/main`) holding the Konsist architecture suite `ModuleIsolationTest`. It reads every module's sources from disk. | nothing (no project dependency) |
 
@@ -726,18 +726,37 @@ constant escapes, and literals inside `:core:ui` components are not checked. All
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 19 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 20 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
 `jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
 `amber-roles-allowlisted`, with `next-jam-read-only-list`; the 16th,
 `no-dp-literal-outside-core-ui`, with `list-states`; the 17th, `navigation-only-in-app` (outside
 `:app` and `:konsist-test`, no import of `androidx.navigation.`; an import text match, a fully
 qualified use escapes but would not compile, because only `:app` declares the library), with
-`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below); the
+`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below; the 20th, `next-jam-injects-narrow-setlist-contracts`, with `setlist-mutation-contracts`, see below); the
 two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
+
+As built by `setlist-mutation-contracts` (17 October 2026; code-review finding 2): **`SetlistRepository` is only the union of
+twelve narrow contracts, one per mutation, each with its write, observe and dismiss.** `SetlistSongAddRepository`
+(`addSong`, `observeAdds`, `dismissAdd`), `SetlistSongRemoveRepository` (`dismissRemove`), `SetlistKeyChangeRepository`
+(`dismissKeyChange`), `SetlistLineupRepository` (`dismissLineupChange`), `SetlistAssignmentRepository` (`dismissAssignment`), and
+the existing `SetlistSlotClearRepository` (`dismissSlotClear`), `SetlistMoveRepository` (`dismissMove`),
+`SetlistExtraParticipantRepository` (`dismissExtraParticipantChange`), `SetlistPublishRepository`, `SetlistJamStatusRepository`,
+`SetlistJamEditRepository` and the write-only `SetlistJamCreationRepository`. The shared `dismiss(id)` fan-out is deleted: a
+dismiss removes a failed entry of its own kind only (a sending entry, an unknown id and another kind's id are left alone), and
+the card builder passes the dismiss of the contract that owns the entry (`OverlayFailure.dismiss`, `AdminState.onDismissAdd/Remove/Move`,
+`SongOverlays` over `SongOverlaySources`). Ids stay one global counter, so merged cards still sort by call order. A feature class
+takes only the contracts it calls; `NextJamSetlistWrites` (add, remove, move) and `SongOverlaySources` (key, lineup, assignment,
+clear, extras) are public holder classes that only group them under detekt's parameter limit, never re-exposing `SetlistRepository`.
+`DefaultSetlistRepository` delegates `SetlistSongAddRepository` and `SetlistLineupRepository` to `SetlistSongAdds` and
+`SetlistLineupChanges` (`by`), the others still live in its body until the engine slice. `:app` binds all twelve with
+`single<X> { get<SetlistRepository>() }` (`AppModuleBindingsTest` asserts `assertSame` for each). Test fakes may implement the union.
+Konsist rule 20, `next-jam-injects-narrow-setlist-contracts`: no import or fully qualified `com.bbbjam.core.data.setlist.SetlistRepository`
+in `:feature:next-jam` or `:feature:past-jams` **main** sources (shown failing against 12 files first, evidence in
+`docs/evidence/setlist-mutation-contracts/`). Known limit: a text match, so an import alias or a bare mention in a comment escapes.
 
 ## Build Conventions
 

@@ -1,6 +1,7 @@
 package com.bbbjam.core.data.setlist
 
 import android.database.SQLException
+import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.admin.AdminAnswer
 import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.WriteOutcome
@@ -13,9 +14,12 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 import java.util.Locale
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -25,10 +29,24 @@ internal class SetlistLineupChanges(
     private val writer: AdminWriter,
     private val setlistDao: SetlistDao,
     private val catalogDao: CatalogDao,
-) {
+    private val scope: DataScope,
+    private val queue: SetlistMutationQueue,
+) : SetlistLineupRepository {
     private val entries = MutableStateFlow<List<LineupChange>>(emptyList())
 
-    fun observe() = entries.asStateFlow()
+    override fun observeLineupChanges() = entries.asStateFlow()
+
+    override suspend fun setSlotCount(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        count: Int,
+    ): SetSlotCountOutcome = scope.async(start = CoroutineStart.UNDISPATCHED) {
+        queue.order.withLock {
+            val entry = start(queue.ids.incrementAndGet(), jamDate, songId, instrument, count)
+            scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { send(entry) } }
+        }.await()
+    }.await()
 
     suspend fun start(id: Long, date: LocalDate, songId: SongId, instrument: Instrument, count: Int): LineupChange {
         val title = displayedTitle(catalogDao, setlistDao, date, songId)
@@ -78,7 +96,7 @@ internal class SetlistLineupChanges(
         }
     }
 
-    fun dismiss(id: Long) {
+    override fun dismissLineupChange(id: Long) {
         entries.update { list -> list.filterNot { it.id == id && it.state is LineupChange.State.Failed } }
     }
 

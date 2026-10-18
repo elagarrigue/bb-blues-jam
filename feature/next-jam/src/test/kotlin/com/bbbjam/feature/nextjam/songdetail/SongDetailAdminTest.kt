@@ -41,6 +41,8 @@ import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
+import com.bbbjam.feature.nextjam.sources
+import com.bbbjam.feature.nextjam.writes
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -85,7 +87,8 @@ class SongDetailAdminTest {
             freshness = fetched,
         )
 
-    private fun presenter(adminSession: AdminSession = session) = SongDetailPresenter(jams, adminSession, setlist)
+    private fun presenter(adminSession: AdminSession = session) =
+        SongDetailPresenter(jams, adminSession, setlist.sources())
 
     private fun params(
         onBack: () -> Unit = {},
@@ -255,6 +258,7 @@ class SongDetailAdminTest {
             assertEquals("Cerrar", card.dismissLabel)
             card.events(AddFailureUiModel.Event.Dismiss)
             assertEquals(listOf(5L), setlist.dismissed)
+            assertEquals(listOf("KeyChange" to 5L), setlist.dismissCalls)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -263,7 +267,7 @@ class SongDetailAdminTest {
     fun `the list and the detail draw the same key, lineup and status for the same sending entries`() = runTest {
         val calendar =
             JamCalendar(Clock.fixed(Instant.parse("2026-10-02T15:00:00Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
-        val list = NextJamPresenter(jams, calendar, session, setlist)
+        val list = NextJamPresenter(jams, calendar, session, setlist.writes(), setlist.sources())
         moleculeFlow(RecompositionMode.Immediate) {
             list.present(NextJamPresenter.Params()) to presenter().present(params())
         }.test {

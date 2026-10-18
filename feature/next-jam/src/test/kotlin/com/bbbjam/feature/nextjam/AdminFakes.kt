@@ -26,6 +26,8 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.MusicianName
 import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
+import com.bbbjam.feature.nextjam.admin.NextJamSetlistWrites
+import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -247,7 +249,61 @@ class FakeSetlistRepository : SetlistRepository {
 
     override fun dismissJamEdit(id: Long) = Unit
 
-    override fun dismiss(id: Long) {
+    /** Every typed dismiss, as (contract noun, id): which contract a card's "Cerrar" went through. */
+    val dismissCalls = mutableListOf<Pair<String, Long>>()
+
+    override fun dismissAdd(id: Long) {
         dismissed += id
+        dismissCalls += "Add" to id
+        adds.value = adds.value.filterNot { it.id == id && it.state is SetlistAdd.State.Failed }
+    }
+
+    override fun dismissRemove(id: Long) {
+        dismissed += id
+        dismissCalls += "Remove" to id
+        removes.value = removes.value.filterNot { it.id == id && it.state is SetlistRemove.State.Failed }
+    }
+
+    override fun dismissKeyChange(id: Long) {
+        dismissed += id
+        dismissCalls += "KeyChange" to id
+        keyChanges.value = keyChanges.value.filterNot { it.id == id && it.state is KeyChange.State.Failed }
+    }
+
+    override fun dismissLineupChange(id: Long) {
+        dismissed += id
+        dismissCalls += "LineupChange" to id
+        lineupChanges.value = lineupChanges.value.filterNot { it.id == id && it.state is LineupChange.State.Failed }
+    }
+
+    override fun dismissAssignment(id: Long) {
+        dismissed += id
+        dismissCalls += "Assignment" to id
+        assignments.value = assignments.value.filterNot { it.id == id && it.state is Assignment.State.Failed }
+    }
+
+    override fun dismissSlotClear(id: Long) {
+        dismissed += id
+        dismissCalls += "SlotClear" to id
+        slotClears.value = slotClears.value.filterNot { it.id == id && it.state is SlotClear.State.Failed }
+    }
+
+    override fun dismissMove(id: Long) {
+        dismissed += id
+        dismissCalls += "Move" to id
+        moves.value = moves.value.filterNot { it.id == id && it.state is SetlistMove.State.Failed }
+    }
+
+    override fun dismissExtraParticipantChange(id: Long) {
+        dismissed += id
+        dismissCalls += "ExtraParticipantChange" to id
+        extraParticipantChanges.value =
+            extraParticipantChanges.value.filterNot { it.id == id && it.state is ExtraParticipantChange.State.Failed }
     }
 }
+
+/** The list's add, remove and move contracts, all this one fake (as `:app` binds them). */
+fun FakeSetlistRepository.writes() = NextJamSetlistWrites(this, this, this)
+
+/** The five song-level contracts, all this one fake. */
+fun FakeSetlistRepository.sources() = SongOverlaySources(this, this, this, this, this)
