@@ -268,7 +268,10 @@ upcoming jam until the earlier one passes. The list proposal can be loaded only 
 `SetlistRepository` is the mutation inventory: exactly these fourteen repository-callable mutations (the `SetlistActionRegistry` that once listed them was removed by `remove-action-registry`, 17 October 2026):
 add song, remove song, set key, adjust lineup slot count, assign musician, clear slot, add extra
 participant under `Otros`, remove extra participant under `Otros`, reorder song, publish setlist, create the next jam (a `BORRADOR` `Jams` row, D-25), set the jam status (D-26), update a future jam and delete a future jam (D-28).
-Each returns its own typed outcome. The assistant reaches four of them (add, remove, move, create
+Each returns its own typed outcome. `SetlistRepository` is the union of twelve narrow contracts, one
+per mutation (adding and removing an extra participant share one, as do updating and deleting a
+future jam), so a presenter receives only the
+contracts it uses. The assistant reaches four of them (add, remove, move, create
 jam) through narrow `:core:data` contracts that `:app` binds to the same repository. Read-only refresh/observe operations, failure dismissal and admin login are not setlist
 mutations. Apps Script remains the write authority; the repository is not a credential or protocol
 boundary. A deeplink scheme remains deferred under D1.

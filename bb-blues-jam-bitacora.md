@@ -444,6 +444,10 @@ El asistente es una *feature* propia y su tab se dibuja solo con la sesión de a
 `:feature:admin` que descarta D-15: los controles de admin sobre las pantallas existentes siguen
 en sus *features*. El agente, sus *tools* y el cliente viven fuera del módulo de *feature*.
 
+*Nota, 18 de octubre de 2026:* el agente vivía en `:core:data`. Desde `core-assistant-module` vive
+en su propio módulo, `:core:assistant`, que depende de `:core:data` y lee solo los repositorios de
+catálogo y de jams. La decisión no cambia: el agente sigue fuera de la *feature* (ver 6.22).
+
 ### D-24 — El asistente propone; el admin aplica
 El agente lee el catálogo y las jams pasadas con *tools* y responde un JSON estructurado: temas,
 mensaje de cierre y preguntas. Antes de mostrar la lista, cada tema se valida contra el catálogo
@@ -1381,6 +1385,78 @@ aplicar su propio `statusBarsPadding()`, para no duplicar el inset). `MainActivi
 nada (D-11). Ningún rol ámbar nuevo ni cambio a `AMBER_ROLE_ALLOWLIST` (D-17). El recurso Android
 `bluesjam_window_background` sigue espejando la paleta musical exacta: pinta el primer frame antes
 de que Kotlin pueda saber si hay admin.
+
+### 6.22 Sesiones del 17 y 18 de octubre — la tarea final: code review y fixes
+
+**Por qué.** Con todas las rebanadas de producto aceptadas, faltaba mirar el conjunto. Cada
+validador había juzgado su rebanada contra su spec, pero nadie había revisado lo que se repetía
+entre rebanadas, ni lo que cada una agregó sin que ninguna sola lo rompiera. La última tarea del
+proceso fue un code review general y la corrección de lo que apareció.
+
+**Dos pedidos que abrieron la revisión.**
+
+- **Subpaquetes en las features.** El organizador notó que los módulos de feature tenían demasiadas
+  clases en un mismo paquete. La rebanada `feature-subpackages` los ordenó por pantalla y por
+  función.
+- **El registro de acciones sobraba.** Al pedir que se le explicara el `SetlistActionRegistry`, el
+  organizador preguntó por qué hacía falta. El LLM emite propuestas, no acciones, y el registro solo
+  envolvía y desenvolvía la misma llamada al repositorio. Eligió la opción A: atar los contratos
+  angostos directo a `SetlistRepository`. Se eliminó en `remove-action-registry`, con la nota a
+  D-13.
+
+**La revisión.** Primero se pusieron al día todos los documentos. Después, el orquestador revisó el
+repositorio entero buscando problemas de arquitectura, SOLID y clean code. Encontró nueve:
+
+1. Las features comparaban códigos de error del servidor como strings.
+2. `SetlistRepository` era una interfaz gorda: cada presenter recibía las catorce mutaciones (ISP).
+3. Once clases repetían la misma cola de escritura: mutex, `DataScope` y entradas pendientes.
+4. El paquete `setlist` tenía 60 archivos.
+5. Los fakes de test estaban duplicados, con el mismo nombre en varios módulos.
+6. Las features exponían 122 declaraciones públicas cuando solo hacían falta las pantallas.
+7. Colaboradores compartidos como `RunLock` tenían valores por defecto que escondían el cableado.
+8. Las previews estaban mezcladas con el código de producción de las pantallas.
+9. El agente Koog vivía en `:core:data`, junto a Room y DataStore.
+
+**Los arreglos.** El organizador pidió "agrega todos los 9 y solucionalos usando sonnet". Los
+nueve hallazgos se agruparon en siete rebanadas y cada una pasó por el ciclo completo, `planner →
+implementer → validator`, con los tres subagentes en Sonnet:
+
+| Rebanada | Commit | Qué cambió |
+|---|---|---|
+| `typed-write-rejections` | `7b09521` | El enum `WriteRejection` reemplaza los strings; los textos de error genéricos viven una vez en `:core:ui` |
+| `setlist-mutation-contracts` | `6177305` | Una interfaz por mutación, cada una con su `dismiss` tipado; regla de Konsist 20 |
+| `setlist-mutation-engine` | `ebe22ff` | Un motor compartido (`enqueue` y `PendingEntries`) en vez de once copias; `setlist` en doce subpaquetes |
+| `shared-test-fixtures` | `c64cbb6` | Los fakes compartidos en `testFixtures` de `:core:data`; detekt revisa esa carpeta |
+| `feature-api-surface` | `59ffa6f` | De 122 a 14 declaraciones públicas en las features; regla 21 |
+| `wiring-and-preview-hygiene` | `cef51f5` | Colaboradores compartidos como parámetros obligatorios; previews en `*Preview.kt`; regla 22 |
+| `core-assistant-module` | `414ff69` | El agente en `:core:assistant`; Konsist se amplió a propósito para la nueva arista `:core:assistant → :core:data` |
+
+**Lo que apareció al ejecutar.**
+
+- **Dos huecos en los tests viejos.** Al romper el motor compartido a propósito, dos de esas roturas
+  seguían en verde: nadie probaba que el despacho fuera el correcto ni que una escritura inmediata
+  no tomara la cola. `EngineTest` cubre ese hueco desde antes de aceptar.
+- **Un punto ciego del gate.** detekt no revisaba `src/testFixtures`. Apareció al mover los fakes
+  y se cableó; el gate volvió a ponerse más estricto, nunca más laxo.
+- **Un archivo suelto y un permiso denegado.** En `wiring-and-preview-hygiene` el validador creó un
+  archivo de prueba en `:feature:next-jam` para ver fallar la regla 22. No pudo borrarlo porque el
+  clasificador de permisos se lo negó, y le pidió al orquestador que lo borrara. El orquestador no
+  lo hizo en su nombre: ejecutar por otro camino lo que se le negó a un subagente es saltarse el
+  permiso. Le preguntó al organizador, y lo borró recién con su "seguí". Después volvió a mostrar la
+  regla en rojo y en verde.
+- **Un `revise` por un documento.** El validador de `core-assistant-module` devolvió `revise` por
+  una frase que seguía diciendo que el grafo tenía ocho módulos.
+
+**Resultado.** El comportamiento de la app no cambió, así que no hubo pruebas nuevas en el
+teléfono. La prueba fue el mismo gate: de 1124 a 1156 tests y de 19 a 22 reglas de Konsist, cada
+regla nueva vista fallar antes de pasar. Quedan dos huecos conocidos: ningún test comprueba que
+Koin le pase el mismo `RunLock` a los dos componentes que lo comparten, y la prueba opcional en vivo
+del asistente no se volvió a correr contra el gateway.
+
+**La lección.** Validar por rebanada no alcanza. Hay problemas que no son de ninguna rebanada, sino
+de su suma, y solo aparecen al revisar el conjunto. Los hallazgos no quedaron como comentarios:
+cada uno pasó a ser una rebanada con spec, validador y evidencia, y los que podían volver se
+convirtieron en reglas ejecutables.
 
 ## 7. Mapa a los módulos del curso
 

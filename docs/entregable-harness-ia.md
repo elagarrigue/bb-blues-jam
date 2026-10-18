@@ -13,14 +13,14 @@ cada decisión. La funcionalidad de la app está en el [README](../README.md).
 
 | | |
 |---|---|
-| Período | 19 de septiembre al 17 de octubre de 2026, cuatro semanas |
-| Rebanadas (features) en `feature_list.json` | 67: 66 `accepted`, 1 `blocked` por decisión de alcance (D-20) |
-| Especificaciones escritas por el `planner` | 66, en `docs/specs/` |
+| Período | 19 de septiembre al 18 de octubre de 2026, cuatro semanas |
+| Rebanadas (features) en `feature_list.json` | 75: 74 `accepted`, 1 `blocked` por decisión de alcance (D-20) |
+| Especificaciones escritas por el `planner` | 74, en `docs/specs/` |
 | Decisiones registradas con su fundamento | 29 (D-01 … D-29) |
-| Commits | más de 220 |
-| Tests JVM en la última corrida del gate | 1135 |
-| Reglas de arquitectura ejecutables (Konsist) | 20 |
-| Módulos Gradle | 8, más `:konsist-test` y el build incluido `build-logic` |
+| Commits | más de 240 |
+| Tests JVM en la última corrida del gate | 1156 |
+| Reglas de arquitectura ejecutables (Konsist) | 22 |
+| Módulos Gradle | 9, más `:konsist-test` y el build incluido `build-logic` |
 | Acciones del backend (Apps Script) | más de 20, todas validadas en el servidor |
 | Líneas de código de producto escritas a mano | ninguna |
 
@@ -178,7 +178,7 @@ de baseline que escondan problemas y sin reglas apagadas para que pase. Cuando d
 
 ### 3.5 Reglas de arquitectura como código (Konsist)
 
-Las decisiones que un build en verde no detecta se volvieron tests. Algunas de las 20 reglas:
+Las decisiones que un build en verde no detecta se volvieron tests. Algunas de las 22 reglas:
 
 | Regla | Decisión |
 |---|---|
@@ -189,6 +189,7 @@ Las decisiones que un build en verde no detecta se volvieron tests. Algunas de l
 | Ninguna feature importa la navegación | D-03 |
 | El agente no puede referenciar repositorios de escritura (`assistant-reads-only`) | D-24 |
 | La feature del asistente solo aplica propuestas a través del contrato de acciones | D-13 |
+| Una feature solo expone sus pantallas y su módulo Koin (desde el code review final, sección 7) | D-03 |
 
 **Regla de método: una regla que no puede fallar no prueba nada.** Cada regla nueva se mostró
 fallando antes de confiar en que pasara. Se plantaba la violación, se veía el gate en rojo con el
@@ -368,7 +369,7 @@ El MVP se construyó para recibir al asistente: contrato de acciones (D-13), cat
 | D-21 | Agente en el teléfono con **Koog** (JetBrains), el equivalente en Kotlin del Agents SDK visto en clase | Un servidor aparte con `openai-agents`, o un bucle propio sobre OkHttp |
 | D-21 | Subir Kotlin 2.2 → 2.3 primero, en su propia rebanada | Usar Koog 0.5, anterior a la 1.0 |
 | D-22 | Key de DevExpert Inference en `BuildConfig`, con el riesgo aceptado y escrito | Pedirla en la app, o solo en debug |
-| D-23 | `:feature:assistant` con un tab solo para el admin; el agente vive en `:core:data` | Un `:feature:admin` (choca con D-15) |
+| D-23 | `:feature:assistant` con un tab solo para el admin; el agente vive en `:core:data` (desde el code review final, en `:core:assistant`) | Un `:feature:admin` (choca con D-15) |
 | D-24 | **El asistente propone; el admin aplica** | Que el agente escriba |
 | D-25 a D-29 | La app crea, edita, borra y cambia el estado de las jams; las listas se cargan en jams en espera | Seguir dependiendo de la planilla para eso |
 
@@ -412,7 +413,58 @@ semana.
 
 ---
 
-## 7. Errores, y qué los atrapó
+## 7. La tarea final: code review y fixes
+
+Con las rebanadas de producto aceptadas, la última tarea del proceso fue revisar el código entero
+y corregir lo que apareciera (bitácora §6.22). Cada rebanada ya había pasado por su validador, pero
+un validador juzga una rebanada contra su spec. Nadie había mirado el conjunto: lo que se repite
+entre rebanadas, o lo que cada una agregó sin que ninguna sola lo rompiera.
+
+**Cómo se hizo.**
+
+1. Dos pedidos puntuales del organizador abrieron la revisión:
+   - Los módulos de feature tenían demasiadas clases por paquete. Eso dio la rebanada
+     `feature-subpackages`.
+   - El `SetlistActionRegistry` solo envolvía y desenvolvía la misma llamada al repositorio. Se
+     eliminó en `remove-action-registry`, con una nota a D-13.
+2. Primero se pusieron al día todos los documentos. Después, el orquestador hizo una revisión
+   general de arquitectura, SOLID y clean code sobre todo el repositorio.
+3. Salieron nueve hallazgos. Se agruparon en siete rebanadas nuevas en `feature_list.json`. Cada
+   una pasó por el mismo ciclo `planner → implementer → validator` que una rebanada de producto,
+   con los tres subagentes en Sonnet.
+
+**Los hallazgos y su arreglo.**
+
+| Hallazgo | Principio | Rebanada |
+|---|---|---|
+| Las features comparaban códigos de error del servidor como strings (`"song_not_in_setlist"`) | tipos sobre strings | `typed-write-rejections` |
+| `SetlistRepository` era una interfaz gorda: cada presenter recibía las catorce mutaciones | ISP | `setlist-mutation-contracts` |
+| Once copias de la misma cola de escritura (mutex, `DataScope`, entradas pendientes) | DRY / SRP | `setlist-mutation-engine` |
+| Un paquete `setlist` con 60 archivos | cohesión | `setlist-mutation-engine` |
+| Fakes de test duplicados con el mismo nombre en varios módulos | DRY | `shared-test-fixtures` |
+| 122 declaraciones públicas en las features, cuando solo hacían falta las pantallas | encapsulamiento | `feature-api-surface` |
+| Colaboradores compartidos (`RunLock`) con valores por defecto que escondían el cableado | DIP | `wiring-and-preview-hygiene` |
+| Previews mezcladas con el código de producción de las pantallas | SRP | `wiring-and-preview-hygiene` |
+| El agente Koog vivía en `:core:data`, junto a Room y DataStore | SRP por módulo | `core-assistant-module` |
+
+**Lo que mostró.**
+
+- **Un refactor también necesita un test que falle.** Al romper a propósito el motor de escritura
+  compartido, dos de esas roturas seguían en verde con los tests viejos: nadie probaba el despacho ni la
+  escritura inmediata. Se agregó `EngineTest` antes de aceptar.
+- **El gate tenía un punto ciego.** detekt no revisaba la carpeta nueva de `testFixtures`. Se
+  descubrió al moverle código y se cableó.
+- **Las correcciones se volvieron reglas.** Tres de los hallazgos quedaron como reglas de Konsist
+  (20 a 22), y cada una se vio fallar antes de pasar. Así el problema no puede volver en silencio.
+- **El comportamiento no cambió.** No hubo pruebas nuevas en el teléfono. La prueba fue el mismo
+  gate: de 1124 a 1156 tests y de 19 a 22 reglas, con la app idéntica para el usuario.
+- **Un validador dejó un archivo suelto** que rompía la compilación y le pidió al orquestador que
+  lo borrara, porque a él se le había negado el permiso. El orquestador no borró en su nombre:
+  primero le preguntó al humano (ver la sección 8).
+
+---
+
+## 8. Errores, y qué los atrapó
 
 Un registro honesto vale más que una lista de aciertos.
 
@@ -427,12 +479,14 @@ Un registro honesto vale más que una lista de aciertos.
 | La restricción de TalkBack no se le pasó al implementer | orquestador | el usuario | cada prompt con dispositivo repite los límites |
 | Tests que no podían fallar (invertir la regla los dejaba en verde) | implementer | validator | romper a propósito es parte de la DoD |
 | Una evidencia que decía "sin medir" al lado de la medición | implementer | validator | `revise` hasta que doc y evidencia coinciden |
+| Un validador dejó un archivo de prueba que rompía la compilación y, con el borrado denegado, le pidió al orquestador que lo borrara | validator | el orquestador, que preguntó al humano | un permiso denegado a un subagente no se ejecuta por otro camino sin confirmación |
+| Duplicación y acoplamiento acumulados entre rebanadas, invisibles para cada validador | proceso | el code review final (sección 7) | revisión general como última tarea, con hallazgos convertidos en rebanadas y reglas |
 
 Un orquestador también necesita su propio gate (§6.18).
 
 ---
 
-## 8. Mapa a los módulos del curso
+## 9. Mapa a los módulos del curso
 
 | Semana | Módulo | Aplicación en el proyecto |
 |---|---|---|
@@ -441,13 +495,13 @@ Un orquestador también necesita su propio gate (§6.18).
 | 3 | IDEs agénticos | El MVP completo construido por el pipeline `planner → implementer → validator` en Claude Code, y Codex sobre el mismo harness |
 | 4 | CLI y MCP | Subagentes, skills propias, MCP de Stitch (en el scope de usuario para no versionar la key), `adb` y probes HTTP como herramientas de verificación |
 | 5 | APIs de IA | Agente Koog con tool calling, salida estructurada, streaming, validación contra el catálogo y contrato de acciones |
-| 6 | Prototipado y proyecto final | La app en manos del organizador: maneja las jams sin tocar la planilla |
+| 6 | Prototipado y proyecto final | La app en manos del organizador: maneja las jams sin tocar la planilla. Cierre con un code review general y sus fixes por el mismo pipeline |
 
 ---
 
-## 9. Lecciones
+## 10. Lecciones
 
-1. **El harness importa más que el prompt.** Lo que mantuvo la calidad durante 65 rebanadas fueron
+1. **El harness importa más que el prompt.** Lo que mantuvo la calidad durante 74 rebanadas fueron
    el gate, las reglas ejecutables, la escalera de estados y el validador independiente, no una
    instrucción bien redactada.
 2. **Separar roles encuentra lo que un solo agente no ve.** El que planifica, el que implementa y el
@@ -465,10 +519,14 @@ Un orquestador también necesita su propio gate (§6.18).
 8. **La IA es un multiplicador del criterio, no un reemplazo.** Las 29 decisiones las tomó el
    humano. Los agentes las convirtieron en código, tests y evidencia, y avisaron cada vez que algo
    las contradecía.
+9. **Validar por rebanada no alcanza: hace falta una revisión del conjunto.** Cada validador juzga
+   su rebanada. La duplicación y el acoplamiento que se acumulan entre rebanadas solo aparecen
+   mirando todo junto. Por eso la última tarea fue un code review general, y sus arreglos pasaron
+   por el mismo pipeline que el producto.
 
 ---
 
-## 10. Dónde mirar la evidencia
+## 11. Dónde mirar la evidencia
 
 | Qué | Dónde |
 |---|---|
@@ -482,3 +540,4 @@ Un orquestador también necesita su propio gate (§6.18).
 | Reglas de arquitectura | `konsist-test/` |
 | Gate | `init.sh` |
 | Guías de migración del backend | `docs/migrations/` |
+| Code review final: las siete rebanadas de arreglos | `feature_list.json` (de `typed-write-rejections` a `core-assistant-module`), `docs/specs/`, `PROGRESS.md` |

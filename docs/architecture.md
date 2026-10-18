@@ -1,7 +1,8 @@
 # Application architecture
 
 Verified against the module definitions, composition root, repository bindings and agent tools
-on 18 October 2026, after `remove-action-registry` (commit `44657af`). The presentation-ready
+on 18 October 2026, after the code-review fixes that ended with `core-assistant-module` (commit
+`414ff69`). The presentation-ready
 overview is available as [SVG](diagrams/app-architecture.svg) and [PNG](diagrams/app-architecture.png).
 Solid arrows in that overview indicate module dependencies; dashed arrows indicate runtime HTTP
 communication. The overview groups repeated dependencies to keep it readable. The exact direct
@@ -110,7 +111,11 @@ device. Admin is state inside each feature, not a separate module.
 
 ## Verification and source references
 
-Konsist enforces architectural boundaries. Molecule tests exercise composable presenters on the
+Konsist enforces architectural boundaries with 22 rules. The last three came from the October 2026
+code review: `:feature:next-jam` and `:feature:past-jams` take the narrow setlist contracts, never
+the whole `SetlistRepository`; a
+feature module exposes only its screens and its Koin module; previews live in private `*Preview.kt`
+files. Molecule tests exercise composable presenters on the
 JVM. `init.sh` invokes the project's build/check gate, including Konsist, detekt and ktlint. These
 tools inspect the product; they are not runtime services.
 

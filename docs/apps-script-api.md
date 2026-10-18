@@ -570,7 +570,7 @@ it and decodes with `decodeOk`:
 | `invalid_passphrase`, `passphrase_not_set` | `AccessRefused` |
 | `rate_limited`, `busy`, `unknown_action`, `NotConfigured`, an HTML page, any invalid answer | `Unavailable` |
 | `Offline` | `Offline` |
-| any other service code | `Rejected(code)` |
+| any other service code | `Rejected(code)`, whose `rejection` is the typed `WriteRejection` |
 
 `AdminWriter` never saves or clears the stored passphrase, whatever the answer (user decision
 W3): a refused write leaves the device in admin mode, and the admin recovers on Info with five
@@ -601,6 +601,23 @@ With no passphrase stored the refresh is the anonymous GET, as before. Musician 
 reading `Jam.setlistForMusicians()`, which withholds every draft whatever the cache holds.
 
 ### Client setlist mutations (`SetlistRepository`)
+
+**Current shape (after the October 2026 code review).** The per-slice paragraphs below record what
+each slice added; four things changed afterwards without changing any request, answer or cache
+rule:
+
+- `SetlistRepository` is the union of twelve narrow contracts, one per mutation, each in its own
+  `setlist/` subpackage (`add`, `remove`, `key`, `lineup`, `assign`, `clear`, `move`, `extras`,
+  `publish`, `jamstatus`, `jamcreate`, `jamedit`). Each contract has its write, its `observe…` and
+  a typed `dismiss<Noun>(id)`; the single `dismiss(id)` the paragraphs below mention is gone
+  (`setlist-mutation-contracts`). Ids still share one counter.
+- The order and write mutexes, the `DataScope` launch and the entry bookkeeping live once in
+  `setlist/engine/` (`SetlistMutationQueue.enqueue` and `PendingEntries`), not in each mutation
+  class (`setlist-mutation-engine`).
+- `WriteOutcome.Rejected(code)` also exposes `rejection: WriteRejection`, a typed enum of the
+  service codes (`Unknown` for an unlisted one); no feature compares code strings
+  (`typed-write-rejections`).
+- The phase 2 agent lives in `:core:assistant`, not in `:core:data` (`core-assistant-module`).
 
 `:core:data` `setlist/` holds the public `SetlistRepository` (`addSong(jamDate, songId, key):
 AddSongOutcome`, `observeAdds(): Flow<List<SetlistAdd>>`, `dismiss(id)`), `AddSongOutcome`
