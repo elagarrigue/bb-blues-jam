@@ -20,7 +20,7 @@ import com.bbbjam.core.ui.strip.InstrumentChipUiModel
  * cached data whose latest refresh failed. Every state can be pulled to refresh
  * (`live-refresh-during-jam`): [pullRefresh] is the indicator and the pull's event.
  */
-sealed interface NextJamUiModel : UiModel {
+internal sealed interface NextJamUiModel : UiModel {
     val pullRefresh: PullRefreshUiModel
 
     /**
@@ -70,7 +70,7 @@ sealed interface NextJamUiModel : UiModel {
  * status under the header, then pending/failed row mutations and [addSong] after the rows. The
  * filter never hides pending rows or failures.
  */
-data class NextJamAdminUiModel(
+internal data class NextJamAdminUiModel(
     val status: AdminStatusUiModel,
     val pending: List<PendingRowUiModel>,
     val failures: List<AddFailureUiModel>,
@@ -82,10 +82,10 @@ data class NextJamAdminUiModel(
  * D-27): the shared [badge], the [note] of what musicians see and the [hint] that points to the Jams
  * tab, where the status is changed and the list is published.
  */
-data class AdminStatusUiModel(val badge: JamStatusBadgeUiModel, val note: String, val hint: String) : UiModel
+internal data class AdminStatusUiModel(val badge: JamStatusBadgeUiModel, val note: String, val hint: String) : UiModel
 
 /** An add in flight: [title] and [status] ("Agregando…"), at the end of the list. */
-data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
+internal data class PendingRowUiModel(val id: Long, val title: String, val status: String) : UiModel
 
 /**
  * A failed add, remove or key change (`admin-remove-song-from-setlist` and `admin-set-key` reuse the
@@ -93,7 +93,7 @@ data class PendingRowUiModel(val id: Long, val title: String, val status: String
  * agregar «Crossroads»", "No se pudo quitar «Crossroads»" or "No se pudo cambiar la tonalidad de
  * «Crossroads»"), [message] by outcome (C1) and [dismissLabel] ("Cerrar").
  */
-data class AddFailureUiModel(
+internal data class AddFailureUiModel(
     val id: Long,
     val title: String,
     val message: String,
@@ -107,16 +107,16 @@ data class AddFailureUiModel(
 }
 
 /** "Agregar tema": opens the catalog picker for the jam. Navigation only. */
-data class AddSongActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+internal data class AddSongActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
         data object Open : Event
     }
 }
 
 /** [date] is "Sábado 31 de octubre · 21:00"; [venue] is the Sheet's `lugar` as written. */
-data class JamHeaderUiModel(val date: String, val venue: String, val timeRemaining: String) : UiModel
+internal data class JamHeaderUiModel(val date: String, val venue: String, val timeRemaining: String) : UiModel
 
-sealed interface SetlistUiModel : UiModel {
+internal sealed interface SetlistUiModel : UiModel {
     /**
      * The rows in position order, only those the instrument filter shows; [droppedRowsNote] says how
      * many rows could not be read, or is null. [filterBar] is the instrument filter
@@ -146,7 +146,7 @@ sealed interface SetlistUiModel : UiModel {
  * The draft card: [label] is the badge (drawn uppercase, "EN PREPARACIÓN"), [title] the heading and
  * [message] what the musician will see once the list is published. Nothing in it is clickable.
  */
-data class DraftSetlistUiModel(val label: String, val title: String, val message: String) : UiModel
+internal data class DraftSetlistUiModel(val label: String, val title: String, val message: String) : UiModel
 
 /**
  * One song row, always collapsed (`song-detail-replaces-row-expansion`; D-07). [position] is the
@@ -158,7 +158,7 @@ data class DraftSetlistUiModel(val label: String, val title: String, val message
  * readers. [admin] is the admin's part of the row, the compact bar under the header; null for
  * musicians, so a musician's row is exactly what it was before admin controls existed.
  */
-data class SongRowUiModel(
+internal data class SongRowUiModel(
     val position: Int,
     val positionLabel: String,
     val rowKey: String = "p$position",
@@ -185,7 +185,7 @@ data class SongRowUiModel(
  * lineup, slots, extras or position), else null; it is drawn under the title line. Song-level
  * controls live in the song detail.
  */
-data class SongRowAdminUiModel(
+internal data class SongRowAdminUiModel(
     val removal: RemovalUiModel,
     val move: MoveUiModel? = null,
     val saveStatus: String? = null,
@@ -199,7 +199,7 @@ data class SongRowAdminUiModel(
  * non-blank) and "Cancelar". The extras themselves, each with its "Quitar", are lines of the song detail's
  * lineup panel (`ui-polish-pass`, U4), which sends [Event.Remove] here.
  */
-data class ExtraParticipantEditorUiModel(
+internal data class ExtraParticipantEditorUiModel(
     val formVisible: Boolean,
     val name: String,
     val instrument: String,
@@ -221,10 +221,10 @@ data class ExtraParticipantEditorUiModel(
 }
 
 /** The move actions of an admin row. Edges count the full setlist, not filtered rows. */
-data class MoveUiModel(val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel
+internal data class MoveUiModel(val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel
 
 /** One visible one-place reorder action. Disabled actions remain drawn to keep the layout stable. */
-data class MoveActionUiModel(
+internal data class MoveActionUiModel(
     val label: String,
     val clickLabel: String,
     val enabled: Boolean,
@@ -236,7 +236,7 @@ data class MoveActionUiModel(
 }
 
 /** "Cambiar tonalidad": opens the key picker for the detail's song. Navigation only. */
-data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+internal data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
         data object Open : Event
     }
@@ -247,7 +247,7 @@ data class SetKeyActionUiModel(val label: String, val events: EventHandler<Event
  * [RemovalUiModel.Event.Confirm]; there is no undo, and the row disappears only when the server
  * confirms (no optimistic hide).
  */
-sealed interface RemovalUiModel : UiModel {
+internal sealed interface RemovalUiModel : UiModel {
     sealed interface Event : UiEvent {
         /** Show the confirmation instead of the action. Changes nothing anywhere. */
         data object RequestRemove : Event
@@ -280,9 +280,9 @@ sealed interface RemovalUiModel : UiModel {
 }
 
 /** The song detail's always-visible admin lineup controls. */
-data class LineupEditorUiModel(val heading: String, val lines: List<LineupEditorLineUiModel>) : UiModel
+internal data class LineupEditorUiModel(val heading: String, val lines: List<LineupEditorLineUiModel>) : UiModel
 
-data class LineupEditorLineUiModel(
+internal data class LineupEditorLineUiModel(
     val instrument: com.bbbjam.core.model.Instrument,
     val countLabel: String,
     val removeDescription: String,

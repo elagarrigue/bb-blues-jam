@@ -7,10 +7,10 @@ import com.bbbjam.core.model.SongId
 import java.time.LocalDate
 
 /** The three ways a proposal's songs reach a jam (`assistant-proposal-targets`). */
-enum class ApplyMode { ADD, REPLACE, CREATE }
+internal enum class ApplyMode { ADD, REPLACE, CREATE }
 
 /** One proposal song in a run and what happened to it. */
-data class SongApply(val song: ProposedSong, val state: State) {
+internal data class SongApply(val song: ProposedSong, val state: State) {
     sealed interface State {
         data object Waiting : State
 
@@ -31,7 +31,7 @@ data class SongApply(val song: ProposedSong, val state: State) {
 }
 
 /** One listed song a replace takes out, and what happened to it. */
-data class SongRemoval(val song: JamSong, val state: State) {
+internal data class SongRemoval(val song: JamSong, val state: State) {
     sealed interface State {
         data object Waiting : State
 
@@ -46,7 +46,7 @@ data class SongRemoval(val song: JamSong, val state: State) {
 }
 
 /** The reorder phase of a replace. */
-sealed interface OrderStep {
+internal sealed interface OrderStep {
     data object Waiting : OrderStep
 
     /** [done] of [total] moves are confirmed. */
@@ -60,7 +60,7 @@ sealed interface OrderStep {
 }
 
 /** The creation step of a create run. */
-sealed interface JamStep {
+internal sealed interface JamStep {
     data object Creating : JamStep
 
     /** [date] is the one the server echoed: the songs are loaded into it. */
@@ -74,7 +74,7 @@ sealed interface JamStep {
  * many songs the run tries to add; [songs] also holds the ones skipped or kept without a call. [removals],
  * [order] and [target] belong to a replace, [jam] to a create.
  */
-data class ApplyRun(
+internal data class ApplyRun(
     val mode: ApplyMode,
     val jamDate: LocalDate?,
     val planned: Int,

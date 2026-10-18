@@ -56,7 +56,25 @@ fun AddSongScreen(
     onAdded: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    presenter: AddSongPresenter = koinInject(),
+) {
+    AddSongScreen(
+        jamDate = jamDate,
+        onBack = onBack,
+        onAdded = onAdded,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun AddSongScreen(
+    jamDate: LocalDate,
+    onBack: () -> Unit,
+    onAdded: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    presenter: AddSongPresenter,
 ) {
     val model = presenter.present(AddSongPresenter.Params(jamDate = jamDate, onBack = onBack, onAdded = onAdded))
     AddSongContent(model = model, modifier = modifier, contentPadding = contentPadding)

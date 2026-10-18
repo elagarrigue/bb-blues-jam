@@ -7,7 +7,7 @@ import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.feature.assistant.run.ApplyMode
 
 /** What sits under a proposal to use it on the upcoming jam (`assistant-proposal-targets`). */
-sealed interface ApplyUiModel : UiModel {
+internal sealed interface ApplyUiModel : UiModel {
     /** Nothing: not the latest proposal, snapshot not read yet, a pending turn, or a finished success. */
     data object None : ApplyUiModel
 
@@ -26,7 +26,7 @@ sealed interface ApplyUiModel : UiModel {
 }
 
 /** One target button: [target] says where the songs go. */
-data class TargetActionUiModel(
+internal data class TargetActionUiModel(
     val target: ApplyMode,
     val label: String,
     val enabled: Boolean,
@@ -38,7 +38,7 @@ data class TargetActionUiModel(
 }
 
 /** The confirmation dialog: drawn while this is non-null. */
-data class ConfirmationUiModel(
+internal data class ConfirmationUiModel(
     val title: String,
     val lines: List<String>,
     val confirmLabel: String,
@@ -54,10 +54,10 @@ data class ConfirmationUiModel(
     }
 }
 
-enum class ApplyTone { NEUTRAL, SUCCESS, FAILURE, MUTED }
+internal enum class ApplyTone { NEUTRAL, SUCCESS, FAILURE, MUTED }
 
 /** The run's one-line summary (a polite live region) and, while it runs, "Detener". */
-data class ApplySummaryUiModel(
+internal data class ApplySummaryUiModel(
     val text: String,
     val tone: ApplyTone,
     val stopLabel: String?,
@@ -68,10 +68,10 @@ data class ApplySummaryUiModel(
     }
 }
 
-enum class ApplyStatusKind { PROGRESS, DONE, SKIPPED, FAILED, NOT_ATTEMPTED }
+internal enum class ApplyStatusKind { PROGRESS, DONE, SKIPPED, FAILED, NOT_ATTEMPTED }
 
 /** The caption under a proposed song while or after a run. */
-data class ApplyStatusUiModel(val text: String, val kind: ApplyStatusKind) : UiModel
+internal data class ApplyStatusUiModel(val text: String, val kind: ApplyStatusKind) : UiModel
 
 /** A removed song's line under a replace: its [title] and what happened to it ([text]). */
-data class ApplyStatusLineUiModel(val title: String, val text: String, val kind: ApplyStatusKind) : UiModel
+internal data class ApplyStatusLineUiModel(val title: String, val text: String, val kind: ApplyStatusKind) : UiModel

@@ -1896,13 +1896,19 @@
     "depends_on": [
       "shared-test-fixtures"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Public top-level declarations per feature reduced to the screens and Koin modules :app imports (count before/after recorded)",
       "Koin resolution and all presenter tests still pass",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh exit 0, 1153 testcases (docs/evidence/feature-api-surface/baseline-init.txt, baseline-count.txt). Public top-level declarations before: next-jam 43, past-jams 27, info 10, assistant 42 (122); after: 6, 3, 3, 2 (14) (public-count-before.txt, public-count-after.txt).",
+      "Konsist rule 21 (feature-public-api-allowlisted) shown failing first against the unchanged tree (konsist-failing-run.txt, 37 files violated), green after the change (konsist-green-run.txt); a temporary public class in :feature:info turned it red and was removed (konsist-negative-run.txt).",
+      "Final CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 21 Konsist rules, 1154 testcases = baseline + 1 (rule 21), none other (final-init.txt, final-count.txt). :app:assembleDebug compiled; git diff -- app empty; feature test sources changed in one file: two helper functions in next-jam FakeSetlistRepository.kt made internal.",
+      "Deviations: SongDetailScreen has no separate internal overload (detekt TooManyFunctions at 12 in that file, and nothing would call it); it resolves koinInject() in the public function. Not run on a device: no runtime behavior changes.",
+      "Accepted on 17 October 2026 by the independent validator: gate rerun exit 0 (konsist, detekt, ktlint wired), public top-level declarations recounted at 14 (from 122), own planted public class turned rule 21 red then restored, diff filter shows only visibility and screen-split lines, :app unchanged."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 6); the organizer asked to fix all nine findings with sonnet subagents."
   },
   {

@@ -32,7 +32,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 /** Full-screen editor for one fixed open slot. */
-class AssignMusicianPresenter(
+internal class AssignMusicianPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
     private val setlist: SetlistAssignmentRepository,

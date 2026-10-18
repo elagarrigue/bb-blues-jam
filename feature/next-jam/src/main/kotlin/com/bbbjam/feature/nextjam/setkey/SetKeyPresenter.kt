@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
  *
  * Reached only from the admin's "Cambiar tonalidad"; it authorizes nothing (Apps Script does).
  */
-class SetKeyPresenter(
+internal class SetKeyPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
     private val setlist: SetlistKeyChangeRepository,

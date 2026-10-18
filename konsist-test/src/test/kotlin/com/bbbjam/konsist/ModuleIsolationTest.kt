@@ -4,6 +4,8 @@ import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.container.KoScope
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
 import com.lemonappdev.konsist.api.provider.KoModuleProvider
+import com.lemonappdev.konsist.api.provider.KoNameProvider
+import com.lemonappdev.konsist.api.provider.modifier.KoVisibilityModifierProvider
 import com.lemonappdev.konsist.api.verify.assertFalse
 import com.lemonappdev.konsist.api.verify.assertTrue
 import java.io.File
@@ -175,6 +177,27 @@ class ModuleIsolationTest {
             .filter { (it.modulePath == FEATURE_NEXT_JAM || it.modulePath == FEATURE_PAST_JAMS) && it.isMainSource() }
             .assertFalse(testName = "next-jam-injects-narrow-setlist-contracts") { file ->
                 WHOLE_SETLIST_REPOSITORY.containsMatchIn(file.text)
+            }
+    }
+
+    /**
+     * Rule 21, `feature-public-api-allowlisted`: a public top-level declaration in a `:feature:*` main
+     * source must be named in `FEATURE_PUBLIC_API_ALLOWLIST` for its module (the screens and Koin
+     * modules `:app` imports). A feature module not in the map may declare none. Test sources are not
+     * checked. Known limit: top-level declarations only; members of an allowed public type are not
+     * counted.
+     */
+    @Test
+    fun `feature modules expose only their allowlisted public declarations`() {
+        scope.files
+            .filter { it.modulePath.startsWith(FEATURE) && it.isMainSource() }
+            .assertTrue(testName = "feature-public-api-allowlisted") { file ->
+                val allowed = FEATURE_PUBLIC_API_ALLOWLIST[file.modulePath].orEmpty()
+                file.declarations(includeNested = false, includeLocal = false)
+                    .filterIsInstance<KoVisibilityModifierProvider>()
+                    .filter { it.hasPublicOrDefaultModifier }
+                    .filterIsInstance<KoNameProvider>()
+                    .all { it.name in allowed }
             }
     }
 
@@ -454,6 +477,25 @@ class ModuleIsolationTest {
             "feature/info" to setOf("primaryAction", "onPrimaryAction"),
             // assistant-admin-tab: "Enviar" (`button-primary`) and the key of each proposed song.
             "feature/assistant" to setOf("key", "primaryAction", "onPrimaryAction"),
+        )
+
+        /**
+         * The public top-level names each `:feature:*` main source may declare (rule 21): what `:app`
+         * imports. A new public name is a reviewed decision made in the same diff; a module not listed
+         * may declare none.
+         */
+        val FEATURE_PUBLIC_API_ALLOWLIST: Map<String, Set<String>> = mapOf(
+            "feature/next-jam" to setOf(
+                "NextJamScreen",
+                "AddSongScreen",
+                "AssignMusicianScreen",
+                "SetKeyScreen",
+                "SongDetailScreen",
+                "nextJamModule",
+            ),
+            "feature/past-jams" to setOf("PastJamsScreen", "PastJamDetailScreen", "pastJamsModule"),
+            "feature/info" to setOf("InfoScreen", "AdminLoginScreen", "infoModule"),
+            "feature/assistant" to setOf("AssistantScreen", "assistantModule"),
         )
 
         /**

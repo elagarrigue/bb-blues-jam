@@ -12,7 +12,7 @@ import com.bbbjam.core.ui.state.ListErrorUiModel
  * field and the [content]. Picking a song adds it in the key the catalog suggests (K1 (a)) and
  * closes the picker at once; the add goes on in the data layer.
  */
-data class AddSongUiModel(
+internal data class AddSongUiModel(
     val back: BackUiModel,
     val title: String,
     val search: SearchFieldUiModel,
@@ -20,13 +20,14 @@ data class AddSongUiModel(
 ) : UiModel
 
 /** The search field: [query] as typed, [label] its label. Matching ignores case and accents. */
-data class SearchFieldUiModel(val query: String, val label: String, val events: EventHandler<Event>) : UiModel {
+internal data class SearchFieldUiModel(val query: String, val label: String, val events: EventHandler<Event>) :
+    UiModel {
     sealed interface Event : UiEvent {
         data class Changed(val query: String) : Event
     }
 }
 
-sealed interface AddSongContentUiModel : UiModel {
+internal sealed interface AddSongContentUiModel : UiModel {
     /** No catalog emission yet, or nothing cached and a read is running. */
     data class Loading(val description: String) : AddSongContentUiModel
 
@@ -49,7 +50,7 @@ sealed interface AddSongContentUiModel : UiModel {
  * [isListed]: drawn muted with [listedLabel] and not clickable. [pickLabel] is the click label
  * ("agregar a la lista").
  */
-data class CatalogRowUiModel(
+internal data class CatalogRowUiModel(
     val id: String,
     val title: String,
     val artist: String,

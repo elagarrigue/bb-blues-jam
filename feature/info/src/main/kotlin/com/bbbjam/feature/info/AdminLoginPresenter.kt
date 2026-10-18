@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
  * are created once, so any earlier handler writes through the same state. A change that touches two
  * of them is one snapshot, so no model ever shows half of it.
  */
-class AdminLoginPresenter(private val adminSession: AdminSession) :
+internal class AdminLoginPresenter(private val adminSession: AdminSession) :
     Presenter<AdminLoginUiModel, AdminLoginPresenter.Params> {
 
     /** [onBack] closes the login; [onLoggedIn] runs once the server accepted the passphrase. */

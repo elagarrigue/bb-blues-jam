@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * lands, only decides what happens locally; it authorizes nothing (D-11). The tap count is not
  * snapshot state, so taps never emit a new model.
  */
-class InfoPresenter(private val linkOpener: ExternalLinkOpener, private val adminSession: AdminSession) :
+internal class InfoPresenter(private val linkOpener: ExternalLinkOpener, private val adminSession: AdminSession) :
     Presenter<InfoUiModel, InfoPresenter.Params> {
 
     /** [onOpenAdminLogin] opens the admin login (bound by `:app`). */

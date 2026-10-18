@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Where the creation of a proposed jam stands. */
-sealed interface JamCreation {
+internal sealed interface JamCreation {
     data object Creating : JamCreation
 
     data object Created : JamCreation
@@ -22,7 +22,7 @@ sealed interface JamCreation {
 }
 
 /** Why a jam was not created. */
-sealed interface JamFailure {
+internal sealed interface JamFailure {
     data class Write(val reason: WriteOutcome) : JamFailure
 
     /** The deployed script does not know `createJam` yet. */
@@ -38,7 +38,7 @@ sealed interface JamFailure {
  * called only from the admin's confirm tap (D-24). After a success it asks the jams repository for one
  * refresh, outcome ignored: the repository already mirrored the draft.
  */
-class JamCreationRunner(
+internal class JamCreationRunner(
     private val creator: JamCreator,
     private val jams: JamsRepository,
     private val scope: CoroutineScope,

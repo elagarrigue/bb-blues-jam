@@ -5,7 +5,7 @@ import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 
 /** Everything the Info screen draws, as plain values: the copy, the links, the link error. */
-data class InfoUiModel(
+internal data class InfoUiModel(
     val title: String,
     val tagline: String,
     val sections: List<InfoSectionUiModel>,
@@ -28,8 +28,12 @@ data class InfoUiModel(
     }
 }
 
-data class InfoSectionUiModel(val title: String, val body: String) : UiModel
+internal data class InfoSectionUiModel(val title: String, val body: String) : UiModel
 
 /** [openLabel] is the accessibility action label for the row ("Abrir Instagram"). */
-data class InfoLinkUiModel(val link: SocialLink, val label: String, val destination: String, val openLabel: String) :
-    UiModel
+internal data class InfoLinkUiModel(
+    val link: SocialLink,
+    val label: String,
+    val destination: String,
+    val openLabel: String,
+) : UiModel

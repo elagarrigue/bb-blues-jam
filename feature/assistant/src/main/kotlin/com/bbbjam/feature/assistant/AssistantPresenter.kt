@@ -38,7 +38,7 @@ import com.bbbjam.feature.assistant.run.ProposalApplier
  * Creating a proposed jam (`assistant-create-jam`) works the same way with its own saveable `Long?` for
  * the open dialog and [JamCreationRunner]; "today" is read once per snapshot from [calendar].
  */
-class AssistantPresenter(
+internal class AssistantPresenter(
     private val chat: AssistantChat,
     private val applier: ProposalApplier,
     private val jams: JamsRepository,

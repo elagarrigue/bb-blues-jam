@@ -11,7 +11,7 @@ import com.bbbjam.feature.pastjams.PastJamsPresenter
  * detekt's parameter limit (`admin-edit-delete-jam` C1): the status change, the publication, the creation
  * and the edit or deletion of a future jam (D-13, D-03). Constructor injection; never `SetlistRepository`.
  */
-class JamsAdminWrites(
+internal class JamsAdminWrites(
     val statuses: SetlistJamStatusRepository,
     val publishes: SetlistPublishRepository,
     val creator: JamCreator,

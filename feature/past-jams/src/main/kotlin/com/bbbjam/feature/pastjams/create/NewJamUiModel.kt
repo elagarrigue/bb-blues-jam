@@ -11,7 +11,7 @@ import com.bbbjam.core.ui.presenter.UiModel
  * dialog while [form] is set, and the result of the last creation in [progress]. One handler takes
  * every event; the creation goes through `JamCreator`, bound to the setlist repository (D-13, D-25).
  */
-data class NewJamUiModel(
+internal data class NewJamUiModel(
     val label: String,
     val form: JamFormUiModel?,
     val progress: NewJamProgressUiModel?,
@@ -28,7 +28,7 @@ data class NewJamUiModel(
 }
 
 /** What the last creation did: still going, done, or a card. */
-sealed interface NewJamProgressUiModel : UiModel {
+internal sealed interface NewJamProgressUiModel : UiModel {
     data class Creating(val status: String) : NewJamProgressUiModel
 
     data class Created(val message: String) : NewJamProgressUiModel

@@ -15,7 +15,7 @@ import com.bbbjam.feature.nextjam.SetKeyActionUiModel
  * (`song-detail-replaces-row-expansion`, D-15) the song gains [Song.admin], the song-level controls
  * the expanded row used to hold.
  */
-sealed interface SongDetailUiModel : UiModel {
+internal sealed interface SongDetailUiModel : UiModel {
     val back: BackUiModel
 
     /**
@@ -56,7 +56,7 @@ sealed interface SongDetailUiModel : UiModel {
  * writes of this song only, each with "Cerrar". "Anotar", "Liberar" and an extra's "Quitar" are line actions of the
  * lineup panel.
  */
-data class SongDetailAdminUiModel(
+internal data class SongDetailAdminUiModel(
     val saveStatus: String?,
     val setKey: SetKeyActionUiModel,
     val lineup: LineupEditorUiModel,

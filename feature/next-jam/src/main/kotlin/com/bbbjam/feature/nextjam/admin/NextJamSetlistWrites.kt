@@ -9,7 +9,7 @@ import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
  * `NextJamPresenter` stays under detekt's parameter limit (`setlist-mutation-contracts` D5). Never
  * `SetlistRepository`; `:app` binds each contract to the one instance.
  */
-class NextJamSetlistWrites(
+internal class NextJamSetlistWrites(
     val adds: SetlistSongAddRepository,
     val removals: SetlistSongRemoveRepository,
     val moves: SetlistMoveRepository,

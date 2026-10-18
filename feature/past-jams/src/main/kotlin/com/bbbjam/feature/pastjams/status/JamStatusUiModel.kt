@@ -12,7 +12,7 @@ import com.bbbjam.core.ui.status.JamStatusChipsUiModel
  * modal [confirming] dialog when leaving PUBLICADA, a [failure] card and one handler for every event. The
  * chip being applied is marked pending inside [chips] (`jam-status-chip-loading`); no sending text.
  */
-data class JamStatusUiModel(
+internal data class JamStatusUiModel(
     val chips: JamStatusChipsUiModel,
     val publishUnavailable: String?,
     val confirming: StatusConfirmUiModel?,
@@ -27,7 +27,7 @@ data class JamStatusUiModel(
     }
 }
 
-data class StatusConfirmUiModel(
+internal data class StatusConfirmUiModel(
     val prompt: String,
     val body: String,
     val confirmLabel: String,
@@ -35,7 +35,7 @@ data class StatusConfirmUiModel(
 ) : UiModel
 
 /** [retryLabel] is null when retrying is pointless (the script is outdated). */
-data class StatusFailureUiModel(
+internal data class StatusFailureUiModel(
     val id: Long,
     val title: String,
     val message: String,
@@ -45,7 +45,7 @@ data class StatusFailureUiModel(
 ) : UiModel
 
 /** Publishing the upcoming jam: the modal confirmation (opened by the Publicada chip) and the failure card. */
-sealed interface PublishUiModel : UiModel {
+internal sealed interface PublishUiModel : UiModel {
     data class Confirming(
         val prompt: String,
         val details: String,

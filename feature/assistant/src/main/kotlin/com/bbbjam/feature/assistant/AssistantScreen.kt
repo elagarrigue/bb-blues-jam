@@ -44,7 +44,15 @@ import org.koin.compose.koinInject
  * decides. Nothing here writes anywhere (D-24). The status-bar inset is [AppNavHost]'s.
  */
 @Composable
-fun AssistantScreen(modifier: Modifier = Modifier, presenter: AssistantPresenter = koinInject()) {
+fun AssistantScreen(modifier: Modifier = Modifier) {
+    AssistantScreen(
+        modifier = modifier,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun AssistantScreen(modifier: Modifier = Modifier, presenter: AssistantPresenter) {
     AssistantContent(model = presenter.present(Unit), modifier = modifier)
 }
 

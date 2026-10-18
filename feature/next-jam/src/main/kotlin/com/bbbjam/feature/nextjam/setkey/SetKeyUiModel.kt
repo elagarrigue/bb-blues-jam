@@ -10,7 +10,7 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
  * The key picker (`admin-set-key`, V1): full screen over the tabs, reached from the song detail's
  * "Cambiar tonalidad" (`song-detail-replaces-row-expansion`). Every state has the back control.
  */
-sealed interface SetKeyUiModel : UiModel {
+internal sealed interface SetKeyUiModel : UiModel {
     val back: BackUiModel
 
     /** The flag or the jams are not read yet: only the back control. */
@@ -36,14 +36,14 @@ sealed interface SetKeyUiModel : UiModel {
 }
 
 /** One section ([label] "Mayores" or "Menores", drawn uppercase): 12 cells as [rows] of 4. */
-data class KeySectionUiModel(val label: String, val rows: List<List<KeyCellUiModel>>) : UiModel
+internal data class KeySectionUiModel(val label: String, val rows: List<List<KeyCellUiModel>>) : UiModel
 
 /**
  * One key. [description] is what a screen reader says ("Tonalidad Bb"). The cell equal to the
  * current key [isCurrent]: it shows [currentLabel] ("actual") and is not clickable. [pickLabel] is
  * the click label ("elegir esta tonalidad").
  */
-data class KeyCellUiModel(
+internal data class KeyCellUiModel(
     val key: String,
     val description: String,
     val isCurrent: Boolean,

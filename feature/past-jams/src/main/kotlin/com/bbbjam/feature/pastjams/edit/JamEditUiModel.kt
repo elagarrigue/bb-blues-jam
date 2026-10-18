@@ -11,7 +11,7 @@ import com.bbbjam.core.ui.presenter.UiModel
  * drawn disabled while this jam is being written, the [sending] line, a [failure] card and one handler for
  * every event.
  */
-data class JamManageUiModel(
+internal data class JamManageUiModel(
     val edit: IconActionUiModel,
     val delete: IconActionUiModel?,
     val sending: String?,
@@ -27,10 +27,10 @@ data class JamManageUiModel(
 }
 
 /** An icon action: [description] names the jam's date for a screen reader; [enabled] is false while it is sending. */
-data class IconActionUiModel(val description: String, val enabled: Boolean) : UiModel
+internal data class IconActionUiModel(val description: String, val enabled: Boolean) : UiModel
 
 /** [retryLabel] is null when retrying is pointless (the script is outdated, or the list changed). */
-data class JamEditFailureUiModel(
+internal data class JamEditFailureUiModel(
     val id: Long,
     val title: String,
     val message: String,
@@ -44,7 +44,7 @@ data class JamEditFailureUiModel(
  * enabled. [dateNote] is set only when the date differs from the jam's; [visibilityNote] only for a jam
  * musicians already see.
  */
-data class EditJamFormUiModel(
+internal data class EditJamFormUiModel(
     val title: String,
     val jamDate: java.time.LocalDate,
     val dateLabel: String,
@@ -73,7 +73,7 @@ data class EditJamFormUiModel(
 }
 
 /** The delete confirmation: the [title], the [lines] of consequences in order and the two buttons. */
-data class DeleteJamUiModel(
+internal data class DeleteJamUiModel(
     val title: String,
     val jamDate: java.time.LocalDate,
     val lines: List<String>,

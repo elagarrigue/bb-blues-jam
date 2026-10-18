@@ -18,7 +18,7 @@ import java.time.LocalDate
  * state. For the admin the `Jams` and `Empty` states also carry [JamsAdminUiModel] (`admin-jams-tab`),
  * null for musicians, whose model is exactly what it was.
  */
-sealed interface PastJamsUiModel : UiModel {
+internal sealed interface PastJamsUiModel : UiModel {
     val title: String
     val pullRefresh: PullRefreshUiModel
 
@@ -61,7 +61,7 @@ sealed interface PastJamsUiModel : UiModel {
  * [openLabel] is the click label ("ver la lista de temas"), null for a [PastJamSummary.NotShown]
  * row, which is not tappable; [events] receives [Event.Open].
  */
-data class PastJamRowUiModel(
+internal data class PastJamRowUiModel(
     val date: LocalDate,
     val dateLabel: String,
     val venue: String,
@@ -76,7 +76,7 @@ data class PastJamRowUiModel(
 }
 
 /** What a past jam row says under its date and venue. */
-sealed interface PastJamSummary : UiModel {
+internal sealed interface PastJamSummary : UiModel {
     /** [countLabel] is "13 temas"; [hook] is the first titles in position order, then "y n más". */
     data class Songs(val countLabel: String, val hook: String) : PastJamSummary
 

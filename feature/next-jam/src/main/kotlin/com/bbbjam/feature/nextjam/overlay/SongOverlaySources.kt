@@ -12,7 +12,7 @@ import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
  * (`setlist-mutation-contracts` D5). Each is the narrow contract, never `SetlistRepository`; the song
  * detail also writes through the lineup, clear and extra-participant ones.
  */
-class SongOverlaySources(
+internal class SongOverlaySources(
     val keyRepository: SetlistKeyChangeRepository,
     val lineupRepository: SetlistLineupRepository,
     val assignmentRepository: SetlistAssignmentRepository,

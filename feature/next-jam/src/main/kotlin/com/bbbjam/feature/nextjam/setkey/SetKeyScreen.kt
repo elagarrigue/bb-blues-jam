@@ -53,7 +53,27 @@ fun SetKeyScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    presenter: SetKeyPresenter = koinInject(),
+) {
+    SetKeyScreen(
+        jamDate = jamDate,
+        songId = songId,
+        onBack = onBack,
+        onDone = onDone,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun SetKeyScreen(
+    jamDate: LocalDate,
+    songId: SongId,
+    onBack: () -> Unit,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    presenter: SetKeyPresenter,
 ) {
     val model = presenter.present(SetKeyPresenter.Params(jamDate, songId, onBack, onDone))
     SetKeyContent(model = model, modifier = modifier, contentPadding = contentPadding)

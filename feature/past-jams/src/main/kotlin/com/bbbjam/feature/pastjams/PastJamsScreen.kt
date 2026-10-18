@@ -50,7 +50,21 @@ fun PastJamsScreen(
     modifier: Modifier = Modifier,
     onOpenJam: (jamDate: LocalDate) -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(),
-    presenter: PastJamsPresenter = koinInject(),
+) {
+    PastJamsScreen(
+        modifier = modifier,
+        onOpenJam = onOpenJam,
+        contentPadding = contentPadding,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun PastJamsScreen(
+    modifier: Modifier = Modifier,
+    onOpenJam: (jamDate: LocalDate) -> Unit = {},
+    contentPadding: PaddingValues = PaddingValues(),
+    presenter: PastJamsPresenter,
 ) {
     val model = presenter.present(PastJamsPresenter.Params(onOpenJam))
     PastJamsContent(model = model, modifier = modifier, contentPadding = contentPadding)

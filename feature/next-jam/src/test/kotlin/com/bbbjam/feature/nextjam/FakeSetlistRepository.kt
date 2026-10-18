@@ -297,7 +297,7 @@ class FakeSetlistRepository : SetlistRepository {
 }
 
 /** The list's add, remove and move contracts, all this one fake (as `:app` binds them). */
-fun FakeSetlistRepository.writes() = NextJamSetlistWrites(this, this, this)
+internal fun FakeSetlistRepository.writes() = NextJamSetlistWrites(this, this, this)
 
 /** The five song-level contracts, all this one fake. */
-fun FakeSetlistRepository.sources() = SongOverlaySources(this, this, this, this, this)
+internal fun FakeSetlistRepository.sources() = SongOverlaySources(this, this, this, this, this)

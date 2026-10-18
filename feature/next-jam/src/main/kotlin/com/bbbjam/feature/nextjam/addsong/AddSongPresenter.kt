@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
  *
  * Reached only from the admin's "Agregar tema"; it authorizes nothing (Apps Script does).
  */
-class AddSongPresenter(
+internal class AddSongPresenter(
     private val catalog: CatalogRepository,
     private val jams: JamsRepository,
     private val setlist: SetlistSongAddRepository,

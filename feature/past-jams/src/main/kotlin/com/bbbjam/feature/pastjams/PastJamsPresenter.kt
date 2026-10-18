@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
  * the staleness notice. [Params.onOpenJam] is read through `rememberUpdatedState`, so an earlier model's
  * Open handler calls the current callback.
  */
-class PastJamsPresenter(
+internal class PastJamsPresenter(
     private val jams: JamsRepository,
     private val calendar: JamCalendar,
     private val adminSession: AdminSession,

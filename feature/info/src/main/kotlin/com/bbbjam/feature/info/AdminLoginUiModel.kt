@@ -10,7 +10,7 @@ import com.bbbjam.core.ui.presenter.UiModel
  * renderer; it is the one secret in any UiModel, so [toString] never prints it, and the phase 2
  * assistant context must leave it out (`docs/risks-and-open-questions.md`).
  */
-data class AdminLoginUiModel(
+internal data class AdminLoginUiModel(
     val title: String,
     val fieldLabel: String,
     val passphrase: String,

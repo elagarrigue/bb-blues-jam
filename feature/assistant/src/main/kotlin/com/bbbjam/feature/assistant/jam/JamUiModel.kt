@@ -12,7 +12,7 @@ import com.bbbjam.feature.assistant.apply.confirmation
  * every turn but the creatable one, while a turn is pending, when the plan is blocked and once the
  * jam is created. [note] says what is held back or why it cannot be created.
  */
-data class JamCardUiModel(
+internal data class JamCardUiModel(
     val heading: String,
     val date: String,
     val detail: String,
@@ -22,7 +22,7 @@ data class JamCardUiModel(
 ) : UiModel
 
 /** "Crear la jam" (or "Reintentar"): tapping it only opens [confirmation]; nothing is written (D-24). */
-data class JamActionUiModel(
+internal data class JamActionUiModel(
     val label: String,
     val enabled: Boolean,
     val events: EventHandler<Event>,
@@ -34,4 +34,4 @@ data class JamActionUiModel(
 }
 
 /** The creation's one-line status, a polite live region. */
-data class JamResultUiModel(val text: String, val tone: ApplyTone) : UiModel
+internal data class JamResultUiModel(val text: String, val tone: ApplyTone) : UiModel

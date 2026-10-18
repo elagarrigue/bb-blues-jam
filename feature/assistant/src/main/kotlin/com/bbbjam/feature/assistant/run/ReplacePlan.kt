@@ -12,7 +12,7 @@ import java.time.LocalDate
  * What replacing the upcoming jam's list with a proposal would do (`assistant-proposal-targets`, R1 and
  * R5): a client-side diff of existing actions, so kept songs keep their row, key and musicians. Pure.
  */
-sealed interface ReplacePlan {
+internal sealed interface ReplacePlan {
     /** The snapshot is not read yet: nothing is drawn. */
     data object Unknown : ReplacePlan
 
@@ -41,10 +41,10 @@ sealed interface ReplacePlan {
 }
 
 /** One reorder call: move [songId] to the absolute 1-based [toPosition]. */
-data class SongMove(val songId: SongId, val toPosition: Int)
+internal data class SongMove(val songId: SongId, val toPosition: Int)
 
 /** The plan to make the upcoming jam of [snapshot] list exactly [songs], in order. */
-fun replacePlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ReplacePlan {
+internal fun replacePlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ReplacePlan {
     val jam = snapshot?.upcoming
     val listed = jam?.setlist as? Setlist.Available
     return when {
@@ -83,7 +83,7 @@ fun replacePlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ReplacePlan
  * not already in place, move it to that 1-based position, applying the move to a copy as the server's
  * `moveSetlistRow_` does. At most `target.size - 1`. Songs of [current] outside [target] end up after it.
  */
-fun reorderMoves(current: List<SongId>, target: List<SongId>): List<SongMove> {
+internal fun reorderMoves(current: List<SongId>, target: List<SongId>): List<SongMove> {
     val simulated = current.toMutableList()
     val moves = mutableListOf<SongMove>()
     for ((index, id) in target.withIndex()) {

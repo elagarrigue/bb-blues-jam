@@ -7,7 +7,7 @@ import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 
-sealed interface AssignMusicianUiModel : UiModel {
+internal sealed interface AssignMusicianUiModel : UiModel {
     val back: BackUiModel
 
     data class Loading(override val back: BackUiModel) : AssignMusicianUiModel
@@ -35,13 +35,14 @@ sealed interface AssignMusicianUiModel : UiModel {
     }
 }
 
-data class SuggestionSectionUiModel(
+internal data class SuggestionSectionUiModel(
     val label: String,
     val emptyMessage: String?,
     val rows: List<SuggestionRowUiModel>,
 ) : UiModel
 
-data class SuggestionRowUiModel(val name: String, val clickLabel: String, val events: EventHandler<Event>) : UiModel {
+internal data class SuggestionRowUiModel(val name: String, val clickLabel: String, val events: EventHandler<Event>) :
+    UiModel {
     sealed interface Event : UiEvent {
         data object Select : Event
     }

@@ -53,7 +53,7 @@ import java.time.LocalDate
  * Every callback is read through `rememberUpdatedState`, so an earlier model's handler calls the
  * current one.
  */
-class SongDetailPresenter(
+internal class SongDetailPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
     private val sources: SongOverlaySources,

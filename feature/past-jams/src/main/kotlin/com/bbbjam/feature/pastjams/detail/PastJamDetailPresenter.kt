@@ -27,7 +27,7 @@ import java.time.LocalDate
  * [Params.onBack] is read through `rememberUpdatedState`, so an earlier model's back handler calls
  * the current callback.
  */
-class PastJamDetailPresenter(private val jams: JamsRepository) :
+internal class PastJamDetailPresenter(private val jams: JamsRepository) :
     Presenter<PastJamDetailUiModel, PastJamDetailPresenter.Params> {
 
     /** [jamDate] names the past jam; [onBack] leaves the screen (bound by `:app`). */

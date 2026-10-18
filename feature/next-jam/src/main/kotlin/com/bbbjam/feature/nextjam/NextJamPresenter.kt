@@ -102,7 +102,7 @@ import kotlin.random.Random
  * an admin write is sending leaves the write's overlay alone (it comes from the setlist entries, not
  * from the snapshot), and the next refresh brings the written row.
  */
-class NextJamPresenter(
+internal class NextJamPresenter(
     private val jams: JamsRepository,
     private val calendar: JamCalendar,
     private val adminSession: AdminSession,

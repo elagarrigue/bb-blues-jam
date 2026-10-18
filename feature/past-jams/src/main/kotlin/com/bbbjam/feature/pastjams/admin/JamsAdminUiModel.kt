@@ -14,7 +14,7 @@ import java.time.LocalDate
  * upcoming jam and every held-back future jam as [future] cards in date order, BORRADOR included
  * (D-26), above the past jams. [noFuture] is the line shown when there is no future jam.
  */
-data class JamsAdminUiModel(
+internal data class JamsAdminUiModel(
     val upcomingHeading: String,
     val pastHeading: String,
     val noFuture: String?,
@@ -30,7 +30,7 @@ data class JamsAdminUiModel(
  * are the status actions (every card) and, on the upcoming card only, the publication; [manage] are the edit
  * and delete actions (`admin-edit-delete-jam`).
  */
-data class FutureJamUiModel(
+internal data class FutureJamUiModel(
     val date: LocalDate,
     val dateLabel: String,
     val venue: String,
@@ -43,4 +43,4 @@ data class FutureJamUiModel(
 ) : UiModel
 
 /** The upcoming jam's controls: the status change and, while it applies, the publication. */
-data class JamControlsUiModel(val status: JamStatusUiModel, val publish: PublishUiModel?) : UiModel
+internal data class JamControlsUiModel(val status: JamStatusUiModel, val publish: PublishUiModel?) : UiModel

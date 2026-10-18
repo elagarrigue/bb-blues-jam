@@ -11,7 +11,7 @@ import java.time.LocalDate
  * What loading a proposal into the upcoming jam would do, decided from the jams snapshot
  * (`assistant-apply-proposal`, A3 and A4). Pure: no clock, no I/O.
  */
-sealed interface ApplyPlan {
+internal sealed interface ApplyPlan {
     /** The snapshot is not read yet: nothing is drawn, so a blocked note never flashes. */
     data object Unknown : ApplyPlan
 
@@ -38,7 +38,7 @@ sealed interface ApplyPlan {
  * draft read without the admin read is Withheld and an unreadable one Unavailable, both
  * [ApplyPlan.Blocked.Reason.UNREADABLE]. Duplicates are matched by [ProposedSong.songId].
  */
-fun applyPlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ApplyPlan =
+internal fun applyPlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ApplyPlan =
     if (snapshot == null) ApplyPlan.Unknown else planFor(songs, snapshot.upcoming)
 
 /**
@@ -46,7 +46,7 @@ fun applyPlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ApplyPlan =
  * create run targets the jam that run created, which may be held back). A date with no such jam is
  * [ApplyPlan.Blocked.Reason.NO_UPCOMING].
  */
-fun applyPlanFor(songs: List<ProposedSong>, snapshot: JamsSnapshot?, date: LocalDate): ApplyPlan =
+internal fun applyPlanFor(songs: List<ProposedSong>, snapshot: JamsSnapshot?, date: LocalDate): ApplyPlan =
     if (snapshot == null) {
         ApplyPlan.Unknown
     } else {

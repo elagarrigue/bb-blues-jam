@@ -91,7 +91,23 @@ fun NextJamScreen(
     contentPadding: PaddingValues = PaddingValues(),
     onOpenSong: (jamDate: LocalDate, songId: SongId, position: Int) -> Unit = { _, _, _ -> },
     onAddSong: (jamDate: LocalDate) -> Unit = {},
-    presenter: NextJamPresenter = koinInject(),
+) {
+    NextJamScreen(
+        modifier = modifier,
+        contentPadding = contentPadding,
+        onOpenSong = onOpenSong,
+        onAddSong = onAddSong,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun NextJamScreen(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    onOpenSong: (jamDate: LocalDate, songId: SongId, position: Int) -> Unit = { _, _, _ -> },
+    onAddSong: (jamDate: LocalDate) -> Unit = {},
+    presenter: NextJamPresenter,
 ) {
     // RESUMED only while this tab is selected, the activity is in front and no destination sits
     // above the tabs, so the live refresh stops in the background, with the screen off, on another

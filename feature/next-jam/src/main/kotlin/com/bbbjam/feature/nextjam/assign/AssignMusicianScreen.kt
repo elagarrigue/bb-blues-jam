@@ -49,7 +49,31 @@ fun AssignMusicianScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    presenter: AssignMusicianPresenter = koinInject(),
+) {
+    AssignMusicianScreen(
+        jamDate = jamDate,
+        songId = songId,
+        instrument = instrument,
+        ordinal = ordinal,
+        onBack = onBack,
+        onDone = onDone,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun AssignMusicianScreen(
+    jamDate: LocalDate,
+    songId: SongId,
+    instrument: Instrument,
+    ordinal: SlotPosition,
+    onBack: () -> Unit,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    presenter: AssignMusicianPresenter,
 ) {
     val model = presenter.present(AssignMusicianPresenter.Params(jamDate, songId, instrument, ordinal, onBack, onDone))
     AssignMusicianContent(model, modifier, contentPadding)

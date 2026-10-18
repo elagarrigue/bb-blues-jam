@@ -11,7 +11,7 @@ import com.bbbjam.feature.assistant.apply.ApplyUiModel
 import com.bbbjam.feature.assistant.jam.JamCardUiModel
 
 /** The Asistente tab (`assistant-admin-tab`): either the not-configured block or the chat. */
-sealed interface AssistantUiModel : UiModel {
+internal sealed interface AssistantUiModel : UiModel {
     val title: String
 
     /** The build has no key: only the title and this block, no composer. */
@@ -28,7 +28,7 @@ sealed interface AssistantUiModel : UiModel {
 }
 
 /** What the tab says about the service: nothing, a static checking line, or a banner with "Reintentar". */
-sealed interface StatusUiModel : UiModel {
+internal sealed interface StatusUiModel : UiModel {
     data object None : StatusUiModel
 
     data class Checking(val text: String) : StatusUiModel
@@ -42,10 +42,10 @@ sealed interface StatusUiModel : UiModel {
 }
 
 /** One request and its reply. [id] keys the lazy list; it is never drawn. */
-data class TurnUiModel(val id: Long, val authorLabel: String, val request: String, val reply: ReplyUiModel)
+internal data class TurnUiModel(val id: Long, val authorLabel: String, val request: String, val reply: ReplyUiModel)
 
 /** What a turn shows under its request. */
-sealed interface ReplyUiModel : UiModel {
+internal sealed interface ReplyUiModel : UiModel {
     data class Pending(
         val loadingLabel: String,
         val songsHeading: String?,
@@ -92,13 +92,13 @@ sealed interface ReplyUiModel : UiModel {
 }
 
 /** The "Reintentar" action, present only on the last turn. */
-data class RetryUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
+internal data class RetryUiModel(val label: String, val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
         data object Retry : Event
     }
 }
 
-data class ProposedSongUiModel(
+internal data class ProposedSongUiModel(
     val positionLabel: String,
     val title: String,
     val artist: String,
@@ -109,7 +109,7 @@ data class ProposedSongUiModel(
 )
 
 /** The field and the "Enviar" button. */
-data class ComposerUiModel(
+internal data class ComposerUiModel(
     val text: String,
     val label: String,
     val placeholder: String,

@@ -10,7 +10,7 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
  * list and nothing about who played (user, 5 October 2026), no filter, no admin control, no row
  * event.
  */
-sealed interface PastJamDetailUiModel : UiModel {
+internal sealed interface PastJamDetailUiModel : UiModel {
     val back: BackUiModel
 
     /** Nothing emitted yet (a local read). Only the back control is drawn; [description] is for screen readers. */
@@ -28,10 +28,10 @@ sealed interface PastJamDetailUiModel : UiModel {
  * [dateLabel] is "Sábado 25 de julio de 2026"; [venue] is the Sheet's `lugar` as written;
  * [countLabel] is "13 temas", only when there are songs to show.
  */
-data class PastJamHeaderUiModel(val dateLabel: String, val venue: String, val countLabel: String?) : UiModel
+internal data class PastJamHeaderUiModel(val dateLabel: String, val venue: String, val countLabel: String?) : UiModel
 
 /** What sits under the header. */
-sealed interface PastSetlistUiModel : UiModel {
+internal sealed interface PastSetlistUiModel : UiModel {
     /** The songs in position order; [droppedRowsNote] says how many rows could not be read, or null. */
     data class Songs(val rows: List<PastSongRowUiModel>, val droppedRowsNote: String?) : PastSetlistUiModel
 
@@ -44,7 +44,7 @@ sealed interface PastSetlistUiModel : UiModel {
  * jam song's key as the admin set it (D-08), read as [keyDescription] ("Tonalidad B"). Deliberately
  * nothing else: no lineup, slot or musician (user, 5 October 2026), and no event.
  */
-data class PastSongRowUiModel(
+internal data class PastSongRowUiModel(
     val position: Int,
     val positionLabel: String,
     val title: String,

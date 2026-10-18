@@ -53,7 +53,23 @@ fun AdminLoginScreen(
     onLoggedIn: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    presenter: AdminLoginPresenter = koinInject(),
+) {
+    AdminLoginScreen(
+        onBack = onBack,
+        onLoggedIn = onLoggedIn,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun AdminLoginScreen(
+    onBack: () -> Unit,
+    onLoggedIn: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    presenter: AdminLoginPresenter,
 ) {
     AdminLoginContent(
         model = presenter.present(AdminLoginPresenter.Params(onBack = onBack, onLoggedIn = onLoggedIn)),

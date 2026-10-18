@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
  * (R4): a per-song refusal lets the run continue, a server duplicate is Skipped, every other outcome aborts
  * the run, because later calls would fail alike and an offline answer may hide a write.
  */
-class ProposalApplier(
+internal class ProposalApplier(
     adder: SetlistSongAdder,
     remover: SetlistSongRemover,
     mover: SetlistSongMover,

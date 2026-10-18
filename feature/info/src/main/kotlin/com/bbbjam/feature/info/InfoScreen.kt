@@ -45,7 +45,21 @@ fun InfoScreen(
     onOpenAdminLogin: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    presenter: InfoPresenter = koinInject(),
+) {
+    InfoScreen(
+        onOpenAdminLogin = onOpenAdminLogin,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        presenter = koinInject(),
+    )
+}
+
+@Composable
+internal fun InfoScreen(
+    onOpenAdminLogin: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    presenter: InfoPresenter,
 ) {
     InfoContent(
         model = presenter.present(InfoPresenter.Params(onOpenAdminLogin = onOpenAdminLogin)),

@@ -76,8 +76,8 @@ fun SongDetailScreen(
         instrument: Instrument,
         position: SlotPosition,
     ) -> Unit = { _, _, _, _ -> },
-    presenter: SongDetailPresenter = koinInject(),
 ) {
+    val presenter: SongDetailPresenter = koinInject()
     val model = presenter.present(
         SongDetailPresenter.Params(jamDate, songId, position, onBack, onSetKey, onAssignSlot),
     )

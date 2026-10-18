@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * only [cancel] does. One turn is pending at a time. The conversation (and its history, kept by core)
  * is created on the first send and reused by every later turn, including retries.
  */
-class AssistantChat(private val assistant: SetlistAssistant, private val scope: CoroutineScope) {
+internal class AssistantChat(private val assistant: SetlistAssistant, private val scope: CoroutineScope) {
     private val lock = Any()
     private val state = MutableStateFlow<List<ChatTurn>>(emptyList())
     private val jobs = mutableMapOf<Long, Job>()
@@ -153,7 +153,12 @@ class AssistantChat(private val assistant: SetlistAssistant, private val scope: 
  * catalog-validated songs streamed while the turn was pending; it is a preview, never a proposal: the
  * final reply replaces it, and it stays only to show an incomplete answer (`assistant-streaming`).
  */
-data class ChatTurn(val id: Long, val request: String, val state: State, val draft: List<ProposedSong> = emptyList()) {
+internal data class ChatTurn(
+    val id: Long,
+    val request: String,
+    val state: State,
+    val draft: List<ProposedSong> = emptyList(),
+) {
     sealed interface State {
         /** Sent, no answer yet. */
         data object Pending : State
@@ -170,7 +175,7 @@ data class ChatTurn(val id: Long, val request: String, val state: State, val dra
 }
 
 /** What the chat knows about the service: not yet, or the last [status] it read. */
-sealed interface ServiceState {
+internal sealed interface ServiceState {
     /** No answer yet (the first check, or a re-check after a problem). */
     data object Checking : ServiceState
 
