@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-10-18",
+  "period_start": "2026-09-19",
+  "source": "docs/entregable-harness-ia.md",
+  "features": { "total": 75, "accepted": 74, "blocked": 1, "in_progress": 0 },
+  "specifications": 74,
+  "decisions": 29,
+  "commits_more_than": 240,
+  "jvm_testcases": 1156,
+  "konsist_rules": 22,
+  "production_modules": 9,
+  "final_review": { "findings": 9, "fix_slices": 7, "feature_public_declarations_before": 122, "feature_public_declarations_after": 14 },
+  "note": "Dated evidence snapshot, not live counters. One scope-blocked feature remains. JVM testcase totals include the opt-in live test that is skipped by default."
+}

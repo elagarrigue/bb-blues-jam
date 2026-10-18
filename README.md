@@ -135,9 +135,9 @@ Es un chat. El admin pide la lista en una frase, por ejemplo:
 > Generá una lista de temas de blues nacional, 12, con inicio y final bien arriba y temas más
 > tranquis en el medio. Sumá algún tema que haya tocado Juan en alguna jam pasada.
 
-- El agente consulta el **catálogo** y las **jams anteriores** con herramientas de solo lectura y
-  propone una lista ordenada. Cada tema trae tonalidad y un motivo. La respuesta cierra con un
-  mensaje y, si el pedido es ambiguo, con preguntas.
+- El agente consulta el **catálogo**, las **jams anteriores** y la **agenda** de próximas jams con
+  herramientas de solo lectura y propone una lista ordenada. Cada tema trae tonalidad y un motivo.
+  La respuesta cierra con un mensaje y, si el pedido es ambiguo, con preguntas.
 - **Los temas van apareciendo de a uno** a medida que el modelo responde (streaming). Mientras
   espera, se ve una animación de puntos.
 - **Solo propone temas del repertorio propio.** Cada tema se valida contra el catálogo antes de
@@ -154,12 +154,12 @@ Es un chat. El admin pide la lista en una frase, por ejemplo:
 ## Cómo funciona por dentro
 
 ```
- ┌──────────────┐  lee (GET anónimo)    ┌──────────────┐        ┌──────────────────┐
- │  App Android │ ───────────────────▶ │  Apps Script │ ─────▶ │  Google Sheet    │
- │  (Compose)   │ ◀─────────────────── │  (validación │        │  catálogo, jams, │
- │              │  escribe (frase de    │   y lock)    │        │  una pestaña por │
- │              │  acceso + validación )└──────────────┘        │  fecha           │
- │              │                                               └──────────────────┘
+ ┌──────────────┐   lee (GET anónimo)   ┌──────────────┐       ┌──────────────────┐
+ │  App Android │ ────────────────────▶ │  Apps Script │  ───▶ │  Google Sheet    │
+ │  (Compose)   │ ◀──────────────────── │  (validación │       │  catálogo, jams, │
+ │              │   escribe (frase de   │   y lock)    │       │  una pestaña por │
+ │              │   acceso, validada)   └──────────────┘       │  fecha           │
+ │              │                                              └──────────────────┘
  │   Asistente  │ ── Koog (en el teléfono) ──▶ DevExpert Inference (compatible con OpenAI)
  └──────────────┘
 ```
@@ -174,7 +174,8 @@ Es un chat. El admin pide la lista en una frase, por ejemplo:
 - **Asistente:** el agente corre en el teléfono con [Koog](https://github.com/JetBrains/koog), el
   framework de agentes de JetBrains para Kotlin. Llama a DevExpert Inference, un gateway compatible
   con OpenAI. El agente solo lee: aplicar una propuesta es un paso aparte que el admin confirma, y
-  usa las mismas funciones del repositorio que los controles manuales (contrato de acciones, D-13).
+  usa las mismas funciones del repositorio que los controles manuales: es el contrato de acciones,
+  decidido antes de escribir código (ver la [bitácora](bb-blues-jam-bitacora.md)).
 
 ### Stack
 
@@ -192,6 +193,7 @@ Compose · OkHttp · Koog 1.3 · Konsist, detekt y ktlint en el gate.
 :feature:past-jams       pestaña Jams
 :feature:info            Info y entrada del admin
 :feature:assistant       chat del asistente
+:konsist-test            reglas de arquitectura (22), corren en el gate
 backend/apps-script      Apps Script (Node tests)
 ```
 
@@ -207,7 +209,12 @@ superior.
    bluesjam.appsScriptUrl=https://script.google.com/macros/s/.../exec
    devexpert.key=...           # opcional: sin key, el asistente muestra "no configurado"
    bluesjam.demoUpcomingJam=true   # opcional, solo debug: jam de demo si la planilla no tiene una
+   bluesjam.debugAdmin=true        # opcional, solo debug: arranca en modo admin sin la frase
    ```
+   En un build de release estas opciones quedan siempre apagadas. El modo admin de debug solo dibuja
+   los controles: el servidor sigue validando cada escritura con la frase. Para probar otros estados
+   de la jam de demo están `bluesjam.demoUpcomingJamDraft`, `bluesjam.demoUpcomingJamCreated` y
+   `bluesjam.demoUpcomingJamLive`.
 2. Si querés tu propio backend, creá la planilla con el esquema de
    [`docs/sheet-schema.md`](docs/sheet-schema.md) y desplegá el script con
    [`backend/apps-script/README.md`](backend/apps-script/README.md).
@@ -216,16 +223,24 @@ superior.
    ./init.sh                      # build + tests + Konsist + detekt + ktlint
    ./gradlew :app:installDebug
    ```
+4. Los tests del backend corren aparte, con Node 18 o superior y sin instalar nada:
+   ```bash
+   node --test backend/apps-script/test/*.test.js
+   ```
 
 ## Documentación
 
 | Documento | Contenido |
 |---|---|
 | [`docs/entregable-harness-ia.md`](docs/entregable-harness-ia.md) | Entregable del curso: el harness y el proceso con IA |
+| [`docs/presentation/`](docs/presentation/) | Presentación del entregable: abrir `dist/index.html` en el navegador |
 | [`bb-blues-jam-bitacora.md`](bb-blues-jam-bitacora.md) | Bitácora: el proceso y las 29 decisiones con su fundamento |
 | [`docs/architecture.md`](docs/architecture.md) | Módulos, dependencias y flujo en ejecución, con diagrama |
+| [`docs/feature-map.html`](docs/feature-map.html) | Mapa interactivo de las rebanadas y sus dependencias |
 | [`docs/build-brief.md`](docs/build-brief.md) | Objetivos, MVP y no-objetivos |
 | [`docs/phase-2-brief.md`](docs/phase-2-brief.md) | El asistente |
 | [`docs/domain-model.md`](docs/domain-model.md) | Entidades, estados y autoridad de cada dato |
+| [`docs/user-and-access-model.md`](docs/user-and-access-model.md) | Roles, frase de acceso y quién puede escribir |
 | [`DESIGN.md`](DESIGN.md) | Tokens y reglas visuales |
 | [`docs/apps-script-api.md`](docs/apps-script-api.md) | Contrato del backend |
+| [`docs/sheet-schema.md`](docs/sheet-schema.md) | Esquema de la planilla |

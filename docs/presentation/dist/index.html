@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111318">
+  <meta name="description" content="BB Blues Jam: once slides sobre el harness y el proceso de desarrollo con agentes de IA. Proyecto final AI Expert, DevExpert.">
+  <title>BB Blues Jam · El harness detrás de la app</title>
+  <link rel="icon" href="assets/bbb_blues_band_logo.png">
+  <link rel="preload" href="assets/barlow_condensed_bold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/chivo_regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script src="presentation.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#deck">Ir a la presentación</a>
+  <header class="masthead">
+    <a class="brand" href="#1" aria-label="BB Blues Jam, inicio"><img src="assets/bbb_blues_band_logo.png" alt="Bahía Blanca Blues"><span>BB BLUES JAM <span class="brand-divider">/</span> <span class="muted">EL HARNESS</span></span></a>
+    <span class="edition">PROYECTO FINAL <span>AI EXPERT · 2026</span></span>
+  </header>
+
+  <main id="deck" tabindex="-1" aria-label="Presentación de 11 diapositivas">
+    <section class="slide active cover" id="slide-1" data-title="El harness detrás de la app" aria-labelledby="title-1">
+      <div class="slide-content cover-grid">
+        <div class="cover-copy">
+          <p class="eyebrow">01 / EL PROCESO</p>
+          <h1 id="title-1">EL HARNESS<br>DETRÁS DE<br>LA <span class="outline">APP.</span></h1>
+          <p class="lead">Cuatro semanas. Cero líneas de producto a mano.<br>Cómo se organizó el trabajo para lograrlo.</p>
+          <div class="cover-meta"><span>BAHÍA BLANCA, ARGENTINA</span><span>19 SEP — 18 OCT 2026</span></div>
+        </div>
+        <div class="cover-art" aria-label="Identidad de Bahía Blanca Blues y las tres piezas del proceso">
+          <div class="record"><div class="record-label"><img src="assets/bbb_blues_band_logo.png" alt="Bahía Blanca Blues"><span>BB BLUES JAM</span></div></div>
+          <div class="record-caption"><span>LADO A · EL PROCESO · HOY</span><span>LADO B · LA APP · DEMO</span></div>
+          <div class="process-strip"><span>CONTEXTO</span><i>→</i><span>AGENTES</span><i>→</i><span>EVIDENCIA</span></div>
+        </div>
+        <div class="cover-bottom"><span>PROYECTO FINAL AI EXPERT · DEVEXPERT</span><span>DESPUÉS: LA APP EN VIVO</span></div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>El harness detrás de la app</h3>
+        <p><strong>Tiempo:</strong> 40 segundos · acumulado: 0:40.</p>
+        <p><strong>Idea central:</strong> anunciar que el tema es el proceso, y que la app viene después.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Organizo una jam de blues en Bahía Blanca, y para mi proyecto final de AI Expert construí una app para esa jam. Todo el código de producto lo escribieron agentes de IA: en cuatro semanas, ninguna línea a mano.</p>
+        <p>Pero hoy no voy a hablar de la app; la van a ver funcionando al final. Quiero contarles el lado B: la estructura que permitió que agentes sin memoria trabajaran durante semanas sin romper lo que ya estaba. A esa estructura la llamamos harness.”</p>
+        <p><strong>En pantalla:</strong> señalá el disco: lado A el proceso, que es lo de hoy; lado B la app, que es la demo.</p>
+        <p><strong>Transición:</strong> “Todo empezó antes de escribir código: eligiendo bien el problema.”</p>
+        <p><strong>Respaldo:</strong> entregable §1.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-2" data-title="Antes de generar, elegir bien el problema" aria-labelledby="title-2" hidden inert>
+      <div class="slide-content choice-grid">
+        <div>
+          <p class="eyebrow">02 / EL PUNTO DE PARTIDA</p>
+          <h2 id="title-2">ANTES DE GENERAR,<br>ELEGIR BIEN<br>EL PROBLEMA.</h2>
+          <p class="lead">Una jam de blues mensual en Bahía Blanca, con 20 a 60 músicos.<br>Antes de elegirla se evaluaron ocho dominios.</p>
+          <div class="takeaway">Un problema verificable hace posible <b>un proceso verificable.</b></div>
+        </div>
+        <div class="problem-lines criteria">
+          <div><span class="line-number">01</span><p><b>La IA tiene que decidir, no resumir.</b><span>Doce temas que arranquen arriba, aflojen en el medio, cierren fuerte y no repitan la jam anterior.</span></p></div>
+          <div><span class="line-number">02</span><p><b>El resultado se verifica de un vistazo.</b><span>Cualquier músico lee la lista y sabe si sirve.</span></p></div>
+          <div><span class="line-number">03</span><p><b>La tarea manual es realmente tediosa.</b><span>Hoy depende de la memoria de una persona.</span></p></div>
+          <div><span class="line-number">04</span><p><b>Un problema propio, con usuarios reales.</b><span>El organizador de la jam es también el desarrollador.</span></p></div>
+        </div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>Antes de generar, elegir bien el problema</h3>
+        <p><strong>Tiempo:</strong> 50 segundos · acumulado: 1:30.</p>
+        <p><strong>Idea central:</strong> el problema se eligió con criterios que hacen verificable el trabajo de la IA.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Evalué ocho dominios antes de elegir: películas, recetas, deportes, playlists. De ese descarte salieron cuatro criterios. La IA tiene que decidir, no resumir. El resultado tiene que verificarse de un vistazo. La tarea manual tiene que ser realmente tediosa. E idealmente, un problema propio con usuarios reales.</p>
+        <p>Armar la lista de una jam cumple los cuatro: elegir doce temas que arranquen arriba, aflojen en el medio, cierren fuerte y no repitan la jam anterior es una decisión; cualquier músico la verifica leyéndola; y hoy depende de la memoria de una persona.”</p>
+        <p><strong>En pantalla:</strong> recorré los cuatro criterios rápido; el énfasis va en “verificable”.</p>
+        <p><strong>Transición:</strong> “Con el problema elegido, todavía faltaba decidir mucho antes de pedir código.”</p>
+        <p><strong>Respaldo:</strong> entregable §2.1; bitácora §1.3.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-3" data-title="Primero decidir, después generar" aria-labelledby="title-3" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">03 / DEL PROBLEMA AL PLAN</p>
+        <h2 id="title-3">PRIMERO DECIDIR.<br>DESPUÉS GENERAR.</h2>
+        <div class="discovery-track">
+          <article><span class="step-index">01</span><h3>INVESTIGAR</h3><p class="tool-name">NotebookLM + documentación oficial</p><div class="big-number">10 <small>APIs</small></div><p>Ninguna da tonalidad ni tempo confiables: el dato central de una jam.</p><div class="decision">Decisión: la tonalidad la pone el admin.</div></article>
+          <article><span class="step-index">02</span><h3>ACOTAR</h3><p class="tool-name">Conversación de diseño con Claude</p><div class="big-number">3 <small>decisiones</small></div><p>Una fuente por dato. Solo el catálogo propio. Lo que hace el admin, también el asistente.</p><div class="decision">De Manal o Memphis la Blusera, el modelo sabe poco y alucina.</div></article>
+          <article><span class="step-index">03</span><h3>DOCUMENTAR</h3><p class="tool-name">build-brief + Stitch</p><div class="big-number">7 <small>documentos</small></div><p>Dominio, acceso, diseño, stack y riesgos, escritos para un agente sin contexto.</p><div class="decision">Stitch inventó un bar y un admin. Lo atrapó contrastar con lo decidido.</div></article>
+          <article><span class="step-index">04</span><h3>PLANIFICAR</h3><p class="tool-name">harness-starter</p><div class="big-number">34 <small>rebanadas</small></div><p><b>Rebanada:</b> una funcionalidad chica, de punta a punta. Ordenadas por dependencias reales.</p><div class="decision">8 podían arrancar ese mismo día, sin esperar la planilla.</div></article>
+        </div>
+        <p class="bottom-statement">El descubrimiento se convirtió en <b>contratos para un agente sin contexto.</b></p>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>Primero decidir, después generar</h3>
+        <p><strong>Tiempo:</strong> 1 minuto 15 segundos · acumulado: 2:45.</p>
+        <p><strong>Idea central:</strong> la investigación y las decisiones se convierten en contratos que un agente sin contexto puede ejecutar.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Primero investigué diez APIs de música con NotebookLM y lo contrasté con la documentación oficial. La conclusión más importante fue negativa: ninguna da tonalidad ni tempo confiables, que es justo el dato central de una jam. Así que la tonalidad la pone el admin.</p>
+        <p>Después acoté el sistema conversando con Claude. Tres decisiones sostienen todo el proyecto: una sola fuente por dato, sin sincronización bidireccional; el asistente solo elige temas del catálogo propio, porque de Manal o de Memphis la Blusera el modelo sabe poco y alucina; y todo lo que el admin hace a mano, el asistente lo tiene que poder hacer también.</p>
+        <p>Eso se escribió en siete documentos para un agente sin contexto. Stitch generó las pantallas, pero en su resumen inventó un bar, un admin llamado Fede y una PWA. Lo atrapamos porque había decisiones escritas para contrastar.</p>
+        <p>Con eso, harness-starter generó un plan de 34 rebanadas. Una rebanada es una funcionalidad chica, de punta a punta. Al escribir el grafo de dependencias quedó a la vista que ocho podían arrancar ese mismo día.”</p>
+        <p><strong>En pantalla:</strong> recorré los cuatro pasos de izquierda a derecha. Las 34 rebanadas son el plan inicial, no el total del proyecto.</p>
+        <p><strong>Transición:</strong> “Ese contexto necesitaba un lugar estable donde vivir. Ahí aparece el harness.”</p>
+        <p><strong>Respaldo:</strong> entregable §2.2 a §2.5. Las tres decisiones son D-04, D-14 y D-13 en la bitácora.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-4" data-title="El agente no recuerda, el repositorio sí" aria-labelledby="title-4" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">04 / EL HARNESS</p>
+        <div class="heading-row"><h2 id="title-4">EL AGENTE NO RECUERDA.<br>EL REPOSITORIO SÍ.</h2><p>Seis piezas para retomar el trabajo<br>sin empezar de cero.</p></div>
+        <div class="harness-map">
+          <div class="harness-center"><span class="hub-symbol" aria-hidden="true">↻</span><h3>UNA SESIÓN<br>NUEVA</h3><p>Leer → actuar → verificar<br>→ dejar evidencia</p></div>
+          <article class="harness-piece p1"><span>01 / CONTEXTO</span><h3>AGENTS.md + docs</h3><p>Un índice corto: reglas con su motivo<br>y qué leer en cada caso.</p></article>
+          <article class="harness-piece p2"><span>02 / CONOCIMIENTO</span><h3>Skills versionadas</h3><p>El workflow del curso y una skill<br>propia de arquitectura.</p></article>
+          <article class="harness-piece p3"><span>03 / ROLES</span><h3>Tres subagentes</h3><p>Planificar, implementar y validar<br>con fronteras explícitas.</p></article>
+          <article class="harness-piece p4"><span>04 / VERIFICACIÓN</span><h3>init.sh</h3><p>Un gate que corre todo y declara<br>qué herramientas corren de verdad.</p></article>
+          <article class="harness-piece p5"><span>05 / REGLAS EJECUTABLES</span><h3>Konsist</h3><p>Las decisiones de arquitectura<br>se convierten en tests.</p></article>
+          <article class="harness-piece p6"><span>06 / ESTADO DURABLE</span><h3>Plan + progreso + evidencia</h3><p>Qué está aceptado, qué falta<br>y con qué se comprobó.</p></article>
+        </div>
+        <div class="shared-line"><span>CLAUDE CODE</span><span class="shared-bar"></span><b>UN MISMO HARNESS</b><span class="shared-bar"></span><span>CODEX</span></div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>El agente no recuerda, el repositorio sí</h3>
+        <p><strong>Tiempo:</strong> 1 minuto 15 segundos · acumulado: 4:00.</p>
+        <p><strong>Idea central:</strong> el harness es lo que permite que un agente sin memoria retome el proyecto en cualquier sesión.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Un agente arranca cada sesión sin recordar nada. Lo que necesita para seguir tiene que estar en el repositorio.</p>
+        <p>El harness tiene seis piezas. AGENTS.md es un índice corto: reglas con su motivo y qué documento leer en cada caso. Las skills guardan el workflow, más una skill propia de arquitectura. Y hay tres roles separados: planificar, implementar y validar.</p>
+        <p>Del otro lado están los controles: init.sh corre la verificación completa; Konsist convierte decisiones de arquitectura en tests; y el plan, el progreso y la evidencia dicen qué está aceptado y con qué se comprobó.</p>
+        <p>Cada sesión lee ese estado, trabaja y deja el siguiente punto de partida. Y como todo está en archivos, el mismo harness sirvió para Claude Code y para Codex.”</p>
+        <p><strong>En pantalla:</strong> empezá por “una sesión nueva” en el centro; después la columna izquierda (contexto) y la derecha (controles). No leas los seis recuadros.</p>
+        <p><strong>Transición:</strong> “De esas piezas, la que más pesó fue la separación de roles: quién puede dar algo por terminado.”</p>
+        <p><strong>Respaldo:</strong> entregable §3. AGENTS.md tiene unas 150 líneas, con las reglas arriba y la Definition of Done al final.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-5" data-title="Quien escribe no es quien acepta" aria-labelledby="title-5" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">05 / EL CICLO POR REBANADA</p>
+        <h2 id="title-5">QUIEN ESCRIBE<br>NO ES QUIEN ACEPTA.</h2>
+        <div class="workflow">
+          <article><span class="role-number">01</span><p class="tool-name">planner</p><h3>PLANIFICA</h3><p>Lee el repo, prueba supuestos<br>y define el contrato.</p><div class="artifact">docs/specs/&lt;id&gt;.md</div></article>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <article><span class="role-number">02</span><p class="tool-name">implementer</p><h3>IMPLEMENTA</h3><p>Escribe código, corre el gate<br>y registra evidencia.</p><div class="artifact">Estado: passing</div></article>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <article><span class="role-number">03</span><p class="tool-name">validator · no puede editar</p><h3>VALIDA</h3><p>Contrasta comportamiento,<br>spec y pruebas reales.</p><div class="artifact">accept / revise / block</div></article>
+        </div>
+        <div class="workflow-return"><span>↶ revise: vuelve a implementación</span><span>accept → el orquestador lo registra y commitea</span></div>
+        <div class="role-bottom"><div><b>passing ≠ accepted</b><span>Autoverificarse no alcanza: las dependencias se destraban solo con aceptación.</span></div><p><strong>9</strong> rebanadas volvieron<br>con <code>revise</code> al menos una vez.</p></div>
+        <div class="lesson-line"><span>UN CASO</span><p>El documento de diseño decía que un cupo libre y uno ocupado se distinguían por el relleno. <b>El validador midió la captura en escala de grises: 50 contra 53.</b> No se distinguían.</p></div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>Quien escribe no es quien acepta</h3>
+        <p><strong>Tiempo:</strong> 1 minuto 15 segundos · acumulado: 5:15.</p>
+        <p><strong>Idea central:</strong> autoverificarse no es aceptar; el validador independiente encuentra lo que el implementador no ve.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Cada rebanada pasa por tres subagentes. El planner lee el repo, prueba supuestos en una copia descartable y escribe la spec. El implementer escribe el código, corre el gate y deja evidencia. El validator, que no puede editar nada, contrasta todo con la spec.</p>
+        <p>El implementer llega como mucho a passing: se autoverificó. Accepted lo da solo el validador, y solo con accepted se destraban las dependencias. Si el validador pudiera arreglar lo que juzga, dejaría de ser independiente.</p>
+        <p>Nueve rebanadas volvieron con revise. Un ejemplo: el documento de diseño decía que un cupo libre y uno ocupado se distinguían por tres señales. El validador midió la captura en escala de grises: 50 contra 53 de luminancia. El relleno no era una señal. Con el tiempo encontró menos errores de código y más diferencias entre lo que un documento afirma y lo que se verificó.”</p>
+        <p><strong>En pantalla:</strong> seguí las flechas y volvé por revise. Pausa en “passing no es accepted”.</p>
+        <p><strong>Transición:</strong> “Para que el validador pueda confiar en algo, la verificación misma tiene que ser confiable.”</p>
+        <p><strong>Respaldo:</strong> entregable §3.3, §3.6 y §4.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-6" data-title="Una regla que no puede fallar no prueba nada" aria-labelledby="title-6" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">06 / VERIFICACIÓN</p>
+        <h2 id="title-6">UNA REGLA QUE NO PUEDE<br>FALLAR NO PRUEBA NADA.</h2>
+        <div class="verification-grid">
+          <div class="terminal"><div class="terminal-top"><span class="terminal-lights" aria-hidden="true">● ● ●</span><span>VERIFICACIÓN / init.sh</span></div><div class="terminal-body"><p><span class="prompt">$</span> CI=true ./init.sh</p><p class="terminal-muted">Build → Tests → Lint → Arquitectura</p><div class="terminal-results"><p>konsist <span>wired ✓</span></p><p>detekt <span>wired ✓</span></p><p>ktlint <span>wired ✓</span></p></div><p class="terminal-muted terminal-caption">Al principio decía NOT WIRED YET,<br>porque era la verdad.</p></div></div>
+          <div class="verification-copy"><div class="test-metrics"><div><strong>1.156</strong><span>tests JVM en la<br>última corrida</span></div><div><strong>22</strong><span>reglas ejecutables<br>de arquitectura</span></div></div><div class="proof-loop"><span>PLANTAR UNA VIOLACIÓN</span><i>↓</i><span class="failure">VER EL GATE EN ROJO</span><i>↓</i><span>REPARAR Y RECIÉN AHÍ CONFIAR</span></div><p>Lo mismo con los tests de producto: cambiar el «cualquiera» del filtro por «todos» tenía que poner algo en rojo. Más de una vez, no pasó.</p></div>
+        </div>
+        <div class="lesson-line"><span>REGLA DEL GATE</span><p>Solo se volvió más estricto, nunca más laxo: <b>sin baselines que escondan problemas ni reglas apagadas para que pase.</b></p></div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>Una regla que no puede fallar no prueba nada</h3>
+        <p><strong>Tiempo:</strong> 1 minuto · acumulado: 6:15.</p>
+        <p><strong>Idea central:</strong> un verde solo vale si se vio que puede ponerse rojo.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“El gate es init.sh: build, más de mil tests, lint y 22 reglas de arquitectura. Al final declara qué herramientas corren de verdad. Al principio decía NOT WIRED YET, porque era la verdad.</p>
+        <p>Cada regla nueva se mostró fallando antes de confiar en ella: se plantaba la violación, se veía el rojo con archivo y línea, y se reparaba. Lo mismo con los tests de producto: el implementer y el validator rompían el código a propósito, por ejemplo cambiando el ‘cualquiera’ del filtro por ‘todos’. Más de una vez los tests seguían en verde, y ese hueco se cerró antes de aceptar.</p>
+        <p>Y una regla del proyecto: el gate solo se volvió más estricto. Nunca se apagó una regla para que pasara.”</p>
+        <p><strong>En pantalla:</strong> la terminal resume una verificación documentada; no es una ejecución en vivo.</p>
+        <p><strong>Transición:</strong> “Todo esto corre solo. Pero solo no quiere decir sin humano.”</p>
+        <p><strong>Respaldo:</strong> entregable §3.4 y §3.5. 1.156 tests JVM en la última corrida, incluido un test de llamada real que se omite por defecto.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-7" data-title="La autonomía concentra el criterio humano" aria-labelledby="title-7" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">07 / EL HUMANO EN EL CIRCUITO</p>
+        <div class="heading-row"><h2 id="title-7">LA AUTONOMÍA CONCENTRA<br>EL CRITERIO HUMANO.</h2><p>Las preguntas pasaron<br>de «¿sigo?» a «¿esto?».</p></div>
+        <div class="human-grid">
+          <article class="harness-piece"><span>01 / DÓNDE FRENAR</span><h3>Solo donde una decisión cambia el proyecto</h3><p>Una versión alfa en el gate, subir Kotlin para usar Koog, una regla de arquitectura nueva o contradecir una decisión escrita.</p></article>
+          <article class="harness-piece"><span>02 / PREGUNTAS CONCRETAS</span><h3>El producto aparece al preguntar</h3><p>El Instagram mostraba una jam los martes: era el programa de radio. Resuelto por el agente, la app mostraría una jam que no existe.</p></article>
+          <article class="harness-piece"><span>03 / VERIFICACIÓN</span><h3>Sacar al humano de la verificación, no de las decisiones</h3><p>Jam de demo y sesión de admin solo en debug. El validador abrió el APK de release y comprobó que no están.</p></article>
+          <article class="harness-piece"><span>04 / LÍMITES</span><h3>Lo que no está en el prompt, no existe</h3><p>Un subagente activó TalkBack: la restricción estaba en la memoria del orquestador, no en su prompt. Desde entonces, cada prompt repite los límites.</p></article>
+        </div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>La autonomía concentra el criterio humano</h3>
+        <p><strong>Tiempo:</strong> 1 minuto 15 segundos · acumulado: 7:30.</p>
+        <p><strong>Idea central:</strong> el humano no aprueba cada paso; interviene donde una decisión cambia el proyecto.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“El flujo corre las rebanadas de corrido, sin pedir permiso en cada etapa. Se detiene solo donde una decisión cambia el proyecto: meter una versión alfa en el gate, subir Kotlin, una regla nueva. Las preguntas pasaron de ‘¿sigo?’ a ‘¿esto?’.</p>
+        <p>Esas preguntas sacaron a la luz cosas que no estaban en ningún documento. El Instagram de la jam mostraba una jam los martes en otro lugar: era el programa de radio. Si el agente lo resolvía solo, la app mostraría hoy una jam que no existe.</p>
+        <p>Cuando yo era el cuello de botella de la verificación, la respuesta fue código: una jam de demo y una sesión de admin que existen solo en debug. El validador abrió el APK de release y comprobó que no estaban. La idea es sacar al humano de la verificación, no de las decisiones.</p>
+        <p>Y una lección cara: los subagentes no heredan contexto. Uno activó TalkBack en mi teléfono porque la restricción estaba en la memoria del orquestador, no en su prompt. Desde entonces cada prompt repite los límites.”</p>
+        <p><strong>En pantalla:</strong> un recuadro por párrafo, en orden.</p>
+        <p><strong>Transición:</strong> “Ese no fue el único error. Hubo varios, y me interesa más qué los atrapó.”</p>
+        <p><strong>Respaldo:</strong> entregable §5.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-8" data-title="Los errores, y qué los atrapó" aria-labelledby="title-8" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">08 / ERRORES</p>
+        <div class="heading-row"><h2 id="title-8">LOS ERRORES,<br>Y QUÉ LOS ATRAPÓ.</h2><p>Un registro honesto vale más<br>que una lista de aciertos.</p></div>
+        <table class="error-table">
+          <thead><tr><th scope="col">Error</th><th scope="col">Lo cometió</th><th scope="col">Lo atrapó</th><th scope="col">Qué cambió</th></tr></thead>
+          <tbody>
+            <tr><td>Stitch inventó un bar, un admin y la arquitectura</td><td>herramienta generativa</td><td>contrastar con las decisiones escritas</td><td>los hechos viven en archivos con su fuente</td></tr>
+            <tr><td>El gate decía <code>wired</code> sin correr nada</td><td>el propio harness</td><td>el planner, al prototipar</td><td>una herramienta cuenta solo si corre en todos los módulos</td></tr>
+            <tr><td>Tests que seguían en verde con la regla invertida</td><td>implementer</td><td>validator</td><td>romper a propósito es parte de la definición de terminado</td></tr>
+            <tr><td>Un <code>git commit -a</code> se llevó cambios a medio hacer de un agente</td><td>orquestador</td><td>el build roto en dos commits</td><td>commits por ruta explícita mientras corre un agente</td></tr>
+            <tr><td>Tras pegar el backend, seguía respondiendo la versión vieja</td><td>despliegue manual</td><td>un probe que no escribe nada</td><td>todo chequeo se diseña para ser observable desde afuera</td></tr>
+          </tbody>
+        </table>
+        <p class="bottom-statement">Ningún error terminó en «tener más cuidado». <b>Cada uno dejó un cambio en el proceso.</b></p>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>Los errores, y qué los atrapó</h3>
+        <p><strong>Tiempo:</strong> 1 minuto · acumulado: 8:30.</p>
+        <p><strong>Idea central:</strong> todos se equivocaron, incluido el orquestador; cada error dejó un cambio en el proceso.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Un registro honesto vale más que una lista de aciertos. Se equivocaron todos.</p>
+        <p>La herramienta generativa inventó datos; lo atrapó contrastar con decisiones escritas. El propio harness mentía: el gate podía decir ‘wired’ sin correr nada, y lo descubrió el planner al prototipar. El implementer escribió tests que no podían fallar, y lo atrapó el validador. El orquestador hizo un commit que se llevó cambios a medio hacer de un agente. Y en el backend, después de pegar el código nuevo, la URL seguía respondiendo con la versión vieja; lo delató un probe que no escribe nada.</p>
+        <p>Lo importante es la última columna: ninguno terminó en ‘tener más cuidado’. Cada uno terminó en un cambio del proceso.”</p>
+        <p><strong>En pantalla:</strong> leé la columna “Lo atrapó” y la de “Qué cambió”; no hace falta leer cada fila entera.</p>
+        <p><strong>Transición:</strong> “La prueba más grande del proceso fue meter IA dentro de la propia app.”</p>
+        <p><strong>Respaldo:</strong> entregable §8 y §5.6.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-9" data-title="La IA entró a la app sin tocar las features" aria-labelledby="title-9" hidden inert>
+      <div class="slide-content assistant-grid">
+        <div>
+          <p class="eyebrow">09 / LA PRUEBA DEL PLAN: FASE 2</p>
+          <h2 id="title-9">LA IA ENTRÓ A LA APP<br>SIN TOCAR LAS FEATURES.</h2>
+          <p class="lead">Un asistente que le propone la lista al admin.<br>Diseñado para encajar desde la primera semana.</p>
+          <div class="assistant-flow"><div><span>01</span><p><b>LEE DATOS REALES</b><small>Catálogo, jams pasadas y agenda, con herramientas de solo lectura.</small></p></div><i aria-hidden="true">↓</i><div><span>02</span><p><b>ELIGE, ORDENA Y EXPLICA</b><small>Una propuesta estructurada, que llega tema por tema.</small></p></div><i aria-hidden="true">↓</i><div><span>03</span><p><b>LA APP VALIDA</b><small>Lo que no está en el catálogo, se descarta.</small></p></div><i aria-hidden="true">↓</i><div class="human-step"><span>04</span><p><b>EL ADMIN DECIDE</b><small>Aplica con las mismas funciones que usa a mano.</small></p></div></div>
+          <p class="assistant-fact"><a href="assets/app-architecture.svg" target="_blank" rel="noopener" class="architecture-link">Ver arquitectura de la app ↗</a></p>
+        </div>
+        <div class="proof-panel">
+          <div class="proof-zero"><strong>0</strong><span>módulos de feature existentes<br>tocados al agregar el asistente.</span></div>
+          <p class="proof-note">Konsist lo comprueba en cada corrida: el agente no puede escribir y la feature solo aplica a través del contrato.</p>
+          <h3>SOLO APARECIÓ AL EJECUTAR</h3>
+          <ul>
+            <li>El gateway aceptaba herramientas, pero el modelo no las usaba. <b>La spec ya traía el plan B.</b></li>
+            <li>El gateway se cayó con 502. <b>La rebanada quedó blocked, no passing:</b> no se verifica lo que no corre.</li>
+          </ul>
+        </div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>La IA entró a la app sin tocar las features</h3>
+        <p><strong>Tiempo:</strong> 1 minuto 10 segundos · acumulado: 9:40.</p>
+        <p><strong>Idea central:</strong> la fase 2 comprobó que las decisiones de la semana uno funcionaban.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“La fase 2 fue un asistente que le propone al admin la lista de la jam. Lo van a ver en la demo; acá me interesa cómo entró.</p>
+        <p>El agente corre en el teléfono con Koog. Lee el catálogo, las jams pasadas y la agenda con herramientas de solo lectura. Propone temas, la app descarta todo lo que no esté en el catálogo, y el admin decide si aplica la propuesta.</p>
+        <p>Lo que muestra el diff: agregar el asistente no tocó ningún módulo de feature existente. Aplica propuestas con las mismas funciones que usa el admin a mano, porque eso se decidió en la primera semana. Y Konsist lo prueba en cada corrida.</p>
+        <p>Algunas cosas solo aparecieron al ejecutar. El gateway aceptaba herramientas pero el modelo no las usaba; la spec ya traía un plan B. Y cuando el gateway se cayó con 502, la rebanada quedó bloqueada, no ‘passing’: no se puede verificar lo que no corre.”</p>
+        <p><strong>En pantalla:</strong> el número cero es el centro de la slide. El enlace abre el diagrama de arquitectura si preguntan por módulos.</p>
+        <p><strong>Transición:</strong> “Con todo aceptado, faltaba una última tarea: mirar el conjunto.”</p>
+        <p><strong>Respaldo:</strong> entregable §6; docs/architecture.md.</p></aside>
+    </section>
+
+    <section class="slide" id="slide-10" data-title="Validar por rebanada no alcanza" aria-labelledby="title-10" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">10 / LA ÚLTIMA TAREA: REVISAR EL CONJUNTO</p>
+        <div class="heading-row"><h2 id="title-10">VALIDAR POR REBANADA<br>NO ALCANZA.</h2><p>Cada validador juzga su rebanada.<br>Nadie había mirado el conjunto.</p></div>
+        <div class="review-summary"><div><strong>9</strong><span>hallazgos de un code<br>review de todo el repo</span></div><i aria-hidden="true">→</i><div><strong>7</strong><span>rebanadas nuevas, con el mismo<br>planner → implementer → validator</span></div><i aria-hidden="true">→</i><div><strong>3</strong><span>hallazgos convertidos en reglas<br>de Konsist, para que no vuelvan</span></div></div>
+        <div class="finding-grid">
+          <div><strong>11 → 1</strong><span>copias del mismo mecanismo de escritura, unificadas en un motor.</span></div>
+          <div><strong>122 → 14</strong><span>declaraciones públicas en las features: solo quedan las pantallas.</span></div>
+          <div><strong>2</strong><span>roturas del motor nuevo que los tests viejos no detectaban. Se agregó un test antes de aceptar.</span></div>
+        </div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>Validar por rebanada no alcanza</h3>
+        <p><strong>Tiempo:</strong> 1 minuto · acumulado: 10:40.</p>
+        <p><strong>Idea central:</strong> cada validador juzga su rebanada; los problemas entre rebanadas necesitan una revisión del conjunto.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Cada validador juzga una rebanada contra su spec. Nadie había mirado el conjunto: lo que se repite entre rebanadas, o lo que cada una agregó sin romper nada sola.</p>
+        <p>Así que la última tarea fue un code review de todo el repositorio. Salieron nueve hallazgos, que se convirtieron en siete rebanadas nuevas con el mismo ciclo planner, implementer y validator.</p>
+        <p>Por ejemplo, había once copias del mismo mecanismo de escritura, y quedó uno. Las features exponían 122 declaraciones públicas cuando hacían falta 14. Y al romper a propósito el motor nuevo, dos roturas seguían en verde con los tests viejos: se agregó un test antes de aceptar. Tres de los hallazgos quedaron como reglas de Konsist, para que no vuelvan en silencio.”</p>
+        <p><strong>En pantalla:</strong> recorré la línea 9 → 7 → 3 y después los tres números.</p>
+        <p><strong>Transición:</strong> “Con eso, lo que me llevo.”</p>
+        <p><strong>Respaldo:</strong> entregable §7. No hubo nueva prueba en el teléfono para esos refactors: la prueba fue el mismo gate, de 1124 a 1156 tests.</p></aside>
+    </section>
+
+    <section class="slide closing" id="slide-11" data-title="El harness importa más que el prompt" aria-labelledby="title-11" hidden inert>
+      <div class="slide-content">
+        <p class="eyebrow">11 / LO QUE ME LLEVO · CORTE AL 18 OCT 2026</p>
+        <div class="closing-grid"><div><h2 id="title-11">EL HARNESS IMPORTA<br>MÁS QUE EL PROMPT.</h2><div class="closing-lessons"><p><span>01</span> Separar roles encuentra lo que un solo agente no ve.</p><p><span>02</span> Una regla que no puede fallar no prueba nada.</p><p><span>03</span> Los subagentes no heredan contexto: lo que no se escribe, no existe.</p><p><span>04</span> Acotar el LLM a datos propios es lo que lo vuelve útil.</p></div></div>
+          <div class="result-graphic"><svg class="donut" viewBox="0 0 220 220" role="img" aria-label="75 rebanadas: 74 aceptadas y una bloqueada por decisión de alcance"><circle class="donut-track" cx="110" cy="110" r="91"/><circle class="donut-accepted" cx="110" cy="110" r="91" pathLength="75"/><circle class="donut-blocked" cx="110" cy="110" r="91" pathLength="75"/></svg><div class="donut-label"><strong>74<span>/75</span></strong><small>REBANADAS ACEPTADAS</small></div><div class="result-legend"><span><i class="legend-accepted"></i>74 aceptadas</span><span><i class="legend-blocked"></i>1 bloqueada por alcance</span></div></div>
+        </div>
+        <div class="closing-stats"><div><strong>4</strong><span>semanas</span></div><div><strong>29</strong><span>decisiones<br>humanas</span></div><div><strong>1.156</strong><span>tests JVM</span></div><div><strong>+240</strong><span>commits</span></div><div><strong>0</strong><span>líneas de producto<br>escritas a mano</span></div></div>
+        <div class="closing-signoff"><p>La IA multiplica el criterio.<br><b>El criterio sigue siendo nuestro.</b></p><span class="next-up">A CONTINUACIÓN · LA APP EN VIVO</span><button class="primary-button" id="restart">Volver al inicio <span aria-hidden="true">↗</span></button></div>
+      </div>
+      <aside class="speaker-notes" aria-label="Notas del presentador"><h3>El harness importa más que el prompt</h3>
+        <p><strong>Tiempo:</strong> 50 segundos · acumulado: 11:30.</p>
+        <p><strong>Idea central:</strong> cerrar con las lecciones y pasar a la demo.</p>
+        <p><strong>Guion:</strong></p>
+        <p>“Al 18 de octubre: 75 rebanadas, 74 aceptadas y una bloqueada por una decisión de alcance. Ninguna línea de producto escrita a mano.</p>
+        <p>Lo que mantuvo la calidad no fue un prompt bien redactado: fueron roles separados, reglas que pueden fallar, contexto escrito y un asistente acotado a datos propios. Las 29 decisiones las tomé yo; los agentes las convirtieron en código, tests y evidencia, y avisaron cada vez que algo las contradecía.</p>
+        <p>La IA multiplica el criterio. El criterio sigue siendo nuestro. Y ahora, vamos a la app.”</p>
+        <p><strong>En pantalla:</strong> señalá el gráfico y la rebanada bloqueada. Al terminar, pasá a la demo.</p>
+        <p><strong>Transición a la demo:</strong> “Les muestro primero lo que ve un músico, y después el modo admin con el asistente.”</p>
+        <p><strong>Respaldo:</strong> entregable §1, §10 y §11; feature_list.json; snapshot.json. La bloqueada no se cuenta como aceptada. Los conteos son un corte documentado, no estadísticas en vivo.</p></aside>
+    </section>
+  </main>
+
+  <footer class="deck-controls">
+    <div class="position"><span id="slide-number">01</span><span class="position-divider">/</span><span id="slide-total">11</span><span id="slide-label">EL PROCESO</span></div>
+    <nav class="slide-dots" aria-label="Elegir diapositiva"></nav>
+    <div class="tools"><button id="overview-button" aria-label="Ver todas las diapositivas (G)" title="Índice (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button><button id="notes-button" aria-label="Mostrar notas para presentar (N)" aria-expanded="false" title="Notas (N)">N</button><button id="fullscreen-button" aria-label="Pantalla completa (F)" title="Pantalla completa (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button><span class="control-separator"></span><button id="previous" aria-label="Diapositiva anterior (flecha izquierda)">←</button><button id="next" class="next-button" aria-label="Diapositiva siguiente (flecha derecha)">→</button></div>
+  </footer>
+  <div class="progress-track" aria-hidden="true"><div id="progress-fill"></div></div>
+  <div class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></div>
+  <dialog id="overview"><div class="dialog-heading"><div><p class="eyebrow">EL RECORRIDO</p><h2>ONCE SLIDES. UN PROCESO.</h2></div><button id="close-overview" aria-label="Cerrar índice">✕</button></div><div id="overview-grid"></div><p class="shortcut-hint">← → Navegá &nbsp; · &nbsp; F Pantalla completa &nbsp; · &nbsp; N Notas &nbsp; · &nbsp; G Índice &nbsp; · &nbsp; Esc Cerrar</p></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <noscript><style>.slide[hidden]{display:block!important}.slide{min-height:100vh}.deck-controls,.progress-track{display:none}body{overflow:auto}#deck{height:auto}</style><p>Activá JavaScript para navegar con el teclado. También podés leer las slides hacia abajo.</p></noscript>
+</body>
+</html>
