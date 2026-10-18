@@ -1789,5 +1789,126 @@
       "Independent validator accepted on 17 October 2026: CI=true ./init.sh rerun exit 0 (konsist, detekt, ktlint wired, 1124 testcases), 0 references to the eight deleted types, own mutant on the mover binding red then restored, :core:data KDoc-only and :feature:assistant comment-only diffs, konsist-test untouched, D-13 note additive; the stale PNG diagram is not embedded anywhere."
     ],
     "notes": "Organizer decision of 17 October 2026 (option A): the registry was a pure indirection, the LLM emits proposals not SetlistActions, and SetlistRepository already is the mutation inventory. Keeps the narrow contracts and rule 19 (D-24 enforcement). Amends the second sentence of D-13. Subagents run on sonnet."
+  },
+  {
+    "id": "typed-write-rejections",
+    "area": "core-data",
+    "title": "Typed write rejections and shared write-failure copy",
+    "user_visible_behavior": "None for users: every failure card keeps its exact wording. Internally the Apps Script error codes stop being string literals in feature modules: :core:data exposes a typed rejection (for example a WriteRejection enum or sealed type on WriteOutcome.Rejected) mapped from the code in one place, and the generic failure lines (offline, unavailable, access refused) shared by Próxima jam and Jams live once in :core:ui.",
+    "depends_on": [],
+    "status": "not_started",
+    "verification": [
+      "No server error-code string literal remains in any feature main source (grep)",
+      "Every failure card's copy is unchanged (existing tests pass unmodified in their assertions, plus a mapping test per code)",
+      "Unknown codes still fall back to the generic Sheet-refused line",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 1); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "setlist-mutation-contracts",
+    "area": "core-data",
+    "title": "One narrow contract per setlist mutation; features inject only what they use",
+    "user_visible_behavior": "None for users. SetlistRepository becomes the union of one interface per mutation (add, remove, key, lineup, assign, clear slot, extras, move, publish, create jam, jam status, jam edit), each with its write, observe and dismiss; the shared dismiss(id) fan-out is replaced consistently. :feature:next-jam presenters and state holders receive only the interfaces they call; :app/Koin bind them all to the one SetlistRepository instance.",
+    "depends_on": [
+      "typed-write-rejections"
+    ],
+    "status": "not_started",
+    "verification": [
+      "No :feature:next-jam class depends on SetlistRepository itself (Konsist or grep check)",
+      "All interfaces resolve to the same instance (Koin test)",
+      "Behavior unchanged: existing presenter tests pass",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 2); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "setlist-mutation-engine",
+    "area": "core-data",
+    "title": "Deduplicate the setlist mutation managers and split the setlist package",
+    "user_visible_behavior": "None for users. The eleven mutation managers in :core:data share one generic pending-entries holder (Sending, confirm-remove, Failed, dismiss) and one queue helper for the ordered undispatched write; every manager takes the queue the same way; the mutation queue and failure log are required constructor parameters, never silent defaults. core.data.setlist is split into per-mutation subpackages.",
+    "depends_on": [
+      "setlist-mutation-contracts"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The enqueue pattern exists once (grep for CoroutineStart.UNDISPATCHED in setlist drops accordingly)",
+      "Ordering, cancellation and mirror semantics unchanged: existing :core:data setlist tests pass; a mutant in the shared helper fails them",
+      "No package with more than ~20 files in core.data.setlist",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 3, 4 and 7 (queue part)); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "shared-test-fixtures",
+    "area": "build",
+    "title": "Shared test fakes for feature modules",
+    "user_visible_behavior": "None for users. FakeJamsRepository, FakeAdminSession and other fakes duplicated across feature test sources move to one shared test-fixtures location (a testFixtures source set in :core:data or a test-only :core:testing module) that feature tests depend on; the duplicates are deleted.",
+    "depends_on": [
+      "setlist-mutation-engine"
+    ],
+    "status": "not_started",
+    "verification": [
+      "No duplicated fake class across modules (grep)",
+      "Konsist build-file rules still pass, amended only if the new test-only dependency needs it, shown failing first",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 5); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "feature-api-surface",
+    "area": "features",
+    "title": "Shrink each feature module's public API to what :app uses",
+    "user_visible_behavior": "None for users. Presenters, UiModels, mappers and helpers in feature modules become internal; :app still sees only the screens and Koin modules. Screens keep a public entry point while previews and tests reach the internal presenter overload.",
+    "depends_on": [
+      "shared-test-fixtures"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Public top-level declarations per feature reduced to the screens and Koin modules :app imports (count before/after recorded)",
+      "Koin resolution and all presenter tests still pass",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 6); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "wiring-and-preview-hygiene",
+    "area": "features",
+    "title": "Required coordination dependencies and previews out of production screens",
+    "user_visible_behavior": "None for users. RunLock in ProposalApplier and JamCreationRunner becomes a required constructor parameter. Preview fixtures (domain snapshots, anonymous AdminSession objects) move out of SongDetailScreen, InfoScreen and any other production screen file into separate *Preview.kt files, as the other screens already do.",
+    "depends_on": [
+      "feature-api-surface"
+    ],
+    "status": "not_started",
+    "verification": [
+      "No shared-coordination constructor default remains (grep)",
+      "No @Preview or preview fixture left in a *Screen.kt file",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 7 and 8); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "core-assistant-module",
+    "area": "core",
+    "title": "Move the setlist assistant agent out of :core:data into :core:assistant",
+    "user_visible_behavior": "None for users. The Koog agent, its tools, prompts, validators, streaming parser and gateway HTTP client move from :core:data (package core.data.assistant) to a new :core:assistant module that depends on :core:model and :core:data. Konsist is amended deliberately (organizer decision): :core:assistant may depend on :core:data; the Koog/Ktor library allowlist moves to :core:assistant; assistant-reads-only applies to the new module. :feature:assistant and :app depend on :core:assistant.",
+    "depends_on": [
+      "wiring-and-preview-hygiene"
+    ],
+    "status": "not_started",
+    "verification": [
+      "No ai.koog or io.ktor reference remains in :core:data",
+      "Konsist rules amended only as described, each amended rule shown failing first on a violating fixture; rule count recorded",
+      "The assistant's JVM tests pass unchanged in behavior; the opt-in live test still compiles",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
+    ],
+    "evidence": [],
+    "notes": "From the organizer's code review of 17 October 2026 (finding 9); the organizer asked to fix all nine findings with sonnet subagents."
   }
 ]
