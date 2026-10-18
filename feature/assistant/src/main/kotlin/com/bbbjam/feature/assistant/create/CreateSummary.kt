@@ -1,8 +1,10 @@
 package com.bbbjam.feature.assistant.create
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.WriteFailureCopy
 import com.bbbjam.feature.assistant.apply.ApplyCopy
 import com.bbbjam.feature.assistant.apply.ApplyOutcomeCopy
 import com.bbbjam.feature.assistant.apply.ApplySummaryUiModel
@@ -50,7 +52,7 @@ private fun ApplyRun.createText(snapshot: JamsSnapshot?): Pair<String, ApplyTone
     }
 }
 
-private fun notCreatedText() = CreateCopy.notCreated(ApplyOutcomeCopy.WRITE_UNAVAILABLE)
+private fun notCreatedText() = CreateCopy.notCreated(WriteFailureCopy.UNAVAILABLE)
 
 private fun ApplyRun.finishedText(date: LocalDate?, snapshot: JamsSnapshot?): Pair<String, ApplyTone> = when {
     date == null -> notCreatedText() to ApplyTone.FAILURE
@@ -74,7 +76,8 @@ private fun ApplyRun.abortedText(reason: WriteOutcome, date: LocalDate?, snapsho
         date == null -> CreateCopy.notCreated(ApplyOutcomeCopy.writeFailure(reason))
 
         // The first add refused as `jam_not_editable` on the jam just created: the script predates D-29.
-        addedCount == 0 && behind(date, snapshot) != null && (reason as? WriteOutcome.Rejected)?.code == NOT_EDITABLE ->
+        addedCount == 0 && behind(date, snapshot) != null &&
+            (reason as? WriteOutcome.Rejected)?.rejection == WriteRejection.JAM_NOT_EDITABLE ->
             CreateCopy.OUTDATED_HELD_BACK
 
         else -> CreateCopy.partial(date, addedCount + skippedCount, planned, ApplyOutcomeCopy.writeFailure(reason))
@@ -84,5 +87,3 @@ private fun ApplyRun.abortedText(reason: WriteOutcome, date: LocalDate?, snapsho
 /** The upcoming jam [date] waits behind, or null when [date] is the upcoming jam (or the snapshot is unknown). */
 internal fun behind(date: LocalDate, snapshot: JamsSnapshot?): LocalDate? =
     snapshot?.upcoming?.date?.takeIf { it != date && date > it }
-
-private const val NOT_EDITABLE = "jam_not_editable"

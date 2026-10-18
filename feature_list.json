@@ -1796,14 +1796,20 @@
     "title": "Typed write rejections and shared write-failure copy",
     "user_visible_behavior": "None for users: every failure card keeps its exact wording. Internally the Apps Script error codes stop being string literals in feature modules: :core:data exposes a typed rejection (for example a WriteRejection enum or sealed type on WriteOutcome.Rejected) mapped from the code in one place, and the generic failure lines (offline, unavailable, access refused) shared by Próxima jam and Jams live once in :core:ui.",
     "depends_on": [],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "No server error-code string literal remains in any feature main source (grep)",
       "Every failure card's copy is unchanged (existing tests pass unmodified in their assertions, plus a mapping test per code)",
       "Unknown codes still fall back to the generic Sheet-refused line",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1124 testcases; final exit 0, wired, 1146 testcases (+22, none removed): docs/evidence/typed-write-rejections/baseline-init.txt, final-init.txt",
+      "Red first: WriteRejectionTest with SLOT_TAKEN mutated to slot_takn failed 3 of 6; reverted and green (red-mutant.txt, green-writerejection.txt)",
+      "Grep gates print nothing (literal codes and .code == in feature main sources); the two generic Spanish lines have one main-source hit each, in WriteFailureCopy (grep-gates.txt, duplicate-text.txt)",
+      "Mapping tests per code (27 codes incl. unknown, empty and invalid_status) in next-jam FailureMessagesTest, past-jams JamsFailureMessagesTest, assistant WriteFailureMappingTest; WriteFailureCopyTest pins the six moved lines to the original literals",
+      "Accepted on 17 October 2026 by the independent validator: gate rerun exit 0 (konsist, detekt, ktlint wired, 1146 testcases), grep gates empty, every converted mapping compared branch by branch with HEAD, own mutant in editFailureMessage red then restored."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 1); the organizer asked to fix all nine findings with sonnet subagents."
   },
   {

@@ -79,12 +79,6 @@ internal object PastJamsCopy {
         "El script de la planilla todavía no sabe cambiar el estado. Actualizalo con la guía y probá de nuevo."
     const val CLOSE = "Cerrar"
     const val CANCEL = "Cancelar"
-    const val ACCESS_REFUSED =
-        "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar."
-    const val OFFLINE = "No hay conexión. Probá de nuevo cuando tengas internet."
-    const val UNAVAILABLE = "El servidor no respondió. Probá de nuevo en un rato."
-    const val JAM_CHANGED = "La jam cambió en la planilla. Actualizá y probá de nuevo."
-    const val SHEET_REFUSED = "La planilla rechazó el cambio. Revisala y probá de nuevo."
 
     /** The "Nueva jam" form (`admin-jams-tab`, J7/J9). */
     const val NEW_JAM = "Nueva jam"

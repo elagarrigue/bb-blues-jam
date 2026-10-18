@@ -1,6 +1,7 @@
 package com.bbbjam.feature.assistant.run
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
 import com.bbbjam.core.data.assistant.ProposedSong
 import com.bbbjam.core.data.setlist.AddSongOutcome
 import com.bbbjam.core.data.setlist.CreateJamOutcome
@@ -90,7 +91,7 @@ internal class ApplySteps(
         if (stopRequested(turnId)) return store.stop(turnId)
         store.setRemoval(turnId, song.songId, SongRemoval.State.Removing)
         val reason = (remover.removeSong(date, song.songId) as? RemoveSongOutcome.NotRemoved)?.reason
-        val code = (reason as? WriteOutcome.Rejected)?.code
+        val code = (reason as? WriteOutcome.Rejected)?.rejection
         return when {
             reason == null || code == NOT_LISTED -> {
                 store.setRemoval(turnId, song.songId, SongRemoval.State.Removed)
@@ -157,9 +158,9 @@ internal class ApplySteps(
         is AddSongOutcome.NotAdded -> {
             val reason = outcome.reason
             when {
-                reason is WriteOutcome.Rejected && reason.code == DUPLICATE -> Step.Record(SongApply.State.Skipped)
+                reason is WriteOutcome.Rejected && reason.rejection == DUPLICATE -> Step.Record(SongApply.State.Skipped)
 
-                reason is WriteOutcome.Rejected && reason.code in PER_SONG_CODES ->
+                reason is WriteOutcome.Rejected && reason.rejection in PER_SONG_CODES ->
                     Step.Record(SongApply.State.Failed(reason))
 
                 else -> Step.Abort(reason)
@@ -168,9 +169,9 @@ internal class ApplySteps(
     }
 
     private companion object {
-        const val DUPLICATE = "song_already_in_setlist"
-        const val NOT_LISTED = "song_not_in_setlist"
-        const val DUPLICATE_ID = "duplicate_song"
-        val PER_SONG_CODES = setOf("unknown_song", "invalid_song", "invalid_key")
+        val DUPLICATE = WriteRejection.SONG_ALREADY_IN_SETLIST
+        val NOT_LISTED = WriteRejection.SONG_NOT_IN_SETLIST
+        val DUPLICATE_ID = WriteRejection.DUPLICATE_SONG
+        val PER_SONG_CODES = setOf(WriteRejection.UNKNOWN_SONG, WriteRejection.INVALID_SONG, WriteRejection.INVALID_KEY)
     }
 }

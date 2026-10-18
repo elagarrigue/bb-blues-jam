@@ -1,6 +1,7 @@
 package com.bbbjam.feature.pastjams.edit
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
 import com.bbbjam.core.data.jams.JamFormInput
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.formatFormDate
@@ -62,7 +63,7 @@ internal fun JamsAdminState.manageUiModel(jam: Jam): JamManageUiModel {
 
 private fun JamEdit.toFailure(): JamEditFailureUiModel {
     val reason = (state as? JamEdit.State.Failed)?.reason
-    val listChanged = (reason as? WriteOutcome.Rejected)?.code == "setlist_changed"
+    val listChanged = (reason as? WriteOutcome.Rejected)?.rejection == WriteRejection.SETLIST_CHANGED
     return JamEditFailureUiModel(
         id = id,
         title = if (change is JamEdit.Change.Delete) JamEditCopy.DELETE_FAILED else JamEditCopy.UPDATE_FAILED,

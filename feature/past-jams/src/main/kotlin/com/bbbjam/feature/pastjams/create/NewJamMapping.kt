@@ -1,6 +1,7 @@
 package com.bbbjam.feature.pastjams.create
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
 import com.bbbjam.core.data.jams.JamDateProblem
 import com.bbbjam.core.data.jams.JamFormCheck
 import com.bbbjam.core.data.jams.JamsSnapshot
@@ -13,6 +14,7 @@ import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
 import com.bbbjam.core.ui.jamform.JamFormText
 import com.bbbjam.core.ui.jamform.JamFormUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.text.WriteFailureCopy
 import com.bbbjam.feature.pastjams.PastJamsCopy
 import com.bbbjam.feature.pastjams.admin.failureMessage
 import com.bbbjam.feature.pastjams.toUiModel
@@ -128,15 +130,19 @@ internal fun createFailureMessage(outcome: CreateJamOutcome): String = when (out
     is CreateJamOutcome.ScriptOutdated -> PastJamsCopy.CREATE_SCRIPT_OUTDATED
 
     is CreateJamOutcome.NotCreated -> outcome.reason.let { reason ->
-        val code = (reason as? WriteOutcome.Rejected)?.code.orEmpty()
+        val rejected = reason as? WriteOutcome.Rejected
         when {
-            code == "jam_exists" || code == "tab_exists" -> PastJamsCopy.CREATE_EXISTS
-            code == "past_date" -> JamFormText.DATE_PAST_ERROR
-            code.startsWith("invalid_") -> PastJamsCopy.CREATE_INVALID
+            rejected?.rejection == WriteRejection.JAM_EXISTS || rejected?.rejection == WriteRejection.TAB_EXISTS ->
+                PastJamsCopy.CREATE_EXISTS
+
+            rejected?.rejection == WriteRejection.PAST_DATE -> JamFormText.DATE_PAST_ERROR
+
+            rejected?.isInvalidInput == true -> PastJamsCopy.CREATE_INVALID
+
             else -> failureMessage(reason)
         }
     }
 
     // Created never reaches a failure; the generic line is the safe fallback.
-    is CreateJamOutcome.Created -> PastJamsCopy.UNAVAILABLE
+    is CreateJamOutcome.Created -> WriteFailureCopy.UNAVAILABLE
 }

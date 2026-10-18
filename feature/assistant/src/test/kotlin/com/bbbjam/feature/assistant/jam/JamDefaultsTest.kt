@@ -1,6 +1,7 @@
 package com.bbbjam.feature.assistant.jam
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.ui.text.WriteFailureCopy
 import com.bbbjam.core.ui.theme.BluesJamColors
 import com.bbbjam.feature.assistant.apply.ApplyDefaults
 import com.bbbjam.feature.assistant.apply.ApplyOutcomeCopy
@@ -50,7 +51,7 @@ class JamDefaultsTest {
         assertEquals("Sábado 28 de noviembre de 2026", JamCopy.dateInWords(LocalDate.of(2026, 11, 28)))
         assertEquals("21:05", JamCopy.time(java.time.LocalTime.of(21, 5)))
         assertEquals(
-            "No se pudo crear: ${ApplyOutcomeCopy.ACCESS_REFUSED}",
+            "No se pudo crear: ${WriteFailureCopy.ACCESS_REFUSED}",
             JamCopy.failure(JamFailure.Write(WriteOutcome.AccessRefused)),
         )
         assertEquals(

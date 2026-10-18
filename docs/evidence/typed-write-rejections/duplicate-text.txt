@@ -1,0 +1,17 @@
+./core/ui/src/main/kotlin/com/bbbjam/core/ui/text/WriteFailureCopy.kt:14:    const val SHEET_REFUSED = "La planilla rechazó el cambio. Revisala y probá de nuevo."
+./core/ui/src/test/kotlin/com/bbbjam/core/ui/text/WriteFailureCopyTest.kt:17:        assertEquals("La planilla rechazó el cambio. Revisala y probá de nuevo.", WriteFailureCopy.SHEET_REFUSED)
+./feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/apply/WriteFailureMappingTest.kt:19:    private val sheetRefused = "La planilla rechazó el cambio. Revisala y probá de nuevo."
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/admin/FailureMessagesTest.kt:18:    private val sheetRefused = "La planilla rechazó el cambio. Revisala y probá de nuevo."
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/admin/NextJamAdminTest.kt:212:            WriteOutcome.Rejected("missing_header") to "La planilla rechazó el cambio. Revisala y probá de nuevo.",
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/admin/NextJamAdminTest.kt:213:            WriteOutcome.Rejected("invalid_key") to "La planilla rechazó el cambio. Revisala y probá de nuevo.",
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/overlay/NextJamKeyChangeTest.kt:243:            "La planilla rechazó el cambio. Revisala y probá de nuevo.",
+./feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/admin/JamsFailureMessagesTest.kt:19:    private val sheetRefused = "La planilla rechazó el cambio. Revisala y probá de nuevo."
+./feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/create/NewJamCreateTest.kt:265:            "missing_header" to "La planilla rechazó el cambio. Revisala y probá de nuevo.",
+./core/ui/src/main/kotlin/com/bbbjam/core/ui/text/WriteFailureCopy.kt:12:    const val UNAVAILABLE = "El servidor no respondió. Probá de nuevo en un rato."
+./core/ui/src/test/kotlin/com/bbbjam/core/ui/text/WriteFailureCopyTest.kt:15:        assertEquals("El servidor no respondió. Probá de nuevo en un rato.", WriteFailureCopy.UNAVAILABLE)
+./feature/assistant/src/test/kotlin/com/bbbjam/feature/assistant/apply/WriteFailureMappingTest.kt:16:    private val unavailable = "El servidor no respondió. Probá de nuevo en un rato."
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/admin/FailureMessagesTest.kt:15:    private val unavailable = "El servidor no respondió. Probá de nuevo en un rato."
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/admin/NextJamAdminTest.kt:206:            WriteOutcome.Unavailable to "El servidor no respondió. Probá de nuevo en un rato.",
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/overlay/NextJamKeyChangeTest.kt:220:                "No se pudo agregar «Red House»" to "El servidor no respondió. Probá de nuevo en un rato.",
+./feature/next-jam/src/test/kotlin/com/bbbjam/feature/nextjam/overlay/NextJamKeyChangeTest.kt:248:            "El servidor no respondió. Probá de nuevo en un rato.",
+./feature/past-jams/src/test/kotlin/com/bbbjam/feature/pastjams/admin/JamsFailureMessagesTest.kt:17:    private val unavailable = "El servidor no respondió. Probá de nuevo en un rato."

@@ -29,5 +29,11 @@ sealed interface WriteOutcome {
     data object Unavailable : WriteOutcome
 
     /** The server refused the write for a reason of its own, such as a validation error. */
-    data class Rejected(val code: String) : WriteOutcome
+    data class Rejected(val code: String) : WriteOutcome {
+        /** The typed view of [code]; [WriteRejection.Unknown] for a code the client does not map. */
+        val rejection: WriteRejection get() = WriteRejection.fromCode(code)
+
+        /** Whether the server refused the input itself: any `invalid_*` code, listed or not. */
+        val isInvalidInput: Boolean get() = code.startsWith("invalid_")
+    }
 }

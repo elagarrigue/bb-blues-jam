@@ -1,0 +1,61 @@
+Calculating task graph as no cached configuration is available for tasks: :core:data:testDebugUnitTest --tests *WriteRejectionTest
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:compileKotlin UP-TO-DATE
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :build-logic:convention:processResources UP-TO-DATE
+> Task :build-logic:convention:classes UP-TO-DATE
+> Task :build-logic:convention:jar UP-TO-DATE
+> Task :core:model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:data:preBuild UP-TO-DATE
+> Task :core:data:preDebugBuild UP-TO-DATE
+> Task :core:data:preDebugUnitTestBuild UP-TO-DATE
+> Task :core:model:processResources NO-SOURCE
+> Task :core:data:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :core:data:javaPreCompileDebug UP-TO-DATE
+> Task :core:data:generateDebugResources UP-TO-DATE
+> Task :core:data:processDebugNavigationResources UP-TO-DATE
+> Task :core:data:packageDebugResources UP-TO-DATE
+> Task :core:model:compileKotlin UP-TO-DATE
+> Task :core:data:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:compileJava NO-SOURCE
+> Task :core:model:classes UP-TO-DATE
+> Task :core:data:generateDebugRFile UP-TO-DATE
+> Task :core:model:jar UP-TO-DATE
+> Task :core:data:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :core:data:kspDebugKotlin
+> Task :core:data:compileDebugKotlin
+> Task :core:data:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:data:processDebugJavaRes UP-TO-DATE
+> Task :core:data:bundleLibCompileToJarDebug
+> Task :core:data:bundleLibRuntimeToJarDebug
+> Task :core:data:kspDebugUnitTestKotlin
+> Task :core:data:compileDebugUnitTestKotlin
+> Task :core:data:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :core:data:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :core:data:testDebugUnitTest FAILED
+
+WriteRejectionTest > Rejected exposes the typed view and keeps the raw code FAILED
+    java.lang.AssertionError at WriteRejectionTest.kt:69
+
+WriteRejectionTest > every code maps back to its entry FAILED
+    java.lang.AssertionError at WriteRejectionTest.kt:49
+
+WriteRejectionTest > every entry carries the exact wire code FAILED
+    org.junit.ComparisonFailure at WriteRejectionTest.kt:40
+
+6 tests completed, 3 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:data:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/core/data/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 12s
+23 actionable tasks: 7 executed, 16 up-to-date
+Configuration cache entry stored.

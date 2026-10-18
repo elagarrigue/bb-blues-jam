@@ -1,17 +1,13 @@
 package com.bbbjam.feature.assistant.apply
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
+import com.bbbjam.core.ui.text.WriteFailureCopy
 import java.time.LocalDate
 
 /** The copy of a run's progress, summary and failures (`assistant-apply-proposal`), with *vos* (D-12). */
 internal object ApplyOutcomeCopy {
-    const val ACCESS_REFUSED =
-        "La frase de acceso cambió o no es válida. Salí del modo admin en Info y volvé a entrar."
     const val WRITE_OFFLINE = "No pudimos confirmar si se agregó: no hay conexión o el servidor tardó."
-    const val WRITE_UNAVAILABLE = "El servidor no respondió. Probá de nuevo en un rato."
-    const val NOT_IN_CATALOG = "Ese tema ya no está en el catálogo."
-    const val JAM_CHANGED = "La jam cambió en la planilla. Actualizá y probá de nuevo."
-    const val SHEET_REFUSED = "La planilla rechazó el cambio. Revisala y probá de nuevo."
 
     private fun alreadyThere(count: Int) =
         if (count == 1) "1 ya estaba en la lista." else "$count ya estaban en la lista."
@@ -44,16 +40,16 @@ internal object ApplyOutcomeCopy {
 
     /** The reason a write did not happen, as a sentence. */
     fun writeFailure(reason: WriteOutcome): String = when (reason) {
-        WriteOutcome.AccessRefused -> ACCESS_REFUSED
+        WriteOutcome.AccessRefused -> WriteFailureCopy.ACCESS_REFUSED
 
         WriteOutcome.Offline -> WRITE_OFFLINE
 
-        WriteOutcome.Unavailable, WriteOutcome.Done -> WRITE_UNAVAILABLE
+        WriteOutcome.Unavailable, WriteOutcome.Done -> WriteFailureCopy.UNAVAILABLE
 
-        is WriteOutcome.Rejected -> when (reason.code) {
-            "unknown_song" -> NOT_IN_CATALOG
-            "unknown_jam", "jam_not_editable" -> JAM_CHANGED
-            else -> SHEET_REFUSED
+        is WriteOutcome.Rejected -> when (reason.rejection) {
+            WriteRejection.UNKNOWN_SONG -> WriteFailureCopy.NOT_IN_CATALOG
+            WriteRejection.UNKNOWN_JAM, WriteRejection.JAM_NOT_EDITABLE -> WriteFailureCopy.JAM_CHANGED
+            else -> WriteFailureCopy.SHEET_REFUSED
         }
     }
 

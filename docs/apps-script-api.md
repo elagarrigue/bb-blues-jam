@@ -72,7 +72,8 @@ Error:
 | `internal_error` | Any other exception; `message` is the exception message |
 
 `message` is English and for logs only. The app maps `code` to Spanish copy; it never shows
-`message`.
+`message`. On the client, `WriteRejection` (`:core:data`, `admin/`) lists the error codes of the write
+actions that the app maps to copy.
 
 ## `GET ?resource=catalog`
 

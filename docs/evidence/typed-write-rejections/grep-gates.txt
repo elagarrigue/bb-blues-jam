@@ -1,0 +1,4 @@
+$ grep literal codes
+(rc 1)
+$ grep .code ==
+(rc 1)

@@ -74,6 +74,14 @@ to `ACTIONS` in `backend/apps-script/src/Post.js` and never call the passphrase 
 action; `handlePost` runs the guard (rate limit, `Config` re-read) for every action and the script
 lock for every write. `checkWriteAccess` is a deploy check with no repository function.
 
+As built by `typed-write-rejections` (17 October 2026): `admin/WriteRejection` is the enum of the
+server error codes the client maps to copy (`fromCode`, with `Unknown` for any other), and
+`WriteOutcome.Rejected` keeps its `code: String` and adds the derived `rejection` and
+`isInvalidInput` (any `invalid_*`). A feature never compares a code string: it switches on
+`reason.rejection`. The generic failure lines shared by write cards (`ACCESS_REFUSED`, `OFFLINE`,
+`UNAVAILABLE`, `JAM_CHANGED`, `SHEET_REFUSED`, `NOT_IN_CATALOG`) live once in
+`:core:ui` `text/WriteFailureCopy`; feature-specific wording stays in the feature.
+
 As built by `admin-add-song-to-setlist` Part A (backend and `:core:data`, no UI yet): `AdminWriter`
 gains `internal suspend fun send(action, fields): AdminAnswer` (`Ok(body: JsonObject)` or
 `Refused(outcome, failure)`, never `Done`; `write` is `send` with `Ok` → `Done`), over

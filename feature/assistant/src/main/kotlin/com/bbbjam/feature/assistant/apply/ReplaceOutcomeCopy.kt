@@ -1,6 +1,7 @@
 package com.bbbjam.feature.assistant.apply
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
 import java.time.LocalDate
 
 /** The copy of a replace run's progress, summary and failures (`assistant-proposal-targets`), with *vos* (D-12). */
@@ -29,7 +30,7 @@ internal object ReplaceOutcomeCopy {
 
     /** The reason a move did not happen: the sheet's own duplicate/empty positions get their own line. */
     fun moveFailure(reason: WriteOutcome): String =
-        if (reason is WriteOutcome.Rejected && reason.code == "unordered_setlist") {
+        if (reason is WriteOutcome.Rejected && reason.rejection == WriteRejection.UNORDERED_SETLIST) {
             ReplaceCopy.UNORDERED
         } else {
             ApplyOutcomeCopy.writeFailure(reason)

@@ -10,6 +10,7 @@ import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.status.jamStatusBadge
+import com.bbbjam.core.ui.text.WriteFailureCopy
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
@@ -56,7 +57,7 @@ private fun NextJamRemovalPreview() {
                 AddFailureUiModel(
                     id = 4,
                     title = NextJamCopy.removeFailed("Pride and Joy"),
-                    message = NextJamCopy.ACCESS_REFUSED,
+                    message = WriteFailureCopy.ACCESS_REFUSED,
                     dismissLabel = NextJamCopy.CLOSE,
                     events = EventHandler {},
                 ),

@@ -1,8 +1,10 @@
 package com.bbbjam.feature.assistant.jam
 
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.admin.WriteRejection
 import com.bbbjam.core.data.assistant.JamRejection
 import com.bbbjam.core.ui.text.SpanishDateNames
+import com.bbbjam.core.ui.text.WriteFailureCopy
 import com.bbbjam.feature.assistant.apply.ApplyCopy
 import com.bbbjam.feature.assistant.apply.ApplyOutcomeCopy
 import com.bbbjam.feature.assistant.run.JamFailure
@@ -82,18 +84,18 @@ internal object JamCopy {
     }
 
     private fun writeReason(reason: WriteOutcome): String = when (reason) {
-        WriteOutcome.AccessRefused -> ApplyOutcomeCopy.ACCESS_REFUSED
+        WriteOutcome.AccessRefused -> WriteFailureCopy.ACCESS_REFUSED
 
         WriteOutcome.Offline -> OFFLINE
 
-        WriteOutcome.Unavailable, WriteOutcome.Done -> ApplyOutcomeCopy.WRITE_UNAVAILABLE
+        WriteOutcome.Unavailable, WriteOutcome.Done -> WriteFailureCopy.UNAVAILABLE
 
-        is WriteOutcome.Rejected -> when (reason.code) {
-            "jam_exists" -> JAM_EXISTS
-            "tab_exists" -> TAB_EXISTS
-            "past_date" -> PAST_DATE
-            "invalid_date", "invalid_time", "invalid_venue" -> INVALID_DATA
-            else -> ApplyOutcomeCopy.SHEET_REFUSED
+        is WriteOutcome.Rejected -> when (reason.rejection) {
+            WriteRejection.JAM_EXISTS -> JAM_EXISTS
+            WriteRejection.TAB_EXISTS -> TAB_EXISTS
+            WriteRejection.PAST_DATE -> PAST_DATE
+            WriteRejection.INVALID_DATE, WriteRejection.INVALID_TIME, WriteRejection.INVALID_VENUE -> INVALID_DATA
+            else -> WriteFailureCopy.SHEET_REFUSED
         }
     }
 }
