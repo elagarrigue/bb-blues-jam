@@ -190,16 +190,3 @@ private fun SubmitButton(model: AdminLoginUiModel) {
         Text(text = model.submitLabel, style = BluesJamTheme.typography.body, color = style.content)
     }
 }
-
-@Preview
-@Composable
-private fun AdminLoginScreenPreview() {
-    val session = object : AdminSession {
-        override fun observeIsAdmin(): Flow<Boolean> = flowOf(false)
-
-        override suspend fun logIn(passphrase: String): LoginOutcome = LoginOutcome.WrongPassphrase
-
-        override suspend fun logOut() = Unit
-    }
-    BluesJamTheme { AdminLoginScreen(onBack = {}, onLoggedIn = {}, presenter = AdminLoginPresenter(session)) }
-}

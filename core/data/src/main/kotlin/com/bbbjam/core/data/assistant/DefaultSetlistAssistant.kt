@@ -32,7 +32,7 @@ internal class DefaultSetlistAssistant(
     private val jams: JamsRepository,
     private val calendar: JamCalendar,
     private val executorFactory: AssistantExecutorFactory,
-    private val statusProbe: AssistantStatusProbe = AssistantStatusProbe(),
+    private val statusProbe: AssistantStatusProbe,
 ) : SetlistAssistant {
     private val executor: PromptExecutor by lazy { executorFactory.create(credentials.key) }
 

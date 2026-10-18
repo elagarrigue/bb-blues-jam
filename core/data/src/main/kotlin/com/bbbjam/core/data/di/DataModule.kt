@@ -8,6 +8,7 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.DefaultAdminSession
 import com.bbbjam.core.data.assistant.AssistantHttp
+import com.bbbjam.core.data.assistant.AssistantStatusProbe
 import com.bbbjam.core.data.assistant.DefaultSetlistAssistant
 import com.bbbjam.core.data.assistant.SetlistAssistant
 import com.bbbjam.core.data.cache.BluesJamDatabase
@@ -58,5 +59,7 @@ val dataModule = module {
     single { get<BluesJamDatabase>().setlistDao() }
     single { SetlistMutationQueue() }
     single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), get(), get()) }
-    single<SetlistAssistant> { DefaultSetlistAssistant(get(), get(), get(), get(), AssistantHttp.executorFactory()) }
+    single<SetlistAssistant> {
+        DefaultSetlistAssistant(get(), get(), get(), get(), AssistantHttp.executorFactory(), AssistantStatusProbe())
+    }
 }

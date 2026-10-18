@@ -24,6 +24,7 @@ import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.assistant.run.ProposalApplier
+import com.bbbjam.feature.assistant.run.RunLock
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -166,4 +167,4 @@ internal fun testApplier(
     remover: SetlistSongRemover = FakeSetlistSongRemover(),
     mover: SetlistSongMover = FakeSetlistSongMover(),
     creator: JamCreator = ScriptedJamCreator(),
-) = ProposalApplier(adder, remover, mover, creator, scope)
+) = ProposalApplier(adder, remover, mover, creator, scope, RunLock())

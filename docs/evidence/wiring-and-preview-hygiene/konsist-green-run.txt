@@ -1,0 +1,20 @@
+Reusing configuration cache.
+> Task :konsist-test:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :konsist-test:processResources NO-SOURCE
+> Task :konsist-test:processTestResources NO-SOURCE
+> Task :konsist-test:compileKotlin NO-SOURCE
+> Task :konsist-test:compileJava NO-SOURCE
+> Task :konsist-test:classes UP-TO-DATE
+> Task :konsist-test:jar
+> Task :konsist-test:compileTestKotlin
+> Task :konsist-test:compileTestJava NO-SOURCE
+> Task :konsist-test:testClasses UP-TO-DATE
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.21/79346ed53db48b18312a472602eb5c057070c54d/kotlin-compiler-embeddable-2.0.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+> Task :konsist-test:test
+
+BUILD SUCCESSFUL in 5s
+3 actionable tasks: 3 executed
+Configuration cache entry reused.

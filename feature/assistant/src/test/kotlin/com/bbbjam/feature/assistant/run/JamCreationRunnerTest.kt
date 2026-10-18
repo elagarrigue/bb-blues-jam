@@ -23,7 +23,7 @@ class JamCreationRunnerTest {
     private val creator = ScriptedJamCreator()
     private val jams = SettableJamsRepository()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-    private val runner = JamCreationRunner(creator, jams, scope)
+    private val runner = JamCreationRunner(creator, jams, scope, RunLock())
     private val jam = ProposedJam(LocalDate.of(2026, 11, 28), LocalTime.of(21, 0), "La Macanuda")
 
     @Test

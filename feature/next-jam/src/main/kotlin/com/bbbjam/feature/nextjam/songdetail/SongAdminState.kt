@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 internal class SongAdminState(
     val overlays: SongOverlays = SongOverlays(),
     val onSetKey: (LocalDate, SongId) -> Unit = { _, _ -> },
-    val reservations: LineupReservations = LineupReservations(),
+    val reservations: LineupReservations,
     val onLineupCount: (LocalDate, SongId, Instrument, LineupEditorLineUiModel.Event) -> Unit = { _, _, _, _ -> },
     val extraFormKey: String? = null,
     val extraName: String = "",

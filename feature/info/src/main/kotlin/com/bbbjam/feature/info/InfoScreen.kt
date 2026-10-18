@@ -146,16 +146,3 @@ private fun LinkRow(link: InfoLinkUiModel, onClick: () -> Unit) {
         Text(text = link.destination, style = BluesJamTheme.typography.caption, color = BluesJamTheme.colors.textMuted)
     }
 }
-
-@Preview
-@Composable
-private fun InfoScreenPreview() {
-    val session = object : AdminSession {
-        override fun observeIsAdmin(): Flow<Boolean> = flowOf(true)
-
-        override suspend fun logIn(passphrase: String): LoginOutcome = LoginOutcome.Success
-
-        override suspend fun logOut() = Unit
-    }
-    BluesJamTheme { InfoScreen(onOpenAdminLogin = {}, presenter = InfoPresenter({ true }, session)) }
-}

@@ -19,8 +19,8 @@
   <text x="86" y="241" class="module">:app</text>
   <text x="86" y="270" class="body">Navigation Compose · inicio de Koin · composición de módulos</text>
   <line x1="674" y1="226" x2="674" y2="276" stroke="#514532"/>
-  <text x="697" y="241" class="body" font-weight="700">SetlistRepository</text>
-  <text x="697" y="267" class="small">Contratos angostos atados directo</text>
+  <text x="697" y="241" class="body" font-weight="700">Bindings de escritura</text>
+  <text x="697" y="267" class="small">Contratos → SetlistRepository</text>
 
   <path d="M540 294V315M177 315H903" class="bus"/>
   <path d="M177 315V338" class="dependency"/><path d="M419 315V338" class="dependency"/>
@@ -54,7 +54,7 @@
   <text x="85" y="674" class="small">Tokens · componentes compartidos</text>
   <rect x="390" y="521" width="626" height="190" rx="8" class="box"/>
   <text x="412" y="555" class="module">:core:data</text>
-  <text x="412" y="585" class="small">Contratos + implementaciones de repositorios · AdminSession · AdminWriter</text>
+  <text x="412" y="585" class="small">CatalogRepository · JamsRepository · SetlistRepository · AdminWriter</text>
   <rect x="410" y="609" width="250" height="82" rx="6" class="inner"/>
   <text x="427" y="636" class="body" font-weight="700">Datos y persistencia local</text>
   <text x="427" y="661" class="small">Room: caché de catálogo y jams</text>
@@ -96,13 +96,13 @@
 
   <rect x="40" y="890" width="1512" height="111" rx="10" fill="#2A1218" stroke="#514532"/>
   <text x="64" y="919" class="eyebrow">LÍMITE DEL ASISTENTE</text>
-  <text x="64" y="952" class="module" font-size="21">El agente propone → se valida → el admin confirma → contrato de acciones → repositorio → servidor</text>
-  <text x="64" y="980" class="small">La edición manual también usa repositorios. Las mutaciones están expuestas al asistente; el agente no las ejecuta por su cuenta.</text>
+  <text x="64" y="952" class="module" font-size="21">El agente propone → se valida → el admin confirma → contratos de escritura → repositorio → servidor</text>
+  <text x="64" y="980" class="small">Koin conecta los contratos directamente al repositorio. La edición manual usa sus mismas funciones; el agente no escribe.</text>
 
   <path d="M49 1040H95" class="dependency"/><text x="108" y="1045" class="small">Dependencia de módulo</text>
   <path d="M345 1040H391" class="http"/><text x="404" y="1045" class="small">Comunicación en ejecución</text>
   <text x="750" y="1045" class="small">Estado en Compose · presenters sin ViewModels · admin como estado</text>
   <line x1="48" y1="1064" x2="1552" y2="1064" stroke="#514532"/>
   <text x="48" y="1091" class="small">VERIFICACIÓN / Molecule + tests JVM · Konsist · detekt · ktlint · init.sh</text>
-  <text x="1552" y="1091" text-anchor="end" class="tiny">Basado en el código del repositorio · 17 OCT 2026</text>
+  <text x="1552" y="1091" text-anchor="end" class="tiny">Código actual · sin registro de acciones · 18 OCT 2026</text>
 </svg>

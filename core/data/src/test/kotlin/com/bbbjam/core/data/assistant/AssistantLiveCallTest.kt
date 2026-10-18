@@ -79,6 +79,7 @@ class AssistantLiveCallTest {
             FakePastJams(past = listOf(juanJam) + seeded),
             fixedCalendar(),
             AssistantHttp.executorFactory(AssistantModel.BASE_URL, client),
+            AssistantStatusProbe(),
         )
 
         val originalOut = System.out

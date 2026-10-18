@@ -81,7 +81,7 @@ internal fun AddSongScreen(
 }
 
 @Composable
-private fun AddSongContent(model: AddSongUiModel, modifier: Modifier, contentPadding: PaddingValues) {
+internal fun AddSongContent(model: AddSongUiModel, modifier: Modifier, contentPadding: PaddingValues) {
     val spacing = BluesJamTheme.spacing
     Column(
         modifier = modifier
@@ -204,33 +204,4 @@ private fun CatalogRow(row: CatalogRowUiModel) {
             row.listedLabel?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.note) }
         }
     }
-}
-
-@Preview
-@Composable
-private fun AddSongScreenPreview() {
-    fun row(id: String, title: String, artist: String, key: String, listed: Boolean = false) = CatalogRowUiModel(
-        id = id,
-        title = title,
-        artist = artist,
-        key = key,
-        keyDescription = SongListText.keyDescription(key),
-        isListed = listed,
-        listedLabel = if (listed) AddSongCopy.ALREADY_LISTED else null,
-        pickLabel = AddSongCopy.PICK_LABEL,
-        events = EventHandler {},
-    )
-    val model = AddSongUiModel(
-        back = backUiModel {},
-        title = AddSongCopy.TITLE,
-        search = SearchFieldUiModel("", AddSongCopy.SEARCH_LABEL, EventHandler {}),
-        content = AddSongContentUiModel.Songs(
-            listOf(
-                row("crossroads", "Crossroads", "Eric Clapton", "A"),
-                row("red-house", "Red House", "Jimi Hendrix", "Bb", listed = true),
-                row("the-thrill-is-gone", "The Thrill Is Gone", "B.B. King", "Bm"),
-            ),
-        ),
-    )
-    BluesJamTheme { Box { AddSongContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) } }
 }

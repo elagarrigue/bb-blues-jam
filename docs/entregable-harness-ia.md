@@ -374,7 +374,7 @@ El MVP se construyó para recibir al asistente: contrato de acciones (D-13), cat
 
 ### 6.2 Cómo está hecho el agente
 
-- **Dos herramientas de solo lectura:** `searchCatalog` y `pastJams`. El agente lee datos con
+- **Tres herramientas de solo lectura:** `searchCatalog`, `pastJams` y `jamSchedule`. El agente lee datos con
   herramientas, no con un volcado en el prompt. Así funciona "algún tema que haya tocado Juan".
 - **Salida estructurada:** temas con id del catálogo, motivo, mensaje de cierre y preguntas.
 - **`ProposalValidator`:** cada id se valida contra el catálogo antes de mostrarse. Título, artista

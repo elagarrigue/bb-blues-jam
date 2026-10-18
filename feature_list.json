@@ -1919,13 +1919,18 @@
     "depends_on": [
       "feature-api-surface"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "No shared-coordination constructor default remains (grep)",
       "No @Preview or preview fixture left in a *Screen.kt file",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh exit 0, 1154 testcases, 21 rules (docs/evidence/wiring-and-preview-hygiene/baseline-init.txt, baseline-count.txt). Rule 22 feature-previews-in-preview-files added first and red on 7 files (konsist-failing-run.txt); green after the move (konsist-green-run.txt); negative with a @Preview in PastJamsScreen.kt fails, then removed (konsist-negative-run.txt).",
+      "Greps after (greps-after.txt): RunLock() in main only in AssistantModule, no default AssistantStatusProbe(), LineupReservations() only in LineupControls and the preview, no @Preview in feature *Screen.kt/*Views.kt, git diff -- app empty. Widened private to internal: AddSongContent, AssignMusicianContent, SetKeyContent.",
+      "Final CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1155 testcases = baseline + 1 (final-init.txt, final-count.txt). No device run; previews not rendered in Android Studio.",
+      "Accepted on 18 October 2026 by the independent validator: gate rerun exit 0 (konsist, detekt, ktlint wired, 1155 testcases), moved previews diffed against the removed lines (only the three content functions widened to internal and the explicit LineupReservations), tests plumbing-only, :app unchanged. The orchestrator re-proved rule 22 red with a planted @Preview in PastJamsScreen.kt and green after restoring it, after deleting a stray file the validator had left."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 7 and 8); the organizer asked to fix all nine findings with sonnet subagents."
   },
   {

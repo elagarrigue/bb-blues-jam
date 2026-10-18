@@ -28,6 +28,7 @@ import com.bbbjam.feature.assistant.jam
 import com.bbbjam.feature.assistant.proposal
 import com.bbbjam.feature.assistant.run.ApplyPlan
 import com.bbbjam.feature.assistant.run.JamCreationRunner
+import com.bbbjam.feature.assistant.run.RunLock
 import com.bbbjam.feature.assistant.snapshot
 import com.bbbjam.feature.assistant.song
 import com.bbbjam.feature.assistant.testApplier
@@ -51,7 +52,8 @@ class JamPresenterTest {
     private val creator = ScriptedJamCreator()
     private val jams = SettableJamsRepository()
     private val applier = testApplier(adder, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
-    private val runner = JamCreationRunner(creator, jams, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
+    private val runner =
+        JamCreationRunner(creator, jams, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined), RunLock())
     private val newDate = LocalDate.of(2026, 11, 28)
     private val newJam = ProposedJam(newDate, LocalTime.of(21, 30), "La Macanuda")
 

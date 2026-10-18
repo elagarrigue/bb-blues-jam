@@ -729,20 +729,22 @@ constant escapes, and literals inside `:core:ui` components are not checked. All
 `konsist-test/src/test/kotlin/com/bbbjam/konsist/ModuleIsolationTest.kt`, which runs inside
 `./gradlew check` (so inside `./init.sh`). It checks imports and also every `project(":…")` in
 `core/*` and `feature/*` build files, and reads module groups from paths, so a new `:feature:*` is
-covered without editing it. It holds 21 rules (the 12th, `data-libraries-only-in-core-data`, came
+covered without editing it. It holds 22 rules (the 12th, `data-libraries-only-in-core-data`, came
 with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qualified`, with
 `jams-repository-cache`; the 14th and 15th, `no-material-theme-outside-core-ui` and
 `amber-roles-allowlisted`, with `next-jam-read-only-list`; the 16th,
 `no-dp-literal-outside-core-ui`, with `list-states`; the 17th, `navigation-only-in-app` (outside
 `:app` and `:konsist-test`, no import of `androidx.navigation.`; an import text match, a fully
 qualified use escapes but would not compile, because only `:app` declares the library), with
-`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below; the 20th, `next-jam-injects-narrow-setlist-contracts`, with `setlist-mutation-contracts`, see below; the 21st, `feature-public-api-allowlisted`, with `feature-api-surface`, see below); the
+`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below; the 20th, `next-jam-injects-narrow-setlist-contracts`, with `setlist-mutation-contracts`, see below; the 21st, `feature-public-api-allowlisted`, with `feature-api-surface`, see below; the 22nd, `feature-previews-in-preview-files`, with `wiring-and-preview-hygiene`, see below); the
 two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
 to fail before it is trusted.
 
 As built by `feature-api-surface` (17 October 2026; code-review finding 6): **a `:feature:*` module exposes only what `:app` imports.** Rule 21 (`feature-public-api-allowlisted`) lists in `FEATURE_PUBLIC_API_ALLOWLIST` the public top-level names per feature main source (next-jam: the five screens and `nextJamModule`; past-jams: `PastJamsScreen`, `PastJamDetailScreen`, `pastJamsModule`; info: `InfoScreen`, `AdminLoginScreen`, `infoModule`; assistant: `AssistantScreen`, `assistantModule`); everything else (presenters, UiModels, Params, mappers, copy, holders) is `internal`. A public screen takes no presenter: it resolves `koinInject()` and calls an `internal` overload of the same name that takes the presenter (previews and tests use it). A new public name, or a new feature module, adds its entry in the same diff. Known limit: top-level declarations only.
+
+As built by `wiring-and-preview-hygiene` (17 October 2026; code-review findings 7 and 8): **previews live in `*Preview.kt`, and coordination collaborators are required constructor parameters.** Rule 22 (`feature-previews-in-preview-files`) fails any `@Preview` function in a `:feature:*` main file named `*Screen.kt` or `*Views.kt`; previews and their fixtures sit in a sibling `*Preview.kt` (private, except `previewRow`, internal) and call the screens' `internal` content functions. It checks the annotation only: a fixture left in a screen file, or a preview in another non-`*Preview.kt` file, escapes it, and `:core:ui` components keep their previews beside them. `RunLock`, `LineupReservations` (in `SongAdminState`) and `DefaultSetlistAssistant.statusProbe` no longer have a default: a default would give each consumer its own instance and defeat the sharing.
 
 As built by `setlist-mutation-contracts` (17 October 2026; code-review finding 2): **`SetlistRepository` is only the union of
 twelve narrow contracts, one per mutation, each with its write, observe and dismiss.** `SetlistSongAddRepository`

@@ -80,7 +80,7 @@ internal fun AssignMusicianScreen(
 }
 
 @Composable
-private fun AssignMusicianContent(model: AssignMusicianUiModel, modifier: Modifier, contentPadding: PaddingValues) {
+internal fun AssignMusicianContent(model: AssignMusicianUiModel, modifier: Modifier, contentPadding: PaddingValues) {
     val spacing = BluesJamTheme.spacing
     Column(
         modifier = modifier
@@ -180,19 +180,4 @@ private fun SuggestionSection(model: SuggestionSectionUiModel) {
             Text(it, style = BluesJamTheme.typography.body, color = BluesJamTheme.colors.textMuted)
         }
     }
-}
-
-@Preview
-@Composable
-private fun AssignMusicianPreview() {
-    val model = AssignMusicianUiModel.Content(
-        back = backUiModel {}, title = AssignMusicianCopy.TITLE, songTitle = "Crossroads",
-        slotLabel = "Guitarra 2", instrument = Instrument.GUITAR, ordinal = 2, name = "",
-        nameLabel = AssignMusicianCopy.NAME, validationMessage = null,
-        currentSection = SuggestionSectionUiModel(AssignMusicianCopy.CURRENT, null, emptyList()),
-        pastSection = SuggestionSectionUiModel(AssignMusicianCopy.PAST, AssignMusicianCopy.PAST_EMPTY, emptyList()),
-        submitLabel = AssignMusicianCopy.SUBMIT, submitEnabled = false,
-        events = com.bbbjam.core.ui.presenter.EventHandler {},
-    )
-    BluesJamTheme { AssignMusicianContent(model, Modifier, PaddingValues()) }
 }

@@ -79,6 +79,7 @@ class DefaultSetlistAssistantTest {
         jams,
         fixedCalendar(),
         AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
+        AssistantStatusProbe(),
     )
 
     // The gateway answers as a stream (assistant-streaming): every scripted reply is an SSE body.

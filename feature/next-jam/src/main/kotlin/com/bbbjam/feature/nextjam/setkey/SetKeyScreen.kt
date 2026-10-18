@@ -80,7 +80,7 @@ internal fun SetKeyScreen(
 }
 
 @Composable
-private fun SetKeyContent(model: SetKeyUiModel, modifier: Modifier, contentPadding: PaddingValues) {
+internal fun SetKeyContent(model: SetKeyUiModel, modifier: Modifier, contentPadding: PaddingValues) {
     val spacing = BluesJamTheme.spacing
     Column(
         modifier = modifier
@@ -188,22 +188,4 @@ private fun KeyCell(cell: KeyCellUiModel, modifier: Modifier) {
             cell.currentLabel?.let { Text(text = it, style = BluesJamTheme.typography.caption, color = style.caption) }
         }
     }
-}
-
-@Preview
-@Composable
-private fun SetKeyScreenPreview() {
-    val model = SetKeyUiModel.Content(
-        back = backUiModel {},
-        title = SetKeyCopy.TITLE,
-        songTitle = "Crossroads",
-        currentLabel = SetKeyCopy.CURRENT,
-        currentKey = "A",
-        currentKeyDescription = SongListText.keyDescription("A"),
-        sections = listOf(
-            keySection(SetKeyCopy.MAJORS, SetKeyDefaults.MAJORS, "A") {},
-            keySection(SetKeyCopy.MINORS, SetKeyDefaults.MINORS, "A") {},
-        ),
-    )
-    BluesJamTheme { Box { SetKeyContent(model = model, modifier = Modifier, contentPadding = PaddingValues()) } }
 }

@@ -1,0 +1,1 @@
+testcases 1154 (baseline, sum of tests= over TEST-*.xml); konsist 21 rules

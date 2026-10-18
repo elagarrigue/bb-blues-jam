@@ -11,6 +11,7 @@ import com.bbbjam.feature.assistant.apply.applyKey
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.run.JamCreationRunner
 import com.bbbjam.feature.assistant.run.ProposalApplier
+import com.bbbjam.feature.assistant.run.RunLock
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -58,5 +59,6 @@ internal fun testPresenter(
         ScriptedJamCreator(),
         jams,
         CoroutineScope(SupervisorJob() + kotlinx.coroutines.Dispatchers.Unconfined),
+        RunLock(),
     ),
 ) = AssistantPresenter(chat, applier, jams, runner, testCalendar())

@@ -42,7 +42,7 @@ internal class JamCreationRunner(
     private val creator: JamCreator,
     private val jams: JamsRepository,
     private val scope: CoroutineScope,
-    private val runLock: RunLock = RunLock(),
+    private val runLock: RunLock,
 ) {
     private val lock = Any()
     private val state = MutableStateFlow<Map<Long, JamCreation>>(emptyMap())

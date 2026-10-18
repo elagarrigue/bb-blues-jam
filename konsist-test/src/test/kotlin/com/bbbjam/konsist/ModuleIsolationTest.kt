@@ -201,6 +201,30 @@ class ModuleIsolationTest {
             }
     }
 
+    /**
+     * Rule 22, `feature-previews-in-preview-files`: in a `:feature:*` main source named `*Screen.kt`
+     * or `*Views.kt`, no function carries `@Preview`; previews live in a sibling `*Preview.kt`.
+     * Known limit: it checks the annotation only, so a preview fixture left in a screen file is not
+     * caught, and a preview placed in another non-`*Preview.kt` file escapes. `:core:ui` components
+     * keep their previews beside them by design and are not covered.
+     */
+    @Test
+    fun `feature screens and views declare no previews`() {
+        scope.files
+            .filter {
+                it.modulePath.startsWith(FEATURE) && it.isMainSource() &&
+                    (it.name.endsWith("Screen") || it.name.endsWith("Views"))
+            }
+            .assertFalse(testName = "feature-previews-in-preview-files") { file ->
+                file.functions(includeNested = true, includeLocal = false).any { fn ->
+                    fn.annotations.any {
+                        it.name ==
+                            "Preview"
+                    }
+                }
+            }
+    }
+
     @Test
     fun `only the app imports the navigation library`() {
         scope.files

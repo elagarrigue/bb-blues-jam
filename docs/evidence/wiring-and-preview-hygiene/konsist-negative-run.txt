@@ -1,0 +1,38 @@
+Reusing configuration cache.
+> Task :konsist-test:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :konsist-test:processResources NO-SOURCE
+> Task :konsist-test:processTestResources NO-SOURCE
+> Task :konsist-test:compileKotlin NO-SOURCE
+> Task :konsist-test:compileJava NO-SOURCE
+> Task :konsist-test:classes UP-TO-DATE
+> Task :konsist-test:jar UP-TO-DATE
+> Task :konsist-test:compileTestKotlin UP-TO-DATE
+> Task :konsist-test:compileTestJava NO-SOURCE
+> Task :konsist-test:testClasses UP-TO-DATE
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.21/79346ed53db48b18312a472602eb5c057070c54d/kotlin-compiler-embeddable-2.0.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+
+> Task :konsist-test:test
+
+ModuleIsolationTest > feature screens and views declare no previews FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'feature-previews-in-preview-files' was violated (1 time). Invalid files:
+    ??? File PastJamsScreen.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\feature\past-jams\src\main\kotlin\com\bbbjam\feature\pastjams\PastJamsScreen.kt
+
+22 tests completed, 1 failed
+
+> Task :konsist-test:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':konsist-test:test'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/konsist-test/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 5s
+3 actionable tasks: 1 executed, 2 up-to-date
+Configuration cache entry reused.

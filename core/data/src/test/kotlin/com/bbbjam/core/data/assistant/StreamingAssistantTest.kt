@@ -63,6 +63,7 @@ class StreamingAssistantTest {
             FakePastJams(),
             fixedCalendar(),
             AssistantHttp.executorFactory(baseUrl, OkHttpClient()),
+            AssistantStatusProbe(),
         )
 
     private fun body(request: RecordedRequest): JsonObject =

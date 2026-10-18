@@ -1,0 +1,1 @@
+testcases 1155 (baseline 1154 + 1 rule 22, none other); konsist 22 rules

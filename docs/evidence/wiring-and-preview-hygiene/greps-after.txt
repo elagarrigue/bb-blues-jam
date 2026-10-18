@@ -1,0 +1,10 @@
+$ grep -rn "RunLock()" --include=*.kt */*/src/main (main sources)
+feature/assistant/src/main/kotlin/com/bbbjam/feature/assistant/di/AssistantModule.kt:35:    single { RunLock() }
+$ AssistantStatusProbe() in main
+core/data/src/main/kotlin/com/bbbjam/core/data/di/DataModule.kt:63:        DefaultSetlistAssistant(get(), get(), get(), get(), AssistantHttp.executorFactory(), AssistantStatusProbe())
+$ LineupReservations() in main
+feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/songdetail/LineupControls.kt:36:    val reservations = remember { LineupReservations() }
+feature/next-jam/src/main/kotlin/com/bbbjam/feature/nextjam/songdetail/SongDetailPreview.kt:80:    DetailPreview(previewModel(fullSong, SongAdminState(reservations = LineupReservations())))
+$ @Preview in feature *Screen.kt / *Views.kt (expect none)
+(exit 1)
+$ git diff --stat -- app

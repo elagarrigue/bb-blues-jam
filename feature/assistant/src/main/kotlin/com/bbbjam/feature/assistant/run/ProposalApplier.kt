@@ -31,7 +31,7 @@ internal class ProposalApplier(
     mover: SetlistSongMover,
     creator: JamCreator,
     private val scope: CoroutineScope,
-    private val runLock: RunLock = RunLock(),
+    private val runLock: RunLock,
 ) {
     private val lock = Any()
     private val state = MutableStateFlow<Map<Long, ApplyRun>>(emptyMap())
