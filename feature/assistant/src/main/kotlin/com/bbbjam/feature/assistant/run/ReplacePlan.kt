@@ -1,6 +1,6 @@
 package com.bbbjam.feature.assistant.run
 
-import com.bbbjam.core.data.assistant.ProposedSong
+import com.bbbjam.core.assistant.ProposedSong
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus

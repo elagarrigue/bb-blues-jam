@@ -4,10 +4,10 @@ import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
+import com.bbbjam.core.assistant.AssistantReply
+import com.bbbjam.core.assistant.ProposedJam
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.assistant.AssistantReply
-import com.bbbjam.core.data.assistant.ProposedJam
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus

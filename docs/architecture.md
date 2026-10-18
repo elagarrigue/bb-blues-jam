@@ -1,7 +1,8 @@
 # Application architecture
 
 Verified against the module definitions, composition root, repository bindings and agent tools
-on 17 October 2026. The presentation-ready overview is [app-architecture.svg](diagrams/app-architecture.svg).
+on 18 October 2026, after `remove-action-registry` (commit `44657af`). The presentation-ready
+overview is available as [SVG](diagrams/app-architecture.svg) and [PNG](diagrams/app-architecture.png).
 Solid arrows in that overview indicate module dependencies; dashed arrows indicate runtime HTTP
 communication. The overview groups repeated dependencies to keep it readable. The exact direct
 production-module dependencies are shown below.
@@ -18,19 +19,21 @@ flowchart TB
         assistant[":feature:assistant<br/>Admin chat · proposal review and application"]
     end
     ui[":core:ui<br/>Presenter contracts · theme · shared components"]
-    data[":core:data<br/>Repository contracts and implementations<br/>Room · DataStore · HTTP · Koog agent"]
+    data[":core:data<br/>Repository contracts and implementations<br/>Room · DataStore · HTTP"]
+    coreassistant[":core:assistant<br/>Koog agent · tools · streaming"]
     model[":core:model<br/>Pure Kotlin domain types<br/>Jam · Song · JamSong · Lineup · Slot · Key"]
     app --> next & past & info & assistant
-    app --> ui & data & model
+    app --> ui & data & coreassistant & model
     next --> ui & data
     past --> ui & data
     info --> ui & data
-    assistant --> ui & data
+    assistant --> ui & data & coreassistant
     ui --> model
+    coreassistant --> data & model
     data --> model
 ```
 
-There are eight production Gradle modules. `:konsist-test` is a separate test-only JVM module;
+There are nine production Gradle modules. `:konsist-test` is a separate test-only JVM module;
 `build-logic` is an included build containing convention plugins. Neither is an application layer.
 `backend/apps-script` is a separately deployed backend, not a Gradle module.
 
@@ -53,9 +56,10 @@ flowchart TB
         cache[("Room cache")]
         session["AdminSession / DataStore"]
         repo["SetlistRepository / AdminWriter"]
-        agent["Koog agent in :core:data<br/>searchCatalog · pastJams · jamSchedule"]
+        agent["Koog agent in :core:assistant<br/>searchCatalog · pastJams · jamSchedule"]
         validator["ProposalValidator / JamProposalValidator"]
         confirm["Admin reviews and confirms<br/>:feature:assistant"]
+        writes["Narrow :core:data write contracts<br/>SetlistSongAdder / SetlistSongRemover<br/>SetlistSongMover / JamCreator"]
         screen -->|UiEvent| presenter
         presenter -->|present| uimodel
         uimodel -->|render| screen
@@ -67,7 +71,8 @@ flowchart TB
         agent -->|read-only tools| reads
         agent -->|structured output / stream| validator
         validator -->|validated proposal| confirm
-        confirm -->|narrow write contracts| repo
+        confirm --> writes
+        writes -->|direct delegation wired by Koin in :app| repo
         repo -->|confirmed server result| cache
         session -->|stored credential supplied to writes| repo
     end
@@ -88,6 +93,12 @@ narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `
 `remove-action-registry`. Manual feature edits call the same repository functions. Every supported
 mutation is a `SetlistRepository` function.
 
+The bindings are constructor-time SAM implementations in `appModule`: add, remove, move and create
+delegate directly to the same repository instance. They introduce no dispatcher, action DTO,
+registry or extra runtime layer. `SetlistRepository` and its implementation remain in `:core:data`;
+`:app` only selects and wires the narrow surfaces. Status, publication and jam-edit contracts are
+also bound to that repository instance. The module graph gains one module, `:core:assistant`, and one core-to-core edge, `:core:assistant -> :core:data`; every other dependency is unchanged.
+
 The local admin state controls which UI is rendered; Apps Script authenticates and validates
 server actions. Room is a local cache, not an independent authority. The Sheet owns the catalog
 and past jams; the app controls upcoming-setlist editing and publication through the backend,
@@ -107,6 +118,7 @@ tools inspect the product; they are not runtime services.
 - [Composition root](../app/src/main/java/com/bbbjam/BluesJamApp.kt).
 - [Application bindings](../app/src/main/java/com/bbbjam/di/AppModule.kt).
 - [Data bindings](../core/data/src/main/kotlin/com/bbbjam/core/data/di/DataModule.kt).
-- [Agent and registered tools](../core/data/src/main/kotlin/com/bbbjam/core/data/assistant/DefaultSetlistAssistant.kt).
+- [Assistant binding](../core/assistant/src/main/kotlin/com/bbbjam/core/assistant/di/AssistantCoreModule.kt).
+- [Agent and registered tools](../core/assistant/src/main/kotlin/com/bbbjam/core/assistant/DefaultSetlistAssistant.kt).
 - [Server action router](../backend/apps-script/src/Post.js).
 - [Canonical architecture rules](../.claude/skills/architecture/SKILL.md) and [domain authority](domain-model.md).

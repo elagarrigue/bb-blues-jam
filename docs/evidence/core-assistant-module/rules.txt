@@ -1,0 +1,1 @@
+ModuleIsolationTest @Test count: 22 (before: 22). Amended: core-import-allowlist, build-file-project-deps, data-libraries-only-in-core-data(-qualified), assistant-reads-only (+ non-vacuity guard). Untouched: rules 19-22.

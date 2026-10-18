@@ -1,7 +1,7 @@
 package com.bbbjam.feature.assistant.jam
 
 import androidx.compose.runtime.MutableState
-import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.core.data.jams.JamPlan
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.jamCreationPlan

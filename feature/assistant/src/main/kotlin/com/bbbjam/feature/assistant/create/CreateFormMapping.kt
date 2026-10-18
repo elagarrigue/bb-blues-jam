@@ -1,6 +1,6 @@
 package com.bbbjam.feature.assistant.create
 
-import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.core.data.jams.JamDateProblem
 import com.bbbjam.core.data.jams.JamFormCheck
 import com.bbbjam.core.data.jams.VenueProblem

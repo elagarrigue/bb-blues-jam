@@ -1,0 +1,1 @@
+debugRuntimeClasspath of :app, external coordinates (sorted, unique): 460 lines before (HEAD worktree) and 460 after; diff empty (no library added, no version moved).

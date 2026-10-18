@@ -1,6 +1,6 @@
 package com.bbbjam.feature.assistant.apply
 
-import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist

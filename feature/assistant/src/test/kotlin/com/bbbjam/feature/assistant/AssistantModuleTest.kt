@@ -1,6 +1,6 @@
 package com.bbbjam.feature.assistant
 
-import com.bbbjam.core.data.assistant.SetlistAssistant
+import com.bbbjam.core.assistant.SetlistAssistant
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.setlist.add.SetlistSongAdder
 import com.bbbjam.core.data.setlist.jamcreate.JamCreator

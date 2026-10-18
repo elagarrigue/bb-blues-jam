@@ -1,8 +1,8 @@
 package com.bbbjam.di
 
 import com.bbbjam.BuildConfig
+import com.bbbjam.core.assistant.AssistantCredentials
 import com.bbbjam.core.data.AppsScriptEndpoint
-import com.bbbjam.core.data.assistant.AssistantCredentials
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
 import com.bbbjam.core.data.setlist.add.SetlistSongAdder

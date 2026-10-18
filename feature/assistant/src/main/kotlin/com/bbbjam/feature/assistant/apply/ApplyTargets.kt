@@ -1,6 +1,6 @@
 package com.bbbjam.feature.assistant.apply
 
-import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.feature.assistant.AssistantHandlers
 import com.bbbjam.feature.assistant.create.CreateCopy
 import com.bbbjam.feature.assistant.create.createForm

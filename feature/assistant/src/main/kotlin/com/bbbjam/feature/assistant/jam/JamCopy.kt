@@ -1,8 +1,8 @@
 package com.bbbjam.feature.assistant.jam
 
+import com.bbbjam.core.assistant.JamRejection
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.admin.WriteRejection
-import com.bbbjam.core.data.assistant.JamRejection
 import com.bbbjam.core.ui.text.SpanishDateNames
 import com.bbbjam.core.ui.text.WriteFailureCopy
 import com.bbbjam.feature.assistant.apply.ApplyCopy

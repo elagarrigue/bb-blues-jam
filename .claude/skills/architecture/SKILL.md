@@ -19,6 +19,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 |---|---|---|
 | `:core:model` | Domain types: `Jam`, `JamStatus`, `Setlist`, `SetlistProblem`, `JamSong`, `Lineup`, `Slot`, `ExtraParticipant`, `Instrument`, `Song`, `Tempo`, `Difficulty`, `Key`, `SongId`. Pure Kotlin, no Android, no serialization, no date parsing, no clock. | nothing |
 | `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. The setlist mutations live in per-mutation subpackages of `core.data.setlist` plus a shared `engine` (`setlist-mutation-engine`). | `:core:model` |
+| `:core:assistant` | The setlist assistant agent (`core-assistant-module`, 18 October 2026; code-review finding 9): the Koog agent, its tools, prompt, validators, streaming parser and gateway HTTP client, package `com.bbbjam.core.assistant`, plus its Koin module `assistantCoreModule` (`di/`). The only module besides `:core:data` allowed `okhttp3.` and `kotlinx.serialization.`, and the only one allowed Koog and Ktor; never Room or DataStore. | `:core:model`, `:core:data` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
 | `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the direct Koin bindings of the narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover`, `JamCreator`, and since `setlist-mutation-contracts` every one of the twelve `Setlist...Repository` contracts) to the one `SetlistRepository` (D-13; there is no action registry since `remove-action-registry`). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
@@ -398,28 +399,33 @@ and passes `admin` into both `BluesJamTheme` and `AppNavHost`.
 As built by `assistant-agent-core` (13 October 2026; phase 2, D-21 to D-24; no UI yet, the next slice
 is `assistant-admin-tab`): **no new module.** A `:core:assistant` module would have violated
 `core-import-allowlist` and `build-file-project-deps` (a `:core:*` may depend only on `:core:model`), so
-the agent lives in `:core:data`, package `com.bbbjam.core.data.assistant`. The public surface is plain
+the agent lived in `:core:data`, package `com.bbbjam.core.data.assistant`. **History: `core-assistant-module`
+(18 October 2026) reversed that on purpose** (organizer decision after the code review, finding 9): the agent
+now lives in `:core:assistant`, package `com.bbbjam.core.assistant`, depending on `:core:model` and `:core:data`,
+and Konsist was amended (see below). `:core:data` holds no Koog, no Ktor and no agent code. The paragraph that
+follows describes the agent as built; read its package as `com.bbbjam.core.assistant`. The public surface is plain
 Kotlin, no Koog, Ktor or serialization type: `SetlistAssistant` (`isConfigured`, `startConversation()`),
 `AssistantConversation` (`suspend send(request): AssistantReply`, history in memory, one turn at a time
 behind a `Mutex`, a blank request is a caller bug), `AssistantReply` (`NotConfigured`, `Proposal(songs,
 message, questions, rejectedSongIds)`, `Failed(AssistantFailure)`), `ProposedSong`, `AssistantFailure`
 (`Offline`, `Unauthorized`, `Unavailable(status)`, `InvalidResponse`, `TooManySteps`, `CatalogEmpty`) and
 `AssistantCredentials`. Internal: `DefaultSetlistAssistant(credentials, catalog, jams, executorFactory)`
-(a Koin `single`, binding `AssistantHttp.executorFactory()`; `:app` supplies the credentials),
+(a Koin `single` in `assistantCoreModule`, binding `AssistantHttp.executorFactory()`; `:app` supplies the credentials
+and lists the module in `startKoin`),
 `CatalogTool` (`searchCatalog`) and `PastJamsTool` (`pastJams`), both `SimpleTool`s holding one
 repository (`CatalogRepository` / `JamsRepository`) and returning compact text, `ProposalValidator`
 (catalog-only, title/artist/key from the catalog, malformed/unknown/repeated ids to `rejectedSongIds`),
 `ProposalDto`, `AssistantPrompt`, `AssistantErrors` (cause-chain mapping; only IO, Koog HTTP/client,
 parsing and agent exceptions are caught, cancellation is rethrown) and `AssistantModel` (alias `chat`,
 `OpenAIEndpoint.Completions` only, never `Responses`). **The agent is read-only (D-24):** the Konsist
-rule `assistant-reads-only` bans, in that package's main and test sources, any import or qualified
+rule `assistant-reads-only` bans, in `:core:assistant`'s main and test sources, any import or qualified
 reference to `com.bbbjam.core.data.setlist`, `.admin`, `.remote` and `.cache`; proposals reach the
 setlist only through `assistant-apply-proposal` and the action contract. **Structured output is
 `StructuredRequest.Manual`, not `Native`:** the live call showed the gateway's model skipping the tools
 and answering at once when `response_format` is sent (`docs/evidence/assistant-agent-core/
 live-call-1-native.md`); with the schema in the prompt it called both tools and returned a valid
 proposal (`live-call.md`). A later change of alias or gateway is `AssistantModel.MODEL_ID`/`BASE_URL`.
-The opt-in live test is `AssistantLiveCallTest` (`-Pbbbjam.assistantLive=true`, off in the gate).
+The opt-in live test is `AssistantLiveCallTest` (`-Pbbbjam.assistantLive=true`, off in the gate; since `core-assistant-module` it seeds an in-code catalog of twelve songs instead of the Sheet seed, which the module cannot read, so a future live run is not byte-comparable with `docs/evidence/assistant-streaming/live-call.md`).
 
 As built by `assistant-admin-tab` (13 October 2026; phase 2): **`:feature:assistant`** (depends on `:core:ui` and `:core:data`
 only, `bluesjam.android.feature`) holds `AssistantChat`, `AssistantPresenter`, the pure `assistantModel(...)`, `AssistantUiModel`,
@@ -699,17 +705,26 @@ with songs draws no button.
 - Only `:core:data` imports or references `okhttp3.`, `androidx.room.`,
   `kotlinx.serialization.` or `androidx.datastore.`: Sheet I/O and stored state live only in
   repositories (D-13). A feature sees repository
-  interfaces and domain types.
+  interfaces and domain types. One exception per library set, set by `core-assistant-module`: `:core:assistant`
+  may import `ai.koog.`, `io.ktor.`, `okhttp3.` and `kotlinx.serialization.` (its gateway client and proposal DTO),
+  never Room or DataStore, and `:core:data` may no longer import Koog or Ktor. `okhttp3.` is therefore allowed in
+  exactly two modules, each for its own HTTP client. The allowlist is `DATA_LIBRARY_ALLOWLIST` (module to prefixes)
+  in `ModuleIsolationTest`.
+- The one core-to-core edge is `:core:assistant -> :core:data` (plus `:core:model`); `core-import-allowlist` and
+  `build-file-project-deps` allow exactly that and nothing else. `:core:data` and `:core:ui` still depend on
+  `:core:model` only, and nothing may depend on `:core:assistant` from `core/*`. Features and `:app` may (D-03 forbids
+  feature-to-feature edges, not this one).
 
 Konsist enforces the first four rules (the clock one as `core-model-no-system-clock`, a textual
 match on each `:core:model` file), the data-library rule (`data-libraries-only-in-core-data` on imports, and
 `data-libraries-only-in-core-data-qualified`, a text match on every non-import line outside
-`:core:data` and `:konsist-test`, because kotlinx-serialization-core reaches a feature transitively
+`:konsist-test`, each against the module's own `DATA_LIBRARY_ALLOWLIST` entry, because kotlinx-serialization-core reaches a feature transitively
 and a fully qualified reference there compiles; known limits: it is a line-based text match, so a
 qualified name split across lines at a dot, or with a backticked segment, is not caught, and the
 compile classpath still blocks okhttp3, Room, serialization-json and DataStore but not
 serialization-core; `androidx.datastore.` joined both lists with `admin-passphrase-login`, and
-`ai.koog.` and `io.ktor.` with `assistant-agent-core`), the
+`ai.koog.` and `io.ktor.` with `assistant-agent-core`, moving to `:core:assistant`'s entry with
+`core-assistant-module`), the
 package roots, the ViewModel ban and
 `no-color-literal-outside-core-ui` (no numeric `Color(…)` and no ARGB hex literal in any module but
 `:core:ui`; it does not catch `Color.Red`, `Color.parseColor`, named-argument `Color(red = …)` or XML
@@ -736,7 +751,7 @@ with `catalog-repository-cache`; the 13th, `data-libraries-only-in-core-data-qua
 `no-dp-literal-outside-core-ui`, with `list-states`; the 17th, `navigation-only-in-app` (outside
 `:app` and `:konsist-test`, no import of `androidx.navigation.`; an import text match, a fully
 qualified use escapes but would not compile, because only `:app` declares the library), with
-`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below; the 20th, `next-jam-injects-narrow-setlist-contracts`, with `setlist-mutation-contracts`, see below; the 21st, `feature-public-api-allowlisted`, with `feature-api-surface`, see below; the 22nd, `feature-previews-in-preview-files`, with `wiring-and-preview-hygiene`, see below); the
+`song-detail-screen`; the 18th, `assistant-reads-only`, with `assistant-agent-core`, retargeted by `core-assistant-module` to every file of `:core:assistant` (module, not package) with a non-vacuity guard that fails if the module has no main or no test file to scan, because the rule once passed silently after its filter matched nothing; see below; the 19th, `assistant-feature-applies-through-contract`, with `assistant-apply-proposal`, see below; the 20th, `next-jam-injects-narrow-setlist-contracts`, with `setlist-mutation-contracts`, see below; the 21st, `feature-public-api-allowlisted`, with `feature-api-surface`, see below; the 22nd, `feature-previews-in-preview-files`, with `wiring-and-preview-hygiene`, see below); the
 two that read build files are
 `build-file-project-deps` and `build-file-applies-convention` (see Build Conventions). **A new
 dependency rule means a new test in that class**, proven able
@@ -801,7 +816,7 @@ them.
   | `bluesjam.android.compose` | requires an Android plugin first; Compose compiler plugin; `buildFeatures.compose = true` | `:app` (and through the two below) |
   | `bluesjam.android.presenter` | `.android.library` + `.android.compose`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, molecule-runtime, turbine, kotlinx-coroutines-test | `:core:ui` |
   | `bluesjam.android.feature` | `.android.presenter`; `implementation` Koin BOM, `koin-core`, `koin-compose` | every `:feature:*` |
-  | `bluesjam.android.data` | `.android.library` + `org.jetbrains.kotlin.plugin.serialization` + `com.google.devtools.ksp`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, kotlinx-coroutines-test, turbine | `:core:data` |
+  | `bluesjam.android.data` | `.android.library` + `org.jetbrains.kotlin.plugin.serialization` + `com.google.devtools.ksp`; `unitTests.isReturnDefaultValues = true`; `testImplementation` junit, kotlinx-coroutines-test, turbine | `:core:data`, `:core:assistant` (which has no use for the KSP plugin; it is applied with no processor, harmless) |
 
   A convention adds a dependency only when every module of its kind needs it. Optional or
   module-specific libraries (Compose BOM, foundation, tooling, `koin-android`, junit in JVM modules
@@ -974,7 +989,7 @@ them.
   not allowed").
 - **Koog and Ktor pins** (`assistant-agent-core`): `ai.koog:agents-core` and
   `ai.koog:http-client-ktor` 1.3.0 (catalog `koog`), `io.ktor:ktor-client-okhttp` 3.3.3 (catalog
-  `ktor`, the version Koog 1.3.0 is built against), all `implementation` in `core/data/build.gradle.kts`
+  `ktor`, the version Koog 1.3.0 is built against), all `implementation` in `core/assistant/build.gradle.kts`
   only. Never the `koog-agents` umbrella (it pulls Anthropic, AWS, Ollama, OpenTelemetry...). Koog
   needs Kotlin >= 2.3.10 and Java 17 bytecode. The Ktor client uses the OkHttp engine over a client built
   in `AssistantHttp`, and Koog gets its `KtorKoogHttpClient.Factory` explicitly (no `ServiceLoader`).
@@ -1188,7 +1203,7 @@ The admin edits and deletes future jams from the Jams tab (D-28).
 
 The assistant's answer streams (15 October 2026). The final parse stays the source of truth.
 
-- **Core (`:core:data`, `assistant`).** `AssistantConversation.send(request, onDraft)`; `AssistantDraft(songs)` is the
+- **Core (`:core:assistant`).** `AssistantConversation.send(request, onDraft)`; `AssistantDraft(songs)` is the
   cumulative, catalog-validated songs of the answer in progress (an empty draft when a tool round discards its text).
   `streamingProposalStrategy` is a Koog `functionalStrategy`: at most `MAX_AGENT_ITERATIONS` requests, each streamed with the
   tools; text deltas feed `DraftTracker` (`ProposalStreamParser`, a pure character state machine that returns the raw `songs`
@@ -1196,7 +1211,7 @@ The assistant's answer streams (15 October 2026). The final parse stays the sour
   drift); a round with tool calls runs them and goes on; the text round is parsed whole. The streamed message is shaped before
   the parse (one text part; reasoning parts dropped from the history). A stream with no finish reason is
   `IncompleteStreamException`, mapped to `AssistantFailure.Incomplete`; cancellation closes the HTTP call (JVM test with a raw
-  socket gateway). The agent package stays read-only.
+  socket gateway). The agent module stays read-only.
 - **Chat (`:feature:assistant`).** `ChatTurn.draft` holds the streamed songs, written only while the turn is Pending (a late
   call after a cancel is ignored). The mapping shows them under `PROPUESTA · n temas` while pending (`Pending.songs`), shows
   `Answered(Proposal)` from the final list alone (the draft is ignored), and turns a failed, cancelled or interrupted turn that

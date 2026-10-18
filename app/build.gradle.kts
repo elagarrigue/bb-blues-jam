@@ -90,6 +90,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:ui"))
     implementation(project(":core:data"))
+    implementation(project(":core:assistant"))
     implementation(project(":feature:assistant"))
     implementation(project(":feature:info"))
     implementation(project(":feature:next-jam"))

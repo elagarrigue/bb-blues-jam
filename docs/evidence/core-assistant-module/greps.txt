@@ -1,0 +1,2 @@
+rg core/data exit 1 (1 = no match)
+rg old package exit 1

@@ -185,7 +185,8 @@ Compose · OkHttp · Koog 1.3 · Konsist, detekt y ktlint en el gate.
 ```
 :app                     wiring (Koin) y navegación
 :core:model              tipos de dominio (Kotlin puro)
-:core:data               repositorios, caché, cliente de Apps Script, agente
+:core:data               repositorios, caché, cliente de Apps Script
+:core:assistant          agente Koog, herramientas y streaming
 :core:ui                 tema, tokens y componentes compartidos
 :feature:next-jam        próxima jam y detalle del tema
 :feature:past-jams       pestaña Jams

@@ -92,6 +92,8 @@ class ModuleIsolationTest {
                 val allowed = buildList {
                     add(packageRootOf(import.modulePath))
                     if (import.modulePath != CORE_MODEL) add(packageRootOf(CORE_MODEL))
+                    // The one core-to-core edge (core-assistant-module): the agent reads the repositories.
+                    if (import.modulePath == CORE_ASSISTANT) add(packageRootOf(CORE_DATA))
                 }
                 import.name.startsWith(PROJECT_PACKAGE) && allowed.none { import.name.isUnder(it) }
             }
@@ -126,28 +128,42 @@ class ModuleIsolationTest {
     }
 
     @Test
-    fun `only core data imports the data libraries`() {
-        scope.files.filter { it.modulePath != CORE_DATA }.flatMap { it.imports }
+    fun `only core data and core assistant import the data libraries, each its own`() {
+        scope.files.flatMap { it.imports }
             .assertFalse(testName = "data-libraries-only-in-core-data") { import ->
-                DATA_LIBRARY_PREFIXES.any { import.name.startsWith(it) }
+                val allowed = DATA_LIBRARY_ALLOWLIST[import.modulePath].orEmpty()
+                DATA_LIBRARY_PREFIXES.any { import.name.startsWith(it) && it !in allowed }
             }
     }
 
     @Test
-    fun `only core data references the data libraries, even fully qualified`() {
+    fun `only core data and core assistant reference the data libraries, each its own, even fully qualified`() {
         scope.files
-            .filter { it.modulePath != CORE_DATA && it.modulePath != KONSIST_TEST }
+            .filter { it.modulePath != KONSIST_TEST }
             .assertFalse(testName = "data-libraries-only-in-core-data-qualified") { file ->
+                val allowed = DATA_LIBRARY_ALLOWLIST[file.modulePath].orEmpty()
                 file.text.lineSequence()
                     .filterNot { it.trimStart().startsWith("import ") }
-                    .any { QUALIFIED_DATA_LIBRARY.containsMatchIn(it) }
+                    .flatMap { QUALIFIED_DATA_LIBRARY.findAll(it).map { match -> match.groupValues[1] } }
+                    .any { library ->
+                        DATA_LIBRARY_PREFIXES.first { prefix -> prefix.startsWith("$library.") } !in
+                            allowed
+                    }
             }
     }
 
     @Test
-    fun `the assistant package reads data only through the catalog and jams repositories`() {
-        scope.files
-            .filter { it.modulePath == CORE_DATA && it.packagee?.name.orEmpty().isUnder(ASSISTANT_PACKAGE) }
+    fun `the assistant module reads data only through the catalog and jams repositories`() {
+        val assistantFiles = scope.files.filter { it.modulePath == CORE_ASSISTANT }
+        // Non-vacuity: this rule once scanned zero files (the agent moved out from under its filter) and
+        // passed silently. `core-import-allowlist` lets the module import `core.data.*`, so this is the guard.
+        if (assistantFiles.none { it.isMainSource() } || assistantFiles.none { !it.isMainSource() }) {
+            fail(
+                "Assert 'assistant-reads-only' scanned no main or no test file of $CORE_ASSISTANT: " +
+                    "it would pass vacuously.",
+            )
+        }
+        assistantFiles
             .assertFalse(testName = "assistant-reads-only") { file ->
                 file.imports.any { import -> ASSISTANT_FORBIDDEN_PACKAGES.any { import.name.isUnder(it) } } ||
                     file.text.lineSequence()
@@ -353,8 +369,14 @@ class ModuleIsolationTest {
 
     private fun isAllowedProjectDependency(modulePath: String, dependency: String): Boolean = when {
         modulePath == CORE_MODEL -> false
+
+        // The one core-to-core edge (core-assistant-module); no other core module may depend on it.
+        modulePath == CORE_ASSISTANT -> dependency == ":core:model" || dependency == ":core:data"
+
         modulePath.startsWith(CORE) -> dependency == ":core:model"
+
         modulePath.startsWith(FEATURE) -> dependency.startsWith(":core:")
+
         else -> true
     }
 
@@ -368,6 +390,7 @@ class ModuleIsolationTest {
         const val CORE_MODEL = "core/model"
         const val CORE_UI = "core/ui"
         const val CORE_DATA = "core/data"
+        const val CORE_ASSISTANT = "core/assistant"
         const val KONSIST_TEST = "konsist-test"
         const val APP = "app"
         const val PROJECT_PACKAGE = "com.bbbjam."
@@ -385,7 +408,9 @@ class ModuleIsolationTest {
          * HTTP, the Room cache, JSON and DataStore (the admin passphrase, `admin-passphrase-login`
          * A6) belong to `:core:data`: Sheet I/O and stored state live only in repositories (D-13),
          * so no other module may import them. Koog (`ai.koog.`) and Ktor (`io.ktor.`) joined with
-         * `assistant-agent-core`: only `:core:data` touches the agent runtime and its HTTP client.
+         * `assistant-agent-core` and, since `core-assistant-module`, belong to `:core:assistant`
+         * alone, which also keeps its own OkHttp gateway client and its kotlinx-serialization DTO.
+         * The set of every prefix is checked against [DATA_LIBRARY_ALLOWLIST].
          */
         val DATA_LIBRARY_PREFIXES =
             listOf(
@@ -396,6 +421,16 @@ class ModuleIsolationTest {
                 "ai.koog.",
                 "io.ktor.",
             )
+
+        /**
+         * Which of [DATA_LIBRARY_PREFIXES] each module may use. `okhttp3.` is therefore allowed in exactly
+         * two modules, each for its own HTTP client; any other module (a feature, `:core:ui`,
+         * `:core:model`, `:app`) is absent from the map and may use none.
+         */
+        val DATA_LIBRARY_ALLOWLIST: Map<String, List<String>> = mapOf(
+            CORE_DATA to listOf("okhttp3.", "androidx.room.", "kotlinx.serialization.", "androidx.datastore."),
+            CORE_ASSISTANT to listOf("ai.koog.", "io.ktor.", "okhttp3.", "kotlinx.serialization."),
+        )
 
         /**
          * A reference to a data library outside an import line, such as a fully qualified
@@ -419,12 +454,12 @@ class ModuleIsolationTest {
         const val NAVIGATION_PREFIX = "androidx.navigation."
 
         /**
-         * The assistant agent is read-only (D-24): its package, main and test sources, imports nothing
-         * from the packages that write or that reach the Sheet, the cache or the transport directly. It
+         * The assistant agent is read-only (D-24): its module, `:core:assistant`, main and test sources,
+         * import nothing from the packages that write or that reach the Sheet, the cache or the transport
+         * directly. It
          * sees the data through `catalog` and `jams` (the repositories its tools read). Known limit: a
          * text match on the package names, so an import alias or a split qualified name escapes.
          */
-        const val ASSISTANT_PACKAGE = "com.bbbjam.core.data.assistant"
         val ASSISTANT_FORBIDDEN_PACKAGES = listOf("setlist", "admin", "remote", "cache")
             .map { "com.bbbjam.core.data.$it" }
         val ASSISTANT_FORBIDDEN_QUALIFIED =

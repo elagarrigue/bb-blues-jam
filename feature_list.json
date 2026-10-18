@@ -1941,14 +1941,22 @@
     "depends_on": [
       "wiring-and-preview-hygiene"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "No ai.koog or io.ktor reference remains in :core:data",
       "Konsist rules amended only as described, each amended rule shown failing first on a violating fixture; rule count recorded",
       "The assistant's JVM tests pass unchanged in behavior; the opt-in live test still compiles",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh exit 0, 1155 testcases (core/data 392), 22 rules (docs/evidence/core-assistant-module/baseline.txt). Moves done with git mv (33 renames: 18 main, 15 test files); only package lines and imports differ.",
+      "konsist-before.txt: saved before any rule amendment, 4 of 22 red (core-import-allowlist, data-libraries-only-in-core-data, data-libraries-only-in-core-data-qualified, build-file-project-deps) and assistant-reads-only falsely green (its package filter matched no file). Then each rule amended and proven with a planted violation that failed and was removed (plant-*.txt, step*.txt): ui imports core.assistant (allowlist); assistant imports core.ui (allowlist); core/ui and core/data build files depend on :core:assistant (build-file-project-deps); ai.koog import and qualified reference in core/data, androidx.room import and qualified reference in core/assistant, okhttp3 import in feature/assistant and qualified in core/ui (library rules); setlist import and qualified admin reference in core/assistant main and test, setlist import in core/ui (assistant-reads-only / allowlist); the non-vacuity guard fails when the module filter matches nothing (plant-vacuous-assistant-filter.txt). konsist-after.txt: 22 tests green. Rules 19 to 22 untouched; rules.txt: 22 before, 22 after.",
+      "rg ai.koog|io.ktor in core/data empty; rg core.data.assistant outside history docs empty (greps.txt). :app debugRuntimeClasspath identical before and after, no library added or moved (classpath-diff.txt). :app:assembleRelease ok.",
+      "Final CI=true ./init.sh exit 0, konsist/detekt/ktlint wired (final-init.txt), 1156 testcases = 1155 + 1 new AssistantCoreModuleTest (core/assistant 94 + core/data 299 = 393 vs 392 before; test-counts-after.txt). AssistantLiveCallTest compiles and is skipped by default; its seed is an in-code twelve-song catalog, never run live. No device run, the agent has no UI.",
+      "Notes: :core:assistant uses bluesjam.android.data (its KSP plugin is unused there; build-logic untouched, orchestrator decision). Library allowlist is per module (DATA_LIBRARY_ALLOWLIST). docs/architecture.md updated on module-specific Mermaid lines only, PNG not regenerated; its other session's 'eight-module dependency graph is unchanged' sentence was stale.",
+      "Repair after validator REVISE: the stale sentence in docs/architecture.md line 100 replaced by the module graph gains :core:assistant and one edge :core:assistant -> :core:data; no other 'eight' in the file; Markdown only, gate not rerun.",
+      "Accepted on 18 October 2026 by the independent validator: gate rerun exit 0 (konsist 22 rules, detekt, ktlint wired, 1156 testcases), no koog or ktor in :core:data, own plants (okhttp3 in a feature, SetlistRepository in core/assistant) red then removed, Konsist amendments minimal, rule 18 cannot pass vacuously; one revise (stale module-count sentence in docs/architecture.md) repaired."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 9); the organizer asked to fix all nine findings with sonnet subagents."
   }
 ]

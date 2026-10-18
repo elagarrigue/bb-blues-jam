@@ -1,7 +1,7 @@
 package com.bbbjam.feature.assistant.apply
 
 import androidx.compose.runtime.MutableState
-import com.bbbjam.core.data.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantReply
 import com.bbbjam.core.data.jams.JamFormInput
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.checkJamForm
@@ -99,7 +99,7 @@ internal class ApplyHandlers(
     }
 
     // After a create run that made the jam, "Reintentar los que faltan" targets that jam, held back or not (C6).
-    private fun addPlan(turnId: Long, songs: List<com.bbbjam.core.data.assistant.ProposedSong>): ApplyPlan {
+    private fun addPlan(turnId: Long, songs: List<com.bbbjam.core.assistant.ProposedSong>): ApplyPlan {
         val created = applier.runs.value[turnId]?.takeIf { it.mode == ApplyMode.CREATE && it.jam is JamStep.Created }
         val date = created?.jamDate
         return if (date != null) applyPlanFor(songs, snapshot(), date) else applyPlan(songs, snapshot())

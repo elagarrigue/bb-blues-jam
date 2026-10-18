@@ -1,0 +1,8 @@
+core/assistant 94
+core/data 299
+core/model 58
+core/ui 148
+feature/assistant 160
+app 44
+konsist-test 22
+total 1156

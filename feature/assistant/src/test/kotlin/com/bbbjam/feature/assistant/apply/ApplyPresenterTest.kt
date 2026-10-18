@@ -47,7 +47,7 @@ class ApplyPresenterTest {
     private fun flow(chat: AssistantChat) =
         moleculeFlow(RecompositionMode.Immediate) { testPresenter(chat, applier, jams).present(Unit) }
 
-    private fun AssistantChat.ask(request: String, reply: com.bbbjam.core.data.assistant.AssistantReply) {
+    private fun AssistantChat.ask(request: String, reply: com.bbbjam.core.assistant.AssistantReply) {
         val deferred = assistant.expectReply()
         send(request)
         deferred.complete(reply)

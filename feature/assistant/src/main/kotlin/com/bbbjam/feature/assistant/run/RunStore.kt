@@ -1,7 +1,7 @@
 package com.bbbjam.feature.assistant.run
 
+import com.bbbjam.core.assistant.ProposedSong
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.assistant.ProposedSong
 import com.bbbjam.core.model.SongId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update

@@ -1,0 +1,26 @@
+# Baseline before the move: CI=true ./init.sh exit 0; konsist, detekt, ktlint wired
+# testcases per module (XML reports)
+core/assistant 0
+core/data 392
+core/model 58
+core/ui 148
+feature/assistant 160
+app 44
+konsist-test 22
+total 1155
+# @Test per moved class (grep -c)
+AssistantCredentialsTest.kt:3
+AssistantFakes.kt:0
+AssistantLiveCallTest.kt:1
+AssistantPromptTest.kt:3
+AssistantStatusTest.kt:8
+CatalogToolTest.kt:5
+DefaultSetlistAssistantTest.kt:18
+DraftTrackerTest.kt:2
+JamProposalValidatorTest.kt:4
+JamScheduleToolTest.kt:5
+PastJamsToolTest.kt:7
+ProposalStreamParserTest.kt:19
+ProposalValidatorTest.kt:5
+SseFixtures.kt:0
+StreamingAssistantTest.kt:13

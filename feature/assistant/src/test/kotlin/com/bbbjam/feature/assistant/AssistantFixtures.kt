@@ -1,8 +1,8 @@
 package com.bbbjam.feature.assistant
 
-import com.bbbjam.core.data.assistant.AssistantFailure
-import com.bbbjam.core.data.assistant.AssistantReply
-import com.bbbjam.core.data.assistant.ProposedSong
+import com.bbbjam.core.assistant.AssistantFailure
+import com.bbbjam.core.assistant.AssistantReply
+import com.bbbjam.core.assistant.ProposedSong
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId

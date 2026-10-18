@@ -4,8 +4,8 @@ import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
-import com.bbbjam.core.data.assistant.AssistantFailure
-import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.core.assistant.AssistantFailure
+import com.bbbjam.core.assistant.AssistantStatus
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.chat.ChatTurn
 import kotlinx.coroutines.CompletableDeferred

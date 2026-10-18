@@ -2,6 +2,7 @@ package com.bbbjam
 
 import android.app.Application
 import android.util.Log
+import com.bbbjam.core.assistant.di.assistantCoreModule
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.toLogLine
 import com.bbbjam.core.data.di.dataModule
@@ -50,7 +51,15 @@ class BluesJamApp : Application() {
         super.onCreate()
         val koin = startKoin {
             androidContext(this@BluesJamApp)
-            modules(appModule, dataModule, assistantModule, infoModule, nextJamModule, pastJamsModule)
+            modules(
+                appModule,
+                dataModule,
+                assistantCoreModule,
+                assistantModule,
+                infoModule,
+                nextJamModule,
+                pastJamsModule,
+            )
         }.koin
         // Debug only, each behind its own flag: the demo upcoming jam (bluesjam.demoUpcomingJam) and
         // the debug admin session (bluesjam.debugAdmin). Loaded after dataModule so they override

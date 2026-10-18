@@ -1,11 +1,11 @@
 package com.bbbjam.feature.assistant
 
-import com.bbbjam.core.data.assistant.AssistantConversation
-import com.bbbjam.core.data.assistant.AssistantDraft
-import com.bbbjam.core.data.assistant.AssistantReply
-import com.bbbjam.core.data.assistant.AssistantStatus
-import com.bbbjam.core.data.assistant.ProposedSong
-import com.bbbjam.core.data.assistant.SetlistAssistant
+import com.bbbjam.core.assistant.AssistantConversation
+import com.bbbjam.core.assistant.AssistantDraft
+import com.bbbjam.core.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantStatus
+import com.bbbjam.core.assistant.ProposedSong
+import com.bbbjam.core.assistant.SetlistAssistant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 

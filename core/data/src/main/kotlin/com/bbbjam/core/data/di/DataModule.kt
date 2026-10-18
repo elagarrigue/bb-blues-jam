@@ -7,10 +7,6 @@ import com.bbbjam.core.data.admin.AdminCredentialStore
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.DefaultAdminSession
-import com.bbbjam.core.data.assistant.AssistantHttp
-import com.bbbjam.core.data.assistant.AssistantStatusProbe
-import com.bbbjam.core.data.assistant.DefaultSetlistAssistant
-import com.bbbjam.core.data.assistant.SetlistAssistant
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.DefaultCatalogRepository
@@ -36,8 +32,7 @@ private const val LOG_TAG = "BluesJam"
  * POST transports are the same OkHttp instance; [AdminSession] keeps the verified passphrase in
  * DataStore (`admin-passphrase-login`), and [AdminWriter] sends it with every admin write
  * (`apps-script-write-auth`), the jams refresh's admin read and [SetlistRepository]'s mutations
- * (`admin-add-song-to-setlist`). The setlist assistant (`assistant-agent-core`) also needs an
- * `AssistantCredentials` from `:app`; it reads the catalog and jams repositories only.
+ * (`admin-add-song-to-setlist`).
  */
 val dataModule = module {
     single<Clock> { Clock.systemUTC() }
@@ -59,7 +54,4 @@ val dataModule = module {
     single { get<BluesJamDatabase>().setlistDao() }
     single { SetlistMutationQueue() }
     single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), get(), get()) }
-    single<SetlistAssistant> {
-        DefaultSetlistAssistant(get(), get(), get(), get(), AssistantHttp.executorFactory(), AssistantStatusProbe())
-    }
 }

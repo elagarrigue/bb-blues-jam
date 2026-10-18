@@ -1,8 +1,8 @@
 package com.bbbjam.feature.assistant.chat
 
-import com.bbbjam.core.data.assistant.AssistantFailure
-import com.bbbjam.core.data.assistant.AssistantReply
-import com.bbbjam.core.data.assistant.AssistantStatus
+import com.bbbjam.core.assistant.AssistantFailure
+import com.bbbjam.core.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantStatus
 import com.bbbjam.feature.assistant.ChatScope
 import com.bbbjam.feature.assistant.FakeSetlistAssistant
 import com.bbbjam.feature.assistant.failed

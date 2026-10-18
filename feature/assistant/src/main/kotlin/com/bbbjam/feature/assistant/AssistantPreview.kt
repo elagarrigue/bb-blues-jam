@@ -2,10 +2,10 @@ package com.bbbjam.feature.assistant
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.bbbjam.core.data.assistant.AssistantFailure
-import com.bbbjam.core.data.assistant.AssistantReply
-import com.bbbjam.core.data.assistant.AssistantStatus
-import com.bbbjam.core.data.assistant.ProposedSong
+import com.bbbjam.core.assistant.AssistantFailure
+import com.bbbjam.core.assistant.AssistantReply
+import com.bbbjam.core.assistant.AssistantStatus
+import com.bbbjam.core.assistant.ProposedSong
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.presenter.EventHandler

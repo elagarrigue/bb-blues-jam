@@ -1,0 +1,180 @@
+Calculating task graph as configuration cache cannot be reused because file 'settings.gradle.kts' has changed.
+> Task :build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:convention:pluginDescriptors
+> Task :build-logic:convention:processResources
+> Task :build-logic:convention:compileKotlin
+> Task :build-logic:convention:compileJava NO-SOURCE
+> Task :build-logic:convention:classes
+> Task :build-logic:convention:jar
+> Task :konsist-test:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :konsist-test:processResources NO-SOURCE
+> Task :konsist-test:processTestResources NO-SOURCE
+> Task :konsist-test:compileKotlin NO-SOURCE
+> Task :konsist-test:compileJava NO-SOURCE
+> Task :konsist-test:classes UP-TO-DATE
+> Task :konsist-test:jar
+> Task :konsist-test:compileTestKotlin
+> Task :konsist-test:compileTestJava NO-SOURCE
+> Task :konsist-test:testClasses UP-TO-DATE
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.jetbrains.kotlin.com.intellij.util.containers.Unsafe (file:/C:/Users/Emmanuel/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.21/79346ed53db48b18312a472602eb5c057070c54d/kotlin-compiler-embeddable-2.0.21.jar)
+WARNING: Please consider reporting this to the maintainers of class org.jetbrains.kotlin.com.intellij.util.containers.Unsafe
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+
+> Task :konsist-test:test
+
+ModuleIsolationTest > core modules import only their own root and core model FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'core-import-allowlist' was violated (24 times). Invalid declarations:
+    ??? Import com.bbbjam.core.data.catalog.CatalogRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\CatalogTool.kt:6:1
+    ??? Import com.bbbjam.core.data.catalog.CatalogRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:12:1
+    ??? Import com.bbbjam.core.data.jams.JamCalendar file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:13:1
+    ??? Import com.bbbjam.core.data.jams.JamsRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:14:1
+    ??? Import com.bbbjam.core.data.jams.isValidTime file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamProposalValidator.kt:3:1
+    ??? Import com.bbbjam.core.data.jams.normalizeVenue file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamProposalValidator.kt:4:1
+    ??? Import com.bbbjam.core.data.jams.JamCalendar file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:6:1
+    ??? Import com.bbbjam.core.data.jams.JamsRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:7:1
+    ??? Import com.bbbjam.core.data.jams.JamsSnapshot file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:8:1
+    ??? Import com.bbbjam.core.data.jams.JamsRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\PastJamsTool.kt:6:1
+    ??? Import com.bbbjam.core.data.DataFailure file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:3:1
+    ??? Import com.bbbjam.core.data.Freshness file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:4:1
+    ??? Import com.bbbjam.core.data.catalog.CatalogRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:5:1
+    ??? Import com.bbbjam.core.data.catalog.CatalogSnapshot file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:6:1
+    ??? Import com.bbbjam.core.data.catalog.RefreshOutcome file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:7:1
+    ??? Import com.bbbjam.core.data.jams.JamCalendar file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:8:1
+    ??? Import com.bbbjam.core.data.jams.JamsRefreshOutcome file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:9:1
+    ??? Import com.bbbjam.core.data.jams.JamsRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:10:1
+    ??? Import com.bbbjam.core.data.jams.JamsSnapshot file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantFakes.kt:11:1
+    ??? Import com.bbbjam.core.data.Freshness file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\JamScheduleToolTest.kt:3:1
+    ??? Import com.bbbjam.core.data.jams.JamsSnapshot file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\JamScheduleToolTest.kt:4:1
+    ??? Import com.bbbjam.core.data.catalog.CatalogRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\di\AssistantCoreModuleTest.kt:8:1
+    ??? Import com.bbbjam.core.data.jams.JamCalendar file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\di\AssistantCoreModuleTest.kt:9:1
+    ??? Import com.bbbjam.core.data.jams.JamsRepository file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\di\AssistantCoreModuleTest.kt:10:1
+
+ModuleIsolationTest > only core data imports the data libraries FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'data-libraries-only-in-core-data' was violated (100 times). Invalid declarations:
+    ??? Import ai.koog.agents.core.agent.exception.AIAgentMaxNumberOfIterationsReachedException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantErrors.kt:3:1
+    ??? Import ai.koog.http.client.KoogHttpClientException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantErrors.kt:4:1
+    ??? Import ai.koog.prompt.streaming.IncompleteStreamException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantErrors.kt:5:1
+    ??? Import ai.koog.prompt.structure.LLMStructuredParsingError file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantErrors.kt:6:1
+    ??? Import kotlinx.serialization.SerializationException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantErrors.kt:8:1
+    ??? Import ai.koog.http.client.ktor.KtorKoogHttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:3:1
+    ??? Import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:4:1
+    ??? Import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:5:1
+    ??? Import ai.koog.prompt.executor.clients.openai.OpenAILLMClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:6:1
+    ??? Import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:7:1
+    ??? Import ai.koog.prompt.executor.model.PromptExecutor file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:8:1
+    ??? Import ai.koog.prompt.llm.LLMProvider file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:9:1
+    ??? Import io.ktor.client.HttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:10:1
+    ??? Import io.ktor.client.engine.okhttp.OkHttp file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:11:1
+    ??? Import okhttp3.OkHttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantHttp.kt:13:1
+    ??? Import ai.koog.prompt.llm.LLMCapability file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantModel.kt:3:1
+    ??? Import ai.koog.prompt.llm.LLMProvider file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantModel.kt:4:1
+    ??? Import ai.koog.prompt.llm.LLModel file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantModel.kt:5:1
+    ??? Import ai.koog.prompt.Prompt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantPrompt.kt:3:1
+    ??? Import ai.koog.prompt.dsl.prompt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantPrompt.kt:4:1
+    ??? Import okhttp3.Call file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantStatusProbe.kt:8:1
+    ??? Import okhttp3.Callback file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantStatusProbe.kt:9:1
+    ??? Import okhttp3.OkHttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantStatusProbe.kt:10:1
+    ??? Import okhttp3.Request file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantStatusProbe.kt:11:1
+    ??? Import okhttp3.Response file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\AssistantStatusProbe.kt:12:1
+    ??? Import ai.koog.agents.core.tools.SimpleTool file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\CatalogTool.kt:3:1
+    ??? Import ai.koog.agents.core.tools.annotations.LLMDescription file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\CatalogTool.kt:4:1
+    ??? Import ai.koog.serialization.typeToken file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\CatalogTool.kt:5:1
+    ??? Import kotlinx.serialization.Serializable file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\CatalogTool.kt:11:1
+    ??? Import ai.koog.agents.core.agent.AIAgent file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:3:1
+    ??? Import ai.koog.agents.core.agent.config.AIAgentConfig file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:4:1
+    ??? Import ai.koog.agents.core.agent.exception.AIAgentException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:5:1
+    ??? Import ai.koog.agents.core.tools.ToolRegistry file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:6:1
+    ??? Import ai.koog.http.client.KoogHttpClientException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:7:1
+    ??? Import ai.koog.prompt.executor.clients.LLMClientException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:8:1
+    ??? Import ai.koog.prompt.executor.model.PromptExecutor file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:9:1
+    ??? Import ai.koog.prompt.streaming.IncompleteStreamException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:10:1
+    ??? Import ai.koog.prompt.structure.LLMStructuredParsingError file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:11:1
+    ??? Import kotlinx.serialization.SerializationException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:21:1
+    ??? Import kotlinx.serialization.json.Json file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistant.kt:22:1
+    ??? Import ai.koog.agents.core.tools.SimpleTool file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:3:1
+    ??? Import ai.koog.agents.core.tools.annotations.LLMDescription file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:4:1
+    ??? Import ai.koog.serialization.typeToken file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:5:1
+    ??? Import kotlinx.serialization.Serializable file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\JamScheduleTool.kt:13:1
+    ??? Import ai.koog.agents.core.tools.SimpleTool file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\PastJamsTool.kt:3:1
+    ??? Import ai.koog.agents.core.tools.annotations.LLMDescription file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\PastJamsTool.kt:4:1
+    ??? Import ai.koog.serialization.typeToken file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\PastJamsTool.kt:5:1
+    ??? Import kotlinx.serialization.Serializable file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\PastJamsTool.kt:12:1
+    ??? Import ai.koog.agents.core.tools.annotations.LLMDescription file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\ProposalDto.kt:3:1
+    ??? Import kotlinx.serialization.Serializable file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\ProposalDto.kt:4:1
+    ??? Import ai.koog.agents.core.agent.AIAgentFunctionalStrategy file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:3:1
+    ??? Import ai.koog.agents.core.agent.functionalStrategy file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:4:1
+    ??? Import ai.koog.prompt.message.Message file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:5:1
+    ??? Import ai.koog.prompt.message.MessagePart file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:6:1
+    ??? Import ai.koog.prompt.streaming.IncompleteStreamException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:7:1
+    ??? Import ai.koog.prompt.streaming.StreamFrame file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:8:1
+    ??? Import ai.koog.prompt.streaming.toMessageResponse file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:9:1
+    ??? Import ai.koog.prompt.structure.StructuredRequest file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:10:1
+    ??? Import ai.koog.prompt.structure.StructuredRequestConfig file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:11:1
+    ??? Import ai.koog.prompt.structure.json.JsonStructure file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:12:1
+    ??? Import kotlinx.serialization.SerializationException file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:16:1
+    ??? Import kotlinx.serialization.json.Json file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\StreamingProposalStrategy.kt:17:1
+    ??? Import kotlinx.serialization.json.Json file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:9:1
+    ??? Import kotlinx.serialization.json.JsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:10:1
+    ??? Import kotlinx.serialization.json.JsonPrimitive file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:11:1
+    ??? Import kotlinx.serialization.json.contentOrNull file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:12:1
+    ??? Import kotlinx.serialization.json.jsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:13:1
+    ??? Import kotlinx.serialization.json.jsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:14:1
+    ??? Import kotlinx.serialization.json.jsonPrimitive file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:15:1
+    ??? Import okhttp3.Interceptor file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:16:1
+    ??? Import okhttp3.Response file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantLiveCallTest.kt:17:1
+    ??? Import okhttp3.OkHttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\AssistantStatusTest.kt:10:1
+    ??? Import kotlinx.serialization.json.Json file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:14:1
+    ??? Import kotlinx.serialization.json.JsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:15:1
+    ??? Import kotlinx.serialization.json.JsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:16:1
+    ??? Import kotlinx.serialization.json.JsonPrimitive file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:17:1
+    ??? Import kotlinx.serialization.json.buildJsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:18:1
+    ??? Import kotlinx.serialization.json.buildJsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:19:1
+    ??? Import kotlinx.serialization.json.jsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:20:1
+    ??? Import kotlinx.serialization.json.jsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:21:1
+    ??? Import kotlinx.serialization.json.jsonPrimitive file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:22:1
+    ??? Import kotlinx.serialization.json.put file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:23:1
+    ??? Import kotlinx.serialization.json.putJsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:24:1
+    ??? Import kotlinx.serialization.json.putJsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:25:1
+    ??? Import okhttp3.OkHttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt:30:1
+    ??? Import kotlinx.serialization.json.JsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:3:1
+    ??? Import kotlinx.serialization.json.JsonPrimitive file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:4:1
+    ??? Import kotlinx.serialization.json.buildJsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:5:1
+    ??? Import kotlinx.serialization.json.buildJsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:6:1
+    ??? Import kotlinx.serialization.json.put file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:7:1
+    ??? Import kotlinx.serialization.json.putJsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:8:1
+    ??? Import kotlinx.serialization.json.putJsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\SseFixtures.kt:9:1
+    ??? Import kotlinx.serialization.json.Json file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:18:1
+    ??? Import kotlinx.serialization.json.JsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:19:1
+    ??? Import kotlinx.serialization.json.JsonElement file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:20:1
+    ??? Import kotlinx.serialization.json.JsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:21:1
+    ??? Import kotlinx.serialization.json.jsonArray file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:22:1
+    ??? Import kotlinx.serialization.json.jsonObject file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:23:1
+    ??? Import kotlinx.serialization.json.jsonPrimitive file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:24:1
+    ??? Import okhttp3.OkHttpClient file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\StreamingAssistantTest.kt:29:1
+
+ModuleIsolationTest > only core data references the data libraries, even fully qualified FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'data-libraries-only-in-core-data-qualified' was violated (2 times). Invalid files:
+    ??? File DefaultSetlistAssistantTest.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DefaultSetlistAssistantTest.kt
+    ??? File DraftTrackerTest.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\test\kotlin\com\bbbjam\core\assistant\DraftTrackerTest.kt
+
+ModuleIsolationTest > module build files declare only allowed project dependencies FAILED
+    java.lang.AssertionError: Assert 'build-file-project-deps' was violated (1 times). Invalid build files:
+    core/assistant/build.gradle.kts:19 core/assistant may not depend on :core:data: implementation(project(":core:data"))
+
+22 tests completed, 4 failed
+
+> Task :konsist-test:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':konsist-test:test'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/konsist-test/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 8s
+7 actionable tasks: 7 executed
+Configuration cache entry stored.
