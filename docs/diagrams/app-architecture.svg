@@ -39,7 +39,7 @@
   <text x="85" y="566" class="module">:core:ui</text>
   <text x="85" y="601" class="body">Presentación compartida</text>
   <text x="85" y="629" class="small">Presenters · modelos de pantalla</text>
-  <text x="85" y="654" class="small">Tema · tokens · componentes</text>
+  <text x="85" y="654" class="small">Tema · constantes · componentes</text>
   <text x="85" y="687" class="small">Estado en Compose, sin ViewModels</text>
   <rect x="380" y="530" width="320" height="180" rx="8" class="box"/>
   <text x="402" y="566" class="module">:core:data</text>
