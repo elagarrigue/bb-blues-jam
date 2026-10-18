@@ -225,7 +225,7 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
   the pending status chip's outline (`jam-status-chip-loading`, a second exception requested by the user: it
   replaces a text line, is bounded to one chip while one write runs, stops on the server's answer, uses
   `textMuted`). Both are drawn static when the system animator scale is 0 (WCAG 2.2.2).
-- **Deeplinks (D1):** none yet; deferred to `action-contract-registry`.
+- **Deeplinks (D1):** none; still deferred. D-13 is met by `SetlistRepository` functions (`action-contract-registry`, whose registry was later removed by `remove-action-registry`).
 
 The component is `TabBar` in `:core:ui` (`com.bbbjam.core.ui.nav`); its colors come only from
 `TabBarDefaults`.

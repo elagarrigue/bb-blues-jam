@@ -8,7 +8,7 @@ copy is in Rioplatense Spanish and is not governed by this file.
 
 ### Jam
 A single monthly blues session at a venue, on a specific date. The unit everything else hangs off.
-A Jam is either upcoming (at most one at a time) or past. Not to be confused with the event series
+A Jam is upcoming (at most one at a time), held back ("en espera", a later future jam) or past. Not to be confused with the event series
 as a whole, which is called the BB Blues Jam.
 
 ### Setlist
@@ -99,8 +99,8 @@ locally. Never required for a Song to be usable; the MVP works with the Sheet al
 
 ### Assistant
 The phase 2 admin-only chat that composes Setlists from the Catalog under thematic constraints. Out
-of scope for the MVP, but its action contract is honored from phase 1. Since `assistant-agent-core`
-(13 October 2026) its agent core exists without a screen: it answers a request with a **Proposal**, a
+of scope for the MVP, but its action contract is honored from phase 1. It is an admin-only tab
+(`assistant-admin-tab`, 13 October 2026) whose agent answers a request with a **Proposal**, a
 validated, catalog-only ordered list of songs (each with the catalog's title, artist and key plus a
 short reason), a closing message, follow-up questions and the ids it had to reject. A Proposal changes
 nothing; loading it into the setlist is a separate, confirmed step through the action contract.

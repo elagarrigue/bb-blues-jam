@@ -7,8 +7,9 @@ Empezá cada sesión con: "Leé START-HERE.md".
 flujo `planner` → `implementer` → `validator`. El estado verificado al día vive en `PROGRESS.md`,
 no acá; este documento solo orienta.
 
-Generado el 19 de septiembre de 2026. Actualizado el 10 de octubre de 2026.
-Estado: 40 rebanadas `accepted`; el estado al día vive en `PROGRESS.md`.
+Generado el 19 de septiembre de 2026. Actualizado el 17 de octubre de 2026.
+Estado: 67 rebanadas, 66 `accepted` y 1 `blocked` (D-20); el estado al día vive en `PROGRESS.md`.
+La arquitectura actual está resumida en `docs/architecture.md`.
 
 ---
 
@@ -31,13 +32,14 @@ Hoy la lista de temas se arma a mano y se comparte por WhatsApp o en papel:
 
 ### Las dos fases
 
-**Fase 1 — app base.** Tres pestañas: próxima jam, jams anteriores, info. El admin arma la
-lista; el músico la consulta.
+**Fase 1 — app base.** Tres pestañas: Próxima jam, Jams (antes Anteriores, D-27) e Info. El admin
+arma la lista; el músico la consulta.
 
 **Fase 2 — el asistente.** Chat solo para el admin que arma listas de temas teniendo en cuenta
 el historial y restricciones temáticas ("solo blues nacional argentino", "solo blues de 12
 compases", "arrancar lento y subir"). El admin propone algunos temas base y el asistente
-completa el resto, luego ejecuta las acciones para crear la lista.
+completa el resto. El asistente solo propone; el admin confirma y la app aplica la propuesta (D-24).
+Es una cuarta pestaña, visible solo en modo admin (D-23).
 
 ---
 
@@ -47,7 +49,7 @@ Ya están en el repo. Son el insumo del descubrimiento:
 
 | Archivo | Para qué |
 |---|---|
-| `bb-blues-jam-bitacora.md` | Proceso, 20 decisiones con su fundamento, mapa a los módulos del curso |
+| `bb-blues-jam-bitacora.md` | Proceso, 29 decisiones con su fundamento, mapa a los módulos del curso |
 | `bb-blues-jam-design-prompt.md` | Brief de diseño completo + prompts por pantalla para Stitch |
 
 **Importante:** la bitácora es también el material de la presentación final. Mantenela
@@ -103,14 +105,23 @@ bitácora.
 | D-10 | Songsterr fuera del MVP; se guarda `songsterrId` y se abre en el navegador |
 | D-11 | Autenticación por frase de acceso, sin Firebase Auth ni OAuth |
 | D-12 | UI en español rioplatense, código y docs técnicos en inglés |
-| D-13 | Contrato de acciones definido antes del asistente |
+| D-13 | Contrato de acciones definido antes del asistente (enmendada el 17 de octubre: sin registry, todo es función de `SetlistRepository`) |
 | D-14 | El catálogo del Sheet es el pool de candidatos del LLM |
-| D-15 | El admin es un estado dentro de cada feature, no un módulo |
+| D-15 | El admin es un estado dentro de cada feature, no un módulo (se entra con 5 toques en el logo de Info) |
 | D-16 | Koin para inyección de dependencias, solo por constructor |
 | D-17 | Material 3 por debajo, tokens `BluesJamTheme.*` por encima; las pantallas no leen `MaterialTheme.colorScheme` |
-| D-18 | La formación solo se achica; quien toca fuera de ella va en "Otros" (nombre e instrumento) |
+| D-18 | Quien toca fuera de la formación va en "Otros". Enmendada el 12 de octubre: los cupos también crecen, hasta 3 por instrumento (1 en batería y teclados) |
 | D-19 | Info presenta a Bahía Blanca Blues y su radio; el lugar va en cada jam, no en Info |
 | D-20 | Tempo, etiquetas, dificultad y Songsterr no se usan por ahora (quedan opcionales en el esquema) |
+| D-21 | El agente corre en el teléfono con Koog, sobre Kotlin 2.3 |
+| D-22 | La key de inferencia va en `BuildConfig`, en todos los builds |
+| D-23 | El asistente es `:feature:assistant`, con una pestaña solo para el admin |
+| D-24 | El asistente propone; el admin aplica |
+| D-25 | La app crea la fila de la próxima jam (enmienda a D-04) |
+| D-26 | Tres estados de jam: BORRADOR, CREADA y PUBLICADA |
+| D-27 | La pestaña Anteriores pasa a ser Jams |
+| D-28 | El admin edita y borra las jams que vienen desde la app (enmienda a D-25 y D-04) |
+| D-29 | La app carga listas en una jam en espera |
 
 ### Las dos que más condicionan el trabajo
 
@@ -121,12 +132,14 @@ bitácora.
 | Catálogo de temas | Sheet | Sheet → app, solo lectura |
 | Jams pasadas | Sheet | Sheet → app, solo lectura |
 | Lista de la próxima jam | App | app → Sheet vía Apps Script |
-| Estado publicado | App | app → Sheet |
+| Estado de la jam | App | app → Sheet |
+| Jams futuras (crear, editar, borrar) | App | app → Sheet (D-25, D-28) |
 
 **D-13 — contrato de acciones.** Regla: *si el admin puede hacerlo a mano, el asistente tiene que
-poder hacerlo también.* Toda mutación existe desde la fase 1 como deeplink o como función del
-repositorio. Cuando llegue el asistente, se registran esas mismas funciones desde `:app` sin tocar
-los módulos de feature.
+poder hacerlo también.* Toda mutación es una función de `SetlistRepository`. El asistente llega a
+las que necesita (agregar, quitar y mover temas, crear la jam) por contratos angostos de
+`:core:data` que `:app` conecta al repositorio. El registry intermedio que hubo en `:app` se quitó
+el 17 de octubre (`remove-action-registry`).
 
 ---
 

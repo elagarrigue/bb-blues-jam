@@ -173,8 +173,8 @@ Es un chat. El admin pide la lista en una frase, por ejemplo:
   sigue mostrando la última versión.
 - **Asistente:** el agente corre en el teléfono con [Koog](https://github.com/JetBrains/koog), el
   framework de agentes de JetBrains para Kotlin. Llama a DevExpert Inference, un gateway compatible
-  con OpenAI. Toda acción que aplica una propuesta pasa por el mismo contrato de acciones que usa
-  el admin a mano.
+  con OpenAI. El agente solo lee: aplicar una propuesta es un paso aparte que el admin confirma, y
+  usa las mismas funciones del repositorio que los controles manuales (contrato de acciones, D-13).
 
 ### Stack
 
@@ -183,7 +183,7 @@ presenters composables sin ViewModels, testeados con Molecule · Room · DataSto
 Compose · OkHttp · Koog 1.3 · Konsist, detekt y ktlint en el gate.
 
 ```
-:app                     wiring, navegación, contrato de acciones
+:app                     wiring (Koin) y navegación
 :core:model              tipos de dominio (Kotlin puro)
 :core:data               repositorios, caché, cliente de Apps Script, agente
 :core:ui                 tema, tokens y componentes compartidos
@@ -222,6 +222,7 @@ superior.
 |---|---|
 | [`docs/entregable-harness-ia.md`](docs/entregable-harness-ia.md) | Entregable del curso: el harness y el proceso con IA |
 | [`bb-blues-jam-bitacora.md`](bb-blues-jam-bitacora.md) | Bitácora: el proceso y las 29 decisiones con su fundamento |
+| [`docs/architecture.md`](docs/architecture.md) | Módulos, dependencias y flujo en ejecución, con diagrama |
 | [`docs/build-brief.md`](docs/build-brief.md) | Objetivos, MVP y no-objetivos |
 | [`docs/phase-2-brief.md`](docs/phase-2-brief.md) | El asistente |
 | [`docs/domain-model.md`](docs/domain-model.md) | Entidades, estados y autoridad de cada dato |

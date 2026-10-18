@@ -22,9 +22,10 @@ optional slice. The phase 2 assistant remains a later product phase, outside the
 ## Phase 2 admin assistant
 
 - **Status:** phase 2 started 13 October 2026; excluded from the MVP. It composes upcoming setlists from the
-  Sheet catalog under thematic constraints and uses the app-owned action contract without changing
-  feature modules. See [build brief](build-brief.md), [domain model](domain-model.md), and
-  [action contract registry spec](specs/action-contract-registry.md).
+  Sheet catalog under thematic constraints. The agent only reads; applying a proposal goes through
+  narrow `:core:data` write contracts that `:app` binds to `SetlistRepository` (D-13, amended by
+  `remove-action-registry`). See [phase 2 brief](phase-2-brief.md), [domain model](domain-model.md)
+  and [architecture](architecture.md).
 - **Prerequisite:** met on 13 October 2026 — see [phase 2 brief](phase-2-brief.md); slices are in
   `feature_list.json`.
 
