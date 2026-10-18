@@ -8,8 +8,8 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistRemove
+import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus

@@ -7,7 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
 import com.bbbjam.core.model.JamStatus
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart

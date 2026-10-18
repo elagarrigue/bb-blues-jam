@@ -1,6 +1,6 @@
 package com.bbbjam.feature.nextjam.overlay
 
-import com.bbbjam.core.data.setlist.Assignment
+import com.bbbjam.core.data.setlist.assign.Assignment
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Slot

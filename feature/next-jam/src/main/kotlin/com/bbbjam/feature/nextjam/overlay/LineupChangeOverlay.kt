@@ -1,6 +1,6 @@
 package com.bbbjam.feature.nextjam.overlay
 
-import com.bbbjam.core.data.setlist.LineupChange
+import com.bbbjam.core.data.setlist.lineup.LineupChange
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate

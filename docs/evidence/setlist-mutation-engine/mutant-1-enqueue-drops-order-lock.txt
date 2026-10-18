@@ -1,0 +1,14 @@
+mutant 1-enqueue-drops-order-lock
+file SetlistMutationQueue.kt
+replace:
+    order.withLock {
+        when
+with:
+    run {
+        when
+
+exit 1
+> Task :core:data:testDebugUnitTest FAILED
+DefaultSetlistRepositoryTest > adds, removes and key changes share one id counter, one dismiss and one write queue in call order FAILED
+BUILD FAILED in 4s
+77 tests completed, 1 failed

@@ -8,7 +8,7 @@ import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.assistant.AssistantReply
 import com.bbbjam.core.data.assistant.JamRejection
 import com.bbbjam.core.data.assistant.ProposedJam
-import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.feature.assistant.AssistantUiModel
 import com.bbbjam.feature.assistant.ChatScope

@@ -121,7 +121,7 @@ class AssignMusicianPresenterTest {
                 true,
                 snapshot(),
                 listOf(
-                    com.bbbjam.core.data.setlist.Assignment(
+                    com.bbbjam.core.data.setlist.assign.Assignment(
                         1,
                         date,
                         songId,
@@ -129,7 +129,7 @@ class AssignMusicianPresenterTest {
                         Instrument.GUITAR,
                         ordinal,
                         requireNotNull(MusicianName.parseOrNull("Ana")),
-                        com.bbbjam.core.data.setlist.Assignment.State.Sending,
+                        com.bbbjam.core.data.setlist.assign.Assignment.State.Sending,
                     ),
                 ),
                 params,

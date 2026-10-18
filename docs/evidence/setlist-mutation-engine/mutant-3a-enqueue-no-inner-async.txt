@@ -1,0 +1,20 @@
+mutant 3a-enqueue-no-inner-async
+file SetlistMutationQueue.kt
+replace:
+is QueuedWrite.Send -> scope.async(start = CoroutineStart.UNDISPATCHED) {
+                writes.withLock { write.block() }
+            }
+with:
+is QueuedWrite.Send -> CompletableDeferred(writes.withLock { write.block() })
+
+exit 1
+DefaultSetlistRepositoryTest > adds, removes and key changes share one id counter, one dismiss and one write queue in call order FAILED
+DefaultSetlistRepositoryTest > two quick changes are sent in call order, and a later failure leaves the earlier confirmed key FAILED
+DefaultSetlistRepositoryTest > two quick adds are sent one at a time in call order and get consecutive positions FAILED
+DefaultSetlistRepositoryTest > adds and removes share one id counter, one dismiss and one write queue in call order FAILED
+SetlistDismissTest > a dismiss removes a failed entry of its own kind only, never a sending one FAILED
+SetlistLineupChangesTest > lineup calls queue with other mutations and survive caller cancellation FAILED
+SetlistLineupChangesTest > assignment shares write order and survives caller cancellation FAILED
+> Task :core:data:testDebugUnitTest FAILED
+BUILD FAILED in 7m 3s
+77 tests completed, 7 failed

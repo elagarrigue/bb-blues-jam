@@ -10,8 +10,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.jams.JamFormInput
 import com.bbbjam.core.data.jams.JamFormValues
-import com.bbbjam.core.data.setlist.JamEdit
-import com.bbbjam.core.data.setlist.SetlistJamEditRepository
+import com.bbbjam.core.data.setlist.jamedit.JamEdit
+import com.bbbjam.core.data.setlist.jamedit.SetlistJamEditRepository
 import com.bbbjam.core.ui.jamform.JamFormField
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart

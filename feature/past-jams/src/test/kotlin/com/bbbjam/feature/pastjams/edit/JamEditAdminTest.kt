@@ -7,7 +7,7 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.JamEdit
+import com.bbbjam.core.data.setlist.jamedit.JamEdit
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus
@@ -391,11 +391,11 @@ class JamEditAdminTest {
     @Test
     fun `a status change sending disables edit and delete of that card`() = runTest {
         statuses.changes.value = listOf(
-            com.bbbjam.core.data.setlist.JamStatusChange(
+            com.bbbjam.core.data.setlist.jamstatus.JamStatusChange(
                 7,
                 heldDate,
                 JamStatus.CREATED,
-                com.bbbjam.core.data.setlist.JamStatusChange.State.Sending,
+                com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Sending,
             ),
         )
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {

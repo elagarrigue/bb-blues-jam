@@ -12,8 +12,8 @@ import com.bbbjam.core.data.jams.JamFormInput
 import com.bbbjam.core.data.jams.JamFormSeed
 import com.bbbjam.core.data.jams.JamFormValues
 import com.bbbjam.core.data.jams.formatFormTime
-import com.bbbjam.core.data.setlist.CreateJamOutcome
-import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.JamCreator
 import com.bbbjam.core.ui.jamform.JamFormField
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch

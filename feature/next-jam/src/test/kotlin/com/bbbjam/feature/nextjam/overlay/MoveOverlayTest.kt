@@ -1,7 +1,7 @@
 package com.bbbjam.feature.nextjam.overlay
 
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.setlist.SetlistMove
+import com.bbbjam.core.data.setlist.move.SetlistMove
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup

@@ -1,0 +1,1 @@
+testcases 1153 (baseline 1150; +3 EngineTest, none removed); konsist 20 rules

@@ -1,0 +1,5 @@
+# New regex, import removed: green
+
+BUILD SUCCESSFUL in 5s
+3 actionable tasks: 3 executed
+Configuration cache entry reused.

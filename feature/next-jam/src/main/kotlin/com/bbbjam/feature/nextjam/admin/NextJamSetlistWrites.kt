@@ -1,8 +1,8 @@
 package com.bbbjam.feature.nextjam.admin
 
-import com.bbbjam.core.data.setlist.SetlistMoveRepository
-import com.bbbjam.core.data.setlist.SetlistSongAddRepository
-import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
+import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
+import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
 
 /**
  * The narrow contracts of the list's own mutations (add, remove, move), grouped so

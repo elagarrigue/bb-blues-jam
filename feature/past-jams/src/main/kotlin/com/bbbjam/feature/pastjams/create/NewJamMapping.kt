@@ -8,7 +8,7 @@ import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.jams.VenueProblem
 import com.bbbjam.core.data.jams.checkJamForm
 import com.bbbjam.core.data.jams.jamFormSeed
-import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.ui.jamform.JamFormField
 import com.bbbjam.core.ui.jamform.JamFormFieldUiModel
 import com.bbbjam.core.ui.jamform.JamFormText

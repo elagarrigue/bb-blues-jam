@@ -5,9 +5,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import com.bbbjam.core.data.setlist.JamEdit
-import com.bbbjam.core.data.setlist.JamStatusChange
-import com.bbbjam.core.data.setlist.SetlistPublish
+import com.bbbjam.core.data.setlist.jamedit.JamEdit
+import com.bbbjam.core.data.setlist.jamstatus.JamStatusChange
+import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.feature.pastjams.create.NewJamControls
 import com.bbbjam.feature.pastjams.create.rememberNewJamControls
 import com.bbbjam.feature.pastjams.edit.JamEditControls

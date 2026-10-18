@@ -2,7 +2,7 @@ package com.bbbjam.feature.assistant.run
 
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.assistant.ProposedJam
-import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.feature.assistant.CreateCall
 import com.bbbjam.feature.assistant.FakeJamCreator
 import com.bbbjam.feature.assistant.FakeJamsRepository

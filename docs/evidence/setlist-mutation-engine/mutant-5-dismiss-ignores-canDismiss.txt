@@ -1,0 +1,17 @@
+mutant 5-dismiss-ignores-canDismiss
+file PendingEntries.kt
+replace:
+idOf(it) == id && canDismiss(it)
+with:
+idOf(it) == id
+
+exit 1
+DefaultSetlistRepositoryTest > a sending key change is not dismissed, a failed one is FAILED
+DefaultSetlistRepositoryTest > a failed entry stays until dismissed, and dismiss leaves a sending entry and unknown ids alone FAILED
+SetlistDismissTest > a dismiss removes a failed entry of its own kind only, never a sending one FAILED
+SetlistJamEditsTest > a sending entry cannot be dismissed FAILED
+SetlistJamStatusesTest > a sending entry cannot be dismissed FAILED
+SetlistLineupChangesTest > lineup calls queue with other mutations and survive caller cancellation FAILED
+> Task :core:data:testDebugUnitTest FAILED
+BUILD FAILED in 4s
+77 tests completed, 6 failed

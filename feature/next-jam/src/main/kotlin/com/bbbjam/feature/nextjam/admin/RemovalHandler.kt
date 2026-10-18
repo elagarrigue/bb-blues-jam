@@ -1,6 +1,6 @@
 package com.bbbjam.feature.nextjam.admin
 
-import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.RemovalUiModel
 import java.time.LocalDate

@@ -1,6 +1,6 @@
 package com.bbbjam.feature.nextjam.overlay
 
-import com.bbbjam.core.data.setlist.KeyChange
+import com.bbbjam.core.data.setlist.key.KeyChange
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
 import java.time.LocalDate

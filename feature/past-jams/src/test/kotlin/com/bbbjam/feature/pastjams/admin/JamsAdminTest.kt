@@ -98,8 +98,11 @@ class JamsAdminTest {
     /** The chip drawn with the pulsing outline: the status being applied. */
     private fun JamStatusUiModel.pending() = chips.chips.filter { it.pending }.map { it.label }
 
-    private fun entry(id: Long, target: JamStatus, state: com.bbbjam.core.data.setlist.JamStatusChange.State) =
-        com.bbbjam.core.data.setlist.JamStatusChange(id, upcomingDate, target, state)
+    private fun entry(
+        id: Long,
+        target: JamStatus,
+        state: com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State,
+    ) = com.bbbjam.core.data.setlist.jamstatus.JamStatusChange(id, upcomingDate, target, state)
 
     @Test
     fun `a musician gets the past jams exactly as before and no admin section, whatever else the snapshot holds`() =
@@ -280,7 +283,7 @@ class JamsAdminTest {
     fun `a sending change marks the requested chip pending, all chips disabled, no text, selection unchanged`() =
         runTest {
             statuses.changes.value =
-                listOf(entry(7, JamStatus.DRAFT, com.bbbjam.core.data.setlist.JamStatusChange.State.Sending))
+                listOf(entry(7, JamStatus.DRAFT, com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Sending))
             moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
                 repository.snapshots.emit(snapshot(upcoming(JamStatus.PUBLISHED)))
                 val sending = expectMostRecentItem()
@@ -309,10 +312,10 @@ class JamsAdminTest {
     fun `a sending publication marks Publicada pending, disables the chips and draws no text`() = runTest {
         publishes.entries.value =
             listOf(
-                com.bbbjam.core.data.setlist.SetlistPublish(
+                com.bbbjam.core.data.setlist.publish.SetlistPublish(
                     9,
                     upcomingDate,
-                    com.bbbjam.core.data.setlist.SetlistPublish.State.Sending,
+                    com.bbbjam.core.data.setlist.publish.SetlistPublish.State.Sending,
                 ),
             )
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
@@ -330,7 +333,7 @@ class JamsAdminTest {
     @Test
     fun `a status failure is a card with retry and close, an outdated script has the guide message and close only`() =
         runTest {
-            val failed = com.bbbjam.core.data.setlist.JamStatusChange.State.Failed(
+            val failed = com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Failed(
                 com.bbbjam.core.data.admin.WriteOutcome.Offline,
             )
             statuses.changes.value = listOf(entry(3, JamStatus.DRAFT, failed))
@@ -348,7 +351,7 @@ class JamsAdminTest {
                 assertTrue(statuses.dismissed.contains(3L))
 
                 statuses.changes.value = listOf(
-                    entry(4, JamStatus.DRAFT, com.bbbjam.core.data.setlist.JamStatusChange.State.Outdated),
+                    entry(4, JamStatus.DRAFT, com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Outdated),
                 )
                 val outdated = expectMostRecentItem().controls().status
                 val outdatedCard = checkNotNull(outdated.failure)
@@ -427,10 +430,10 @@ class JamsAdminTest {
             assertTrue(awaitItem().controls().publish is PublishUiModel.Confirming)
 
             publishes.entries.value = listOf(
-                com.bbbjam.core.data.setlist.SetlistPublish(
+                com.bbbjam.core.data.setlist.publish.SetlistPublish(
                     55,
                     upcomingDate,
-                    com.bbbjam.core.data.setlist.SetlistPublish.State.Sending,
+                    com.bbbjam.core.data.setlist.publish.SetlistPublish.State.Sending,
                 ),
             )
             val sending = expectMostRecentItem().controls()
@@ -488,10 +491,10 @@ class JamsAdminTest {
     @Test
     fun `a failed publish stays in the card, retry republishes and close dismisses, only before publication`() =
         runTest {
-            val entry = com.bbbjam.core.data.setlist.SetlistPublish(
+            val entry = com.bbbjam.core.data.setlist.publish.SetlistPublish(
                 51,
                 upcomingDate,
-                com.bbbjam.core.data.setlist.SetlistPublish.State.Failed(
+                com.bbbjam.core.data.setlist.publish.SetlistPublish.State.Failed(
                     com.bbbjam.core.data.admin.WriteOutcome.Offline,
                 ),
             )
@@ -566,7 +569,7 @@ class JamsAdminTest {
 
     @Test
     fun `a failed status change keeps the previous chip selected and the failure card`() = runTest {
-        val failed = com.bbbjam.core.data.setlist.JamStatusChange.State.Failed(
+        val failed = com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Failed(
             com.bbbjam.core.data.admin.WriteOutcome.Offline,
         )
         statuses.changes.value = listOf(entry(3, JamStatus.CREATED, failed))
@@ -586,7 +589,7 @@ class JamsAdminTest {
             entry(
                 7,
                 JamStatus.CREATED,
-                com.bbbjam.core.data.setlist.JamStatusChange.State.Failed(
+                com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Failed(
                     com.bbbjam.core.data.admin.WriteOutcome.Offline,
                 ),
             ),
@@ -603,7 +606,7 @@ class JamsAdminTest {
     @Test
     fun `while a change is sending a tap on any chip writes nothing`() = runTest {
         statuses.changes.value =
-            listOf(entry(7, JamStatus.CREATED, com.bbbjam.core.data.setlist.JamStatusChange.State.Sending))
+            listOf(entry(7, JamStatus.CREATED, com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Sending))
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(PastJamsPresenter.Params()) }.test {
             repository.snapshots.emit(snapshot(upcoming(JamStatus.DRAFT, 2)))
             val status = expectMostRecentItem().controls().status

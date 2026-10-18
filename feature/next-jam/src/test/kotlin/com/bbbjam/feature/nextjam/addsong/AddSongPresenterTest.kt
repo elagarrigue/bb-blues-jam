@@ -10,7 +10,7 @@ import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistAdd
+import com.bbbjam.core.data.setlist.add.SetlistAdd
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus

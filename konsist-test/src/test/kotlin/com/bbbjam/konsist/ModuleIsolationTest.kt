@@ -393,11 +393,12 @@ class ModuleIsolationTest {
 
         /**
          * The repositories and the writer the assistant feature must never reach (D-13, D-24): imports
-         * included. Every `core.data.setlist.Setlist...Repository` is banned, not only `SetlistRepository`,
-         * so the feature cannot bypass the registry through `SetlistMoveRepository` and the like.
+         * included. Every `Setlist...Repository` under `core.data.setlist`, at the root or in a per-mutation
+         * subpackage (`setlist.add.SetlistSongAddRepository`), is banned, not only `SetlistRepository`, so the
+         * feature cannot bypass the contracts through `SetlistMoveRepository` and the like.
          */
         val ASSISTANT_FEATURE_FORBIDDEN =
-            Regex("""\bcom\.bbbjam\.core\.data\.(setlist\.(Setlist\w*Repository|\*)|admin\.(AdminWriter|\*))""")
+            Regex("""\bcom\.bbbjam\.core\.data\.(setlist\.(\w+\.)*(Setlist\w*Repository|\*)|admin\.(AdminWriter|\*))""")
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")

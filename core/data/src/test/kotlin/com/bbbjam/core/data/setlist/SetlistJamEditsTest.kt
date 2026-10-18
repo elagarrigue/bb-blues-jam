@@ -12,6 +12,11 @@ import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.jamedit.DeleteJamOutcome
+import com.bbbjam.core.data.setlist.jamedit.JamEdit
+import com.bbbjam.core.data.setlist.jamedit.UpdateJamOutcome
 import com.bbbjam.core.model.JamStatus
 import java.io.File
 import java.time.LocalDate
@@ -298,7 +303,8 @@ class SetlistJamEditsTest {
             database.setlistDao(),
             database.catalogDao(),
             DataScope(backgroundScope),
-            failureLog = WriteFailureLog(log::add),
+            SetlistMutationQueue(),
+            WriteFailureLog(log::add),
         )
     }
 

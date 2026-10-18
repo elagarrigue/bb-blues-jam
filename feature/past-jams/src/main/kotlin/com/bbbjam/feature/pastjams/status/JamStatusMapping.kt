@@ -1,8 +1,8 @@
 package com.bbbjam.feature.pastjams.status
 
-import com.bbbjam.core.data.setlist.JamEdit
-import com.bbbjam.core.data.setlist.JamStatusChange
-import com.bbbjam.core.data.setlist.SetlistPublish
+import com.bbbjam.core.data.setlist.jamedit.JamEdit
+import com.bbbjam.core.data.setlist.jamstatus.JamStatusChange
+import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist

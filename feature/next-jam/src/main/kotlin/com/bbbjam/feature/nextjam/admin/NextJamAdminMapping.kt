@@ -1,13 +1,13 @@
 package com.bbbjam.feature.nextjam.admin
 
-import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.ExtraParticipantChange
-import com.bbbjam.core.data.setlist.KeyChange
-import com.bbbjam.core.data.setlist.LineupChange
-import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistRemove
-import com.bbbjam.core.data.setlist.SlotClear
+import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.clear.SlotClear
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantChange
+import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.setlist.lineup.LineupChange
+import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus

@@ -10,6 +10,10 @@ import com.bbbjam.core.data.cache.JamEntity
 import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.jamstatus.JamStatusChange
+import com.bbbjam.core.data.setlist.jamstatus.SetJamStatusOutcome
 import com.bbbjam.core.model.JamStatus
 import java.io.File
 import java.time.LocalDate
@@ -236,7 +240,8 @@ class SetlistJamStatusesTest {
             database.setlistDao(),
             database.catalogDao(),
             DataScope(backgroundScope),
-            failureLog = WriteFailureLog(log::add),
+            SetlistMutationQueue(),
+            WriteFailureLog(log::add),
         )
     }
 

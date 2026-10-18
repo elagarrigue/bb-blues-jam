@@ -4,11 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.ExtraParticipantChange
-import com.bbbjam.core.data.setlist.KeyChange
-import com.bbbjam.core.data.setlist.LineupChange
-import com.bbbjam.core.data.setlist.SlotClear
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.clear.SlotClear
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantChange
+import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.setlist.lineup.LineupChange
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Key

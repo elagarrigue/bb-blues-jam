@@ -11,8 +11,8 @@ import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.KeyChange
-import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Setlist

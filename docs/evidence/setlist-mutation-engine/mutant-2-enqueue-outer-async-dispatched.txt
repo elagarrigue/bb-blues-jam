@@ -1,0 +1,14 @@
+mutant 2-enqueue-outer-async-dispatched
+file SetlistMutationQueue.kt
+replace:
+: T = scope.async(start = CoroutineStart.UNDISPATCHED) {
+    order
+with:
+: T = scope.async {
+    order
+
+exit 1
+> Task :core:data:testDebugUnitTest FAILED
+EngineTest > enqueue runs start before the caller suspends, with no scheduler turn FAILED
+BUILD FAILED in 3s
+80 tests completed, 1 failed

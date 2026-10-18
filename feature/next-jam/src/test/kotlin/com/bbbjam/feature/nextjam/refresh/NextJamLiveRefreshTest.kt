@@ -9,9 +9,9 @@ import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.KeyChange
-import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistRemove
+import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.JamStatus

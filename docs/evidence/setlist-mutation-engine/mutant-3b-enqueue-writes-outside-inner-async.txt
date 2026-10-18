@@ -1,0 +1,20 @@
+mutant 3b-enqueue-writes-outside-inner-async
+file SetlistMutationQueue.kt
+replace:
+is QueuedWrite.Send -> scope.async(start = CoroutineStart.UNDISPATCHED) {
+                writes.withLock { write.block() }
+            }
+with:
+is QueuedWrite.Send -> writes.withLock { scope.async(start = CoroutineStart.UNDISPATCHED) { write.block() } }
+
+exit 1
+DefaultSetlistRepositoryTest > adds, removes and key changes share one id counter, one dismiss and one write queue in call order FAILED
+DefaultSetlistRepositoryTest > two quick adds are sent one at a time in call order and get consecutive positions FAILED
+DefaultSetlistRepositoryTest > adds and removes share one id counter, one dismiss and one write queue in call order FAILED
+SetlistDismissTest > a dismiss removes a failed entry of its own kind only, never a sending one FAILED
+SetlistJamEditsTest > an edit queues with another mutation in call order FAILED
+SetlistJamStatusesTest > a status change queues with another mutation in call order FAILED
+SetlistPublishRepositoryTest > publish queues behind add and malformed success is never accepted FAILED
+> Task :core:data:testDebugUnitTest FAILED
+BUILD FAILED in 3m 3s
+77 tests completed, 7 failed

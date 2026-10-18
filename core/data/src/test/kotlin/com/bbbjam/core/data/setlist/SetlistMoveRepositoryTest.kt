@@ -15,6 +15,10 @@ import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.cache.toDomain
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.move.MoveSongOutcome
+import com.bbbjam.core.data.setlist.move.SetlistMove
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
@@ -134,6 +138,8 @@ class SetlistMoveRepositoryTest {
             database.setlistDao(),
             catalogDao,
             DataScope(backgroundScope),
+            SetlistMutationQueue(),
+            WriteFailureLog { },
         )
     }
 

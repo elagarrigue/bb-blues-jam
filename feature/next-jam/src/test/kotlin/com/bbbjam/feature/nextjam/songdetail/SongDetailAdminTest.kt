@@ -13,8 +13,8 @@ import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.KeyChange
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.key.KeyChange
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam

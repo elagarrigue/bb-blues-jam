@@ -1,0 +1,37 @@
+mutant 6b-remove-and-fail-swapped
+file PendingEntries.kt
+replace:
+list.filterNot { idOf(it) == id }
+with:
+list.map { if (idOf(it) == id) it else it }
+
+exit 1
+DefaultSetlistRepositoryTest > a sending key change is not dismissed, a failed one is FAILED
+DefaultSetlistRepositoryTest > the cache holds the new key before the entry is removed FAILED
+DefaultSetlistRepositoryTest > addSong, called with no UI, caches the confirmed song with seven open slots and clears its entry FAILED
+DefaultSetlistRepositoryTest > adds, removes and key changes share one id counter, one dismiss and one write queue in call order FAILED
+DefaultSetlistRepositoryTest > a cache that refuses the key still answers KeySet and clears the entry FAILED
+DefaultSetlistRepositoryTest > a failed entry stays until dismissed, and dismiss leaves a sending entry and unknown ids alone FAILED
+DefaultSetlistRepositoryTest > removeSong, called with no UI, mirrors the removal and renumbering and clears its entry FAILED
+DefaultSetlistRepositoryTest > cancelling the caller of a key change does not cancel it FAILED
+DefaultSetlistRepositoryTest > two quick changes are sent in call order, and a later failure leaves the earlier confirmed key FAILED
+DefaultSetlistRepositoryTest > clearSlot writes expected identity and updates Room only after confirmed slot payload FAILED
+DefaultSetlistRepositoryTest > cancelling the caller does not cancel a write in flight FAILED
+DefaultSetlistRepositoryTest > setKey, called with no UI, sends the key, updates only that cached song and clears its entry FAILED
+DefaultSetlistRepositoryTest > adds and removes share one id counter, one dismiss and one write queue in call order FAILED
+SetlistJamEditsTest > a confirmed delete sends the expected songs and drops the jam with its children FAILED
+SetlistJamEditsTest > caller cancellation does not cancel the server write FAILED
+SetlistJamEditsTest > a confirmed move sends all fields, moves the jam with its children and removes the entry FAILED
+SetlistJamStatusesTest > caller cancellation does not cancel the server write FAILED
+SetlistJamStatusesTest > a confirmed status is sent as sheet text, mirrored after the echo and the entry removed FAILED
+SetlistLineupChangesTest > assignment sends typed ordinal and mirrors only the server-confirmed cell before clearing entry FAILED
+SetlistLineupChangesTest > lineup cache refusal and SQL failure do not change the confirmed server outcome FAILED
+SetlistLineupChangesTest > setSlotCount mirrors all seven confirmed columns before clearing the sending entry FAILED
+SetlistLineupChangesTest > lineup calls queue with other mutations and survive caller cancellation FAILED
+SetlistLineupChangesTest > assignment shares write order and survives caller cancellation FAILED
+SetlistMoveRepositoryTest > moveSong publishes Sending then mirrors song slot and extra positions after confirmation FAILED
+SetlistPublishRepositoryTest > caller cancellation does not cancel the server write FAILED
+SetlistPublishRepositoryTest > publish stays draft while sending then mirrors only confirmed status FAILED
+> Task :core:data:testDebugUnitTest FAILED
+BUILD FAILED in 1m 3s
+77 tests completed, 26 failed

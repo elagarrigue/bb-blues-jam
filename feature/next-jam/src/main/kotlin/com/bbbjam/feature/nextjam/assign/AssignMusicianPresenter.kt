@@ -11,8 +11,8 @@ import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.assign.SetlistAssignmentRepository
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamSong

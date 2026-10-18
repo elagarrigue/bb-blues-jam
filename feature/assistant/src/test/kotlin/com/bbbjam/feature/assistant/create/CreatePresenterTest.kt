@@ -231,7 +231,8 @@ class CreatePresenterTest {
     fun `a server that echoes another date receives the songs there`() = runTest {
         jams.snapshot = JamsSnapshot(upcomingJam(), emptyList(), Freshness(Instant.EPOCH, null, false))
         val echoed = LocalDate.of(2026, 11, 29)
-        creator.outcome = com.bbbjam.core.data.setlist.CreateJamOutcome.Created(echoed, LocalTime.of(21, 0), "Sala")
+        creator.outcome =
+            com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome.Created(echoed, LocalTime.of(21, 0), "Sala")
         val chat = chat()
         chat.ask(proposal(songs = 1).copy(jam = ProposedJam(heldBack, LocalTime.of(21, 0), "Sala")))
         flow(chat).test {
@@ -258,7 +259,8 @@ class CreatePresenterTest {
 
     @Test
     fun `a failed create loads nothing, says so, and offers Crear again`() = runTest {
-        creator.outcome = com.bbbjam.core.data.setlist.CreateJamOutcome.NotCreated(WriteOutcome.Rejected("jam_exists"))
+        creator.outcome =
+            com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome.NotCreated(WriteOutcome.Rejected("jam_exists"))
         val chat = chat()
         chat.ask(proposal(songs = 2).copy(jam = ProposedJam(heldBack, LocalTime.of(21, 0), "Sala")))
         flow(chat).test {

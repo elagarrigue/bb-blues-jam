@@ -1,7 +1,7 @@
 package com.bbbjam.feature.pastjams.admin
 
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.feature.pastjams.create.createFailureMessage
 import org.junit.Assert.assertEquals
 import org.junit.Test

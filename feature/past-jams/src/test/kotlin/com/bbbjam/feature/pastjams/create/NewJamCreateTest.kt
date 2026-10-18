@@ -7,7 +7,7 @@ import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist

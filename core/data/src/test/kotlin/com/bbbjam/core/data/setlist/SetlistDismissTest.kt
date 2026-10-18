@@ -11,6 +11,8 @@ import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
@@ -221,6 +223,8 @@ class SetlistDismissTest {
             database.setlistDao(),
             database.catalogDao(),
             DataScope(backgroundScope),
+            SetlistMutationQueue(),
+            WriteFailureLog { },
         )
     }
 

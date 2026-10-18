@@ -1,10 +1,10 @@
 package com.bbbjam.feature.assistant.run
 
 import com.bbbjam.core.data.assistant.ProposedSong
-import com.bbbjam.core.data.setlist.JamCreator
-import com.bbbjam.core.data.setlist.SetlistSongAdder
-import com.bbbjam.core.data.setlist.SetlistSongMover
-import com.bbbjam.core.data.setlist.SetlistSongRemover
+import com.bbbjam.core.data.setlist.add.SetlistSongAdder
+import com.bbbjam.core.data.setlist.jamcreate.JamCreator
+import com.bbbjam.core.data.setlist.move.SetlistSongMover
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemover
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.CoroutineScope

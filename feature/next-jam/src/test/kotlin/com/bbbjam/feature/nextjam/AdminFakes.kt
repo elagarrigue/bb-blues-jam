@@ -2,25 +2,25 @@ package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.admin.LoginOutcome
-import com.bbbjam.core.data.setlist.AddSongOutcome
-import com.bbbjam.core.data.setlist.AssignSlotOutcome
-import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.ClearSlotOutcome
-import com.bbbjam.core.data.setlist.ExtraParticipantChange
-import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
-import com.bbbjam.core.data.setlist.KeyChange
-import com.bbbjam.core.data.setlist.LineupChange
-import com.bbbjam.core.data.setlist.MoveSongOutcome
-import com.bbbjam.core.data.setlist.PublishOutcome
-import com.bbbjam.core.data.setlist.RemoveSongOutcome
-import com.bbbjam.core.data.setlist.SetKeyOutcome
-import com.bbbjam.core.data.setlist.SetSlotCountOutcome
-import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistPublish
-import com.bbbjam.core.data.setlist.SetlistRemove
 import com.bbbjam.core.data.setlist.SetlistRepository
-import com.bbbjam.core.data.setlist.SlotClear
+import com.bbbjam.core.data.setlist.add.AddSongOutcome
+import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.setlist.assign.AssignSlotOutcome
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.clear.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.clear.SlotClear
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantChange
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantOutcome
+import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.setlist.key.SetKeyOutcome
+import com.bbbjam.core.data.setlist.lineup.LineupChange
+import com.bbbjam.core.data.setlist.lineup.SetSlotCountOutcome
+import com.bbbjam.core.data.setlist.move.MoveSongOutcome
+import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.publish.PublishOutcome
+import com.bbbjam.core.data.setlist.publish.SetlistPublish
+import com.bbbjam.core.data.setlist.remove.RemoveSongOutcome
+import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.MusicianName
@@ -76,7 +76,7 @@ class FakeSetlistRepository : SetlistRepository {
     val moves = MutableStateFlow<List<SetlistMove>>(emptyList())
     val publishes = MutableStateFlow<List<SetlistPublish>>(emptyList())
     val publishCalls = mutableListOf<LocalDate>()
-    val statusChanges = MutableStateFlow<List<com.bbbjam.core.data.setlist.JamStatusChange>>(emptyList())
+    val statusChanges = MutableStateFlow<List<com.bbbjam.core.data.setlist.jamstatus.JamStatusChange>>(emptyList())
     val statusCalls = mutableListOf<Pair<LocalDate, com.bbbjam.core.model.JamStatus>>()
     var statusHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     val publishResults = ArrayDeque<PublishOutcome>()
@@ -198,7 +198,9 @@ class FakeSetlistRepository : SetlistRepository {
 
     // Creating a jam belongs to the assistant (assistant-create-jam); this screen never calls it.
     override suspend fun createJam(date: LocalDate, startTime: java.time.LocalTime, venue: String) =
-        com.bbbjam.core.data.setlist.CreateJamOutcome.NotCreated(com.bbbjam.core.data.admin.WriteOutcome.Unavailable)
+        com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome.NotCreated(
+            com.bbbjam.core.data.admin.WriteOutcome.Unavailable,
+        )
 
     override suspend fun publishSetlist(jamDate: LocalDate): PublishOutcome {
         publishCalls += jamDate
@@ -218,18 +220,19 @@ class FakeSetlistRepository : SetlistRepository {
     override suspend fun setJamStatus(
         jamDate: LocalDate,
         status: com.bbbjam.core.model.JamStatus,
-    ): com.bbbjam.core.data.setlist.SetJamStatusOutcome {
+    ): com.bbbjam.core.data.setlist.jamstatus.SetJamStatusOutcome {
         statusCalls += jamDate to status
         statusHold?.await()
-        return com.bbbjam.core.data.setlist.SetJamStatusOutcome.StatusSet(status, changed = true)
+        return com.bbbjam.core.data.setlist.jamstatus.SetJamStatusOutcome.StatusSet(status, changed = true)
     }
 
-    override fun observeJamStatusChanges(): Flow<List<com.bbbjam.core.data.setlist.JamStatusChange>> = statusChanges
+    override fun observeJamStatusChanges(): Flow<List<com.bbbjam.core.data.setlist.jamstatus.JamStatusChange>> =
+        statusChanges
 
     override fun dismissJamStatusChange(id: Long) {
         dismissed += id
         statusChanges.value = statusChanges.value.filterNot {
-            it.id == id && it.state !is com.bbbjam.core.data.setlist.JamStatusChange.State.Sending
+            it.id == id && it.state !is com.bbbjam.core.data.setlist.jamstatus.JamStatusChange.State.Sending
         }
     }
 
@@ -239,12 +242,16 @@ class FakeSetlistRepository : SetlistRepository {
         newDate: LocalDate,
         startTime: java.time.LocalTime,
         venue: String,
-    ) = com.bbbjam.core.data.setlist.UpdateJamOutcome.NotUpdated(com.bbbjam.core.data.admin.WriteOutcome.Unavailable)
+    ) = com.bbbjam.core.data.setlist.jamedit.UpdateJamOutcome.NotUpdated(
+        com.bbbjam.core.data.admin.WriteOutcome.Unavailable,
+    )
 
     override suspend fun deleteJam(jamDate: LocalDate, expectedSongs: Int) =
-        com.bbbjam.core.data.setlist.DeleteJamOutcome.NotDeleted(com.bbbjam.core.data.admin.WriteOutcome.Unavailable)
+        com.bbbjam.core.data.setlist.jamedit.DeleteJamOutcome.NotDeleted(
+            com.bbbjam.core.data.admin.WriteOutcome.Unavailable,
+        )
 
-    override fun observeJamEdits(): Flow<List<com.bbbjam.core.data.setlist.JamEdit>> =
+    override fun observeJamEdits(): Flow<List<com.bbbjam.core.data.setlist.jamedit.JamEdit>> =
         kotlinx.coroutines.flow.emptyFlow()
 
     override fun dismissJamEdit(id: Long) = Unit

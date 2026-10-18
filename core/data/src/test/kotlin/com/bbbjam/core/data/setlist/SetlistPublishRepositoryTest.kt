@@ -12,6 +12,11 @@ import com.bbbjam.core.data.cache.JamSlotEntity
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.add.AddSongOutcome
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.publish.PublishOutcome
+import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.SongId
 import java.io.File
@@ -156,7 +161,8 @@ class SetlistPublishRepositoryTest {
             database.setlistDao(),
             catalogDao,
             DataScope(backgroundScope),
-            failureLog = failureLog,
+            SetlistMutationQueue(),
+            failureLog,
         )
     }
 

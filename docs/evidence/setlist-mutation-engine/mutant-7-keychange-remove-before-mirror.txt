@@ -1,0 +1,16 @@
+mutant 7-keychange-remove-before-mirror
+file SetlistKeyChanges.kt
+replace:
+            mirror(entry)
+            entries.remove(entry.id)
+
+with:
+            entries.remove(entry.id)
+            mirror(entry)
+
+
+exit 1
+> Task :core:data:testDebugUnitTest FAILED
+DefaultSetlistRepositoryTest > the cache holds the new key before the entry is removed FAILED
+BUILD FAILED in 3s
+77 tests completed, 1 failed

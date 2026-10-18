@@ -1,6 +1,6 @@
 package com.bbbjam.feature.nextjam.overlay
 
-import com.bbbjam.core.data.setlist.SetlistMove
+import com.bbbjam.core.data.setlist.move.SetlistMove
 import com.bbbjam.core.model.JamSong
 import java.time.LocalDate
 

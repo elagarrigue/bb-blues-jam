@@ -15,8 +15,8 @@ import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistSongAddRepository
+import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.Song
 import com.bbbjam.core.model.SongId

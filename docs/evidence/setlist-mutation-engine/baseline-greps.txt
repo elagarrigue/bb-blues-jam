@@ -1,0 +1,14 @@
+UNDISPATCHED per file:
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/DefaultSetlistRepository.kt:6
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistExtraParticipants.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistJamCreations.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistJamEdits.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistJamStatuses.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistLineupChanges.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistMoves.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistPublishes.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistSlotClears.kt:2
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/SetlistSongAdds.kt:2
+
+files in setlist:
+57

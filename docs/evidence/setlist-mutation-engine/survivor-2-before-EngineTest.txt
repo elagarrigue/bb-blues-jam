@@ -1,0 +1,12 @@
+mutant 2-enqueue-outer-async-dispatched
+file SetlistMutationQueue.kt
+replace:
+: T = scope.async(start = CoroutineStart.UNDISPATCHED) {
+    order
+with:
+: T = scope.async {
+    order
+
+exit 0
+
+SURVIVED: all tests passed

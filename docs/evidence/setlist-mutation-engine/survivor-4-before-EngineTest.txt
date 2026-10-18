@@ -1,0 +1,10 @@
+mutant 4-immediate-takes-writes
+file SetlistMutationQueue.kt
+replace:
+is QueuedWrite.Immediate -> CompletableDeferred(write.value)
+with:
+is QueuedWrite.Immediate -> scope.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { write.value } }
+
+exit 0
+
+SURVIVED: all tests passed

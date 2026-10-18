@@ -1,9 +1,9 @@
 package com.bbbjam.feature.pastjams.admin
 
-import com.bbbjam.core.data.setlist.JamCreator
-import com.bbbjam.core.data.setlist.SetlistJamEditRepository
-import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
-import com.bbbjam.core.data.setlist.SetlistPublishRepository
+import com.bbbjam.core.data.setlist.jamcreate.JamCreator
+import com.bbbjam.core.data.setlist.jamedit.SetlistJamEditRepository
+import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
 import com.bbbjam.feature.pastjams.PastJamsPresenter
 
 /**

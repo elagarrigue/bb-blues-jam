@@ -1,0 +1,150 @@
+package com.bbbjam.core.data.setlist.clear
+
+import android.database.SQLException
+import com.bbbjam.core.data.DataScope
+import com.bbbjam.core.data.admin.AdminAnswer
+import com.bbbjam.core.data.admin.AdminWriter
+import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.cache.CatalogDao
+import com.bbbjam.core.data.cache.JamSlotEntity
+import com.bbbjam.core.data.cache.SetlistDao
+import com.bbbjam.core.data.remote.ServiceCodes
+import com.bbbjam.core.data.remote.SlotKeys
+import com.bbbjam.core.data.setlist.engine.PendingEntries
+import com.bbbjam.core.data.setlist.engine.QueuedWrite
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.SetlistRequestFields
+import com.bbbjam.core.data.setlist.engine.displayedTitle
+import com.bbbjam.core.data.setlist.engine.enqueue
+import com.bbbjam.core.data.setlist.engine.slotEntities
+import com.bbbjam.core.data.setlist.engine.validCell
+import com.bbbjam.core.model.Instrument
+import com.bbbjam.core.model.SlotPosition
+import com.bbbjam.core.model.SongId
+import java.time.LocalDate
+import java.util.Locale
+import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
+
+/** Compare-and-clear entry, request and confirmed cache mirror. */
+internal class SetlistSlotClears(
+    private val writer: AdminWriter,
+    private val setlistDao: SetlistDao,
+    private val catalogDao: CatalogDao,
+    private val scope: DataScope,
+    private val queue: SetlistMutationQueue,
+) : SetlistSlotClearRepository {
+    private val entries = PendingEntries<SlotClear>({ it.id }) { it.state is SlotClear.State.Failed }
+
+    override suspend fun clearSlot(
+        jamDate: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        ordinal: SlotPosition,
+        expectedName: String,
+    ): ClearSlotOutcome = queue.enqueue(scope) { id ->
+        val (entry, target, localError) = start(id, jamDate, songId, instrument, ordinal, expectedName)
+        QueuedWrite.Send { send(entry, target, localError) }
+    }
+
+    override fun observeSlotClears(): Flow<List<SlotClear>> = entries.observe()
+
+    override fun dismissSlotClear(id: Long) = entries.dismiss(id)
+
+    private suspend fun start(
+        id: Long,
+        date: LocalDate,
+        songId: SongId,
+        instrument: Instrument,
+        ordinal: SlotPosition,
+        expectedName: String,
+    ): Triple<SlotClear, Target?, String?> {
+        val title = displayedTitle(catalogDao, setlistDao, date, songId)
+        val songs = if (setlistDao.setlistState(date.toString()) == "AVAILABLE") {
+            setlistDao.songsOf(date.toString())
+        } else {
+            emptyList()
+        }
+        val song = songs.singleOrNull { it.songId == songId.value }
+        val slots = song?.let { setlistDao.slotsOf(date.toString(), it.position) }.orEmpty()
+        val instrumentSlots = slots.filter { it.instrument == instrument.name }.sortedBy { it.columnIndex }
+        val slot = instrumentSlots.getOrNull(ordinal.value - 1)
+        val target = if (song != null && slot?.musicianName == expectedName) {
+            slot?.let { Target(song.position, it.columnIndex) }
+        } else {
+            null
+        }
+        val localError = when {
+            song == null || slot == null -> ServiceCodes.SLOT_NOT_IN_LINEUP
+            slot.musicianName == null -> SLOT_EMPTY
+            slot.musicianName != expectedName -> SLOT_CHANGED
+            else -> null
+        }
+        val entry = SlotClear(id, date, songId, title, instrument, ordinal, expectedName, SlotClear.State.Sending)
+        entries.add(entry)
+        return Triple(entry, target, localError)
+    }
+
+    private suspend fun send(entry: SlotClear, target: Target?, localError: String?): ClearSlotOutcome {
+        val outcome = when {
+            target == null -> ClearSlotOutcome.NotCleared(
+                WriteOutcome.Rejected(localError ?: ServiceCodes.SLOT_NOT_IN_LINEUP),
+            )
+
+            else -> sendValid(entry, target)
+        }
+        when (outcome) {
+            ClearSlotOutcome.Cleared -> entries.remove(entry.id)
+
+            is ClearSlotOutcome.NotCleared -> entries.fail(entry.id) {
+                it.copy(state = SlotClear.State.Failed(outcome.reason))
+            }
+        }
+        return outcome
+    }
+
+    private suspend fun sendValid(entry: SlotClear, target: Target): ClearSlotOutcome {
+        val fields = mapOf(
+            SetlistRequestFields.DATE to JsonPrimitive(entry.jamDate.toString()),
+            SetlistRequestFields.SONG_ID to JsonPrimitive(entry.songId.value),
+            "instrument" to JsonPrimitive(entry.instrument.name.lowercase(Locale.ROOT)),
+            "ordinal" to JsonPrimitive(entry.ordinal.value),
+            "expectedName" to JsonPrimitive(entry.musicianName),
+        )
+        return when (val answer = writer.send("clearSlot", fields)) {
+            is AdminAnswer.Refused -> ClearSlotOutcome.NotCleared(answer.outcome)
+
+            is AdminAnswer.Ok -> {
+                val column = (answer.body["column"] as? JsonPrimitive)
+                    ?.takeUnless { it.isString }
+                    ?.intOrNull
+                val slots = confirmedSlots(answer.body, entry)
+                if (column != target.columnIndex || slots == null) {
+                    return ClearSlotOutcome.NotCleared(WriteOutcome.Unavailable)
+                }
+                try {
+                    setlistDao.replaceSlots(entry.jamDate.toString(), entry.songId.value, slots)
+                } catch (ignored: SQLException) {
+                    // Sheet is authoritative; refresh repairs Room.
+                }
+                ClearSlotOutcome.Cleared
+            }
+        }
+    }
+
+    private data class Target(val position: Int, val columnIndex: Int)
+
+    private companion object {
+        const val SLOT_EMPTY = "slot_empty"
+        const val SLOT_CHANGED = "slot_changed"
+
+        fun confirmedSlots(body: JsonObject, entry: SlotClear): List<JamSlotEntity>? = (body["slots"] as? JsonObject)
+            ?.takeIf { body["schemaVersion"] == JsonPrimitive(1) }
+            ?.let(SlotKeys::cells)
+            ?.takeIf { cells -> cells.all(::validCell) }
+            ?.let { cells -> slotEntities(cells, entry.jamDate.toString()) }
+    }
+}

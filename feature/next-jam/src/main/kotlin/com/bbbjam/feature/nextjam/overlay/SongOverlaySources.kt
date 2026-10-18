@@ -1,10 +1,10 @@
 package com.bbbjam.feature.nextjam.overlay
 
-import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
-import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
-import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
-import com.bbbjam.core.data.setlist.SetlistLineupRepository
-import com.bbbjam.core.data.setlist.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.assign.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.clear.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
 
 /**
  * The five song-level contracts the song detail and the list both read and dismiss through

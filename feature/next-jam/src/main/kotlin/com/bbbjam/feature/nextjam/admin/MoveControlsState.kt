@@ -7,8 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import com.bbbjam.core.data.jams.JamsSnapshot
-import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId

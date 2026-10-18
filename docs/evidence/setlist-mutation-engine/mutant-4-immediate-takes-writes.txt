@@ -1,0 +1,12 @@
+mutant 4-immediate-takes-writes
+file SetlistMutationQueue.kt
+replace:
+is QueuedWrite.Immediate -> CompletableDeferred(write.value)
+with:
+is QueuedWrite.Immediate -> scope.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { write.value } }
+
+exit 1
+> Task :core:data:testDebugUnitTest FAILED
+EngineTest > an immediate answer does not wait behind an earlier write FAILED
+BUILD FAILED in 3s
+80 tests completed, 1 failed

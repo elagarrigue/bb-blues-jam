@@ -2,7 +2,7 @@ package com.bbbjam.feature.assistant.run
 
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.assistant.ProposedJam
-import com.bbbjam.core.data.setlist.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.assistant.CallLog
 import com.bbbjam.feature.assistant.ChatScope

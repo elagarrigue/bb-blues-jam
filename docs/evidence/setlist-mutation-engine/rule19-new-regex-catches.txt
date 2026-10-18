@@ -1,0 +1,9 @@
+# New regex, same temporary import: rule 19 must fail
+ModuleIsolationTest > the assistant feature applies a proposal only through the song adder contract FAILED
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'assistant-feature-applies-through-contract' was violated (1 time). Invalid files:
+20 tests completed, 1 failed
+> Task :konsist-test:test FAILED
+FAILURE: Build failed with an exception.
+Execution failed for task ':konsist-test:test'.
+> There were failing tests. See the report at: file:///C:/Users/Emmanuel/AndroidStudioProjects/BBBluesJam/konsist-test/build/reports/tests/test/index.html
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).

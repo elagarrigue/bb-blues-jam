@@ -1,7 +1,7 @@
 package com.bbbjam.feature.nextjam.songdetail
 
 import androidx.compose.runtime.MutableState
-import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipantRepository
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.admin.removalKey

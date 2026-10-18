@@ -1,36 +1,36 @@
 package com.bbbjam.di
 
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.setlist.AddSongOutcome
-import com.bbbjam.core.data.setlist.AssignSlotOutcome
-import com.bbbjam.core.data.setlist.ClearSlotOutcome
-import com.bbbjam.core.data.setlist.CreateJamOutcome
-import com.bbbjam.core.data.setlist.DeleteJamOutcome
-import com.bbbjam.core.data.setlist.ExtraParticipantOutcome
-import com.bbbjam.core.data.setlist.JamCreator
-import com.bbbjam.core.data.setlist.MoveSongOutcome
-import com.bbbjam.core.data.setlist.PublishOutcome
-import com.bbbjam.core.data.setlist.RemoveSongOutcome
-import com.bbbjam.core.data.setlist.SetJamStatusOutcome
-import com.bbbjam.core.data.setlist.SetKeyOutcome
-import com.bbbjam.core.data.setlist.SetSlotCountOutcome
-import com.bbbjam.core.data.setlist.SetlistAssignmentRepository
-import com.bbbjam.core.data.setlist.SetlistExtraParticipantRepository
-import com.bbbjam.core.data.setlist.SetlistJamCreationRepository
-import com.bbbjam.core.data.setlist.SetlistJamEditRepository
-import com.bbbjam.core.data.setlist.SetlistJamStatusRepository
-import com.bbbjam.core.data.setlist.SetlistKeyChangeRepository
-import com.bbbjam.core.data.setlist.SetlistLineupRepository
-import com.bbbjam.core.data.setlist.SetlistMoveRepository
-import com.bbbjam.core.data.setlist.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
-import com.bbbjam.core.data.setlist.SetlistSlotClearRepository
-import com.bbbjam.core.data.setlist.SetlistSongAddRepository
-import com.bbbjam.core.data.setlist.SetlistSongAdder
-import com.bbbjam.core.data.setlist.SetlistSongMover
-import com.bbbjam.core.data.setlist.SetlistSongRemoveRepository
-import com.bbbjam.core.data.setlist.SetlistSongRemover
-import com.bbbjam.core.data.setlist.UpdateJamOutcome
+import com.bbbjam.core.data.setlist.add.AddSongOutcome
+import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
+import com.bbbjam.core.data.setlist.add.SetlistSongAdder
+import com.bbbjam.core.data.setlist.assign.AssignSlotOutcome
+import com.bbbjam.core.data.setlist.assign.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.clear.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.clear.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantOutcome
+import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.JamCreator
+import com.bbbjam.core.data.setlist.jamcreate.SetlistJamCreationRepository
+import com.bbbjam.core.data.setlist.jamedit.DeleteJamOutcome
+import com.bbbjam.core.data.setlist.jamedit.SetlistJamEditRepository
+import com.bbbjam.core.data.setlist.jamedit.UpdateJamOutcome
+import com.bbbjam.core.data.setlist.jamstatus.SetJamStatusOutcome
+import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.key.SetKeyOutcome
+import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.lineup.SetSlotCountOutcome
+import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
+import com.bbbjam.core.data.setlist.move.MoveSongOutcome
+import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.move.SetlistSongMover
+import com.bbbjam.core.data.setlist.publish.PublishOutcome
+import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
+import com.bbbjam.core.data.setlist.remove.RemoveSongOutcome
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemover
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Key
@@ -151,18 +151,18 @@ internal class FakeSetlistRepository : SetlistRepository {
         return addOutcome
     }
 
-    override fun observeAdds() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistAdd>>()
+    override fun observeAdds() = emptyFlow<List<com.bbbjam.core.data.setlist.add.SetlistAdd>>()
 
     override suspend fun removeSong(jamDate: LocalDate, songId: SongId): RemoveSongOutcome {
         removeCalls += listOf(jamDate, songId)
         return removeOutcome
     }
 
-    override fun observeRemoves() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistRemove>>()
+    override fun observeRemoves() = emptyFlow<List<com.bbbjam.core.data.setlist.remove.SetlistRemove>>()
 
     override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome = SetKeyOutcome.KeySet
 
-    val keyChangesFlow = MutableStateFlow(emptyList<com.bbbjam.core.data.setlist.KeyChange>())
+    val keyChangesFlow = MutableStateFlow(emptyList<com.bbbjam.core.data.setlist.key.KeyChange>())
     val dismissed = mutableListOf<String>()
 
     override fun observeKeyChanges() = keyChangesFlow
@@ -174,7 +174,7 @@ internal class FakeSetlistRepository : SetlistRepository {
         count: Int,
     ): SetSlotCountOutcome = SetSlotCountOutcome.SlotCountSet
 
-    override fun observeLineupChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.LineupChange>>()
+    override fun observeLineupChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.lineup.LineupChange>>()
 
     override suspend fun assignSlot(
         jamDate: LocalDate,
@@ -184,7 +184,7 @@ internal class FakeSetlistRepository : SetlistRepository {
         musicianName: MusicianName,
     ): AssignSlotOutcome = AssignSlotOutcome.Assigned
 
-    override fun observeAssignments() = emptyFlow<List<com.bbbjam.core.data.setlist.Assignment>>()
+    override fun observeAssignments() = emptyFlow<List<com.bbbjam.core.data.setlist.assign.Assignment>>()
 
     override suspend fun clearSlot(
         jamDate: LocalDate,
@@ -194,19 +194,19 @@ internal class FakeSetlistRepository : SetlistRepository {
         expectedName: String,
     ): ClearSlotOutcome = ClearSlotOutcome.Cleared
 
-    override fun observeSlotClears() = emptyFlow<List<com.bbbjam.core.data.setlist.SlotClear>>()
+    override fun observeSlotClears() = emptyFlow<List<com.bbbjam.core.data.setlist.clear.SlotClear>>()
 
     override suspend fun moveSong(jamDate: LocalDate, songId: SongId, toPosition: Int): MoveSongOutcome {
         moveCalls += listOf(jamDate, songId, toPosition)
         return moveOutcome
     }
 
-    override fun observeMoves() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistMove>>()
+    override fun observeMoves() = emptyFlow<List<com.bbbjam.core.data.setlist.move.SetlistMove>>()
 
     override suspend fun publishSetlist(jamDate: LocalDate): PublishOutcome =
         PublishOutcome.Published(alreadyPublished = false)
 
-    override fun observePublishes() = emptyFlow<List<com.bbbjam.core.data.setlist.SetlistPublish>>()
+    override fun observePublishes() = emptyFlow<List<com.bbbjam.core.data.setlist.publish.SetlistPublish>>()
 
     override fun dismissPublish(id: Long) = Unit
 
@@ -250,7 +250,7 @@ internal class FakeSetlistRepository : SetlistRepository {
     override suspend fun setJamStatus(jamDate: LocalDate, status: JamStatus): SetJamStatusOutcome =
         SetJamStatusOutcome.StatusSet(status, changed = true)
 
-    override fun observeJamStatusChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.JamStatusChange>>()
+    override fun observeJamStatusChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.jamstatus.JamStatusChange>>()
 
     override fun dismissJamStatusChange(id: Long) = Unit
 
@@ -264,7 +264,7 @@ internal class FakeSetlistRepository : SetlistRepository {
     override suspend fun deleteJam(jamDate: LocalDate, expectedSongs: Int): DeleteJamOutcome =
         DeleteJamOutcome.Deleted(expectedSongs)
 
-    override fun observeJamEdits() = emptyFlow<List<com.bbbjam.core.data.setlist.JamEdit>>()
+    override fun observeJamEdits() = emptyFlow<List<com.bbbjam.core.data.setlist.jamedit.JamEdit>>()
 
     override fun dismissJamEdit(id: Long) = Unit
 
@@ -284,5 +284,5 @@ internal class FakeSetlistRepository : SetlistRepository {
     ): ExtraParticipantOutcome = ExtraParticipantOutcome.NotChanged(WriteOutcome.Rejected("extra_changed"))
 
     override fun observeExtraParticipantChanges() =
-        emptyFlow<List<com.bbbjam.core.data.setlist.ExtraParticipantChange>>()
+        emptyFlow<List<com.bbbjam.core.data.setlist.extras.ExtraParticipantChange>>()
 }

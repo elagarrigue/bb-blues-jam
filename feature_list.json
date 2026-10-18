@@ -1848,14 +1848,22 @@
     "depends_on": [
       "setlist-mutation-contracts"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The enqueue pattern exists once (grep for CoroutineStart.UNDISPATCHED in setlist drops accordingly)",
       "Ordering, cancellation and mirror semantics unchanged: existing :core:data setlist tests pass; a mutant in the shared helper fails them",
       "No package with more than ~20 files in core.data.setlist",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired; test count recorded before and after"
     ],
-    "evidence": [],
+    "evidence": [
+      "Baseline CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1150 testcases; checkpoint after the engine and before the move exit 0, 1153; final exit 0, wired, 20 Konsist rules, 1153 testcases (+3 EngineTest, none removed): docs/evidence/setlist-mutation-engine/baseline-init.txt, checkpoint-init.txt, final-init.txt, baseline-count.txt, final-count.txt",
+      "Greps (grep-gates.txt): UNDISPATCHED only twice, in engine/SetlistMutationQueue.kt; no queue.ids/order/writes, ids: AtomicLong or order: Mutex outside the engine; no default SetlistMutationQueue()/WriteFailureLog in main; DefaultSetlistRepository.kt has no override and no fun; files per package 2 (root), engine 6, others 3-6; no @Suppress, baseline or ignoreFailures added",
+      "Mutants on the shared helpers against the unchanged setlist tests (mutant-*.txt): drop order lock (1 red), no inner async and writes outside the inner async (7 red each), dismiss ignoring canDismiss (6), fail on the wrong id (21), remove/fail swapped (26), key remove-before-mirror (1) all red. Two survived the old suite (survivor-2-before-EngineTest.txt: outer async dispatched; survivor-4-before-EngineTest.txt: Immediate takes writes); EngineTest (3 tests, new file) kills both (mutant-2-*.txt, mutant-4-*.txt), restored after each",
+      "Konsist rule 19 regex amended to setlist\\.(\\w+\\.)*(Setlist\\w*Repository|\\*): the old regex did not catch a temporary import of setlist.add.SetlistSongAddRepository in :feature:assistant main (rule19-gap-old-regex.txt, BUILD SUCCESSFUL), the new one does (rule19-new-regex-catches.txt, assistant-feature-applies-through-contract FAILED), green after removing it (rule19-new-regex-green.txt). Rules 18 (prefix match on setlist) and 20 (root SetlistRepository stays at the root) need no change",
+      "Import-only check (import-only-diff.txt): feature/app/core-ui diffs are import lines plus fully qualified names in 6 test files (package segment only, some re-wrapped by ktlint); core/data test diffs are imports and the constructor arguments (SetlistMutationQueue(), the log), plus a file-level repositoryOver helper in DefaultSetlistRepositoryTest because the extra argument line pushed the class over detekt LargeClass",
+      "Deviations: core/data tests kept in the root test package with imports (not mirrored to subpackages); JamCreations consumes an id from the shared counter like the other managers; test helper parameters keep their own WriteFailureLog { } defaults. Docs: architecture SKILL.md (as-built paragraph, rule 19 text, setlist/ layout)",
+      "Accepted on 17 October 2026 by the independent validator: gate rerun twice exit 0 (konsist, detekt, ktlint wired, 1153 testcases), all 11 managers compared with HEAD, own mutants (no order lock, Immediate taking writes, dismiss ignoring canDismiss) red then restored, rule 19 amendment evidence checked, no line-ending churn."
+    ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 3, 4 and 7 (queue part)); the organizer asked to fix all nine findings with sonnet subagents."
   },
   {

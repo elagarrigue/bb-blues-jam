@@ -2,10 +2,10 @@ package com.bbbjam.feature.assistant
 
 import com.bbbjam.core.data.assistant.SetlistAssistant
 import com.bbbjam.core.data.jams.JamsRepository
-import com.bbbjam.core.data.setlist.JamCreator
-import com.bbbjam.core.data.setlist.SetlistSongAdder
-import com.bbbjam.core.data.setlist.SetlistSongMover
-import com.bbbjam.core.data.setlist.SetlistSongRemover
+import com.bbbjam.core.data.setlist.add.SetlistSongAdder
+import com.bbbjam.core.data.setlist.jamcreate.JamCreator
+import com.bbbjam.core.data.setlist.move.SetlistSongMover
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemover
 import com.bbbjam.feature.assistant.chat.AssistantChat
 import com.bbbjam.feature.assistant.di.assistantModule
 import com.bbbjam.feature.assistant.run.JamCreationRunner

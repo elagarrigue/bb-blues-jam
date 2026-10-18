@@ -17,6 +17,13 @@ import com.bbbjam.core.data.cache.SetlistDao
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.cache.toDomain
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.assign.AssignSlotOutcome
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.clear.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.lineup.LineupChange
+import com.bbbjam.core.data.setlist.lineup.SetSlotCountOutcome
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
@@ -459,6 +466,8 @@ class SetlistLineupChangesTest {
             setlistDao,
             catalogDao,
             DataScope(backgroundScope),
+            SetlistMutationQueue(),
+            WriteFailureLog { },
         )
     }
 

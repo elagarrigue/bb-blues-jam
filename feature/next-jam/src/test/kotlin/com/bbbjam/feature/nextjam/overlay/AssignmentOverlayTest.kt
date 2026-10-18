@@ -1,8 +1,8 @@
 package com.bbbjam.feature.nextjam.overlay
 
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.setlist.Assignment
-import com.bbbjam.core.data.setlist.SlotClear
+import com.bbbjam.core.data.setlist.assign.Assignment
+import com.bbbjam.core.data.setlist.clear.SlotClear
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.MusicianName

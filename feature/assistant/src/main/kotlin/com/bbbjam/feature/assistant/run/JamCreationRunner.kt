@@ -3,8 +3,8 @@ package com.bbbjam.feature.assistant.run
 import com.bbbjam.core.data.admin.WriteOutcome
 import com.bbbjam.core.data.assistant.ProposedJam
 import com.bbbjam.core.data.jams.JamsRepository
-import com.bbbjam.core.data.setlist.CreateJamOutcome
-import com.bbbjam.core.data.setlist.JamCreator
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
+import com.bbbjam.core.data.setlist.jamcreate.JamCreator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

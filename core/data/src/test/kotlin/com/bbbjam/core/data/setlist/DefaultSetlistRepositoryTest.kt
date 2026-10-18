@@ -7,6 +7,7 @@ import com.bbbjam.core.data.Fixtures
 import com.bbbjam.core.data.admin.AdminCredentialStore
 import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.admin.WriteOutcome
+import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.CatalogSongEntity
 import com.bbbjam.core.data.cache.JamEntity
 import com.bbbjam.core.data.cache.JamExtraEntity
@@ -17,6 +18,16 @@ import com.bbbjam.core.data.cache.SetlistDao
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.cache.toDomain
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.add.AddSongOutcome
+import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.setlist.clear.ClearSlotOutcome
+import com.bbbjam.core.data.setlist.clear.SlotClear
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.key.KeyChange
+import com.bbbjam.core.data.setlist.key.SetKeyOutcome
+import com.bbbjam.core.data.setlist.remove.RemoveSongOutcome
+import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
@@ -740,13 +751,7 @@ class DefaultSetlistRepositoryTest {
             },
         )
         if (passphrase != null) store.save(passphrase)
-        return DefaultSetlistRepository(
-            AdminWriter(post, store),
-            setlistDao,
-            catalogDao,
-            DataScope(backgroundScope),
-            failureLog = failureLog,
-        )
+        return repositoryOver(AdminWriter(post, store), setlistDao, catalogDao, DataScope(backgroundScope), failureLog)
     }
 
     private suspend fun cachedSongs() =
@@ -784,3 +789,12 @@ class DefaultSetlistRepositoryTest {
         fun error(code: String) = """{"schemaVersion":1,"error":{"code":"$code","message":"m"}}"""
     }
 }
+
+/** Construction plumbing: the repository takes its queue and log explicitly, so a test builds its own. */
+private fun repositoryOver(
+    writer: AdminWriter,
+    setlistDao: SetlistDao,
+    catalogDao: CatalogDao,
+    scope: DataScope,
+    failureLog: WriteFailureLog,
+) = DefaultSetlistRepository(writer, setlistDao, catalogDao, scope, SetlistMutationQueue(), failureLog)

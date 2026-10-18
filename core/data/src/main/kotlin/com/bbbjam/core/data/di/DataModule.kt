@@ -21,7 +21,8 @@ import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
 import com.bbbjam.core.data.setlist.DefaultSetlistRepository
 import com.bbbjam.core.data.setlist.SetlistRepository
-import com.bbbjam.core.data.setlist.WriteFailureLog
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
 import java.time.Clock
 import org.koin.dsl.module
 
@@ -55,6 +56,7 @@ val dataModule = module {
     single { AdminWriter(get(), get()) }
     single<WriteFailureLog> { WriteFailureLog { line -> Log.w(LOG_TAG, line) } }
     single { get<BluesJamDatabase>().setlistDao() }
-    single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), failureLog = get()) }
+    single { SetlistMutationQueue() }
+    single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), get(), get()) }
     single<SetlistAssistant> { DefaultSetlistAssistant(get(), get(), get(), get(), AssistantHttp.executorFactory()) }
 }

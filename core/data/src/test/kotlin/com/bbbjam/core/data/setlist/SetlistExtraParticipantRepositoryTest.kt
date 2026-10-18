@@ -12,6 +12,10 @@ import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.JamSongEntity
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantChange
+import com.bbbjam.core.data.setlist.extras.ExtraParticipantOutcome
 import com.bbbjam.core.model.SongId
 import java.io.File
 import java.time.LocalDate
@@ -102,6 +106,8 @@ class SetlistExtraParticipantRepositoryTest {
             database.setlistDao(),
             catalogDao,
             DataScope(backgroundScope),
+            SetlistMutationQueue(),
+            WriteFailureLog { },
         )
     }
 

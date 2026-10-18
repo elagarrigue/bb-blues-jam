@@ -1,5 +1,18 @@
 package com.bbbjam.core.data.setlist
 
+import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
+import com.bbbjam.core.data.setlist.assign.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.clear.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.jamcreate.SetlistJamCreationRepository
+import com.bbbjam.core.data.setlist.jamedit.SetlistJamEditRepository
+import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
+import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
+
 /**
  * The setlist mutations of the upcoming jam (`admin-add-song-to-setlist`,
  * `admin-remove-song-from-setlist`, `admin-set-key`, `admin-adjust-lineup`,

@@ -8,9 +8,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
-import com.bbbjam.core.data.setlist.SetlistAdd
-import com.bbbjam.core.data.setlist.SetlistMove
-import com.bbbjam.core.data.setlist.SetlistRemove
+import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.refresh.AdminRefreshEffect

@@ -11,6 +11,9 @@ import com.bbbjam.core.data.cache.JamEntity
 import com.bbbjam.core.data.cache.JamRows
 import com.bbbjam.core.data.cache.SyncStateEntity
 import com.bbbjam.core.data.remote.TransportResult
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.jamcreate.CreateJamOutcome
 import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.SongId
 import java.io.File
@@ -164,7 +167,8 @@ class SetlistJamCreationsTest {
             database.setlistDao(),
             database.catalogDao(),
             DataScope(backgroundScope),
-            failureLog = WriteFailureLog(log::add),
+            SetlistMutationQueue(),
+            WriteFailureLog(log::add),
         )
     }
 

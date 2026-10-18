@@ -1,0 +1,32 @@
+mutant 6a-fail-wrong-id
+file PendingEntries.kt
+replace:
+list.map { if (idOf(it) == id) transform(it) else it }
+with:
+list.map { if (idOf(it) != id) transform(it) else it }
+
+exit 1
+DefaultSetlistRepositoryTest > with no passphrase stored it is AccessRefused, nothing is sent and the key stays FAILED
+DefaultSetlistRepositoryTest > a sending key change is not dismissed, a failed one is FAILED
+DefaultSetlistRepositoryTest > adds, removes and key changes share one id counter, one dismiss and one write queue in call order FAILED
+DefaultSetlistRepositoryTest > a failed entry stays until dismissed, and dismiss leaves a sending entry and unknown ids alone FAILED
+DefaultSetlistRepositoryTest > every answer but a well-formed ok leaves no phantom row and publishes a failed entry FAILED
+DefaultSetlistRepositoryTest > two quick changes are sent in call order, and a later failure leaves the earlier confirmed key FAILED
+DefaultSetlistRepositoryTest > adds and removes share one id counter, one dismiss and one write queue in call order FAILED
+DefaultSetlistRepositoryTest > clearSlot rejects stale local target without posting and restores failure without Room mutation FAILED
+DefaultSetlistRepositoryTest > every failed key change leaves the cache and the catalog as they were and publishes a failed entry FAILED
+DefaultSetlistRepositoryTest > every failed removal leaves the cache as it was and publishes a failed entry FAILED
+DefaultSetlistRepositoryTest > song_not_in_setlist also removes the cached row, and the entry still fails FAILED
+SetlistDismissTest > a dismiss removes a failed entry of its own kind only, never a sending one FAILED
+SetlistJamEditsTest > an update refusal fails the entry, leaves Room alone and logs one line without the venue FAILED
+SetlistJamEditsTest > unknown_action is an outdated script for both writes and the entries can be dismissed FAILED
+SetlistJamStatusesTest > a refusal fails the entry, leaves Room alone and logs one safe line FAILED
+SetlistJamStatusesTest > unknown_action is a script that must be updated, with an Outdated entry and Room unchanged FAILED
+SetlistLineupChangesTest > lineup refusals and malformed successes preserve Room and can be dismissed FAILED
+SetlistLineupChangesTest > assignment refusals and malformed confirmations leave Room unchanged and can be dismissed FAILED
+SetlistExtraParticipantRepositoryTest > malformed confirmation leaves Room unchanged and exposes a dismissible failure FAILED
+SetlistMoveRepositoryTest > moveSong failures preserve Room and invalid local targets are rejected without a request FAILED
+SetlistPublishRepositoryTest > failure keeps draft observable and logs one safe line FAILED
+> Task :core:data:testDebugUnitTest FAILED
+BUILD FAILED in 3s
+77 tests completed, 21 failed

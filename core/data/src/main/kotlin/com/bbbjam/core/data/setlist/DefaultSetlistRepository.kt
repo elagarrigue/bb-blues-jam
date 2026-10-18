@@ -4,124 +4,61 @@ import com.bbbjam.core.data.DataScope
 import com.bbbjam.core.data.admin.AdminWriter
 import com.bbbjam.core.data.cache.CatalogDao
 import com.bbbjam.core.data.cache.SetlistDao
-import com.bbbjam.core.model.Instrument
-import com.bbbjam.core.model.Key
-import com.bbbjam.core.model.MusicianName
-import com.bbbjam.core.model.SlotPosition
-import com.bbbjam.core.model.SongId
-import java.time.LocalDate
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.sync.withLock
+import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
+import com.bbbjam.core.data.setlist.add.SetlistSongAdds
+import com.bbbjam.core.data.setlist.assign.SetlistAssignmentRepository
+import com.bbbjam.core.data.setlist.assign.SetlistAssignments
+import com.bbbjam.core.data.setlist.clear.SetlistSlotClearRepository
+import com.bbbjam.core.data.setlist.clear.SetlistSlotClears
+import com.bbbjam.core.data.setlist.engine.SetlistMutationQueue
+import com.bbbjam.core.data.setlist.engine.WriteFailureLog
+import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipantRepository
+import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipants
+import com.bbbjam.core.data.setlist.jamcreate.SetlistJamCreationRepository
+import com.bbbjam.core.data.setlist.jamcreate.SetlistJamCreations
+import com.bbbjam.core.data.setlist.jamedit.SetlistJamEditRepository
+import com.bbbjam.core.data.setlist.jamedit.SetlistJamEdits
+import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
+import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatuses
+import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
+import com.bbbjam.core.data.setlist.key.SetlistKeyChanges
+import com.bbbjam.core.data.setlist.lineup.SetlistLineupChanges
+import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
+import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.move.SetlistMoves
+import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
+import com.bbbjam.core.data.setlist.publish.SetlistPublishes
+import com.bbbjam.core.data.setlist.remove.SetlistRemovals
+import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
 
 /**
- * [SetlistRepository] over the admin POST path. The pending and failed entries live in memory; the
- * cache only ever receives a song the server confirmed, built from its answer, so a failed write
- * leaves no row anywhere. A removal changes the cache only when the server removed the song, or
- * answered that the Sheet no longer has it. A key change changes the cache only when the server
- * wrote the key, and before its entry is removed.
+ * [SetlistRepository] over the admin POST path, by delegation: each of the twelve mutation
+ * contracts is implemented by its own manager, built here over the same [queue]. The pending and
+ * failed entries live in memory; the cache only ever receives what the server confirmed, so a
+ * failed write leaves no row anywhere.
  *
- * Ordering: [order] is held while a call resolves its song, publishes its entry and queues its write
- * on [writes] (both mutexes are fair), so writes are sent one at a time in call order. The write
- * runs in [scope], and the caller only awaits it.
+ * Ordering: every manager publishes its entry under the queue's order lock and sends its request
+ * under its write lock (both mutexes are fair), so writes are sent one at a time in call order. The
+ * write runs in [scope], and the caller only awaits it. [failureLog] receives the safe diagnostics of
+ * the publish, status, edit and creation writes.
  */
 internal class DefaultSetlistRepository(
-    private val writer: AdminWriter,
-    private val setlistDao: SetlistDao,
-    private val catalogDao: CatalogDao,
-    private val scope: DataScope,
-    private val queue: SetlistMutationQueue = SetlistMutationQueue(),
-    failureLog: WriteFailureLog = WriteFailureLog { },
-    private val additions: SetlistSongAdds =
-        SetlistSongAdds(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
-    private val lineupChanges: SetlistLineupChanges =
-        SetlistLineupChanges(writer, setlistDao, catalogDao, scope, queue),
-    private val slotClears: SetlistSlotClears = SetlistSlotClears(writer, setlistDao, catalogDao, scope, queue),
-    private val moves: SetlistMoves =
-        SetlistMoves(writer, setlistDao, catalogDao, scope, queue.ids, queue.order, queue.writes),
-    private val extraChanges: SetlistExtraParticipants =
-        SetlistExtraParticipants(writer, setlistDao, catalogDao, scope, queue),
-    private val jamStatuses: SetlistJamStatuses = SetlistJamStatuses(writer, setlistDao, scope, queue, failureLog),
-    private val jamEdits: SetlistJamEdits = SetlistJamEdits(writer, setlistDao, scope, queue, failureLog),
+    writer: AdminWriter,
+    setlistDao: SetlistDao,
+    catalogDao: CatalogDao,
+    scope: DataScope,
+    queue: SetlistMutationQueue,
+    failureLog: WriteFailureLog,
 ) : SetlistRepository,
-    SetlistSongAddRepository by additions,
-    SetlistLineupRepository by lineupChanges,
-    SetlistJamStatusRepository by jamStatuses,
-    SetlistJamEditRepository by jamEdits,
-    SetlistSlotClearRepository by slotClears,
-    SetlistMoveRepository by moves,
-    SetlistExtraParticipantRepository by extraChanges,
+    SetlistSongAddRepository by SetlistSongAdds(writer, setlistDao, catalogDao, scope, queue),
+    SetlistSongRemoveRepository by SetlistRemovals(writer, setlistDao, catalogDao, scope, queue),
+    SetlistKeyChangeRepository by SetlistKeyChanges(writer, setlistDao, catalogDao, scope, queue),
+    SetlistLineupRepository by SetlistLineupChanges(writer, setlistDao, catalogDao, scope, queue),
+    SetlistAssignmentRepository by SetlistAssignments(writer, setlistDao, catalogDao, scope, queue),
+    SetlistSlotClearRepository by SetlistSlotClears(writer, setlistDao, catalogDao, scope, queue),
+    SetlistMoveRepository by SetlistMoves(writer, setlistDao, catalogDao, scope, queue),
+    SetlistExtraParticipantRepository by SetlistExtraParticipants(writer, setlistDao, catalogDao, scope, queue),
+    SetlistPublishRepository by SetlistPublishes(writer, setlistDao, scope, queue, failureLog),
+    SetlistJamStatusRepository by SetlistJamStatuses(writer, setlistDao, scope, queue, failureLog),
     SetlistJamCreationRepository by SetlistJamCreations(writer, setlistDao, scope, queue, failureLog),
-    SetlistPublishRepository by SetlistPublishes(
-        writer,
-        setlistDao,
-        scope,
-        queue.ids,
-        queue.order,
-        queue.writes,
-        failureLog,
-    ) {
-
-    private val removals = SetlistRemovals(writer, setlistDao, catalogDao)
-    private val keyChanges = SetlistKeyChanges(writer, setlistDao, catalogDao)
-    private val assignments = SetlistAssignments(writer, setlistDao, catalogDao)
-
-    /**
-     * Runs in [scope] from the first instruction, like the add, and queues behind earlier writes of
-     * either kind: the entry is published under [order] and the request sent under [writes].
-     */
-    override suspend fun removeSong(jamDate: LocalDate, songId: SongId): RemoveSongOutcome =
-        scope.async(start = CoroutineStart.UNDISPATCHED) {
-            queue.order.withLock {
-                val entry = removals.start(queue.ids.incrementAndGet(), jamDate, songId)
-                scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { removals.send(entry) } }
-            }.await()
-        }.await()
-
-    override fun observeRemoves(): Flow<List<SetlistRemove>> = removals.observe()
-
-    override fun dismissRemove(id: Long) = removals.dismiss(id)
-
-    /**
-     * Runs in [scope] from the first instruction, like the add, and queues behind earlier writes of
-     * any kind: the entry is published under [order] and the request sent under [writes].
-     */
-    override suspend fun setKey(jamDate: LocalDate, songId: SongId, key: Key): SetKeyOutcome =
-        scope.async(start = CoroutineStart.UNDISPATCHED) {
-            queue.order.withLock {
-                val entry = keyChanges.start(queue.ids.incrementAndGet(), jamDate, songId, key)
-                scope.async(start = CoroutineStart.UNDISPATCHED) { queue.writes.withLock { keyChanges.send(entry) } }
-            }.await()
-        }.await()
-
-    override fun observeKeyChanges(): Flow<List<KeyChange>> = keyChanges.observe()
-
-    override fun dismissKeyChange(id: Long) = keyChanges.dismiss(id)
-
-    override suspend fun assignSlot(
-        jamDate: LocalDate,
-        songId: SongId,
-        instrument: Instrument,
-        ordinal: SlotPosition,
-        musicianName: MusicianName,
-    ): AssignSlotOutcome = scope.async(start = CoroutineStart.UNDISPATCHED) {
-        queue.order.withLock {
-            val (entry, target, localError) = assignments.start(
-                queue.ids.incrementAndGet(),
-                jamDate,
-                songId,
-                instrument,
-                ordinal,
-                musicianName,
-            )
-            scope.async(start = CoroutineStart.UNDISPATCHED) {
-                queue.writes.withLock { assignments.send(entry, target, localError) }
-            }
-        }.await()
-    }.await()
-
-    override fun observeAssignments(): Flow<List<Assignment>> = assignments.observe()
-
-    override fun dismissAssignment(id: Long) = assignments.dismiss(id)
-}
+    SetlistJamEditRepository by SetlistJamEdits(writer, setlistDao, scope, queue, failureLog)

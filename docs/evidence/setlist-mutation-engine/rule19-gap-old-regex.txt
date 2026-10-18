@@ -1,0 +1,10 @@
+# Old regex, post-move tree, temporary import of setlist.add.SetlistSongAddRepository in :feature:assistant main
+> Task :konsist-test:compileTestKotlin
+> Task :konsist-test:compileTestJava NO-SOURCE
+> Task :konsist-test:testClasses UP-TO-DATE
+> Task :konsist-test:test
+
+BUILD SUCCESSFUL in 5s
+3 actionable tasks: 3 executed
+Configuration cache entry reused.
+exit-of-pipeline-tail-only; see BUILD line above

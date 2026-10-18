@@ -1,0 +1,23 @@
+== UNDISPATCHED in setlist main
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/engine/SetlistMutationQueue.kt:39:): T = scope.async(start = CoroutineStart.UNDISPATCHED) {
+core/data/src/main/kotlin/com/bbbjam/core/data/setlist/engine/SetlistMutationQueue.kt:42:            is QueuedWrite.Send -> scope.async(start = CoroutineStart.UNDISPATCHED) {
+== queue.ids|order|writes, ids: AtomicLong, order: Mutex
+== '= SetlistMutationQueue()' / '= WriteFailureLog' (main: none expected; the hits are test helper parameters)
+== DefaultSetlistRepository override/fun
+== added Suppress/baseline/ignoreFailures
++Verification: baseline CI=true ./init.sh exit 0; konsist/detekt/ktlint wired. node --check passed. Headless Edge: 77 assertions passed, eight slides, local assets/fonts, desktop at 1366x768/1440x900/1920x1080 without overflow, mobile at 390x844 without horizontal overflow, navigation/index/notes/restart, no runtime exceptions and eight-page PDF. Report: presentations/harness-ia/verification.json; checker: verify.mjs.
+== files per package
+2 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/
+5 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/add/
+4 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/assign/
+3 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/clear/
+6 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/engine/
+3 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/extras/
+4 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/jamcreate/
+6 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/jamedit/
+4 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/jamstatus/
+4 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/key/
+4 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/lineup/
+5 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/move/
+3 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/publish/
+5 core/data/src/main/kotlin/com/bbbjam/core/data/setlist/remove/

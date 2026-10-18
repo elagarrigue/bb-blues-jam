@@ -18,7 +18,7 @@ Presentation is a composable presenter that returns a plain `UiModel`; there are
 | Module | Holds | May depend on |
 |---|---|---|
 | `:core:model` | Domain types: `Jam`, `JamStatus`, `Setlist`, `SetlistProblem`, `JamSong`, `Lineup`, `Slot`, `ExtraParticipant`, `Instrument`, `Song`, `Tempo`, `Difficulty`, `Key`, `SongId`. Pure Kotlin, no Android, no serialization, no date parsing, no clock. | nothing |
-| `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. | `:core:model` |
+| `:core:data` | Repository interfaces (the contracts features use) and their implementations: Apps Script client, Room cache, DataStore admin flag. The setlist mutations live in per-mutation subpackages of `core.data.setlist` plus a shared `engine` (`setlist-mutation-engine`). | `:core:model` |
 | `:core:ui` | Presenter contracts (`Presenter`, `UiModel`, `UiEvent`, `EventHandler`), design tokens, theme, shared components such as the instrument strip, and UI-side contracts features share, such as `ExternalLinkOpener` (`com.bbbjam.core.ui.link`). | `:core:model` |
 | `:feature:<name>` | One screen or flow: its presenters, `UiModel`s, composables, and one Koin module. | `:core:*` only |
 | `:app` | Navigation (Navigation Compose, only here, all internal in `navigation/`: the string routes in `AppRoutes.kt`; `AppNavHost.kt`, the outer host with the tabs shell (`AppRoutes.TABS`) and, above it, the song detail (`SONG_DETAIL`, `song/{jamDate}/{songId}/{position}`, named by song id since `song-detail-replaces-row-expansion`; it opens the admin's key picker and assign screen above itself), the past jam detail (`PAST_JAM_DETAIL`, `pastJam/{jamDate}`, same insets and double-tap guard) and the admin login (`ADMIN_LOGIN`, `admin-login`, no argument; back pops under the `RESUMED` guard, a successful login pops by route with `popBackStack(ADMIN_LOGIN, inclusive = true)`, a no-op once gone); `TabsShell(onOpenSong, onOpenPastJam, onOpenAdminLogin)` hands the callbacks to the tabs); `TabsShell.kt`, an inner host with one route per tab (`NEXT_JAM` start, `PAST_JAMS`, `INFO`; switching with `popUpTo(start) { saveState }`, `launchSingleTop`, `restoreState`) above the `TabBar`, with the status-bar inset outside the scroll; `AppTab.kt`, the tabs in bar order with labels, icons and the pure `tabBarModel`; `AppMotion.kt`, the named durations), `BluesJamApp` (`startKoin` with every module), `appModule` (Android implementations of `:core` contracts, such as `IntentLinkOpener`), and the direct Koin bindings of the narrow `:core:data` write contracts (`SetlistSongAdder`, `SetlistSongRemover`, `SetlistSongMover`, `JamCreator`, and since `setlist-mutation-contracts` every one of the twelve `Setlist...Repository` contracts) to the one `SetlistRepository` (D-13; there is no action registry since `remove-action-registry`). Since `bottom-navigation` a new top-level destination goes in the **outer** host, beside the song route, as the past jam detail does. | everything |
@@ -438,7 +438,7 @@ visible; the activity declares `windowSoftInputMode="adjustResize"` (without it 
 onPrimaryAction}` (shown failing first).
 
 As built by `assistant-apply-proposal` (14 October 2026; phase 2): **loading a proposal goes through a narrow contract, not
-the repository.** `:core:data` `setlist/SetlistSongAdder` is a `fun interface` (`suspend addSong(jamDate, songId, key):
+the repository.** `:core:data` `setlist/add/SetlistSongAdder` is a `fun interface` (`suspend addSong(jamDate, songId, key):
 AddSongOutcome`) with no implementation there and no `dataModule` binding; `:app` binds it with a lambda over the one
 `SetlistRepository` (`remove-action-registry`; it was a registry adapter before), which returns the original outcome. `:feature:assistant` gets only that mutation (no remove, publish or clear). Konsist rule 19,
 `assistant-feature-applies-through-contract`: no reference, import included, to `core.data.setlist.SetlistRepository`,
@@ -475,7 +475,10 @@ removes, then moves, a client-side diff of existing actions so kept songs keep t
 (`createJam`, then the adds into the date the server echoed), over `ApplySteps` and `RunStore`; `ApplyRun` carries `mode`,
 `removals`, `order`, `jam`. A replace is a success only when the latest snapshot lists exactly the proposal (R3). The
 confirming dialog is one saveable `String?` key (`applyKey`, "turnId|MODE"). Konsist rule 19 now bans every
-`core.data.setlist.Setlist...Repository` (shown failing first).
+`core.data.setlist.Setlist...Repository` (shown failing first). Since `setlist-mutation-engine` the regex is
+`\bcom\.bbbjam\.core\.data\.(setlist\.(\w+\.)*(Setlist\w*Repository|\*)|admin\.(AdminWriter|\*))`: the contracts moved to
+subpackages (`setlist.add.SetlistSongAddRepository`), which the old regex no longer matched (shown first, then caught:
+`docs/evidence/setlist-mutation-engine/rule19-*.txt`).
 
 As built by `jam-status-created` (14 October 2026; D-26, amends D-04 and D-25): `JamStatus` has three values,
 `DRAFT` (`BORRADOR`, does not exist for musicians), `CREATED` (`CREADA`, date only) and `PUBLISHED`. `Jam`
@@ -751,12 +754,26 @@ the card builder passes the dismiss of the contract that owns the entry (`Overla
 `SongOverlays` over `SongOverlaySources`). Ids stay one global counter, so merged cards still sort by call order. A feature class
 takes only the contracts it calls; `NextJamSetlistWrites` (add, remove, move) and `SongOverlaySources` (key, lineup, assignment,
 clear, extras) are public holder classes that only group them under detekt's parameter limit, never re-exposing `SetlistRepository`.
-`DefaultSetlistRepository` delegates `SetlistSongAddRepository` and `SetlistLineupRepository` to `SetlistSongAdds` and
-`SetlistLineupChanges` (`by`), the others still live in its body until the engine slice. `:app` binds all twelve with
+`DefaultSetlistRepository` delegates every contract to its manager (`by`; completed by `setlist-mutation-engine`). `:app` binds all twelve with
 `single<X> { get<SetlistRepository>() }` (`AppModuleBindingsTest` asserts `assertSame` for each). Test fakes may implement the union.
 Konsist rule 20, `next-jam-injects-narrow-setlist-contracts`: no import or fully qualified `com.bbbjam.core.data.setlist.SetlistRepository`
 in `:feature:next-jam` or `:feature:past-jams` **main** sources (shown failing against 12 files first, evidence in
 `docs/evidence/setlist-mutation-contracts/`). Known limit: a text match, so an import alias or a bare mention in a comment escapes.
+
+As built by `setlist-mutation-engine` (17 October 2026; code-review findings 3, 4 and the queue part of 7): **the ordered write and
+the pending entries exist once, and `core.data.setlist` is split per mutation.** Package `core.data.setlist.engine` (all
+`internal`): `SetlistMutationQueue` (ids, `order`, `writes`) with the one `queue.enqueue(scope) { id -> ...; QueuedWrite }` helper,
+the only place with `scope.async(UNDISPATCHED)` (it runs `start` under `order`, publishes the entry there, then queues the
+`QueuedWrite.Send` block under `writes`; `QueuedWrite.Immediate` answers without taking `writes`, which the add uses for an
+unknown song); `PendingEntries<E>(idOf, canDismiss)` (`observe`, `add`, `remove` for Done, `fail`, `dismiss`; it never mirrors, a
+manager mirrors to Room first and then calls `remove`); and the shared `SetlistRequestFields`, `displayedTitle`,
+`ConfirmedSlots` (`validCell`, `slotEntities`) and `WriteFailureLog`. Every manager takes the `SetlistMutationQueue` whole.
+`DefaultSetlistRepository(writer, setlistDao, catalogDao, scope, queue, failureLog)` is pure delegation: no body, no `override`, the
+twelve contracts by `by`, the queue and the log required (built once in `dataModule`). Subpackages, each with its contract,
+outcome, entry type and manager: `add`, `remove`, `key`, `lineup`, `assign`, `clear`, `move`, `extras`, `publish`, `jamstatus`,
+`jamcreate`, `jamedit`; the root keeps only `SetlistRepository` and `DefaultSetlistRepository`. Public type names did not
+change, only their package, so features changed only their imports. A new mutation adds a subpackage and a manager built on
+`enqueue` and `PendingEntries`, never its own mutex or `MutableStateFlow` list.
 
 ## Build Conventions
 
@@ -1106,7 +1123,7 @@ The admin edits and deletes future jams from the Jams tab (D-28).
   `requireFutureJam_` (any known-`estado` jam dated today or later) guards them and the BORRADOR/CREADA targets of
   `setJamStatus`; `requireEditableJam_` (upcoming only) still guards every setlist mutation and PUBLICADA.
 - **Repository (E6, E7).** `SetlistJamEditRepository` is part of `SetlistRepository`; `SetlistJamEdits` runs on the
-  shared `SetlistMutationQueue` with the `scope.async(UNDISPATCHED)` pattern. Room follows only a confirmed echo:
+  shared `SetlistMutationQueue` (since `setlist-mutation-engine` through `enqueue`). Room follows only a confirmed echo:
   `SetlistJamEditDao.moveJam` copies the jam, songs, slots and extras to the new date in one transaction and deletes the
   old row (children cascade); a delete drops the row. No schema change.
 - **Date rule (E9).** `jamEditPlan` (pure, `:core:data` `jams/`) blocks an edit that would change which jam is the
