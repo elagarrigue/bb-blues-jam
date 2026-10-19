@@ -24,8 +24,7 @@ cada decisión. La funcionalidad de la app está en el [README](../README.md).
 | Acciones del backend (Apps Script) | más de 20, todas validadas en el servidor |
 | Líneas de código de producto escritas a mano | ninguna |
 
-Todo el código de producto lo escribieron agentes. El humano (el organizador de la jam, que además
-es el desarrollador) decidió, revisó, probó en el teléfono e hizo los pasos que solo se pueden hacer
+Todo el código de producto lo escribieron agentes. El humano desarrollador decidió, revisó, probó en el teléfono e hizo los pasos que solo se pueden hacer
 con su cuenta de Google.
 
 ---
