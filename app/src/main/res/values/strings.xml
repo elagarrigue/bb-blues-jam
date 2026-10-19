@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">BBBluesJam</string>
+    <!-- Launch screen (AppSplash), under the band logo. -->
+    <string name="splash_title">JAM DE BLUES</string>
 </resources>

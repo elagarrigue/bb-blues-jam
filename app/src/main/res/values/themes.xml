@@ -4,4 +4,13 @@
     <style name="Theme.BBBluesJam" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/bluesjam_window_background</item>
     </style>
+
+    <!-- Launch theme: only the window color, swapped for Theme.BBBluesJam by installSplashScreen()
+         in MainActivity. No icon: the system masks it to a small circle, so AppSplash draws the
+         large logo in Compose instead. -->
+    <style name="Theme.BBBluesJam.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/bluesjam_window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <item name="postSplashScreenTheme">@style/Theme.BBBluesJam</item>
+    </style>
 </resources>

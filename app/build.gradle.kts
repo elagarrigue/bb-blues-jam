@@ -102,6 +102,8 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    // Backports the Android 12 splash screen (band logo on the window background) down to minSdk.
+    implementation(libs.androidx.core.splashscreen)
     // Navigation Compose lives only in :app (D-03, Konsist navigation-only-in-app): features take
     // callbacks and plain values, never a NavController.
     implementation(libs.androidx.navigation.compose)
