@@ -29,9 +29,7 @@ records the figures and their source. Feature counts and specs were checked agai
 The presentation does not change feature statuses or claim new product acceptance.
 
 Brand tokens and bundled fonts come from `DESIGN.md` and `core/ui/src/main/res/`.
-This folder is the versioned copy. The hosting checkout lives in `presentations/harness-ia/`
-(git-ignored here), with its own repository and the static hosting settings in `.openai/hosting.json`;
-edit there and copy the files back, or the other way around, so both stay in sync.
+This folder is the only copy of the presentation; edit it here.
 
 The refreshed narrative includes the final code review: nine findings resolved in seven
 slices, feature public declarations reduced from 122 to 14, and the Koog agent moved into

@@ -30,5 +30,3 @@ docs/design/**/node_modules/
 # Local Codex junction; recreate with scripts/setup-codex.ps1.
 /.agents/skills
 
-# Hosting checkout of the presentation (its own git repo); the versioned copy is docs/presentation/
-/presentations/
