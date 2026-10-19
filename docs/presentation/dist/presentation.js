@@ -13,6 +13,28 @@
   const pad = number => String(number).padStart(2, '0');
   const hashIndex = () => /^#\d+$/.test(location.hash) ? Math.min(slides.length, Number(location.hash.slice(1))) - 1 : 0;
   document.querySelector('#slide-total').textContent = pad(slides.length);
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const revealSelector = [
+    '.eyebrow', 'h1', 'h2', '.heading-row>p', '.lead', '.cover-meta', '.cover-art', '.cover-bottom', '.takeaway',
+    '.problem-lines>div', '.phone-figure', '.discovery-track>article', '.bottom-statement', '.harness-center', '.harness-piece',
+    '.shared-line', '.workflow>*', '.workflow-return', '.role-bottom', '.lesson-line', '.terminal', '.test-metrics>div',
+    '.proof-loop>*', '.verification-copy>p', '.error-table thead', '.error-table tbody tr', '.assistant-flow>*', '.assistant-fact',
+    '.proof-panel', '.review-summary>*', '.finding-grid>div', '.closing-lessons>p', '.result-graphic', '.closing-stats>div',
+    '.closing-signoff>p', '.closing-signoff>.next-up'
+  ].join(',');
+  const countSelector = '.big-number, .test-metrics strong, .role-bottom strong, .review-summary strong, .finding-grid strong, .closing-stats strong, .donut-label strong';
+  const counters = new Map();
+  let countFrame;
+  slides.forEach(slide => {
+    slide.querySelectorAll('.slide-content').forEach(content => content.querySelectorAll(revealSelector).forEach((element, index) => {
+      element.classList.add('reveal');
+      element.style.setProperty('--i', Math.min(index, 16));
+    }));
+    slide.querySelectorAll(countSelector).forEach(element => {
+      const node = [...element.childNodes].find(child => child.nodeType === Node.TEXT_NODE && /\d/.test(child.textContent));
+      if (node) counters.set(node, { slide, element, text: node.textContent });
+    });
+  });
 
   slides.forEach((slide, index) => {
     const button = document.createElement('button');
@@ -22,6 +44,7 @@
     dots.append(button);
     const card = document.createElement('button');
     card.type = 'button';
+    card.style.setProperty('--i', index);
     const number = document.createElement('span');
     number.textContent = pad(index + 1);
     const title = document.createElement('b');
@@ -35,6 +58,9 @@
     index = Math.max(0, Math.min(slides.length - 1, index));
     if (index === current) return;
     const old = slides[current];
+    document.body.dataset.direction = index < current ? 'back' : 'forward';
+    document.body.style.setProperty('--glow-x', `${index % 2 ? 35 : -25}vmax`);
+    document.body.style.setProperty('--glow-y', `${-40 + index % 3 * 14}vmax`);
     const wasInOld = old?.contains(document.activeElement);
     slides.forEach((slide, position) => {
       const active = position === index;
@@ -47,7 +73,12 @@
     current = index;
     slides[index].scrollTop = 0;
     history.replaceState(null, '', `#${index + 1}`);
-    document.querySelector('#slide-number').textContent = pad(index + 1);
+    const slideNumber = document.querySelector('#slide-number');
+    slideNumber.textContent = pad(index + 1);
+    slideNumber.classList.remove('flip');
+    void slideNumber.offsetWidth;
+    slideNumber.classList.add('flip');
+    countUp(slides[index]);
     document.querySelector('#slide-label').textContent = slides[index].querySelector('.eyebrow').textContent.split('/').slice(1).join('/').trim();
     document.querySelector('#progress-fill').style.width = `${(index + 1) / slides.length * 100}%`;
     previous.disabled = index === 0;
@@ -55,6 +86,48 @@
     document.querySelector('#announcement').textContent = `Diapositiva ${index + 1} de ${slides.length}. ${slides[index].dataset.title}`;
     document.title = `${index + 1}/${slides.length} · ${slides[index].dataset.title} · BB Blues Jam`;
     if (focus || wasInOld) document.querySelector('#deck').focus({ preventScroll: true });
+  }
+
+  const formatNumber = (value, grouped) => grouped ? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : String(value);
+  const numberPattern = /\d{1,3}(?:\.\d{3})+|\d+/g;
+  const parseNumber = value => Number(value.replace(/\./g, ''));
+
+  // Arrow figures ("122 → 14") count from the left value to the right one; others count up from zero.
+  function interpolate(text, progress) {
+    if (progress >= 1) return text;
+    const arrow = text.indexOf('→');
+    if (arrow >= 0) {
+      const from = parseNumber(text.slice(0, arrow).match(numberPattern)[0]);
+      return text.slice(0, arrow + 1) + text.slice(arrow + 1).replace(numberPattern, match => formatNumber(Math.round(from + (parseNumber(match) - from) * progress), match.includes('.')));
+    }
+    return text.replace(numberPattern, match => formatNumber(Math.round(parseNumber(match) * progress), match.includes('.')));
+  }
+
+  function resetCounters() {
+    cancelAnimationFrame(countFrame);
+    counters.forEach(({ element, text }, node) => { node.textContent = text; element.classList.remove('counting'); });
+  }
+
+  function countUp(slide) {
+    resetCounters();
+    if (reducedMotion.matches) return;
+    const start = performance.now();
+    const active = [...counters].filter(([, counter]) => counter.slide === slide).map(([node, counter]) => {
+      const order = Number(counter.element.closest('.reveal')?.style.getPropertyValue('--i')) || 0;
+      return { node, ...counter, delay: order * 75 + 320 };
+    });
+    if (!active.length) return;
+    const tick = now => {
+      let running = false;
+      active.forEach(({ node, element, text, delay }) => {
+        const progress = Math.min(1, Math.max(0, (now - start - delay) / 1300));
+        node.textContent = interpolate(text, 1 - Math.pow(1 - progress, 3));
+        element.classList.toggle('counting', progress < 1);
+        running ||= progress < 1;
+      });
+      if (running) countFrame = requestAnimationFrame(tick);
+    };
+    countFrame = requestAnimationFrame(tick);
   }
 
   function toggleNotes() {
@@ -94,6 +167,7 @@
   document.querySelector('#close-overview').addEventListener('click', () => overview.close());
   document.querySelector('#restart').addEventListener('click', () => go(0, true));
   overview.addEventListener('click', event => { if (event.target === overview) { const box = overview.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) overview.close(); } });
+  window.addEventListener('beforeprint', resetCounters);
   window.addEventListener('hashchange', () => go(hashIndex()));
   document.addEventListener('fullscreenchange', () => {
     const active = !!document.fullscreenElement;

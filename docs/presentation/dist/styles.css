@@ -28,3 +28,72 @@
 #slide-3 .discovery-track{margin-top:clamp(20px,3.4vh,34px)}#slide-3 .big-number{margin:14px 0 8px}#slide-3 .decision{margin-top:14px}#slide-3 .bottom-statement{margin-top:22px}
 #slide-5 .workflow{margin-top:26px}#slide-5 .workflow article{padding:20px 24px}#slide-5 .workflow h3{margin-top:12px}#slide-5 .artifact{margin-top:16px;padding-top:12px}#slide-5 .workflow-return{padding:12px 0}#slide-5 .role-bottom{margin-top:16px}#slide-5 .lesson-line{margin-top:16px;padding-top:14px}
 @media(max-height:790px) and (min-width:901px){#slide-3 .big-number{font-size:56px;margin:10px 0 6px}#slide-3 .discovery-track article>p:not(.tool-name){min-height:0}#slide-5 .workflow h3{margin-top:8px;font-size:34px}#slide-5 .role-bottom>div b{font-size:34px}#slide-5 .workflow article>p:not(.tool-name){margin-top:10px}}
+/* Motion: staggered reveals, slide-specific accents and ambient light. Base styles stay at their final state, so print, reduced motion and no-JS show the complete slide. */
+body:before{content:'';position:fixed;z-index:-1;left:0;top:0;width:80vmax;height:80vmax;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#ffb30014 0,#ffb30008 35%,transparent 65%);transform:translate(var(--glow-x,-20vmax),var(--glow-y,-30vmax));transition:transform 1.6s cubic-bezier(.4,0,.2,1)}
+.slide.active .slide-content{animation:enter .45s ease both}
+.slide.active .reveal{animation:reveal .8s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0) * 75ms + 120ms)}
+.slide.active :is(h1,h2).reveal{animation-name:reveal-title;animation-duration:1s}
+.slide.active .error-table tr.reveal,.slide.active .problem-lines>div.reveal{animation-name:reveal-row}
+[data-direction=back] .slide.active .reveal{animation-delay:calc(var(--i,0) * 45ms + 60ms)}
+@keyframes reveal{from{opacity:0;transform:translateY(22px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes reveal-title{from{opacity:0;transform:translateY(.35em);clip-path:inset(0 0 100% 0)}to{opacity:1;transform:none;clip-path:inset(0 0 -10% 0)}}
+@keyframes reveal-row{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.counting{font-variant-numeric:tabular-nums}
+.record{transition:box-shadow .6s}.record:after{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(from 20deg,transparent 0 12%,#ffffff12 17%,transparent 24% 62%,#ffffff0d 67%,transparent 74%)}
+.slide.active .record{animation:record-drop 1.4s cubic-bezier(.16,1,.3,1) .25s both}
+.slide.active .record-label{animation:spin 14s linear 1.2s infinite}
+.cover-art:hover .record{box-shadow:20px 28px 60px #0006,0 0 70px #ffb3001f}
+@keyframes record-drop{from{opacity:0;transform:scale(.82) rotate(-160deg)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.slide.active .process-strip i{animation:arrow-flow 2.4s ease-in-out 1.6s infinite}
+.slide.active .process-strip i:nth-of-type(2){animation-delay:2s}
+@keyframes arrow-flow{0%,60%,100%{transform:none;color:var(--muted)}30%{transform:translateX(5px);color:var(--amber)}}
+.slide.active .line-number{animation:tint 1.6s ease both;animation-delay:calc(var(--i,0) * 75ms + 500ms)}
+@keyframes tint{0%{color:var(--amber)}100%{color:var(--archive)}}
+.harness-piece,.workflow article,.finding-grid>div,.closing-stats>div,#overview-grid button{transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .35s,background .35s,box-shadow .35s}
+.harness-piece:hover,.workflow article:hover{transform:translateY(-3px);border-color:var(--border);box-shadow:0 14px 30px #0005}
+.slide.active .hub-symbol{display:inline-block;animation:spin 9s linear infinite}
+.slide.active .harness-center{animation:reveal .9s cubic-bezier(.16,1,.3,1) both,hub-pulse 3.2s ease-out 1.4s infinite;animation-delay:.35s,1.4s}
+@keyframes hub-pulse{0%{box-shadow:0 0 0 0 #ffb30024}70%,100%{box-shadow:0 0 0 26px #ffb30000}}
+.slide.active .harness-center:before,.slide.active .harness-center:after{animation:line-grow .7s ease 1s both}
+.slide.active .harness-center:before{transform-origin:right}.slide.active .harness-center:after{transform-origin:left}
+.slide.active .shared-bar{animation:line-grow .9s ease 1.1s both}
+@keyframes line-grow{from{transform:scaleX(0)}to{transform:none}}
+.slide.active .flow-arrow{animation:reveal .8s cubic-bezier(.16,1,.3,1) both,arrow-nudge 1.8s ease-in-out 1.5s infinite;animation-delay:calc(var(--i,0) * 75ms + 120ms),1.5s}
+@keyframes arrow-nudge{0%,100%{transform:none;color:var(--muted)}50%{transform:translateX(6px);color:var(--amber)}}
+.slide.active .workflow article:nth-of-type(3) .artifact{animation:verdict 1s ease 1.4s both}
+@keyframes verdict{0%{color:var(--text)}40%{color:var(--amber)}100%{color:var(--text)}}
+.slide.active .terminal-body>*{animation:type-in .45s steps(6,end) both}
+.slide.active .terminal-body>:nth-child(1){animation-delay:.6s}.slide.active .terminal-body>:nth-child(2){animation-delay:1s}.slide.active .terminal-body>:nth-child(4){animation-delay:2.3s}
+.slide.active .terminal-results p{animation:result-in .5s cubic-bezier(.16,1,.3,1) both}
+.slide.active .terminal-results p:nth-child(1){animation-delay:1.4s}.slide.active .terminal-results p:nth-child(2){animation-delay:1.7s}.slide.active .terminal-results p:nth-child(3){animation-delay:2s}
+.slide.active .terminal-body>p:first-child:after{content:'▍';margin-left:4px;color:var(--amber);animation:blink 1s steps(1) infinite}
+@keyframes type-in{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 -2% 0 0)}}
+@keyframes result-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes blink{50%{opacity:0}}
+.slide.active .terminal-lights{animation:lights 3s ease 1s both}
+@keyframes lights{0%{color:var(--archive)}50%{color:var(--amber)}100%{color:var(--archive)}}
+.slide.active .proof-loop .failure{animation:reveal .8s cubic-bezier(.16,1,.3,1) both,alarm 1.4s ease 1.8s 2;animation-delay:calc(var(--i,0) * 75ms + 120ms),1.8s}
+@keyframes alarm{0%,100%{text-shadow:none}50%{text-shadow:0 0 14px #ffb4abaa}}
+.slide.active .assistant-flow .human-step{animation:reveal .8s cubic-bezier(.16,1,.3,1) both,human-glow 2.8s ease-in-out 2s infinite;animation-delay:calc(var(--i,0) * 75ms + 120ms),2s}
+@keyframes human-glow{0%,100%{border-color:var(--border)}50%{border-color:#ffb30099}}
+.slide.active .proof-zero strong{display:inline-block;animation:zero-pop 1s cubic-bezier(.34,1.56,.64,1) .7s both}
+@keyframes zero-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+.slide.active .review-summary>i{animation:arrow-nudge 1.8s ease-in-out 1.5s infinite}
+.finding-grid>div:hover,.closing-stats>div:hover{transform:translateY(-3px)}
+.slide.active .donut-accepted{animation:donut-draw 1.6s cubic-bezier(.65,0,.35,1) .5s both}
+.slide.active .donut-blocked{animation:reveal-fade .4s ease 2s both}
+@keyframes donut-draw{from{stroke-dasharray:0 65}to{stroke-dasharray:62.6 2.4}}
+@keyframes reveal-fade{from{opacity:0}to{opacity:1}}
+.slide.active .next-up{background:linear-gradient(90deg,var(--amber) 40%,#fff3c4 50%,var(--amber) 60%) 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 3.5s linear 1.5s infinite}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:-150% 0}}
+.slide.active .primary-button{animation:reveal .8s ease both,button-glow 2.6s ease-in-out 2s infinite;animation-delay:1.2s,2s}
+@keyframes button-glow{0%,100%{box-shadow:0 0 0 0 #ffb30000}50%{box-shadow:0 0 26px 2px #ffb30055}}
+.progress-track>div{transition:width .6s cubic-bezier(.65,0,.35,1);box-shadow:0 0 12px #ffb30099}
+.slide-dots button:after{transition:background .3s,left .3s,right .3s}.slide-dots button[aria-current=true]:after{left:-2px;right:-2px}
+#slide-number{display:inline-block}.flip{animation:flip .45s cubic-bezier(.16,1,.3,1)}
+@keyframes flip{from{opacity:0;transform:translateY(60%)}to{opacity:1;transform:none}}
+dialog[open] #overview-grid button{animation:reveal .55s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0) * 35ms)}
+#overview-grid button:hover{transform:translateY(-3px)}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media print{*,*:before,*:after{animation:none!important;transition:none!important}body:before{display:none}}
