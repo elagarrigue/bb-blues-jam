@@ -85,7 +85,7 @@ class JamsAdminTest {
         else -> null
     }
 
-    private fun PastJamsUiModel.card(): FutureJamUiModel = checkNotNull(admin()).future.first()
+    private fun PastJamsUiModel.card(): FutureJamUiModel = checkNotNull(admin()).future.minBy { it.date }
 
     private fun PastJamsUiModel.controls(): JamControlsUiModel = card().controls
 
@@ -163,9 +163,10 @@ class JamsAdminTest {
                 assertEquals(UiText.res(R.string.past_jams_upcoming_heading), admin.upcomingHeading)
                 assertEquals(UiText.res(R.string.past_jams_past_heading), admin.pastHeading)
                 assertNull(admin.noFuture)
-                assertEquals(listOf(upcomingDate, LocalDate.of(2026, 11, 28)), admin.future.map { it.date })
+                // Latest first: the upcoming jam is the last card.
+                assertEquals(listOf(LocalDate.of(2026, 11, 28), upcomingDate), admin.future.map { it.date })
 
-                val first = admin.future[0]
+                val first = admin.future[1]
                 assertEquals(dateTime(upcomingDate), first.dateLabel)
                 assertEquals("La Macanuda", first.venue)
                 assertEquals(createdChip, first.controls.status.selected())
@@ -176,7 +177,7 @@ class JamsAdminTest {
                 assertNull(first.controls.status.publishUnavailable)
                 assertNull(first.controls.publish)
 
-                val second = admin.future[1]
+                val second = admin.future[0]
                 assertEquals(dateTime(LocalDate.of(2026, 11, 28)), second.dateLabel)
                 assertEquals(draftChip, second.controls.status.selected())
                 assertEquals(UiText.res(R.string.past_jams_draft_note), second.note)
@@ -211,7 +212,7 @@ class JamsAdminTest {
             val model = expectMostRecentItem()
             val admin = checkNotNull(model.admin())
             assertEquals(
-                listOf(count(1), UiText.res(R.string.past_jams_future_unavailable)),
+                listOf(UiText.res(R.string.past_jams_future_unavailable), count(1)),
                 admin.future.map { it.songCount },
             )
             // Only a past draft: nothing to list below ANTERIORES, so the empty block, with the admin section.
@@ -559,7 +560,7 @@ class JamsAdminTest {
                 current.select(JamStatus.CREATED)
                 assertEquals(emptyList<Pair<LocalDate, JamStatus>>(), statuses.calls)
 
-                val held = checkNotNull(model.admin()).future[1].controls.status
+                val held = checkNotNull(model.admin()).future.sortedBy { it.date }[1].controls.status
                 assertEquals(listOf(createdChip), held.labels())
                 assertEquals(UiText.res(R.string.past_jams_publish_only_upcoming), held.publishUnavailable)
                 held.select(JamStatus.PUBLISHED)

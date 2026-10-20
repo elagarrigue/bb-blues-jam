@@ -16,8 +16,8 @@ import com.bbbjam.feature.pastjams.status.jamStatusUiModel
 import com.bbbjam.feature.pastjams.status.publishUiModel
 
 /**
- * The admin's section of the Jams tab from the **raw** snapshot (D-26 admin view): the upcoming jam,
- * then the held-back ones, BORRADOR included. Every card gets the status actions and the edit and delete
+ * The admin's section of the Jams tab from the **raw** snapshot (D-26 admin view): the jams to come,
+ * latest first (the upcoming jam last), BORRADOR included. Every card gets the status actions and the edit and delete
  * actions; only the upcoming card gets the publication (only it has an app-built setlist).
  */
 internal fun JamsSnapshot.toJamsAdmin(admin: JamsAdminState): JamsAdminUiModel {
@@ -28,9 +28,11 @@ internal fun JamsSnapshot.toJamsAdmin(admin: JamsAdminState): JamsAdminUiModel {
         upcomingHeading = UiText.res(R.string.past_jams_upcoming_heading),
         pastHeading = UiText.res(R.string.past_jams_past_heading),
         noFuture = if (future.isEmpty()) UiText.res(R.string.past_jams_no_future) else null,
+        // Drawn latest first, like the past jams below, so the tab reads newest to oldest; the upcoming
+        // jam is still the earliest one.
         future = future.mapIndexed { index, jam ->
             jam.toFutureCard(admin, future.first(), musiciansNext, index == 0)
-        },
+        }.reversed(),
         newJam = toNewJam(admin.newJam, admin.today),
         editForm = toEditForm(admin, future),
         deleteConfirm = admin.toDeleteConfirm(future),

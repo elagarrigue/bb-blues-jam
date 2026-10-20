@@ -90,7 +90,8 @@ class JamEditAdminTest {
         },
     )
 
-    private fun PastJamsUiModel.card(index: Int) = admin().future[index]
+    /** The [index]th future card in date order (they are drawn latest first). */
+    private fun PastJamsUiModel.card(index: Int) = admin().future.sortedBy { it.date }[index]
 
     private val createdChip = UiText.res(CoreR.string.jam_status_created)
     private val cancel = UiText.res(CoreR.string.jam_form_cancel)

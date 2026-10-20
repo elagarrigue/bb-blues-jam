@@ -824,8 +824,8 @@ in `JamFormText`); the assistant's `Crear una jam nueva con esta lista` form use
 The middle tab (`Jams`, D-27). A musician sees the past jams only, as before (title `Jams anteriores`). The admin sees the
 title `Jams` (`h1`) and two sections: `PRÓXIMAS` and `ANTERIORES` (`caption`, `textMuted`, heading semantics), the second
 with the unchanged past rows. `PRÓXIMAS` starts with a full-width `Nueva jam` button (`surfaceRaised` fill, `text`
-content, 48dp, never amber), then the result of the last creation, then one card per future jam in date order, the upcoming
-jam first, BORRADOR included (D-26); with none, the line `No hay ninguna jam programada.`. A card is on `surface`
+content, 48dp, never amber), then the result of the last creation, then one card per future jam, latest first (user request,
+20 October 2026: the tab reads newest to oldest, like `ANTERIORES`), so the upcoming jam is the last card, BORRADOR included (D-26); with none, the line `No hay ninguna jam programada.`. A card is on `surface`
 (`shapes.md`): the date `Sábado 31 de octubre · 21:00` (`songTitle`, `text`, with the two icons at its end), the venue and `12 temas` / `1 tema` /
 `Sin temas todavía` / `No se pudo leer la lista` (`body`, `textMuted`), the shared status badge (`:core:ui`, the
 "Status chips" component, below the date line) and the status note (`caption`, `textMuted`). Every future card carries the
