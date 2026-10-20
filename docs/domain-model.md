@@ -87,6 +87,9 @@ the model's memory, which is exactly where an LLM is weakest on this repertoire 
   filter (D-18).
 - A **Song** may appear in many **Jams**, with a different key and a different lineup each time.
 - Deleting a JamSong from a setlist does not affect the Song in the catalog.
+- **Deleting a Song** (`admin-catalog-tab`, D-30) is refused while it is in the setlist of the upcoming jam or of a
+  held-back jam, by the app and again by Apps Script. A Song only in past jams can be deleted: each jam tab keeps
+  plain-text copies of title and artist, and its id is never given to another song.
 
 Without a declared lineup, "open slot" has no definition and the app's primary filter cannot exist
 (D-06). The lineup is therefore not optional metadata; it is what makes the main screen work.
@@ -148,7 +151,7 @@ from the project entirely (D-04).
 
 | Entity | Authority | Direction |
 |---|---|---|
-| Song catalog | Sheet | Sheet → app, read-only |
+| Song catalog | App and Sheet (D-30) | title, artist and default key: app → Sheet via Apps Script (add, edit, delete); tempo, tags, difficulty and `songsterrId`: Sheet only; both may be edited, last write wins |
 | Past jams | Sheet | Sheet → app, read-only |
 | Future jam rows (D-25, D-28) | App | create, edit (date, time, venue) and delete via Apps Script; past jams stay in the Sheet |
 | Upcoming setlist | App | app → Sheet via Apps Script |

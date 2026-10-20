@@ -1,0 +1,422 @@
+✖ songSlug_ vectors (0.8544ms)
+✖ the router lists the four catalog actions as guarded writes (0.1638ms)
+✖ Post.js holds the lines the migration guide tells the user to look for (4.1797ms)
+✖ createSong appends one row with id, titulo, artista and tono_default only (1.6922ms)
+✖ createSong ignores a client id and normalizes text (0.1785ms)
+✖ createSong refusals write nothing (0.4812ms)
+✖ createSong: title clash adds the artist, then a numeric suffix (0.1664ms)
+✖ createSong never reuses an id found in a jam tab, past included, or in an invalid Catalogo row (0.1819ms)
+✖ updateSong writes only the changed cells, never id or the Sheet-only columns (0.6303ms)
+✖ updateSong with equal values is changed:false and writes nothing; a key-only change writes one cell (0.2615ms)
+✖ updateSong refusals write nothing (0.2205ms)
+✖ updateSong may keep its own title and artist (excludes the edited row from song_exists) (0.1914ms)
+✖ deleteSong refuses a song in the upcoming or a held-back jam and names the dates (0.204ms)
+✖ deleteSong deletes a song that is only in past jams and answers its id (0.3112ms)
+✖ deleteSong other refusals and a delete that did not happen (0.2087ms)
+✖ deleteSong refuses when a future jam tab cannot be read (0.1628ms)
+✖ create and update read-back failures are internal_error (0.1638ms)
+✖ checkCatalogWrite touches only the temporary tab, never Catalogo, and cleans up (0.2494ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 0
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79.8364
+
+✖ failing tests:
+
+test at test\catalog-write.test.js:156:1
+✖ songSlug_ vectors (0.8544ms)
+  TypeError: songSlug_ is not a function
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:157:16)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.start (node:internal/test_runner/test:1000:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17)
+
+test at test\catalog-write.test.js:164:1
+✖ the router lists the four catalog actions as guarded writes (0.1638ms)
+  TypeError: Cannot read properties of undefined (reading 'write')
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:166:32)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3)
+
+test at test\catalog-write.test.js:175:1
+✖ Post.js holds the lines the migration guide tells the user to look for (4.1797ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(source.includes('createSong: { write: true, run: createSong_ },'))
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:177:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:183:1
+✖ createSong appends one row with id, titulo, artista and tono_default only (1.6922ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: {
+  +     code: 'unknown_action',
+  +     message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite'
+  +   },
+  -   ok: true,
+      schemaVersion: 1,
+  -   song: {
+  -     artist: 'Jimi Hendrix',
+  -     defaultKey: 'Bb',
+  -     id: 'red-house',
+  -     title: 'Red House'
+  -   }
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:186:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { schemaVersion: 1, error: { code: 'unknown_action', message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite' } },
+    expected: { schemaVersion: 1, ok: true, song: { id: 'red-house', title: 'Red House', artist: 'Jimi Hendrix', defaultKey: 'Bb' } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:195:1
+✖ createSong ignores a client id and normalizes text (0.1785ms)
+  TypeError: Cannot read properties of undefined (reading 'id')
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:198:26)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7)
+
+test at test\catalog-write.test.js:202:1
+✖ createSong refusals write nothing (0.4812ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'invalid_title'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:153:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:214:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'invalid_title',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:227:1
+✖ createSong: title clash adds the artist, then a numeric suffix (0.1664ms)
+  TypeError: Cannot read properties of undefined (reading 'id')
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:229:75)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7)
+
+test at test\catalog-write.test.js:236:1
+✖ createSong never reuses an id found in a jam tab, past included, or in an invalid Catalogo row (0.1819ms)
+  TypeError: Cannot read properties of undefined (reading 'id')
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:238:33)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7)
+
+test at test\catalog-write.test.js:243:1
+✖ updateSong writes only the changed cells, never id or the Sheet-only columns (0.6303ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: {
+  +     code: 'unknown_action',
+  +     message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite'
+  +   },
+  -   changed: true,
+  -   ok: true,
+      schemaVersion: 1,
+  -   song: {
+  -     artist: 'Cream',
+  -     defaultKey: 'A',
+  -     id: 'crossroads',
+  -     title: 'Crossroads'
+  -   }
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:247:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { schemaVersion: 1, error: { code: 'unknown_action', message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite' } },
+    expected: { schemaVersion: 1, ok: true, song: { id: 'crossroads', title: 'Crossroads', artist: 'Cream', defaultKey: 'A' }, changed: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:255:1
+✖ updateSong with equal values is changed:false and writes nothing; a key-only change writes one cell (0.2615ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - false
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:258:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:265:1
+✖ updateSong refusals write nothing (0.2205ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'invalid_song'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:153:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:273:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'invalid_song',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:278:1
+✖ updateSong may keep its own title and artist (excludes the edited row from song_exists) (0.1914ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - true
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:280:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:283:1
+✖ deleteSong refuses a song in the upcoming or a held-back jam and names the dates (0.204ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'song_in_future_jam'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:153:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:287:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'song_in_future_jam',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:293:1
+✖ deleteSong deletes a song that is only in past jams and answers its id (0.3112ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: {
+  +     code: 'unknown_action',
+  +     message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite'
+  +   },
+  -   id: 'only-past',
+  -   ok: true,
+      schemaVersion: 1
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:296:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { schemaVersion: 1, error: { code: 'unknown_action', message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite' } },
+    expected: { schemaVersion: 1, ok: true, id: 'only-past' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:303:1
+✖ deleteSong other refusals and a delete that did not happen (0.2087ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'invalid_song'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:153:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:306:5)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'invalid_song',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:313:1
+✖ deleteSong refuses when a future jam tab cannot be read (0.1628ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'missing_header'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:153:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:315:3)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'missing_header',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:319:1
+✖ create and update read-back failures are internal_error (0.1638ms)
+  AssertionError [ERR_ASSERTION]: {"schemaVersion":1,"error":{"code":"unknown_action","message":"Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite"}}
+  + actual - expected
+  
+  + 'unknown_action'
+  - 'internal_error'
+  
+      at assertError (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:153:10)
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:320:3)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown_action',
+    expected: 'internal_error',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\catalog-write.test.js:324:1
+✖ checkCatalogWrite touches only the temporary tab, never Catalogo, and cleans up (0.2494ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: {
+  +     code: 'unknown_action',
+  +     message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite'
+  +   },
+  -   ok: true,
+      schemaVersion: 1
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\backend\apps-script\test\catalog-write.test.js:327:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { schemaVersion: 1, error: { code: 'unknown_action', message: 'Unknown or missing action. Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite' } },
+    expected: { schemaVersion: 1, ok: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

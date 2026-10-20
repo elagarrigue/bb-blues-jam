@@ -1,0 +1,4 @@
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'assistant-reads-only' was violated (1 time). Invalid files:
+    ??? File TempViolation.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\core\assistant\src\main\kotlin\com\bbbjam\core\assistant\TempViolation.kt
+
+22 tests completed, 2 failed

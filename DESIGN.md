@@ -197,15 +197,15 @@ arm's length on stage. It is the largest style in the app; rows keep `key` (44sp
 
 ## Layout
 
-Three tabs in a bottom navigation bar: **Próxima jam**, **Jams**, **Info**. Phase 2 adds a fourth, **Asistente**, drawn only while the admin session is active (last, so the musician tabs never move).
+Three tabs in a bottom navigation bar: **Próxima jam**, **Jams**, **Info**. While the admin session is active the bar also has **Temas** (between Jams and Info, `admin-catalog-tab`) and **Asistente** (phase 2, last), so a musician sees three tabs and the admin five; Info moves one place right for the admin only.
 
 ### Bottom bar
 
 Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
 
 - **Order and labels:** `Próxima jam`, `Jams` (called `Anteriores` until `admin-jams-tab`, D-27), `Info`, left to right, each with icon and
-  label (always shown). Icons from `material-icons-core` (I1): `List` (auto-mirrored), `DateRange`,
-  outlined `Info`; the icon has no description, the label names the item.
+  label (always shown); in admin mode `Temas` sits between `Jams` and `Info` and `Asistente` is last. Icons from `material-icons-core` (I1): `List` (auto-mirrored), `DateRange`,
+  outlined `Info`, `PlayArrow` for `Temas` (the core set has no music icon); the icon has no description, the label names the item.
 - **Colors:** bar container `surface`; selected icon and label `text` on an indicator
   `surfaceRaised` (12.75:1); unselected icon and label `textMuted`. **No amber**: the selected tab
   is a location, not an action ("amber only for what the user can act on"); the export's amber
@@ -844,6 +844,39 @@ la próxima jam sigue siendo la del sábado 31 de octubre.`; every creation says
 ven hasta que la pases a creada o publiques la lista.` `Crear la jam` closes the dialog and shows `Creando la jam…` (polite),
 then `Jam creada como borrador.`, or an assertive failure card (`No se pudo crear la jam`, the reason, `La jam no se creó.`,
 `Reintentar`, `Cerrar`; with an outdated script, `Cerrar` only). The new card appears only after the server answers.
+
+### Temas tab (admin-catalog-tab)
+
+The admin's catalog (D-30), a fifth bar item for the admin only; a musician never sees it and a session that ends while it
+is selected returns to Próxima jam. One column of `LazyColumn` items, pull to refresh like the other tabs:
+
+- **Header:** title `Temas` (`h1`, heading); the count `128 temas` / `1 tema` (`caption`, `textMuted`); a full-width
+  `Agregar tema` button (`surfaceRaised`, `text`, 48dp, `shapes.md`, never amber, `textMuted` while a write runs).
+- **Notice** under the button: the sending line (`Guardando el tema…` / `Borrando el tema…`) and the result line
+  (`Tema agregado.`, `Cambios guardados.`, `Tema borrado.`) are `body` `textMuted` polite live regions; a failure is the
+  assertive card of the Jams tab (`surface`, title `error` `No se pudo agregar el tema` / `No se pudo guardar el tema` / `No se pudo
+  borrar el tema`, the reason in `textMuted`, `El catálogo sigue como estaba.`, underlined `text` actions `Reintentar`
+  (only when sending the same request again can help) and `Cerrar`).
+- **Search** `Buscar por título o artista`: outlined, every colour role set from tokens (as the admin login), `textMuted`
+  label. It filters title or artist ignoring case and accents; no match reads `No hay temas que coincidan con «…».`
+- **Rows** (`surface`, `shapes.md`): title (`songTitle`, `text`, two lines) and artist (`body`, `textMuted`) in one merged node
+  with the default key at the end (`songTitle` size, amber `key`, described `Tonalidad A`), then the edit (`text`) and delete
+  (`error`) icons as 48dp `IconRowAction`s described `Editar Crossroads` / `Borrar Crossroads`, drawn disabled (`textMuted`)
+  while any catalog write runs. Sorted by title then artist, ignoring case and accents. The only amber in the module is `key`.
+- **Add and edit form** (Material 3 `AlertDialog`, `surfaceRaised`): title `Agregar tema` / `Editar tema`; three outlined fields
+  `Título`, `Artista`, `Tonalidad` (hint `Ej.: A, Bm, F#`; not the Próxima jam key grid). Field errors are `error` `caption`:
+  `Escribí el título.`, `Escribí el artista.`, `Hasta 100 caracteres.`, `No puede empezar con =, +, - ni @.`, `Tiene que tener
+  alguna letra o número.`, `Usá una tonalidad como A, Bm o F#.`, and under the artist `Ya hay un tema con ese título y ese
+  artista.`. `textMuted` notes: add `El tempo, las etiquetas y la dificultad se cargan en la planilla.`; edit `Las jams pasadas
+  muestran los datos nuevos. La tonalidad de cada jam no cambia.` `Agregar` / `Guardar` and `Cancelar` are `text`
+  (`textMuted` when disabled; `Guardar` stays disabled until something differs). Back and a tap outside equal `Cancelar`.
+- **Delete dialog:** `¿Borrar «Crossroads»?` with `textMuted` `caption` lines `Robert Johnson`, `Las jams pasadas lo siguen
+  mostrando.`, `No se puede deshacer.`; `Borrar el tema` in `error`, `Cancelar` in `text`. If the song is in the readable
+  list of the upcoming or a held-back jam the dialog is a refusal instead, and nothing is sent: `No se puede borrar
+  «Crossroads»`, `Está en la lista de la jam del sábado 25 de julio.` (two jams: `de las jams del … y del …`; more: the first
+  and `de n más`), `Sacalo de esa lista antes de borrarlo.`, one `Entendido` in `text`.
+- **States:** the shared skeleton, error block, empty state (`Todavía no hay temas`) and staleness notice of `list-states`.
+- Tokens only (`BluesJamTheme.*`), no dp or colour literals; colours in `CatalogDefaults`.
 
 ### Editing and deleting a jam (admin-edit-delete-jam)
 

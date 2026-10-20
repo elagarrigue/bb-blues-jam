@@ -30,6 +30,8 @@ import androidx.room.TypeConverters
 internal abstract class BluesJamDatabase : RoomDatabase() {
     abstract fun catalogDao(): CatalogDao
 
+    abstract fun catalogEditDao(): CatalogEditDao
+
     abstract fun jamsDao(): JamsDao
 
     abstract fun setlistDao(): SetlistDao

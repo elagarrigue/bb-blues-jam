@@ -33,6 +33,9 @@ internal object AppRoutes {
     /** The Info tab. */
     const val INFO = "info"
 
+    /** The admin-only Temas tab (`admin-catalog-tab`); registered always, drawn only for the admin. */
+    const val CATALOG = "catalog"
+
     /** The admin-only Asistente tab (`assistant-admin-tab`); registered always, drawn only for the admin. */
     const val ASSISTANT = "assistant"
 

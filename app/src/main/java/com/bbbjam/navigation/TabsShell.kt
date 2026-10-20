@@ -25,6 +25,7 @@ import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.nav.TabBar
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.feature.assistant.AssistantScreen
+import com.bbbjam.feature.catalog.CatalogScreen
 import com.bbbjam.feature.info.InfoScreen
 import com.bbbjam.feature.nextjam.NextJamScreen
 import com.bbbjam.feature.pastjams.PastJamsScreen
@@ -44,8 +45,9 @@ import java.time.LocalDate
  * picker, all in the outer host. The admin's key picker and assign screen open from the song
  * detail (`song-detail-replaces-row-expansion`), not from the tabs.
  *
- * [admin] is the admin flag, null until it is read (`assistant-admin-tab`): the Asistente tab is in
- * the bar and drawn only when it is true, and a real false while it is selected selects Próxima jam.
+ * [admin] is the admin flag, null until it is read (`assistant-admin-tab`, `admin-catalog-tab`): the Temas and
+ * Asistente tabs are in the bar and drawn only when it is true, and a real false while one is selected selects
+ * Próxima jam.
  * The route is registered always (navigation graphs must be stable). While the keyboard is up the bar
  * is not drawn, so the composer sits right above the keyboard with no bar-high gap.
  */
@@ -68,7 +70,7 @@ internal fun TabsShell(
         if (tab != currentSelected) inner.select(tab)
     }
     LaunchedEffect(selected, admin) {
-        if (shouldLeaveAssistant(selected, admin)) inner.select(AppTab.NEXT_JAM)
+        if (shouldLeaveAdminTab(selected, admin)) inner.select(AppTab.NEXT_JAM)
     }
     Column(modifier = modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
         NavHost(
@@ -84,6 +86,7 @@ internal fun TabsShell(
                 NextJamScreen(onOpenSong = onOpenSong, onAddSong = onOpenAddSong)
             }
             composable(AppRoutes.PAST_JAMS) { PastJamsScreen(onOpenJam = onOpenPastJam) }
+            composable(AppRoutes.CATALOG) { if (admin == true) CatalogScreen() }
             composable(AppRoutes.INFO) { InfoScreen(onOpenAdminLogin = onOpenAdminLogin) }
             composable(AppRoutes.ASSISTANT) { if (admin == true) AssistantScreen() }
         }

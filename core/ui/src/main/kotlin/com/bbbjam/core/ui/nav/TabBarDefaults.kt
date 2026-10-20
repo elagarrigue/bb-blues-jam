@@ -3,6 +3,7 @@ package com.bbbjam.core.ui.nav
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.ui.graphics.Color
@@ -35,8 +36,14 @@ internal object TabBarDefaults {
     /** I1: icons from `material-icons-core`, no new dependency. The list mirrors in RTL. */
     fun icon(icon: TabIcon): ImageVector = when (icon) {
         TabIcon.SETLIST -> Icons.AutoMirrored.Filled.List
+
         TabIcon.ARCHIVE -> Icons.Filled.DateRange
+
         TabIcon.INFO -> Icons.Outlined.Info
+
         TabIcon.ASSISTANT -> Icons.Filled.Star
+
+        // I1: material-icons-core has no music icon; the label names the tab (`admin-catalog-tab`).
+        TabIcon.CATALOG -> Icons.Filled.PlayArrow
     }
 }

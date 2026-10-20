@@ -16,6 +16,7 @@ import com.bbbjam.debug.debugOverrides
 import com.bbbjam.debug.isDemo
 import com.bbbjam.di.appModule
 import com.bbbjam.feature.assistant.di.assistantModule
+import com.bbbjam.feature.catalog.di.catalogModule
 import com.bbbjam.feature.info.di.infoModule
 import com.bbbjam.feature.nextjam.di.nextJamModule
 import com.bbbjam.feature.pastjams.di.pastJamsModule
@@ -54,6 +55,7 @@ class BluesJamApp : Application() {
                 dataModule,
                 assistantCoreModule,
                 assistantModule,
+                catalogModule,
                 infoModule,
                 nextJamModule,
                 pastJamsModule,

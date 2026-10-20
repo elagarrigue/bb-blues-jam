@@ -63,7 +63,7 @@ single authority:
 
 | Entity | Authority | Direction |
 |---|---|---|
-| Song catalog | Sheet | Sheet → app, read-only |
+| Song catalog | App and Sheet (D-30) | title, artist and default key: app → Sheet via Apps Script; the rest Sheet only |
 | Past jams | Sheet | Sheet → app, read-only |
 | Upcoming setlist | App | app → Sheet via Apps Script |
 | Published status | App | app → Sheet |

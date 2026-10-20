@@ -460,10 +460,10 @@ class ModuleIsolationTest {
          * sees the data through `catalog` and `jams` (the repositories its tools read). Known limit: a
          * text match on the package names, so an import alias or a split qualified name escapes.
          */
-        val ASSISTANT_FORBIDDEN_PACKAGES = listOf("setlist", "admin", "remote", "cache")
+        val ASSISTANT_FORBIDDEN_PACKAGES = listOf("setlist", "admin", "remote", "cache", "catalog.edit")
             .map { "com.bbbjam.core.data.$it" }
         val ASSISTANT_FORBIDDEN_QUALIFIED =
-            Regex("""\bcom\.bbbjam\.core\.data\.(setlist|admin|remote|cache)\b""")
+            Regex("""\bcom\.bbbjam\.core\.data\.(setlist|admin|remote|cache|catalog\.edit)\b""")
 
         const val FEATURE_ASSISTANT = "feature/assistant"
 
@@ -480,7 +480,10 @@ class ModuleIsolationTest {
          * feature cannot bypass the contracts through `SetlistMoveRepository` and the like.
          */
         val ASSISTANT_FEATURE_FORBIDDEN =
-            Regex("""\bcom\.bbbjam\.core\.data\.(setlist\.(\w+\.)*(Setlist\w*Repository|\*)|admin\.(AdminWriter|\*))""")
+            Regex(
+                """\bcom\.bbbjam\.core\.data\.(setlist\.(\w+\.)*(Setlist\w*Repository|\*)|""" +
+                    """admin\.(AdminWriter|\*)|catalog\.edit\.(\w+|\*))""",
+            )
 
         val INCLUDE_REGEX = Regex("""include\(\s*"(:[^"]+)"\s*\)""")
         val PROJECT_DEPENDENCY = Regex("""project\(\s*"(:[^"]+)"\s*\)""")
@@ -536,6 +539,8 @@ class ModuleIsolationTest {
             "feature/info" to setOf("primaryAction", "onPrimaryAction"),
             // assistant-admin-tab: "Enviar" (`button-primary`) and the key of each proposed song.
             "feature/assistant" to setOf("key", "primaryAction", "onPrimaryAction"),
+            // admin-catalog-tab: the default key of each song row (`key`); the buttons are neutral.
+            "feature/catalog" to setOf("key"),
         )
 
         /**
@@ -555,6 +560,7 @@ class ModuleIsolationTest {
             "feature/past-jams" to setOf("PastJamsScreen", "PastJamDetailScreen", "pastJamsModule"),
             "feature/info" to setOf("InfoScreen", "AdminLoginScreen", "infoModule"),
             "feature/assistant" to setOf("AssistantScreen", "assistantModule"),
+            "feature/catalog" to setOf("CatalogScreen", "catalogModule"),
         )
 
         /**

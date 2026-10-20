@@ -1,3 +1,38 @@
+## 20 October 2026 - admin-catalog-tab implemented (passing, awaiting validation and the Apps Script redeploy)
+
+Part A and Part B in one pass (D-30, amends D-04). The admin gets a fifth tab, Temas, between Jams and Info: list, search,
+add, edit (title, artist, default key) and delete with confirmation. Apps Script got createSong, updateSong, deleteSong and
+checkCatalogWrite (server-generated slug id, never reused from Catalogo or any jam tab, delete refused while the song is in the
+upcoming or a held-back jam). :core:data has CatalogEditRepository (Room follows only a valid echo, then a catalog refresh).
+New module :feature:catalog; :app and :core:ui wired; Konsist rules 18 and 19 extended (shown failing first); docs and the
+migration guide written (docs/migrations/admin-catalog-tab-script-update.md).
+
+Verification run: node --test backend/apps-script/test/*.test.js 229 -> 247 passing (18 new tests, shown failing against the
+old Post.js first); CI=true ./init.sh exit 0 with konsist, detekt and ktlint wired; JVM XML totals 1209 testcases, 1 skipped,
+0 failures (1156 at HEAD + 53 new: core:data 25, core:ui 1, feature:catalog 27). Evidence in docs/evidence/admin-catalog-tab/ and feature_list.json.
+
+NOT RUN: live checks L1-L5 and any device check (no emulator used). They wait for the user to paste Post.js into Post.gs and
+redeploy as a new version of the existing deployment (migration guide). Until then the Temas tab shows the outdated-script card
+on every write. Admin mode on the device needs the passphrase login (no forced debug admin). Existing uncommitted work from
+other tasks (launcher icons, presentations) was left untouched.
+
+Next best step: the user redeploys the script, then L1-L4 (and L5 if wanted), then the independent validator.
+
+## 20 October 2026 - launcher icon refinement
+
+User-requested refinement: removed the yellow enclosing ring and redrew the guitar, setlist and
+cream JAM de BLUES lettering. Updated the adaptive foreground and all ten legacy launcher PNGs.
+Transparent source and exact built-in image-generation prompt: docs/design/launcher/.
+Regenerate resources with scripts/update-launcher-icons.ps1. DESIGN.md updated.
+
+Baseline failed Konsist no-dp-literal-outside-core-ui on the existing AppSplash divider. Narrow
+supporting fix: moved unchanged 48dp/1dp dimensions into core:ui brand/SplashDefaults; rules unchanged.
+Final CI=true ./init.sh exit 0; konsist, detekt and ktlint wired. Foreground and 192px round icon
+visually inspected. Adaptive opaque radius 308.35px at 1024px: zero pixels outside 66/108 safe circle.
+All ten legacy dimensions verified (48/72/96/144/192px). git diff --check clean.
+Tracked as launcher-icon-refinement, passing (self-verified). No device installation or independent
+acceptance. Existing unrelated catalog planning and presentation work preserved.
+
 ## 18 October 2026 - UI copy moved to strings.xml
 
 User decision, reversing `info-screen` Decision 6 (copy in Kotlin `*Copy` objects). Every `*Copy` object is deleted; each of `:core:ui`, `:feature:next-jam`, `:feature:past-jams`, `:feature:assistant` and `:feature:info` owns `src/main/res/values/strings.xml` (module-prefixed names, no duplicates across modules). UiModels carry `com.bbbjam.core.ui.text.UiText` (`res`/`plural`/`raw`), resolved by screens; presenters stay Android-free and tests assert `UiText` equality. Shared copy (write failures, jam form, list states, instruments, dates, statuses) lives in `:core:ui`. Not migrated on purpose: logs, Sheet/wire names, the agent prompt and tool output in `:core:assistant`, preview fixtures. Architecture skill updated. Accepted cost: the phase 2 assistant no longer reads plain copy from a UiModel.

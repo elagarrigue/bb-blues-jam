@@ -1,0 +1,67 @@
+<resources>
+    <!-- Temas tab (admin-catalog-tab) -->
+    <string name="catalog_title">Temas</string>
+    <plurals name="catalog_count">
+        <item quantity="one">%d tema</item>
+        <item quantity="other">%d temas</item>
+    </plurals>
+    <string name="catalog_add">Agregar tema</string>
+    <string name="catalog_search_label">Buscar por título o artista</string>
+    <string name="catalog_loading">Cargando los temas…</string>
+    <string name="catalog_load_failed">No pudimos cargar los temas</string>
+    <string name="catalog_empty_title">Todavía no hay temas</string>
+    <string name="catalog_empty_message">Agregá el primero con el botón Agregar tema.</string>
+    <string name="catalog_no_results">No hay temas que coincidan con «%1$s».</string>
+    <string name="catalog_edit_description">Editar %1$s</string>
+    <string name="catalog_delete_description">Borrar %1$s</string>
+
+    <!-- Result lines -->
+    <string name="catalog_saving">Guardando el tema…</string>
+    <string name="catalog_deleting">Borrando el tema…</string>
+    <string name="catalog_added">Tema agregado.</string>
+    <string name="catalog_saved">Cambios guardados.</string>
+    <string name="catalog_deleted">Tema borrado.</string>
+
+    <!-- Failure card -->
+    <string name="catalog_create_failed">No se pudo agregar el tema</string>
+    <string name="catalog_update_failed">No se pudo guardar el tema</string>
+    <string name="catalog_delete_failed">No se pudo borrar el tema</string>
+    <string name="catalog_unchanged">El catálogo sigue como estaba.</string>
+    <string name="catalog_close">Cerrar</string>
+    <string name="catalog_failure_song_exists">Ya hay un tema con ese título y ese artista.</string>
+    <string name="catalog_failure_in_future_jam">Ese tema está en la lista de una jam que viene. Sacalo de esa lista antes de borrarlo.</string>
+    <string name="catalog_failure_duplicate_id">Ese tema está repetido en la planilla. Corregilo ahí y probá de nuevo.</string>
+    <string name="catalog_failure_script_outdated">El script de la planilla todavía no sabe editar el catálogo. Actualizalo con la guía y probá de nuevo.</string>
+
+    <!-- Add and edit form -->
+    <string name="catalog_form_add_title">Agregar tema</string>
+    <string name="catalog_form_edit_title">Editar tema</string>
+    <string name="catalog_form_title_label">Título</string>
+    <string name="catalog_form_artist_label">Artista</string>
+    <string name="catalog_form_key_label">Tonalidad</string>
+    <string name="catalog_form_key_hint">Ej.: A, Bm, F#</string>
+    <string name="catalog_form_add">Agregar</string>
+    <string name="catalog_form_save">Guardar</string>
+    <string name="catalog_form_add_note">El tempo, las etiquetas y la dificultad se cargan en la planilla.</string>
+    <string name="catalog_form_edit_note">Las jams pasadas muestran los datos nuevos. La tonalidad de cada jam no cambia.</string>
+    <string name="catalog_error_title_empty">Escribí el título.</string>
+    <string name="catalog_error_artist_empty">Escribí el artista.</string>
+    <string name="catalog_error_too_long">Hasta 100 caracteres.</string>
+    <string name="catalog_error_control">Usá solo letras, números y signos comunes.</string>
+    <string name="catalog_error_formula">No puede empezar con =, +, - ni @.</string>
+    <string name="catalog_error_no_letters">Tiene que tener alguna letra o número.</string>
+    <string name="catalog_error_key">Usá una tonalidad como A, Bm o F#.</string>
+    <string name="catalog_error_duplicate">Ya hay un tema con ese título y ese artista.</string>
+
+    <!-- Delete dialogs -->
+    <string name="catalog_delete_title">¿Borrar «%1$s»?</string>
+    <string name="catalog_delete_past_note">Las jams pasadas lo siguen mostrando.</string>
+    <string name="catalog_delete_undo">No se puede deshacer.</string>
+    <string name="catalog_delete_confirm">Borrar el tema</string>
+    <string name="catalog_refused_title">No se puede borrar «%1$s»</string>
+    <string name="catalog_refused_one">Está en la lista de la jam del %1$s.</string>
+    <string name="catalog_refused_two">Está en la lista de las jams del %1$s y del %2$s.</string>
+    <string name="catalog_refused_many">Está en la lista de las jams del %1$s y de %2$d más.</string>
+    <string name="catalog_refused_advice">Sacalo de esa lista antes de borrarlo.</string>
+    <string name="catalog_refused_ok">Entendido</string>
+</resources>

@@ -4,6 +4,7 @@
     <string name="tab_jams">Jams</string>
     <string name="tab_info">Info</string>
     <string name="tab_assistant">Asistente</string>
+    <string name="tab_catalog">Temas</string>
 
     <!-- Shell -->
     <string name="admin_banner_label">MODO ADMIN</string>

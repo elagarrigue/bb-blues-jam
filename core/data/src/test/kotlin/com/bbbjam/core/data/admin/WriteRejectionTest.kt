@@ -33,6 +33,11 @@ class WriteRejectionTest {
         WriteRejection.INVALID_DATE to "invalid_date",
         WriteRejection.INVALID_TIME to "invalid_time",
         WriteRejection.INVALID_VENUE to "invalid_venue",
+        WriteRejection.SONG_EXISTS to "song_exists",
+        WriteRejection.SONG_IN_FUTURE_JAM to "song_in_future_jam",
+        WriteRejection.DUPLICATE_ID to "duplicate_id",
+        WriteRejection.INVALID_TITLE to "invalid_title",
+        WriteRejection.INVALID_ARTIST to "invalid_artist",
     )
 
     @Test

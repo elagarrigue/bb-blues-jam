@@ -1,0 +1,4 @@
+    com.lemonappdev.konsist.core.exception.KoAssertionFailedException: Assert 'assistant-feature-applies-through-contract' was violated (1 time). Invalid files:
+    ??? File TempViolation.kt file://C:\Users\Emmanuel\AndroidStudioProjects\BBBluesJam\feature\assistant\src\main\kotlin\com\bbbjam\feature\assistant\TempViolation.kt
+
+ModuleIsolationTest > the assistant module reads data only through the catalog and jams repositories FAILED

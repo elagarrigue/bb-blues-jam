@@ -28,8 +28,8 @@ the MVP does not use (D-20). A Song exists
 independently of any Jam and is reused across Jams.
 
 ### Catalog
-The full repertoire of Songs available to be programmed, maintained by the admin in the Sheet. The
-Catalog is the only pool the assistant may select from.
+The full repertoire of Songs available to be programmed, maintained by the admin in the Sheet and, for title,
+artist and default key, from the app's **Temas** tab (D-30). The Catalog is the only pool the assistant may select from.
 
 ### Lineup
 The set of Slots defined for one JamSong — which instruments are needed and how many of each. The
@@ -86,7 +86,8 @@ Hideaway radio program). What the Info tab presents; facts in `docs/info-content
 
 ### Sheet
 The Google Sheets workbook that serves as the project's backend, reached through Apps Script. It is
-the authority for the Catalog and past Jams; the app is the authority for the upcoming Setlist.
+the authority for past Jams and the Catalog's optional fields; the catalog's title, artist and default key are
+written by the app too (D-30), and the app is the authority for the upcoming Setlist.
 
 ### Live Window
 The time around a Jam when Próxima jam refreshes itself often: from 30 minutes before its start to

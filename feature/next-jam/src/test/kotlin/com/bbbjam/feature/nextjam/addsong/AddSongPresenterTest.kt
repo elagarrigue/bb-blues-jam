@@ -6,11 +6,10 @@ import app.cash.turbine.test
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.admin.WriteOutcome
-import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.CatalogSnapshot
-import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.data.setlist.add.SetlistAdd
+import com.bbbjam.core.data.testing.FakeCatalogRepository
 import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Jam
 import com.bbbjam.core.model.JamSong
@@ -194,25 +193,6 @@ class AddSongPresenterTest {
             assertEquals(1, backs)
             assertTrue(setlist.addCalls.isEmpty())
             cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    /** Emits what the test puts in [snapshots]; counts subscriptions and refreshes. */
-    class FakeCatalogRepository : CatalogRepository {
-        val snapshots = MutableSharedFlow<CatalogSnapshot>(replay = 1)
-        var subscriptions = 0
-            private set
-        var refreshCalls = 0
-            private set
-
-        override fun observeCatalog(): Flow<CatalogSnapshot> {
-            subscriptions++
-            return snapshots
-        }
-
-        override suspend fun refresh(): RefreshOutcome {
-            refreshCalls++
-            return RefreshOutcome.Failed(DataFailure.Offline)
         }
     }
 }

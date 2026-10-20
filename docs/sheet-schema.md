@@ -50,11 +50,12 @@ Seed files for import live in `docs/sheet-seed/`.
 
 | Tab | One row per | Authority (D-04) | Written by |
 |---|---|---|---|
-| `Catalogo` | Song | Sheet | The admin, by hand. The app never writes it. |
+| `Catalogo` | Song | Sheet, and the app for title, artist and default key (D-30) | The admin by hand, and Apps Script for the admin's Temas tab (`createSong`, `updateSong`, `deleteSong`); last write wins |
 | `Jams` | Jam | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `YYYY-MM-DD`, one tab per jam | JamSong in that jam's setlist | Sheet for past jams; app for the upcoming jam | Admin by hand; Apps Script for the upcoming jam |
 | `Config` | Setting | Sheet | The admin, by hand |
 | `_prueba_escritura` | Nothing (transient) | Apps Script | Created and deleted by the `checkWriteAccess` deploy check within one request (`apps-script-write-auth`); never read by any route, never served |
+| `_prueba_catalogo` | Nothing (transient) | Apps Script | Created with the `Catalogo` header and one base row, given a marker row that is appended, edited, read back and deleted, and deleted itself by the `checkCatalogWrite` deploy check within one request (`admin-catalog-tab`); it never opens `Catalogo` and no route serves it |
 | `_prueba_lista` | Nothing (transient) | Apps Script | Created with the jam tab header, given one marker row and deleted by the `checkSetlistWrite` deploy check within one request (`admin-add-song-to-setlist`), or given three marker rows, one removed, and deleted by the `checkSetlistRemove` deploy check (`admin-remove-song-from-setlist`); since `admin-set-key` the `checkSetlistWrite` marker's `tono` is also rewritten (`Bbm` to `F#m`) before the read-back; it has no `Jams` row, so no route ever serves it |
 
 A jam tab is named with its ISO date, for example `2026-07-25`, so tabs sort chronologically and the
@@ -77,8 +78,32 @@ The id is what jam tabs reference, so fixing a typo in a title or an artist neve
 
 MusicBrainz, Deezer and Last.fm enrichment (`mbid`, `artistArea`, `deezerTrackId`, `previewUrl`,
 `artworkUrl`) is **not** stored in the Sheet: it is fetched in the background and cached in Room
-(D-09). Storing it here would make the app a writer of the catalog, which D-04 forbids.
+(D-09). Storing it here would make the app a writer of those fields; since D-30 the app writes only `id`, `titulo`,
+`artista` and `tono_default` (see **Rows the app writes in `Catalogo`**), and the optional columns stay Sheet-only.
 `songsterr_id` is not enrichment: the admin types it in the Sheet and nothing fetches it.
+
+### Rows the app writes in `Catalogo` (`admin-catalog-tab`, D-30)
+
+The admin's Temas tab adds, edits and deletes rows through Apps Script, always under the script lock and after the
+passphrase guard:
+
+- **Add** (`createSong`) appends one row after the last one with `id`, `titulo`, `artista` and `tono_default`, as plain
+  text; `tempo`, `etiquetas`, `dificultad` and `songsterr_id` stay empty for the admin to fill in the Sheet. The client
+  never sends an id: the server makes it (below).
+- **Edit** (`updateSong`) writes only the cells among `titulo`, `artista` and `tono_default` that changed, on the row
+  found by its trimmed `id`. The `id` and every other cell stay. Editing a title never rewrites the copies in jam tabs
+  (they are a fallback only) and editing `tono_default` never changes a jam's `tono` (D-08).
+- **Delete** (`deleteSong`) removes the row, and is refused (`song_in_future_jam`) while any `Jams` row with a known
+  `estado` dated today or later (the upcoming jam and every held-back jam) has a row with that `id_tema` in its tab.
+- **The id is a slug**, from `titulo`: NFD, accents dropped (U+0300 to U+036F), lowercase, every run of characters outside
+  `[a-z0-9]` one `-`, hyphens trimmed (`Café Madrid` is `cafe-madrid`, `Ñandú` is `nandu`, `7/4` is `7-4`). If taken, the
+  id is `slug(titulo)-slug(artista)`, and if that is taken too, that plus `-2`, `-3`, ... (the smallest free). **Taken** is
+  every trimmed `id` cell of `Catalogo` (valid or not) and every `id_tema` of the jam tab of every `Jams` row, past
+  included, so a deleted song's id is never reused while history still names it.
+- **Duplicates.** Another row with the same slug of `titulo` and the same slug of `artista` is `song_exists` (an edit does
+  not count the row being edited). A retried create after a lost answer is therefore safe.
+- **Text.** `titulo` and `artista`: plain text, no control characters, trimmed, whitespace runs collapsed, 1 to 100
+  characters, not starting with `=`, `+`, `-` or `@`, and at least one letter or digit. `tono_default` matches **Keys**.
 
 ## `Jams` → `Jam`
 

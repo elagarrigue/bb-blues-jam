@@ -11,13 +11,16 @@ import com.bbbjam.core.ui.text.UiText
  * The bottom bar's tabs in bar order, each with its inner route, its approved label (Rioplatense
  * Spanish, D-12) and its icon (I1).
  */
-internal enum class AppTab(val route: String, val label: Int, val icon: TabIcon) {
+internal enum class AppTab(val route: String, val label: Int, val icon: TabIcon, val adminOnly: Boolean = false) {
     NEXT_JAM(AppRoutes.NEXT_JAM, R.string.tab_next_jam, TabIcon.SETLIST),
     PAST_JAMS(AppRoutes.PAST_JAMS, R.string.tab_jams, TabIcon.ARCHIVE),
+
+    /** Admin only (`admin-catalog-tab`): the catalog, between Jams and Info. */
+    CATALOG(AppRoutes.CATALOG, R.string.tab_catalog, TabIcon.CATALOG, adminOnly = true),
     INFO(AppRoutes.INFO, R.string.tab_info, TabIcon.INFO),
 
     /** Admin only (`assistant-admin-tab`); always last, so the musician tabs never move. */
-    ASSISTANT(AppRoutes.ASSISTANT, R.string.tab_assistant, TabIcon.ASSISTANT),
+    ASSISTANT(AppRoutes.ASSISTANT, R.string.tab_assistant, TabIcon.ASSISTANT, adminOnly = true),
     ;
 
     companion object {
@@ -27,18 +30,17 @@ internal enum class AppTab(val route: String, val label: Int, val icon: TabIcon)
 }
 
 /**
- * The tabs the bar draws: the musician tabs always, [AppTab.ASSISTANT] only when [admin] is true.
- * [admin] is null while the flag has not been read yet (process start, restore): no admin tab then.
+ * The tabs the bar draws: the musician tabs always, the [AppTab.adminOnly] ones (Temas, Asistente) only when
+ * [admin] is true. [admin] is null while the flag has not been read yet (process start, restore): no admin tab then.
  */
-internal fun visibleTabs(admin: Boolean?): List<AppTab> =
-    AppTab.entries.filter { it != AppTab.ASSISTANT || admin == true }
+internal fun visibleTabs(admin: Boolean?): List<AppTab> = AppTab.entries.filter { !it.adminOnly || admin == true }
 
 /**
- * True when the shell must leave the Asistente tab: it is selected and the flag was read as false
- * (the session ended). A flag not read yet (null) never redirects.
+ * True when the shell must leave an admin-only tab (Temas, Asistente): it is selected and the flag was read
+ * as false (the session ended). A flag not read yet (null) never redirects.
  */
-internal fun shouldLeaveAssistant(selected: AppTab?, admin: Boolean?): Boolean =
-    selected == AppTab.ASSISTANT && admin == false
+internal fun shouldLeaveAdminTab(selected: AppTab?, admin: Boolean?): Boolean =
+    selected?.adminOnly == true && admin == false
 
 /**
  * The bar for the current [selected] tab (none selected when null) over [visibleTabs] for [admin].

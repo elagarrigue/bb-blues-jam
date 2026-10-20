@@ -10,6 +10,8 @@ import com.bbbjam.core.data.admin.DefaultAdminSession
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.DefaultCatalogRepository
+import com.bbbjam.core.data.catalog.edit.CatalogEditRepository
+import com.bbbjam.core.data.catalog.edit.DefaultCatalogEditRepository
 import com.bbbjam.core.data.jams.DefaultJamsRepository
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
@@ -45,6 +47,7 @@ val dataModule = module {
     single { BluesJamDatabase.create(get()) }
     single { get<BluesJamDatabase>().catalogDao() }
     single<CatalogRepository> { DefaultCatalogRepository(get(), get(), get(), get()) }
+    single { get<BluesJamDatabase>().catalogEditDao() }
     single { get<BluesJamDatabase>().jamsDao() }
     single<JamsRepository> { DefaultJamsRepository(get(), get(), get(), get(), get(), get()) }
     single { AdminCredentialStore(AdminCredentialStore.dataStore(get())) }
@@ -53,5 +56,6 @@ val dataModule = module {
     single<WriteFailureLog> { WriteFailureLog { line -> Log.w(LOG_TAG, line) } }
     single { get<BluesJamDatabase>().setlistDao() }
     single { SetlistMutationQueue() }
+    single<CatalogEditRepository> { DefaultCatalogEditRepository(get(), get(), get(), get()) }
     single<SetlistRepository> { DefaultSetlistRepository(get(), get(), get(), get(), get(), get()) }
 }

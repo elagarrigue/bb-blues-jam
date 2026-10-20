@@ -19,7 +19,9 @@ the feature handoff and does not indicate that the shared router has been update
 The fifteen actions currently reported by the shared router are `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
 `setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`,
-`publishSetlist` and `checkPublish`. The remote source hash is not exposed by the API.
+`publishSetlist` and `checkPublish`. Later slices added more (see `docs/apps-script-api.md`); since `admin-catalog-tab` (D-30) the router
+also lists `createSong`, `updateSong`, `deleteSong` and `checkCatalogWrite`, deployed with `docs/migrations/admin-catalog-tab-script-update.md`.
+The remote source hash is not exposed by the API.
 
 Every POST action passes one passphrase guard in the router, with a rate limit of 10 failed
 guesses per 10 minutes; write actions run under the script lock. The GET reads never open the

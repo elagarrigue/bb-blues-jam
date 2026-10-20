@@ -4,7 +4,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * The song catalog, read from the Sheet through Apps Script and cached on the device (D-04: the
- * Sheet owns it; the app never writes it). Cache-first: the last stored catalog is always served,
+ * Sheet owns it; the admin edits title, artist and default key through [com.bbbjam.core.data.catalog.edit.CatalogEditRepository],
+ * D-30, and the next refresh replaces the cache). Cache-first: the last stored catalog is always served,
  * offline included, with its [com.bbbjam.core.data.Freshness].
  */
 interface CatalogRepository {

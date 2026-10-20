@@ -14,20 +14,30 @@ import org.junit.Test
 class AppTabTest {
 
     @Test
-    fun `the tabs are in bar order with the approved labels, routes and icons, Asistente last`() {
-        val all = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO, AppTab.ASSISTANT)
+    fun `the tabs are in bar order with the approved labels, routes and icons, Temas after Jams and Asistente last`() {
+        val all = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.CATALOG, AppTab.INFO, AppTab.ASSISTANT)
         assertEquals(all, AppTab.entries.toList())
         assertEquals(
-            listOf(R.string.tab_next_jam, R.string.tab_jams, R.string.tab_info, R.string.tab_assistant),
+            listOf(
+                R.string.tab_next_jam,
+                R.string.tab_jams,
+                R.string.tab_catalog,
+                R.string.tab_info,
+                R.string.tab_assistant,
+            ),
             AppTab.entries.map { it.label },
         )
         assertEquals(
-            listOf(AppRoutes.NEXT_JAM, AppRoutes.PAST_JAMS, AppRoutes.INFO, AppRoutes.ASSISTANT),
+            listOf(AppRoutes.NEXT_JAM, AppRoutes.PAST_JAMS, AppRoutes.CATALOG, AppRoutes.INFO, AppRoutes.ASSISTANT),
             AppTab.entries.map { it.route },
         )
         assertEquals(
-            listOf(TabIcon.SETLIST, TabIcon.ARCHIVE, TabIcon.INFO, TabIcon.ASSISTANT),
+            listOf(TabIcon.SETLIST, TabIcon.ARCHIVE, TabIcon.CATALOG, TabIcon.INFO, TabIcon.ASSISTANT),
             AppTab.entries.map { it.icon },
+        )
+        assertEquals(
+            listOf(false, false, true, false, true),
+            AppTab.entries.map { it.adminOnly },
         )
     }
 
@@ -41,21 +51,26 @@ class AppTabTest {
     }
 
     @Test
-    fun `the Asistente tab is visible only when the admin flag is true`() {
+    fun `the admin-only tabs are visible only when the admin flag is true`() {
         val musician = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO)
         assertEquals(musician, visibleTabs(null))
         assertEquals(musician, visibleTabs(false))
-        assertEquals(musician + AppTab.ASSISTANT, visibleTabs(true))
+        assertEquals(
+            listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.CATALOG, AppTab.INFO, AppTab.ASSISTANT),
+            visibleTabs(true),
+        )
     }
 
     @Test
-    fun `the shell leaves Asistente only on a real false`() {
-        assertTrue(shouldLeaveAssistant(AppTab.ASSISTANT, false))
-        assertFalse(shouldLeaveAssistant(AppTab.ASSISTANT, null))
-        assertFalse(shouldLeaveAssistant(AppTab.ASSISTANT, true))
+    fun `the shell leaves Temas and Asistente only on a real false`() {
+        listOf(AppTab.CATALOG, AppTab.ASSISTANT).forEach { tab ->
+            assertTrue(shouldLeaveAdminTab(tab, false))
+            assertFalse(shouldLeaveAdminTab(tab, null))
+            assertFalse(shouldLeaveAdminTab(tab, true))
+        }
         listOf(null, false, true).forEach { admin ->
             listOf(null, AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO).forEach { selected ->
-                assertFalse("$selected/$admin", shouldLeaveAssistant(selected, admin))
+                assertFalse("$selected/$admin", shouldLeaveAdminTab(selected, admin))
             }
         }
     }
@@ -72,9 +87,9 @@ class AppTabTest {
             }
         }
         assertEquals(listOf(false, false, false), tabBarModel(null, false) {}.tabs.map { it.selected })
-        assertEquals(listOf(false, false, false, false), tabBarModel(null, true) {}.tabs.map { it.selected })
+        assertEquals(List(5) { false }, tabBarModel(null, true) {}.tabs.map { it.selected })
         assertEquals(3, tabBarModel(AppTab.NEXT_JAM, null) {}.tabs.size)
-        assertEquals(4, tabBarModel(AppTab.ASSISTANT, true) {}.tabs.size)
+        assertEquals(5, tabBarModel(AppTab.ASSISTANT, true) {}.tabs.size)
     }
 
     @Test

@@ -692,6 +692,10 @@ Musicians never receive the overlay. A move target is absolute, so a replay has 
 
 ## Quotas
 
+`createSong` and `deleteSong` read the `id_tema` column of every jam tab named by a `Jams` row (past ones too, to never reuse
+an id; future ones to refuse a delete), so with a few years of monthly jams they open a few dozen small tabs per call.
+They are rare admin actions under the script lock.
+
 From Google's "Quotas for Google Services" page (developers.google.com/apps-script/guides/services/quotas,
 page last updated 3 September 2026, read 1 October 2026). Google states all quotas may change
 without notice. Limits for a consumer (gmail.com) account:
@@ -847,3 +851,24 @@ second passes the future-jam rule (`futureJamIn_`) and fails the upcoming-jam ru
 `jam_not_editable`), then appends a marker row to a temporary setlist tab with `appendSetlistRow_` and reads it back with
 `buildSetlist`. Both tabs are deleted in `finally`; it never opens `Jams` or a real jam tab. Answer `{ok:true}`.
 Do not run `addSong` by hand against the real Sheet.
+
+### `createSong`, `updateSong`, `deleteSong` and `checkCatalogWrite` (`admin-catalog-tab`, D-30)
+
+Four guarded, locked writes, the last entries of `ACTIONS` (`..., checkFutureSetlistWrite, createSong, updateSong,
+deleteSong, checkCatalogWrite`). Every refusal happens before any write and the answer is read back from the Sheet.
+Songs are written as plain text. The row layout and the id rules are in `sheet-schema.md` (**Rows the app writes in
+`Catalogo`**).
+
+| Action | Request fields | Refusals, in order | Answer |
+|---|---|---|---|
+| `createSong` | `title`, `artist`, `defaultKey` (other fields, an `id` included, are ignored) | `invalid_title`, `invalid_artist`, `invalid_key`, `missing_tab`, `missing_header`/`duplicate_header`, `song_exists` | `{ok, song:{id,title,artist,defaultKey}}` with the generated id and the normalized texts |
+| `updateSong` | `id`, `title`, `artist`, `defaultKey` (all required) | `invalid_song`, `invalid_title`, `invalid_artist`, `invalid_key`, `missing_tab`, header codes, `unknown_song`, `duplicate_id`, `song_exists` | `{ok, song, changed}`; equal values answer `changed:false` and write nothing |
+| `deleteSong` | `id` | `invalid_song`, `missing_tab`, header codes, `unknown_song`, `duplicate_id`, `song_in_future_jam` (the message lists the dates; a future jam tab that cannot be mapped refuses with its header code) | `{ok, id}` |
+| `checkCatalogWrite` | none | none | `{ok:true}` |
+
+`checkCatalogWrite` works only on the temporary tab `_prueba_catalogo` (a leftover is deleted first, and the tab is
+deleted in `finally`): it writes the `Catalogo` header and a base row, appends a marker row, rewrites its key, reads it back
+with `buildCatalog` and deletes it. It never opens `Catalogo`. Do not run `createSong`, `updateSong` or `deleteSong` by
+hand against the real Sheet. Client side, `CatalogEditRepository` (`:core:data`, `catalog/edit`) sends them through
+`AdminWriter`, mirrors Room only from a valid `song` echo and then refreshes the catalog; `unknown_action` is
+`ScriptOutdated` (migration guide `docs/migrations/admin-catalog-tab-script-update.md`).

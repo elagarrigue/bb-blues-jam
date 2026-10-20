@@ -84,6 +84,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:assistant"))
     implementation(project(":feature:assistant"))
+    implementation(project(":feature:catalog"))
     implementation(project(":feature:info"))
     implementation(project(":feature:next-jam"))
     implementation(project(":feature:past-jams"))

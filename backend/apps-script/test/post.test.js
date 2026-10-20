@@ -15,7 +15,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { loadScript, SRC_DIR, SRC_FILES } = require('./helpers/load.js');
 
-const { handlePost, doPost, ACTIONS, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, requirePassphrase_, handleGet } = loadScript();
+const { handlePost, doPost, ACTIONS, CATALOG_CHECK_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, requirePassphrase_, handleGet } = loadScript();
 
 const STORED = 'Blues-Pass 42';
 const CONFIG_TAB = 'Config';
@@ -190,7 +190,7 @@ const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
 test('the action table: checkPassphrase and readJams read, every other action writes', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus', 'updateJam', 'deleteJam', 'checkJamEdit', 'checkFutureSetlistWrite']);
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus', 'updateJam', 'deleteJam', 'checkJamEdit', 'checkFutureSetlistWrite', 'createSong', 'updateSong', 'deleteSong', 'checkCatalogWrite']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
@@ -493,7 +493,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -520,7 +520,7 @@ test('no response, message, cache key or cache value contains the stored or the 
             assert.ok(!text.includes('zz-submitted-marker') && !text.includes('definitely-wrong'), `submitted passphrase leaked: ${text}`);
           }
           // The tabs the actions are documented to open (docs/apps-script-api.md); never any other.
-          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, PUBLISH_CHECK_TAB, CREATE_JAM_CHECK_TAB, FUTURE_SETLIST_CHECK_TAB, `${FUTURE_SETLIST_CHECK_TAB}_lista`, JAM_EDIT_CHECK_TAB, `${JAM_EDIT_CHECK_TAB}_a`, `${JAM_EDIT_CHECK_TAB}_b`, 'Jams', 'Catalogo'];
+          const allowed = [CONFIG_TAB, WRITE_CHECK_TAB, SETLIST_CHECK_TAB, PUBLISH_CHECK_TAB, CREATE_JAM_CHECK_TAB, FUTURE_SETLIST_CHECK_TAB, `${FUTURE_SETLIST_CHECK_TAB}_lista`, JAM_EDIT_CHECK_TAB, `${JAM_EDIT_CHECK_TAB}_a`, `${JAM_EDIT_CHECK_TAB}_b`, 'Jams', 'Catalogo', CATALOG_CHECK_TAB];
           assert.ok(fake.requested.every((name) => allowed.includes(name)), `requested ${fake.requested}`);
           for (const [key, value] of services.cache.store) {
             assert.match(key, /^auth_failures_\d+$/);
@@ -598,7 +598,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite'));
+  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite'));
   });
   withAppsScript({
     getActiveSpreadsheet() {

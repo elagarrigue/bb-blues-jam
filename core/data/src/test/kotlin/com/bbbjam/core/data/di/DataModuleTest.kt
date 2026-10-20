@@ -12,6 +12,7 @@ import com.bbbjam.core.data.admin.LoginOutcome
 import com.bbbjam.core.data.cache.BluesJamDatabase
 import com.bbbjam.core.data.catalog.CatalogRepository
 import com.bbbjam.core.data.catalog.RefreshOutcome
+import com.bbbjam.core.data.catalog.edit.CatalogEditRepository
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRefreshOutcome
 import com.bbbjam.core.data.jams.JamsRepository
@@ -79,6 +80,9 @@ class DataModuleTest {
 
             // admin-add-song-to-setlist: one setlist repository, whose entries live in memory.
             assertSame(app.koin.get<SetlistRepository>(), app.koin.get<SetlistRepository>())
+
+            // admin-catalog-tab: one catalog edit repository, which owns the write serialization.
+            assertSame(app.koin.get<CatalogEditRepository>(), app.koin.get<CatalogEditRepository>())
         } finally {
             app.close()
             database.close()

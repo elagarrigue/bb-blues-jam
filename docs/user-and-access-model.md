@@ -44,7 +44,7 @@ everyone, write for the passphrase holder.
 
 ## Ownership Boundaries
 
-Ownership is by entity, not by user (D-04). The Sheet owns the catalog and past jams; the app owns
+Ownership is by entity, not by user (D-04). The Sheet owns past jams and, with the app for title, artist and default key (D-30), the catalog; the app owns
 the upcoming setlist and its published status. No user owns a resource, so there is nothing to
 transfer and no per-record access rules.
 

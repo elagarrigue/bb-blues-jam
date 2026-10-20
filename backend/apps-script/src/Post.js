@@ -54,6 +54,12 @@
  * mutation (removeSong, moveSong, setKey, setSlotCount, assignSlot, clearSlot, the extras) and PUBLICADA stay
  * upcoming-only (requireEditableJam_). `checkFutureSetlistWrite` proves the two guards on temporary tabs.
  *
+ * admin-catalog-tab (D-30, amends D-04) adds `createSong`, `updateSong`, `deleteSong` and `checkCatalogWrite`: the
+ * admin adds, edits (titulo, artista, tono_default) and deletes Catalogo rows. The server generates the slug id
+ * under the script lock and never reuses one found in Catalogo or in any jam tab; the id, tempo, etiquetas,
+ * dificultad and songsterr_id are never written after creation. deleteSong is refused while the song is in the
+ * list of the upcoming or a held-back jam. Every refusal happens before any write.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
  * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -99,6 +105,12 @@ var FUTURE_SETLIST_CHECK_TAB = '_prueba_lista_futura';
 
 /** Request formats for addSong (docs/sheet-schema.md, Identifiers and Keys). */
 var POST_ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
+/** Temporary tab of the catalog write check (admin-catalog-tab); never Catalogo. */
+var CATALOG_CHECK_TAB = '_prueba_catalogo';
+
+/** Longest title or artist createSong and updateSong accept (UTF-16 units). */
+var MAX_SONG_TEXT_LENGTH_ = 100;
+
 var SONG_ID_ = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 var KEY_ = /^[A-G][#b]?m?$/;
 
@@ -162,6 +174,10 @@ var ACTIONS = {
   deleteJam: { write: true, run: deleteJam_ },
   checkJamEdit: { write: true, run: checkJamEdit_ },
   checkFutureSetlistWrite: { write: true, run: checkFutureSetlistWrite_ },
+  createSong: { write: true, run: createSong_ },
+  updateSong: { write: true, run: updateSong_ },
+  deleteSong: { write: true, run: deleteSong_ },
+  checkCatalogWrite: { write: true, run: checkCatalogWrite_ },
 };
 
 /**
@@ -1661,6 +1677,268 @@ function clearSlotFromRow_(sheet, row, columns, instrument, ordinal, expectedNam
   return { field: field };
 }
 
+/**
+ * Validates and normalizes a song title or artist: plain text, trimmed, whitespace runs collapsed,
+ * 1 to MAX_SONG_TEXT_LENGTH_ characters, not starting like a formula, with at least one letter or
+ * digit (a non-empty slug). Throws ContractError `code` otherwise.
+ */
+function normalizeSongText_(value, code) {
+  const label = code.replace('invalid_', '');
+  if (typeof value !== 'string' || /[\u0000-\u001f\u007f-\u009f]/.test(value)) {
+    throw new ContractError(code, label + ' must be plain text');
+  }
+  const text = value.trim().replace(/\s+/g, ' ');
+  if (text.length === 0 || text.length > MAX_SONG_TEXT_LENGTH_ || /^[=+\-@]/.test(text) || songSlug_(text) === '') {
+    throw new ContractError(code, label + ' must be a plain name of at most ' + MAX_SONG_TEXT_LENGTH_ + ' characters with a letter or digit');
+  }
+  return text;
+}
+
+/** The slug of a text: NFD, accents dropped, lowercase, runs outside [a-z0-9] become one `-`, trimmed. */
+function songSlug_(text) {
+  return String(text)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** The song fields of a request, validated in the order title, artist, key. */
+function songFieldsFromRequest_(request) {
+  const title = normalizeSongText_(request.title, 'invalid_title');
+  const artist = normalizeSongText_(request.artist, 'invalid_artist');
+  if (typeof request.defaultKey !== 'string' || !KEY_.test(request.defaultKey)) {
+    throw new ContractError('invalid_key', 'defaultKey must be a key such as A, Bm or F#');
+  }
+  return { title: title, artist: artist, defaultKey: request.defaultKey };
+}
+
+/** The Catalogo tab, its mapped columns and its display rows; missing_tab and the header codes otherwise. */
+function openCatalog_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName(CATALOG_TAB);
+  if (!sheet) {
+    throw new ContractError('missing_tab', 'The tab ' + CATALOG_TAB + ' does not exist');
+  }
+  const rows = sheet.getDataRange().getDisplayValues();
+  return { sheet: sheet, rows: rows, columns: catalogColumns_(rows.length > 0 ? rows[0] : []) };
+}
+
+/** The unique Catalogo row of `id` (trimmed match): `{ row, cells }`; unknown_song or duplicate_id otherwise. */
+function findCatalogRow_(rows, columns, id) {
+  const matches = [];
+  for (let index = 1; index < rows.length; index++) {
+    if (textCell((rows[index] || [])[columns.id]) === id) matches.push({ row: index + 1, cells: rows[index] });
+  }
+  if (matches.length === 0) throw new ContractError('unknown_song', id + ' is not on a Catalogo row');
+  if (matches.length > 1) throw new ContractError('duplicate_id', id + ' is on more than one Catalogo row');
+  return matches[0];
+}
+
+/** Throws song_exists when another row (not `exceptRow`) has the same title slug and artist slug. */
+function requireNewSong_(rows, columns, fields, exceptRow) {
+  const title = songSlug_(fields.title);
+  const artist = songSlug_(fields.artist);
+  for (let index = 1; index < rows.length; index++) {
+    if (index + 1 === exceptRow) continue;
+    const cells = rows[index] || [];
+    const otherTitle = textCell(cells[columns.title]);
+    const otherArtist = textCell(cells[columns.artist]);
+    if (otherTitle !== null && otherArtist !== null && songSlug_(otherTitle) === title && songSlug_(otherArtist) === artist) {
+      throw new ContractError('song_exists', 'Catalogo already has ' + fields.title + ' by ' + fields.artist);
+    }
+  }
+}
+
+/** Every id a new song may not take: all Catalogo id cells and every id_tema of the tab of each Jams date. */
+function takenSongIds_(spreadsheet, catalogRows, columns) {
+  const taken = {};
+  for (let index = 1; index < catalogRows.length; index++) {
+    const id = textCell((catalogRows[index] || [])[columns.id]);
+    if (id !== null) taken[id] = true;
+  }
+  const jamsSheet = spreadsheet.getSheetByName(JAMS_TAB);
+  if (!jamsSheet) return taken;
+  const timeZone = spreadsheet.getSpreadsheetTimeZone();
+  const range = jamsSheet.getDataRange();
+  const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+    return Utilities.formatDate(value, timeZone, pattern);
+  }).jams;
+  jams.forEach(function (jam) {
+    const tab = jam.date === null ? null : spreadsheet.getSheetByName(jam.date);
+    if (!tab) return;
+    const display = tab.getDataRange().getDisplayValues();
+    const header = display.length > 0 ? display[0].map(function (cell) { return String(cell).trim(); }) : [];
+    const column = header.indexOf('id_tema');
+    if (column < 0) return;
+    for (let index = 1; index < display.length; index++) {
+      const id = textCell((display[index] || [])[column]);
+      if (id !== null) taken[id] = true;
+    }
+  });
+  return taken;
+}
+
+/** The first free id: slug(title), then slug(title)-slug(artist), then that plus -2, -3, ... */
+function newSongId_(fields, taken) {
+  const base = songSlug_(fields.title);
+  if (!taken[base]) return base;
+  const withArtist = base + '-' + songSlug_(fields.artist);
+  if (!taken[withArtist]) return withArtist;
+  let n = 2;
+  while (taken[withArtist + '-' + n]) n++;
+  return withArtist + '-' + n;
+}
+
+/** Throws unless the Catalogo row `row` reads back as `song` (display values). */
+function verifyCatalogSong_(sheet, row, columns, song) {
+  const width = sheet.getDataRange().getDisplayValues()[0].length;
+  const cells = sheet.getRange(row, 1, 1, width).getDisplayValues()[0];
+  if (textCell(cells[columns.id]) !== song.id || textCell(cells[columns.title]) !== song.title ||
+      textCell(cells[columns.artist]) !== song.artist || textCell(cells[columns.defaultKey]) !== song.defaultKey) {
+    throw new Error('The Catalogo row did not read back');
+  }
+}
+
+/** Writes one Catalogo row after the last row: id, titulo, artista and tono_default only, as text, then reads it back. */
+function appendCatalogRow_(sheet, columns, song, services) {
+  const row = sheet.getLastRow() + 1;
+  const wanted = [
+    [columns.id, song.id],
+    [columns.title, song.title],
+    [columns.artist, song.artist],
+    [columns.defaultKey, song.defaultKey],
+  ];
+  wanted.forEach(function (item) { sheet.getRange(row, item[0] + 1).setNumberFormat(PLAIN_TEXT_FORMAT); });
+  wanted.forEach(function (item) { sheet.getRange(row, item[0] + 1).setValue(item[1]); });
+  services.flush();
+  verifyCatalogSong_(sheet, row, columns, song);
+  return row;
+}
+
+/** Writes `[{column, value}]` into one Catalogo row as text and reads each cell back (same writer as Jams cells). */
+function writeCatalogCells_(sheet, row, services, changes) {
+  writeJamCells_(sheet, row, services, changes);
+}
+
+/** Deletes the Catalogo row `row` of `id`, flushes, and throws unless the id is gone. */
+function deleteCatalogRow_(sheet, columns, services, row, id) {
+  sheet.deleteRow(row);
+  services.flush();
+  const rows = sheet.getDataRange().getDisplayValues();
+  for (let index = 1; index < rows.length; index++) {
+    if (textCell((rows[index] || [])[columns.id]) === id) throw new Error('The Catalogo row of ' + id + ' was not deleted');
+  }
+}
+
+/**
+ * Adds a song (admin-catalog-tab, D-30). Refusals before any write, in order: invalid_title, invalid_artist,
+ * invalid_key, missing_tab, header codes, song_exists. The id is generated here (never taken from the request).
+ */
+function createSong_(request, spreadsheet, services) {
+  const fields = songFieldsFromRequest_(request);
+  const catalog = openCatalog_(spreadsheet);
+  requireNewSong_(catalog.rows, catalog.columns, fields, -1);
+  const id = newSongId_(fields, takenSongIds_(spreadsheet, catalog.rows, catalog.columns));
+  const song = { id: id, title: fields.title, artist: fields.artist, defaultKey: fields.defaultKey };
+  appendCatalogRow_(catalog.sheet, catalog.columns, song, services);
+  return { ok: true, song: song };
+}
+
+/**
+ * Edits the title, artist and default key of a song (all required). Refusals before any write: invalid_song,
+ * the three field codes, missing_tab, header codes, unknown_song, duplicate_id, song_exists. Equal values answer
+ * `changed: false` with no write; otherwise only the changed cells are written and read back.
+ */
+function updateSong_(request, spreadsheet, services) {
+  if (typeof request.id !== 'string' || !SONG_ID_.test(request.id)) {
+    throw new ContractError('invalid_song', 'id must be a song id');
+  }
+  const fields = songFieldsFromRequest_(request);
+  const catalog = openCatalog_(spreadsheet);
+  const found = findCatalogRow_(catalog.rows, catalog.columns, request.id);
+  requireNewSong_(catalog.rows, catalog.columns, fields, found.row);
+  const columns = catalog.columns;
+  const changes = [];
+  if (textCell(found.cells[columns.title]) !== fields.title) changes.push({ column: columns.title, value: fields.title });
+  if (textCell(found.cells[columns.artist]) !== fields.artist) changes.push({ column: columns.artist, value: fields.artist });
+  if (textCell(found.cells[columns.defaultKey]) !== fields.defaultKey) changes.push({ column: columns.defaultKey, value: fields.defaultKey });
+  const song = { id: request.id, title: fields.title, artist: fields.artist, defaultKey: fields.defaultKey };
+  if (changes.length === 0) return { ok: true, song: song, changed: false };
+  writeCatalogCells_(catalog.sheet, found.row, services, changes);
+  return { ok: true, song: song, changed: true };
+}
+
+/**
+ * Deletes a song. Refusals before any write: invalid_song, missing_tab, header codes, unknown_song,
+ * duplicate_id, then song_in_future_jam (the message lists the dates; an unreadable future tab refuses with its
+ * header code). The row is deleted and verified gone.
+ */
+function deleteSong_(request, spreadsheet, services) {
+  if (typeof request.id !== 'string' || !SONG_ID_.test(request.id)) {
+    throw new ContractError('invalid_song', 'id must be a song id');
+  }
+  const catalog = openCatalog_(spreadsheet);
+  const found = findCatalogRow_(catalog.rows, catalog.columns, request.id);
+  const dates = futureJamsWithSong_(spreadsheet, services, request.id);
+  if (dates.length > 0) {
+    throw new ContractError('song_in_future_jam', request.id + ' is in the setlist of ' + dates.join(', '));
+  }
+  deleteCatalogRow_(catalog.sheet, catalog.columns, services, found.row, request.id);
+  return { ok: true, id: request.id };
+}
+
+/** The dates of every future jam (known estado, today or later) whose tab has a row with `id_tema` = `id`. */
+function futureJamsWithSong_(spreadsheet, services, id) {
+  const sheet = spreadsheet.getSheetByName(JAMS_TAB);
+  if (!sheet) {
+    throw new ContractError('missing_tab', 'The tab ' + JAMS_TAB + ' does not exist');
+  }
+  const timeZone = spreadsheet.getSpreadsheetTimeZone();
+  const range = sheet.getDataRange();
+  const jams = buildJams(range.getDisplayValues(), range.getValues(), function () { return null; }, function (value, pattern) {
+    return Utilities.formatDate(value, timeZone, pattern);
+  }).jams;
+  const today = todayIso_(spreadsheet, services);
+  const dates = [];
+  jams.forEach(function (jam) {
+    const known = jam.status === DRAFT_STATUS || jam.status === CREATED_STATUS || jam.status === PUBLISHED_STATUS;
+    if (!known || jam.date === null || !POST_ISO_DATE_.test(jam.date) || jam.date < today) return;
+    const tab = spreadsheet.getSheetByName(jam.date);
+    if (!tab) return;
+    const tabRange = tab.getDataRange();
+    const rows = buildSetlist(tabRange.getDisplayValues(), tabRange.getValues(), jam.date);
+    if (rows.some(function (row) { return row.songId === id; })) dates.push(jam.date);
+  });
+  return dates;
+}
+
+/** Self-cleaning proof that a Catalogo row can be appended, edited, read and deleted, on `_prueba_catalogo` only. */
+function checkCatalogWrite_(request, spreadsheet, services) {
+  const leftover = spreadsheet.getSheetByName(CATALOG_CHECK_TAB);
+  if (leftover) spreadsheet.deleteSheet(leftover);
+  const sheet = spreadsheet.insertSheet(CATALOG_CHECK_TAB);
+  const header = CATALOG_FIELDS.map(function (spec) { return spec.header; });
+  sheet.getRange(1, 1, 2, header.length).setValues([header, ['zz-prueba-base', 'Base', 'Prueba', 'A', '', '', '', '']]);
+  const columns = catalogColumns_(header);
+  let songs;
+  try {
+    const marker = { id: 'zz-prueba-catalogo', title: '7/4', artist: 'Prueba', defaultKey: 'Bbm' };
+    const row = appendCatalogRow_(sheet, columns, marker, services);
+    writeCatalogCells_(sheet, row, services, [{ column: columns.defaultKey, value: CHECK_KEY_ }]);
+    const range = sheet.getDataRange();
+    songs = buildCatalog(range.getDisplayValues(), range.getValues()).songs;
+    deleteCatalogRow_(sheet, columns, services, row, marker.id);
+  } finally {
+    spreadsheet.deleteSheet(sheet);
+  }
+  const added = songs && songs.length === 2 ? songs[1] : null;
+  if (!added || added.id !== 'zz-prueba-catalogo' || added.title !== '7/4' || added.defaultKey !== CHECK_KEY_) {
+    throw new Error('The catalog write check read back a different row');
+  }
+  return { ok: true };
+}
+
 /** Today in the spreadsheet's time zone, as YYYY-MM-DD: the zone the admin's dates are typed in. */
 function todayIso_(spreadsheet, services) {
   return Utilities.formatDate(new Date(services.now), spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
@@ -1888,6 +2166,7 @@ function notSet_() {
 if (typeof module !== 'undefined') {
   module.exports = {
     ACTIONS,
+    CATALOG_CHECK_TAB,
     CREATE_JAM_CHECK_TAB,
     FUTURE_SETLIST_CHECK_TAB,
     JAM_EDIT_CHECK_TAB,
@@ -1899,5 +2178,6 @@ if (typeof module !== 'undefined') {
     passphraseMatches_,
     readPassphrase_,
     requirePassphrase_,
+    songSlug_,
   };
 }

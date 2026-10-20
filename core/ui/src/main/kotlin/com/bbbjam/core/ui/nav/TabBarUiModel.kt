@@ -37,4 +37,7 @@ enum class TabIcon {
 
     /** Asistente (phase 2, admin only). */
     ASSISTANT,
+
+    /** Temas (`admin-catalog-tab`, admin only): the catalog. */
+    CATALOG,
 }

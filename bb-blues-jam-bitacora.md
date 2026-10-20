@@ -496,6 +496,18 @@ músicos, los extras y publicar. Una lista cargada en una jam en espera no se ve
 próxima; la pestaña Jams muestra la cantidad de temas. Costo aceptado: una redeploy más del script. Pedido del
 organizador del 15 de octubre de 2026.
 
+### D-30 — La app escribe el catálogo. Enmienda a D-04 (admin-catalog-tab)
+El admin agrega, edita (título, artista y tono por defecto) y borra temas del catálogo desde la pestaña Temas, que solo
+existe en modo admin. Cada cambio va por Apps Script con la frase de acceso (`createSong`, `updateSong`, `deleteSong`) y
+el servidor lo valida de nuevo. El id del tema lo genera el servidor, como un slug del título; nunca lo cambia y nunca
+reutiliza uno que todavía figure en alguna pestaña de jam, ni siquiera de una jam pasada, para que el historial no
+apunte a otro tema. Borrar un tema se rechaza mientras esté en la lista de la próxima jam o de una jam en espera
+(la app lo avisa antes de mandar nada y el servidor lo vuelve a comprobar); un tema que solo está en jams pasadas se
+puede borrar porque cada pestaña de jam guarda copias en texto del título y el artista. El tempo, las etiquetas, la
+dificultad y el id de Songsterr siguen siendo solo de la planilla. El Sheet se puede seguir editando a mano, pero ya no
+es el camino previsto: si los dos escriben, gana la última escritura, sin sincronización, como en D-28. Decisiones del
+organizador del 20 de octubre de 2026. El asistente sigue sin escribir el catálogo (D-24).
+
 ---
 
 # Parte III — Harness y seguimiento

@@ -1958,5 +1958,54 @@
       "Accepted on 18 October 2026 by the independent validator: gate rerun exit 0 (konsist 22 rules, detekt, ktlint wired, 1156 testcases), no koog or ktor in :core:data, own plants (okhttp3 in a feature, SetlistRepository in core/assistant) red then removed, Konsist amendments minimal, rule 18 cannot pass vacuously; one revise (stale module-count sentence in docs/architecture.md) repaired."
     ],
     "notes": "From the organizer's code review of 17 October 2026 (finding 9); the organizer asked to fix all nine findings with sonnet subagents."
+  },
+  {
+    "id": "admin-catalog-tab",
+    "area": "feature-catalog",
+    "title": "Admin-only Temas tab: list the song catalog and add, edit and delete songs",
+    "user_visible_behavior": "In admin mode a fifth bottom tab, Temas, sits between Jams and Info and lists the catalog. The admin adds a song (title, artist, default key), edits those three fields of an existing song, and deletes a song after a confirmation. Deleting is refused, with the reason, while the song is in the upcoming jam or a held-back future jam; a song only in past jams can be deleted. tempo, etiquetas, dificultad and songsterr_id are never changed by the app. Ids are slugs per sheet-schema Identifiers, unique and never changed after creation. Every write is validated in Apps Script with the passphrase. Musicians never see the tab. User decisions of 20 October 2026, D-30 amending D-04: the app writes Catalogo; the Sheet can still be edited by hand, last write wins.",
+    "depends_on": [
+      "catalog-repository-cache",
+      "apps-script-write-auth",
+      "admin-passphrase-login",
+      "bottom-navigation",
+      "core-assistant-module"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Apps Script createSong/updateSong/deleteSong validated server-side (passphrase, required fields, Keys, unique slug id, delete refused when referenced by a future jam tab), covered by node --test",
+      "Repository and presenter JVM tests for list, add, edit, delete, refused delete and write failures; no mutation only in the UI (D-13)",
+      "Temas tab visible only in admin mode, between Jams and Info; musician build shows four tabs at most as before",
+      "Docs updated: bitacora D-30, domain-model authority table, sheet-schema, apps-script-api, DESIGN.md Temas screen",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "20 October 2026 (implementer, Parts A and B in one pass). Part A: backend/apps-script/src/Post.js gains createSong, updateSong, deleteSong and checkCatalogWrite (server-generated slug id under the lock, never reused from Catalogo or any jam tab; delete refused with song_in_future_jam; all refusals before any write; read-back). New backend/apps-script/test/catalog-write.test.js (18 tests) shown failing against the old Post.js first (18 of 18 failed, docs/evidence/admin-catalog-tab/node-catalog-write-failing.txt), then green. node --test backend/apps-script/test/*.test.js: 229 tests before, 247 after, 0 failures (post.test.js action lists and allowed-tab list updated).",
+      "Part A :core:data: catalog/edit/ (CatalogEditRepository, outcomes, SongForm, DefaultCatalogEditRepository, CatalogEcho), cache/CatalogEditDao, remote/CatalogSongEchoDto, WriteRejection +5 codes, bound in dataModule. New JVM tests: SongFormTest 9, CatalogEditDaoTest 5, DefaultCatalogEditRepositoryTest 11 (request bodies without an id, Room mirror keeps tempo/tags/difficulty/songsterr, refresh launched on Ok, nothing in Room on any refusal, ScriptOutdated, invalid echo, caller cancellation, serialized writes), WriteRejectionTest and DataModuleTest extended. No Room schema version change.",
+      "Konsist: rules 18 and 19 extended to ban core.data.catalog.edit in :core:assistant and :feature:assistant; a temporary import in each module made rule 18 and rule 19 fail (22 tests, 2 failed; docs/evidence/admin-catalog-tab/konsist-rule18-failing.txt and konsist-rule19-failing.txt), then the temporary files were removed and the suite passed. Rule count stays 22. AMBER_ROLE_ALLOWLIST['feature/catalog'] = {key}; FEATURE_PUBLIC_API_ALLOWLIST['feature/catalog'] = {CatalogScreen, catalogModule}.",
+      "Part B: new :feature:catalog (CatalogPresenter, CatalogControls, CatalogWrites, pure catalogContent / songFormModel / futureUses / deleteDialog, CatalogDefaults, screen, views, dialogs, previews, strings.xml in Rioplatense Spanish, catalogModule). 27 JVM tests in the module (Molecule presenter flows: Loading then Hidden for a musician, sort/search, add, edit, delete, local refusal sends nothing, server refusal, retry, outdated script, double tap sends once, in-flight disables, pull; content states; mappings and colours). :app: AppTab.CATALOG between Jams and Info with adminOnly (also ASSISTANT), visibleTabs(admin), shouldLeaveAdminTab, TabsShell route, catalogModule in startKoin; AppTabTest and AppRoutesTest updated. :core:ui: TabIcon.CATALOG (Icons.Filled.PlayArrow: material-icons-extended is not a dependency and was not added), tab_catalog, searchKey moved from :feature:next-jam (SearchTextTest); FakeCatalogRepository moved to :core:data test fixtures.",
+      "Docs updated: bitacora D-30 (Spanish), AGENTS.md (D-01 to D-30), domain-model authority table and delete rule, sheet-schema (Tabs, _prueba_catalogo, rows the app writes), apps-script-api (new section and Quotas note), technical-discovery, user-and-access-model, CONTEXT.md, DESIGN.md (Layout, Bottom bar, new Temas tab section), bb-blues-jam-design-prompt.md, architecture skill, backend README, and the new migration guide docs/migrations/admin-catalog-tab-script-update.md.",
+      "Final CI=true ./init.sh exit 0 after ./gradlew ktlintFormat: konsist, detekt and ktlint wired. JVM XML totals after the final run: 1209 testcases, 1 skipped (live), 0 failures (app 40, core:assistant 94, core:data 324, core:model 58, core:ui 153, feature:assistant 160, feature:catalog 27, feature:info 22, feature:next-jam 204, feature:past-jams 105, konsist 22); 1156 at HEAD + 53 new (core:data 25, core:ui 1, feature:catalog 27).",
+      "NOT RUN (waiting for the user's manual Apps Script redeploy, docs/migrations/admin-catalog-tab-script-update.md): live checks L1 (deployProbe unknown_action listing the four new actions), L2 (GET ?resource=catalog unchanged), L3 (checkCatalogWrite with the passphrase), L4 (device: five tabs in admin mode, three logged out, Temas lists the catalog, delete of a song in the upcoming jam shows the refusal dialog and sends nothing) and optional L5 (add, edit, delete a Prueba Temas song in the real Catalogo). No device or emulator was used and no uiautomator dump was taken, so the Compose semantics (merged row node, content descriptions, 48dp targets) are only covered by the presenter models and Defaults tests.",
+      "Independent validator accept (20 October 2026) after one revise (evidence count corrected to 1209, seven unused imports removed): CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, 1209 JVM testcases (1 skipped live, 0 failures), node 247/247. Live checks L1-L5 NOT RUN, pending the user's Apps Script redeploy (docs/migrations/admin-catalog-tab-script-update.md)."
+    ]
+  },
+  {
+    "id": "launcher-icon-refinement",
+    "area": "branding",
+    "title": "Remove the yellow launcher ring and refine the guitar/setlist artwork",
+    "user_visible_behavior": "The launcher shows cleaner cream JAM de BLUES lettering, a blues guitar and setlist on indigo, without the enclosing yellow ring.",
+    "depends_on": [],
+    "status": "passing",
+    "verification": [
+      "Inspect the adaptive foreground and legacy icon for the requested artwork refinement",
+      "Verify adaptive safe-circle bounds and all five legacy density dimensions",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "20 October 2026: built-in image-generation edit; transparent source and exact prompt in docs/design/launcher/. scripts/update-launcher-icons.ps1 regenerates the adaptive layer and ten legacy icons. Foreground and 192px round icon visually inspected: no enclosing yellow ring.",
+      "Adaptive opaque radius 308.35px on 1024px canvas; zero pixels outside 66/108 safe circle. All ten legacy dimensions verified: 48, 72, 96, 144 and 192px.",
+      "Baseline Konsist failure in existing AppSplash fixed by moving unchanged divider dimensions into core:ui SplashDefaults. Final CI=true ./init.sh exit 0; konsist, detekt and ktlint wired; git diff --check clean. No device installation or independent validation."
+    ]
   }
 ]

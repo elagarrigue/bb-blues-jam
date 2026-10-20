@@ -87,7 +87,7 @@ Read optional docs only when relevant:
   Apps Script client.
 - `DESIGN.md` — when touching any UI. It carries the design tokens and the visual rules.
 - `bb-blues-jam-design-prompt.md` — per-screen design requirements. Source of truth for screens.
-- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The decisions (D-01 … D-29) and
+- `bb-blues-jam-bitacora.md` — Spanish, presentation material. The decisions (D-01 … D-30) and
   their reasoning live here. Consult when a change might contradict one.
 
 ## Startup Workflow
@@ -149,4 +149,4 @@ A feature is done only when all are true:
 ## Reminder
 
 No ViewModels. No feature module imports another. No mutation only in the UI. `passing` is not
-`accepted`. When a change would contradict D-01 … D-29, stop and ask.
+`accepted`. When a change would contradict D-01 … D-30, stop and ask.

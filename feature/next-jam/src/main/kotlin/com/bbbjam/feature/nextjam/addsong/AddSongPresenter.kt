@@ -27,10 +27,9 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.state.listError
 import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.core.ui.text.searchKey
 import com.bbbjam.feature.nextjam.R
-import java.text.Normalizer
 import java.time.LocalDate
-import java.util.Locale
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
@@ -177,9 +176,3 @@ private fun Song.toRow(isListed: Boolean, onPick: (Song) -> Unit) = CatalogRowUi
         }
     },
 )
-
-private val COMBINING_MARKS = Regex("\\p{Mn}+")
-
-/** Lowercase with accents removed (`Batería` → `bateria`), for matching and sorting only. */
-internal fun String.searchKey(): String =
-    COMBINING_MARKS.replace(Normalizer.normalize(this, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)

@@ -224,3 +224,12 @@ una hoja inferior o una pantalla completa — elegí y justificá brevemente.
 No diseñes: auto-anotación de músicos, tablaturas renderizadas dentro de la app, perfiles de
 usuario, chat entre músicos, notificaciones, ni pantalla de asistente de IA. Van en una versión
 posterior.
+
+## Temas (solo admin, `admin-catalog-tab`, D-30)
+
+Quinta pestaña del admin, entre Jams e Info (los músicos ven tres pestañas, nunca esta). Título `Temas`, la cantidad de temas,
+un botón ancho `Agregar tema` (neutro, nunca ámbar), un buscador por título o artista y una fila por tema con el título, el
+artista, la tonalidad por defecto (el único ámbar) y dos iconos de 48dp para editar y borrar. Agregar y editar abren un diálogo
+con Título, Artista y Tonalidad; borrar pide confirmación, y si el tema está en la lista de la próxima jam o de una jam en
+espera explica en qué jam está y no manda nada. El tempo, las etiquetas y la dificultad se cargan en la planilla. Los
+estados de carga, error, vacío y sin conexión son los de las otras listas.

@@ -33,6 +33,11 @@ enum class WriteRejection(val code: String) {
     INVALID_DATE("invalid_date"),
     INVALID_TIME("invalid_time"),
     INVALID_VENUE("invalid_venue"),
+    SONG_EXISTS("song_exists"),
+    SONG_IN_FUTURE_JAM("song_in_future_jam"),
+    DUPLICATE_ID("duplicate_id"),
+    INVALID_TITLE("invalid_title"),
+    INVALID_ARTIST("invalid_artist"),
 
     /** Any code not listed above; never matched by [fromCode] on its own empty [code]. */
     Unknown(""),
