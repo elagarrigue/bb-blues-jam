@@ -221,7 +221,9 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
   detail; content scrolls below it, never under the clock.
 - **Motion (M1):** tab switch, a 150 ms crossfade; song detail, slides in from the end in 250 ms
   over the tabs (which stay drawn under it) and out to the end on back. No other motion, except the
-  assistant's loading dots (`assistant-streaming`), shown only while a request runs, stopped by `Cancelar`, and
+  assistant's loading dots (`assistant-streaming`), shown only while a request runs, stopped by `Cancelar`
+  (the same dots sit beside the summary of a run that loads a proposal into a jam, a user request, shown only
+  while it runs and stopped by `Detener`; they carry the summary as their one polite node), and
   the pending status chip's outline (`jam-status-chip-loading`, a second exception requested by the user: it
   replaces a text line, is bounded to one chip while one write runs, stops on the server's answer, uses
   `textMuted`). Both are drawn static when the system animator scale is 0 (WCAG 2.2.2).

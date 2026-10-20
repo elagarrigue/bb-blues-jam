@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -16,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.bbbjam.core.ui.jamform.JamFormDialog
+import com.bbbjam.core.ui.state.LoadingDots
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
@@ -90,13 +93,31 @@ private fun RemovalLine(line: ApplyStatusLineUiModel) {
 @Composable
 private fun ApplySummary(summary: ApplySummaryUiModel) {
     val notice = AssistantDefaults.notice()
-    Text(
-        text = summary.text.resolve(),
-        style = BluesJamTheme.typography.body,
-        color = ApplyDefaults.summary(summary.tone),
-        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-    )
-    summary.stopLabel?.let { label ->
-        TextAction(label.resolve(), notice.action) { summary.events(ApplySummaryUiModel.Event.Stop) }
+    val text = summary.text.resolve()
+    val color = ApplyDefaults.summary(summary.tone)
+    val stopLabel = summary.stopLabel
+    if (stopLabel == null) {
+        Text(
+            text = text,
+            style = BluesJamTheme.typography.body,
+            color = color,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
+    } else {
+        // While the run goes, the dots carry the summary as their one polite node; the text is hidden from a
+        // screen reader so it is not read twice.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
+        ) {
+            LoadingDots(description = text)
+            Text(
+                text = text,
+                style = BluesJamTheme.typography.body,
+                color = color,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+        }
+        TextAction(stopLabel.resolve(), notice.action) { summary.events(ApplySummaryUiModel.Event.Stop) }
     }
 }

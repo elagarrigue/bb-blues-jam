@@ -57,7 +57,7 @@ internal data class ConfirmationUiModel(
 
 internal enum class ApplyTone { NEUTRAL, SUCCESS, FAILURE, MUTED }
 
-/** The run's one-line summary (a polite live region) and, while it runs, "Detener". */
+/** The run's one-line summary (a polite live region) and, while it runs, the loading dots and "Detener". */
 internal data class ApplySummaryUiModel(
     val text: UiText,
     val tone: ApplyTone,
