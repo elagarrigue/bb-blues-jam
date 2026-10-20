@@ -209,10 +209,9 @@ superior.
    bluesjam.appsScriptUrl=https://script.google.com/macros/s/.../exec
    devexpert.key=...           # opcional: sin key, el asistente muestra "no configurado"
    bluesjam.demoUpcomingJam=true   # opcional, solo debug: jam de demo si la planilla no tiene una
-   bluesjam.debugAdmin=true        # opcional, solo debug: arranca en modo admin sin la frase
    ```
-   En un build de release estas opciones quedan siempre apagadas. El modo admin de debug solo dibuja
-   los controles: el servidor sigue validando cada escritura con la frase. Para probar otros estados
+   En un build de release estas opciones quedan siempre apagadas. El modo admin siempre necesita la
+   frase, también en debug: se entra con cinco toques en el logo de Info. Para probar otros estados
    de la jam de demo están `bluesjam.demoUpcomingJamDraft`, `bluesjam.demoUpcomingJamCreated` y
    `bluesjam.demoUpcomingJamLive`.
 2. Si querés tu propio backend, creá la planilla con el esquema de

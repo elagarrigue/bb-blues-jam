@@ -2,7 +2,6 @@ package com.bbbjam.debug
 
 import android.util.Log
 import com.bbbjam.BuildConfig
-import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.model.Jam
@@ -19,7 +18,6 @@ internal data class DebugFlags(
     val demoUpcomingJam: Boolean = false,
     val demoUpcomingJamDraft: Boolean = false,
     val demoUpcomingJamCreated: Boolean = false,
-    val debugAdmin: Boolean = false,
     val demoUpcomingJamLive: Boolean = false,
 ) {
     companion object {
@@ -28,7 +26,6 @@ internal data class DebugFlags(
             demoUpcomingJam = BuildConfig.DEMO_UPCOMING_JAM,
             demoUpcomingJamDraft = BuildConfig.DEMO_UPCOMING_JAM_DRAFT,
             demoUpcomingJamCreated = BuildConfig.DEMO_UPCOMING_JAM_CREATED,
-            debugAdmin = BuildConfig.DEBUG_ADMIN,
             demoUpcomingJamLive = BuildConfig.DEMO_UPCOMING_JAM_LIVE,
         )
     }
@@ -42,8 +39,6 @@ internal data class DebugFlags(
  *   well ([BuildConfig.DEMO_UPCOMING_JAM_DRAFT], `unpublished-setlist-state`) the demo jam is a draft;
  *   with `bluesjam.demoUpcomingJamCreated=true` ([BuildConfig.DEMO_UPCOMING_JAM_CREATED],
  *   `jam-status-created`) it is a CREADA jam (the draft flag wins if both are on).
- * - `bluesjam.debugAdmin=true` ([BuildConfig.DEBUG_ADMIN], `debug-admin-session`) rebinds
- *   [AdminSession] to [DebugAdminSession] around the real one.
  * - `bluesjam.demoUpcomingJamLive=true` ([BuildConfig.DEMO_UPCOMING_JAM_LIVE], `live-refresh-during-jam`)
  *   also rebinds [JamsRepository] to [DemoUpcomingJamRepository], in live mode: the demo replaces the
  *   upcoming jam and starts 10 minutes after the process started, and every refresh is logged with [log].
@@ -76,10 +71,6 @@ internal fun Koin.debugOverrides(
             },
         )
     }
-    if (flags.debugAdmin) {
-        val real = get<AdminSession>()
-        add(module { single<AdminSession> { DebugAdminSession(real) } })
-    }
 }
 
 /** The demo jam's status for these flags: the draft flag wins over the created one. */
@@ -91,12 +82,6 @@ internal fun DebugFlags.demoStatus(): JamStatus = when {
 
 /** True for the demo jam, so the startup log can mark it `(demo)`. Always false in release. */
 internal fun Jam.isDemo(): Boolean = venue == DemoUpcomingJam.VENUE
-
-/**
- * ` admin (debug)` when this build starts in forced admin mode (`debug-admin-session`), so the
- * startup log never passes for a real login. Always empty in release.
- */
-internal fun debugAdminLogSuffix(): String = if (BuildConfig.DEBUG_ADMIN) " admin (debug)" else ""
 
 /** The app's log tag (`BluesJamApp.LOG_TAG`, private there), so the demo lines sit with the startup lines. */
 private const val LOG_TAG = "BluesJam"

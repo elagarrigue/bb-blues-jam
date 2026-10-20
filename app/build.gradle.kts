@@ -37,12 +37,6 @@ val demoUpcomingJamDraft: Boolean =
 val demoUpcomingJamCreated: Boolean =
     localProperties.getProperty("bluesjam.demoUpcomingJamCreated", "").trim() == "true"
 
-// Debug-only admin session (debug-admin-session): bluesjam.debugAdmin=true starts a debug build in
-// admin mode without a login, so device checks of admin controls need no passphrase typed. It draws
-// controls only and authorizes nothing (Apps Script checks every write). Absent means false; release
-// is always false.
-val debugAdmin: Boolean = localProperties.getProperty("bluesjam.debugAdmin", "").trim() == "true"
-
 // Debug-only live demo jam (live-refresh-during-jam): bluesjam.demoUpcomingJamLive=true replaces the
 // upcoming jam, whatever the cache holds, with the demo jam dated today and starting 10 minutes after
 // the process started (Buenos Aires), so its live window is open and the 30 s refresh can be watched
@@ -70,14 +64,12 @@ android {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", demoUpcomingJam.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", demoUpcomingJamDraft.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_CREATED", demoUpcomingJamCreated.toString())
-            buildConfigField("boolean", "DEBUG_ADMIN", debugAdmin.toString())
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_LIVE", demoUpcomingJamLive.toString())
         }
         release {
             buildConfigField("boolean", "DEMO_UPCOMING_JAM", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_DRAFT", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_CREATED", "false")
-            buildConfigField("boolean", "DEBUG_ADMIN", "false")
             buildConfigField("boolean", "DEMO_UPCOMING_JAM_LIVE", "false")
             optimization {
                 enable = false

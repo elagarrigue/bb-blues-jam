@@ -96,12 +96,9 @@ transfer and no per-record access rules.
   `invalid_passphrase` or `passphrase_not_set` to a write, the outcome is `AccessRefused`; the
   device keeps the stored passphrase and its admin controls. Nothing logs the device out
   automatically.
-- **Debug-only admin flag** (`debug-admin-session`): a development build with
-  `bluesjam.debugAdmin=true` in the git-ignored `local.properties` starts in admin mode without a
-  login, so device checks of admin controls need no passphrase typed. It only draws controls and
-  authorizes nothing: it never stores, sends or knows the passphrase, so a write from such a session
-  sends no request and returns `AccessRefused` (`AdminWriter`, `apps-script-write-auth`). Release
-  builds never contain it.
+- **No debug-only admin flag.** `bluesjam.debugAdmin` (`debug-admin-session`) was removed on
+  20 October 2026: a forced admin UI without a stored passphrase read jams anonymously and could not
+  write. Every build, debug included, enters admin mode only through the passphrase login.
 
 ## Revocation / Expiry
 

@@ -12,7 +12,6 @@ import com.bbbjam.core.data.jams.toLogLine
 import com.bbbjam.core.model.JamStatus
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
-import com.bbbjam.debug.debugAdminLogSuffix
 import com.bbbjam.debug.debugOverrides
 import com.bbbjam.debug.isDemo
 import com.bbbjam.di.appModule
@@ -37,8 +36,7 @@ import org.koin.core.context.startKoin
  * done it logs one line from the jams cache: the upcoming/past split and how many setlist songs
  * resolve in the cached catalog. An exception that escapes is logged, not fatal. In a debug build
  * with `bluesjam.demoUpcomingJam=true` the jams are decorated with the demo upcoming jam, marked
- * `(demo)` in that line; with `bluesjam.debugAdmin=true` the app starts in admin mode without a
- * login (`debug-admin-session`), and that line ends with ` admin (debug)`.
+ * `(demo)` in that line. Admin mode always needs the passphrase login: there is no forced debug admin.
  */
 class BluesJamApp : Application() {
     private val appScope = CoroutineScope(
@@ -61,9 +59,8 @@ class BluesJamApp : Application() {
                 pastJamsModule,
             )
         }.koin
-        // Debug only, each behind its own flag: the demo upcoming jam (bluesjam.demoUpcomingJam) and
-        // the debug admin session (bluesjam.debugAdmin). Loaded after dataModule so they override
-        // JamsRepository and AdminSession; release loads nothing.
+        // Debug only, behind its flags: the demo upcoming jam (bluesjam.demoUpcomingJam*). Loaded after
+        // dataModule so it overrides JamsRepository; release loads nothing.
         koin.loadModules(koin.debugOverrides(), allowOverride = true)
         val catalog = koin.get<CatalogRepository>()
         val jams = koin.get<JamsRepository>()
@@ -73,7 +70,7 @@ class BluesJamApp : Application() {
             catalogDone.await()
             jamsDone.await()
             val catalogIds = catalog.observeCatalog().first().songs.map { it.id }.toSet()
-            Log.i(LOG_TAG, jams.observeJams().first().toCacheLine { it in catalogIds } + debugAdminLogSuffix())
+            Log.i(LOG_TAG, jams.observeJams().first().toCacheLine { it in catalogIds })
         }
     }
 

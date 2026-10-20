@@ -1033,15 +1033,12 @@ them.
   dated today with its start 10 minutes after the process started (Buenos Aires, truncated to the
   minute, computed once), so the live window is open, and every `refresh()` logs `demo jams
   refresh: <Updated|Failed> at <instant>` (tag `BluesJam`). Leave it off or absent.
-- **Debug admin session** (`debug-admin-session`): device checks of admin controls never need the
-  real passphrase. `bluesjam.debugAdmin=true` becomes `BuildConfig.DEBUG_ADMIN` (debug only;
-  release hard `false`). `DebugAdminSession(real: AdminSession)` in `app/src/debug/` emits true
-  while a forced state is on (starts on), else the real value; `logOut()` ends the forced state and
-  calls the real one; `logIn` delegates. It never stores, sends or knows the passphrase and
-  authorizes nothing. **The overrides are independent**: `Koin.debugOverrides()` delegates to
-  `debugOverrides(DebugFlags)`, which adds one module per flag on (demo jam, admin), so a test turns
-  each flag on alone (`DebugAdminSessionTest`). The release `debugAdminLogSuffix()` returns `""`; in
-  debug the startup `jams cache` line ends with ` admin (debug)` when the flag is on.
+- **No forced debug admin** (removed 20 October 2026; it was `debug-admin-session`): a forced admin
+  UI without a stored passphrase read jams anonymously, so it hid drafts and withheld setlists while
+  looking like admin mode. Admin mode on a device always comes from the real passphrase login. Do
+  not reintroduce a flag that draws admin controls without the passphrase. `Koin.debugOverrides()`
+  delegates to `debugOverrides(DebugFlags)`, which adds the demo jam module when its flags are on
+  (`DebugOverridesTest`).
 - **No Compose UI test harness** (`song-row-expansion`, T1 declined by the user on 3 October 2026):
   no Robolectric, `ui-test-junit4` or `ui-test-manifest`. Put everything a test must check into the
   `UiModel` (copy, state descriptions, order, kinds) and test it on the JVM; keep the visual rules
