@@ -58,15 +58,23 @@ class MainActivity : ComponentActivity() {
                     null -> Unit
                 }
             }
-            // Saved so a rotation or process restore does not replay the splash.
-            var splashDone by rememberSaveable { mutableStateOf(false) }
+            // The splash plays once per cold start: a warm start (the activity finished with back, then
+            // reopened while the process lives) skips it, and the saved value keeps a rotation or process
+            // restore from replaying it.
+            var splashDone by rememberSaveable { mutableStateOf(splashShown) }
             LaunchedEffect(Unit) {
-                delay(SPLASH_DURATION_MS)
+                if (!splashDone) delay(SPLASH_DURATION_MS)
                 splashDone = true
+                splashShown = true
             }
             BluesJamTheme(admin = isAdmin == true) {
                 if (splashDone) AppNavHost(admin = isAdmin, assistantAvailable = assistantAvailable) else AppSplash()
             }
         }
+    }
+
+    private companion object {
+        /** True once this process has played the splash; a new process (a cold start) starts false. */
+        var splashShown = false
     }
 }
