@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.bbbjam.core.ui.R as CoreUiR
+import com.bbbjam.core.ui.brand.SplashDefaults
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /** How long the splash stays up on a cold start before the tabs show. */
@@ -58,8 +58,8 @@ internal fun AppSplash(modifier: Modifier = Modifier) {
             Spacer(Modifier.height(spacing.lg))
             Box(
                 modifier = Modifier
-                    .width(DIVIDER_WIDTH)
-                    .height(DIVIDER_THICKNESS)
+                    .width(SplashDefaults.dividerWidth)
+                    .height(SplashDefaults.dividerThickness)
                     .background(colors.border),
             )
             Spacer(Modifier.height(spacing.md))
@@ -72,5 +72,3 @@ internal fun AppSplash(modifier: Modifier = Modifier) {
 }
 
 private const val LOGO_WIDTH_FRACTION = 0.85f
-private val DIVIDER_WIDTH = 48.dp
-private val DIVIDER_THICKNESS = 1.dp

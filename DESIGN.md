@@ -109,6 +109,9 @@ rules are in `docs/build-brief.md`. Interface copy is Rioplatense Spanish using 
   without edits as the shared header in Próxima jam and Info.
 - **Launcher icon** — app/src/main/res/drawable-nodpi/launcher_brand.png adapts the guitar and
   checklist artwork from JAM de BLUES Guitar Checklist.png with a safe margin for Android masking.
+  Refined on 20 October 2026: no yellow enclosing ring; cream lettering and cleaner guitar/setlist
+  illustration on the indigo launcher background. Source and generation notes: docs/design/launcher/.
+  Regenerate adaptive and legacy density resources with scripts/update-launcher-icons.ps1.
 
 - **`bb-blues-jam-design-prompt.md`** — the complete design brief: screen-by-screen requirements,
   the slot model as it affects layout, reading priority, and design rules. **Source of truth.**
