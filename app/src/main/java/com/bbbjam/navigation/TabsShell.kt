@@ -47,6 +47,8 @@ import java.time.LocalDate
  *
  * [admin] is the admin flag, null until it is read (`assistant-admin-tab`, `admin-catalog-tab`): the Temas and
  * Asistente tabs are in the bar and drawn only when it is true, and a real false while one is selected selects
+ * Próxima jam. [assistantAvailable] is the startup status read of the assistant's gateway, null until it answers:
+ * Asistente is in the bar only when it is true, and a real false while Asistente is selected (a restore) selects
  * Próxima jam.
  * The route is registered always (navigation graphs must be stable). While the keyboard is up the bar
  * is not drawn, so the composer sits right above the keyboard with no bar-high gap.
@@ -60,6 +62,7 @@ internal fun TabsShell(
     onOpenAddSong: (jamDate: LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     admin: Boolean? = null,
+    assistantAvailable: Boolean? = null,
 ) {
     val inner = rememberNavController()
     val entry by inner.currentBackStackEntryAsState()
@@ -69,8 +72,8 @@ internal fun TabsShell(
         // Reselecting the current tab does nothing: no new entry, no reset, no animation.
         if (tab != currentSelected) inner.select(tab)
     }
-    LaunchedEffect(selected, admin) {
-        if (shouldLeaveAdminTab(selected, admin)) inner.select(AppTab.NEXT_JAM)
+    LaunchedEffect(selected, admin, assistantAvailable) {
+        if (shouldLeaveAdminTab(selected, admin, assistantAvailable)) inner.select(AppTab.NEXT_JAM)
     }
     Column(modifier = modifier.fillMaxSize().background(BluesJamTheme.colors.background)) {
         NavHost(
@@ -90,7 +93,9 @@ internal fun TabsShell(
             composable(AppRoutes.INFO) { InfoScreen(onOpenAdminLogin = onOpenAdminLogin) }
             composable(AppRoutes.ASSISTANT) { if (admin == true) AssistantScreen() }
         }
-        if (!WindowInsets.isImeVisible) TabBar(tabBarModel(selected, admin) { tab -> onSelect(tab) })
+        if (!WindowInsets.isImeVisible) {
+            TabBar(tabBarModel(selected, admin, assistantAvailable) { tab -> onSelect(tab) })
+        }
     }
 }
 

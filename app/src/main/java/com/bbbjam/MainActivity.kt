@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.bbbjam.core.assistant.AssistantStatus
+import com.bbbjam.core.assistant.SetlistAssistant
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.ui.theme.BluesJamTheme
 import com.bbbjam.navigation.AppNavHost
@@ -40,6 +42,22 @@ class MainActivity : ComponentActivity() {
             val adminSession = koinInject<AdminSession>()
             // null until the flag is read: the Asistente tab neither shows nor redirects before then.
             val isAdmin: Boolean? by remember { adminSession.observeIsAdmin() }.collectAsState(initial = null)
+            val assistant = koinInject<SetlistAssistant>()
+            // The Asistente tab shows only when the gateway answers at startup (or at login): one token-free
+            // status read, made only for the admin. Saved so a rotation does not read again; the tab itself
+            // reads the status again each time it is entered.
+            var assistantAvailable: Boolean? by rememberSaveable { mutableStateOf(null) }
+            LaunchedEffect(isAdmin) {
+                when (isAdmin) {
+                    true -> if (assistantAvailable == null) {
+                        assistantAvailable = assistant.checkStatus() == AssistantStatus.Available
+                    }
+
+                    false -> assistantAvailable = null
+
+                    null -> Unit
+                }
+            }
             // Saved so a rotation or process restore does not replay the splash.
             var splashDone by rememberSaveable { mutableStateOf(false) }
             LaunchedEffect(Unit) {
@@ -47,7 +65,7 @@ class MainActivity : ComponentActivity() {
                 splashDone = true
             }
             BluesJamTheme(admin = isAdmin == true) {
-                if (splashDone) AppNavHost(admin = isAdmin) else AppSplash()
+                if (splashDone) AppNavHost(admin = isAdmin, assistantAvailable = assistantAvailable) else AppSplash()
             }
         }
     }

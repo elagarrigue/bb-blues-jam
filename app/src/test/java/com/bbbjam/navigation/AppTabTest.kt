@@ -53,49 +53,68 @@ class AppTabTest {
     @Test
     fun `the admin-only tabs are visible only when the admin flag is true`() {
         val musician = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO)
-        assertEquals(musician, visibleTabs(null))
-        assertEquals(musician, visibleTabs(false))
+        listOf(null, false, true).forEach { available ->
+            assertEquals(musician, visibleTabs(null, available))
+            assertEquals(musician, visibleTabs(false, available))
+        }
         assertEquals(
             listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.CATALOG, AppTab.INFO, AppTab.ASSISTANT),
-            visibleTabs(true),
+            visibleTabs(true, true),
         )
+    }
+
+    @Test
+    fun `Asistente is visible only once the startup status read answered available`() {
+        val adminWithoutAssistant = listOf(AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.CATALOG, AppTab.INFO)
+        assertEquals(adminWithoutAssistant, visibleTabs(true, null))
+        assertEquals(adminWithoutAssistant, visibleTabs(true, false))
     }
 
     @Test
     fun `the shell leaves Temas and Asistente only on a real false`() {
         listOf(AppTab.CATALOG, AppTab.ASSISTANT).forEach { tab ->
-            assertTrue(shouldLeaveAdminTab(tab, false))
-            assertFalse(shouldLeaveAdminTab(tab, null))
-            assertFalse(shouldLeaveAdminTab(tab, true))
+            assertTrue(shouldLeaveAdminTab(tab, false, true))
+            assertFalse(shouldLeaveAdminTab(tab, null, true))
+            assertFalse(shouldLeaveAdminTab(tab, true, true))
         }
         listOf(null, false, true).forEach { admin ->
-            listOf(null, AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO).forEach { selected ->
-                assertFalse("$selected/$admin", shouldLeaveAdminTab(selected, admin))
+            listOf(null, false, true).forEach { available ->
+                listOf(null, AppTab.NEXT_JAM, AppTab.PAST_JAMS, AppTab.INFO).forEach { selected ->
+                    assertFalse("$selected/$admin/$available", shouldLeaveAdminTab(selected, admin, available))
+                }
             }
         }
+    }
+
+    @Test
+    fun `the shell leaves Asistente when the startup status read answered not available`() {
+        assertTrue(shouldLeaveAdminTab(AppTab.ASSISTANT, true, false))
+        assertFalse(shouldLeaveAdminTab(AppTab.ASSISTANT, true, null))
+        assertFalse(shouldLeaveAdminTab(AppTab.CATALOG, true, false))
     }
 
     @Test
     fun `the bar marks exactly the selected tab over the visible tabs`() {
         listOf(null, false, true).forEach { admin ->
-            val visible = visibleTabs(admin)
+            val visible = visibleTabs(admin, true)
             visible.forEach { selected ->
-                val model = tabBarModel(selected, admin) {}
+                val model = tabBarModel(selected, admin, true) {}
                 assertEquals(visible.map { it == selected }, model.tabs.map { it.selected })
                 assertEquals(visible.map { UiText.res(it.label) }, model.tabs.map { it.label })
                 assertEquals(visible.map { it.icon }, model.tabs.map { it.icon })
             }
         }
-        assertEquals(listOf(false, false, false), tabBarModel(null, false) {}.tabs.map { it.selected })
-        assertEquals(List(5) { false }, tabBarModel(null, true) {}.tabs.map { it.selected })
-        assertEquals(3, tabBarModel(AppTab.NEXT_JAM, null) {}.tabs.size)
-        assertEquals(5, tabBarModel(AppTab.ASSISTANT, true) {}.tabs.size)
+        assertEquals(listOf(false, false, false), tabBarModel(null, false, true) {}.tabs.map { it.selected })
+        assertEquals(List(5) { false }, tabBarModel(null, true, true) {}.tabs.map { it.selected })
+        assertEquals(3, tabBarModel(AppTab.NEXT_JAM, null, true) {}.tabs.size)
+        assertEquals(5, tabBarModel(AppTab.ASSISTANT, true, true) {}.tabs.size)
+        assertEquals(4, tabBarModel(AppTab.NEXT_JAM, true, false) {}.tabs.size)
     }
 
     @Test
     fun `each tab's handler selects that tab`() {
         val selected = mutableListOf<AppTab>()
-        val model = tabBarModel(AppTab.NEXT_JAM, admin = true) { selected += it }
+        val model = tabBarModel(AppTab.NEXT_JAM, admin = true, assistantAvailable = true) { selected += it }
         model.tabs.forEach { it.events(TabUiModel.Event.Select) }
         assertEquals(AppTab.entries.toList(), selected)
     }

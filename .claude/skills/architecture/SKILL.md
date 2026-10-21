@@ -440,7 +440,7 @@ composition (a presenter is a `factory`, its composition dies when the tab is le
 `tabBarModel(selected, admin, onSelect)` and `shouldLeaveAssistant(selected, admin)` (only a real `false`) are pure and tested;
 `TabsShell(admin)` always registers the route, draws `AssistantScreen` only for the admin and hides the bar while the keyboard is
 visible; the activity declares `windowSoftInputMode="adjustResize"` (without it the system panned the whole window). `:core:ui`
-`TabIcon.ASSISTANT` maps to `Icons.Filled.Star`. Service status amendment: `SetlistAssistant.checkStatus()` (`AssistantStatus`, a token-free `GET /v1/models` in `AssistantStatusProbe`) feeds `AssistantChat.service`; the tab shows a banner and disables `Enviar` unless Available; `AssistantHttp` timeouts are 60 s. Konsist: `AMBER_ROLE_ALLOWLIST["feature/assistant"] = {key, primaryAction,
+`TabIcon.ASSISTANT` maps to `Icons.Filled.Star`. Service status amendment: `SetlistAssistant.checkStatus()` (`AssistantStatus`, a token-free `GET /v1/models` in `AssistantStatusProbe`) feeds `AssistantChat.service`; the tab shows a banner and disables `Enviar` unless Available; `MainActivity` also calls `checkStatus()` once at start (or when the admin flag turns true), saves the result, and passes `assistantAvailable` to `AppNavHost`/`TabsShell`: `visibleTabs` draws Asistente only on true and `shouldLeaveAdminTab` leaves it on a real false; `AssistantHttp` timeouts are 60 s. Konsist: `AMBER_ROLE_ALLOWLIST["feature/assistant"] = {key, primaryAction,
 onPrimaryAction}` (shown failing first).
 
 As built by `assistant-apply-proposal` (14 October 2026; phase 2): **loading a proposal goes through a narrow contract, not

@@ -200,7 +200,7 @@ arm's length on stage. It is the largest style in the app; rows keep `key` (44sp
 
 ## Layout
 
-Three tabs in a bottom navigation bar: **Próxima jam**, **Jams**, **Info**. While the admin session is active the bar also has **Temas** (between Jams and Info, `admin-catalog-tab`) and **Asistente** (phase 2, last), so a musician sees three tabs and the admin five; Info moves one place right for the admin only.
+Three tabs in a bottom navigation bar: **Próxima jam**, **Jams**, **Info**. While the admin session is active the bar also has **Temas** (between Jams and Info, `admin-catalog-tab`) and **Asistente** (phase 2, last), so a musician sees three tabs and the admin five; Info moves one place right for the admin only. Asistente is in the bar only when the assistant's gateway answered Available to the status read made at startup (or at login); otherwise the admin sees four tabs until the next start.
 
 ### Bottom bar
 
@@ -756,7 +756,7 @@ instrument strip can grow.
 
 ## Asistente (phase 2, `assistant-admin-tab`)
 
-An admin-only fourth tab, **Asistente**, a chat over the setlist assistant. It follows the admin palette
+An admin-only last tab, **Asistente**, a chat over the setlist assistant. It is in the bar only when the gateway answered Available at app start (or at login); entering the tab reads the status again, as below. It follows the admin palette
 automatically and writes nothing by itself (D-24); loading a proposal is the admin's confirmed action (see "Usar la propuesta: tres destinos").
 
 - Column: title `Asistente` (`h1`, `text`, heading), a `LazyColumn` of turns (`md` apart), the composer pinned at the

@@ -45,10 +45,11 @@ import com.bbbjam.feature.pastjams.detail.PastJamDetailScreen
  * are applied once here, in a [Column] wrapping the whole [NavHost], rather than per destination:
  * every destination (the tabs shell and every full-screen route) used to apply its own
  * `statusBarsPadding()` independently, which would double the inset if this wrapper's inset stayed
- * too. [TabsShell] no longer applies its own.
+ * too. [TabsShell] no longer applies its own. [assistantAvailable] goes to [TabsShell], which draws Asistente only
+ * when it is true.
  */
 @Composable
-internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean? = false) {
+internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean? = false, assistantAvailable: Boolean? = null) {
     val nav = rememberNavController()
     Column(modifier = modifier.fillMaxSize().background(BluesJamTheme.colors.background).statusBarsPadding()) {
         if (admin == true) AdminBanner()
@@ -76,6 +77,7 @@ internal fun AppNavHost(modifier: Modifier = Modifier, admin: Boolean? = false) 
                     onOpenAdminLogin = { nav.navigate(AppRoutes.ADMIN_LOGIN) { launchSingleTop = true } },
                     onOpenAddSong = { date -> nav.navigate(AppRoutes.addSong(date)) { launchSingleTop = true } },
                     admin = admin,
+                    assistantAvailable = assistantAvailable,
                 )
             }
             songDetail(nav)

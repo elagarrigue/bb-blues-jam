@@ -22,7 +22,9 @@ Only the admin. Musicians never see the assistant.
 ## Behavior
 
 1. A new bottom-navigation tab, **Asistente**, drawn only while the admin session is active. It
-   disappears with the admin flag; a musician build/session never shows it.
+   disappears with the admin flag; a musician build/session never shows it. Since 21 October 2026 it is
+   also drawn only when the token-free status read (`GET /v1/models`) made at app start, or at admin
+   login, answered Available; entering the tab reads the status again and shows its banner as before.
 2. The tab is a chat. The admin writes a request; the agent answers.
 3. Every agent answer is a **structured JSON response**:
    - `songs`: the proposed setlist in order — each item a catalog song id, plus the title, artist
