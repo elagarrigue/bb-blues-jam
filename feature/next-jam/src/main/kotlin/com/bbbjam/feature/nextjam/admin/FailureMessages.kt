@@ -27,6 +27,8 @@ internal fun failureMessage(reason: WriteOutcome): UiText = when (reason) {
 
         WriteRejection.DUPLICATE_SONG -> UiText.res(R.string.next_jam_failure_duplicate_song)
 
+        WriteRejection.SONG_PLAYED -> UiText.res(R.string.next_jam_failure_song_played)
+
         WriteRejection.UNKNOWN_SONG -> UiText.res(CoreR.string.write_failure_not_in_catalog)
 
         WriteRejection.UNKNOWN_JAM,

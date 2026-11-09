@@ -101,6 +101,7 @@
     <string name="assistant_replace_dialog_title">¿Reemplazar la lista?</string>
     <string name="assistant_replace_confirm">Reemplazar</string>
     <string name="assistant_replace_note_equal">La lista de la próxima jam ya es igual a esta.</string>
+    <string name="assistant_replace_note_played">La lista tiene temas que ya se tocaron y este reemplazo los sacaría. Desmarcalos o usá Agregar al final.</string>
     <string name="assistant_replace_note_repeated">La lista de la próxima jam tiene temas repetidos; arreglala en la planilla para poder reemplazarla.</string>
     <string name="assistant_replace_no_assignments">Ninguno de esos temas tiene músicos anotados.</string>
     <string name="assistant_replace_published">La lista está publicada: los músicos ven cada cambio apenas se guarda.</string>

@@ -5,7 +5,7 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and eighteen POST actions in local source: `checkPassphrase`,
+(`apps-script-jams-read-endpoint`), and twenty-nine POST actions in local source (`ACTIONS` in `Post.js` is the full set; the latest is `setSongPlayed`, `song-played-state`): `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
 `setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam`, `setJamStatus`, `updateJam`, `deleteJam`, `checkJamEdit` and `checkFutureSetlistWrite`. Every POST
 action passes the passphrase guard in the router. Earlier actions have the deployment history below;
@@ -189,7 +189,7 @@ in `sheet-schema.md`, **Reading cells**.
 
 ### Setlist row
 
-Every row has exactly these keys, in this order, and `slots` has exactly these eighteen:
+Every row has exactly these keys, in this order (`played` last), and `slots` has exactly these eighteen:
 
 | Field | Jam tab header | Value |
 |---|---|---|
@@ -200,6 +200,7 @@ Every row has exactly these keys, in this order, and `slots` has exactly these e
 | `key` | `tono` | text or `null` |
 | `slots` | the eighteen slot columns, three per instrument | `{"guitar1","guitar2","guitar3","bass1","bass2","bass3","drums1","drums2","drums3","vocals1","vocals2","vocals3","harmonica1","harmonica2","harmonica3","keyboards1","keyboards2","keyboards3"}` from `Guitarra 1`-`3`, `Bajo 1`-`3`, `Batería 1`-`3`, `Voz 1`-`3`, `Armónica 1`-`3`, `Teclados 1`-`3` (the first of the five single-slot instruments also under its old un-numbered header); each `null` (empty), `"-"` (raw) or a name. A column the tab does not have reads `"-"`, never `null`. The five legacy keys `bass`, `drums`, `vocals`, `harmonica`, `keyboards` are **also** sent, after the eighteen, each equal to its `...1` key (23 keys in all), so an app that predates the layout keeps reading |
 | `extraParticipants` | `Otros` | the raw trimmed cell, or `null` when empty or when the column is missing (D-18) |
+| `played` | `tocado` | the raw trimmed cell, or `null` when empty or when the column is missing (`song-played-state`, D-31); the Kotlin mapper interprets it (`sí` is played). Added after `extraParticipants` without changing `schemaVersion` (still 1): the client ignores unknown keys, so an older build ignores it, and a newer build reads an older script as "nothing played" |
 
 Rows come in tab order, not sorted: the mapper sorts by `position`. A row whose mapped cells are
 all empty is skipped, and unmapped columns are ignored. The key order of `slots` is the column
@@ -208,7 +209,7 @@ non-`-` column of that instrument). `-` and `Otros` are passed through raw: the 
 their only parser. Required tab headers: `posicion`, `id_tema`, `titulo`, `artista`, `tono` and
 the original seven slot columns (`Guitarra 1`, `Guitarra 2`, and `Bajo`/`Bajo 1`, `Batería`/`Batería 1`,
 `Voz`/`Voz 1`, `Armónica`/`Armónica 1`, `Teclados`/`Teclados 1`); the other eleven slot columns and
-`Otros` are optional. Having both spellings of one slot is `duplicate_header`.
+`Otros` and `tocado` are optional. Having both spellings of one slot is `duplicate_header`.
 
 ### Errors
 
@@ -473,6 +474,37 @@ written (D-08). The answer is `{"schemaVersion":1,"ok":true}`. Because the row i
 removal that renumbered the tab in between never misdirects the write. A published jam's new key
 is what the next GET returns.
 
+### `setSongPlayed` (`song-played-state`, D-31)
+
+Request: `{"action":"setSongPlayed","passphrase":"…","date":"2026-10-31","songId":"crossroads","played":true}`.
+A write action (last in `ACTIONS`), under the lock, guarded by the router (the action never calls the guard).
+Every check runs **before anything is written**, in this order:
+
+| Order | Check | Code |
+|---|---|---|
+| 1 | `date` is a string, `YYYY-MM-DD`, a real calendar day | `invalid_date` |
+| 2 | `songId` is a string matching `^[a-z0-9]+(-[a-z0-9]+)*$` | `invalid_song` |
+| 3 | `played` is a JSON boolean | `invalid_played` |
+| 4 | the `Jams` tab has exactly one row with that `fecha` | `unknown_jam`, `duplicate_date` |
+| 5 | that jam is the upcoming jam (published or not) | `jam_not_editable` |
+| 6 | the jam's tab exists, then has every required header once | `song_not_in_setlist` (no tab), `missing_header`, `duplicate_header` |
+| 7 | exactly one row's trimmed `id_tema` equals `songId` (`findSongRow_`) | `song_not_in_setlist`, `duplicate_song` |
+
+The value already stored answers `{"schemaVersion":1,"ok":true,"played":true,"changed":false}` with no write.
+Otherwise `writePlayedCell_` writes **only that row's `tocado` cell**: `setNumberFormat('@')`, then `setValue('sí')` or
+`setValue('')`; on a tab without the column, marking first writes the header `tocado` after the last column (same
+plain-text order) and unmarking writes nothing. The cell is read back and a disagreement is an `Error`
+(`internal_error`). The answer is `{"schemaVersion":1,"ok":true,"played":<bool>,"changed":true}`.
+
+**Guard.** `requireNotPlayed_(sheet, row, columns, songId)` throws `song_played` when the row's `tocado` cell reads as
+played (a tab without the column is never played). It runs right after `findSongRow_` and before the first write in
+`setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `addExtraParticipant`, `removeExtraParticipant` and `removeSong`
+(through `removeSetlistRow_`). `moveSong`, `addSong`, `publishSetlist`, `setJamStatus` and the jam edits are not guarded.
+
+**Deploy check.** No new action: `checkSetlistWrite` has one more step on its temporary tab. It marks the marker row played
+with `writePlayedCell_`, requires the guard to throw `song_played`, unmarks it, requires the guard to pass, and the final
+read-back must have `played: null`.
+
 ### `setSlotCount` (`admin-adjust-lineup`)
 
 Request: `{"action":"setSlotCount","passphrase":"?","date":"2026-10-31","songId":"crossroads","instrument":"guitar","count":1}`.
@@ -606,9 +638,13 @@ reading `Jam.setlistForMusicians()`, which withholds every draft whatever the ca
 each slice added; four things changed afterwards without changing any request, answer or cache
 rule:
 
-- `SetlistRepository` is the union of twelve narrow contracts, one per mutation, each in its own
+- `SetlistRepository` is the union of thirteen narrow contracts, one per mutation, each in its own
   `setlist/` subpackage (`add`, `remove`, `key`, `lineup`, `assign`, `clear`, `move`, `extras`,
-  `publish`, `jamstatus`, `jamcreate`, `jamedit`). Each contract has its write, its `observe…` and
+  `publish`, `jamstatus`, `jamcreate`, `jamedit`, `played`). The played mark (`song-played-state`, D-31):
+  `setSongPlayed(jamDate, songId, played): SetSongPlayedOutcome` (`PlayedSet`, `NotSet(reason)`, `ScriptOutdated`),
+  `observePlayedChanges()` with `PlayedChange` (`Sending`, `Failed`, `Outdated`) and `dismissPlayedChange(id)`. It sends
+  through `AdminWriter.send`, requires the echoed `played` to equal the request, mirrors Room with
+  `SetlistPlayedDao.updatePlayed` only then and removes the entry; `unknown_action` is `ScriptOutdated`. Each contract has its write, its `observe…` and
   a typed `dismiss<Noun>(id)`; the single `dismiss(id)` the paragraphs below mention is gone
   (`setlist-mutation-contracts`). Ids still share one counter.
 - The order and write mutexes, the `DataScope` launch and the entry bookkeeping live once in

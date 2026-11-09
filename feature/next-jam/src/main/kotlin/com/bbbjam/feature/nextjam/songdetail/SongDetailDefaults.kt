@@ -19,6 +19,7 @@ internal object SongDetailDefaults {
     /** Every style the screen draws itself, except [keyStyle]. */
     val otherStyles: List<TextStyle> get() = listOf(titleStyle, bodyStyle, captionStyle)
 
-    /** The key's colour: the amber `key` role, never another amber role. */
-    fun keyColor(colors: BluesJamColors = BluesJamColors): Color = colors.key
+    /** The key's colour: the amber `key` role, never another amber role; `archive` for a played song. */
+    fun keyColor(colors: BluesJamColors = BluesJamColors, played: Boolean = false): Color =
+        if (played) colors.archive else colors.key
 }

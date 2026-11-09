@@ -35,7 +35,7 @@ const OLD_LAYOUT_ABSENT = {
 const WIDE_SLOT_HEADERS = ['Guitarra', 'Bajo', 'Batería', 'Voz', 'Armónica', 'Teclados'].flatMap((name) => [1, 2, 3].map((n) => `${name} ${n}`));
 const WIDE_TAB_HEADER = ['posicion', 'id_tema', 'titulo', 'artista', 'tono'].concat(WIDE_SLOT_HEADERS, ['Otros']);
 // A tab created by the app: 14 slot columns, no Batería 2/3 or Teclados 2/3.
-const CREATED_TAB_HEADER = WIDE_TAB_HEADER.filter((h) => !['Batería 2', 'Batería 3', 'Teclados 2', 'Teclados 3'].includes(h));
+const CREATED_TAB_HEADER = WIDE_TAB_HEADER.filter((h) => !['Batería 2', 'Batería 3', 'Teclados 2', 'Teclados 3'].includes(h)).concat(['tocado']);
 const DRAFT_MARKER = 'zz-borrador-secreto';
 const WRITE_OPS = ['insertSheet', 'deleteSheet', 'setName', 'setValues', 'setValue', 'setNumberFormat', 'deleteRow', 'insertRowAfter'];
 
@@ -204,7 +204,7 @@ function fakeSpreadsheet({ jams = JAMS, catalog = CATALOG, tabs = {}, convertAlw
     if (rows === null) {
       delete all[name];
     } else {
-      all[name] = gridSheet(name, rows, log);
+      all[name] = gridSheet(name, rows, log, false, false, [], -1, lostCells);
     }
   }
   const hook = (sheet) => {
@@ -570,6 +570,7 @@ test('addSong appends the catalog song at max + 1 with the request key, seven op
       bass: null, drums: null, vocals: null, harmonica: null, keyboards: null,
     },
     extraParticipants: null,
+    played: null,
   });
   const admin = call(fake, 'readJams');
   assert.equal(admin.jams[2].setlist.at(-1).songId, 'crossroads');
@@ -1716,13 +1717,13 @@ test('a new jam tab is created with 14 slot headers and no Batería 2/3 or Tecla
   const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: null } });
   assert.equal(addSong(fake, {}).position, 1);
   const header = fake.log[1][4][0];
-  assert.equal(header.length, 20);
+  assert.equal(header.length, 21);
   for (const absent of ['Batería 2', 'Batería 3', 'Teclados 2', 'Teclados 3']) {
     assert.ok(!header.includes(absent), absent);
   }
   assert.ok(header.includes('Batería') || header.includes('Batería 1'));
   const cells = fake.tabs[UPCOMING].cells[1].map((x) => x.value);
-  assert.equal(cells.length, 20);
+  assert.equal(cells.length, 21);
   assert.equal(cells.filter((c) => c === '-').length, 7, 'only the existing beyond-default columns hold "-"');
 });
 
@@ -2242,4 +2243,165 @@ test('checkFutureSetlistWrite is a guarded write', () => {
   const svc = services();
   call(fake, 'checkFutureSetlistWrite', {}, svc);
   assert.equal(svc.lock.tries, 1);
+});
+
+// ---- song-played-state (D-31): tocado, setSongPlayed and the guard ----
+
+const PLAYED_HEADER = TAB_HEADER.concat(['tocado']);
+const withPlayed = (cells, played) => cells.concat([played]);
+const playedTab = () => [
+  PLAYED_HEADER,
+  withPlayed(row('1', 'crossroads', 'Crossroads', 'Eric Clapton', 'A', ['Tincho', '', '', '', '', '', ''], 'Juan (saxo)'), 'sí'),
+  withPlayed(row('2', HOOCHIE, 'Hoochie Coochie Man', 'Muddy Waters', 'A'), ''),
+];
+
+function setSongPlayed(fake, fields, svc) {
+  return call(fake, 'setSongPlayed', Object.assign({ date: UPCOMING, songId: HOOCHIE, played: true }, fields), svc);
+}
+
+test('setSongPlayed marks with sí as plain text, format first, and reads the cell back', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() } });
+  const svc = services();
+  assert.deepStrictEqual(setSongPlayed(fake, {}, svc), { schemaVersion: 1, ok: true, played: true, changed: true });
+  assert.equal(svc.lock.tries, 1);
+  assert.equal(svc.lock.releases, 1);
+  // HOOCHIE is on sheet row 3; tocado is column 14.
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 3, 14, '@'],
+    ['setValue', UPCOMING, 3, 14, 'sí'],
+  ]);
+  assert.equal(readTab(fake, UPCOMING)[1].played, 'sí');
+  assert.equal(call(fake, 'readJams').jams[2].setlist[1].played, 'sí');
+});
+
+test('setSongPlayed unmarks by clearing the cell, and the same value is changed:false with no write', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() } });
+  assert.deepStrictEqual(setSongPlayed(fake, { songId: 'crossroads', played: true }), { schemaVersion: 1, ok: true, played: true, changed: false });
+  assert.deepStrictEqual(setSongPlayed(fake, { played: false }), { schemaVersion: 1, ok: true, played: false, changed: false });
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.deepStrictEqual(setSongPlayed(fake, { songId: 'crossroads', played: false }), { schemaVersion: 1, ok: true, played: false, changed: true });
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 2, 14, '@'],
+    ['setValue', UPCOMING, 2, 14, ''],
+  ]);
+  assert.equal(readTab(fake, UPCOMING)[0].played, null);
+});
+
+test('setSongPlayed on a tab without tocado adds the header after the last column when marking, nothing when unmarking', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: FOUR_SONGS } });
+  assert.deepStrictEqual(setSongPlayed(fake, { played: false }), { schemaVersion: 1, ok: true, played: false, changed: false });
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.deepStrictEqual(setSongPlayed(fake, {}), { schemaVersion: 1, ok: true, played: true, changed: true });
+  // TAB_HEADER has 13 columns: the header goes to column 14, the cell of HOOCHIE (sheet row 5) under it.
+  assert.deepStrictEqual(writes(fake.log), [
+    ['setNumberFormat', UPCOMING, 1, 14, '@'],
+    ['setValue', UPCOMING, 1, 14, 'tocado'],
+    ['setNumberFormat', UPCOMING, 5, 14, '@'],
+    ['setValue', UPCOMING, 5, 14, 'sí'],
+  ]);
+  const rows = readTab(fake, UPCOMING);
+  assert.deepStrictEqual(rows.map((r) => r.played), [null, null, null, 'sí']);
+});
+
+test('setSongPlayed validates in order and writes nothing on any failure', () => {
+  const noHeader = { [UPCOMING]: [TAB_HEADER.filter((h) => h !== 'tono')] };
+  const duplicatedSong = { [UPCOMING]: playedTab().concat([withPlayed(row('3', ' ' + HOOCHIE, 'Otra', 'X', 'C'), '')]) };
+  const cases = [
+    [{ date: undefined }, 'invalid_date'],
+    [{ date: '2026-02-30' }, 'invalid_date'],
+    [{ songId: 'Bad Id' }, 'invalid_song'],
+    [{ played: undefined }, 'invalid_played'],
+    [{ played: 'true' }, 'invalid_played'],
+    [{ played: 1 }, 'invalid_played'],
+    [{ played: null, date: '1999-01-01' }, 'invalid_played'],
+    [{ date: '1999-01-01' }, 'unknown_jam'],
+    [{ date: LATER }, 'jam_not_editable'],
+    [{ songId: 'zz-no-existe' }, 'song_not_in_setlist'],
+    [{}, 'missing_header', noHeader],
+    [{}, 'duplicate_song', duplicatedSong],
+  ];
+  for (const [fields, code, tabs] of cases) {
+    const fake = fakeSpreadsheet({ tabs: tabs || { [UPCOMING]: playedTab() } });
+    assertError(setSongPlayed(fake, fields), code);
+    assert.deepStrictEqual(writes(fake.log), [], code);
+  }
+  const noTab = fakeSpreadsheet({ tabs: { [UPCOMING]: null } });
+  assertError(setSongPlayed(noTab, {}), 'song_not_in_setlist');
+  assert.deepStrictEqual(writes(noTab.log), []);
+});
+
+test('setSongPlayed is a guarded write, and a cell that does not read back is internal_error', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() } });
+  assertError(handlePost({ action: 'setSongPlayed', date: UPCOMING, songId: HOOCHIE, played: true }, fake.spreadsheet, services()), 'invalid_passphrase');
+  assert.deepStrictEqual(writes(fake.log), []);
+  assert.equal(ACTIONS.setSongPlayed.write, true);
+  const lost = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() }, lostCells: [{ sheet: UPCOMING, row: 3, column: 14, value: 'sí' }] });
+  assertError(setSongPlayed(lost, {}), 'internal_error');
+});
+
+test('a played row is refused with song_played by every guarded action, writing nothing', () => {
+  const guarded = [
+    ['setKey', { key: 'G' }],
+    ['setSlotCount', { instrument: 'guitar', count: 1 }],
+    ['assignSlot', { instrument: 'guitar', ordinal: 2, name: 'Mora' }],
+    ['clearSlot', { instrument: 'guitar', ordinal: 1, expectedName: 'Tincho' }],
+    ['addExtraParticipant', { name: 'Ana', instrument: 'saxo' }],
+    ['removeExtraParticipant', { ordinal: 1, expectedName: 'Juan', expectedInstrument: 'saxo' }],
+    ['removeSong', {}],
+  ];
+  for (const [action, fields] of guarded) {
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() } });
+    assertError(call(fake, action, Object.assign({ date: UPCOMING, songId: 'crossroads' }, fields)), 'song_played');
+    assert.deepStrictEqual(writes(fake.log), [], action);
+  }
+});
+
+test('the played guard accepts any spelling of si and only that', () => {
+  for (const [cell, refused] of [['sí', true], ['Sí', true], ['SI ', true], [' si', true], ['no', false], ['x', false], ['', false], ['sí!', false]]) {
+    const tab = [PLAYED_HEADER, withPlayed(row('1', 'crossroads', 'Crossroads', 'Eric', 'A'), cell)];
+    const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: tab } });
+    const body = setKey(fake, { songId: 'crossroads', key: 'G' });
+    if (refused) assertError(body, 'song_played');
+    else assert.deepStrictEqual(body, { schemaVersion: 1, ok: true }, cell);
+  }
+});
+
+test('a played song can still be moved and its tocado cell stays with it; unplayed rows are not guarded', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() } });
+  assert.equal(moveSong(fake, { songId: 'crossroads', toPosition: 2 }).ok, true);
+  assert.deepStrictEqual(orderedRows(fake).map((r) => [r.songId, r.played]), [[HOOCHIE, null], ['crossroads', 'sí']]);
+  assert.deepStrictEqual(setKey(fake, { songId: HOOCHIE, key: 'C' }), { schemaVersion: 1, ok: true });
+});
+
+test('a tab without tocado has nothing played, so every guarded action still works', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: FOUR_SONGS } });
+  assert.deepStrictEqual(setKey(fake, {}), { schemaVersion: 1, ok: true });
+  assert.equal(removeSong(fake, { songId: PRIDE }).ok, true);
+});
+
+test('a new jam tab has tocado as its last column and the appended row leaves it empty', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: null } });
+  addSong(fake, {});
+  const header = fake.log[1][4][0];
+  assert.equal(header.at(-1), 'tocado');
+  assert.equal(readTab(fake, UPCOMING)[0].played, null);
+  assert.deepStrictEqual(setSongPlayed(fake, { songId: 'crossroads', played: true }), { schemaVersion: 1, ok: true, played: true, changed: true });
+  assert.equal(readTab(fake, UPCOMING)[0].played, 'sí');
+});
+
+test('checkSetlistWrite marks its marker played, proves the refusal, unmarks and reads played null', () => {
+  const fake = fakeSpreadsheet();
+  assert.deepStrictEqual(call(fake, 'checkSetlistWrite'), { schemaVersion: 1, ok: true });
+  const playedOps = fake.log.filter((op) => op[0] === 'setValue' && op[3] === 21 && op[1] === SETLIST_CHECK_TAB);
+  assert.deepStrictEqual(playedOps.map((op) => op[4]), ['sí', '']);
+  const lost = fakeSpreadsheet({ lostValues: ['sí'] });
+  assertError(call(lost, 'checkSetlistWrite'), 'internal_error');
+  assert.ok(!(SETLIST_CHECK_TAB in lost.tabs));
+});
+
+test('a date change keeps the tocado column with the renamed tab', () => {
+  const fake = fakeSpreadsheet({ tabs: { [UPCOMING]: playedTab() } });
+  const result = call(fake, 'updateJam', { date: UPCOMING, newDate: '2026-11-07' });
+  assert.equal(result.error, undefined, JSON.stringify(result));
+  assert.equal(readTab(fake, '2026-11-07')[0].played, 'sí');
 });

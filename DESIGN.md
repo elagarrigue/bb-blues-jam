@@ -275,6 +275,28 @@ always collapsed (`song-detail-replaces-row-expansion`, 11 October 2026).
   removal is sent, `Quitando…` replaces the bar. The `Posición x de n` line is no longer drawn (the
   position label is in the header). Song-level admin controls live in the song detail.
 
+### Played song (`song-played-state`, D-31)
+
+The admin marks a song of the upcoming jam as **ya tocado** during the jam. Everyone sees it muted:
+
+- **Row:** position, title and key in `archive` (5.84:1 on the background; the amber `key` role is read only for what is
+  still live), and a `Ya tocado` caption (`caption`, `archive`) under the title. The caption sits inside the header node, so
+  TalkBack reads "Ya tocado" with the row; colour is never the only signal (WCAG 1.4.1).
+- **Strip and lineup panel:** every chip or line on `surfaceRaised` with `archive` text and its own glyph, **no amber**: a
+  played song's open slot is not a place to play any more. `slotFilled` as the fill would give archive text only 3.85:1, so
+  `surfaceRaised` is used (5.16:1; 4.80:1 on the admin's raised surface). The instrument filter ignores those open slots in
+  its matches and its chip counts; the musician filter still lists the song.
+- **Admin bar:** arrows | **check toggle** (`CheckCircle`, `Role.Switch`, `text` when on and `textMuted` when off, never amber,
+  48dp; descriptions "Marcar como tocado" / "Desmarcar como tocado", states "Tocado" / "Sin tocar") | gap | trash. The trash
+  is **absent** while the song is played. The toggle is in the bar, an explicit exception to "song-level actions go in the
+  detail", because it is a progress action done in sequence during the jam; the detail has the same switch too.
+- **Song detail:** `YA TOCADO` (`caption`, `archive`) under the artist, the key in `archive`, the panel muted without hint.
+  For the admin, the key block is not a button, there is no `FORMACIÓN` editor, no `+ Otro`, no `Anotar`/`Liberar`/`Quitar`
+  line action, and the `Ya tocado` switch row follows the key block. Reordering (arrows and drag) still works.
+- **Optimism:** like the key, only a sending change overlays (`Guardando…`); a failure reverts it and shows a dismissible
+  card. An old script gives the card "El script de la planilla todavía no sabe marcar temas tocados. Actualizalo con la guía
+  y probá de nuevo."
+
 ### Instrument strip
 
 The component the main screen depends on, and the Stitch export resolved it as **labelled chips

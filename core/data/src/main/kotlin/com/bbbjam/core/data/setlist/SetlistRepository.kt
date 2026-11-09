@@ -10,6 +10,7 @@ import com.bbbjam.core.data.setlist.jamstatus.SetlistJamStatusRepository
 import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
 import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
 import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.played.SetlistPlayedRepository
 import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
 
@@ -37,4 +38,5 @@ interface SetlistRepository :
     SetlistPublishRepository,
     SetlistJamStatusRepository,
     SetlistJamEditRepository,
-    SetlistJamCreationRepository
+    SetlistJamCreationRepository,
+    SetlistPlayedRepository

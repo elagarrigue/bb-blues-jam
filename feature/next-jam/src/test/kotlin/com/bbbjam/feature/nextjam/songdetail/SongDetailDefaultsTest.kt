@@ -8,6 +8,14 @@ import org.junit.Test
 
 /** K1: the key is the largest text on the detail, in the amber `key` role. */
 class SongDetailDefaultsTest {
+    @org.junit.Test
+    fun `a played song's key is archive, never amber`() {
+        org.junit.Assert.assertEquals(
+            com.bbbjam.core.ui.theme.BluesJamColors.archive,
+            SongDetailDefaults.keyColor(played = true),
+        )
+        org.junit.Assert.assertEquals(com.bbbjam.core.ui.theme.BluesJamColors.key, SongDetailDefaults.keyColor())
+    }
 
     @Test
     fun `the key style is keyDisplay at 96sp`() {

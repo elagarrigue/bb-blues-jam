@@ -286,8 +286,11 @@ private fun RowHeader(row: SongRowUiModel, reorder: ReorderState?) {
         verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         TitleLine(row)
+        row.playedLabel?.let { label ->
+            Text(text = label.resolve(), style = BluesJamTheme.typography.caption, color = PlayedRowDefaults.caption())
+        }
         row.admin?.saveStatus?.let { status -> SaveStatusLine(status) }
-        InstrumentStrip(row.instruments)
+        InstrumentStrip(row.instruments, muted = row.played)
     }
 }
 
@@ -305,12 +308,12 @@ private fun TitleLine(row: SongRowUiModel) {
         Text(
             text = row.positionLabel,
             style = BluesJamTheme.typography.songTitle,
-            color = BluesJamTheme.colors.textMuted,
+            color = PlayedRowDefaults.position(row.played),
         )
         Text(
             text = row.title,
             style = BluesJamTheme.typography.songTitle,
-            color = BluesJamTheme.colors.text,
+            color = PlayedRowDefaults.title(row.played),
             maxLines = TITLE_MAX_LINES,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -318,7 +321,7 @@ private fun TitleLine(row: SongRowUiModel) {
         Text(
             text = row.key,
             style = BluesJamTheme.typography.key,
-            color = BluesJamTheme.colors.key,
+            color = PlayedRowDefaults.key(row.played),
             modifier = Modifier.semantics { contentDescription = keyDescription },
         )
     }

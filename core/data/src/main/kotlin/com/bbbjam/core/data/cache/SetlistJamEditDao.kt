@@ -28,8 +28,8 @@ internal interface SetlistJamEditDao {
 
     @Query(
         """
-        INSERT INTO jam_song (jam_date, position, song_id, title_copy, artist_copy, key)
-        SELECT :newDate, position, song_id, title_copy, artist_copy, key FROM jam_song WHERE jam_date = :oldDate
+        INSERT INTO jam_song (jam_date, position, song_id, title_copy, artist_copy, key, played)
+        SELECT :newDate, position, song_id, title_copy, artist_copy, key, played FROM jam_song WHERE jam_date = :oldDate
         """,
     )
     suspend fun copySongs(oldDate: String, newDate: String)

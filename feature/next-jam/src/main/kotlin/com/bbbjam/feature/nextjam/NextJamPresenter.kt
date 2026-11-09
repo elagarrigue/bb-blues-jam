@@ -392,8 +392,9 @@ private fun Setlist.Available.songsModel(date: LocalDate, state: RowState): Setl
     val roster = shownEntries.map { it.song }.musicianRoster()
     val matchKey = state.musician?.let(::musicianMatchKey)
     val ofMusician = if (matchKey == null) shownEntries else shownEntries.filter { it.song.involves(matchKey) }
-    val shown = ofMusician.filter { it.song.lineup.matchesInstrumentFilter(state.filter) }
-    val instrumentBar = instrumentFilterBar(ofMusician.map { it.song.lineup }, state.filter, state.onFilterChange)
+    val shown = ofMusician.filter { it.song.filterLineup().matchesInstrumentFilter(state.filter) }
+    val instrumentBar =
+        instrumentFilterBar(ofMusician.map { it.song.filterLineup() }, state.filter, state.onFilterChange)
     return SetlistUiModel.Songs(
         rows = shown
             .map { entry ->
@@ -436,6 +437,8 @@ private fun JamSong.toRow(position: Int, rowKey: String, openDetail: () -> Unit)
     keyDescription = SongListText.keyDescription(key.value),
     instruments = lineup.toInstrumentChips(extraParticipants),
     openDetailLabel = UiText.res(R.string.next_jam_open_detail),
+    played = played,
+    playedLabel = if (played) UiText.res(R.string.next_jam_played) else null,
     events = EventHandler { event ->
         when (event) {
             SongRowUiModel.Event.OpenDetail -> openDetail()

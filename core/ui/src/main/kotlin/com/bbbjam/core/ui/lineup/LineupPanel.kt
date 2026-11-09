@@ -47,7 +47,7 @@ fun LineupPanel(
     val hasCaption = model.hint != null || model.noOpenSlotsNote != null
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
         if (hasOpenSection) {
-            Section(stringResource(R.string.lineup_open_heading), model.openSlots, separated = false)
+            Section(stringResource(R.string.lineup_open_heading), model.openSlots, separated = false, model.muted)
             openSlotsFooter?.invoke()
         }
         model.hint?.let { Caption(it) }
@@ -56,8 +56,8 @@ fun LineupPanel(
             Section(
                 stringResource(R.string.lineup_filled_heading),
                 model.filledSlots,
-                separated =
-                    hasOpenSection || hasCaption,
+                separated = hasOpenSection || hasCaption,
+                muted = model.muted,
             )
         }
         if (model.extras.isNotEmpty()) {
@@ -65,6 +65,7 @@ fun LineupPanel(
                 stringResource(R.string.lineup_extras_heading),
                 model.extras,
                 separated = hasOpenSection || hasCaption || model.filledSlots.isNotEmpty(),
+                muted = model.muted,
             )
         }
     }
@@ -106,7 +107,7 @@ fun LineupPanelActionRow(instrument: String, actionLabel: String, actionDescript
  * above it, so groups sit `xs + sm` apart while lines inside a group stay `xs` apart.
  */
 @Composable
-private fun Section(heading: String, lines: List<LineupLineUiModel>, separated: Boolean) {
+private fun Section(heading: String, lines: List<LineupLineUiModel>, separated: Boolean, muted: Boolean) {
     Text(
         text = heading.uppercase(),
         style = BluesJamTheme.typography.caption,
@@ -115,7 +116,7 @@ private fun Section(heading: String, lines: List<LineupLineUiModel>, separated: 
             .then(if (separated) Modifier.padding(top = BluesJamTheme.spacing.sm) else Modifier)
             .semantics { heading() },
     )
-    lines.forEach { line -> Line(line) }
+    lines.forEach { line -> Line(line, muted) }
 }
 
 @Composable

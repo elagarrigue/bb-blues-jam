@@ -2067,14 +2067,21 @@
       "admin-drag-reorder",
       "musician-filter"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Apps Script setSongPlayed validated server-side (passphrase, editable jam, unique row, boolean) and setKey/setSlotCount/assignSlot/clearSlot/extras/removeSong refused with a typed error for a played song; moveSong still allowed; node --test",
       "Repository and presenter JVM tests for mark, unmark, refused edits, read-only detail and muted row",
       "Docs updated: sheet-schema (tocado column), apps-script-api, domain-model, DESIGN.md, bitacora decision",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "Implemented 9 Nov 2026 (implementer; awaiting independent validation), Part A then Part B as in docs/specs/song-played-state.md, orchestrator defaults for the four open questions. Apps Script: PLAYED_FIELD/isPlayedText_, played key after extraParticipants (schemaVersion 1), setSongPlayed (router-guarded write), writePlayedCell_, requireNotPlayed_ after findSongRow_ in setKey/setSlotCount/assignSlot/clearSlot/both extras/removeSong (not moveSong), checkSetlistWrite step, tocado in new tabs. :core:model JamSong.played; :core:data isPlayedCell, InvalidPlayed, jam_song.played (Room v3, view and copySongs), SetlistPlayedDao.updatePlayed, WriteRejection.SONG_PLAYED, core.data.setlist.played (13th contract), :app binding. :core:ui muted strip/panel, IconRowToggle. :feature:next-jam overlay, PlayedControls, read-only row/detail, instrument filter over filterLineup(), SetKey/assign Gone for a played song. :feature:assistant PLAYED_SONGS block. Debug demo jam first song played.",
+      "cd backend/apps-script && node --test: 267 pass, 0 fail (new: setSongPlayed mark/unmark/idempotence/header creation/validation order/read-back, seven guarded actions refused with no write, moveSong allowed, tab without tocado unguarded, new tab 21 columns, checkSetlistWrite step, updateJam keeps the column, isPlayedText_ table, buildSetlist played). docs/api-samples jams-*.json now carry played:null.",
+      "JVM, 0 failures: core:model 63, core:data 343 (SetlistPlayedChangesTest 6 incl. ScriptOutdated, echo mismatch, FIFO with setKey, dismiss own kind; SetlistPlayedDaoTest 5 incl. copySongs/remove/move keep played; PlayedCellTest 3 incl. old-script decode; mapper test), core:ui 176 (mutedStyle, muted panel, ContrastTest archive 5.84 / 5.16 / admin 5.50 / 4.80), feature:next-jam 240 (NextJamPlayedTest 10, SongDetailPlayedTest 6, PlayedRowDefaultsTest 3), feature:assistant 161 (ReplacePlanTest PLAYED_SONGS), app 43 (13 contracts assertSame, demo fixture), konsist-test 22.",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint all wired (run after Part A and again after Part B; ktlintFormat first; no baseline, no rule disabled). Deviation recorded: muted fill is surfaceRaised, not slotFilled (archive on slotFilled is 3.85:1 < AA).",
+      "NOT RUN: device/emulator steps (muted look, 48dp toggle, TalkBack, detail switch row; no Compose UI harness) and the live script (user redeploys per docs/migrations/song-played-state-script-update.md: paste Jams.gs and Post.gs, New version, no-passphrase probe must end \"..., checkCatalogWrite, setSongPlayed\" and GET jams rows carry played:null). Docs updated: sheet-schema, apps-script-api, domain-model, DESIGN.md, bitacora D-31, architecture skill, AGENTS.md (D-31), migration guide.",
+      "9 November 2026: independent validator accept. Reran node --test (267 pass) and CI=true ./init.sh (exit 0, konsist/detekt/ktlint wired). Device (Pixel 5, debug demo live jam, no writes): played row 01 muted with 'Ya tocado' caption, no amber, toggle checked, no trash; row 02 normal; chip counts drop. Song detail read-only not seen on device (covered by SongDetailPlayedTest). Live script redeploy (Jams.gs + Post.gs, new version) and a real toggle still owed to the user. Follow-ups: off/on toggle icons look alike; LineupPanelUiModel.muted KDoc vs detailColor mismatch."
+    ]
   },
   {
     "id": "admin-presence-notice",

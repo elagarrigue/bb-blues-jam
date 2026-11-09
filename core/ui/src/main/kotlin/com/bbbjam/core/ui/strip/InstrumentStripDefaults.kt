@@ -47,4 +47,14 @@ internal object InstrumentStripDefaults {
             glyph = Glyph.NONE,
         )
     }
+
+    /**
+     * The strip of a played song (`song-played-state`, D-31): every kind on the `surfaceRaised` fill with
+     * `archive` text (5.16:1, and 4.80:1 on the admin's raised surface; `slotFilled` would give 3.85:1), and
+     * no amber, because a played song's open slot is not a place to play any more
+     * (DESIGN.md "amber only for what you can act on"). The glyph is the kind's own, so an open slot is
+     * still told from a filled one by its dot and its wording, never by colour alone.
+     */
+    fun mutedStyle(kind: InstrumentChipKind, colors: BluesJamColors = BluesJamColors): ChipStyle =
+        style(kind, colors).copy(fill = colors.surfaceRaised, textColor = colors.archive, glyphColor = colors.archive)
 }

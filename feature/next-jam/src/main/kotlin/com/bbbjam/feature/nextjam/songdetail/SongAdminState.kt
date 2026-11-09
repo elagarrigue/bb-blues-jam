@@ -11,6 +11,7 @@ import com.bbbjam.core.model.SlotPosition
 import com.bbbjam.core.model.SongId
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
+import com.bbbjam.feature.nextjam.admin.rememberPlayedToggle
 import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import java.time.LocalDate
@@ -35,6 +36,7 @@ internal class SongAdminState(
     val onExtraEvent: (LocalDate, SongId, ExtraParticipantEditorUiModel.Event) -> Unit = { _, _, _ -> },
     val onAssignSlot: (LocalDate, SongId, Instrument, SlotPosition) -> Unit = { _, _, _, _ -> },
     val onClearSlot: (LocalDate, SongId, Instrument, SlotPosition, String) -> Unit = { _, _, _, _, _ -> },
+    val onTogglePlayed: (LocalDate, SongId, Boolean) -> Unit = { _, _, _ -> },
 )
 
 /**
@@ -60,6 +62,7 @@ internal fun rememberSongAdminState(
     val extraForm =
         remember(sources) { ExtraParticipantFormState(extraFormKey, extraName, extraInstrument, extraAddConsumed) }
     val scope = rememberCoroutineScope()
+    val onTogglePlayed = rememberPlayedToggle(sources.playedRepository, overlays.playedChanges)
     if (!isAdmin) return null
     return SongAdminState(
         overlays = overlays,
@@ -76,5 +79,6 @@ internal fun rememberSongAdminState(
                 sources.slotRepository.clearSlot(date, songId, instrument, position, name)
             }
         },
+        onTogglePlayed = onTogglePlayed,
     )
 }

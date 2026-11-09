@@ -1,6 +1,7 @@
 package com.bbbjam.core.ui.action
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -17,4 +18,5 @@ enum class IconRowActionIcon(internal val imageVector: ImageVector) {
     MoveDown(Icons.Filled.KeyboardArrowDown),
     Delete(Icons.Filled.Delete),
     Edit(Icons.Filled.Edit),
+    Played(Icons.Filled.CheckCircle),
 }

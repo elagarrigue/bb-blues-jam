@@ -10,7 +10,7 @@ Jam(date, startTime, venue, status: DRAFT | CREATED | PUBLISHED, setlist: Setlis
 Setlist = Available(songs: List<JamSong>, droppedRows) | Withheld | Unavailable(problem)
 SetlistProblem = MISSING_TAB | INVALID_TAB | INVALID_ROWS | UNKNOWN
 JamSong(position, songId, title, artist, key, lineup: Lineup,
-        extraParticipants: List<ExtraParticipant> = [])
+        extraParticipants: List<ExtraParticipant> = [], played: Boolean = false)
 Lineup(slots: List<Slot>)                // at most 3 of each instrument (D-18, amended)
 Slot(instrument, musicianName?)          // open when musicianName is null
 ExtraParticipant(name, instrument)       // free-text instrument; never open (D-18)
@@ -53,6 +53,12 @@ is never read as "no songs" (`jams-repository-cache`, decision D1):
 One Song scheduled in one Jam. Carries the `position` in the setlist, the `key` chosen for that
 night, and the `lineup` of slots. The key lives here rather than on Song because a jam's key is
 whatever suits the person singing that night (D-08).
+
+`played` (`song-played-state`, D-31) is the admin's "ya tocado" mark, stored in the optional `tocado` column of the
+upcoming jam's tab. The **app owns it**, like the rest of the upcoming setlist (D-04), and it only exists for the
+upcoming jam: past jams ignore it. A played song is **read-only** except for its position: its key, lineup, musicians and
+Otros cannot change and it cannot be removed (the server refuses with `song_played`; the app hides the controls), and
+its open slots stop counting as open for the instrument filter. The admin can unmark it.
 
 ### Slot
 

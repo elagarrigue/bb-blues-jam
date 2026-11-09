@@ -234,6 +234,15 @@ class DemoUpcomingJamRepositoryTest {
     }
 
     @Test
+    fun demoMarksOnlyTheFirstSongPlayedForTheMutedLookCheck() {
+        val songs = (DemoUpcomingJam.on(today).setlist as Setlist.Available).songs
+
+        assertEquals(listOf(true), songs.map { it.played }.distinct().filter { it })
+        assertTrue(songs.first().played)
+        assertTrue(songs.drop(1).none { it.played })
+    }
+
+    @Test
     fun demoSetlistCoversTheDeviceChecks() {
         val songs = (DemoUpcomingJam.on(today).setlist as Setlist.Available).songs
         val slots = songs.flatMap { it.lineup.slots }

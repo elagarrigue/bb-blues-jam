@@ -19,7 +19,8 @@ internal interface SetlistDao :
     SetlistExtraDao,
     SetlistAssignmentDao,
     SetlistJamDao,
-    SetlistJamEditDao {
+    SetlistJamEditDao,
+    SetlistPlayedDao {
     @Query("SELECT setlist_state FROM jam WHERE date = :date")
     override suspend fun setlistState(date: String): String?
 

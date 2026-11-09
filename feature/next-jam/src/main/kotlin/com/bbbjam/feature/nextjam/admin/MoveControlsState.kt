@@ -99,7 +99,7 @@ internal fun RowAdmin.moveModel(
     row: SongRowUiModel,
     song: JamSong,
     total: Int,
-    removal: RemovalUiModel,
+    removal: RemovalUiModel?,
 ): MoveUiModel? = if (removal is RemovalUiModel.Removing) {
     null
 } else {

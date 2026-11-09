@@ -40,9 +40,9 @@ private const val DETAIL_MAX_LINES = 2
  * so a long free-text extra instrument never squeezes the name.
  */
 @Composable
-internal fun Line(line: LineupLineUiModel) {
+internal fun Line(line: LineupLineUiModel, muted: Boolean = false) {
     val spacing = BluesJamTheme.spacing
-    val style = LineupPanelDefaults.style(line.kind)
+    val style = LineupPanelDefaults.style(line.kind, muted = muted)
     val lineDescription = line.contentDescription.resolve()
     Row(
         modifier = Modifier
@@ -66,13 +66,13 @@ internal fun Line(line: LineupLineUiModel) {
                 style,
                 Modifier.widthIn(max = LineupPanelDefaults.INSTRUMENT_MAX_WIDTH),
             )
-            DetailText(line, Modifier.weight(1f))
+            DetailText(line, muted, Modifier.weight(1f))
         } else {
             // With an action the instrument sits above the detail, so a large font never breaks
             // "LIBRE" or a name letter by letter between the instrument and the action.
             Column(modifier = Modifier.weight(1f).padding(vertical = spacing.xs)) {
                 InstrumentText(line, style)
-                DetailText(line)
+                DetailText(line, muted)
             }
         }
         line.actionLabel?.let { label ->
@@ -118,11 +118,11 @@ private fun InstrumentText(
 }
 
 @Composable
-private fun DetailText(line: LineupLineUiModel, modifier: Modifier = Modifier) {
+private fun DetailText(line: LineupLineUiModel, muted: Boolean, modifier: Modifier = Modifier) {
     Text(
         text = line.detail.resolve(),
         style = BluesJamTheme.typography.body,
-        color = LineupPanelDefaults.detailColor(line.kind),
+        color = LineupPanelDefaults.detailColor(line.kind, muted = muted),
         maxLines = DETAIL_MAX_LINES,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier,

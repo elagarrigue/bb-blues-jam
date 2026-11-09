@@ -508,6 +508,15 @@ dificultad y el id de Songsterr siguen siendo solo de la planilla. El Sheet se p
 es el camino previsto: si los dos escriben, gana la última escritura, sin sincronización, como en D-28. Decisiones del
 organizador del 20 de octubre de 2026. El asistente sigue sin escribir el catálogo (D-24).
 
+### D-31 — Temas ya tocados (song-played-state)
+Durante la jam el admin marca un tema de la próxima jam como "ya tocado" y lo puede desmarcar. Se guarda en una
+columna opcional `tocado` de la pestaña de la jam (`sí` o vacío; si falta la columna, nada está tocado) y es de la
+app, como el resto de la lista que viene (D-04). Es una mutación de repositorio (`setSongPlayed`, D-13) que Apps
+Script valida con la frase de acceso. Mientras está tocado no se puede cambiar el tono, los cupos, los músicos ni
+los Otros, ni sacarlo de la lista: el servidor lo rechaza con `song_played` aunque lo pida una versión vieja de la
+app. Sí se puede mover. Todos lo ven apagado, y sus cupos libres dejan de contar como libres. El asistente no lo
+conoce; solo se bloquea un reemplazo que sacaría un tema tocado. Decisiones del organizador del 9 de noviembre de 2026.
+
 ---
 
 # Parte III — Harness y seguimiento

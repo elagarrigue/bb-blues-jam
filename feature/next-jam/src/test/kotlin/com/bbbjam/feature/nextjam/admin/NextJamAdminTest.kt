@@ -131,11 +131,11 @@ class NextJamAdminTest {
         assertFalse(checkNotNull(first.move).up.enabled)
         assertTrue(checkNotNull(first.move).down.enabled)
         assertNull(first.saveStatus)
-        // The song-level controls live in the song detail: the row's admin part has nothing else.
+        // The song-level controls live in the song detail: the row's admin part has only the "ya tocado" switch more.
         val fields = SongRowAdminUiModel::class.java.declaredFields
             .filterNot { java.lang.reflect.Modifier.isStatic(it.modifiers) || it.isSynthetic }
             .map { it.name }.toSet()
-        assertEquals(setOf("removal", "move", "saveStatus"), fields)
+        assertEquals(setOf("removal", "move", "saveStatus", "played"), fields)
         val musician = published.toUiModel(today).asJam()
         assertTrue((musician.setlist as SetlistUiModel.Songs).rows.all { it.admin == null })
     }

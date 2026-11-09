@@ -38,6 +38,7 @@ class WriteRejectionTest {
         WriteRejection.DUPLICATE_ID to "duplicate_id",
         WriteRejection.INVALID_TITLE to "invalid_title",
         WriteRejection.INVALID_ARTIST to "invalid_artist",
+        WriteRejection.SONG_PLAYED to "song_played",
     )
 
     @Test

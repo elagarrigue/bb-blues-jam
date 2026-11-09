@@ -140,6 +140,7 @@ private fun notes(add: ApplyPlan, replace: ReplacePlan): List<UiText> = buildLis
     when ((replace as? ReplacePlan.Blocked)?.reason) {
         ReplacePlan.Blocked.Reason.ALREADY_EQUAL -> add(UiText.res(R.string.assistant_replace_note_equal))
         ReplacePlan.Blocked.Reason.REPEATED_IDS -> add(UiText.res(R.string.assistant_replace_note_repeated))
+        ReplacePlan.Blocked.Reason.PLAYED_SONGS -> add(UiText.res(R.string.assistant_replace_note_played))
         else -> Unit
     }
 }

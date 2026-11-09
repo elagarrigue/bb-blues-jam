@@ -42,6 +42,19 @@ class InstrumentStripDefaultsTest {
     }
 
     @Test
+    fun `a played song's chips are archive text on surfaceRaised for every kind, never amber, with their own glyph`() {
+        val amber = colors.slotOpen
+        InstrumentChipKind.entries.forEach { kind ->
+            val muted = InstrumentStripDefaults.mutedStyle(kind)
+            assertEquals(colors.surfaceRaised, muted.fill)
+            assertEquals(colors.archive, muted.textColor)
+            assertEquals(colors.archive, muted.glyphColor)
+            assertEquals(InstrumentStripDefaults.style(kind).glyph, muted.glyph)
+            listOf(muted.fill, muted.textColor, muted.glyphColor).forEach { assertNotEquals(amber, it) }
+        }
+    }
+
+    @Test
     fun `an extra is never amber`() {
         val style = InstrumentStripDefaults.style(InstrumentChipKind.EXTRA)
         val amber = colors.slotOpen

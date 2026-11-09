@@ -507,6 +507,22 @@ release `false`; the draft flag wins); `DemoUpcomingJam.on/startingAt` and `Demo
 `JamStatus`, and live mode moves the replaced real upcoming jam to the front of `heldBack`. Konsist unchanged
 (19 rules).
 
+As built by `song-played-state` (9 November 2026; D-31): **the thirteenth mutation contract**, `core.data.setlist.played`
+(`SetlistPlayedRepository`: `setSongPlayed(jamDate, songId, played): SetSongPlayedOutcome`, `observePlayedChanges()`,
+`dismissPlayedChange(id)`; `PlayedChange` `Sending`/`Failed`/`Outdated`; the internal `SetlistPlayedChanges` on the shared queue,
+sending through `AdminWriter.send` and requiring the echoed `played`), `SetlistRepository` is the union of **thirteen**
+contracts and `:app` binds `single<SetlistPlayedRepository>` with an `assertSame` in `AppModuleBindingsTest`. `JamSong.played`
+(app-owned, D-04) is read from the optional `tocado` column (`isPlayedCell`, the one rule shared with the script's
+`isPlayedText_`), cached as `jam_song.played` (database version 3, destructive; `jam_song_resolved` selects it and
+`copySongs` copies it) and mirrored by `SetlistPlayedDao.updatePlayed` only after the server's echo. **A played song is
+read-only**: the script's `requireNotPlayed_` refuses seven actions with `song_played` (not `moveSong`), and the app hides the
+controls (`SongRowAdminUiModel.removal` and `SongDetailAdminUiModel.setKey`/`lineup`/`extraParticipants` are null while played;
+`SetKeyPresenter` and the assign screen are `Gone`). `SongOverlaySources` has a sixth contract and `SongOverlays.playedChanges` is
+the one optimistic rule for the list and the detail (`PlayedOverlay.kt`, `PlayedControls.kt`); the instrument filter looks at
+`JamSong.filterLineup()` (a played song has no open slot). `:core:ui` gained the muted strip/panel (`mutedStyle`,
+`LineupPanelUiModel.muted`) and `IconRowToggle`; `:feature:assistant` blocks a replace that would remove a played song
+(`ReplacePlan.Blocked.Reason.PLAYED_SONGS`). Konsist is unchanged.
+
 As built by `admin-set-jam-status` (14 October 2026; D-26): one new write action, `setJamStatus({date, status})`
 (last in `ACTIONS`, router-guarded, `status` is the exact Sheet text; refusals `invalid_date`, `invalid_status`, then
 `requireEditableJam_`, all before any write; the same status answers `changed: false` with no write; target

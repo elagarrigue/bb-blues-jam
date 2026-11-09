@@ -17,6 +17,8 @@ import com.bbbjam.core.data.setlist.lineup.LineupChange
 import com.bbbjam.core.data.setlist.lineup.SetSlotCountOutcome
 import com.bbbjam.core.data.setlist.move.MoveSongOutcome
 import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.played.PlayedChange
+import com.bbbjam.core.data.setlist.played.SetSongPlayedOutcome
 import com.bbbjam.core.data.setlist.publish.PublishOutcome
 import com.bbbjam.core.data.setlist.publish.SetlistPublish
 import com.bbbjam.core.data.setlist.remove.RemoveSongOutcome
@@ -69,6 +71,9 @@ class FakeSetlistRepository : SetlistRepository {
     val publishResults = ArrayDeque<PublishOutcome>()
     var publishHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     val moveCalls = mutableListOf<Triple<LocalDate, SongId, Int>>()
+    val playedChanges = MutableStateFlow<List<PlayedChange>>(emptyList())
+    val playedCalls = mutableListOf<Triple<LocalDate, SongId, Boolean>>()
+    var playedHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     var moveHold: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     data class AssignmentCall(
         val date: LocalDate,
@@ -78,6 +83,20 @@ class FakeSetlistRepository : SetlistRepository {
         val name: MusicianName,
     )
     val assignmentCalls = mutableListOf<AssignmentCall>()
+
+    override suspend fun setSongPlayed(jamDate: LocalDate, songId: SongId, played: Boolean): SetSongPlayedOutcome {
+        playedCalls += Triple(jamDate, songId, played)
+        playedHold?.await()
+        return SetSongPlayedOutcome.PlayedSet(played)
+    }
+
+    override fun observePlayedChanges(): Flow<List<PlayedChange>> = playedChanges
+
+    override fun dismissPlayedChange(id: Long) {
+        dismissed += id
+        dismissCalls += "PlayedChange" to id
+        playedChanges.value = playedChanges.value.filterNot { it.id == id && it.state !is PlayedChange.State.Sending }
+    }
 
     override suspend fun addSong(jamDate: LocalDate, songId: SongId, key: Key): AddSongOutcome {
         addCalls += AddCall(jamDate, songId, key)
@@ -299,5 +318,5 @@ class FakeSetlistRepository : SetlistRepository {
 /** The list's add, remove and move contracts, all this one fake (as `:app` binds them). */
 internal fun FakeSetlistRepository.writes() = NextJamSetlistWrites(this, this, this)
 
-/** The five song-level contracts, all this one fake. */
-internal fun FakeSetlistRepository.sources() = SongOverlaySources(this, this, this, this, this)
+/** The six song-level contracts, all this one fake. */
+internal fun FakeSetlistRepository.sources() = SongOverlaySources(this, this, this, this, this, this)

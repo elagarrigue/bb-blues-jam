@@ -50,6 +50,8 @@ internal data class JamSongEntity(
     @ColumnInfo(name = "title_copy") val titleCopy: String,
     @ColumnInfo(name = "artist_copy") val artistCopy: String,
     val key: String,
+    /** The admin's "ya tocado" mark (D-31); the column was added by database version 3. */
+    @ColumnInfo(defaultValue = "0") val played: Boolean = false,
 )
 
 /**
@@ -106,7 +108,7 @@ internal data class JamExtraEntity(
 @DatabaseView(
     viewName = "jam_song_resolved",
     value = """
-        SELECT s.jam_date, s.position, s.song_id, s.key,
+        SELECT s.jam_date, s.position, s.song_id, s.key, s.played,
             COALESCE(c.title, s.title_copy) AS title,
             COALESCE(c.artist, s.artist_copy) AS artist
         FROM jam_song AS s LEFT JOIN catalog_song AS c ON c.id = s.song_id
@@ -119,6 +121,7 @@ internal data class JamSongResolved(
     val key: String,
     val title: String,
     val artist: String,
+    val played: Boolean = false,
 )
 
 /** A jam with every row that hangs off it, as one `@Transaction` read returns it. */

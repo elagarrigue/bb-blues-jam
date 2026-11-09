@@ -65,6 +65,26 @@ class ReplacePlanTest {
     }
 
     @Test
+    fun `a proposal that drops a played song is blocked, and one that keeps it is not`() {
+        val played = Setlist.Available(
+            listOf(
+                jamSong(1).copy(position = 1),
+                jamSong(2).copy(position = 2, played = true),
+                jamSong(3).copy(position = 3),
+            ),
+        )
+        val dropsPlayed = listOf(1, 3, 5).map { song(it) }
+        assertEquals(
+            ReplacePlan.Blocked(ReplacePlan.Blocked.Reason.PLAYED_SONGS),
+            replacePlan(dropsPlayed, snapshot(jam(setlist = played))),
+        )
+        // Dropping only unplayed songs, appending and moving a played one are all fine.
+        val keepsPlayed = ready(replacePlan(listOf(2, 1, 5).map { song(it) }, snapshot(jam(setlist = played))))
+        assertEquals(ids(3), keepsPlayed.toRemove.map { it.songId })
+        assertEquals(ids(5), keepsPlayed.toAdd.map { it.songId })
+    }
+
+    @Test
     fun `the same ids in another order are not equal and need only moves`() {
         val plan = ready(replacePlan(proposal, snapshot(jam(setlist = listedOrder(1, 2, 3, 5)))))
         assertTrue(plan.toAdd.isEmpty())

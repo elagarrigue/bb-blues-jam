@@ -33,6 +33,18 @@ class LineupPanelDefaultsTest {
     }
 
     @Test
+    fun `a muted panel draws open lines without amber and keeps names in full text`() {
+        val open = LineupPanelDefaults.style(InstrumentChipKind.OPEN_SLOT, muted = true)
+        assertEquals(colors.surfaceRaised, open.fill)
+        assertEquals(colors.archive, open.textColor)
+        assertEquals(Glyph.DOT, open.glyph)
+        assertEquals(colors.archive, LineupPanelDefaults.detailColor(InstrumentChipKind.OPEN_SLOT, muted = true))
+        assertEquals(colors.text, LineupPanelDefaults.detailColor(InstrumentChipKind.FILLED_SLOT, muted = true))
+        assertEquals(Glyph.CHECK, LineupPanelDefaults.style(InstrumentChipKind.EXTRA, muted = true).glyph)
+        assertNotEquals(colors.slotOpen, LineupPanelDefaults.detailColor(InstrumentChipKind.OPEN_SLOT, muted = true))
+    }
+
+    @Test
     fun `an extra line is styled exactly like a filled slot and is never amber`() {
         val style = LineupPanelDefaults.style(InstrumentChipKind.EXTRA)
         assertEquals(LineupPanelDefaults.style(InstrumentChipKind.FILLED_SLOT), style)

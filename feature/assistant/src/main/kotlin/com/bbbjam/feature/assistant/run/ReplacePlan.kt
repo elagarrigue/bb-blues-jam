@@ -18,7 +18,7 @@ internal sealed interface ReplacePlan {
 
     /** The list cannot be replaced, for [reason]. */
     data class Blocked(val reason: Reason) : ReplacePlan {
-        enum class Reason { NO_UPCOMING, UNREADABLE, REPEATED_IDS, ALREADY_EQUAL }
+        enum class Reason { NO_UPCOMING, UNREADABLE, REPEATED_IDS, ALREADY_EQUAL, PLAYED_SONGS }
     }
 
     /**
@@ -43,7 +43,11 @@ internal sealed interface ReplacePlan {
 /** One reorder call: move [songId] to the absolute 1-based [toPosition]. */
 internal data class SongMove(val songId: SongId, val toPosition: Int)
 
-/** The plan to make the upcoming jam of [snapshot] list exactly [songs], in order. */
+/**
+ * The plan to make the upcoming jam of [snapshot] list exactly [songs], in order. A song already played
+ * cannot be removed (`song-played-state`: the server refuses it, which would stop the run midway), so a
+ * proposal that drops one is [ReplacePlan.Blocked.Reason.PLAYED_SONGS]; appending and moving are not affected.
+ */
 internal fun replacePlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): ReplacePlan {
     val jam = snapshot?.upcoming
     val listed = jam?.setlist as? Setlist.Available
@@ -69,9 +73,13 @@ internal fun replacePlan(songs: List<ProposedSong>, snapshot: JamsSnapshot?): Re
                     val (kept, toRemove) = listed.songs.partition { it.songId in wanted }
                     val toAdd = proposed.filter { it.songId !in current.toSet() }
                     val lost = toRemove.sumOf { it.assignments() }
-                    ReplacePlan.Ready(
-                        jam.date, jam.status, toAdd, toRemove, kept, lost, current.size, target, current, proposed,
-                    )
+                    if (toRemove.any { it.played }) {
+                        ReplacePlan.Blocked(ReplacePlan.Blocked.Reason.PLAYED_SONGS)
+                    } else {
+                        ReplacePlan.Ready(
+                            jam.date, jam.status, toAdd, toRemove, kept, lost, current.size, target, current, proposed,
+                        )
+                    }
                 }
             }
         }

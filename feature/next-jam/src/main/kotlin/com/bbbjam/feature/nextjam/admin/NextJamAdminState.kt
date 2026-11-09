@@ -39,6 +39,7 @@ internal fun rememberNextJamAdminState(
     var confirming by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val onRemoval = removalHandler(writes.removals, scope, { confirming == it }) { confirming = it }
+    val onTogglePlayed = rememberPlayedToggle(overlays.sources?.playedRepository, overlays.playedChanges)
     if (!isAdmin) return null
     return AdminState(
         adds,
@@ -56,5 +57,7 @@ internal fun rememberNextJamAdminState(
         onDismissRemove = writes.removals::dismissRemove,
         onDismissMove = writes.moves::dismissMove,
         overlaySources = overlays.sources,
+        playedChanges = overlays.playedChanges,
+        onTogglePlayed = onTogglePlayed,
     )
 }

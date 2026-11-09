@@ -32,6 +32,17 @@
     <string name="next_jam_close">Cerrar</string>
     <string name="next_jam_cancel">Cancelar</string>
     <string name="next_jam_saving">Guardando…</string>
+    <string name="next_jam_played">Ya tocado</string>
+    <string name="next_jam_mark_played">Marcar como tocado</string>
+    <string name="next_jam_unmark_played">Desmarcar como tocado</string>
+    <string name="next_jam_state_played">Tocado</string>
+    <string name="next_jam_state_unplayed">Sin tocar</string>
+    <string name="next_jam_played_failed">No se pudo marcar «%1$s» como tocado</string>
+    <string name="next_jam_unplayed_failed">No se pudo desmarcar «%1$s» como tocado</string>
+    <string name="next_jam_played_script_outdated">El script de la planilla todavía no sabe marcar temas tocados. Actualizalo con la guía y probá de nuevo.</string>
+    <string name="next_jam_failure_song_played">Ese tema ya está marcado como tocado; desmarcalo para cambiarlo.</string>
+    <string name="song_detail_played_label">YA TOCADO</string>
+    <string name="song_detail_played_switch">Ya tocado</string>
     <string name="next_jam_move_up">Subir</string>
     <string name="next_jam_move_down">Bajar</string>
     <string name="next_jam_move_up_description">subir un lugar</string>

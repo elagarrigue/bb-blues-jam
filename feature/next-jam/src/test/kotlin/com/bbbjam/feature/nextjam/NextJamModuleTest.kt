@@ -15,6 +15,7 @@ import com.bbbjam.core.data.setlist.extras.SetlistExtraParticipantRepository
 import com.bbbjam.core.data.setlist.key.SetlistKeyChangeRepository
 import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
 import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
+import com.bbbjam.core.data.setlist.played.SetlistPlayedRepository
 import com.bbbjam.core.data.setlist.remove.SetlistSongRemoveRepository
 import com.bbbjam.core.data.testing.FakeAdminSession
 import com.bbbjam.core.data.testing.FakeJamsRepository
@@ -49,6 +50,7 @@ class NextJamModuleTest {
             single<SetlistSlotClearRepository> { get<SetlistRepository>() }
             single<SetlistSongAddRepository> { get<SetlistRepository>() }
             single<SetlistSongRemoveRepository> { get<SetlistRepository>() }
+            single<SetlistPlayedRepository> { get<SetlistRepository>() }
             single<CatalogRepository> { NoCatalog }
         }
         val app = koinApplication { modules(nextJamModule, dataBindings) }

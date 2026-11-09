@@ -208,6 +208,21 @@ test('a missing Otros column gives extraParticipants null; the cell is passed th
   assert.equal(buildSetlist(withOtros, withOtros)[0].extraParticipants, 'Juan saxo;');
 });
 
+test('a missing tocado column gives played null; the cell is passed through raw, trimmed', () => {
+  const header = TAB_HEADER.concat(['tocado']);
+  const rowWith = (played) => slotRow('1', 'a', ['', played]);
+  assert.equal(buildSetlist([TAB_HEADER, slotRow('1', 'a')], [TAB_HEADER, slotRow('1', 'a')])[0].played, null);
+  for (const [cell, expected] of [['sí', 'sí'], [' SI ', 'SI'], ['x', 'x'], ['', null], ['  ', null]]) {
+    assert.equal(buildSetlist([header, rowWith(cell)], [header, rowWith(cell)])[0].played, expected, cell);
+  }
+});
+
+test('isPlayedText_ is true only for si, with or without the accent, in any case', () => {
+  const { isPlayedText_ } = loadScript();
+  for (const text of ['sí', 'si', 'SÍ', ' Si ', 'sI']) assert.equal(isPlayedText_(text), true, text);
+  for (const text of ['', ' ', 'no', 'x', 'sí!', 'sii', 'yes', null, undefined, 1]) assert.equal(isPlayedText_(text), false, String(text));
+});
+
 test('the jam, the row and the slots keep their documented key order', () => {
   const { body } = edgeResponse();
   for (const jam of body.jams) {

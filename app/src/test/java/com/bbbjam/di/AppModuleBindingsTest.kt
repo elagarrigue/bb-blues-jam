@@ -26,6 +26,9 @@ import com.bbbjam.core.data.setlist.lineup.SetlistLineupRepository
 import com.bbbjam.core.data.setlist.move.MoveSongOutcome
 import com.bbbjam.core.data.setlist.move.SetlistMoveRepository
 import com.bbbjam.core.data.setlist.move.SetlistSongMover
+import com.bbbjam.core.data.setlist.played.PlayedChange
+import com.bbbjam.core.data.setlist.played.SetSongPlayedOutcome
+import com.bbbjam.core.data.setlist.played.SetlistPlayedRepository
 import com.bbbjam.core.data.setlist.publish.PublishOutcome
 import com.bbbjam.core.data.setlist.publish.SetlistPublishRepository
 import com.bbbjam.core.data.setlist.remove.RemoveSongOutcome
@@ -90,13 +93,15 @@ class AppModuleBindingsTest {
                 koin.get<SetlistJamStatusRepository>(),
                 koin.get<SetlistJamEditRepository>(),
                 koin.get<SetlistJamCreationRepository>(),
+                koin.get<SetlistPlayedRepository>(),
             )
-            assertEquals(12, resolved.size)
+            assertEquals(13, resolved.size)
             resolved.forEach { assertSame(repository, it) }
             assertSame(repository.observeKeyChanges(), koin.get<SetlistKeyChangeRepository>().observeKeyChanges())
             koin.get<SetlistKeyChangeRepository>().dismissKeyChange(5)
             koin.get<SetlistMoveRepository>().dismissMove(6)
-            assertEquals(listOf("KeyChange:5", "Move:6"), repository.dismissed)
+            koin.get<SetlistPlayedRepository>().dismissPlayedChange(7)
+            assertEquals(listOf("KeyChange:5", "Move:6", "PlayedChange:7"), repository.dismissed)
         } finally {
             application.close()
         }
@@ -249,6 +254,15 @@ internal class BindingsSetlistRepository : SetlistRepository {
 
     override suspend fun setJamStatus(jamDate: LocalDate, status: JamStatus): SetJamStatusOutcome =
         SetJamStatusOutcome.StatusSet(status, changed = true)
+
+    override suspend fun setSongPlayed(jamDate: LocalDate, songId: SongId, played: Boolean): SetSongPlayedOutcome =
+        SetSongPlayedOutcome.PlayedSet(played)
+
+    override fun observePlayedChanges() = emptyFlow<List<PlayedChange>>()
+
+    override fun dismissPlayedChange(id: Long) {
+        dismissed += "PlayedChange:$id"
+    }
 
     override fun observeJamStatusChanges() = emptyFlow<List<com.bbbjam.core.data.setlist.jamstatus.JamStatusChange>>()
 

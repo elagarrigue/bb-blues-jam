@@ -87,6 +87,7 @@ internal object SetlistMapper {
         val key = required(row.key, Key::parseOrNull, MissingKey, InvalidKey, issues)
         val slots = lineupSlots(row.slots)
         val extras = extraParticipants(row.extraParticipants.trimmedCell(), issues)
+        val played = playedCell(row.played.trimmedCell(), issues)
         // A required field is null exactly when it recorded an issue that drops the row.
         val song = if (issues.none { it.dropsRow }) {
             JamSong(
@@ -97,6 +98,7 @@ internal object SetlistMapper {
                 key = checkNotNull(key),
                 lineup = Lineup(slots.map { it.second }),
                 extraParticipants = extras,
+                played = played,
             )
         } else {
             null
@@ -154,6 +156,13 @@ internal object SetlistMapper {
                 null
             }
         }
+
+    /** `tocado`: played exactly when [isPlayedCell]; any other non-empty text is recorded and read as not played. */
+    private fun playedCell(cell: String?, issues: MutableList<SetlistRowIssue>): Boolean {
+        val played = isPlayedCell(cell)
+        if (cell != null && !played) issues += SetlistRowIssue.InvalidPlayed
+        return played
+    }
 
     private fun parseExtraParticipant(entry: String): ExtraParticipant? {
         val match = EXTRA_PARTICIPANT.matchEntire(entry) ?: return null

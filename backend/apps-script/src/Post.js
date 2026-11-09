@@ -60,6 +60,10 @@
  * dificultad and songsterr_id are never written after creation. deleteSong is refused while the song is in the
  * list of the upcoming or a held-back jam. Every refusal happens before any write.
  *
+ * song-played-state (D-31) adds `setSongPlayed` and the optional `tocado` column: a played row (`sí`) is refused by
+ * setKey, setSlotCount, assignSlot, clearSlot, both extras actions and removeSong with `song_played`
+ * (requireNotPlayed_); moveSong, addSong and the jam actions are not guarded.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
  * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -178,6 +182,7 @@ var ACTIONS = {
   updateSong: { write: true, run: updateSong_ },
   deleteSong: { write: true, run: deleteSong_ },
   checkCatalogWrite: { write: true, run: checkCatalogWrite_ },
+  setSongPlayed: { write: true, run: setSongPlayed_ },
 };
 
 /**
@@ -451,6 +456,7 @@ function checkSetlistWrite_(request, spreadsheet, services) {
     const columns = mapColumns(SETLIST_CHECK_TAB, setlistSpecs_(), written[0]);
     writeKeyCell_(sheet, findSongRow_(sheet, columns, written, marker.songId), columns, CHECK_KEY_);
     const markerRow = findSongRow_(sheet, columns, written, marker.songId);
+    checkPlayedGuard_(sheet, markerRow, columns, marker.songId);
     [['guitar', 1], ['harmonica', 0], ['harmonica', 1]].forEach(function (step) {
       const cells = readSlotCells_(sheet, markerRow, columns);
       writeSlotCells_(sheet, markerRow, columns, planSlotCount_(cells, SLOT_COLUMNS_[step[0]], step[1]));
@@ -520,7 +526,7 @@ function checkSetlistWrite_(request, spreadsheet, services) {
   return { ok: true };
 }
 
-/** True when `rows` is exactly the marker, with the expected slots and no Otros. */
+/** True when `rows` is exactly the marker, with the expected slots, no Otros and not played. */
 function isMarkerRow_(rows, marker, expectedSlots, expectedExtras) {
   if (rows.length !== 1) {
     return false;
@@ -530,7 +536,7 @@ function isMarkerRow_(rows, marker, expectedSlots, expectedExtras) {
     return row.slots[field] === expectedSlots[field];
   });
   return row.position === String(marker.position) && row.songId === marker.songId && row.title === marker.title &&
-    row.artist === marker.artist && row.key === marker.key && slotsOpen &&
+    row.artist === marker.artist && row.key === marker.key && row.played === null && slotsOpen &&
     row.extraParticipants === (expectedExtras === undefined ? null : expectedExtras);
 }
 
@@ -579,7 +585,9 @@ function removeSetlistRow_(sheet, songId) {
   const display = range.getDisplayValues();
   const raw = range.getValues();
   const columns = mapColumns(sheet.getName(), setlistSpecs_(), display.length > 0 ? display[0] : []);
-  const index = findSongRow_(sheet, columns, display, songId) - 1;
+  const sheetRow = findSongRow_(sheet, columns, display, songId);
+  requireNotPlayed_(sheet, sheetRow, columns, songId);
+  const index = sheetRow - 1;
   const removed = wholePosition_((raw[index] || [])[columns.position]);
   const later = [];
   if (removed !== null) {
@@ -1393,7 +1401,9 @@ function setKey_(request, spreadsheet, services) {
   }
   const display = sheet.getDataRange().getDisplayValues();
   const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
-  writeKeyCell_(sheet, findSongRow_(sheet, columns, display, songId), columns, key);
+  const row = findSongRow_(sheet, columns, display, songId);
+  requireNotPlayed_(sheet, row, columns, songId);
+  writeKeyCell_(sheet, row, columns, key);
   return { ok: true };
 }
 
@@ -1429,6 +1439,7 @@ function setSlotCount_(request, spreadsheet, services) {
   const display = sheet.getDataRange().getDisplayValues();
   const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
   const row = findSongRow_(sheet, columns, display, songId);
+  requireNotPlayed_(sheet, row, columns, songId);
   const changes = planSlotCount_(readSlotCells_(sheet, row, columns), fields, count);
   if (Object.keys(changes).some(function (field) { return columns[field] === undefined; })) {
     throw new ContractError('instrument_not_expandable', 'This jam tab has no column for that slot yet');
@@ -1564,7 +1575,9 @@ function extraWriteContext_(request, spreadsheet, services) {
   if (columns.extraParticipants === undefined || columns.extraParticipants === null) {
     throw new ContractError('missing_header', 'Otros header is required for extra participant edits');
   }
-  return { date: date, songId: songId, sheet: sheet, columns: columns, row: findSongRow_(sheet, columns, display, songId) };
+  const row = findSongRow_(sheet, columns, display, songId);
+  requireNotPlayed_(sheet, row, columns, songId);
+  return { date: date, songId: songId, sheet: sheet, columns: columns, row: row };
 }
 
 function addExtraParticipant_(request, spreadsheet, services) {
@@ -1620,6 +1633,7 @@ function assignSlot_(request, spreadsheet, services) {
   const display = sheet.getDataRange().getDisplayValues();
   const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
   const row = findSongRow_(sheet, columns, display, songId);
+  requireNotPlayed_(sheet, row, columns, songId);
   const assigned = assignSlotToRow_(sheet, row, columns, instrument, ordinal, name);
   return { ok: true, column: SLOT_FIELDS.findIndex(function (spec) { return spec.field === assigned.field; }), name: name };
 }
@@ -1652,6 +1666,7 @@ function clearSlot_(request, spreadsheet, services) {
   const display = sheet.getDataRange().getDisplayValues();
   const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
   const row = findSongRow_(sheet, columns, display, songId);
+  requireNotPlayed_(sheet, row, columns, songId);
   const cleared = clearSlotFromRow_(sheet, row, columns, instrument, ordinal, expectedName);
   return { ok: true, column: SLOT_FIELDS.findIndex(function (spec) { return spec.field === cleared.field; }), slots: withLegacySlotKeys_(readSlotCells_(sheet, row, columns)) };
 }
@@ -2038,12 +2053,12 @@ function nextPosition_(rows) {
   return max + 1;
 }
 
-/** The jam tab specs in documented order: the five setlist columns, the eighteen slots, Otros. */
+/** The jam tab specs in documented order: the five setlist columns, the eighteen slots, Otros, tocado. */
 function setlistSpecs_() {
-  return SETLIST_FIELDS.concat(SLOT_FIELDS, [EXTRA_FIELD]);
+  return SETLIST_FIELDS.concat(SLOT_FIELDS, [EXTRA_FIELD, PLAYED_FIELD]);
 }
 
-/** Inserts the tab `name` with the jam tab header row: 20 columns, the 14 slot columns the ceilings allow. */
+/** Inserts the tab `name` with the jam tab header row: 21 columns, the 14 slot columns the ceilings allow. */
 function createSetlistTab_(spreadsheet, name) {
   const headers = setlistSpecs_().filter(function (spec) {
     return NOT_CREATED_SLOT_FIELDS_.indexOf(spec.field) < 0;
@@ -2093,6 +2108,105 @@ function appendSetlistRow_(sheet, song) {
     run.push(cell);
   });
   flush();
+}
+
+/**
+ * Throws `song_played` when the `tocado` cell of sheet row `row` (1-based) says the song was played
+ * (isPlayedText_). A tab without the column has nothing played. Called after findSongRow_ and before the
+ * first write of every action that edits or removes a row; moveSong and addSong never call it
+ * (song-played-state, D-31).
+ */
+function requireNotPlayed_(sheet, row, columns, songId) {
+  if (columns.played === undefined) {
+    return;
+  }
+  if (isPlayedText_(sheet.getRange(row, columns.played + 1).getDisplayValues()[0][0])) {
+    throw new ContractError('song_played', songId + ' was already played; unmark it to change it');
+  }
+}
+
+/**
+ * Writes the `tocado` cell of sheet row `row`: `sí` when played, empty otherwise, plain text first. A tab
+ * without the column gets the header `tocado` in the first column after the last one when marking (played
+ * true) and nothing is written when unmarking. Returns the 0-based column of the cell, or undefined when
+ * nothing was written.
+ */
+function writePlayedCell_(sheet, row, columns, played) {
+  let column = columns.played;
+  if (column === undefined) {
+    if (!played) {
+      return undefined;
+    }
+    column = sheet.getLastColumn();
+    const header = sheet.getRange(1, column + 1);
+    header.setNumberFormat(PLAIN_TEXT_FORMAT);
+    header.setValue(PLAYED_FIELD.header);
+  }
+  const cell = sheet.getRange(row, column + 1);
+  cell.setNumberFormat(PLAIN_TEXT_FORMAT);
+  cell.setValue(played ? 'sí' : '');
+  return column;
+}
+
+/**
+ * Marks or unmarks one song of the upcoming jam as played (`setSongPlayed`, D-31). Request
+ * `{ date, songId, played }`. Checks before any write, in order: `invalid_date`, `invalid_song`,
+ * `invalid_played` (not a JSON boolean), `unknown_jam` / `duplicate_date`, `jam_not_editable`,
+ * `song_not_in_setlist` (no tab), `missing_header` / `duplicate_header`, `song_not_in_setlist` /
+ * `duplicate_song`. The value already stored answers `changed: false` with no write. Otherwise it writes,
+ * reads the cell back and answers `{ schemaVersion, ok, played, changed: true }`.
+ */
+function setSongPlayed_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a YYYY-MM-DD calendar date');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug such as sweet-little-angel');
+  }
+  const played = request.played;
+  if (typeof played !== 'boolean') {
+    throw new ContractError('invalid_played', 'played must be true or false');
+  }
+  requireEditableJam_(spreadsheet, services, date);
+  const sheet = spreadsheet.getSheetByName(date);
+  if (!sheet) {
+    throw notInSetlist_(songId, date);
+  }
+  const display = sheet.getDataRange().getDisplayValues();
+  const columns = mapColumns(date, setlistSpecs_(), display.length > 0 ? display[0] : []);
+  const row = findSongRow_(sheet, columns, display, songId);
+  const current = columns.played !== undefined && isPlayedText_(textCell((display[row - 1] || [])[columns.played]));
+  if (current === played) {
+    return { schemaVersion: SCHEMA_VERSION, ok: true, played: played, changed: false };
+  }
+  const column = writePlayedCell_(sheet, row, columns, played);
+  const stored = isPlayedText_(sheet.getRange(row, column + 1).getDisplayValues()[0][0]);
+  if (stored !== played) {
+    throw new Error('The played cell read back a different value');
+  }
+  return { schemaVersion: SCHEMA_VERSION, ok: true, played: played, changed: true };
+}
+
+/**
+ * The deploy proof of the played guard, one step of checkSetlistWrite on its temporary tab: marks the
+ * marker played with writePlayedCell_, requires requireNotPlayed_ to throw `song_played`, unmarks it and
+ * requires the guard to pass.
+ */
+function checkPlayedGuard_(sheet, row, columns, songId) {
+  writePlayedCell_(sheet, row, columns, true);
+  let refused = false;
+  try {
+    requireNotPlayed_(sheet, row, columns, songId);
+  } catch (err) {
+    refused = err instanceof ContractError && err.code === 'song_played';
+  }
+  if (!refused) {
+    throw new Error('The played check did not refuse a played marker');
+  }
+  writePlayedCell_(sheet, row, columns, false);
+  requireNotPlayed_(sheet, row, columns, songId);
 }
 
 function adminSetlistError_(code, message) {

@@ -11,7 +11,8 @@ import androidx.room.TypeConverters
  * drops the tables and refetches: no exported schema and no migrations. Version 2 added the jam
  * tables and the `jam_song_resolved` view (`jams-repository-cache`); upgrading from 1 drops the
  * cached catalog too, which the next start refetches. [SetlistDao] (`admin-add-song-to-setlist`)
- * writes to the same tables, so it changed nothing in the schema.
+ * writes to the same tables, so it changed nothing in the schema. Version 3 added `jam_song.played`
+ * (`song-played-state`, D-31); the destructive upgrade drops the cache and the next start refetches.
  */
 @Database(
     entities = [
@@ -23,7 +24,7 @@ import androidx.room.TypeConverters
         JamExtraEntity::class,
     ],
     views = [JamSongResolved::class],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

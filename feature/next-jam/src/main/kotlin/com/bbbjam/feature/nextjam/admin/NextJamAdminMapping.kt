@@ -7,6 +7,7 @@ import com.bbbjam.core.data.setlist.extras.ExtraParticipantChange
 import com.bbbjam.core.data.setlist.key.KeyChange
 import com.bbbjam.core.data.setlist.lineup.LineupChange
 import com.bbbjam.core.data.setlist.move.SetlistMove
+import com.bbbjam.core.data.setlist.played.PlayedChange
 import com.bbbjam.core.data.setlist.remove.SetlistRemove
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
@@ -69,6 +70,8 @@ internal class AdminState(
     val onDismissRemove: (Long) -> Unit = {},
     val onDismissMove: (Long) -> Unit = {},
     val overlaySources: SongOverlaySources? = null,
+    val playedChanges: List<PlayedChange> = emptyList(),
+    val onTogglePlayed: (LocalDate, SongId, Boolean) -> Unit = { _, _, _ -> },
 ) {
     /** The song-level overlay rule this list shares with the song detail. */
     val overlays: SongOverlays
@@ -79,6 +82,7 @@ internal class AdminState(
             slotClears,
             extraParticipantChanges,
             overlaySources,
+            playedChanges,
         )
 }
 
@@ -175,7 +179,8 @@ private fun AdminState.failures(date: LocalDate): List<AddFailureUiModel> {
  */
 internal fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): SongRowUiModel {
     val pending = state.overlays.pendingKey(jam.date, song.songId)
-    val removal = removalModel(song)
+    // A played song cannot be removed: no removal at all, not even a disabled one (D-31).
+    val removal = if (song.played) null else removalModel(song)
     val saving = isMoveSending(song) || state.overlays.isSaving(jam.date, song.songId)
     return row.copy(
         key = pending?.value ?: row.key,
@@ -184,6 +189,7 @@ internal fun RowAdmin.decorate(row: SongRowUiModel, song: JamSong, total: Int): 
             removal = removal,
             move = moveModel(row, song, total, removal),
             saveStatus = if (saving) UiText.res(R.string.next_jam_saving) else null,
+            played = state.overlays.playedToggle(jam.date, song.songId, song.played, state.onTogglePlayed),
         ),
     )
 }

@@ -24,7 +24,7 @@ class SongDetailModelShapeTest {
             .map { it.name }
             .toSet()
         assertEquals(
-            setOf("title", "artist", "keyLabel", "key", "keyDescription", "lineup", "back", "admin"),
+            setOf("title", "artist", "keyLabel", "key", "keyDescription", "lineup", "back", "admin", "playedLabel"),
             fields,
         )
         assertTrue("forbidden field in $fields", fields.none { forbidden.containsMatchIn(it) })

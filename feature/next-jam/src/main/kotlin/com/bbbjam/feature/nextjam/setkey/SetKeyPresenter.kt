@@ -101,7 +101,8 @@ internal fun setKeyModel(
     return when {
         isAdmin == null || snapshot == null -> SetKeyUiModel.Loading(back)
 
-        song == null -> SetKeyUiModel.Gone(
+        // A played song is read-only (D-31): the picker is gone for it, as for a removed song.
+        song == null || song.played -> SetKeyUiModel.Gone(
             back,
             EmptyStateUiModel(
                 UiText.res(R.string.set_key_gone_title),

@@ -8,6 +8,7 @@ import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.LineupEditorUiModel
+import com.bbbjam.feature.nextjam.PlayedToggleUiModel
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 
 /**
@@ -46,6 +47,8 @@ internal sealed interface SongDetailUiModel : UiModel {
         val lineup: LineupPanelUiModel,
         override val back: BackUiModel,
         val admin: SongDetailAdminUiModel? = null,
+        /** "YA TOCADO" for a played song (`song-played-state`): the key is drawn in `archive`, the panel muted. */
+        val playedLabel: UiText? = null,
     ) : SongDetailUiModel
 }
 
@@ -59,8 +62,11 @@ internal sealed interface SongDetailUiModel : UiModel {
  */
 internal data class SongDetailAdminUiModel(
     val saveStatus: UiText?,
-    val setKey: SetKeyActionUiModel,
-    val lineup: LineupEditorUiModel,
-    val extraParticipants: ExtraParticipantEditorUiModel,
+    /** [setKey], [lineup] and [extraParticipants] are null while the song is played (read-only, D-31). */
+    val setKey: SetKeyActionUiModel?,
+    val lineup: LineupEditorUiModel?,
+    val extraParticipants: ExtraParticipantEditorUiModel?,
     val failures: List<AddFailureUiModel>,
+    /** The "ya tocado" switch (`song-played-state`). */
+    val played: PlayedToggleUiModel? = null,
 ) : UiModel

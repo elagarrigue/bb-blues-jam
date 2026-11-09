@@ -491,6 +491,29 @@ class JamsMapperTest {
         }
     }
 
+    @Test
+    fun `tocado marks only the song whose cell is si and records any other text without dropping the row`() {
+        val mapped = JamsMapper.map(
+            listOf(
+                jam(
+                    setlist = listOf(
+                        row("1", "crossroads", played = " S\u00cd "),
+                        row("2", "red-house", played = null),
+                        row("3", "sweet-home", played = "x"),
+                    ),
+                ),
+            ),
+        )
+
+        val songs = mapped.jams.single().jam.available().songs
+        assertEquals(listOf(true, false, false), songs.map { it.played })
+        assertEquals(
+            listOf(SetlistIssue.RowIssues(DATE, 3, listOf(SetlistRowIssue.InvalidPlayed))),
+            mapped.issues,
+        )
+        assertTrue(mapped.issues.none { (it as SetlistIssue.RowIssues).dropped })
+    }
+
     private fun Jam.available(): Setlist.Available = setlist as Setlist.Available
 
     private fun jam(
@@ -510,7 +533,8 @@ class JamsMapperTest {
         key: String? = "A",
         slots: SlotsDto = slots(null, null, null, null, null, null, null),
         extras: String? = null,
-    ) = SetlistRowDto(position, songId, title, artist, key, slots, extras)
+        played: String? = null,
+    ) = SetlistRowDto(position, songId, title, artist, key, slots, extras, played)
 
     /** The seven default cells; the eleven slot columns beyond the default read as `-`, as on a 7-column tab. */
     private fun slots(vararg cells: String?) = SlotsDto(

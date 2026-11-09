@@ -24,6 +24,7 @@ import com.bbbjam.core.ui.text.SongListText
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
+import com.bbbjam.feature.nextjam.admin.playedToggle
 import com.bbbjam.feature.nextjam.admin.removalKey
 import com.bbbjam.feature.nextjam.overlay.SongOverlaySources
 import com.bbbjam.feature.nextjam.overlay.SongOverlays
@@ -137,7 +138,7 @@ internal fun JamsSnapshot.toSongDetail(
     return when {
         admin != null && adminSong != null -> admin.songDetail(jamDate, adminSong, back)
 
-        song != null -> song.toSongModel(song.key.value, song.lineup.toLineupPanel(song.extraParticipants), back)
+        song != null -> song.toSongModel(song.key.value, song.readOnlyPanel(), back)
 
         else -> SongDetailUiModel.NotFound(
             EmptyStateUiModel(
@@ -157,7 +158,14 @@ private fun JamSong.toSongModel(key: String, lineup: LineupPanelUiModel, back: B
     keyDescription = SongListText.keyDescription(key),
     lineup = lineup,
     back = back,
+    playedLabel = if (played) UiText.res(R.string.song_detail_played_label) else null,
 )
+
+/** The panel with no line action: muted and with no hint for a played song, as it is for musicians. */
+private fun JamSong.readOnlyPanel(): LineupPanelUiModel {
+    val panel = lineup.toLineupPanel(extraParticipants)
+    return if (played) panel.copy(muted = true, hint = null) else panel
+}
 
 /**
  * The admin's detail of [cached]: drawn as the list draws its row (the same [SongOverlays], plus the
@@ -169,16 +177,24 @@ private fun SongAdminState.songDetail(date: LocalDate, cached: JamSong, back: Ba
     val song = overlays.overlaid(date, cached) { lineup -> reservations.overlay(date, id, lineup) }
     val key = overlays.pendingKey(date, id)?.value ?: cached.key.value
     val saving = overlays.isSaving(date, id) || reservations.has(date, id)
-    return song.toSongModel(key, lineupPanel(date, song, song.extraParticipants), back).copy(
+    // A played song is read-only (D-31): no key picker, no formation editor, no "+ Otro", no line actions.
+    val editable = !song.played
+    val panel = if (editable) lineupPanel(date, song, song.extraParticipants) else song.readOnlyPanel()
+    return song.toSongModel(key, panel, back).copy(
         admin = SongDetailAdminUiModel(
             saveStatus = if (saving) UiText.res(R.string.next_jam_saving) else null,
-            setKey = SetKeyActionUiModel(
-                UiText.res(R.string.next_jam_set_key),
-                EventHandler(key = "${removalKey(date, id)}|setKey") { onSetKey(date, id) },
-            ),
-            lineup = lineupEditor(date, song),
-            extraParticipants = extraEditor(date, song),
+            setKey = if (editable) {
+                SetKeyActionUiModel(
+                    UiText.res(R.string.next_jam_set_key),
+                    EventHandler(key = "${removalKey(date, id)}|setKey") { onSetKey(date, id) },
+                )
+            } else {
+                null
+            },
+            lineup = if (editable) lineupEditor(date, song) else null,
+            extraParticipants = if (editable) extraEditor(date, song) else null,
             failures = failureCards(overlays.failures(date, id)),
+            played = overlays.playedToggle(date, id, song.played, onTogglePlayed),
         ),
     )
 }

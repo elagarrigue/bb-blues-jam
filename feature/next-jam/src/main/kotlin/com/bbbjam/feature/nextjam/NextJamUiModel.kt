@@ -160,7 +160,9 @@ internal data class DraftSetlistUiModel(val label: UiText, val title: UiText, va
  * order, then the extra participants). Tapping the header opens the song detail
  * ([Event.OpenDetail]); [openDetailLabel] ("ver el detalle del tema") is that action for screen
  * readers. [admin] is the admin's part of the row, the compact bar under the header; null for
- * musicians, so a musician's row is exactly what it was before admin controls existed.
+ * musicians, so a musician's row is exactly what it was before admin controls existed. A played song
+ * (`song-played-state`, D-31) has [played] true and a [playedLabel] ("Ya tocado") under its title: the
+ * row is drawn muted, so colour is never the only signal.
  */
 internal data class SongRowUiModel(
     val position: Int,
@@ -173,6 +175,8 @@ internal data class SongRowUiModel(
     val openDetailLabel: UiText,
     val events: EventHandler<Event>,
     val admin: SongRowAdminUiModel? = null,
+    val played: Boolean = false,
+    val playedLabel: UiText? = null,
 ) : UiModel {
     sealed interface Event : UiEvent {
         /** Open this song's detail. Navigation only, never a write. */
@@ -185,15 +189,36 @@ internal data class SongRowUiModel(
  * header (`song-detail-replaces-row-expansion`, P3). [move] ("Subir"/"Bajar", `admin-reorder-songs`;
  * null while the removal is sent) and [removal] (the remove action, its inline confirmation, or the
  * status while the removal is sent, `admin-remove-song-from-setlist`, U1), which replaces the bar
- * while it confirms. [saveStatus] is "Guardando…" while a write of the song is sending (its key,
- * lineup, slots, extras or position), else null; it is drawn under the title line. Song-level
- * controls live in the song detail.
+ * while it confirms; null while the song is played, which cannot be removed (`song-played-state`).
+ * [played] is the "ya tocado" switch, in the bar of every admin row. [saveStatus] is "Guardando…" while a write
+ * of the song is sending (its key, lineup, slots, extras or position), else null; it is drawn under the title
+ * line. Song-level controls live in the song detail.
  */
 internal data class SongRowAdminUiModel(
-    val removal: RemovalUiModel,
+    val removal: RemovalUiModel?,
     val move: MoveUiModel? = null,
     val saveStatus: UiText? = null,
+    val played: PlayedToggleUiModel? = null,
 ) : UiModel
+
+/**
+ * The "ya tocado" switch (`song-played-state`, D-31): [checked] is the effective value (a sending change
+ * included), [description] the action ("Marcar como tocado" / "Desmarcar como tocado") and [stateDescription]
+ * what a screen reader says for the state ("Tocado" / "Sin tocar"). It is the same switch in the list's bar and
+ * in the song detail, and sends one `setSongPlayed` with the opposite of [checked]. [enabled] is false while
+ * a change of the song is sending.
+ */
+internal data class PlayedToggleUiModel(
+    val checked: Boolean,
+    val enabled: Boolean,
+    val description: UiText,
+    val stateDescription: UiText,
+    val events: EventHandler<Event>,
+) : UiModel {
+    sealed interface Event : UiEvent {
+        data object Toggle : Event
+    }
+}
 
 /**
  * The admin's "Otros" editor (`admin-edit-extra-participants`): the "+ Otro" row at the end of the

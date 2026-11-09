@@ -50,6 +50,9 @@ enum class SetlistRowIssue(val dropsRow: Boolean) {
 
     /** One `Otros` entry is not `Nombre (instrumento)`; that entry is left out, the song is kept. */
     MalformedExtraParticipant(dropsRow = false),
+
+    /** The `tocado` cell holds text other than `sí`; the song is kept and read as not played (D-31). */
+    InvalidPlayed(dropsRow = false),
 }
 
 /**

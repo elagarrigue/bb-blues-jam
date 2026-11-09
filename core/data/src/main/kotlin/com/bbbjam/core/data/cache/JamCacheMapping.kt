@@ -32,7 +32,15 @@ internal fun jamRows(jams: List<Pair<Jam, Map<Int, List<Int>>>>): JamRows {
     val entities = jams.mapIndexed { index, (jam, slotColumns) ->
         val date = jam.date.toString()
         (jam.setlist as? Setlist.Available)?.songs.orEmpty().forEach { song ->
-            songs += JamSongEntity(date, song.position, song.songId.value, song.title, song.artist, song.key.value)
+            songs += JamSongEntity(
+                date,
+                song.position,
+                song.songId.value,
+                song.title,
+                song.artist,
+                song.key.value,
+                song.played,
+            )
             val columns = slotColumns.getValue(song.position)
             slots += song.lineup.slots.zip(columns) { slot, column ->
                 JamSlotEntity(date, song.position, column, slot.instrument.name, slot.musicianName)
@@ -90,4 +98,5 @@ private fun JamWithChildren.toJamSong(song: JamSongResolved): JamSong = JamSong(
     extraParticipants = extras.filter { it.position == song.position }
         .sortedBy { it.entryOrder }
         .map { ExtraParticipant(it.name, it.instrument) },
+    played = song.played,
 )

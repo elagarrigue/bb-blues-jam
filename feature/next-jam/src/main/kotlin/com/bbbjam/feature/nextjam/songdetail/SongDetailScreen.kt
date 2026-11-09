@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,8 +18,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -44,8 +47,11 @@ import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
+import com.bbbjam.feature.nextjam.PlayedRowDefaults
+import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.SetKeyActionUiModel
 import com.bbbjam.feature.nextjam.admin.AddFailureCard
+import com.bbbjam.feature.nextjam.admin.PlayedToggle
 import com.bbbjam.feature.nextjam.admin.SaveStatusLine
 import java.time.LocalDate
 import java.time.LocalTime
@@ -149,13 +155,14 @@ private fun LazyListScope.songItems(model: SongDetailUiModel.Song) {
                 LineupPanel(
                     model = model.lineup,
                     modifier = Modifier.padding(BluesJamTheme.spacing.md),
-                    openSlotsFooter = admin?.let { { ExtraParticipantEditor(it.extraParticipants) } },
+                    openSlotsFooter = admin?.extraParticipants?.let { { ExtraParticipantEditor(it) } },
                 )
-                admin?.let {
-                    LineupEditor(it.lineup)
-                }
+                admin?.lineup?.let { LineupEditor(it) }
             }
         }
+    }
+    admin?.played?.let { played ->
+        item(key = PLAYED_KEY) { PlayedSwitchRow(played, Modifier.padding(start = BluesJamTheme.spacing.sm)) }
     }
     admin?.let {
         items(it.failures, key = { failure -> "failure-${failure.id}" }) { failure ->
@@ -169,6 +176,20 @@ private const val NOT_FOUND_KEY = "notFound"
 private const val TITLE_KEY = "title"
 private const val KEY_KEY = "key"
 private const val LINEUP_KEY = "lineup"
+private const val PLAYED_KEY = "played"
+
+/** "Ya tocado" and its switch (`song-played-state`), after the key block; the admin only. */
+@Composable
+private fun PlayedSwitchRow(model: com.bbbjam.feature.nextjam.PlayedToggleUiModel, modifier: Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(R.string.song_detail_played_switch),
+            style = SongDetailDefaults.bodyStyle,
+            color = BluesJamTheme.colors.text,
+        )
+        PlayedToggle(model, Modifier.padding(start = BluesJamTheme.spacing.sm))
+    }
+}
 
 @Composable
 private fun Title(model: SongDetailUiModel.Song, modifier: Modifier) {
@@ -181,6 +202,9 @@ private fun Title(model: SongDetailUiModel.Song, modifier: Modifier) {
         )
         model.artist?.let { artist ->
             Text(text = artist, style = SongDetailDefaults.bodyStyle, color = BluesJamTheme.colors.textMuted)
+        }
+        model.playedLabel?.let { label ->
+            Text(text = label.resolve(), style = SongDetailDefaults.captionStyle, color = PlayedRowDefaults.caption())
         }
         model.admin?.saveStatus?.let { status -> SaveStatusLine(status) }
     }
@@ -212,7 +236,7 @@ private fun KeyBlock(
         Text(
             text = model.key,
             style = SongDetailDefaults.keyStyle,
-            color = SongDetailDefaults.keyColor(BluesJamTheme.colors),
+            color = SongDetailDefaults.keyColor(BluesJamTheme.colors, played = model.playedLabel != null),
             maxLines = 1,
         )
     }

@@ -95,6 +95,17 @@ class ContrastTest {
     @Test
     fun `archive on a surface`() = assertContrast(colors.archive, colors.surface, expected = 5.39)
 
+    /** A played song's title, position and key (`song-played-state`): `archive` straight on the background. */
+    @Test
+    fun `archive on the background`() = assertContrast(colors.archive, colors.background, expected = 5.84)
+
+    /** A played song's strip chip and muted panel line: `archive` on the `surfaceRaised` fill they draw. */
+    @Test
+    fun `archive on a muted chip fill`() {
+        val style = InstrumentStripDefaults.mutedStyle(InstrumentChipKind.OPEN_SLOT)
+        assertContrast(style.textColor, style.fill, expected = 5.16)
+    }
+
     /** The selected bottom-bar tab: icon and label in `text` on the `surfaceRaised` indicator (`bottom-navigation`). */
     @Test
     fun `text on a raised surface`() {
@@ -152,6 +163,15 @@ class AdminContrastTest {
 
     @Test
     fun `archive on the admin surface`() = assertContrast(colors.archive, admin.surface, expected = 5.03)
+
+    @Test
+    fun `archive on the admin background`() = assertContrast(colors.archive, admin.background, expected = 5.50)
+
+    @Test
+    fun `archive on the admin raised surface`() {
+        val style = InstrumentStripDefaults.mutedStyle(InstrumentChipKind.FILLED_SLOT)
+        assertContrast(style.textColor, admin.surfaceRaised, expected = 4.80)
+    }
 
     @Test
     fun `error on the admin surface`() = assertContrast(colors.error, admin.surface, expected = 9.44)

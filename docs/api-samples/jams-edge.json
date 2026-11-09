@@ -38,7 +38,8 @@
             "harmonica": null,
             "keyboards": null
           },
-          "extraParticipants": null
+          "extraParticipants": null,
+          "played": null
         },
         {
           "position": "1",
@@ -71,7 +72,8 @@
             "harmonica": "-",
             "keyboards": null
           },
-          "extraParticipants": "Juan (saxo); Ana (percusión);"
+          "extraParticipants": "Juan (saxo); Ana (percusión);",
+          "played": null
         },
         {
           "position": "3",
@@ -104,7 +106,8 @@
             "harmonica": null,
             "keyboards": null
           },
-          "extraParticipants": null
+          "extraParticipants": null,
+          "played": null
         }
       ],
       "setlistError": null
@@ -214,7 +217,8 @@
             "harmonica": null,
             "keyboards": null
           },
-          "extraParticipants": null
+          "extraParticipants": null,
+          "played": null
         }
       ],
       "setlistError": null

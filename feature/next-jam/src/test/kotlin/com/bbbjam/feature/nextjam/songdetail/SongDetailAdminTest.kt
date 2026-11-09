@@ -110,7 +110,16 @@ class SongDetailAdminTest {
         }
     }
 
-    private fun SongDetailUiModel.Song.controls() = checkNotNull(admin)
+    private fun SongDetailUiModel.Song.controls() = EditableControls(checkNotNull(admin))
+
+    /** The admin controls of an editable (not played) song: the three editors are never null here. */
+    private class EditableControls(admin: SongDetailAdminUiModel) {
+        val saveStatus = admin.saveStatus
+        val setKey = checkNotNull(admin.setKey)
+        val lineup = checkNotNull(admin.lineup)
+        val extraParticipants = checkNotNull(admin.extraParticipants)
+        val failures = admin.failures
+    }
 
     private fun Pair<NextJamUiModel, SongDetailUiModel>.bothShowAna(): Boolean {
         val row = ((first as? NextJamUiModel.Jam)?.setlist as? SetlistUiModel.Songs)?.rows?.firstOrNull()

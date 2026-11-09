@@ -134,6 +134,7 @@ carries a time, and the header of the next-jam screen needs it.
 | `tono` | `key` | yes | See **Keys**. That night's key, not the catalog default (D-08) |
 | `Guitarra 1`-`3`, `Bajo 1`-`3`, `Batería 1`-`3`, `Voz 1`-`3`, `Armónica 1`-`3`, `Teclados 1`-`3` | `lineup` | the original seven yes, the other eleven no; cells no | Three fixed columns per instrument (D-06, D-18 amended 12 October 2026); see **Slot columns** |
 | `Otros` | `extraParticipants` | no | `Nombre (instrumento)` entries separated by `;`, e.g. `Juan (saxo); Ana (percusión)`. Empty or missing column = none (D-18); see **`Otros`** |
+| `tocado` | `played` | no | `sí` when the admin marked the song as already played, empty otherwise (`song-played-state`, D-31); see **`tocado`** |
 
 `Catalogo` is authoritative for title and artist: the app resolves `id_tema` there. The copies in
 the jam tab exist so the admin can read the tab, and so a setlist stays readable if a song is later
@@ -156,7 +157,7 @@ slot cells and `Otros` are written empty (the default lineup, all open, D-18), a
 cells beyond the default that the tab has (`Guitarra 3`, `Bajo 2`-`3`, `Voz 2`-`3`, `Armónica 2`-`3`;
 also `Batería 2`-`3` and `Teclados 2`-`3` on a tab widened to 18) are written `-`, so none is mistaken for an open slot until the admin grows that
 instrument. A tab that was never widened has no such columns and nothing is written for them. A
-new tab is created with **fourteen** slot headers (20 columns with the five setlist columns and `Otros`): no `Batería 2`-`3` and no `Teclados 2`-`3` (`lineup-max-per-instrument`). A song already in the
+new tab is created with **fourteen** slot headers (21 columns with the five setlist columns, `Otros` and `tocado`): no `Batería 2`-`3` and no `Teclados 2`-`3` (`lineup-max-per-instrument`). A song already in the
 tab is refused (`song_already_in_setlist`). Every check runs before the first write.
 
 `removeSong` (user decision R1 (a)) finds its row by the trimmed `id_tema`, never by `posicion`
@@ -262,6 +263,21 @@ recorded", and the app never presents a past jam as having open slots.
 Musician name suggestions for the assign-slot sheet are derived from the names in past jam tabs,
 which settles that open question without a separate musicians list (there is no Musician entity,
 D-05).
+
+### `tocado` (`song-played-state`, D-31)
+
+Optional column of the upcoming jam's tab, owned by the app like the rest of that setlist (D-04). Marking a song writes
+`sí` (plain text); unmarking clears the cell. **One read rule**, the same in Apps Script (`isPlayedText_`) and in the
+mapper (`isPlayedCell`): trim, lowercase and strip the accent, and the song is played **if and only if** the result is
+`si`. An empty cell, a missing column or any other text (`no`, `x`, `✓`) is not played; the mapper records other
+non-empty text as a row issue (`InvalidPlayed`) and keeps the row. The script's GET carries the raw trimmed cell
+(`played`, `null` when empty or missing) and the mapper interprets it.
+
+A tab created by the app has the column (21 columns); on an older tab the server adds the header `tocado` after the
+last column the first time the admin marks a song (unmarking on such a tab writes nothing). While a song is played the
+server refuses `setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `addExtraParticipant`, `removeExtraParticipant` and
+`removeSong` with `song_played`, whoever sends them; `moveSong` is allowed. A date change (`updateJam`) renames the whole
+tab, so the column goes with it.
 
 ### `Otros`
 

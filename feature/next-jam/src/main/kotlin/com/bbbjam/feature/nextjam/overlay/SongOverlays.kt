@@ -9,6 +9,7 @@ import com.bbbjam.core.data.setlist.clear.SlotClear
 import com.bbbjam.core.data.setlist.extras.ExtraParticipantChange
 import com.bbbjam.core.data.setlist.key.KeyChange
 import com.bbbjam.core.data.setlist.lineup.LineupChange
+import com.bbbjam.core.data.setlist.played.PlayedChange
 import com.bbbjam.core.model.ExtraParticipant
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Key
@@ -40,17 +41,19 @@ internal class SongOverlays(
     val slotClears: List<SlotClear> = emptyList(),
     val extraParticipantChanges: List<ExtraParticipantChange> = emptyList(),
     val sources: SongOverlaySources? = null,
+    val playedChanges: List<PlayedChange> = emptyList(),
 ) {
     /**
      * [song] as the admin sees it: the pending lineup counts, then [reserve] (the detail's
      * not-yet-recomposed `+`/`−` taps; identity by default), then pending assignments and clears,
-     * and the pending extras. The key stays the cached one; see [pendingKey].
+     * and the pending extras, and the pending played mark. The key stays the cached one; see [pendingKey].
      */
     fun overlaid(date: LocalDate, song: JamSong, reserve: (Lineup) -> Lineup = { it }): JamSong = song.copy(
         lineup = reserve(lineupChanges.pendingLineup(date, song.songId, song.lineup))
             .overlayAssignments(date, song.songId, assignments)
             .overlaySlotClears(date, song.songId, slotClears),
         extraParticipants = extraParticipantChanges.pendingExtras(date, song.songId, song.extraParticipants),
+        played = playedChanges.pendingPlayed(date, song.songId) ?: song.played,
     )
 
     /** The latest pending key of the song, or null: the cached key is drawn. */
@@ -58,10 +61,16 @@ internal class SongOverlays(
 
     /** True while any song-level write of the song is sending: the "Guardando…" line. */
     fun isSaving(date: LocalDate, songId: SongId): Boolean = pendingKey(date, songId) != null ||
+        isSavingPlayed(date, songId) ||
         lineupChanges.any { it.matches(date, songId) && it.state == LineupChange.State.Sending } ||
         assignments.any { it.jamDate == date && it.songId == songId && it.state == Assignment.State.Sending } ||
         slotClears.any { it.jamDate == date && it.songId == songId && it.state == SlotClear.State.Sending } ||
         isSavingExtras(date, songId)
+
+    /** True while a played change of the song is sending. */
+    fun isSavingPlayed(date: LocalDate, songId: SongId): Boolean = playedChanges.any {
+        it.jamDate == date && it.songId == songId && it.state == PlayedChange.State.Sending
+    }
 
     /** True while an add or removal of an "Otros" entry of the song is sending. */
     fun isSavingExtras(date: LocalDate, songId: SongId): Boolean = extraParticipantChanges.any {
@@ -124,8 +133,23 @@ internal class SongOverlays(
                 )
             }
         }
-        return keys + lineups + assigned + clears + extras
+        return keys + lineups + assigned + clears + extras + playedFailures(date, songId)
     }
+
+    /** The failed and outdated played changes of [date] (only [songId]'s when given). */
+    private fun playedFailures(date: LocalDate, songId: SongId?): List<OverlayFailure> =
+        playedChanges.filter { it.jamDate == date && (songId == null || it.songId == songId) }.mapNotNull { change ->
+            val title = UiText.res(
+                if (change.played) R.string.next_jam_played_failed else R.string.next_jam_unplayed_failed,
+                change.title,
+            )
+            val message = when (val state = change.state) {
+                PlayedChange.State.Sending -> return@mapNotNull null
+                is PlayedChange.State.Failed -> failureMessage(state.reason)
+                PlayedChange.State.Outdated -> UiText.res(R.string.next_jam_played_script_outdated)
+            }
+            OverlayFailure(change.id, title, message, sources.dismissOf { playedRepository::dismissPlayedChange })
+        }
 
     private fun LineupChange.matches(date: LocalDate, id: SongId) = jamDate == date && songId == id
 }
@@ -152,7 +176,7 @@ internal fun failureCards(failures: List<OverlayFailure>): List<AddFailureUiMode
         )
     }
 
-/** Collects the five song-level entry lists of [sources] once (the flows are created once). */
+/** Collects the six song-level entry lists of [sources] once (the flows are created once). */
 @Composable
 internal fun rememberSongOverlays(sources: SongOverlaySources): SongOverlays {
     val keyChanges by remember { sources.keyRepository.observeKeyChanges() }.collectAsState(initial = emptyList())
@@ -166,7 +190,8 @@ internal fun rememberSongOverlays(sources: SongOverlaySources): SongOverlays {
     val extras by remember {
         sources.extraRepository.observeExtraParticipantChanges()
     }.collectAsState(initial = emptyList())
-    return SongOverlays(keyChanges, lineupChanges, assignments, slotClears, extras, sources)
+    val played by remember { sources.playedRepository.observePlayedChanges() }.collectAsState(initial = emptyList())
+    return SongOverlays(keyChanges, lineupChanges, assignments, slotClears, extras, sources, played)
 }
 
 /** The latest sending change's list of extras, else the confirmed one. */

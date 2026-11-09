@@ -40,6 +40,8 @@ internal data class SetlistRowDto(
     val key: String?,
     val slots: SlotsDto,
     val extraParticipants: String?,
+    /** The raw trimmed `tocado` cell, null when empty or when the tab has no such column or an old script. */
+    val played: String? = null,
 )
 
 /**

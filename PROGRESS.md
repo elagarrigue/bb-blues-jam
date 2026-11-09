@@ -1,3 +1,49 @@
+## 9 November 2026 - song-played-state implemented (passing, awaiting validation)
+
+The admin marks a song of the upcoming jam as "ya tocado" (reversible); a played song is muted for everyone and read-only
+except for its position (D-31). Orchestrator defaults for the spec's four open questions applied: a played song's open
+slots do not count for "cupo libre" and lose amber; the toggle is in the row bar and in the detail; the server adds the
+`tocado` header on an older tab on the first mark; only `si`/`sí` counts as played.
+
+Part A (backend, :core:model, :core:data, :app binding). Apps Script: `PLAYED_FIELD`/`isPlayedText_` (Jams.js), `played` after
+`extraParticipants` in every row (`schemaVersion` stays 1), `setSongPlayed` (last in `ACTIONS`, router-guarded), `writePlayedCell_`,
+`requireNotPlayed_` wired after `findSongRow_` in setKey, setSlotCount, assignSlot, clearSlot, both extras actions and
+`removeSetlistRow_` (not moveSong), `checkSetlistWrite` step, `tocado` appended to `setlistSpecs_` (new tabs have 21 columns).
+`JamSong.played`, `SetlistRowDto.played`, `isPlayedCell` + `SetlistRowIssue.InvalidPlayed`, `jam_song.played` (Room version 3,
+view and `copySongs` updated), `SetlistPlayedDao.updatePlayed`, `WriteRejection.SONG_PLAYED`, package `core.data.setlist.played`
+(13th contract), `:app` binding with `assertSame`. `CI=true ./init.sh` was green after Part A before Part B started.
+
+Part B (UI, assistant, docs). :core:ui muted strip/panel (`mutedStyle`, `LineupPanelUiModel.muted`), `IconRowToggle`,
+`IconRowActionIcon.Played`. :feature:next-jam `PlayedChange` overlay (`SongOverlays.playedChanges`, `SongOverlaySources` has a sixth
+contract), `PlayedControls` (handler: one write per tap pair), row and detail models (removal, setKey, lineup and Otros are null
+while played), `PlayedRowDefaults`, instrument filter over `JamSong.filterLineup()`, SetKey/assign screens `Gone` for a played
+song, strings in vos. :feature:assistant `ReplacePlan.Blocked.Reason.PLAYED_SONGS`. Debug demo jam: first song played.
+
+**Deviation from the spec (recorded):** the muted chip/line fill is `surfaceRaised`, not `slotFilled`. `archive` text on `slotFilled`
+is 3.85:1 (below AA 4.5); on `surfaceRaised` it is 5.16:1 (4.80:1 on the admin's raised surface). ContrastTest records archive on
+background 5.84, on the muted chip fill 5.16, on the admin background 5.50, on the admin raised surface 4.80.
+
+Verification run: `cd backend/apps-script && node --test` 267 pass, 0 fail (was 247 before; new played tests in setlist.test.js,
+jams.test.js, post.test.js). JVM, 0 failures: core:model 63, core:data 343 (new SetlistPlayedChangesTest 6, SetlistPlayedDaoTest 5,
+PlayedCellTest 3, one mapper test, WriteRejectionTest updated), core:ui 176 (muted style, panel and contrast tests), feature:next-jam 240
+(new NextJamPlayedTest 10, SongDetailPlayedTest 6, PlayedRowDefaultsTest 3), feature:assistant 161 (ReplacePlanTest 11), app 43
+(AppModuleBindingsTest 13 contracts, demo test), konsist-test 22. `./gradlew ktlintFormat` first. `CI=true ./init.sh` exit 0 with
+konsist, detekt and ktlint all wired (first Part B run failed on detekt MaxLineLength/TooManyFunctions and a Konsist amber-role check on
+a new test file; all fixed in code, no baseline, no rule touched). Proof `copySongs` keeps `played`:
+`SetlistPlayedDaoTest.a date edit copies the played mark with the songs (copySongs keeps played)`; remove and move keep it in
+`removing or moving a song keeps the played mark of every song`.
+
+NOT RUN: no device or emulator step (no Compose UI harness): the muted look, the 48dp toggle target, TalkBack reading "Ya tocado" and
+the detail switch row are unverified on a device (manual plan in the spec: debug demo jam with `bluesjam.demoUpcomingJam=true`, then
+`uiautomator dump`). The live script was not touched: the user must redeploy before the toggle works against the real Sheet.
+No `JamSong` unit test was added for the `played = false` default. Untracked app/debug and presentations untouched;
+local.properties and the connected device not touched.
+
+User step: redeploy Apps Script as in docs/migrations/song-played-state-script-update.md (paste **Jams.gs and Post.gs**, Manage
+deployments, New version; then the no-passphrase deploy probe).
+
+Next best step: independent validator; then the device pass and the user's redeploy.
+
 ## 9 November 2026 - musician-filter accepted
 
 Independent validator accept. It reran CI=true ./init.sh (Baseline OK, three tools wired) and ran the device steps

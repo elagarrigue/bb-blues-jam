@@ -24,18 +24,26 @@ internal object LineupPanelDefaults {
      * which reads exactly like a filled slot here (`extras-dialog-and-lines`). The strip's extra
      * chip now shares that fill and those colours; only the glyph differs (the strip chip has no check).
      */
-    fun style(kind: InstrumentChipKind, colors: BluesJamColors = BluesJamColors): InstrumentStripDefaults.ChipStyle =
-        when (kind) {
-            InstrumentChipKind.EXTRA -> InstrumentStripDefaults.style(InstrumentChipKind.FILLED_SLOT, colors)
-            else -> InstrumentStripDefaults.style(kind, colors)
+    fun style(
+        kind: InstrumentChipKind,
+        colors: BluesJamColors = BluesJamColors,
+        muted: Boolean = false,
+    ): InstrumentStripDefaults.ChipStyle {
+        val styled = if (kind == InstrumentChipKind.EXTRA) InstrumentChipKind.FILLED_SLOT else kind
+        return if (muted) {
+            InstrumentStripDefaults.mutedStyle(styled, colors)
+        } else {
+            InstrumentStripDefaults.style(styled, colors)
         }
+    }
 
     /**
      * The detail's colour: "LIBRE" in `slotOpen`, a musician's or an extra's name in full
      * `text` (the information on that line), never amber.
      */
-    fun detailColor(kind: InstrumentChipKind, colors: BluesJamColors = BluesJamColors): Color = when (kind) {
-        InstrumentChipKind.OPEN_SLOT -> colors.slotOpen
-        InstrumentChipKind.FILLED_SLOT, InstrumentChipKind.EXTRA -> colors.text
-    }
+    fun detailColor(kind: InstrumentChipKind, colors: BluesJamColors = BluesJamColors, muted: Boolean = false): Color =
+        when (kind) {
+            InstrumentChipKind.OPEN_SLOT -> if (muted) colors.archive else colors.slotOpen
+            InstrumentChipKind.FILLED_SLOT, InstrumentChipKind.EXTRA -> colors.text
+        }
 }

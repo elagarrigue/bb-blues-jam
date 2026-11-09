@@ -32,10 +32,11 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 /**
  * The instrument strip (DESIGN.md): one labelled chip per [chips] entry, wrapping onto new lines,
  * never scrolling sideways. Not interactive: each chip is one screen-reader node with its
- * description, and the glyphs are decorative. An empty list draws nothing.
+ * description, and the glyphs are decorative. An empty list draws nothing. [muted] draws every chip
+ * with [InstrumentStripDefaults.mutedStyle] (a played song).
  */
 @Composable
-fun InstrumentStrip(chips: List<InstrumentChipUiModel>, modifier: Modifier = Modifier) {
+fun InstrumentStrip(chips: List<InstrumentChipUiModel>, modifier: Modifier = Modifier, muted: Boolean = false) {
     if (chips.isEmpty()) return
     val spacing = BluesJamTheme.spacing
     FlowRow(
@@ -43,15 +44,15 @@ fun InstrumentStrip(chips: List<InstrumentChipUiModel>, modifier: Modifier = Mod
         horizontalArrangement = Arrangement.spacedBy(spacing.xs),
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
     ) {
-        chips.forEach { chip -> InstrumentChip(chip) }
+        chips.forEach { chip -> InstrumentChip(chip, muted) }
     }
 }
 
 @Composable
-private fun InstrumentChip(chip: InstrumentChipUiModel) {
+private fun InstrumentChip(chip: InstrumentChipUiModel, muted: Boolean) {
     val spacing = BluesJamTheme.spacing
     val textStyle = BluesJamTheme.typography.caption
-    val style = InstrumentStripDefaults.style(chip.kind)
+    val style = if (muted) InstrumentStripDefaults.mutedStyle(chip.kind) else InstrumentStripDefaults.style(chip.kind)
     // Glyphs follow the label's font size, so they scale with the system font like the text does.
     val em = with(LocalDensity.current) { textStyle.fontSize.toDp() }
     val description = chip.contentDescription.resolve()

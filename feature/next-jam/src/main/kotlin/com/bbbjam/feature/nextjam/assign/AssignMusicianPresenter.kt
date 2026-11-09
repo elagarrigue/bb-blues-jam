@@ -148,7 +148,8 @@ internal fun assignableSong(
 ): JamSong? {
     val allowed = isAdmin == true && !assignments.any { it.targets(params, requireSending = true) }
     val song = if (allowed) upcomingSong(snapshot, params.jamDate, params.songId) else null
-    return song?.takeIf { it.lineup.slotAt(params.instrument, params.ordinal)?.isOpen == true }
+    // A played song is read-only (D-31): the assign screen is gone for it.
+    return song?.takeIf { !it.played && it.lineup.slotAt(params.instrument, params.ordinal)?.isOpen == true }
 }
 
 private fun Assignment.targets(params: AssignMusicianPresenter.Params, requireSending: Boolean): Boolean =

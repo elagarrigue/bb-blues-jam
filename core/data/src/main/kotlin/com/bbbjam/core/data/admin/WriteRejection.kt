@@ -38,6 +38,7 @@ enum class WriteRejection(val code: String) {
     DUPLICATE_ID("duplicate_id"),
     INVALID_TITLE("invalid_title"),
     INVALID_ARTIST("invalid_artist"),
+    SONG_PLAYED("song_played"),
 
     /** Any code not listed above; never matched by [fromCode] on its own empty [code]. */
     Unknown(""),

@@ -149,7 +149,9 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
 /**
  * The admin's compact bar under a row's header (`song-detail-replaces-row-expansion`, P3;
  * `admin-row-icon-actions`): an up-arrow and down-arrow icon button grouped at the start, a
- * flexible gap, then a trash icon button for "Quitar de la lista" at the end — icons are small and
+ * "ya tocado" check toggle (`song-played-state`: a progress action done in sequence during the jam, so it
+ * is in the bar and not only in the detail), a flexible gap, then a trash icon button for "Quitar de la
+ * lista" at the end, absent while the song is played — icons are small and
  * fixed-size, so the earlier even thirds left large empty padding per button. While the removal is
  * sent, "Quitando…" replaces the bar (the move actions are already gone). While it confirms
  * (12 October 2026 amendment), the bar stays drawn as-is and [RemovalConfirmationDialog] opens on
@@ -176,14 +178,17 @@ internal fun AdminRowBar(
             MoveAction(move.up, IconRowActionIcon.MoveUp, Modifier) { onMoveAction(rowKey, move.up) }
             MoveAction(move.down, IconRowActionIcon.MoveDown, Modifier) { onMoveAction(rowKey, move.down) }
         }
+        model.played?.let { PlayedToggle(it) }
         Box(modifier = Modifier.weight(1f))
-        IconRowAction(
-            icon = IconRowActionIcon.Delete,
-            contentDescription = stringResource(R.string.next_jam_remove),
-            tint = AdminControlsDefaults.removal().action,
-            mutedTint = AdminControlsDefaults.move().disabled,
-        ) {
-            if (removal is RemovalUiModel.Idle) removal.events(RemovalUiModel.Event.RequestRemove)
+        if (removal != null) {
+            IconRowAction(
+                icon = IconRowActionIcon.Delete,
+                contentDescription = stringResource(R.string.next_jam_remove),
+                tint = AdminControlsDefaults.removal().action,
+                mutedTint = AdminControlsDefaults.move().disabled,
+            ) {
+                if (removal is RemovalUiModel.Idle) removal.events(RemovalUiModel.Event.RequestRemove)
+            }
         }
     }
     if (removal is RemovalUiModel.Confirming) {

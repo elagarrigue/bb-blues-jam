@@ -131,6 +131,21 @@ function withLegacySlotKeys_(slots) {
 /** The optional extra-participants column, passed through raw for the mapper to split. */
 var EXTRA_FIELD = { header: 'Otros', field: 'extraParticipants', required: false };
 
+/**
+ * The optional "ya tocado" column (song-played-state, D-31). The script transports the raw trimmed
+ * cell (null when empty or when the tab has no column) and the Kotlin mapper interprets it;
+ * `isPlayedText_` is the one rule, mirrored by `isPlayedCell` in :core:data.
+ */
+var PLAYED_FIELD = { header: 'tocado', field: 'played', required: false };
+
+/** True iff `text`, trimmed, lowercased and without its accent, is `si`. Null and anything else are not played. */
+function isPlayedText_(text) {
+  if (typeof text !== 'string') {
+    return false;
+  }
+  return text.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'si';
+}
+
 var ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
@@ -139,7 +154,7 @@ var ISO_DATE_ = /^\d{4}-\d{2}-\d{2}$/;
  */
 function buildSetlist(displayRows, rawRows, tabName) {
   const name = tabName || 'The jam tab';
-  const specs = SETLIST_FIELDS.concat(SLOT_FIELDS, [EXTRA_FIELD]);
+  const specs = SETLIST_FIELDS.concat(SLOT_FIELDS, [EXTRA_FIELD, PLAYED_FIELD]);
   const columns = mapColumns(name, specs, displayRows.length > 0 ? displayRows[0] : []);
   const rows = [];
   for (let r = 1; r < displayRows.length; r++) {
@@ -167,6 +182,7 @@ function buildSetlist(displayRows, rawRows, tabName) {
     });
     row.slots = withLegacySlotKeys_(slots);
     row.extraParticipants = read(EXTRA_FIELD);
+    row.played = read(PLAYED_FIELD);
     if (!empty) {
       rows.push(row);
     }
@@ -244,5 +260,5 @@ function setlistError_(code, message) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { JAMS_TAB, PUBLISHED_STATUS, DRAFT_STATUS, CREATED_STATUS, MUSICIAN_STATUSES_, musicianJams_, requireJamStatuses_, presentStatuses_, JAMS_FIELDS, SETLIST_FIELDS, NOT_IN_LINEUP_, LEGACY_SLOT_KEYS_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildSetlist, buildJams };
+  module.exports = { JAMS_TAB, PUBLISHED_STATUS, DRAFT_STATUS, CREATED_STATUS, MUSICIAN_STATUSES_, musicianJams_, requireJamStatuses_, presentStatuses_, JAMS_FIELDS, SETLIST_FIELDS, NOT_IN_LINEUP_, LEGACY_SLOT_KEYS_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, PLAYED_FIELD, isPlayedText_, buildSetlist, buildJams };
 }

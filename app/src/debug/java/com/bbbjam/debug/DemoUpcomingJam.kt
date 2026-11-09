@@ -60,6 +60,7 @@ internal object DemoUpcomingJam {
         val key: String,
         val cells: List<String?>,
         val extras: List<ExtraParticipant> = emptyList(),
+        val played: Boolean = false,
     ) {
         fun toJamSong(position: Int) = JamSong(
             position = position,
@@ -69,6 +70,7 @@ internal object DemoUpcomingJam {
             key = Key(key),
             lineup = lineupOf(cells),
             extraParticipants = extras,
+            played = played,
         )
     }
 
@@ -92,6 +94,8 @@ internal object DemoUpcomingJam {
             "B.B. King",
             "Bb",
             listOf("Martín", null, "Lucía", null, "Sofía", null, "Tomás"),
+            // Played, so the muted look is checkable on a device without Sheet data (song-played-state).
+            played = true,
         ),
         DemoSong(
             "got-my-mojo-working",
