@@ -1,3 +1,10 @@
+## 9 November 2026 - musician-filter accepted
+
+Independent validator accept. It reran CI=true ./init.sh (Baseline OK, three tools wired) and ran the device steps
+the implementer entry below lists as NOT RUN, on the Pixel 5 with the debug demo jam (filter taps only): pick, count
+line, combine with an instrument chip, relaunch restores the name, combined empty state, clear all. Rotation
+inconclusive. admin-drag-reorder (accepted earlier today) still owes the user's device drag check.
+
 ## 9 November 2026 - musician-filter implemented (passing, awaiting validation)
 
 Filter of Proxima jam by signed-up musician, local and read-only (no mutation, no Apps Script, Room or Gradle change). `:core:model` roster rule
@@ -219,7 +226,7 @@ Verification: red first `docs/evidence/admin-entry-logo-taps/red-presenter.txt` 
 
 ## 16 October 2026 - song detail admin actions (in progress)
 
-In the admin song detail, tapping the key block opens the existing key picker; the separate `Cambiar tonalidad` text button is removed. The key block is exposed as a button with the accessible action label `Cambiar tonalidad`; musician detail remains read-only. The separate `Agregar a Otros` button is also removed: an `+ Otro` / `Agregar` action row now appears at the end of `CUPOS LIBRES` and opens the existing extra participant dialog. It follows the extra-instrument visual convention but does not create a lineup slot or affect slot counts and filters. The formation editor is always visible after the panel; the `Cambiar formación` opener and `Listo` closer are removed. Existing mutations, pending overlays and failure behavior are unchanged. Updated `DESIGN.md`, the design prompt and the related feature specs. Baseline `CI=true ./init.sh` passed before these edits (Konsist, detekt and ktlint wired). No post-change tests or device check run yet.
+In the admin song detail, tapping the key block opens the existing key picker; the separate `Cambiar tonalidad` text button is removed. The key block is exposed as a button with the accessible action label `Cambiar tonalidad`; musician detail remains read-only. The separate `Agregar a Otros` button is also removed: an `+ Otro` / `Agregar` action row now appears at the end of `CUPOS LIBRES` and opens the existing extra participant dialog. It follows the extra-instrument visual convention but does not create a lineup slot or affect slot counts and filters. The formation editor is always visible after the panel; the `Cambiar formaciÃ³n` opener and `Listo` closer are removed. Existing mutations, pending overlays and failure behavior are unchanged. Updated `DESIGN.md`, the design prompt and the related feature specs. Baseline `CI=true ./init.sh` passed before these edits (Konsist, detekt and ktlint wired). No post-change tests or device check run yet.
 
 ## 16 October 2026 - publish-confirm-dialog accepted
 
