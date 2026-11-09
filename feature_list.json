@@ -2007,5 +2007,75 @@
       "Adaptive opaque radius 308.35px on 1024px canvas; zero pixels outside 66/108 safe circle. All ten legacy dimensions verified: 48, 72, 96, 144 and 192px.",
       "Baseline Konsist failure in existing AppSplash fixed by moving unchanged divider dimensions into core:ui SplashDefaults. Final CI=true ./init.sh exit 0; konsist, detekt and ktlint wired; git diff --check clean. No device installation or independent validation."
     ]
+  },
+  {
+    "id": "admin-drag-reorder",
+    "area": "feature-setlist",
+    "title": "Admin reorders songs by long-press and drag, alongside the arrows",
+    "user_visible_behavior": "In admin mode on the next-jam list, a long press on a song row lifts it and dragging moves it to a new position; dropping commits one move through the existing SetlistRepository moveSong(toPosition) mutation (D-13), validated in Apps Script. The up/down arrows keep working. While the move is Sending the list shows the dropped order; a failed move restores the cached order with the usual dismissible failure card. Musicians cannot drag. User request of 9 November 2026.",
+    "depends_on": [
+      "admin-reorder-songs",
+      "admin-catalog-tab"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Presenter JVM tests: drop at a new position calls moveSong once with the target 1-based position; drop at the same position does nothing; failure restores order",
+      "Drag is only enabled in admin mode; arrows still work",
+      "No new mutation outside SetlistRepository (D-13)",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
+  },
+  {
+    "id": "musician-filter",
+    "area": "feature-setlist",
+    "title": "Filter the next-jam list by signed-up musician",
+    "user_visible_behavior": "Everyone can filter the next-jam list by a musician's name to see which songs they play. Names come from the assigned slots and the Otros extras of the upcoming jam (the admin always uses distinct names, so exact normalized name match). The musician filter combines with the instrument filter chip; the filter bar shows how many songs remain of how many, and an empty result has its own state. The chosen name is remembered on the device; if that name is no longer in the jam the filter is shown but yields the empty state with a clear action. Local read-only filter, no mutation. User decisions of 9 November 2026.",
+    "depends_on": [
+      "instrument-filter-chips",
+      "admin-catalog-tab"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Presenter JVM tests: name list from slots + Otros, deduplicated and sorted; filter by name; combined with instrument filter; count; empty state; remembered selection restored",
+      "Copy in strings.xml, Rioplatense vos (D-12); BluesJamTheme tokens only (D-17)",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
+  },
+  {
+    "id": "song-played-state",
+    "area": "feature-setlist",
+    "title": "Admin marks a setlist song as already played (reversible); played songs are read-only and muted",
+    "user_visible_behavior": "In admin mode the admin marks a song of the upcoming jam as ya tocado and can unmark it. A played song is shown with a muted color in the list for everyone. While played, key, lineup, musicians and extras cannot be changed and the song cannot be removed; it can still be reordered. Stored in a new optional jam-tab column `tocado` (missing column or empty cell = not played); the app owns it like the rest of the upcoming setlist (D-04). New setSongPlayed repository mutation and Apps Script action, validated server-side, and the server refuses edits/removal of a played song. User decisions of 9 November 2026.",
+    "depends_on": [
+      "admin-drag-reorder",
+      "musician-filter"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Apps Script setSongPlayed validated server-side (passphrase, editable jam, unique row, boolean) and setKey/setSlotCount/assignSlot/clearSlot/extras/removeSong refused with a typed error for a played song; moveSong still allowed; node --test",
+      "Repository and presenter JVM tests for mark, unmark, refused edits, read-only detail and muted row",
+      "Docs updated: sheet-schema (tocado column), apps-script-api, domain-model, DESIGN.md, bitacora decision",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
+  },
+  {
+    "id": "admin-presence-notice",
+    "area": "feature-setlist",
+    "title": "Warn an admin when another admin is in the same song detail (advisory, no lock)",
+    "user_visible_behavior": "When an admin opens a song detail in admin mode the app announces its presence for that song with a random per-install id, renewed while the detail is open and expiring on its own after about two minutes. Another admin opening the same song sees the notice Otro admin está editando este tema. Nothing is refused or locked: writes stay last-write-wins under the existing script lock. Presence is ephemeral (Apps Script CacheService), never stored in the Sheet, and never authorizes anything. User decision of 9 November 2026: advisory only.",
+    "depends_on": [
+      "song-played-state"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Apps Script presence action passphrase-guarded, TTL expiry and own-id exclusion covered by node --test",
+      "Presenter JVM tests: heartbeat while detail open in admin mode, stops on leave, notice shown only for another id, failures silent",
+      "Musicians never send presence; no write is refused because of presence",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
   }
 ]
