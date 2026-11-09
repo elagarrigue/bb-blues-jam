@@ -20,7 +20,7 @@ import org.koin.dsl.module
 val nextJamModule = module {
     factory { NextJamSetlistWrites(get(), get(), get()) }
     factory { SongOverlaySources(get(), get(), get(), get(), get()) }
-    factory { NextJamPresenter(get(), get(), get(), get(), get()) }
+    factory { NextJamPresenter(get(), get(), get(), get(), get(), get()) }
     factory { AddSongPresenter(get(), get(), get()) }
     factory { AssignMusicianPresenter(get(), get(), get()) }
     factory { SetKeyPresenter(get(), get(), get()) }

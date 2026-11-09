@@ -1,6 +1,7 @@
 package com.bbbjam.feature.nextjam
 
 import com.bbbjam.core.ui.filter.InstrumentFilterBarUiModel
+import com.bbbjam.core.ui.filter.MusicianFilterUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.UiEvent
 import com.bbbjam.core.ui.presenter.UiModel
@@ -122,12 +123,14 @@ internal sealed interface SetlistUiModel : UiModel {
      * The rows in position order, only those the instrument filter shows; [droppedRowsNote] says how
      * many rows could not be read, or is null. [filterBar] is the instrument filter
      * (`instrument-filter-chips`), null when the setlist has no song (the empty case is not a
-     * filter's no-results case).
+     * filter's no-results case). [musicianFilter] is the musician filter (`musician-filter`), null when
+     * nobody is assigned in the setlist and no name is remembered.
      */
     data class Songs(
         val rows: List<SongRowUiModel>,
         val droppedRowsNote: UiText?,
         val filterBar: InstrumentFilterBarUiModel?,
+        val musicianFilter: MusicianFilterUiModel? = null,
     ) : SetlistUiModel
 
     /** A published setlist with no song: the empty block, and no filter bar. */

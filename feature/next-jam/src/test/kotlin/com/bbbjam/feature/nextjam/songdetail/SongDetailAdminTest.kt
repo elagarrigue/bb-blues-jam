@@ -36,6 +36,7 @@ import com.bbbjam.core.ui.strip.toInstrumentChips
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
+import com.bbbjam.feature.nextjam.FakeMusicianFilterPreference
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
 import com.bbbjam.feature.nextjam.NextJamPresenter
@@ -292,7 +293,15 @@ class SongDetailAdminTest {
     fun `the list and the detail draw the same key, lineup and status for the same sending entries`() = runTest {
         val calendar =
             JamCalendar(Clock.fixed(Instant.parse("2026-10-02T15:00:00Z"), ZoneOffset.UTC), JamCalendar.BUENOS_AIRES)
-        val list = NextJamPresenter(jams, calendar, session, setlist.writes(), setlist.sources())
+        val list =
+            NextJamPresenter(
+                jams,
+                calendar,
+                session,
+                setlist.writes(),
+                setlist.sources(),
+                FakeMusicianFilterPreference(),
+            )
         moleculeFlow(RecompositionMode.Immediate) {
             list.present(NextJamPresenter.Params()) to presenter().present(params())
         }.test {

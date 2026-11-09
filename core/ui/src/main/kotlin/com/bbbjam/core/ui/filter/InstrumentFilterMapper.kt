@@ -81,8 +81,12 @@ private fun instrumentDescription(instrument: Instrument, count: Int): UiText {
 }
 
 /** "bajo"; "bajo o voz"; "guitarra, bajo o voz": lowercase, in the given (chip) order. */
-private fun names(selected: List<Instrument>): UiText {
+internal fun names(selected: List<Instrument>): UiText {
     val lower = selected.map { it.lowercaseName() }
     val head = lower.dropLast(1).reduceOrNull { joined, next -> UiText.res(R.string.filter_names_comma, joined, next) }
     return if (head == null) lower.single() else UiText.res(R.string.filter_names_or, head, lower.last())
 }
+
+/** The phrase naming [selected] in chip order, or null when no instrument is selected. */
+internal fun instrumentNames(selected: Set<Instrument>): UiText? =
+    if (selected.isEmpty()) null else names(Instrument.entries.filter { it in selected })

@@ -13,18 +13,7 @@ value class MusicianName private constructor(val value: String) {
             .takeIf { normalized -> isValid(text, normalized) }
             ?.let(::MusicianName)
 
-        private fun normalize(text: String): String = buildString(text.length) {
-            var pendingSpace = false
-            text.forEach { character ->
-                if (character.isWhitespace()) {
-                    pendingSpace = isNotEmpty()
-                } else {
-                    if (pendingSpace) append(' ')
-                    append(character)
-                    pendingSpace = false
-                }
-            }
-        }
+        private fun normalize(text: String): String = collapseWhitespace(text)
 
         private fun isValid(raw: String, normalized: String): Boolean = raw.none(Character::isISOControl) &&
             normalized.isNotEmpty() &&
@@ -32,5 +21,19 @@ value class MusicianName private constructor(val value: String) {
             normalized.none { it in ";()" } &&
             normalized.first() !in "=+-@" &&
             normalized.any(Char::isLetterOrDigit)
+    }
+}
+
+/** [text] with every run of whitespace as one space and no leading or trailing space. */
+internal fun collapseWhitespace(text: String): String = buildString(text.length) {
+    var pendingSpace = false
+    text.forEach { character ->
+        if (character.isWhitespace()) {
+            pendingSpace = isNotEmpty()
+        } else {
+            if (pendingSpace) append(' ')
+            append(character)
+            pendingSpace = false
+        }
     }
 }

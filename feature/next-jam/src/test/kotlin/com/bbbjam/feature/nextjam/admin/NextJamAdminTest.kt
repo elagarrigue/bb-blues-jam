@@ -28,6 +28,7 @@ import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.AddSongActionUiModel
+import com.bbbjam.feature.nextjam.FakeMusicianFilterPreference
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
@@ -78,7 +79,14 @@ class NextJamAdminTest {
 
     private fun snapshot(upcoming: Jam?) = JamsSnapshot(upcoming = upcoming, past = emptyList(), freshness = fetched)
 
-    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist.writes(), setlist.sources())
+    private fun presenter() = NextJamPresenter(
+        repository,
+        calendar,
+        session,
+        setlist.writes(),
+        setlist.sources(),
+        FakeMusicianFilterPreference(),
+    )
 
     private fun add(id: Long, state: SetlistAdd.State, date: LocalDate = jamDate, title: String = "Crossroads") =
         SetlistAdd(id, date, SongId("crossroads"), title, "Eric Clapton", Key("A"), state)

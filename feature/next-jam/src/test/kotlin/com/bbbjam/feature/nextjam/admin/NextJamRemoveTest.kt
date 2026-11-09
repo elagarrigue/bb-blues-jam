@@ -26,6 +26,7 @@ import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.state.EmptyStateUiModel
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.AddFailureUiModel
+import com.bbbjam.feature.nextjam.FakeMusicianFilterPreference
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
@@ -85,7 +86,14 @@ class NextJamRemoveTest {
 
     private fun snapshot(jam: Jam) = JamsSnapshot(upcoming = jam, past = emptyList(), freshness = fetched)
 
-    private fun presenter() = NextJamPresenter(repository, calendar, session, setlist.writes(), setlist.sources())
+    private fun presenter() = NextJamPresenter(
+        repository,
+        calendar,
+        session,
+        setlist.writes(),
+        setlist.sources(),
+        FakeMusicianFilterPreference(),
+    )
 
     private fun NextJamUiModel.rows() = ((this as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows
 

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
@@ -16,14 +17,21 @@ import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.musician.MusicianFilterPreference
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.Jam as DomainJam
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.model.involves
+import com.bbbjam.core.model.musicianMatchKey
+import com.bbbjam.core.model.musicianRoster
 import com.bbbjam.core.ui.filter.InstrumentFilterChange
+import com.bbbjam.core.ui.filter.MusicianFilterChange
+import com.bbbjam.core.ui.filter.MusicianFilterCounts
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.filter.matchesInstrumentFilter
+import com.bbbjam.core.ui.filter.musicianFilter
 import com.bbbjam.core.ui.filter.updatedBy
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
@@ -47,10 +55,13 @@ import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.overlay.displayEntries
 import com.bbbjam.feature.nextjam.overlay.rememberSongOverlays
 import com.bbbjam.feature.nextjam.refresh.rememberNextJamRefreshes
+import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.random.Random
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 /**
  * Presents Próxima jam: the upcoming jam of [JamsRepository.observeJams], already cached, split in
@@ -67,6 +78,11 @@ import kotlin.random.Random
  * once, never recreated, and not tied to the jam date, because it describes the musician, not the
  * jam. Handlers send an [InstrumentFilterChange] that is applied to the current set, never a set
  * computed from an earlier model.
+ *
+ * The musician filter (`musician-filter`) is one name remembered on the device by [musicianPreference]
+ * (a local preference, never a Sheet write). The presenter stays `Loading` until the first read, so
+ * the list never flashes unfiltered; a handler writes the preference and the model follows its flow.
+ * A remembered name that is not in the jam still shows the filter, with its empty state.
  *
  * Opening a song's detail (`song-detail-screen`) is [Params.onOpenSong], a plain callback that
  * `:app` binds to navigation; this module never sees the navigation library (D-03). It is read
@@ -109,6 +125,7 @@ internal class NextJamPresenter(
     private val adminSession: AdminSession,
     private val writes: NextJamSetlistWrites,
     private val overlaySources: SongOverlaySources,
+    private val musicianPreference: MusicianFilterPreference,
     private val random: Random = Random.Default,
 ) : Presenter<NextJamUiModel, NextJamPresenter.Params> {
 
@@ -138,7 +155,14 @@ internal class NextJamPresenter(
         val removes by remember { writes.removals.observeRemoves() }.collectAsState(initial = emptyList())
         val overlays = rememberSongOverlays(overlaySources)
         var subscription by remember { mutableIntStateOf(0) }
-        val snapshot by remember(subscription) { jams.observeJams() }.collectAsState(initial = null)
+        // One flow for the jams and the remembered musician: nothing shows before both were read, and
+        // the first read adds no frame of its own (the list never flashes unfiltered).
+        val read by remember(subscription) {
+            jams.observeJams().combine(musicianPreference.observeSelected()) { jamsSnapshot, name ->
+                ListRead(jamsSnapshot, name)
+            }
+        }.collectAsState(initial = null)
+        val snapshot = read?.snapshot
         val moveControls = rememberMoveControls(writes.moves, snapshot)
         val admin = rememberNextJamAdminState(
             adminSession = adminSession,
@@ -159,12 +183,50 @@ internal class NextJamPresenter(
         val now = remember(snapshot) { calendar.now() }
         var filter by rememberSaveable(stateSaver = InstrumentFilterSaver) { mutableStateOf(emptySet<Instrument>()) }
         val onFilterChange: (InstrumentFilterChange) -> Unit = { change -> filter = filter.updatedBy(change) }
-        val model = snapshot?.let { refreshes.shown(it) }
-            ?.toUiModel(today, filter, onFilterChange, now, refreshes.onRetry, onOpenSong, admin)
-            ?: NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
+        val onMusicianChange = rememberMusicianChange(musicianPreference) { filter = emptySet() }
+        val model = read?.let { loaded ->
+            refreshes.shown(loaded.snapshot)
+                .toUiModel(
+                    today,
+                    filter,
+                    onFilterChange,
+                    now,
+                    refreshes.onRetry,
+                    onOpenSong,
+                    admin,
+                    loaded.musician,
+                    onMusicianChange,
+                )
+        } ?: NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
         return model.withPullRefresh(refreshes.pullRefresh)
     }
 }
+
+/**
+ * The handler of [MusicianFilterChange]: it writes [preference] (the model follows its flow) and, for
+ * [MusicianFilterChange.ClearAll], also calls [onClearInstruments]. A write that fails leaves the selection as it was.
+ */
+@Composable
+private fun rememberMusicianChange(
+    preference: MusicianFilterPreference,
+    onClearInstruments: () -> Unit,
+): (MusicianFilterChange) -> Unit {
+    val scope = rememberCoroutineScope()
+    val clearInstruments by rememberUpdatedState(onClearInstruments)
+    return { change ->
+        if (change == MusicianFilterChange.ClearAll) clearInstruments()
+        scope.launch {
+            try {
+                preference.select((change as? MusicianFilterChange.Select)?.name)
+            } catch (_: IOException) {
+                // The preference could not be written: the selection stays as it was.
+            }
+        }
+    }
+}
+
+/** The jams and the remembered musician (null: none), both read. */
+private class ListRead(val snapshot: JamsSnapshot, val musician: String?)
 
 /** This model with [pullRefresh]; every state can be pulled. */
 private fun NextJamUiModel.withPullRefresh(pullRefresh: PullRefreshUiModel): NextJamUiModel = when (this) {
@@ -200,6 +262,8 @@ internal fun JamsSnapshot.toUiModel(
     onRetry: () -> Unit = {},
     onOpenSong: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
     admin: AdminState? = null,
+    musician: String? = null,
+    onMusicianChange: (MusicianFilterChange) -> Unit = {},
 ): NextJamUiModel {
     // A draft does not exist for a musician (D-26): musicians read the projection, the admin the raw view.
     val jam = (if (admin == null) forMusicians() else this).upcoming
@@ -223,6 +287,8 @@ internal fun JamsSnapshot.toUiModel(
                     filter,
                     onFilterChange,
                     onOpenSong,
+                    musician,
+                    onMusicianChange,
                     admin?.let {
                         RowAdmin(it, jam)
                     },
@@ -261,6 +327,8 @@ private class RowState(
     val filter: Set<Instrument>,
     val onFilterChange: (InstrumentFilterChange) -> Unit,
     val onOpenSong: (LocalDate, SongId, Int) -> Unit,
+    val musician: String?,
+    val onMusicianChange: (MusicianFilterChange) -> Unit,
     val admin: RowAdmin?,
 ) {
     val isAdmin: Boolean
@@ -290,33 +358,7 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
             },
         )
     } else {
-        val overlaidSongs = songs.map { song ->
-            val admin = state.admin?.state
-            if (admin == null) {
-                song
-            } else {
-                admin.overlays.overlaid(date, song)
-            }
-        }
-        val shownEntries = state.admin?.state?.moves?.displayEntries(date, overlaidSongs)
-            ?: overlaidSongs.map { DisplayedJamSong(it, it.position) }
-        val idCounts = shownEntries.groupingBy { it.song.songId }.eachCount()
-        SetlistUiModel.Songs(
-            rows = shownEntries
-                .filter { it.song.lineup.matchesInstrumentFilter(state.filter) }
-                .map { entry ->
-                    val song = entry.song
-                    val displayedPosition = song.position
-                    val rowKey = if (idCounts[song.songId] == 1) song.songId.value else "p$displayedPosition"
-                    song.toRow(
-                        position = displayedPosition,
-                        rowKey = rowKey,
-                        openDetail = { state.onOpenSong(date, song.songId, entry.cachedPosition) },
-                    ).let { row -> state.admin?.decorate(row, song, shownEntries.size) ?: row }
-                },
-            droppedRowsNote = if (droppedRows == 0) null else SongListText.droppedRows(droppedRows),
-            filterBar = instrumentFilterBar(shownEntries.map { it.song.lineup }, state.filter, state.onFilterChange),
-        )
+        songsModel(date, state)
     }
 
     Setlist.Withheld -> SetlistUiModel.Withheld(
@@ -329,6 +371,60 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
 
     // The problem is for logs and the admin, not for musicians.
     is Setlist.Unavailable -> SetlistUiModel.Unavailable(UiText.res(R.string.next_jam_setlist_unavailable))
+}
+
+/**
+ * The songs of a published or admin setlist, filtered: the musician filter first (the roster and the
+ * instrument chips' counts follow the songs it keeps), the instrument filter last.
+ */
+private fun Setlist.Available.songsModel(date: LocalDate, state: RowState): SetlistUiModel.Songs {
+    val overlaidSongs = songs.map { song ->
+        val admin = state.admin?.state
+        if (admin == null) {
+            song
+        } else {
+            admin.overlays.overlaid(date, song)
+        }
+    }
+    val shownEntries = state.admin?.state?.moves?.displayEntries(date, overlaidSongs)
+        ?: overlaidSongs.map { DisplayedJamSong(it, it.position) }
+    val idCounts = shownEntries.groupingBy { it.song.songId }.eachCount()
+    val roster = shownEntries.map { it.song }.musicianRoster()
+    val matchKey = state.musician?.let(::musicianMatchKey)
+    val ofMusician = if (matchKey == null) shownEntries else shownEntries.filter { it.song.involves(matchKey) }
+    val shown = ofMusician.filter { it.song.lineup.matchesInstrumentFilter(state.filter) }
+    val instrumentBar = instrumentFilterBar(ofMusician.map { it.song.lineup }, state.filter, state.onFilterChange)
+    return SetlistUiModel.Songs(
+        rows = shown
+            .map { entry ->
+                val song = entry.song
+                val displayedPosition = song.position
+                val rowKey = if (idCounts[song.songId] == 1) song.songId.value else "p$displayedPosition"
+                song.toRow(
+                    position = displayedPosition,
+                    rowKey = rowKey,
+                    openDetail = { state.onOpenSong(date, song.songId, entry.cachedPosition) },
+                ).let { row -> state.admin?.decorate(row, song, shownEntries.size) ?: row }
+            },
+        droppedRowsNote = if (droppedRows == 0) null else SongListText.droppedRows(droppedRows),
+        // With a musician chosen, the musician block owns the count and the empty line.
+        filterBar = if (state.musician == null) {
+            instrumentBar
+        } else {
+            instrumentBar.copy(summary = null, noResults = null)
+        },
+        musicianFilter = if (roster.isEmpty() && state.musician == null) {
+            null
+        } else {
+            musicianFilter(
+                roster,
+                state.musician,
+                MusicianFilterCounts(shownEntries.size, ofMusician.size, shown.size),
+                state.filter,
+                state.onMusicianChange,
+            )
+        },
+    )
 }
 
 private fun JamSong.toRow(position: Int, rowKey: String, openDetail: () -> Unit) = SongRowUiModel(

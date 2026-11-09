@@ -6,6 +6,7 @@ import com.bbbjam.core.data.catalog.CatalogSnapshot
 import com.bbbjam.core.data.catalog.RefreshOutcome
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.musician.MusicianFilterPreference
 import com.bbbjam.core.data.setlist.SetlistRepository
 import com.bbbjam.core.data.setlist.add.SetlistSongAddRepository
 import com.bbbjam.core.data.setlist.assign.SetlistAssignmentRepository
@@ -37,6 +38,7 @@ class NextJamModuleTest {
             single<JamsRepository> { FakeJamsRepository() }
             single { JamCalendar(Clock.systemUTC(), JamCalendar.BUENOS_AIRES) }
             single<AdminSession> { FakeAdminSession() }
+            single<MusicianFilterPreference> { FakeMusicianFilterPreference() }
             // `:app` binds each narrow contract to the one SetlistRepository instance; so does this test.
             single<SetlistRepository> { FakeSetlistRepository() }
             single<SetlistAssignmentRepository> { get<SetlistRepository>() }

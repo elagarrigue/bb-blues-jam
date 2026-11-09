@@ -48,6 +48,7 @@ import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.brand.BandLogo
 import com.bbbjam.core.ui.filter.InstrumentFilterBar
+import com.bbbjam.core.ui.filter.MusicianFilterBar
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.reorder.ReorderState
@@ -176,6 +177,7 @@ internal fun LazyListScope.setlistItems(
 ) {
     when (setlist) {
         is SetlistUiModel.Songs -> {
+            setlist.musicianFilter?.let { block -> item(key = MUSICIAN_FILTER_KEY) { MusicianFilterBar(block) } }
             setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
             items(setlist.rows, key = { it.rowKey }) { row ->
                 SongRow(row, modifier = Modifier.animateItem(), onMoveAction = onMoveAction, reorder = reorder)
@@ -203,6 +205,7 @@ internal const val HEADER_KEY = "header"
 internal const val BRAND_HEADER_KEY = "brand-header"
 internal const val NOTE_KEY = "note"
 internal const val FILTER_KEY = "filter"
+internal const val MUSICIAN_FILTER_KEY = "musician-filter"
 internal const val STALENESS_KEY = "staleness"
 internal const val EMPTY_KEY = "empty"
 internal const val DRAFT_KEY = "draft"

@@ -2044,13 +2044,19 @@
       "instrument-filter-chips",
       "admin-catalog-tab"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Presenter JVM tests: name list from slots + Otros, deduplicated and sorted; filter by name; combined with instrument filter; count; empty state; remembered selection restored",
       "Copy in strings.xml, Rioplatense vos (D-12); BluesJamTheme tokens only (D-17)",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "Implemented 9 Nov 2026 (implementer; awaiting independent validation). :core:model MusicianRoster.kt (musicianMatchKey, involves, musicianRoster); :core:data musician/MusicianFilterPreference + DefaultMusicianFilterPreference (own DataStore file musician_filter, same okio factory as AdminCredentialStore, bound in dataModule, no new dependency); :core:ui filter/Musician* (UiModel, Change, Mapper, Bar with picker dialog, Defaults) and musician_filter_* strings (vos); :feature:next-jam presenter combines observeJams() and observeSelected() so the model is Loading until both are read, applies musician predicate then instrument predicate, SetlistUiModel.Songs.musicianFilter.",
+      "JVM tests (0 failures): MusicianRosterTest 5, DefaultMusicianFilterPreferenceTest 4 (save, restart, clear, corrupt file), MusicianFilterMapperTest 9 (copy pinned against strings.xml, plurals, empty states, handlers), MusicianFilterDefaultsTest 2, NextJamMusicianFilterTest 7 (choose/clear, name+instrument intersection with chip counts over the name's songs, combined empty with ClearAll, remembered name restored before first list, remembered absent name empty state, no block cases, sending assignment overlay). Module totals: core:model 63, core:data 328, core:ui 170, feature:next-jam 220. Existing NextJamFilterTest unmodified apart from the constructor argument; one NextJamPresenterTest assertion updated for the musician block.",
+      "CI=true ./init.sh exit 0, konsist/detekt/ktlint all wired (ktlintFormat run first; no baseline, no rule disabled). Notes and one design finding in docs/evidence/musician-filter/verification.md.",
+      "NOT RUN: device/emulator manual steps (no Compose UI harness; no device touched). Dialog, chip look, 48dp targets and relaunch restore on a real DataStore are JVM-verified or unverified on device only. Docs updated: DESIGN.md Filter chip, architecture skill.",
+      "9 November 2026: independent validator accept. Reran CI=true ./init.sh: Baseline OK, konsist/detekt/ktlint wired. Validator device check on Pixel 5 with the debug demo jam (filter taps only): picker lists 9 names with counts; picking Lucía shows 'Quedan 5 de 8 temas con Lucía' and instrument chip counts over her songs; + Guitarra gives 4 de 8; force-stop/relaunch restores Lucía and drops the instrument; + Bajo shows the combined empty state; 'Ver todos los temas' clears both and nothing is remembered after relaunch. local.properties restored byte for byte. Rotation inconclusive (block off-screen in landscape)."
+    ]
   },
   {
     "id": "song-played-state",

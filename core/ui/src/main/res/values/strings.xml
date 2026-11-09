@@ -108,6 +108,28 @@
     <string name="filter_names_comma">%1$s, %2$s</string>
     <string name="filter_names_or">%1$s o %2$s</string>
 
+    <!-- Musician filter -->
+    <string name="musician_filter_heading">Filtrá por músico</string>
+    <string name="musician_filter_pick">Elegir músico</string>
+    <string name="musician_filter_clear">Quitar filtro</string>
+    <string name="musician_filter_picker_title">Elegí un músico</string>
+    <string name="musician_filter_all">Todos los músicos</string>
+    <string name="musician_filter_close">Cerrar</string>
+    <plurals name="musician_filter_option">
+        <item quantity="one">%1$s, %2$d tema</item>
+        <item quantity="other">%1$s, %2$d temas</item>
+    </plurals>
+    <plurals name="musician_filter_summary">
+        <item quantity="one">Queda %1$d de %2$d temas con %3$s</item>
+        <item quantity="other">Quedan %1$d de %2$d temas con %3$s</item>
+    </plurals>
+    <plurals name="musician_filter_summary_instrument">
+        <item quantity="one">Queda %1$d de %2$d temas con %3$s y cupo libre para %4$s</item>
+        <item quantity="other">Quedan %1$d de %2$d temas con %3$s y cupo libre para %4$s</item>
+    </plurals>
+    <string name="musician_filter_no_results">%1$s no está en ningún tema de esta jam.</string>
+    <string name="musician_filter_no_results_combined">Ningún tema con %1$s tiene cupo libre para %2$s.</string>
+
     <!-- Song rows -->
     <string name="song_list_key_description">Tonalidad %1$s</string>
     <plurals name="song_list_dropped_rows">

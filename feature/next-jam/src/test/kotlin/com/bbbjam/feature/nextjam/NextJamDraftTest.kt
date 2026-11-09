@@ -82,7 +82,14 @@ class NextJamDraftTest {
     private fun snapshot(upcoming: Jam) = JamsSnapshot(upcoming = upcoming, past = emptyList(), freshness = fetched)
 
     private fun presenter() = FakeSetlistRepository().let {
-        NextJamPresenter(repository, calendar, FakeAdminSession(), it.writes(), it.sources())
+        NextJamPresenter(
+            repository,
+            calendar,
+            FakeAdminSession(),
+            it.writes(),
+            it.sources(),
+            FakeMusicianFilterPreference(),
+        )
     }
 
     @Test

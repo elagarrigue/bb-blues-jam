@@ -26,6 +26,7 @@ import com.bbbjam.core.ui.state.ListErrorUiModel
 import com.bbbjam.core.ui.state.PullRefreshUiModel
 import com.bbbjam.core.ui.state.StalenessNoticeUiModel
 import com.bbbjam.core.ui.text.UiText
+import com.bbbjam.feature.nextjam.FakeMusicianFilterPreference
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
@@ -110,6 +111,7 @@ class NextJamLiveRefreshTest {
             FakeAdminSession(isAdmin),
             setlist.writes(),
             setlist.sources(),
+            FakeMusicianFilterPreference(),
             Random(SEED),
         )
         val screen = Screen()

@@ -424,6 +424,32 @@ Behaviour (`instrument-filter-chips`, approved 4 October 2026):
 The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter`); amber
 `activeFilter` is read only there.
 
+#### Musician filter (`musician-filter`, 9 November 2026)
+
+A second block above the instrument bar, in the same list-item style (it scrolls with the list), to see
+which songs a person plays. It combines with the instrument filter (AND).
+
+- **Names** come from the assigned slots and the `Otros` extras of the upcoming jam (the overlaid songs for the
+  admin), matched on the name with whitespace collapsed and case ignored (not accent-insensitive); the first
+  spelling in position order is shown, sorted alphabetically. Open slots and `-` cells are not names.
+- **Layout.** Heading `Filtrá por músico` (caption, `textMuted`, a heading for screen readers). Nothing chosen: a
+  48dp button `Elegir músico` (`surfaceRaised`, `textMuted`, `rounded.lg`). Chosen: a chip with the name
+  (`activeFilter` fill, `onActiveFilter` text; tap to change) and the underlined text action `Quitar filtro`
+  (48dp). Both open a Material 3 dialog (`surfaceRaised`, never amber): `Todos los músicos` plus one radio row per
+  name, each at least 48dp with its song count ("Juan, 3 temas"). The block is not drawn when nobody is assigned
+  and no name is remembered, nor for a draft, withheld, unavailable or empty setlist.
+- **Lines** (polite live regions, below the chip): "Quedan 3 de 13 temas con Juan" ("Queda 1 de ..."), with an
+  instrument "... con Juan y cupo libre para bajo". Empty: "Juan no está en ningún tema de esta jam." or, when
+  the instrument is what empties it, "Ningún tema con Juan tiene cupo libre para bajo.", plus `Ver todos los
+  temas`, which clears the name and, in the combined case, the instruments. While a name is chosen this block
+  owns the count and empty lines; the instrument bar keeps its chips, with counts over that person's songs.
+- **State.** The chosen name is remembered on the device across relaunches (a DataStore preference in
+  `:core:data`); a remembered name that is no longer in the jam still shows the filter and the empty state. The
+  instrument selection is still lost on relaunch.
+
+The component is `MusicianFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter`); amber `activeFilter` is read
+only in `MusicianFilterDefaults`.
+
 ### Status badge
 
 **Borrador**, **Creada** or **Publicada**. Published is amber; draft and created are muted. Próxima jam keeps this

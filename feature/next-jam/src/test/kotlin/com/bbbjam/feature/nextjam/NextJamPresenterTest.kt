@@ -130,7 +130,14 @@ class NextJamPresenterTest {
     private val header = octoberThirtyFirstHeader
 
     private fun presenter(calendar: JamCalendar = octoberSecond) = FakeSetlistRepository().let {
-        NextJamPresenter(repository, calendar, FakeAdminSession(), it.writes(), it.sources())
+        NextJamPresenter(
+            repository,
+            calendar,
+            FakeAdminSession(),
+            it.writes(),
+            it.sources(),
+            FakeMusicianFilterPreference(),
+        )
     }
 
     private suspend fun ReceiveTurbine<NextJamUiModel>.awaitAfterLoading(): NextJamUiModel =
@@ -452,9 +459,12 @@ class NextJamPresenterTest {
         ).toUiModel(LocalDate.of(2026, 10, 2))
         // Song 1 is open for guitar, drums and vocals; song 2 has no slot at all.
         val counts = listOf(1, 0, 1, 1, 0, 0)
+        // The musician block lists everyone on a slot or in Otros (`musician-filter`); it is checked on its own.
+        val songs = (model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs
+        assertEquals(listOf("Juan", "Mono", "Nico", "Tincho"), songs.musicianFilter?.options?.map { it.name })
         assertEquals(
             NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(2, counts)), staleness = null),
-            model,
+            model.copy(setlist = songs.copy(musicianFilter = null)),
         )
         // The extra is never open: the open chips are exactly the lineup's open slots (D-18).
         val rows = ((model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs).rows

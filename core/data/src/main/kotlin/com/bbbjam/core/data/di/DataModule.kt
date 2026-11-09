@@ -15,6 +15,8 @@ import com.bbbjam.core.data.catalog.edit.DefaultCatalogEditRepository
 import com.bbbjam.core.data.jams.DefaultJamsRepository
 import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
+import com.bbbjam.core.data.musician.DefaultMusicianFilterPreference
+import com.bbbjam.core.data.musician.MusicianFilterPreference
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
@@ -51,6 +53,9 @@ val dataModule = module {
     single { get<BluesJamDatabase>().jamsDao() }
     single<JamsRepository> { DefaultJamsRepository(get(), get(), get(), get(), get(), get()) }
     single { AdminCredentialStore(AdminCredentialStore.dataStore(get())) }
+    single<MusicianFilterPreference> {
+        DefaultMusicianFilterPreference(DefaultMusicianFilterPreference.dataStore(get()))
+    }
     single<AdminSession> { DefaultAdminSession(get(), get()) }
     single { AdminWriter(get(), get()) }
     single<WriteFailureLog> { WriteFailureLog { line -> Log.w(LOG_TAG, line) } }

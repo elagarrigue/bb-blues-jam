@@ -1272,3 +1272,16 @@ shape, enabled)` over `detectDragGesturesAfterLongPress` (lift via `graphicsLaye
 extracts `moveTo(date, songId, target, size)` (queue bookkeeping unchanged) used by `onMove` (arrows) and the new `onDrop`, which resolves the row key against the
 displayed (overlaid, full) order with the same rule that keys rows and calls nothing for the same row or an unknown key. `MoveControlsState`, `AdminState` and
 `RowAdmin` carry `onDrop`. No new mutation: `moveSong` has no caller outside `MoveControlsState.kt`. `JamContent` creates the state; `SongRow` reads `reorder != null`.
+
+## As built by `musician-filter`
+
+Filter of Próxima jam by signed-up musician (9 November 2026). `:core:model` `MusicianRoster.kt`: pure `musicianMatchKey` (whitespace collapsed via the
+shared `collapseWhitespace` of `MusicianName.kt`, lowercase), `JamSong.involves(key)` and `List<JamSong>.musicianRoster()` (`RosterEntry`, deduplicated, first
+spelling, sorted by key; slots and extras, placeholders skipped). `:core:data` package `musician/`: public `MusicianFilterPreference` (`observeSelected`, `select`;
+blank clears) over `DefaultMusicianFilterPreference` in its own DataStore file `musician_filter`, built by the same okio factory as `AdminCredentialStore`; bound
+in `dataModule`. A local preference, not a Sheet mutation. `:core:ui` `filter/`: `MusicianFilterUiModel`/`MusicianOptionUiModel`, `MusicianFilterChange`
+(`Select`, `Clear`, `ClearAll`), pure `musicianFilter(roster, selected, counts, instruments, onChange)`, `MusicianFilterBar` (heading, chip, picker dialog) and
+internal `MusicianFilterDefaults` (amber read only there, so no feature allowlist changed). `:feature:next-jam`: `NextJamPresenter` takes the preference and
+combines it with `observeJams()` in one flow, so the model is `Loading` until both were read and the list never shows unfiltered; `songsModel` applies the
+musician predicate, builds the instrument bar over those songs, then the instrument predicate; `SetlistUiModel.Songs.musicianFilter` is null when nobody is
+assigned and nothing is remembered. While a name is chosen the instrument bar's own summary and no-results are null.

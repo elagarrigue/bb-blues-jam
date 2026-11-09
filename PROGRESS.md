@@ -1,3 +1,23 @@
+## 9 November 2026 - musician-filter implemented (passing, awaiting validation)
+
+Filter of Proxima jam by signed-up musician, local and read-only (no mutation, no Apps Script, Room or Gradle change). `:core:model` roster rule
+(`musicianMatchKey`, `involves`, `musicianRoster`); `:core:data` `MusicianFilterPreference` over its own DataStore file `musician_filter`; `:core:ui`
+`MusicianFilterBar` (chip, `Quitar filtro`, picker dialog), mapper, defaults and `musician_filter_*` strings (vos); `:feature:next-jam` presenter applies the
+musician predicate, then the instrument one (chip counts over the name's songs), and the musician block owns the count and empty lines while a name is chosen.
+The presenter combines `observeJams()` with the preference in one flow so it is `Loading` until both are read (a separate collector added a duplicate
+Loading frame and broke 21 existing tests). DESIGN.md "Filter chip" and the architecture skill updated.
+
+Verification run: `CI=true ./init.sh` exit 0 with konsist, detekt and ktlint wired (ktlintFormat first; two detekt failures fixed in code, no rule touched).
+New JVM tests: MusicianRosterTest 5, DefaultMusicianFilterPreferenceTest 4, MusicianFilterMapperTest 9, MusicianFilterDefaultsTest 2, NextJamMusicianFilterTest 7;
+0 failures in core:model (63), core:data (328), core:ui (170), feature:next-jam (220). Existing filter tests unchanged except the presenter constructor argument; one
+`NextJamPresenterTest` assertion now states the musician block. Notes in docs/evidence/musician-filter/verification.md.
+
+NOT RUN: the device steps (pick a name, kill and relaunch, rotate, open a song and back, combine with a chip, clear): no emulator or device was used and there is no
+Compose UI harness. Unverified on device: the dialog look, 48dp targets and the DataStore restore on relaunch (JVM-tested through the production factory only).
+Untracked app/debug and presentations untouched; local.properties not touched.
+
+Next best step: independent validator; then the device pass with the debug demo jam.
+
 ## 9 November 2026 - admin-drag-reorder implemented (passing, awaiting validation)
 
 Long-press drag in admin mode on Proxima jam, next to the arrows; the drop is one `moveSong(date, songId, toFullPosition)` through the existing mutation
