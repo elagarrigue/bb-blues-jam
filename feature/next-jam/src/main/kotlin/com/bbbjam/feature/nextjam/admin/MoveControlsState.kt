@@ -18,13 +18,18 @@ import com.bbbjam.feature.nextjam.MoveActionUiModel
 import com.bbbjam.feature.nextjam.MoveUiModel
 import com.bbbjam.feature.nextjam.R
 import com.bbbjam.feature.nextjam.RemovalUiModel
+import com.bbbjam.feature.nextjam.ReorderActionUiModel
 import com.bbbjam.feature.nextjam.SongRowUiModel
 import com.bbbjam.feature.nextjam.overlay.displayOrder
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
-internal data class MoveControlsState(val moves: List<SetlistMove>, val onMove: (LocalDate, SongId, Int) -> Unit)
+internal data class MoveControlsState(
+    val moves: List<SetlistMove>,
+    val onMove: (LocalDate, SongId, Int) -> Unit,
+    val onDrop: (LocalDate, SongId, String) -> Unit,
+)
 
 @Composable
 internal fun rememberMoveControls(setlist: SetlistMoveRepository, snapshot: JamsSnapshot?): MoveControlsState {
@@ -34,15 +39,14 @@ internal fun rememberMoveControls(setlist: SetlistMoveRepository, snapshot: Jams
     val scope = rememberCoroutineScope()
     val moveTargets = remember { mutableMapOf<String, Int>() }
     val moveCounts = remember { mutableMapOf<String, Int>() }
-    val onMove: (LocalDate, SongId, Int) -> Unit = { date, songId, direction ->
-        val songs = currentSnapshot?.upcoming?.takeIf { it.date == date }
+    val songsOf: (LocalDate) -> List<JamSong> = { date ->
+        currentSnapshot?.upcoming?.takeIf { it.date == date }
             ?.setlist?.let { (it as? Setlist.Available)?.songs }.orEmpty()
-        val displayed = currentMoves.displayOrder(date, songs)
-        val currentIndex = displayed.indexOfFirst { it.songId == songId }
+    }
+    // Commits one move to the absolute [target]; rapid calls queue their targets in call order.
+    val moveTo: (LocalDate, SongId, Int, Int) -> Unit = { date, songId, target, size ->
         val key = removalKey(date, songId)
-        val currentPosition = moveTargets[key] ?: (currentIndex + 1)
-        val target = currentPosition + direction
-        if (currentIndex >= 0 && target in 1..songs.size) {
+        if (target in 1..size) {
             moveTargets[key] = target
             moveCounts[key] = (moveCounts[key] ?: 0) + 1
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -57,7 +61,24 @@ internal fun rememberMoveControls(setlist: SetlistMoveRepository, snapshot: Jams
             }
         }
     }
-    return MoveControlsState(moves, onMove)
+    val onMove: (LocalDate, SongId, Int) -> Unit = { date, songId, direction ->
+        val songs = songsOf(date)
+        val currentIndex = currentMoves.displayOrder(date, songs).indexOfFirst { it.songId == songId }
+        val currentPosition = moveTargets[removalKey(date, songId)] ?: (currentIndex + 1)
+        if (currentIndex >= 0) moveTo(date, songId, currentPosition + direction, songs.size)
+    }
+    val onDrop: (LocalDate, SongId, String) -> Unit = { date, songId, toRowKey ->
+        val songs = songsOf(date)
+        val displayed = currentMoves.displayOrder(date, songs)
+        val fromIndex = displayed.indexOfFirst { it.songId == songId }
+        val ids = displayed.groupingBy { it.songId }.eachCount()
+        // The same rule that keys the rows: the song id, or the displayed position for a repeated id.
+        val toIndex = displayed.indexOfFirst {
+            (if (ids[it.songId] == 1) it.songId.value else "p${it.position}") == toRowKey
+        }
+        if (fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex) moveTo(date, songId, toIndex + 1, songs.size)
+    }
+    return MoveControlsState(moves, onMove, onDrop)
 }
 
 internal fun RowAdmin.moveAction(songId: SongId, enabled: Boolean, label: UiText, clickLabel: UiText, direction: Int) =
@@ -96,6 +117,11 @@ internal fun RowAdmin.moveModel(
             UiText.res(R.string.next_jam_move_down),
             UiText.res(R.string.next_jam_move_down_description),
             1,
+        ),
+        reorder = ReorderActionUiModel(
+            events = EventHandler(key = "${removalKey(jam.date, song.songId)}|drop") { event ->
+                if (event is ReorderActionUiModel.Event.Drop) state.onDrop(jam.date, song.songId, event.toRowKey)
+            },
         ),
     )
 }

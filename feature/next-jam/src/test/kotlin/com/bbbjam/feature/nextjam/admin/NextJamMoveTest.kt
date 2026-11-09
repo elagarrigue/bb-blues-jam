@@ -19,14 +19,17 @@ import com.bbbjam.core.model.Key
 import com.bbbjam.core.model.Lineup
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.model.SongId
+import com.bbbjam.core.ui.filter.FilterChipUiModel
 import com.bbbjam.core.ui.text.UiText
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
 import com.bbbjam.feature.nextjam.MoveActionUiModel
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
 import com.bbbjam.feature.nextjam.R
+import com.bbbjam.feature.nextjam.ReorderActionUiModel
 import com.bbbjam.feature.nextjam.SetlistUiModel
 import com.bbbjam.feature.nextjam.SongRowUiModel
+import com.bbbjam.feature.nextjam.chipName
 import com.bbbjam.feature.nextjam.savingText
 import com.bbbjam.feature.nextjam.sources
 import com.bbbjam.feature.nextjam.writes
@@ -185,6 +188,139 @@ class NextJamMoveTest {
             row.events(SongRowUiModel.Event.OpenDetail)
             // The song carries the repeated id, so the cached (pre-overlay) position picks it in the detail.
             assertEquals(SongId("hoochie") to 3, opened)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    private fun NextJamUiModel.drop(from: String, toRowKey: String) =
+        checkNotNull(row(from).admin?.move).reorder.events(ReorderActionUiModel.Event.Drop(toRowKey))
+
+    @Test
+    fun `dropping a row on an earlier row calls moveSong once with that 1-based position`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            awaitJam().drop("pride", "hoochie")
+            assertEquals(listOf(Triple(jamDate, SongId("pride"), 2)), setlist.moveCalls)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `dropping on a later row moves down to that position`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            awaitJam().drop("crossroads", "thrill")
+            assertEquals(listOf(Triple(jamDate, SongId("crossroads"), 3)), setlist.moveCalls)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `dropping on the same row or an unknown row calls nothing`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            val model = awaitJam()
+            model.drop("thrill", "thrill")
+            model.drop("thrill", "nope")
+            assertTrue(setlist.moveCalls.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a drop after the setlist shrank calls nothing for the removed song`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            val stale = awaitJam()
+            repository.snapshots.emit(snapshot(songs.filter { it.songId.value != "pride" }))
+            awaitModel { it is NextJamUiModel.Jam && (it.setlist as SetlistUiModel.Songs).rows.size == 3 }
+            stale.drop("pride", "crossroads")
+            stale.drop("crossroads", "pride")
+            assertTrue(setlist.moveCalls.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a drop while a move is sending uses the displayed order`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            setlist.moves.value = listOf(move(1, "pride", 1))
+            // Displayed: pride, crossroads, hoochie, thrill. Dropping crossroads on thrill is position 4.
+            val model = awaitModel { it is NextJamUiModel.Jam && it.row("pride").position == 1 }
+            model.drop("crossroads", "thrill")
+            assertEquals(listOf(Triple(jamDate, SongId("crossroads"), 4)), setlist.moveCalls)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `under an instrument filter the drop target is the full setlist position`() = runTest {
+        val closed = Lineup(emptyList())
+        val mixed = songs.mapIndexed { index, song -> if (index % 2 == 1) song.copy(lineup = closed) else song }
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot(mixed))
+            val all = awaitJam()
+            val bar = checkNotNull((all.setlist as SetlistUiModel.Songs).filterBar)
+            bar.chips.first { it.label.chipName() == "Guitarra" }.events(FilterChipUiModel.Event.Toggle)
+            val filtered =
+                awaitModel { it is NextJamUiModel.Jam && (it.setlist as SetlistUiModel.Songs).rows.size == 2 }
+            assertEquals(
+                listOf(1, 3),
+                (filtered as NextJamUiModel.Jam).let {
+                    (it.setlist as SetlistUiModel.Songs).rows
+                }.map { it.position },
+            )
+            filtered.drop("crossroads", "thrill")
+            assertEquals(listOf(Triple(jamDate, SongId("crossroads"), 3)), setlist.moveCalls)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a failed drop move returns the cached order and shows the failure card`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            awaitJam().drop("pride", "crossroads")
+            setlist.moves.value = listOf(move(1, "pride", 1))
+            val sending = awaitModel { it is NextJamUiModel.Jam && it.row("pride").position == 1 }
+            assertEquals(savingText, checkNotNull(sending.row("pride").admin).saveStatus)
+            setlist.moves.value =
+                listOf(move(1, "pride", 1, SetlistMove.State.Failed(WriteOutcome.Rejected("unordered_setlist"))))
+            val failed = awaitModel { it is NextJamUiModel.Jam && it.failures().isNotEmpty() }
+            assertEquals(4, failed.row("pride").position)
+            assertEquals(UiText.res(R.string.next_jam_move_failed, "pride"), failed.failures().single().title)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `reorder exists for admin rows only and never for a removing row`() = runTest {
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            val model = awaitJam()
+            assertTrue(model.row("thrill").admin?.move != null)
+            setlist.removes.value =
+                listOf(SetlistRemove(10, jamDate, SongId("thrill"), "thrill", SetlistRemove.State.Sending))
+            assertNull(checkNotNull(awaitItem().row("thrill").admin).move)
+            session.isAdmin.value = false
+            val musician = awaitModel { it is NextJamUiModel.Jam && it.row("thrill").admin == null }
+            assertNull(musician.row("thrill").admin)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a drop and an arrow tap queue in call order`() = runTest {
+        val hold = CompletableDeferred<Unit>()
+        setlist.moveHold = hold
+        moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
+            repository.snapshots.emit(snapshot())
+            val model = awaitJam()
+            model.drop("pride", "hoochie")
+            checkNotNull(model.row("pride").admin?.move).up.events(MoveActionUiModel.Event.Move)
+            assertEquals(listOf(2, 1), setlist.moveCalls.map { it.third })
+            hold.complete(Unit)
             cancelAndIgnoreRemainingEvents()
         }
     }

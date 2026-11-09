@@ -1261,3 +1261,14 @@ flag is read and `Hidden` for a musician, the pure `catalogContent`, `songFormMo
 through one in-flight guard in the composition scope (the call itself runs in `DataScope`). `:app`: `AppTab.CATALOG` between Jams and Info with
 `adminOnly` (also `ASSISTANT`), `visibleTabs(admin)` and `shouldLeaveAdminTab`. `searchKey` moved from `:feature:next-jam` to
 `:core:ui` (`com.bbbjam.core.ui.text`) and `FakeCatalogRepository` to the `:core:data` test fixtures, both because a second feature uses them.
+
+## As built by `admin-drag-reorder`
+
+Long-press drag reorder in admin mode, alongside the arrows (9 November 2026). `:core:ui` package `com.bbbjam.core.ui.reorder` holds a generic,
+repository-free helper: pure `ReorderMath` (nearest-center `hoveredKey`, `edgeScrollDelta`), `ReorderState` (`draggedKey`, `dragOffsetY`, ephemeral, never in a
+`UiModel`; `recentlyDragged()` guards the row's tap on release) with `rememberReorderState(listState, isTarget, onDrop)`, and `Modifier.reorderable(state, key,
+shape, enabled)` over `detectDragGesturesAfterLongPress` (lift via `graphicsLayer`/`shadow`, frame-driven auto-scroll). `:feature:next-jam`: `MoveUiModel` gains
+`reorder: ReorderActionUiModel` (`Event.Drop(toRowKey)`), non-null exactly where the arrows are (null for musicians and a `Removing` row). `rememberMoveControls`
+extracts `moveTo(date, songId, target, size)` (queue bookkeeping unchanged) used by `onMove` (arrows) and the new `onDrop`, which resolves the row key against the
+displayed (overlaid, full) order with the same rule that keys rows and calls nothing for the same row or an unknown key. `MoveControlsState`, `AdminState` and
+`RowAdmin` carry `onDrop`. No new mutation: `moveSong` has no caller outside `MoveControlsState.kt`. `JamContent` creates the state; `SongRow` reads `reorder != null`.

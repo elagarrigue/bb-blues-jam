@@ -150,6 +150,7 @@ internal class NextJamPresenter(
             overlays = overlays,
             moves = moveControls.moves,
             onMove = moveControls.onMove,
+            onDrop = moveControls.onDrop,
             onAddSong = { date -> currentOnAddSong(date) },
         )
         val refreshes =

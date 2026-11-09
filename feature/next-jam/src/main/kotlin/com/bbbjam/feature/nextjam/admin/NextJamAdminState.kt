@@ -32,6 +32,7 @@ internal fun rememberNextJamAdminState(
     overlays: SongOverlays,
     moves: List<SetlistMove>,
     onMove: (LocalDate, SongId, Int) -> Unit,
+    onDrop: (LocalDate, SongId, String) -> Unit,
     onAddSong: (LocalDate) -> Unit,
 ): AdminState? {
     AdminRefreshEffect(adminSession, jams)
@@ -51,6 +52,7 @@ internal fun rememberNextJamAdminState(
         moves = moves,
         lineupChanges = overlays.lineupChanges,
         onMove = onMove,
+        onDrop = onDrop,
         onDismissRemove = writes.removals::dismissRemove,
         onDismissMove = writes.moves::dismissMove,
         overlaySources = overlays.sources,

@@ -50,6 +50,8 @@ import com.bbbjam.core.ui.brand.BandLogo
 import com.bbbjam.core.ui.filter.InstrumentFilterBar
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.presenter.EventHandler
+import com.bbbjam.core.ui.reorder.ReorderState
+import com.bbbjam.core.ui.reorder.reorderable
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.ListErrorBlock
 import com.bbbjam.core.ui.state.RefreshableContent
@@ -170,12 +172,13 @@ internal fun NextJamContent(model: NextJamUiModel, modifier: Modifier, contentPa
 internal fun LazyListScope.setlistItems(
     setlist: SetlistUiModel,
     onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
+    reorder: ReorderState? = null,
 ) {
     when (setlist) {
         is SetlistUiModel.Songs -> {
             setlist.filterBar?.let { bar -> item(key = FILTER_KEY) { InstrumentFilterBar(bar) } }
             items(setlist.rows, key = { it.rowKey }) { row ->
-                SongRow(row, modifier = Modifier.animateItem(), onMoveAction = onMoveAction)
+                SongRow(row, modifier = Modifier.animateItem(), onMoveAction = onMoveAction, reorder = reorder)
             }
             setlist.droppedRowsNote?.let { note ->
                 item(key = NOTE_KEY) {
@@ -241,22 +244,31 @@ private fun SongRow(
     row: SongRowUiModel,
     modifier: Modifier = Modifier,
     onMoveAction: (String, MoveActionUiModel) -> Unit = { _, _ -> },
+    reorder: ReorderState? = null,
 ) {
+    val shape = BluesJamTheme.shapes.md
+    // Drag exists only where the presenter built a reorder action (admin, not Removing): no composable decides.
+    val draggable = reorder != null && row.admin?.move != null
+    val lifted = draggable && reorder?.draggedKey == row.rowKey
     Surface(
-        color = BluesJamTheme.colors.surface,
+        color = if (lifted) BluesJamTheme.colors.surfaceRaised else BluesJamTheme.colors.surface,
         contentColor = BluesJamTheme.colors.text,
-        shape = BluesJamTheme.shapes.md,
-        modifier = modifier.fillMaxWidth(),
+        shape = shape,
+        modifier = if (reorder != null) {
+            modifier.fillMaxWidth().reorderable(reorder, row.rowKey, shape, enabled = draggable)
+        } else {
+            modifier.fillMaxWidth()
+        },
     ) {
         Column(modifier = Modifier.animateContentSize()) {
-            RowHeader(row)
+            RowHeader(row, reorder)
             row.admin?.let { admin -> AdminRowBar(admin, row.rowKey, onMoveAction) }
         }
     }
 }
 
 @Composable
-private fun RowHeader(row: SongRowUiModel) {
+private fun RowHeader(row: SongRowUiModel, reorder: ReorderState?) {
     val spacing = BluesJamTheme.spacing
     // The key style's 44sp line plus two spacing.sm paddings makes the header at least 56dp
     // (DESIGN.md song-row), above the 48dp touch target, without a dp literal.
@@ -264,7 +276,8 @@ private fun RowHeader(row: SongRowUiModel) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClickLabel = row.openDetailLabel.resolve(), role = Role.Button) {
-                row.events(SongRowUiModel.Event.OpenDetail)
+                // A long press that became a drag must not also open the detail on release.
+                if (reorder?.recentlyDragged() != true) row.events(SongRowUiModel.Event.OpenDetail)
             }
             .padding(horizontal = spacing.md, vertical = spacing.sm),
         verticalArrangement = Arrangement.spacedBy(spacing.sm),

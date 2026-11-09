@@ -1,3 +1,31 @@
+## 9 November 2026 - admin-drag-reorder implemented (passing, awaiting validation)
+
+Long-press drag in admin mode on Proxima jam, next to the arrows; the drop is one `moveSong(date, songId, toFullPosition)` through the existing mutation
+(D-13), no backend, `:core:data` or Gradle change. In-repo helper `core/ui/.../reorder` (no library, orchestrator decision), `ReorderActionUiModel` in
+`MoveUiModel`, `moveTo` extracted in `MoveControlsState` (arrows unchanged). DESIGN.md, architecture skill and the spec's decisions updated.
+
+Verification run: ReorderMathTest 5 tests, NextJamMoveTest 14 tests (5 existing untouched + 9 new), both 0 failures; CI=true ./init.sh exit 0 with
+konsist, detekt and ktlint wired (ktlintFormat run first).
+NOT RUN: the on-device gesture steps (a to f of the spec): no emulator was used and there is no Compose UI harness. Untested on device: the lift look,
+auto-scroll feel, and that a long press never opens the detail (guarded by `recentlyDragged()`, a 300 ms tap guard). Untracked app/debug and presentations untouched.
+
+Revision after validator finding 1 (9 November 2026): the lifted row is now pinned (`LocalPinnableContainer`) for the whole drag, so auto-scroll no longer
+disposes it and cancels the gesture; `ReorderState` tracks the finger's viewport Y (start item centre + drag deltas) for edge scrolling and the drop hover instead of
+looking the dragged item up in `visibleItemsInfo`; the gesture moved into a private `DragSession`. Re-ran `CI=true ./init.sh`: exit 0, konsist, detekt and ktlint wired.
+Not done: the flash-back on drop (optional) and the device pass. The device pass was skipped: the demo jam wraps only `JamsRepository`, and I did not prove a `moveSong` on it
+cannot reach the real Apps Script/Sheet, so I did not touch `local.properties` or the Pixel 5. Auto-scroll across an off-screen slot is therefore UNVERIFIED on device
+(no JVM test: the pin and scroll live in the Compose runtime; no new pure math was added).
+
+Revision 2 after validator finding 2 (found by code reading, not on device): a pinned lazy item far from the visible window is placed adjacent to it, so accumulating
+consumed scroll into the translation made the lifted row drift one row height per row passed. `dragOffsetY` is gone. The translation is now computed from the finger:
+`ReorderMath.liftTranslation(pointerY, itemSize, placedTop)`, with `placedTop` the row's real placement (an `onPlaced` before `graphicsLayer`, relative to the list via
+`Modifier.reorderHost`, converted to layoutInfo coordinates with `viewportStartOffset`), both snapshot state so it updates each frame. Drop math and the pin are unchanged.
+New JVM test for `liftTranslation` in ReorderMathTest (6 tests). `CI=true ./init.sh`: exit 0, konsist, detekt and ktlint wired. The flash-back on drop was left as is
+(not cheap: the order change arrives asynchronously from the Sending overlay). STILL FOR THE USER ON DEVICE: drag row 1 of a 10-song list to the bottom and confirm the row
+stays under the finger; no device was touched.
+
+Next best step: independent validator; then a manual device pass with the debug demo jam as admin.
+
 ## 20 October 2026 - admin-catalog-tab implemented (passing, awaiting validation and the Apps Script redeploy)
 
 Part A and Part B in one pass (D-30, amends D-04). The admin gets a fifth tab, Temas, between Jams and Info: list, search,

@@ -134,3 +134,8 @@ Test names and results for the cases above, the `init.sh` tail showing three `wi
 
 1. Confirm Decision 1 (in-repo helper rather than `sh.calvin.reorderable`). Default: in-repo.
 2. Is it acceptable that TalkBack users keep to the arrows (no accessibility drag action)? Default: yes.
+
+## Orchestrator decisions (9 November 2026)
+
+1. Decision 1 confirmed: in-repo helper in `:core:ui`, no new library.
+2. Question 2 confirmed: TalkBack users keep the arrows; no accessibility drag action. Recorded in `DESIGN.md`.

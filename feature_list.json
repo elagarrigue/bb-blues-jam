@@ -2017,14 +2017,23 @@
       "admin-reorder-songs",
       "admin-catalog-tab"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Presenter JVM tests: drop at a new position calls moveSong once with the target 1-based position; drop at the same position does nothing; failure restores order",
       "Drag is only enabled in admin mode; arrows still work",
       "No new mutation outside SetlistRepository (D-13)",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "9 Nov 2026 (implementer): in-repo helper core/ui/.../reorder (ReorderMath, ReorderState, Modifier.reorderable), ReorderActionUiModel in MoveUiModel, moveTo extracted in MoveControlsState; no :core:data, backend or Gradle change",
+      "ReorderMathTest 5 tests and NextJamMoveTest 14 tests (5 existing untouched + 9 new: drop up/down one moveSong with 1-based target, same/unknown row no call, shrunk setlist no call, drop over Sending overlay uses displayed order, instrument filter uses full position, failed move returns cached order with failure card, reorder null for musician and Removing row, drop and arrow queue in order): 0 failures, 0 skipped",
+      "CI=true ./init.sh exit 0, konsist, detekt and ktlint wired (ktlintFormat run first)",
+      "grep moveSong( outside tests: only MoveControlsState.kt in feature:next-jam (plus the pre-existing assistant ApplySteps and app AppModule binding)",
+      "Revision after validator finding 1: lifted row pinned via LocalPinnableContainer for the whole drag; ReorderState uses the finger viewport Y for edge scroll and drop hover (no visibleItemsInfo lookup of the dragged item); CI=true ./init.sh re-run exit 0 with three tools wired; flash-back on drop not addressed",
+      "Revision 2 (validator finding 2, found by code reading): lift translation computed from the finger (ReorderMath.liftTranslation, row placement via onPlaced before graphicsLayer, Modifier.reorderHost on the LazyColumn), dragOffsetY accumulation removed; ReorderMathTest 6 tests; CI=true ./init.sh exit 0 with three tools wired; flash-back on drop left as is; user to confirm on device that dragging row 1 of 10 to the bottom keeps the row under the finger",
+      "NOT RUN: on-device manual steps a to f (device pass skipped: not proven that moveSong on the demo jam cannot reach the real Sheet); auto-scroll past the dragged slot unverified on device (no emulator, no Compose UI harness); tap-vs-drag guard (recentlyDragged, 300 ms) unverified on device",
+      "9 November 2026: independent validator accept after two revise rounds (auto-scroll cancel fixed by pinning; lifted-row drift fixed by computing translation from pointer and placed top). Validator reran CI=true ./init.sh: Baseline OK, konsist/detekt/ktlint wired. Device steps a-f (drag, auto-scroll under finger, tap vs long press, flash-back on drop) still owed to the user."
+    ]
   },
   {
     "id": "musician-filter",

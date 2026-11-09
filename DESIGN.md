@@ -569,6 +569,14 @@ through `AdminControlsDefaults`, **no amber**:
   The admin row moves optimistically with a polite `Guardando…` status and remains under the
   thumb. Failure restores the confirmed position and adds a dismissible card. Musicians see the
   confirmed order only. Colors use neutral admin action tokens, not amber.
+  **Drag** (`admin-drag-reorder`, 9 November 2026): in admin mode a long press anywhere on the row lifts
+  it (`surfaceRaised`, scale 1.02, shadow, long-press haptic, never amber) and it follows the finger;
+  dropping over another row commits one `moveSong` to that row's full-setlist position, dropping on its
+  own place does nothing. The list auto-scrolls near the viewport edges. No handle is drawn, a plain tap
+  still opens the detail, and the arrows stay at 48dp: this resolves the "48dp targets versus dragging"
+  question, because the drag is the whole row and the arrows remain the precise and accessible path.
+  TalkBack users keep to the arrows; there is no accessibility drag action (decided 9 November 2026).
+  Musicians and a `Removing` row have no drag. The lift is direct manipulation, not decorative motion.
 - Text selection is non-amber app-wide (`BluesJamTheme` provides `text` handles and `text` at 40%).
 
 ## Core Screens
@@ -816,8 +824,7 @@ the button and dialog described here.
   Stitch export described them in words ("muted slate grey") without giving values.
 - How the strip degrades when a lineup is unusually large (for example four guitars). Wrapping is
   the current answer; confirm it stays legible.
-- Drag-to-reorder versus explicit move actions, given that 48dp targets and dragging conflict on a
-  dense list used one-handed.
+- Resolved by `admin-drag-reorder`: drag and the explicit arrows both exist (see Reordering songs).
 
 ### Jams tab (`admin-jams-tab`)
 

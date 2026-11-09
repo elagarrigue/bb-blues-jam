@@ -38,6 +38,7 @@ private fun previewMove(up: Boolean, down: Boolean) = MoveUiModel(
         down,
         EventHandler {},
     ),
+    reorder = ReorderActionUiModel(EventHandler {}),
 )
 
 /**

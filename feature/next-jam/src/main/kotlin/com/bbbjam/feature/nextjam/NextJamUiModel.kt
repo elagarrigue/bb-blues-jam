@@ -221,8 +221,25 @@ internal data class ExtraParticipantEditorUiModel(
     }
 }
 
-/** The move actions of an admin row. Edges count the full setlist, not filtered rows. */
-internal data class MoveUiModel(val up: MoveActionUiModel, val down: MoveActionUiModel) : UiModel
+/**
+ * The move actions of an admin row. Edges count the full setlist, not filtered rows. [reorder] is the
+ * long-press drag: present exactly where the arrows are.
+ */
+internal data class MoveUiModel(
+    val up: MoveActionUiModel,
+    val down: MoveActionUiModel,
+    val reorder: ReorderActionUiModel,
+) : UiModel
+
+/**
+ * Dropping the dragged row on another row ([Event.Drop.toRowKey], its `rowKey`). The presenter turns it
+ * into one `moveSong` to that row's full position, or nothing when it is the same row or unknown.
+ */
+internal data class ReorderActionUiModel(val events: EventHandler<Event>) : UiModel {
+    sealed interface Event : UiEvent {
+        data class Drop(val toRowKey: String) : Event
+    }
+}
 
 /** One visible one-place reorder action. Disabled actions remain drawn to keep the layout stable. */
 internal data class MoveActionUiModel(

@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.bbbjam.core.ui.brand.BandLogo
+import com.bbbjam.core.ui.reorder.rememberReorderState
+import com.bbbjam.core.ui.reorder.reorderHost
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.StalenessNotice
 import com.bbbjam.core.ui.state.rememberRevealingLazyListState
@@ -59,9 +61,18 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
             }
         }
     }
+    val rows = ((model.setlist as? SetlistUiModel.Songs)?.rows).orEmpty()
+    val reorder = rememberReorderState(
+        listState = listState,
+        isTarget = { it in rowKeys },
+        onDrop = { fromKey, toKey ->
+            val drop = rows.firstOrNull { it.rowKey == fromKey }?.admin?.move?.reorder
+            if (drop != null && toKey is String) drop.events(ReorderActionUiModel.Event.Drop(toKey))
+        },
+    )
     LazyColumn(
         state = listState,
-        modifier = modifier,
+        modifier = modifier.reorderHost(reorder),
         contentPadding = padding,
         verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.sm),
     ) {
@@ -75,16 +86,20 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
                 Box(Modifier.padding(bottom = BluesJamTheme.spacing.sm)) { AdminStatusBlock(admin.status) }
             }
         }
-        setlistItems(model.setlist) { rowKey, action ->
-            if (action.enabled) {
-                val rowIndex = rowKeys.indexOf(rowKey)
-                val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == rowKey }
-                if (rowIndex >= 0 && item != null) {
-                    moveAnchor = MoveScrollAnchor(rowKey, rowIndex, item.index, item.offset)
+        setlistItems(
+            model.setlist,
+            onMoveAction = { rowKey, action ->
+                if (action.enabled) {
+                    val rowIndex = rowKeys.indexOf(rowKey)
+                    val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == rowKey }
+                    if (rowIndex >= 0 && item != null) {
+                        moveAnchor = MoveScrollAnchor(rowKey, rowIndex, item.index, item.offset)
+                    }
+                    action.events(MoveActionUiModel.Event.Move)
                 }
-                action.events(MoveActionUiModel.Event.Move)
-            }
-        }
+            },
+            reorder = reorder,
+        )
         model.admin?.let { admin -> adminItems(admin) }
     }
 }
