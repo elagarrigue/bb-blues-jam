@@ -1301,3 +1301,12 @@ internal `MusicianFilterDefaults` (amber read only there, so no feature allowlis
 combines it with `observeJams()` in one flow, so the model is `Loading` until both were read and the list never shows unfiltered; `songsModel` applies the
 musician predicate, builds the instrument bar over those songs, then the instrument predicate; `SetlistUiModel.Songs.musicianFilter` is null when nobody is
 assigned and nothing is remembered. While a name is chosen the instrument bar's own summary and no-results are null.
+
+## As built by `admin-drag-live-preview`
+
+Live drag preview (9 November 2026). `:core:ui` `reorder`: `DropSlot` (`Before`/`After` a key), pure `ReorderMath.dropSlot` (first target row whose centre is below the
+finger, else after the last; replaced `hoveredKey`), public `List<K>.withDragged(dragged, slot)`, `ReorderState.dropSlot` (derived state; `onDrop(fromKey, DropSlot?)` gets the slot
+the user last saw). `:feature:next-jam`: `SetlistUiModel.Songs.orderKeys` (rowKey of the full displayed order, plain data), `ReorderActionUiModel.Event.Drop(toPosition: Int)`
+(1-based full position), `admin/DragPreview.kt` (`previewKeys`, `Songs.previewed`: reorders rows and renumbers `positionLabel` from the full preview index), and
+`rememberDragPreview` (`DragPreviewHost.kt`): previews while dragging, then holds the dropped order until `orderKeys` changes or 2000 ms pass. `MoveControlsState.onDrop` takes the position.
+Preview, numbers and the drop position come from one pure order (tested against `displayEntries`). Still no new mutation.

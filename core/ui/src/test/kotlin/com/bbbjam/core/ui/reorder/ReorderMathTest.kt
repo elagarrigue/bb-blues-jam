@@ -13,22 +13,33 @@ class ReorderMathTest {
     )
 
     @Test
-    fun `hovered key is the nearest item center`() {
-        assertEquals("a", ReorderMath.hoveredKey(40f, items))
-        assertEquals("b", ReorderMath.hoveredKey(160f, items))
-        assertEquals("c", ReorderMath.hoveredKey(900f, items))
-        assertEquals("a", ReorderMath.hoveredKey(-500f, items))
+    fun `finger above all centres is before the first`() {
+        assertEquals(DropSlot.Before("a"), ReorderMath.dropSlot(-500f, items))
+        assertEquals(DropSlot.Before("a"), ReorderMath.dropSlot(40f, items))
     }
 
     @Test
-    fun `a center in the gap goes to the nearer neighbour`() {
-        assertEquals("a", ReorderMath.hoveredKey(104f, items))
-        assertEquals("b", ReorderMath.hoveredKey(106f, items))
+    fun `finger below all centres is after the last`() {
+        assertEquals(DropSlot.After("c"), ReorderMath.dropSlot(900f, items))
     }
 
     @Test
-    fun `no candidates means no hovered key`() {
-        assertNull(ReorderMath.hoveredKey(10f, emptyList()))
+    fun `finger between rows is before the next one`() {
+        assertEquals(DropSlot.Before("b"), ReorderMath.dropSlot(60f, items))
+        assertEquals(DropSlot.Before("c"), ReorderMath.dropSlot(170f, items))
+    }
+
+    @Test
+    fun `no rows means no slot`() {
+        assertNull(ReorderMath.dropSlot(10f, emptyList()))
+    }
+
+    @Test
+    fun `the slot is stable after a neighbour moves into the gap`() {
+        val before = listOf(ItemBounds("a", 0f, 100f), ItemBounds("c", 220f, 320f))
+        val after = listOf(ItemBounds("a", 0f, 100f), ItemBounds("c", 110f, 210f))
+        assertEquals(ReorderMath.dropSlot(150f, before), DropSlot.Before("c"))
+        assertEquals(ReorderMath.dropSlot(150f, after), DropSlot.Before("c"))
     }
 
     @Test
@@ -54,5 +65,28 @@ class ReorderMathTest {
         val placedTop = 2000f
         val translation = ReorderMath.liftTranslation(pointerY = 600f, itemSize = 100f, placedTop = placedTop)
         assertEquals(550f, placedTop + translation, 0f)
+    }
+
+    @Test
+    fun `finger position follows the grab offset inside the row`() {
+        assertEquals(130f, ReorderMath.fingerY(pointerY = 300f, itemSize = 400f, grabY = 30f), 0f)
+    }
+
+    @Test
+    fun `edge zone is capped by a fraction of the viewport, never above one row`() {
+        assertEquals(206.4f, ReorderMath.autoScrollThreshold(570f, 1720f, 48f), 0.01f)
+        assertEquals(100f, ReorderMath.autoScrollThreshold(100f, 1720f, 48f), 0f)
+        assertEquals(48f, ReorderMath.autoScrollThreshold(570f, 200f, 48f), 0f)
+    }
+
+    @Test
+    fun `a tall row whose centre is in the old zone but whose finger is outside the new one does not scroll`() {
+        val itemSize = 570f
+        val viewport = 1720f
+        // Row centre 250 px from the top: inside the old zone (threshold = itemSize), so it used to scroll.
+        assertTrue(ReorderMath.edgeScrollDelta(250f, 0f, viewport, itemSize, 142f) < 0f)
+        val threshold = ReorderMath.autoScrollThreshold(itemSize, viewport, 48f)
+        val finger = ReorderMath.fingerY(pointerY = 250f, itemSize = itemSize, grabY = 285f + 100f)
+        assertEquals(0f, ReorderMath.edgeScrollDelta(finger, 0f, viewport, threshold, 142f), 0f)
     }
 }

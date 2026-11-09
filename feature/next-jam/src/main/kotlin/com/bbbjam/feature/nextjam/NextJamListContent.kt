@@ -15,7 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.bbbjam.core.ui.brand.BandLogo
-import com.bbbjam.core.ui.reorder.rememberReorderState
+import com.bbbjam.core.ui.reorder.ReorderState
 import com.bbbjam.core.ui.reorder.reorderHost
 import com.bbbjam.core.ui.state.EmptyStateBlock
 import com.bbbjam.core.ui.state.StalenessNotice
@@ -43,7 +43,13 @@ internal fun NoUpcomingJamContent(model: NextJamUiModel.NoUpcomingJam, modifier:
 
 @Composable
 internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: PaddingValues) {
-    val listState = rememberRevealingLazyListState(model.staleness, topAnchorKey = BRAND_HEADER_KEY)
+    // The reveal scroll waits while a row is lifted (and just after), so a refresh cannot yank the list mid-drag.
+    val dragHold = remember { DragHold() }
+    val listState = rememberRevealingLazyListState(
+        model.staleness,
+        topAnchorKey = BRAND_HEADER_KEY,
+        isRevealSuspended = { dragHold.reorder?.recentlyDragged() == true },
+    )
     val rowKeys = ((model.setlist as? SetlistUiModel.Songs)?.rows).orEmpty().map { it.rowKey }
     var moveAnchor by remember { mutableStateOf<MoveScrollAnchor?>(null) }
     LaunchedEffect(moveAnchor, rowKeys) {
@@ -61,15 +67,8 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
             }
         }
     }
-    val rows = ((model.setlist as? SetlistUiModel.Songs)?.rows).orEmpty()
-    val reorder = rememberReorderState(
-        listState = listState,
-        isTarget = { it in rowKeys },
-        onDrop = { fromKey, toKey ->
-            val drop = rows.firstOrNull { it.rowKey == fromKey }?.admin?.move?.reorder
-            if (drop != null && toKey is String) drop.events(ReorderActionUiModel.Event.Drop(toKey))
-        },
-    )
+    val (reorder, displayed) = rememberDragPreview(model.setlist, listState, rowKeys)
+    dragHold.reorder = reorder
     LazyColumn(
         state = listState,
         modifier = modifier.reorderHost(reorder),
@@ -87,7 +86,7 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
             }
         }
         setlistItems(
-            model.setlist,
+            displayed,
             onMoveAction = { rowKey, action ->
                 if (action.enabled) {
                     val rowIndex = rowKeys.indexOf(rowKey)
@@ -102,6 +101,11 @@ internal fun JamContent(model: NextJamUiModel.Jam, modifier: Modifier, padding: 
         )
         model.admin?.let { admin -> adminItems(admin) }
     }
+}
+
+/** Lets the list state, created before the reorder state, ask whether a drag is under way. */
+private class DragHold {
+    var reorder: ReorderState? = null
 }
 
 internal data class MoveScrollAnchor(val key: String, val rowIndex: Int, val lazyIndex: Int, val offset: Int)

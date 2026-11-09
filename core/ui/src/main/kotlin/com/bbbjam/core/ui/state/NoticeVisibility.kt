@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 
 /**
  * Whether a staleness notice that just started being drawn should pull the list back to the top,
@@ -33,6 +34,12 @@ fun shouldRevealNotice(
 }
 
 private const val REST_THRESHOLD_PX = 0
+private const val REVEAL_RECHECK_MS = 50L
+
+/** Returns once [isSuspended] is false, checking again every 50 ms; immediately when it already is. */
+internal suspend fun awaitNotSuspended(isSuspended: () -> Boolean) {
+    while (isSuspended()) delay(REVEAL_RECHECK_MS)
+}
 
 /**
  * A [LazyListState] that scrolls back to the notice (index 0) when it newly appears while the list
@@ -40,13 +47,19 @@ private const val REST_THRESHOLD_PX = 0
  * Does not re-trigger on every recomposition while the notice is already showing, and never pulls a
  * user who has scrolled away back to the top. Shared by `NextJamScreen` and `PastJamsScreen`, the
  * two screens that draw [StalenessNotice] (`list-states`). NextJam passes its keyed header as
- * [topAnchorKey] because the notice is inserted before that visible item.
+ * [topAnchorKey] because the notice is inserted before that visible item. While [isRevealSuspended]
+ * is true (a drag is under way) the reveal waits, then re-reads the list position.
  */
 @Composable
-fun rememberRevealingLazyListState(staleness: StalenessNoticeUiModel?, topAnchorKey: String? = null): LazyListState {
+fun rememberRevealingLazyListState(
+    staleness: StalenessNoticeUiModel?,
+    topAnchorKey: String? = null,
+    isRevealSuspended: () -> Boolean = { false },
+): LazyListState {
     val listState = rememberLazyListState()
     var previousStaleness by remember { mutableStateOf<StalenessNoticeUiModel?>(null) }
     LaunchedEffect(staleness) {
+        awaitNotSuspended(isRevealSuspended)
         val visibleItem = listState.layoutInfo.visibleItemsInfo.firstOrNull {
             it.index == listState.firstVisibleItemIndex
         }

@@ -25,6 +25,7 @@ import com.bbbjam.core.model.SetlistProblem
 import com.bbbjam.core.model.Slot
 import com.bbbjam.core.model.SongId
 import com.bbbjam.core.ui.R as CoreR
+import com.bbbjam.core.ui.filter.InstrumentFilterBarUiModel
 import com.bbbjam.core.ui.lineup.LineupLineUiModel
 import com.bbbjam.core.ui.lineup.LineupPanelUiModel
 import com.bbbjam.core.ui.presenter.EventHandler
@@ -118,6 +119,10 @@ class NextJamPresenterTest {
         events = EventHandler {},
     )
 
+    /** The expected songs block; the order keys are the rows' keys (no filter hides any row here). */
+    private fun expectedSongs(rows: List<SongRowUiModel>, note: UiText?, bar: InstrumentFilterBarUiModel) =
+        SetlistUiModel.Songs(rows, note, bar, orderKeys = rows.map { it.rowKey })
+
     private fun jam(
         setlist: Setlist,
         status: JamStatus = JamStatus.PUBLISHED,
@@ -210,7 +215,7 @@ class NextJamPresenterTest {
                 row("13", "Tres Palabras", "A"),
             )
             assertEquals(
-                NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(13)), staleness = null),
+                NextJamUiModel.Jam(header, expectedSongs(expectedRows, null, bar(13)), staleness = null),
                 awaitItem(),
             )
         }
@@ -230,7 +235,7 @@ class NextJamPresenterTest {
             assertEquals(
                 NextJamUiModel.Jam(
                     header,
-                    SetlistUiModel.Songs(
+                    expectedSongs(
                         listOf(row("01", "Sweet Little Angel", "B")),
                         null,
                         bar(1),
@@ -279,7 +284,7 @@ class NextJamPresenterTest {
             assertEquals(
                 NextJamUiModel.Jam(
                     header,
-                    SetlistUiModel.Songs(listOf(row("01", "Sweet Little Angel", "B")), null, bar(1)),
+                    expectedSongs(listOf(row("01", "Sweet Little Angel", "B")), null, bar(1)),
                     staleness = null,
                 ),
                 awaitItem(),
@@ -370,13 +375,13 @@ class NextJamPresenterTest {
             row("03", "Dust My Broom", "D"),
         )
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(gapRows, null, bar(2)), staleness = null),
+            NextJamUiModel.Jam(header, expectedSongs(gapRows, null, bar(2)), staleness = null),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 0))).toUiModel(today),
         )
         assertEquals(
             NextJamUiModel.Jam(
                 header,
-                SetlistUiModel.Songs(gapRows, UiText.plural(CoreR.plurals.song_list_dropped_rows, 1), bar(2)),
+                expectedSongs(gapRows, UiText.plural(CoreR.plurals.song_list_dropped_rows, 1), bar(2)),
                 staleness = null,
             ),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 1))).toUiModel(today),
@@ -384,7 +389,7 @@ class NextJamPresenterTest {
         assertEquals(
             NextJamUiModel.Jam(
                 header,
-                SetlistUiModel.Songs(gapRows, UiText.plural(CoreR.plurals.song_list_dropped_rows, 2), bar(2)),
+                expectedSongs(gapRows, UiText.plural(CoreR.plurals.song_list_dropped_rows, 2), bar(2)),
                 staleness = null,
             ),
             snapshot(jam(Setlist.Available(withGap, droppedRows = 2))).toUiModel(today),
@@ -463,7 +468,7 @@ class NextJamPresenterTest {
         val songs = (model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs
         assertEquals(listOf("Juan", "Mono", "Nico", "Tincho"), songs.musicianFilter?.options?.map { it.name })
         assertEquals(
-            NextJamUiModel.Jam(header, SetlistUiModel.Songs(expectedRows, null, bar(2, counts)), staleness = null),
+            NextJamUiModel.Jam(header, expectedSongs(expectedRows, null, bar(2, counts)), staleness = null),
             model.copy(setlist = songs.copy(musicianFilter = null)),
         )
         // The extra is never open: the open chips are exactly the lineup's open slots (D-18).

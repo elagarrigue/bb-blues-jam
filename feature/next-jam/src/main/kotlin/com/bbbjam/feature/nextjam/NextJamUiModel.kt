@@ -124,13 +124,15 @@ internal sealed interface SetlistUiModel : UiModel {
      * many rows could not be read, or is null. [filterBar] is the instrument filter
      * (`instrument-filter-chips`), null when the setlist has no song (the empty case is not a
      * filter's no-results case). [musicianFilter] is the musician filter (`musician-filter`), null when
-     * nobody is assigned in the setlist and no name is remembered.
+     * nobody is assigned in the setlist and no name is remembered. [orderKeys] is the `rowKey` of every
+     * entry of the full displayed order, hidden rows included: plain data the drag preview reorders.
      */
     data class Songs(
         val rows: List<SongRowUiModel>,
         val droppedRowsNote: UiText?,
         val filterBar: InstrumentFilterBarUiModel?,
         val musicianFilter: MusicianFilterUiModel? = null,
+        val orderKeys: List<String> = emptyList(),
     ) : SetlistUiModel
 
     /** A published setlist with no song: the empty block, and no filter bar. */
@@ -260,12 +262,12 @@ internal data class MoveUiModel(
 ) : UiModel
 
 /**
- * Dropping the dragged row on another row ([Event.Drop.toRowKey], its `rowKey`). The presenter turns it
- * into one `moveSong` to that row's full position, or nothing when it is the same row or unknown.
+ * Dropping the dragged row at [Event.Drop.toPosition], the 1-based full-setlist position the drag preview
+ * showed. The presenter turns it into one `moveSong`, or nothing when it is the current position or unknown.
  */
 internal data class ReorderActionUiModel(val events: EventHandler<Event>) : UiModel {
     sealed interface Event : UiEvent {
-        data class Drop(val toRowKey: String) : Event
+        data class Drop(val toPosition: Int) : Event
     }
 }
 

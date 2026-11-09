@@ -265,7 +265,9 @@ private fun SongRow(
     ) {
         Column(modifier = Modifier.animateContentSize()) {
             RowHeader(row, reorder)
-            row.admin?.let { admin -> AdminRowBar(admin, row.rowKey, onMoveAction) }
+            row.admin?.let { admin ->
+                AdminRowBar(admin, row.rowKey, onMoveAction) { reorder?.recentlyDragged() == true }
+            }
         }
     }
 }

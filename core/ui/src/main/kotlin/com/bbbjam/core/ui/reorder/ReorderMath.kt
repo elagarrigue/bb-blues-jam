@@ -1,7 +1,5 @@
 package com.bbbjam.core.ui.reorder
 
-import kotlin.math.abs
-
 /** One laid-out list item: its [key] and its vertical extent in the viewport. */
 internal data class ItemBounds(val key: Any, val top: Float, val bottom: Float) {
     val center: Float get() = (top + bottom) / 2f
@@ -9,13 +7,36 @@ internal data class ItemBounds(val key: Any, val top: Float, val bottom: Float) 
 
 /** Pure geometry of the long-press drag, JVM-tested. Knows nothing of lists, jams or repositories. */
 internal object ReorderMath {
-    /** The key of the candidate whose center is nearest to [draggedCenter], or null with no candidates. */
-    fun hoveredKey(draggedCenter: Float, candidates: List<ItemBounds>): Any? =
-        candidates.minByOrNull { abs(it.center - draggedCenter) }?.key
+    private const val EDGE_ZONE_FRACTION = 0.12f
+
+    /**
+     * Where the lifted row would land for a finger at [pointerY]: before the first of [others] (the laid-out
+     * target rows without the lifted one) whose centre is below the finger, else after the last. Counting
+     * centres above the finger, not the nearest centre, keeps the slot stable when a neighbour slides into
+     * the gap. Null with no [others].
+     */
+    fun dropSlot(pointerY: Float, others: List<ItemBounds>): DropSlot? {
+        val below = others.firstOrNull { it.center > pointerY }
+        return when {
+            below != null -> DropSlot.Before(below.key)
+            others.isNotEmpty() -> DropSlot.After(others.last().key)
+            else -> null
+        }
+    }
 
     /** Vertical translation that puts the lifted row's centre under the finger, given where it was placed. */
     fun liftTranslation(pointerY: Float, itemSize: Float, placedTop: Float): Float =
         pointerY - itemSize / 2f - placedTop
+
+    /** The finger's vertical position, given the lifted row's centre [pointerY] and where it was grabbed. */
+    fun fingerY(pointerY: Float, itemSize: Float, grabY: Float): Float = pointerY - itemSize / 2f + grabY
+
+    /**
+     * Width of each auto-scroll edge zone: at most one row, but never so tall that a tall row's zones
+     * swallow the list; at least [minZone] and 12% of the viewport otherwise.
+     */
+    fun autoScrollThreshold(itemSize: Float, viewportHeight: Float, minZone: Float): Float =
+        minOf(itemSize, maxOf(minZone, viewportHeight * EDGE_ZONE_FRACTION))
 
     /**
      * Pixels to scroll this frame: negative near the viewport's top, positive near its bottom, zero

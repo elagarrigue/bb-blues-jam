@@ -32,7 +32,7 @@ internal fun rememberNextJamAdminState(
     overlays: SongOverlays,
     moves: List<SetlistMove>,
     onMove: (LocalDate, SongId, Int) -> Unit,
-    onDrop: (LocalDate, SongId, String) -> Unit,
+    onDrop: (LocalDate, SongId, Int) -> Unit,
     onAddSong: (LocalDate) -> Unit,
 ): AdminState? {
     AdminRefreshEffect(adminSession, jams)

@@ -156,12 +156,14 @@ internal fun AddSongButton(model: AddSongActionUiModel) {
  * sent, "Quitando…" replaces the bar (the move actions are already gone). While it confirms
  * (12 October 2026 amendment), the bar stays drawn as-is and [RemovalConfirmationDialog] opens on
  * top of it instead of an inline block; the trash icon keeps its idle appearance underneath.
+ * [isBlocked] is true during a drag and just after it: a pointer stream that outlived a drag never fires a control.
  */
 @Composable
 internal fun AdminRowBar(
     model: SongRowAdminUiModel,
     rowKey: String,
     onMoveAction: (String, MoveActionUiModel) -> Unit,
+    isBlocked: () -> Boolean = { false },
 ) {
     val removal = model.removal
     if (removal is RemovalUiModel.Removing) {
@@ -175,10 +177,12 @@ internal fun AdminRowBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         model.move?.let { move ->
-            MoveAction(move.up, IconRowActionIcon.MoveUp, Modifier) { onMoveAction(rowKey, move.up) }
-            MoveAction(move.down, IconRowActionIcon.MoveDown, Modifier) { onMoveAction(rowKey, move.down) }
+            MoveAction(move.up, IconRowActionIcon.MoveUp, Modifier) { if (!isBlocked()) onMoveAction(rowKey, move.up) }
+            MoveAction(move.down, IconRowActionIcon.MoveDown, Modifier) {
+                if (!isBlocked()) onMoveAction(rowKey, move.down)
+            }
         }
-        model.played?.let { PlayedToggle(it) }
+        model.played?.let { PlayedToggle(it, isBlocked = isBlocked) }
         Box(modifier = Modifier.weight(1f))
         if (removal != null) {
             IconRowAction(
@@ -187,7 +191,7 @@ internal fun AdminRowBar(
                 tint = AdminControlsDefaults.removal().action,
                 mutedTint = AdminControlsDefaults.move().disabled,
             ) {
-                if (removal is RemovalUiModel.Idle) removal.events(RemovalUiModel.Event.RequestRemove)
+                if (!isBlocked() && removal is RemovalUiModel.Idle) removal.events(RemovalUiModel.Event.RequestRemove)
             }
         }
     }

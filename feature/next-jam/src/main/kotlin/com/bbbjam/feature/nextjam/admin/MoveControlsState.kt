@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 internal data class MoveControlsState(
     val moves: List<SetlistMove>,
     val onMove: (LocalDate, SongId, Int) -> Unit,
-    val onDrop: (LocalDate, SongId, String) -> Unit,
+    val onDrop: (LocalDate, SongId, Int) -> Unit,
 )
 
 @Composable
@@ -67,16 +67,10 @@ internal fun rememberMoveControls(setlist: SetlistMoveRepository, snapshot: Jams
         val currentPosition = moveTargets[removalKey(date, songId)] ?: (currentIndex + 1)
         if (currentIndex >= 0) moveTo(date, songId, currentPosition + direction, songs.size)
     }
-    val onDrop: (LocalDate, SongId, String) -> Unit = { date, songId, toRowKey ->
+    val onDrop: (LocalDate, SongId, Int) -> Unit = { date, songId, toPosition ->
         val songs = songsOf(date)
-        val displayed = currentMoves.displayOrder(date, songs)
-        val fromIndex = displayed.indexOfFirst { it.songId == songId }
-        val ids = displayed.groupingBy { it.songId }.eachCount()
-        // The same rule that keys the rows: the song id, or the displayed position for a repeated id.
-        val toIndex = displayed.indexOfFirst {
-            (if (ids[it.songId] == 1) it.songId.value else "p${it.position}") == toRowKey
-        }
-        if (fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex) moveTo(date, songId, toIndex + 1, songs.size)
+        val fromIndex = currentMoves.displayOrder(date, songs).indexOfFirst { it.songId == songId }
+        if (fromIndex >= 0 && toPosition != fromIndex + 1) moveTo(date, songId, toPosition, songs.size)
     }
     return MoveControlsState(moves, onMove, onDrop)
 }
@@ -120,7 +114,7 @@ internal fun RowAdmin.moveModel(
         ),
         reorder = ReorderActionUiModel(
             events = EventHandler(key = "${removalKey(jam.date, song.songId)}|drop") { event ->
-                if (event is ReorderActionUiModel.Event.Drop) state.onDrop(jam.date, song.songId, event.toRowKey)
+                if (event is ReorderActionUiModel.Event.Drop) state.onDrop(jam.date, song.songId, event.toPosition)
             },
         ),
     )

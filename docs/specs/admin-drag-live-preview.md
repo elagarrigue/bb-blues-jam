@@ -176,3 +176,11 @@ Test names and counts, the `init.sh` tail showing three `wired`, and the device 
 - Gap look: the vacated slot is plain background. Default chosen; a faint outlined placeholder is a follow-up if the device
   check shows the gap is not visible enough.
 - Hold timeout 2000 ms.
+
+## Decisions (amendments)
+
+- 9 November 2026, after the validator's revise (device: the list scrolled away on lift): the non-goal "no change to auto-scroll" is
+  lifted for the edge zone only. Auto-scroll is measured from the finger (grab offset stored at lift), the zone is
+  `min(itemSize, max(48dp, 12% of viewport))`, and it is held off for 300 ms after the lift or until the finger moves a touch slop.
+  Pure `ReorderMath.fingerY` and `autoScrollThreshold` carry JVM tests.
+- Validation round 3 (9 November 2026): the reveal scroll of the next-jam list is suspended while a drag is active or within the 300 ms post-drag guard, and the row bar controls (arrows, trash, played toggle) ignore taps within that guard, so a drag cut short by a refresh can never click a control.

@@ -66,7 +66,7 @@ internal class AdminState(
     val moves: List<SetlistMove> = emptyList(),
     val lineupChanges: List<LineupChange> = emptyList(),
     val onMove: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
-    val onDrop: (LocalDate, SongId, String) -> Unit = { _, _, _ -> },
+    val onDrop: (LocalDate, SongId, Int) -> Unit = { _, _, _ -> },
     val onDismissRemove: (Long) -> Unit = {},
     val onDismissMove: (Long) -> Unit = {},
     val overlaySources: SongOverlaySources? = null,

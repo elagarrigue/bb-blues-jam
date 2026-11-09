@@ -2,6 +2,9 @@ package com.bbbjam.core.ui.state
 
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.text.UiText
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -129,5 +132,28 @@ class NoticeVisibilityTest {
             true,
             shouldRevealNotice(notice(), null, firstVisibleItemIndex = 0, firstVisibleItemScrollOffset = 0),
         )
+    }
+
+    @Test
+    fun `the reveal waits while suspended and proceeds once it ends`() = kotlinx.coroutines.test.runTest {
+        var suspended = true
+        var done = false
+        val job = launch {
+            awaitNotSuspended { suspended }
+            done = true
+        }
+        advanceTimeBy(500)
+        runCurrent()
+        assertEquals(false, done)
+        suspended = false
+        advanceTimeBy(60)
+        runCurrent()
+        assertEquals(true, done)
+        job.join()
+    }
+
+    @Test
+    fun `the reveal does not wait when nothing is suspended`() = kotlinx.coroutines.test.runTest {
+        awaitNotSuspended { false }
     }
 }

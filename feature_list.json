@@ -2092,14 +2092,22 @@
       "admin-drag-reorder",
       "song-played-state"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Pure JVM tests for the live target index and the preview order/numbering during a drag (including under an instrument or musician filter and with a Sending move overlay)",
       "Drop at the previewed position calls moveSong once with that 1-based position; drop back at origin does nothing",
       "Device check: the gap follows the finger, numbers update live, the drop lands where the gap was",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "Implemented 9 Nov 2026 (docs/specs/admin-drag-live-preview.md); status passing, awaiting independent validation.",
+      "JVM 0 failures: ReorderMathTest 8, ReorderPreviewTest 4, DragPreviewTest 5 (incl. equivalence invariant vs displayEntries, with and without Sending overlay, hidden rows keep full numbers), NextJamMoveTest 15 (Drop(toPosition), orderKeys).",
+      "./gradlew ktlintFormat then CI=true ./init.sh exit 0; konsist, detekt, ktlint printed wired; Baseline OK.",
+      "Revision after validator finding 1: auto-scroll measured from the finger with a viewport-capped zone and a 300 ms / touch-slop hold-off; ReorderMathTest 11, CI=true ./init.sh exit 0 with three wired. Spec Decisions amended.",
+      "Revision 2 after validator: reveal scroll suspended while a drag or its 300 ms tap guard is active (awaitNotSuspended, 2 new NoticeVisibilityTest cases); arrows, played toggle and trash gated by recentlyDragged(). CI=true ./init.sh exit 0, three wired.",
+      "Not run: five device checks on the Pixel 5 and the animateItem offset assumption; Compose hold/preview wiring (rememberDragPreview) has no JVM test.",
+      "9 November 2026: independent validator accept after two revise rounds (edge auto-scroll zone from the finger, capped, 300 ms hold-off; reveal scroll suspended during drag and row controls blocked right after a drag). Validator reran CI=true ./init.sh (exit 0, three wired). Device on the demo live jam: list still on lift, gap and live numbers, drag held across a demo refresh with no jump and no save, edge auto-scroll both ways. Release at origin not performed (adb UP blocked); covered by code and NextJamMoveTest. Round 1 device check moved Blues Local 02->04 on the 15 Nov draft; the user said it is a test jam, no revert."
+    ]
   },
   {
     "id": "admin-presence-notice",

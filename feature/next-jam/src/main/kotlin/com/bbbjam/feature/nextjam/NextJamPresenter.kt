@@ -395,12 +395,15 @@ private fun Setlist.Available.songsModel(date: LocalDate, state: RowState): Setl
     val shown = ofMusician.filter { it.song.filterLineup().matchesInstrumentFilter(state.filter) }
     val instrumentBar =
         instrumentFilterBar(ofMusician.map { it.song.filterLineup() }, state.filter, state.onFilterChange)
+    val rowKeyOf: (DisplayedJamSong) -> String =
+        { if (idCounts[it.song.songId] == 1) it.song.songId.value else "p${it.song.position}" }
     return SetlistUiModel.Songs(
+        orderKeys = shownEntries.map(rowKeyOf),
         rows = shown
             .map { entry ->
                 val song = entry.song
                 val displayedPosition = song.position
-                val rowKey = if (idCounts[song.songId] == 1) song.songId.value else "p$displayedPosition"
+                val rowKey = rowKeyOf(entry)
                 song.toRow(
                     position = displayedPosition,
                     rowKey = rowKey,

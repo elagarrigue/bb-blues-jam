@@ -16,7 +16,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LocalPinnableContainer
 import androidx.compose.ui.layout.PinnableContainer
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 
 private const val LIFT_SCALE = 1.02f
 private val LIFT_ELEVATION = 8.dp
+private val EDGE_MIN_ZONE = 48.dp
 
 /**
  * Makes the item with [key] draggable after a long press while [enabled]. The dragged item follows the
@@ -39,12 +42,14 @@ fun Modifier.reorderable(state: ReorderState, key: Any, shape: Shape, enabled: B
     val session = remember(state, key) { DragSession(state, key, scope) }
     session.haptics = haptics
     session.pinnable = pinnable
+    session.minZonePx = with(LocalDensity.current) { EDGE_MIN_ZONE.toPx() }
+    session.touchSlop = LocalViewConfiguration.current.touchSlop
     DisposableEffect(session) { onDispose { session.end(commit = false) } }
     val lifted = state.draggedKey == key
     val gesture = if (enabled) {
         Modifier.pointerInput(session) {
             detectDragGesturesAfterLongPress(
-                onDragStart = { session.begin() },
+                onDragStart = { session.begin(it.y) },
                 onDrag = { change, amount ->
                     if (session.active) {
                         change.consume()
@@ -79,21 +84,23 @@ fun Modifier.reorderable(state: ReorderState, key: Any, shape: Shape, enabled: B
 private class DragSession(private val state: ReorderState, private val key: Any, private val scope: CoroutineScope) {
     var haptics: HapticFeedback? = null
     var pinnable: PinnableContainer? = null
+    var minZonePx = 0f
+    var touchSlop = 0f
     var active = false
         private set
     private var pin: PinnableContainer.PinnedHandle? = null
     private var scroller: Job? = null
 
-    fun begin() {
+    fun begin(grabY: Float) {
         haptics?.performHapticFeedback(HapticFeedbackType.LongPress)
-        state.start(key)
+        state.start(key, grabY)
         if (state.draggedKey != key) return
         active = true
         pin = pinnable?.pin()
         scroller = scope.launch {
             while (isActive) {
                 withFrameNanos { }
-                state.autoScrollStep()
+                state.autoScrollStep(minZonePx, touchSlop)
             }
         }
     }

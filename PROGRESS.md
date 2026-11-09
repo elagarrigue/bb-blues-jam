@@ -1,3 +1,52 @@
+## 9 November 2026 - admin-drag-live-preview accepted; song-played-state script live
+
+admin-drag-live-preview: independent validator accept after two revise rounds (see the entries below and
+feature_list.json). Device-confirmed on the demo live jam: gap under the lifted row, live numbers, edge auto-scroll,
+drag held across a refresh with no jump and no save. Owed to the user: a 10 s origin-release check on the demo jam.
+
+song-played-state: the user redeployed Jams.gs and Post.gs. Orchestrator probe without passphrase: GET jams rows all
+carry "played": null; POST deployProbe answers unknown_action ending in "checkCatalogWrite, setSongPlayed".
+A real mark/unmark on the upcoming jam is still owed to the user.
+
+## 9 November 2026 - admin-drag-live-preview implemented (passing, awaiting validation)
+
+While an admin drags a row the others animate apart so the dragged row's slot is a plain-background gap where it would land;
+the dragged row and every shifted row show their would-be full-setlist numbers; release commits one `moveSong(toPosition)` and
+the list holds the previewed order so the row no longer flashes back. Orchestrator defaults applied (plain gap, 2000 ms hold).
+
+Built: `:core:ui` `DropSlot` (Before/After, `key`), `ReorderMath.dropSlot` (first centre below the finger, else After last; replaces
+`hoveredKey`), `withDragged`, `ReorderState.dropSlot` (derived from finger, scroll and layout) and `onDrop(fromKey, DropSlot?)` fed
+the slot the user last saw. `:feature:next-jam`: `SetlistUiModel.Songs.orderKeys`, `Event.Drop(toPosition: Int)`, `admin/DragPreview.kt`
+(`previewKeys`, `Songs.previewed`), `DragPreviewHost.kt` (`rememberDragPreview`: preview while dragging, `HeldOrder` after a drop,
+cleared when `orderKeys` changes or after 2000 ms, or on a new drag), `MoveControlsState.onDrop(date, songId, toPosition)` (row-key
+resolution deleted). No backend, `:core:data`, Koin, Gradle or Konsist change; `moveSong` still only called from `MoveControlsState.kt`.
+
+Verification run (JVM, 0 failures): ReorderMathTest 8 (dropSlot above/below/between/empty/stable-after-swap, edge scroll),
+ReorderPreviewTest 4, DragPreviewTest 5 (renumbering, filtered subset keeps full numbers, played rows, mismatched key set, and the
+equivalence invariant: previewed order == `displayEntries` after applying `toPosition`, for every from/slot pair, with and without a
+Sending overlay), NextJamMoveTest 15 (drop tests moved to `Drop(toPosition)`, plus orderKeys with a Sending overlay),
+NextJamPresenterTest expectations carry `orderKeys`. `./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0, tail:
+`konsist: wired`, `detekt: wired`, `ktlint: wired`, `Baseline OK.` (detekt forced splitting `JamContent` into `rememberDragPreview`
+and `DropSlot` into its own file; no baseline, rule disable or ignoreFailures.)
+
+Revision after validator (finding 1, high): auto-scroll zone was `itemSize` measured from the lifted row's centre, so on ~570 px rows the
+list ran away on lift. Now `ReorderState.autoScrollStep(minZone, touchSlop)` measures from the finger (`ReorderMath.fingerY`, grab offset passed
+from `onDragStart`), zone `ReorderMath.autoScrollThreshold` = min(itemSize, max(48dp, 12% viewport)), and holds off 300 ms or until the finger
+moved a touch slop. ReorderMathTest now 11 (tall-row case: centre in the old zone, finger outside the new one gives 0). ktlintFormat, then
+CI=true ./init.sh exit 0, konsist/detekt/ktlint wired. Spec amended (Decisions). Device re-check still owed by the user.
+
+Revision 2 after validator (finding: a jams refresh mid-drag fired an unintended setSongPlayed): (1) `rememberRevealingLazyListState` takes
+`isRevealSuspended`; the reveal scroll waits (`awaitNotSuspended`, re-checks every 50 ms) while `ReorderState.recentlyDragged()` (a drag or the
+300 ms after it), wired in `JamContent` through a small `DragHold`. (2) `AdminRowBar(isBlocked)` gates the arrows, the played toggle
+(`PlayedToggle(isBlocked)`) and the trash button with `reorder.recentlyDragged()`, like OpenDetail, so a pointer stream that outlived a drag
+cannot fire a control. New JVM tests in NoticeVisibilityTest: the reveal waits while suspended and proceeds after, and does not wait otherwise.
+ktlintFormat, CI=true ./init.sh exit 0, konsist/detekt/ktlint wired. The click-through itself (a drag ended by a list change) is not JVM-testable; device
+re-check owed.
+
+Not run: the five device checks (gap follows finger, auto-scroll, no flash on release, filter numbers, origin drop sends nothing)
+and the spec's assumption that `visibleItemsInfo.offset` is the settled offset under `animateItem` (watch for gap flapping).
+The Compose hold/preview wiring has no JVM test; it is covered only by the pure parts and the device check.
+
 ## 9 November 2026 - song-played-state implemented (passing, awaiting validation)
 
 The admin marks a song of the upcoming jam as "ya tocado" (reversible); a played song is muted for everyone and read-only

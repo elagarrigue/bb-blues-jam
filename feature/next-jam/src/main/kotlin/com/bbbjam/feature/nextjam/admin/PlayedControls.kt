@@ -49,7 +49,11 @@ internal fun rememberPlayedToggle(
 
 /** The "ya tocado" switch (`song-played-state`): a check icon, `text` when on and `textMuted` when off, never amber. */
 @Composable
-internal fun PlayedToggle(model: PlayedToggleUiModel, modifier: Modifier = Modifier) {
+internal fun PlayedToggle(
+    model: PlayedToggleUiModel,
+    modifier: Modifier = Modifier,
+    isBlocked: () -> Boolean = { false },
+) {
     IconRowToggle(
         icon = IconRowActionIcon.Played,
         checked = model.checked,
@@ -60,7 +64,7 @@ internal fun PlayedToggle(model: PlayedToggleUiModel, modifier: Modifier = Modif
         modifier = modifier,
         enabled = model.enabled,
     ) {
-        model.events(PlayedToggleUiModel.Event.Toggle)
+        if (!isBlocked()) model.events(PlayedToggleUiModel.Event.Toggle)
     }
 }
 
