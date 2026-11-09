@@ -2084,6 +2084,24 @@
     ]
   },
   {
+    "id": "admin-drag-live-preview",
+    "area": "feature-setlist",
+    "title": "While dragging a song, open a gap where it will land and show its future position number",
+    "user_visible_behavior": "User feedback of 9 November 2026 after trying admin-drag-reorder on device: the drag works but it is hard to place the song exactly. While an admin drags a row, the other rows shift to open an empty gap at the position where the song would land on drop, so the target is visible before releasing. The dragged row's position number updates live to the position it would get on drop, and the shifted rows show their would-be numbers too. Dropping still commits exactly one moveSong(toPosition) through SetlistRepository (D-13); no backend change. Musicians never see it.",
+    "depends_on": [
+      "admin-drag-reorder",
+      "song-played-state"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Pure JVM tests for the live target index and the preview order/numbering during a drag (including under an instrument or musician filter and with a Sending move overlay)",
+      "Drop at the previewed position calls moveSong once with that 1-based position; drop back at origin does nothing",
+      "Device check: the gap follows the finger, numbers update live, the drop lands where the gap was",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
+  },
+  {
     "id": "admin-presence-notice",
     "area": "feature-setlist",
     "title": "Warn an admin when another admin is in the same song detail (advisory, no lock)",
