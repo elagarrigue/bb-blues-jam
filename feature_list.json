@@ -2131,5 +2131,38 @@
       "Not run: two-device manual check and live script probe (need the user redeploy: docs/migrations/admin-presence-notice-script-update.md)",
       "9 November 2026: independent validator accept. Reran node --test (274 pass) and CI=true ./init.sh (exit 0, konsist/detekt/ktlint wired). Guard without lock, validation before cache, count-only answer, admin-only resumed upcoming-song heartbeat with release on leave, silent failures, presence_holder excluded from backup, D-32. Orchestrator confirmed the admin model is built only for an upcoming-jam song (SongDetailPresenter). Owed to the user: Post.gs redeploy (new version), probe, optional two-phone check."
     ]
+  },
+  {
+    "id": "played-toggle-polish",
+    "area": "feature-setlist",
+    "title": "Distinct on/off icons for the ya tocado toggle; align the muted lineup KDoc",
+    "user_visible_behavior": "User request of 10 November 2026: the admin's ya tocado toggle (list row bar and song detail) looked almost the same on and off (same filled check circle). Off now shows an outlined icon and on a filled one, so the state is readable without relying on the row's muted look; content descriptions stay Marcar/Desmarcar como tocado. Tokens only (D-17), no amber. Also aligns LineupPanelUiModel.muted KDoc with detailColor (only open slots switch to archive), a validator follow-up of song-played-state.",
+    "depends_on": [
+      "song-played-state"
+    ],
+    "status": "not_started",
+    "verification": [
+      "JVM test that the toggle picks a different icon for on and off",
+      "KDoc matches behaviour",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
+  },
+  {
+    "id": "drag-gap-under-finger",
+    "area": "feature-setlist",
+    "title": "Keep the drag gap under the lifted row when rows have different heights",
+    "user_visible_behavior": "Validator follow-up of admin-drag-live-preview, user asked on 10 November 2026 to continue with it: with rows of different heights the lifted row could be drawn up to about three quarters of a row away from its gap, because the drop slot was the first row centre below the finger. The slot rule now keeps the gap where the lifted row is drawn (e.g. compare the lifted row's own edges/centre with neighbour midpoints, with hysteresis so it does not flap), so the gap always sits directly under the dragged row. Drop still commits one moveSong at the previewed position; numbers keep matching the gap.",
+    "depends_on": [
+      "admin-drag-live-preview"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Pure JVM tests for the slot rule with mixed row heights, including no flapping at the boundary",
+      "Existing DragPreviewTest equivalence invariant still holds",
+      "Device check on the demo live jam only",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": []
   }
 ]
