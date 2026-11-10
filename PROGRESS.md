@@ -1,3 +1,9 @@
+## 9 November 2026 - admin-presence-notice script live
+
+The user redeployed Post.gs. Orchestrator probe without passphrase: deployProbe answers unknown_action ending in
+"setSongPlayed, announcePresence"; announcePresence without passphrase is refused with invalid_passphrase (guard
+active). Two-phone check of the notice still optional for the user.
+
 ## 9 November 2026 - admin-presence-notice implemented (passing, awaiting validation)
 
 Advisory presence (D-32): while an admin has the song detail of an upcoming-jam song open and visible, the app announces itself every 30 s;
