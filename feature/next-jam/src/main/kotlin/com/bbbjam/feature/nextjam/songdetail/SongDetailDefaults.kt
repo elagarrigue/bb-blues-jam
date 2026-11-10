@@ -22,4 +22,7 @@ internal object SongDetailDefaults {
     /** The key's colour: the amber `key` role, never another amber role; `archive` for a played song. */
     fun keyColor(colors: BluesJamColors = BluesJamColors, played: Boolean = false): Color =
         if (played) colors.archive else colors.key
+
+    /** The presence notice is information, not a failure and not a key: plain text colour. */
+    fun presenceNoticeColor(colors: BluesJamColors = BluesJamColors): Color = colors.text
 }

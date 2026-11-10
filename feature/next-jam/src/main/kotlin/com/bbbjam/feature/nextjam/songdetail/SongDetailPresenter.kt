@@ -8,6 +8,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import com.bbbjam.core.data.admin.AdminSession
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.jams.JamsSnapshot
+import com.bbbjam.core.data.presence.SongPresence
 import com.bbbjam.core.model.Instrument
 import com.bbbjam.core.model.JamSong
 import com.bbbjam.core.model.Setlist
@@ -52,6 +53,9 @@ import java.time.LocalDate
  * Tapping the key calls [Params.onSetKey] and "Anotar" calls [Params.onAssignSlot] (navigation, bound
  * by `:app`); every write is an existing setlist repository function (D-13).
  *
+ * Presence (`admin-presence-notice`, D-32): while the admin detail is open and visible ([Params.isResumed]) it
+ * announces itself through [presence] and shows a notice when another admin is on the same song. Advisory only.
+ *
  * Every callback is read through `rememberUpdatedState`, so an earlier model's handler calls the
  * current one.
  */
@@ -59,6 +63,7 @@ internal class SongDetailPresenter(
     private val jams: JamsRepository,
     private val adminSession: AdminSession,
     private val sources: SongOverlaySources,
+    private val presence: SongPresence,
 ) : Presenter<SongDetailUiModel, SongDetailPresenter.Params> {
 
     /**
@@ -79,6 +84,8 @@ internal class SongDetailPresenter(
             instrument: Instrument,
             position: SlotPosition,
         ) -> Unit = { _, _, _, _ -> },
+        /** True while the screen is visible; a presenter nobody marks visible never announces presence. */
+        val isResumed: Boolean = false,
     )
 
     @Composable
@@ -101,10 +108,18 @@ internal class SongDetailPresenter(
             },
         )
         val shown = snapshot
-        return if (shown == null || isAdmin == null) {
+        val model = if (shown == null || isAdmin == null) {
             SongDetailUiModel.Loading(UiText.res(R.string.song_detail_loading), backUiModel(onBack))
         } else {
             shown.toSongDetail(params.jamDate, params.songId, params.position, admin, onBack)
+        }
+        // Only the admin detail of an upcoming-jam song, while visible, announces presence (D-32).
+        val active = isAdmin == true && params.isResumed && model is SongDetailUiModel.Song && model.admin != null
+        val othersHere = rememberOthersHere(presence, active, params.jamDate, params.songId)
+        return if (othersHere && model is SongDetailUiModel.Song && model.admin != null) {
+            model.copy(admin = model.admin.copy(presenceNotice = UiText.res(R.string.song_detail_presence_notice)))
+        } else {
+            model
         }
     }
 }

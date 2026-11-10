@@ -69,4 +69,6 @@ internal data class SongDetailAdminUiModel(
     val failures: List<AddFailureUiModel>,
     /** The "ya tocado" switch (`song-played-state`). */
     val played: PlayedToggleUiModel? = null,
+    /** The notice that another admin is on the song (D-32); advisory, never a failure. */
+    val presenceNotice: UiText? = null,
 ) : UiModel

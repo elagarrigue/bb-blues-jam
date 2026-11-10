@@ -166,7 +166,7 @@ test('the router lists the four catalog actions as guarded writes', () => {
     assert.equal(ACTIONS[name].write, true, name);
   }
   const unknown = handlePost({ action: 'deployProbe' }, fakeSpreadsheet().spreadsheet, services());
-  assert.ok(unknown.error.message.endsWith('createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed'), unknown.error.message);
+  assert.ok(unknown.error.message.endsWith('createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed, announcePresence'), unknown.error.message);
   const fake = fakeSpreadsheet();
   assertError(handlePost({ action: 'createSong', title: 'A', artist: 'B', defaultKey: 'A' }, fake.spreadsheet, services()), 'invalid_passphrase');
   assert.deepStrictEqual(writes(fake.log), []);

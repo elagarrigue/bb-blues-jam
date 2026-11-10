@@ -38,6 +38,7 @@ import com.bbbjam.feature.nextjam.AddFailureUiModel
 import com.bbbjam.feature.nextjam.ExtraParticipantEditorUiModel
 import com.bbbjam.feature.nextjam.FakeMusicianFilterPreference
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
+import com.bbbjam.feature.nextjam.FakeSongPresence
 import com.bbbjam.feature.nextjam.LineupEditorLineUiModel
 import com.bbbjam.feature.nextjam.NextJamPresenter
 import com.bbbjam.feature.nextjam.NextJamUiModel
@@ -93,7 +94,7 @@ class SongDetailAdminTest {
         )
 
     private fun presenter(adminSession: AdminSession = session) =
-        SongDetailPresenter(jams, adminSession, setlist.sources())
+        SongDetailPresenter(jams, adminSession, setlist.sources(), FakeSongPresence())
 
     private fun params(
         onBack: () -> Unit = {},

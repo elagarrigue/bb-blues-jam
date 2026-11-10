@@ -2117,13 +2117,19 @@
     "depends_on": [
       "song-played-state"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Apps Script presence action passphrase-guarded, TTL expiry and own-id exclusion covered by node --test",
       "Presenter JVM tests: heartbeat while detail open in admin mode, stops on leave, notice shown only for another id, failures silent",
       "Musicians never send presence; no write is refused because of presence",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "node --test backend/apps-script: 274 tests, 0 failures (7 new in presence.test.js: guarded action without lock, validation order, own-id exclusion, expiry, leaving, garbage cache and 10-holder ceiling, cache failure)",
+      ":core:data JVM 351 tests 0 failures (DefaultSongPresenceTest 5, PresenceHolderStoreTest 3); :feature:next-jam JVM 252 tests 0 failures (SongPresenceTest 6 on Molecule: heartbeat in virtual time, notice follows answers, Unknown silent, musician/hidden/past jam send nothing, leave once and stop, logout)",
+      "CI=true ./init.sh exit 0 on 9 Nov 2026; tail: konsist wired, detekt wired, ktlint wired, Baseline OK",
+      "Not run: two-device manual check and live script probe (need the user redeploy: docs/migrations/admin-presence-notice-script-update.md)",
+      "9 November 2026: independent validator accept. Reran node --test (274 pass) and CI=true ./init.sh (exit 0, konsist/detekt/ktlint wired). Guard without lock, validation before cache, count-only answer, admin-only resumed upcoming-song heartbeat with release on leave, silent failures, presence_holder excluded from backup, D-32. Orchestrator confirmed the admin model is built only for an upcoming-jam song (SongDetailPresenter). Owed to the user: Post.gs redeploy (new version), probe, optional two-phone check."
+    ]
   }
 ]

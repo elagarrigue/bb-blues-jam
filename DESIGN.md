@@ -378,7 +378,8 @@ had.
   system back both return to Próxima jam with the same tab, filter and scroll.
 - **Order:** back arrow; title (`h1`, `text`, wraps, a heading); artist (`body`, `textMuted`) only
   when there is one; for the admin, `Guardando…` (`caption`, `textMuted`, polite) while a write of
-  the song is sending; the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in
+  the song is sending; for the admin, `Otro admin está editando este tema` (`caption`, `text`, polite) after it while another
+  admin has the same song open (information, never amber or `error`; nothing is blocked); the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in
   `keyDisplay`, colour `key`, one screen-reader node "Tonalidad Bm" (for the admin, the pending key
   while one is saving). In admin mode the key block itself is a 48dp-minimum `Role.Button` with the
   click label `Cambiar tonalidad`; tapping it opens the key picker. There is no separate action under

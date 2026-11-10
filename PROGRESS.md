@@ -1,3 +1,28 @@
+## 9 November 2026 - admin-presence-notice implemented (passing, awaiting validation)
+
+Advisory presence (D-32): while an admin has the song detail of an upcoming-jam song open and visible, the app announces itself every 30 s;
+another admin on the same song sees `Otro admin está editando este tema` under the title. No lock, no refusal, no `WriteRejection`.
+Orchestrator defaults applied (30 s heartbeat / 120 s TTL, release on leave, failed announce keeps the last notice, played songs announce, count only).
+
+Built: `backend/apps-script/src/Post.js` `announcePresence` (`write: false`, no lock, CacheService key `presence_<date>_<songId>`, `invalid_date` /
+`invalid_song` / `invalid_holder`, `others` count, 10-holder ceiling, `leaving`). `:core:data` `presence/`: `SongPresence`, `PresenceAnswer`,
+`DefaultSongPresence` (over `AdminWriter.send`, `leave` in `DataScope`), `PresenceHolderStore` (DataStore `presence_holder`), two `single`s in `dataModule`.
+`:feature:next-jam`: `SongDetailPresenter(..., presence)` with `Params.isResumed`, `PresenceHeartbeat.kt` (`runPresenceHeartbeat`, `PresenceHeartbeat.INTERVAL`,
+`rememberOthersHere`), `SongDetailAdminUiModel.presenceNotice`, screen line (caption, `text`, polite live region), string. Backup and data-extraction rules exclude
+`presence_holder`. Docs: `docs/apps-script-api.md`, `docs/migrations/admin-presence-notice-script-update.md`, bitácora D-32, `DESIGN.md`, architecture skill,
+`docs/user-and-access-model.md`. Deviation from the spec: the effect file is `PresenceHeartbeat.kt` (not `SongPresenceEffect.kt`) because detekt `MatchingDeclarationName`
+requires the file of a single top-level `PresenceHeartbeat` object to carry its name.
+
+Verification run: `node --test` in `backend/apps-script`: 274 tests, 0 failures (7 new in `presence.test.js`: guard without lock, validation order, own-id exclusion,
+expiry, leaving + key removal, garbage cache and 10-holder ceiling, cache failure as `internal_error`; `post.test.js`/`catalog-write.test.js` action lists updated).
+JVM: `:core:data` 351 tests 0 failures (new `DefaultSongPresenceTest` 5, `PresenceHolderStoreTest` 3), `:feature:next-jam` 252 tests 0 failures (new `SongPresenceTest` 6:
+virtual-time heartbeat, notice follows answers, Unknown keeps/never shows with no failure card, musician / hidden / past-jam zero calls, leave once and stop, logout).
+`./gradlew ktlintFormat`, then `CI=true ./init.sh` exit 0, tail: `konsist: wired`, `detekt: wired`, `ktlint: wired`, `Baseline OK.` No baseline, rule disable or ignoreFailures.
+Not run: device check with two admin phones (needs the user's redeploy first); no live script call was made.
+
+User redeploy: paste `Post.js` into `Post.gs`, Manage deployments -> New version (guide `docs/migrations/admin-presence-notice-script-update.md`); the probe
+`{"action":"deployProbe"}` must end `..., setSongPlayed, announcePresence`.
+
 ## 9 November 2026 - admin-drag-live-preview accepted; song-played-state script live
 
 admin-drag-live-preview: independent validator accept after two revise rounds (see the entries below and

@@ -17,6 +17,9 @@ import com.bbbjam.core.data.jams.JamCalendar
 import com.bbbjam.core.data.jams.JamsRepository
 import com.bbbjam.core.data.musician.DefaultMusicianFilterPreference
 import com.bbbjam.core.data.musician.MusicianFilterPreference
+import com.bbbjam.core.data.presence.DefaultSongPresence
+import com.bbbjam.core.data.presence.PresenceHolderStore
+import com.bbbjam.core.data.presence.SongPresence
 import com.bbbjam.core.data.remote.AppsScriptPostTransport
 import com.bbbjam.core.data.remote.AppsScriptTransport
 import com.bbbjam.core.data.remote.OkHttpAppsScriptTransport
@@ -56,6 +59,8 @@ val dataModule = module {
     single<MusicianFilterPreference> {
         DefaultMusicianFilterPreference(DefaultMusicianFilterPreference.dataStore(get()))
     }
+    single { PresenceHolderStore(PresenceHolderStore.dataStore(get())) }
+    single<SongPresence> { DefaultSongPresence(get(), get(), get()) }
     single<AdminSession> { DefaultAdminSession(get(), get()) }
     single { AdminWriter(get(), get()) }
     single<WriteFailureLog> { WriteFailureLog { line -> Log.w(LOG_TAG, line) } }

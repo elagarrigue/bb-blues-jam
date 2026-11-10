@@ -24,5 +24,5 @@ val nextJamModule = module {
     factory { AddSongPresenter(get(), get(), get()) }
     factory { AssignMusicianPresenter(get(), get(), get()) }
     factory { SetKeyPresenter(get(), get(), get()) }
-    factory { SongDetailPresenter(get(), get(), get()) }
+    factory { SongDetailPresenter(get(), get(), get(), get()) }
 }

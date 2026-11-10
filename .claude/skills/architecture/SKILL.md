@@ -1310,3 +1310,13 @@ the user last saw). `:feature:next-jam`: `SetlistUiModel.Songs.orderKeys` (rowKe
 (1-based full position), `admin/DragPreview.kt` (`previewKeys`, `Songs.previewed`: reorders rows and renumbers `positionLabel` from the full preview index), and
 `rememberDragPreview` (`DragPreviewHost.kt`): previews while dragging, then holds the dropped order until `orderKeys` changes or 2000 ms pass. `MoveControlsState.onDrop` takes the position.
 Preview, numbers and the drop position come from one pure order (tested against `displayEntries`). Still no new mutation.
+
+## As built by `admin-presence-notice`
+
+Advisory presence (9 November 2026, D-32). `:core:data` `presence/`: public `SongPresence` (`announce(jamDate, songId): PresenceAnswer`, `leave(...)` fire-and-forget in `DataScope`)
+and `PresenceAnswer` (`Alone`, `OthersHere`, `Unknown`); internal `DefaultSongPresence` over `AdminWriter.send("announcePresence")` (not on `SetlistMutationQueue`, not in
+`SetlistRepository`, no `:app` binding) and `PresenceHolderStore` (own DataStore file `presence_holder`, random id per install, excluded from backup). Presence is not a domain
+mutation (no entity changes, nothing persisted, nothing authorized), yet it still sits behind a repository-style function, never a UI lambda. `:feature:next-jam`
+`SongDetailPresenter(jams, adminSession, sources, presence)` with `Params.isResumed`; `songdetail/PresenceHeartbeat.kt` (`runPresenceHeartbeat`, `PresenceHeartbeat.INTERVAL` 30 s,
+`rememberOthersHere`: heartbeat while the admin detail of an upcoming song is visible, release in `finally`) and `SongDetailAdminUiModel.presenceNotice`. Server: `announcePresence`,
+`write: false`, CacheService key `presence_<date>_<songId>`, 120 s expiry.

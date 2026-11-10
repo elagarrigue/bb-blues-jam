@@ -5,7 +5,7 @@ The contract between the Apps Script web app (`backend/apps-script/`) and the An
 `backend/apps-script/README.md`.
 
 Current routes: two reads, `catalog` (`apps-script-read-endpoint`) and `jams`
-(`apps-script-jams-read-endpoint`), and twenty-nine POST actions in local source (`ACTIONS` in `Post.js` is the full set; the latest is `setSongPlayed`, `song-played-state`): `checkPassphrase`,
+(`apps-script-jams-read-endpoint`), and thirty POST actions in local source (`ACTIONS` in `Post.js` is the full set; the latest is `announcePresence`, `admin-presence-notice`): `checkPassphrase`,
 `checkWriteAccess`, `readJams`, `addSong`, `checkSetlistWrite`, `removeSong`, `checkSetlistRemove`,
 `setKey`, `setSlotCount`, `assignSlot`, `clearSlot`, `moveSong`, `checkSetlistMove`, `publishSetlist`, `checkPublish`, `createJam`, `checkCreateJam`, `setJamStatus`, `updateJam`, `deleteJam`, `checkJamEdit` and `checkFutureSetlistWrite`. Every POST
 action passes the passphrase guard in the router. Earlier actions have the deployment history below;
@@ -261,7 +261,7 @@ without `--strict` and fails with it, by design.
 `application/json; charset=utf-8`. Served by `doPost`/`handlePost` in `src/Post.js`, the only file
 that opens `Config`. The answer uses the same envelope (HTTP 200, `schemaVersion` 1, an `error` key
 on failure). Actions are matched exactly; an unknown or missing one is `unknown_action`, whose
-message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite` (the list of the locally implemented
+message ends `Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed, announcePresence` (the list of the locally implemented
 `Post.gs`; a deploy check).
 
 ### The router and the guard (`apps-script-write-auth`)
@@ -300,7 +300,7 @@ submitted passphrase. No response or message contains either.
 | Case (any action) | Body |
 |---|---|
 | body missing, not JSON, or not a JSON object | error `invalid_request` |
-| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite`) |
+| `action` missing or unknown | error `unknown_action` (`… Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed, announcePresence`) |
 | 10 failed guesses already in the current 10-minute window | error `rate_limited` |
 | `Config` tab, its `clave`/`valor` headers or the `passphrase` row missing, or `valor` blank after trimming | error `passphrase_not_set` |
 | `passphrase` missing, not a string, or not equal | error `invalid_passphrase` |
@@ -473,6 +473,25 @@ cell, row or tab is written, and `Catalogo` is never opened, so `tono_default` i
 written (D-08). The answer is `{"schemaVersion":1,"ok":true}`. Because the row is found by id, a
 removal that renumbered the tab in between never misdirects the write. A published jam's new key
 is what the next GET returns.
+
+### `announcePresence` (`admin-presence-notice`, D-32)
+
+Request: `{"action":"announcePresence","passphrase":"…","date":"2026-10-31","songId":"crossroads","holder":"<uuid>","leaving":true}`
+(`leaving` is optional and counts only when it is exactly `true`). Last in `ACTIONS`, `write: false` on purpose: it never
+touches the Sheet, so it takes **no lock** (it must not wait behind writes or make them `busy`). The router's passphrase
+guard runs as for every action. Validation, before the cache is touched: `invalid_date`, `invalid_song`, `invalid_holder`
+(a string matching `^[A-Za-z0-9-]{16,64}$`). No jam or song existence check.
+
+State lives only in `CacheService.getScriptCache()`, never in the Sheet: key `presence_<date>_<songId>`, value JSON
+`{"<holder>": <expiresAtMs>, …}`, cache TTL 120 s, entries live 120 s (`PRESENCE_TTL_MS_`), at most 10 holders (the 10 latest
+expiries). Each call drops expired entries, counts the **other** holders, then sets the caller to `now + 120 s` or, with
+`leaving`, removes it (the key is removed when empty). Answer: `{"schemaVersion":1,"ok":true,"others":<count>}`; never
+holder ids. Not atomic (no lock): two announces in the same instant may lose one entry, and the next heartbeat restores it.
+A cache exception is `internal_error`; the client treats every failure as unknown and stays silent. It refuses nothing and
+authorizes nothing: writes stay last-write-wins under the script lock.
+
+Client: `:core:data` `SongPresence` (`announce` every 30 s while an admin song detail is open and visible, `leave` once on
+exit), over `AdminWriter.send`, not on the mutation queue.
 
 ### `setSongPlayed` (`song-played-state`, D-31)
 
@@ -731,6 +750,9 @@ Musicians never receive the overlay. A move target is absolute, so a replay has 
 `createSong` and `deleteSong` read the `id_tema` column of every jam tab named by a `Jams` row (past ones too, to never reuse
 an id; future ones to refuse a delete), so with a few years of monthly jams they open a few dozen small tabs per call.
 They are rare admin actions under the script lock.
+
+`announcePresence` (D-32): one POST per open admin song detail every 30 s plus one on leaving; with two or three admins that is
+negligible next to jam-night polling. It uses CacheService only, no Sheet access beyond the guard's `Config` read.
 
 From Google's "Quotas for Google Services" page (developers.google.com/apps-script/guides/services/quotas,
 page last updated 3 September 2026, read 1 October 2026). Google states all quotas may change

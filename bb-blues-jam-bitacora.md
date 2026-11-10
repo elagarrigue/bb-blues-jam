@@ -517,6 +517,9 @@ los Otros, ni sacarlo de la lista: el servidor lo rechaza con `song_played` aunq
 app. Sí se puede mover. Todos lo ven apagado, y sus cupos libres dejan de contar como libres. El asistente no lo
 conoce; solo se bloquea un reemplazo que sacaría un tema tocado. Decisiones del organizador del 9 de noviembre de 2026.
 
+### D-32 — Aviso de otro admin en el mismo tema, sin bloqueo (admin-presence-notice)
+Si dos organizadores editan la próxima jam desde sus celulares a la vez, el último en escribir gana. Pregunta del organizador: ¿hace falta un lock de escritura? Decisión: no, solo un aviso. Mientras un admin tiene abierto el detalle de un tema de la próxima jam y la pantalla está visible, la app le avisa al servidor cada 30 segundos "estoy acá" con un id al azar por instalación; si otro admin tiene el mismo tema abierto, ve `Otro admin está editando este tema`. La presencia vive en la caché de Apps Script (CacheService), no en el Sheet: se vence sola a los 120 segundos y también se libera al salir. Va protegida por la frase de acceso como toda acción, no autoriza ni rechaza nada, y las escrituras siguen siendo "gana la última" bajo el lock del script. Si falla (sin conexión, script viejo), la app no muestra errores y conserva el último aviso. Los músicos nunca la envían. Decisión del organizador del 9 de noviembre de 2026.
+
 ---
 
 # Parte III — Harness y seguimiento

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?><!--
    Auto Backup rules for Android 11 and lower (API 31+ reads data_extraction_rules.xml).
    admin-passphrase-login: the verified admin passphrase (DataStore file admin_session) never
-   leaves the device. Everything else keeps the default behaviour.
+   leaves the device. admin-presence-notice: the presence holder id (presence_holder) is excluded too,
+   so a restored copy never shares an id with another phone. Everything else keeps the default behaviour.
    See https://developer.android.com/guide/topics/data/autobackup
 -->
 <full-backup-content>
     <exclude domain="file" path="datastore/admin_session.preferences_pb" />
+    <exclude domain="file" path="datastore/presence_holder.preferences_pb" />
 </full-backup-content>

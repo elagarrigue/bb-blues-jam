@@ -12,6 +12,7 @@ import com.bbbjam.core.data.testing.FakeJamsRepository
 import com.bbbjam.core.model.Setlist
 import com.bbbjam.core.ui.nav.BackUiModel
 import com.bbbjam.feature.nextjam.FakeSetlistRepository
+import com.bbbjam.feature.nextjam.FakeSongPresence
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.id
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.jam
 import com.bbbjam.feature.nextjam.songdetail.SongDetailFixtures.loading
@@ -37,7 +38,8 @@ class SongDetailPresenterTest {
     }
 
     private val repository = FakeJamsRepository()
-    private val presenter = SongDetailPresenter(repository, FakeAdminSession(), FakeSetlistRepository().sources())
+    private val presenter =
+        SongDetailPresenter(repository, FakeAdminSession(), FakeSetlistRepository().sources(), FakeSongPresence())
 
     @Test
     fun `loading, then the song, then not found when a refresh drops the row`() = runTest {

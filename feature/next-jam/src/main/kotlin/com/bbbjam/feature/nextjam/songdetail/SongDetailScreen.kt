@@ -18,16 +18,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import com.bbbjam.core.data.Freshness
 import com.bbbjam.core.data.jams.JamsSnapshot
 import com.bbbjam.core.model.ExtraParticipant
@@ -86,8 +92,17 @@ fun SongDetailScreen(
     ) -> Unit = { _, _, _, _ -> },
 ) {
     val presenter: SongDetailPresenter = koinInject()
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val model = presenter.present(
-        SongDetailPresenter.Params(jamDate, songId, position, onBack, onSetKey, onAssignSlot),
+        SongDetailPresenter.Params(
+            jamDate,
+            songId,
+            position,
+            onBack,
+            onSetKey,
+            onAssignSlot,
+            isResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
+        ),
     )
     SongDetailContent(model = model, modifier = modifier, contentPadding = contentPadding)
 }
@@ -207,6 +222,14 @@ private fun Title(model: SongDetailUiModel.Song, modifier: Modifier) {
             Text(text = label.resolve(), style = SongDetailDefaults.captionStyle, color = PlayedRowDefaults.caption())
         }
         model.admin?.saveStatus?.let { status -> SaveStatusLine(status) }
+        model.admin?.presenceNotice?.let { notice ->
+            Text(
+                text = notice.resolve(),
+                style = SongDetailDefaults.captionStyle,
+                color = SongDetailDefaults.presenceNoticeColor(BluesJamTheme.colors),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
     }
 }
 

@@ -135,6 +135,10 @@ transfer and no per-record access rules.
   should read as "your access changed" and point to logging out and in again from Info, not as a
   generic network error; that copy comes with the first mutation slice.
 
+## Presence (`admin-presence-notice`, D-32)
+
+The advisory notice that another admin is on the same song uses the guarded POST `announcePresence`: it needs the passphrase like every action, never authorizes or refuses anything, and keeps no data in the Sheet.
+
 ## Admin read and add song (`admin-add-song-to-setlist`)
 
 - On a device that stores a passphrase, the jams refresh is the guarded POST `readJams`, so the

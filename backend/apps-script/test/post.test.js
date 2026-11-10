@@ -115,6 +115,10 @@ function fakeCache({ throwOnGet = false, throwOnPut = false } = {}) {
       }
       store.set(key, value);
     },
+    remove(key) {
+      log.push(['remove', key]);
+      store.delete(key);
+    },
   };
 }
 
@@ -190,7 +194,7 @@ const NOT_STRINGS = [undefined, null, 42, true, [STORED], { value: STORED }];
 const WRONG = ['definitely-wrong', STORED.toLowerCase(), STORED.toUpperCase(), ` ${STORED}`, `${STORED} `, ''];
 
 test('the action table: checkPassphrase and readJams read, every other action writes', () => {
-  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus', 'updateJam', 'deleteJam', 'checkJamEdit', 'checkFutureSetlistWrite', 'createSong', 'updateSong', 'deleteSong', 'checkCatalogWrite', 'setSongPlayed']);
+  assert.deepStrictEqual(ACTION_NAMES, ['checkPassphrase', 'checkWriteAccess', 'readJams', 'addSong', 'checkSetlistWrite', 'removeSong', 'checkSetlistRemove', 'setKey', 'setSlotCount', 'assignSlot', 'clearSlot', 'addExtraParticipant', 'removeExtraParticipant', 'moveSong', 'checkSetlistMove', 'publishSetlist', 'checkPublish', 'createJam', 'checkCreateJam', 'setJamStatus', 'updateJam', 'deleteJam', 'checkJamEdit', 'checkFutureSetlistWrite', 'createSong', 'updateSong', 'deleteSong', 'checkCatalogWrite', 'setSongPlayed', 'announcePresence']);
   assert.equal(ACTIONS.checkPassphrase.write, false);
   assert.equal(ACTIONS.checkWriteAccess.write, true);
   assert.equal(ACTIONS.readJams.write, false);
@@ -493,7 +497,7 @@ test('a missing or unknown action is unknown_action, lists the known actions and
     const services = fakeServices();
     const body = handlePost(request, fake.spreadsheet, services);
     assertError(body, 'unknown_action');
-    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed'), body.error.message);
+    assert.ok(body.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed, announcePresence'), body.error.message);
     assert.deepStrictEqual(fake.accessed, []);
     assert.deepStrictEqual(services.cache.log, []);
   }
@@ -598,7 +602,7 @@ test('doPost parses the JSON body and serializes handlePost with the active spre
     doPost({ postData: { contents: '{}' } });
     const unknown = JSON.parse(output.text);
     assertError(unknown, 'unknown_action');
-  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed'));
+  assert.ok(unknown.error.message.endsWith('Known: checkPassphrase, checkWriteAccess, readJams, addSong, checkSetlistWrite, removeSong, checkSetlistRemove, setKey, setSlotCount, assignSlot, clearSlot, addExtraParticipant, removeExtraParticipant, moveSong, checkSetlistMove, publishSetlist, checkPublish, createJam, checkCreateJam, setJamStatus, updateJam, deleteJam, checkJamEdit, checkFutureSetlistWrite, createSong, updateSong, deleteSong, checkCatalogWrite, setSongPlayed, announcePresence'));
   });
   withAppsScript({
     getActiveSpreadsheet() {
@@ -656,6 +660,8 @@ test('Post.js holds the lines the README tells the user to look for after pastin
   assert.ok(source.includes('checkFutureSetlistWrite: { write: true, run: checkFutureSetlistWrite_ },'));
   assert.ok(source.includes('var FUTURE_SETLIST_CHECK_TAB'));
   assert.ok(source.includes('setSongPlayed: { write: true, run: setSongPlayed_ },'));
+  assert.ok(source.includes('announcePresence: { write: false, run: announcePresence_ },'));
+  assert.ok(source.includes('function announcePresence_'));
   assert.ok(source.includes('function requireNotPlayed_'));
   const jams = fs.readFileSync(path.join(SRC_DIR, 'Jams.js'), 'utf8');
   assert.ok(jams.includes('var PLAYED_FIELD'));

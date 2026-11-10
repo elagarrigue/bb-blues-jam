@@ -64,6 +64,9 @@
  * setKey, setSlotCount, assignSlot, clearSlot, both extras actions and removeSong with `song_played`
  * (requireNotPlayed_); moveSong, addSong and the jam actions are not guarded.
  *
+ * admin-presence-notice (D-32) adds `announcePresence`: advisory presence of an admin on one song detail, kept only in
+ * CacheService (never the Sheet), `write: false` so it takes no lock. It refuses nothing and authorizes nothing.
+ *
  * Uses SCHEMA_VERSION and ROUTES from Code.js, readAllJams_ (Code.js), PUBLISHED_STATUS, DRAFT_STATUS,
  * CREATED_STATUS, requireJamStatuses_, presentStatuses_, JAMS_TAB, SETLIST_FIELDS,
  * NOT_IN_LINEUP_, withLegacySlotKeys_, SLOT_FIELDS, EXTRA_FIELD, buildJams and buildSetlist from Jams.js, CATALOG_TAB and catalogColumns_
@@ -183,6 +186,7 @@ var ACTIONS = {
   deleteSong: { write: true, run: deleteSong_ },
   checkCatalogWrite: { write: true, run: checkCatalogWrite_ },
   setSongPlayed: { write: true, run: setSongPlayed_ },
+  announcePresence: { write: false, run: announcePresence_ },
 };
 
 /**
@@ -2294,4 +2298,78 @@ if (typeof module !== 'undefined') {
     requirePassphrase_,
     songSlug_,
   };
+}
+
+/** Cache key prefix, TTL and holder ceiling of the advisory presence (D-32). */
+var PRESENCE_KEY_PREFIX_ = 'presence_';
+var PRESENCE_TTL_MS_ = 120000;
+var PRESENCE_TTL_SECONDS_ = 120;
+var PRESENCE_MAX_HOLDERS_ = 10;
+var PRESENCE_HOLDER_ = /^[A-Za-z0-9-]{16,64}$/;
+
+/** The live holders of a cache value: unparseable or non-object reads as empty, expired entries are dropped. */
+function readPresence_(raw, now) {
+  let parsed = {};
+  try {
+    parsed = raw === null || raw === undefined ? {} : JSON.parse(raw);
+  } catch (ignored) {
+    parsed = {};
+  }
+  const live = {};
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return live;
+  }
+  Object.keys(parsed).forEach(function (holder) {
+    const expiresAt = parsed[holder];
+    if (typeof expiresAt === 'number' && isFinite(expiresAt) && expiresAt > now) {
+      live[holder] = expiresAt;
+    }
+  });
+  return live;
+}
+
+/**
+ * Announces (or, with `leaving: true`, releases) the presence of one admin on one song (`announcePresence`, D-32).
+ * Request `{ date, songId, holder, leaving? }`. Validates in order `invalid_date`, `invalid_song`, `invalid_holder`
+ * before touching the cache. Answers `{ ok: true, others }`, the count of other live holders. Advisory only: no
+ * lock (so two announces in the same instant may lose one entry; the next heartbeat restores it), no Sheet
+ * access, nothing refused because of it.
+ */
+function announcePresence_(request, spreadsheet, services) {
+  const date = request.date;
+  if (typeof date !== 'string' || !isCalendarDate_(date)) {
+    throw new ContractError('invalid_date', 'date must be a real calendar day, YYYY-MM-DD');
+  }
+  const songId = request.songId;
+  if (typeof songId !== 'string' || !SONG_ID_.test(songId)) {
+    throw new ContractError('invalid_song', 'songId must be a lowercase slug');
+  }
+  const holder = request.holder;
+  if (typeof holder !== 'string' || !PRESENCE_HOLDER_.test(holder)) {
+    throw new ContractError('invalid_holder', 'holder must be 16 to 64 letters, digits or hyphens');
+  }
+  const now = services.now;
+  const key = PRESENCE_KEY_PREFIX_ + date + '_' + songId;
+  const live = readPresence_(services.cache.get(key), now);
+  const others = Object.keys(live).filter(function (id) {
+    return id !== holder;
+  }).length;
+  if (request.leaving === true) {
+    delete live[holder];
+  } else {
+    live[holder] = now + PRESENCE_TTL_MS_;
+  }
+  const kept = Object.keys(live).sort(function (a, b) {
+    return live[b] - live[a];
+  }).slice(0, PRESENCE_MAX_HOLDERS_);
+  if (kept.length === 0) {
+    services.cache.remove(key);
+  } else {
+    const next = {};
+    kept.forEach(function (id) {
+      next[id] = live[id];
+    });
+    services.cache.put(key, JSON.stringify(next), PRESENCE_TTL_SECONDS_);
+  }
+  return { ok: true, others: others };
 }
