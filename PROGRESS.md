@@ -1,3 +1,16 @@
+## 10 November 2026 - drag-gap-under-finger implemented (passing, awaiting validation)
+
+`ReorderMath.dropSlot` now takes `liftedSize`, `gapTop` and `marginFraction`: the gap moves past a neighbour only when the drawn row is more than half
+that neighbour's step from it, plus a dead band of 0.05 of the step (back-swap boundary differs from the forward one by 10% of the step, so jitter cannot flap).
+It can cross several rows per call; with `gapTop == null` it is the old centre rule. `ReorderState.dropSlotState` passes `itemSize` and the lifted row's offset from
+`visibleItemsInfo`; when the lifted row is not visible it falls back to the centre rule (spec said placedTop first; a stale placedTop for a non-visible row would be
+wrong, so the centre rule is used directly; unconfirmed on device). Margin as a fraction avoids needing density in the state. Architecture skill sentence updated.
+
+Verification: new mixed-height tests in `ReorderMathTest` run against the old rule first: 6 of 18 FAILED; restored: pass, including a sweep simulation (down and back
+up, bounded gap distance, monotone slots, distinct swap points). `DragPreviewTest`, `ReorderPreviewTest` untouched. `./gradlew ktlintFormat`, `CI=true ./init.sh`
+exit 0 with `konsist: wired`, `detekt: wired`, `ktlint: wired`, `Baseline OK.` Not run: device check (left to the validator, demo jam only, confirm
+"Demo (solo debug)" before dragging).
+
 ## 10 November 2026 - played-toggle-polish implemented (passing, awaiting validation)
 
 The ya tocado toggle now draws `Icons.Filled.CheckCircle` when on and `Icons.Outlined.CheckCircle` when off (`IconRowActionIcon.uncheckedImageVector`,

@@ -10,18 +10,65 @@ internal object ReorderMath {
     private const val EDGE_ZONE_FRACTION = 0.12f
 
     /**
-     * Where the lifted row would land for a finger at [pointerY]: before the first of [others] (the laid-out
-     * target rows without the lifted one) whose centre is below the finger, else after the last. Counting
-     * centres above the finger, not the nearest centre, keeps the slot stable when a neighbour slides into
-     * the gap. Null with no [others].
+     * Where the lifted row would land, given the drawn row's centre [pointerY]. Without [gapTop] it is the
+     * centre rule: before the first of [others] whose centre is below the finger, else after the last.
+     *
+     * With [gapTop] (the lifted row's placed top, which is where its gap is) the slot follows the geometry:
+     * the gap moves past a neighbour only once the drawn row is more than half that neighbour's step away
+     * from the gap, plus [marginFraction] of the step as a dead band so the back-swap boundary differs from the
+     * forward one and jitter cannot flap. A step is how far the gap moves; it is signed. One call may cross
+     * several rows. [others] are the laid-out target rows without the lifted one, in list order, with the gap
+     * already in the layout. Null with no [others].
      */
-    fun dropSlot(pointerY: Float, others: List<ItemBounds>): DropSlot? {
-        val below = others.firstOrNull { it.center > pointerY }
-        return when {
-            below != null -> DropSlot.Before(below.key)
-            others.isNotEmpty() -> DropSlot.After(others.last().key)
-            else -> null
+    fun dropSlot(
+        pointerY: Float,
+        others: List<ItemBounds>,
+        liftedSize: Float = 0f,
+        gapTop: Float? = null,
+        marginFraction: Float = 0f,
+    ): DropSlot? {
+        if (others.isEmpty()) return null
+        val index = if (gapTop == null) {
+            others.indexOfFirst { it.center > pointerY }.let { if (it < 0) others.size else it }
+        } else {
+            gapIndex(pointerY - liftedSize / 2f, others, liftedSize, gapTop, marginFraction)
         }
+        return if (index < others.size) DropSlot.Before(others[index].key) else DropSlot.After(others.last().key)
+    }
+
+    /** The index in [others] the gap sits before, after moving it from [gapTop] toward the drawn row's top. */
+    private fun gapIndex(
+        drawnTop: Float,
+        others: List<ItemBounds>,
+        liftedSize: Float,
+        gapTop: Float,
+        marginFraction: Float,
+    ): Int {
+        var index = others.count { it.center < gapTop + liftedSize / 2f }
+        var gap = gapTop
+        var moved = true
+        while (moved && index < others.size) {
+            val next = others[index].bottom - liftedSize
+            val step = next - gap
+            moved = drawnTop - gap > step / 2f + marginFraction * step
+            if (moved) {
+                gap = next
+                index++
+            }
+        }
+        if (gap == gapTop) {
+            moved = true
+            while (moved && index > 0) {
+                val next = others[index - 1].top
+                val step = next - gap
+                moved = drawnTop - gap < step / 2f + marginFraction * step
+                if (moved) {
+                    gap = next
+                    index--
+                }
+            }
+        }
+        return index
     }
 
     /** Vertical translation that puts the lifted row's centre under the finger, given where it was placed. */

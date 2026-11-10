@@ -57,10 +57,13 @@ class ReorderState internal constructor(
             null
         } else {
             val accepts = isTarget()
-            val others = listState.layoutInfo.visibleItemsInfo
+            val visible = listState.layoutInfo.visibleItemsInfo
+            val others = visible
                 .filter { it.key != dragged && accepts(it.key) }
                 .map { ItemBounds(it.key, it.offset.toFloat(), (it.offset + it.size).toFloat()) }
-            ReorderMath.dropSlot(pointerY, others)
+            // The lifted row's own placed top is where its gap is. Not visible (pinned far away): centre rule.
+            val gapTop = visible.firstOrNull { it.key == dragged }?.offset?.toFloat()
+            ReorderMath.dropSlot(pointerY, others, itemSize, gapTop, GAP_MARGIN_FRACTION)
         }
     }
 
@@ -125,6 +128,8 @@ class ReorderState internal constructor(
     }
 
     private companion object {
+        // Dead band of the gap swap, as a fraction of the neighbour's step (about 5 dp on a 100 dp row).
+        const val GAP_MARGIN_FRACTION = 0.05f
         const val TAP_GUARD_NANOS = 300_000_000L
         const val EDGE_STEP_DIVISOR = 4f
         const val AUTO_SCROLL_DELAY_NANOS = 300_000_000L

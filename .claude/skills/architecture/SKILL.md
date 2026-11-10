@@ -1304,8 +1304,8 @@ assigned and nothing is remembered. While a name is chosen the instrument bar's 
 
 ## As built by `admin-drag-live-preview`
 
-Live drag preview (9 November 2026). `:core:ui` `reorder`: `DropSlot` (`Before`/`After` a key), pure `ReorderMath.dropSlot` (first target row whose centre is below the
-finger, else after the last; replaced `hoveredKey`), public `List<K>.withDragged(dragged, slot)`, `ReorderState.dropSlot` (derived state; `onDrop(fromKey, DropSlot?)` gets the slot
+Live drag preview (9 November 2026). `:core:ui` `reorder`: `DropSlot` (`Before`/`After` a key), pure `ReorderMath.dropSlot` (geometric: the gap moves past a neighbour once the drawn row is more than half that
+neighbour's step from it, plus a 5% dead band; centre rule only when the lifted row is not visible; replaced `hoveredKey`), public `List<K>.withDragged(dragged, slot)`, `ReorderState.dropSlot` (derived state; `onDrop(fromKey, DropSlot?)` gets the slot
 the user last saw). `:feature:next-jam`: `SetlistUiModel.Songs.orderKeys` (rowKey of the full displayed order, plain data), `ReorderActionUiModel.Event.Drop(toPosition: Int)`
 (1-based full position), `admin/DragPreview.kt` (`previewKeys`, `Songs.previewed`: reorders rows and renumbers `positionLabel` from the full preview index), and
 `rememberDragPreview` (`DragPreviewHost.kt`): previews while dragging, then holds the dropped order until `orderKeys` changes or 2000 ms pass. `MoveControlsState.onDrop` takes the position.

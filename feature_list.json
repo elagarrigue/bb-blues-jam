@@ -2164,13 +2164,20 @@
     "depends_on": [
       "admin-drag-live-preview"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Pure JVM tests for the slot rule with mixed row heights, including no flapping at the boundary",
       "Existing DragPreviewTest equivalence invariant still holds",
       "Device check on the demo live jam only",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "Fail-first: mixed-height tests in ReorderMathTest run against the old centre rule (gapTop ignored): 6 of 18 FAILED (tall-among-short, short-among-tall up and down, jitter/dead band, multi-row jump, sweep simulation). Restored the geometric rule: all pass.",
+      "ReorderMath.dropSlot(pointerY, others, liftedSize, gapTop, marginFraction): gap moves past a neighbour when drawn row is more than step/2 + marginFraction*step away; multi-row per call; centre rule when gapTop is null. ReorderState passes itemSize and the lifted row's offset from visibleItemsInfo, fallback centre rule when not visible. Margin 0.05 of the neighbour step (dead band 10% total).",
+      "Sweep simulation test: down then up over mixed heights, |drawn top - gap top| <= maxStep/2 + margin at every step, slot monotone each way, forward and back swap points differ (no flap). DragPreviewTest and ReorderPreviewTest untouched and passing.",
+      "./gradlew ktlintFormat then CI=true ./init.sh exit 0; tail: konsist: wired, detekt: wired, ktlint: wired, Baseline OK.",
+      "Not run: Pixel 5 device check (orchestrator override: validator does the demo-jam check; confirm 'Demo (solo debug)' before dragging).",
+      "10 November 2026: independent validator accept. Reran CI=true ./init.sh (exit 0, three wired). Pixel 5 demo live jam drag (no UP, no admin taps, force-stop to end): played row ~540 px over a ~475 px row swapped at ~237 px displacement, gap stayed within half a step of the drawn row, no flap under +/-4 px jitter, gap stable under the lifted row at the end of an auto-scroll (spot check). local.properties restored byte for byte."
+    ]
   }
 ]
