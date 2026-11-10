@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,9 +45,15 @@ fun IconRowToggle(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = icon.imageVector,
+            imageVector = IconRowToggleDefaults.glyph(icon, checked),
             contentDescription = null,
             tint = if (checked) checkedTint else uncheckedTint,
         )
     }
+}
+
+internal object IconRowToggleDefaults {
+    /** The glyph for the toggle state: [IconRowActionIcon.imageVector] when on, the unchecked one when off. */
+    fun glyph(icon: IconRowActionIcon, checked: Boolean): ImageVector =
+        if (checked) icon.imageVector else icon.uncheckedImageVector
 }

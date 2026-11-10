@@ -1,3 +1,13 @@
+## 10 November 2026 - played-toggle-polish implemented (passing, awaiting validation)
+
+The ya tocado toggle now draws `Icons.Filled.CheckCircle` when on and `Icons.Outlined.CheckCircle` when off (`IconRowActionIcon.uncheckedImageVector`,
+`IconRowToggleDefaults.glyph` in `:core:ui`); tints, descriptions and semantics unchanged. `LineupPanelUiModel.muted` KDoc now matches `detailColor`;
+`DESIGN.md` Admin bar bullet updated. Architecture skill does not describe the glyph, so unchanged.
+
+Verification: new `IconRowToggleDefaultsTest` (2 tests); fail-first shown (glyph forced to the on icon, Played test FAILED, restored). `./gradlew ktlintFormat`,
+then `CI=true ./init.sh` exit 0, tail: `konsist: wired`, `detekt: wired`, `ktlint: wired`, `Baseline OK.` No baseline or rule change.
+Not run: optional device check.
+
 ## 9 November 2026 - admin-presence-notice script live
 
 The user redeployed Post.gs. Orchestrator probe without passphrase: deployProbe answers unknown_action ending in

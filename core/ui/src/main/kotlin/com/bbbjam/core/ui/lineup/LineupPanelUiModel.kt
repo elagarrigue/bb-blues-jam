@@ -12,7 +12,8 @@ import com.bbbjam.core.ui.text.UiText
  * [noOpenSlotsNote] replaces the open section when no slot is open, and [hint] follows the open
  * lines only when at least one slot is open; each is null otherwise (the admin's panel has no
  * hint). Read-only for musicians: only the admin's lines carry an action. [muted] draws the panel of a
- * played song (`song-played-state`): no amber, every line in `archive`.
+ * played song (`song-played-state`): no amber; the open-slot lines switch to `archive`, filled and extra
+ * lines keep `text`.
  */
 data class LineupPanelUiModel(
     val openSlots: List<LineupLineUiModel>,

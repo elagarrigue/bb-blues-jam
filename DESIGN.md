@@ -286,7 +286,7 @@ The admin marks a song of the upcoming jam as **ya tocado** during the jam. Ever
   played song's open slot is not a place to play any more. `slotFilled` as the fill would give archive text only 3.85:1, so
   `surfaceRaised` is used (5.16:1; 4.80:1 on the admin's raised surface). The instrument filter ignores those open slots in
   its matches and its chip counts; the musician filter still lists the song.
-- **Admin bar:** arrows | **check toggle** (`CheckCircle`, `Role.Switch`, `text` when on and `textMuted` when off, never amber,
+- **Admin bar:** arrows | **check toggle** (`CheckCircle`, filled when on and outlined when off, `Role.Switch`, `text` when on and `textMuted` when off, never amber,
   48dp; descriptions "Marcar como tocado" / "Desmarcar como tocado", states "Tocado" / "Sin tocar") | gap | trash. The trash
   is **absent** while the song is played. The toggle is in the bar, an explicit exception to "song-level actions go in the
   detail", because it is a progress action done in sequence during the jam; the detail has the same switch too.

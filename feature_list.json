@@ -2141,13 +2141,20 @@
     "depends_on": [
       "song-played-state"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "JVM test that the toggle picks a different icon for on and off",
       "KDoc matches behaviour",
       "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
     ],
-    "evidence": []
+    "evidence": [
+      "Added IconRowToggleDefaults.glyph and IconRowActionIcon.uncheckedImageVector (Played: Filled.CheckCircle on, Outlined.CheckCircle off); IconRowToggle draws it; grep: PlayedControls is the only IconRowActionIcon.Played user",
+      "IconRowToggleDefaultsTest (2 JVM tests in :core:ui). Fail-first: with glyph forced to icon.imageVector the Played test FAILED, restored and green",
+      "LineupPanelUiModel.muted KDoc and DESIGN.md Admin bar bullet updated; no behaviour change",
+      "ktlintFormat then CI=true ./init.sh exit 0 on 10 Nov 2026; tail: konsist wired, detekt wired, ktlint wired, Baseline OK",
+      "Not run: optional device check (outline when off, filled when on, row bar and detail)",
+      "10 November 2026: independent validator accept. Reran CI=true ./init.sh (exit 0, three wired); single call site PlayedControls covers row bar and detail; no amber, no new dependency. Device look not run."
+    ]
   },
   {
     "id": "drag-gap-under-finger",
