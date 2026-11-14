@@ -1,3 +1,83 @@
+## 14 November 2026 - exclusive-filter-modes implemented (passing, awaiting validation)
+
+Próxima jam now has one two-segment Material 3 control, Instrumento / Músico, followed by only the active
+filter. NextJamFilters uses neutral tokens, native single-selection semantics, equal widths and 48dp targets.
+The old duplicate headings are hidden via optional showHeading on the shared core filter bars. No roster shows
+an empty-roster line in musician mode. Empty/withheld/unavailable lists still have no filters.
+
+rememberNextJamFilters (NextJamFilterState.kt) keeps instrument selections and a saveable mode override; the musician
+continues using its existing local preference. The initial mode follows a remembered musician, otherwise Instrumento.
+The mapper masks the inactive selection before RowState, so the filters never intersect or narrow each other's counts.
+Switches preserve both selections; clearing a musician does not clear hidden instruments. Instrument mode updates
+batch mode and selection to avoid an intermediate frame. No dependency, repository or backend change.
+
+Tests updated for the requested replacement of combined filtering. NextJamMusicianFilterTest 8 passed, including
+disjoint results, restoring selections, clear isolation, empty roster and mapper masking with both inputs present.
+NextJamFilterTest 9 passed; played-song and row-roster tests updated for exclusive mode. Full next-jam suite: 260 tests, zero failures/errors. Final ktlintFormat and CI=true ./init.sh exit 0 with konsist,
+detekt and ktlint wired, Baseline OK. Filter state split meets Detekt length/complexity limits; no rules changed.
+Not run: device visual, large-font/landscape, TalkBack and rotation/process-death smoke. No commit made.
+Earlier changes retained. DESIGN.md and architecture skill updated.
+
+## 14 November 2026 - concurrent-song-live-refresh implemented (passing, awaiting validation)
+
+SongDetailPresenter now calls rememberSongDetailLiveRefresh while its admin model is visible and another admin is
+known on that same upcoming-jam song. It refreshes immediately, then waits one second after each response. Polls do
+not overlap; the existing repository coalesces other callers, preserves cache on failures and feeds the existing
+projection and write overlays. The effect is keyed by repository, active state, jam date and song id, and cancels on
+hide, logout, missing song, cleared presence or disposal. An already-started shared request may finish in DataScope.
+Presence discovery remains 30 s with 120 s TTL; Unknown keeps the last known presence. No backend change.
+DESIGN.md, architecture skill and risks document the cadence and the whole-jams refresh/latency tradeoff.
+
+SongDetailLiveRefreshTest: 5 Molecule virtual-time tests passed (immediate/1 s cadence and updated key projection,
+removed song, hide/resume/logout/disposal, Unknown then Alone, slow failed refresh with no overlap, and inactive
+roles/targets). SongPresenceTest: 6 passed. ktlintFormat then CI=true ./init.sh exit 0: konsist/detekt/ktlint wired, Baseline OK.
+No verification rules changed. No two-device/live latency or offline device smoke. Next step: independent validation.
+Earlier changes retained; no commit made.
+
+## 14 November 2026 - presence-warning-bottom-bar implemented (passing, awaiting validation)
+
+The concurrent-admin notice now sits in a fixed full-width SongPresenceBar under the song detail list, above system
+navigation insets. The list reserves its height, so controls remain reachable and the notice stays visible on scroll.
+Removed the duplicate title notice. Same Spanish text, one polite live region, wrapping body text. The fill pulses
+between red shades (70%-100% error token over background, 1400 ms each way), with dark background-colour text.
+Colour updates run in drawBehind. The shared core:ui rememberReducedMotion is public; animator scale 0 draws static
+full error with no transition. Presence heartbeat, TTL, admin gating and advisory semantics remain unchanged (D-32).
+DESIGN.md records the requested motion exception and new placement; architecture skill updated.
+
+Verification: PresenceWarningDefaultsTest 2 passed, including AA contrast at 101 pulse samples; SongPresenceTest 6 passed.
+ktlintFormat then CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, Baseline OK. No verification rules changed.
+Not run: two-device visual smoke, large fonts/landscape, TalkBack and reduced-motion device smoke.
+Next step: independent validation. Earlier uncommitted changes retained; no commit made.
+
+## 14 November 2026 - reorder-initial-tap-guard fixed (passing, awaiting validation)
+
+User report: detail, arrows and played toggles ignored taps until a drag; returning from detail broke them again.
+Root cause: ReorderState initialized lastDragEndNanos to Long.MIN_VALUE. Subtracting that sentinel from a positive
+System.nanoTime overflowed negative, so recentlyDragged() stayed true before the first drag. Navigation recreated
+that state and restored the bug. Replaced the sentinel with a nullable timestamp; elapsed-time checks run only
+once a release exists. Active-drag and 300 ms release guards remain. No repository, backend or gesture changes.
+Architecture skill documents the absent-release invariant.
+
+Fail-first: ReorderStateTest 3 tests against the original code, 2 failures (fresh list, recreated list).
+After the fix: 3 passed, including the release guard expiry. Baseline CI=true ./init.sh passed before the fix.
+Final ktlintFormat and CI=true ./init.sh passed: konsist, detekt and ktlint wired, Baseline OK. No rules changed.
+Device touch/navigation smoke not run. Next step: independent validation. No commit made. Earlier jam picker changes retained.
+
+## 14 November 2026 - jam-form-date-time-pickers implemented (passing, awaiting validation)
+
+The shared jam form now opens a Material 3 calendar for Fecha and a 24-hour clock for Hora. Applies to Nueva jam,
+editing a jam and the assistant create form. Picker buttons replace date/time text editors; Lugar stays a text field.
+Both pickers seed the existing value and emit the existing Edit event only on Aceptar; Cancelar/Back/outside tap leaves
+it unchanged. Spanish configuration, neutral theme tokens, no amber; form and clock content scroll on short screens.
+JamPickerValues converts calendar UTC midnight without shifting dates in Argentina and formats numeric field strings.
+Repository writes and form validation stay with the existing hosts. DESIGN.md and architecture skill updated.
+
+Verification: JamPickerValuesTest 3 JVM tests, zero failures/errors (UTC leap-day round trip, empty/impossible dates,
+24-hour boundaries). ktlintFormat, then CI=true ./init.sh exit 0: konsist, detekt and ktlint all wired, Baseline OK.
+The first post-change gate caught a MagicNumber in the fallback hour, fixed with a named constant; no rule changes.
+Not run: device visual/touch, TalkBack, rotation and small-screen smoke. Next step: independent validation.
+Pre-existing untracked app/debug/ and presentations/ were left untouched. No commit made.
+
 ## 10 November 2026 - drag-gap-under-finger implemented (passing, awaiting validation)
 
 `ReorderMath.dropSlot` now takes `liftedSize`, `gapTop` and `marginFraction`: the gap moves past a neighbour only when the drawn row is more than half

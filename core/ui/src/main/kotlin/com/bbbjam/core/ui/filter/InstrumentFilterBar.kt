@@ -40,15 +40,17 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
  * count are not read separately. It draws [model] and forwards events; the presenter decides.
  */
 @Composable
-fun InstrumentFilterBar(model: InstrumentFilterBarUiModel, modifier: Modifier = Modifier) {
+fun InstrumentFilterBar(model: InstrumentFilterBarUiModel, modifier: Modifier = Modifier, showHeading: Boolean = true) {
     val spacing = BluesJamTheme.spacing
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
-        Text(
-            text = model.heading.resolve(),
-            style = BluesJamTheme.typography.caption,
-            color = BluesJamTheme.colors.textMuted,
-            modifier = Modifier.semantics { heading() },
-        )
+        if (showHeading) {
+            Text(
+                text = model.heading.resolve(),
+                style = BluesJamTheme.typography.caption,
+                color = BluesJamTheme.colors.textMuted,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(spacing.xs),
             verticalArrangement = Arrangement.spacedBy(spacing.xs),

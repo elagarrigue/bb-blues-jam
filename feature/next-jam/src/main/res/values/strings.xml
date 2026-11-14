@@ -1,4 +1,7 @@
 <resources>
+    <string name="filter_mode_instrument">Instrumento</string>
+    <string name="filter_mode_musician">Músico</string>
+    <string name="filter_no_musicians">Todavía no hay músicos anotados.</string>
     <!-- Próxima jam: header -->
     <string name="next_jam_tonight">Esta noche</string>
     <string name="next_jam_today">Hoy</string>

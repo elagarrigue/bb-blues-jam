@@ -132,6 +132,9 @@ class NextJamMusicianFilterTest {
     private suspend fun ReceiveTurbine<NextJamUiModel>.start(songs: List<JamSong>): NextJamUiModel {
         assertEquals(nextJamLoading, awaitItem())
         repository.snapshots.emit(snapshot(Setlist.Available(songs)))
+        val first = awaitItem()
+        if (first.songs().filterMode.selected == JamFilterMode.MUSICIAN) return first
+        first.songs().filterMode.events(FilterModeUiModel.Event(JamFilterMode.MUSICIAN))
         return awaitItem()
     }
 
@@ -171,63 +174,62 @@ class NextJamMusicianFilterTest {
     }
 
     @Test
-    fun `a name combines with an instrument, whose counts follow the name's songs`() = runTest {
-        // Song 2 has Juan and an open bass; song 5 has Juan and a filled bass; song 7 has Juan as an extra.
-        val songs = listOf(
-            song(1, "Ana"),
-            song(2, "Juan"),
-            song(5, bass = "Juan"),
-            song(7, bass = "Ana", extras = listOf("Juan")),
-        )
+    fun `switching modes applies only the visible filter and preserves each selection`() = runTest {
+        val songs =
+            listOf(
+                song(1, "Ana"),
+                song(2, "Juan"),
+                song(5, bass = "Juan"),
+                song(7, bass = "Ana", extras = listOf("Juan")),
+            )
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val first = start(songs)
-            val bassChip = { model: NextJamUiModel ->
-                model.songs().filterBar!!.chips.single { it.label.chipName() == "Bajo" }
-            }
-            // Bass is open in songs 1 and 2 before any name.
-            assertEquals("2", bassChip(first).count)
-
             first.pick("Juan")
             val juan = awaitItem()
             assertEquals(listOf(2, 5, 7), juan.positions())
-            // Counts are over Juan's songs only: bass is open in song 2 alone.
-            assertEquals("1", bassChip(juan).count)
-            assertEquals("3", juan.songs().filterBar!!.chips.first().count)
-
-            bassChip(juan).events(FilterChipUiModel.Event.Toggle)
-            val both = awaitItem()
-            assertEquals(listOf(2), both.positions())
-            assertEquals(summaryText(1, 4, "Juan", Instrument.BASS), both.block().summary)
-            // The count line belongs to the musician block while a name is chosen.
-            assertNull(both.songs().filterBar!!.summary)
-            assertNull(both.songs().filterBar!!.noResults)
+            assertNull(juan.songs().filterBar)
+            juan.songs().filterMode.events(FilterModeUiModel.Event(JamFilterMode.INSTRUMENT))
+            val instruments = awaitItem()
+            assertEquals(listOf(1, 2, 5, 7), instruments.positions())
+            assertNull(instruments.songs().musicianFilter)
+            val bassChip = instruments.songs().filterBar!!.chips.single { it.label.chipName() == "Bajo" }
+            assertEquals("2", bassChip.count)
+            bassChip.events(FilterChipUiModel.Event.Toggle)
+            val bass = awaitItem()
+            assertEquals(listOf(1, 2), bass.positions())
+            bass.songs().filterMode.events(FilterModeUiModel.Event(JamFilterMode.MUSICIAN))
+            val musician = awaitItem()
+            assertEquals(listOf(2, 5, 7), musician.positions())
+            assertEquals(summaryText(3, 4, "Juan"), musician.block().summary)
+            assertNull(musician.songs().filterBar)
+            musician.block().events(MusicianFilterUiModel.Event.ClearAll)
+            val cleared = awaitUntil { it.songs().musicianFilter?.selectedName == null }
+            assertEquals(listOf(1, 2, 5, 7), cleared.positions())
+            cleared.songs().filterMode.events(FilterModeUiModel.Event(JamFilterMode.INSTRUMENT))
+            assertEquals(listOf(1, 2), awaitItem().positions())
+            assertEquals(listOf("Juan", null), preference.selections)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `a name and an instrument that match nothing together have an empty block that clears both`() = runTest {
+    fun `disjoint musician and instrument results never become a combined empty result`() = runTest {
         val songs = listOf(song(1, "Juan", bass = "Nico"), song(2, "Ana"))
         moleculeFlow(RecompositionMode.Immediate) { presenter().present(NextJamPresenter.Params()) }.test {
             val first = start(songs)
-            val bassChip = first.songs().filterBar!!.chips.single { it.label.chipName() == "Bajo" }
-            bassChip.events(FilterChipUiModel.Event.Toggle)
+            first.pick("Juan")
+            val musician = awaitItem()
+            assertEquals(listOf(1), musician.positions())
+            musician.songs().filterMode.events(FilterModeUiModel.Event(JamFilterMode.INSTRUMENT))
+            val instruments = awaitItem()
+            instruments.songs().filterBar!!.chips.single {
+                it.label.chipName() == "Bajo"
+            }.events(FilterChipUiModel.Event.Toggle)
             val bass = awaitItem()
             assertEquals(listOf(2), bass.positions())
-            bass.pick("Juan")
-            val empty = awaitItem()
-            assertEquals(emptyList<Int>(), empty.positions())
-            assertEquals(
-                UiText.res(CoreR.string.musician_filter_no_results_combined, "Juan", Instrument.BASS.lowercaseName()),
-                empty.block().noResults,
-            )
-            empty.block().events(MusicianFilterUiModel.Event.ClearAll)
-            val restored = awaitUntil { it.positions() == listOf(1, 2) }
-            assertNull(restored.block().selectedName)
-            assertNull(preference.stored.value)
-            // Only Todos is checked again.
-            val checked = restored.songs().filterBar!!.chips.filter { it.isSelected }.map { it.label.chipName() }
-            assertEquals(listOf("Todos"), checked)
+            bass.songs().filterMode.events(FilterModeUiModel.Event(JamFilterMode.MUSICIAN))
+            assertEquals(listOf(1), awaitItem().positions())
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -277,6 +279,30 @@ class NextJamMusicianFilterTest {
         val empty = (1..3).map { song(it, bass = null) }
         assertNull(snapshot(Setlist.Available(empty)).toUiModel(today).songs().musicianFilter)
         assertNotNull(snapshot(Setlist.Available(empty)).toUiModel(today, musician = "Juan").songs().musicianFilter)
+        val musicians = snapshot(Setlist.Available(empty))
+            .toUiModel(today, filterMode = FilterModeUiModel(JamFilterMode.MUSICIAN)).songs()
+        assertNull(musicians.filterBar)
+        assertEquals(emptyList<String>(), musicians.musicianFilter?.options?.map { it.name })
+        assertEquals(listOf(1, 2, 3), musicians.rows.map { it.position })
+    }
+
+    @Test
+    fun `mapping masks remembered inputs from the inactive mode`() {
+        val data = snapshot(Setlist.Available(listOf(song(1, "Juan", bass = "Nico"), song(2, "Ana"))))
+        val instruments = data.toUiModel(
+            today,
+            filter = setOf(Instrument.BASS),
+            musician = "Juan",
+            filterMode = FilterModeUiModel(JamFilterMode.INSTRUMENT),
+        )
+        val musician = data.toUiModel(
+            today,
+            filter = setOf(Instrument.BASS),
+            musician = "Juan",
+            filterMode = FilterModeUiModel(JamFilterMode.MUSICIAN),
+        )
+        assertEquals(listOf(2), instruments.positions())
+        assertEquals(listOf(1), musician.positions())
     }
 
     @Test

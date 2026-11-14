@@ -23,7 +23,7 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /** Reads the animator duration scale once per entry into the composition; default 1 (motion on). */
 @Composable
-internal fun rememberReducedMotion(): Boolean {
+fun rememberReducedMotion(): Boolean {
     val resolver = LocalContext.current.contentResolver
     return remember(resolver) {
         isReducedMotion(Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f))

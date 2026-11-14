@@ -229,7 +229,7 @@ Decided 5 October 2026 (`bottom-navigation`; I1, M1, D1):
   while it runs and stopped by `Detener`; they carry the summary as their one polite node), and
   the pending status chip's outline (`jam-status-chip-loading`, a second exception requested by the user: it
   replaces a text line, is bounded to one chip while one write runs, stops on the server's answer, uses
-  `textMuted`). Both are drawn static when the system animator scale is 0 (WCAG 2.2.2).
+  `textMuted`), and the concurrent-admin warning bar (`presence-warning-bottom-bar`, user request of 14 November 2026): a slow red colour pulse while another admin has the song open. All are static when the system animator scale is 0.
 - **Deeplinks (D1):** none; still deferred. D-13 is met by `SetlistRepository` functions (`action-contract-registry`, whose registry was later removed by `remove-action-registry`).
 
 The component is `TabBar` in `:core:ui` (`com.bbbjam.core.ui.nav`); its colors come only from
@@ -378,8 +378,13 @@ had.
   system back both return to Próxima jam with the same tab, filter and scroll.
 - **Order:** back arrow; title (`h1`, `text`, wraps, a heading); artist (`body`, `textMuted`) only
   when there is one; for the admin, `Guardando…` (`caption`, `textMuted`, polite) while a write of
-  the song is sending; for the admin, `Otro admin está editando este tema` (`caption`, `text`, polite) after it while another
-  admin has the same song open (information, never amber or `error`; nothing is blocked); the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in
+  the song is sending; for the admin, `Otro admin está editando este tema` in a fixed, full-width bottom bar while another
+  admin has the same song open (`presence-warning-bottom-bar`, 14 November 2026). The bar sits outside the scrollable
+  list, above navigation-bar insets, reserves its own height and wraps its `body` text. Its opaque fill pulses smoothly
+  from 70% `error` blended over `background` to full `error` (1400 ms each way); text is `background`, with AA contrast
+  throughout. Under reduced motion the fill is static `error` and no transition is created. A single polite live region
+  announces the text; colour frames do not re-announce it. Still advisory: nothing is blocked; while this warning is active on a visible admin detail, refresh the data immediately and then one second after each response. No spinner, jump to top or overlapping requests; existing cache and local write overlays stay visible on failures. Stop when presence clears or the detail is hidden.
+  the key block — `TONALIDAD` (caption, `textMuted`, uppercase) over the key in
   `keyDisplay`, colour `key`, one screen-reader node "Tonalidad Bm" (for the admin, the pending key
   while one is saving). In admin mode the key block itself is a 48dp-minimum `Role.Button` with the
   click label `Cambiar tonalidad`; tapping it opens the key picker. There is no separate action under
@@ -399,7 +404,7 @@ had.
   longer in the list (also live, when a refresh or a confirmed removal drops it), or a setlist that
   is not shown, is the empty block "Este tema ya no está en la lista" / "Puede que la organización
   haya cambiado la lista. Volvé a la próxima jam para ver la actual." Never an error, and no
-  staleness notice, pull to refresh or live polling (the list has them).
+  staleness notice or pull to refresh (the list has them). Live polling runs only on the visible admin detail while another admin is known on that same song (`concurrent-song-live-refresh`).
 - **Not shown** (D-20, D-09): tempo, tags, difficulty, songsterr, artwork, the jam's date or venue.
 
 The components are `LineupPanel` (`com.bbbjam.core.ui.lineup`) and `BackButton`
@@ -449,23 +454,18 @@ The component is `InstrumentFilterBar` in `:core:ui` (`com.bbbjam.core.ui.filter
 
 #### Musician filter (`musician-filter`, 9 November 2026)
 
-A second block above the instrument bar, in the same list-item style (it scrolls with the list), to see
-which songs a person plays. It combines with the instrument filter (AND).
+The musician mode below the exclusive Instrumento / Músico segmented selector (it scrolls with the list), to see
+which songs a person plays. Since `exclusive-filter-modes`, it never combines with the instrument filter.
 
 - **Names** come from the assigned slots and the `Otros` extras of the upcoming jam (the overlaid songs for the
   admin), matched on the name with whitespace collapsed and case ignored (not accent-insensitive); the first
   spelling in position order is shown, sorted alphabetically. Open slots and `-` cells are not names.
-- **Layout.** Heading `Filtrá por músico` (caption, `textMuted`, a heading for screen readers). Nothing chosen: a
-  48dp button `Elegir músico` (`surfaceRaised`, `textMuted`, `rounded.lg`). Chosen: a chip with the name
-  (`activeFilter` fill, `onActiveFilter` text; tap to change) and the underlined text action `Quitar filtro`
-  (48dp). Both open a Material 3 dialog (`surfaceRaised`, never amber): `Todos los músicos` plus one radio row per
-  name, each at least 48dp with its song count ("Juan, 3 temas"). The block is not drawn when nobody is assigned
-  and no name is remembered, nor for a draft, withheld, unavailable or empty setlist.
-- **Lines** (polite live regions, below the chip): "Quedan 3 de 13 temas con Juan" ("Queda 1 de ..."), with an
-  instrument "... con Juan y cupo libre para bajo". Empty: "Juan no está en ningún tema de esta jam." or, when
-  the instrument is what empties it, "Ningún tema con Juan tiene cupo libre para bajo.", plus `Ver todos los
-  temas`, which clears the name and, in the combined case, the instruments. While a name is chosen this block
-  owns the count and empty lines; the instrument bar keeps its chips, with counts over that person's songs.
+- **Layout.** Only drawn in Músico mode, without a redundant heading. Nothing chosen: a secondary
+  `Elegir músico` button. Chosen: the name in an activeFilter chip and `Quitar filtro`. Both open the single-select
+  picker. Its counts cover the whole setlist. The result line counts that musician's songs only; no instrument
+  constraint applies. An absent remembered name shows the existing no-results message and `Ver todos los temas`,
+  which clears only the musician. With nobody assigned and no name remembered, show the empty-roster line instead
+  of opening an empty picker. The instrument controls are absent from this mode.
 - **State.** The chosen name is remembered on the device across relaunches (a DataStore preference in
   `:core:data`); a remembered name that is no longer in the jam still shows the filter and the empty state. The
   instrument selection is still lost on relaunch.
@@ -894,8 +894,7 @@ line `En espera: la próxima jam es la del sábado 31 de octubre.` (`caption`, `
 card behind a BORRADOR upcoming jam adds `Los músicos la ven como la próxima jam, porque la del sábado 31 de octubre está
 en borrador.` Cards are not tappable; the list is edited in Próxima jam.
 
-`Nueva jam` opens a modal `AlertDialog` (`surfaceRaised`): three labelled outlined fields (`Fecha` `DD/MM/AAAA`, `Hora`
-`HH:MM`, `Lugar`; fecha and hora use the numeric keyboard and accept `/`, `-`, `.` and `:`, `.`), field errors in `error`
+`Nueva jam` opens a modal `AlertDialog` (`surfaceRaised`): labelled outlined picker buttons (`Fecha` `DD/MM/AAAA`, `Hora` `HH:MM`) and an outlined text field (`Lugar`). Fecha opens a Material 3 calendar; Hora opens a Material 3 24-hour clock. Both use Spanish controls and neutral token colours (no amber), seed the current field value, and apply only on `Aceptar`; `Cancelar`, Back or outside tap keeps the old value. Calendar dates use UTC midnight to avoid device time-zone shifts. The form and clock content scroll on short screens, field errors in `error`
 `caption`, the notes in `textMuted`, `Crear la jam` and `Cancelar` in `text` (a disabled `Crear la jam` is `textMuted`).
 Hora and lugar open with those of the latest-dated jam (`21:00` and empty with none); fecha opens empty. Blocked dates are
 field errors: past, already a jam (also a held-back one), or before the upcoming jam. A later date shows `Queda en espera:
@@ -944,7 +943,7 @@ delete (`error`), described `Editar la jam del sábado 31 de octubre` and `Borra
 absent when the setlist is not readable, so its song count is unknown. While the jam is being written the card shows one
 polite line (`Guardando los cambios…` / `Borrando la jam…`, `textMuted`) and both icons are drawn disabled (`textMuted`,
 no tap), as they are while a status change or publication of that jam is sending. The edit dialog is
-the `Nueva jam` dialog (`surfaceRaised`, three labelled outlined fields seeded with the jam, `error` `caption` field errors,
+the `Nueva jam` dialog (`surfaceRaised`, the same date/time picker buttons and venue text field seeded with the jam, `error` `caption` field errors,
 `textMuted` notes `La lista y los músicos anotados pasan a la nueva fecha.` and `Los músicos ven el cambio cuando
 actualicen la app.`, `Guardar` in `text`, `textMuted` when disabled, and `Cancelar` in `text`). An edit may not change which
 jam is the upcoming one: the date shows an `error` line naming the other jam. The delete dialog is a modal `AlertDialog` like
@@ -1011,3 +1010,16 @@ On the admin's song detail (an admin song row until `song-detail-replaces-row-ex
   `Ya estaba en la lista`, `Sin intentar` in `textMuted`; `No se agregó: ...` in `error`. One polite live region
   summary (`body`): `text` while running and for `Listo`, `error` for partial or cut runs, `textMuted` when stopped;
   `Detener` is an underlined 48dp text action in `text` while running. Never `Listo` when any song failed.
+
+
+### Exclusive filter modes (`exclusive-filter-modes`, 14 November 2026)
+
+Próxima jam shows one Material 3 single-choice segmented row, Instrumento / Músico, over the active filter.
+Equal-width segments have at least 48dp targets, wrapping body labels and native selection semantics. Selected:
+surfaceRaised fill, text content/border; inactive: surface fill, textMuted content, border outline. No new amber role.
+The active filter's redundant heading is hidden. Only that mode's controls and summary are shown and applied;
+instrument multi-selection still uses OR and counts the full setlist, and musician mode ignores instruments entirely.
+Switching modes retains each selection. Clearing a musician never clears hidden instruments. The initial mode follows
+a remembered musician (otherwise Instrumento); explicit choices use rememberSaveable. With nobody assigned and no
+remembered name, musician mode shows Todavía no hay músicos anotados. Empty/unavailable/withheld lists show no mode row.
+This supersedes the earlier combined musician+instrument filtering behaviour.

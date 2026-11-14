@@ -8,7 +8,7 @@ import com.bbbjam.core.ui.text.UiText
 /** Which field a [JamFormUiModel.Event.Edit] is for. */
 enum class JamFormField { DATE, TIME, VENUE }
 
-/** One labelled text field of the form: the typed [value], an optional [hint] and an optional [error]. */
+/** One labelled field: the formatted [value], an optional [hint] and an optional [error]. */
 data class JamFormFieldUiModel(val label: UiText, val value: String, val hint: UiText?, val error: UiText?) : UiModel
 
 /**

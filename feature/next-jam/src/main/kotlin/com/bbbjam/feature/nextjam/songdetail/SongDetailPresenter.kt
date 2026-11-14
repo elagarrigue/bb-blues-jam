@@ -40,8 +40,8 @@ import java.time.LocalDate
  * the jam song, not the catalog song (D-08). It collects [JamsRepository.observeJams]
  * (cache-first; collecting may start the repository's own background refresh) and looks the song
  * up on every snapshot, so a refresh that drops the row turns the detail into the not-found block
- * live. It never reads the catalog and never refreshes on its own (the list owns the per-login
- * admin refresh).
+ * live. It never reads the catalog. The list owns the per-login admin refresh; while another admin
+ * is on this same visible song, the detail also refreshes every second (`concurrent-song-live-refresh`).
  *
  * Admin (`song-detail-replaces-row-expansion`, D-15): the flag comes from [adminSession] and only
  * decides what is drawn; Apps Script authorizes every write. The flag is read with no initial value,
@@ -116,6 +116,7 @@ internal class SongDetailPresenter(
         // Only the admin detail of an upcoming-jam song, while visible, announces presence (D-32).
         val active = isAdmin == true && params.isResumed && model is SongDetailUiModel.Song && model.admin != null
         val othersHere = rememberOthersHere(presence, active, params.jamDate, params.songId)
+        rememberSongDetailLiveRefresh(jams, active && othersHere, params.jamDate, params.songId)
         return if (othersHere && model is SongDetailUiModel.Song && model.admin != null) {
             model.copy(admin = model.admin.copy(presenceNotice = UiText.res(R.string.song_detail_presence_notice)))
         } else {

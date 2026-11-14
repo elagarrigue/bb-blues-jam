@@ -337,7 +337,7 @@ the song up in the upcoming jam's `jam.setlist` and adds `SongDetailAdminUiModel
 lineup, extraParticipants, failures)` built from `SongAdminState` (`rememberSongAdminState`: the
 lineup controls, the "Otros" form, `clearSlot` launched undispatched). Musicians and admins see the
 same `LineupPanel` (open slots first, `OTROS` last); the admin's has line actions and no hint. The
-detail never refreshes (the list owns the per-login refresh). `NextJamPresenter.Params(isResumed,
+detail normally reads the cache (the list owns the per-login refresh); since `concurrent-song-live-refresh`, it polls only while another admin is known on that same visible upcoming song. `NextJamPresenter.Params(isResumed,
 onAddSong, onOpenSong)`. `:app` binds the detail's `onSetKey`/`onAssignSlot` to the existing
 routes; the pickers pop by route back onto the detail. Konsist: the dead `"feature/song-detail"`
 `AMBER_ROLE_ALLOWLIST` entry was removed (user-approved; 17 rules, no logic change).
@@ -543,7 +543,7 @@ As built by `assistant-proposal-targets` Part C (15 October 2026; D-29 amends U1
 `checkJamForm`; `JamFormTest` moved with them). `:core:ui` package `com.bbbjam.core.ui.jamform` holds `JamFormUiModel`
 (title, three `JamFormFieldUiModel`s, notes, submit/cancel labels, `canSubmit`, `Edit`/`Submit`/`Cancel` events),
 `JamFormField`, `JamFormDialog`, the internal `JamFormDefaults` (neutral and `error` roles, no amber) and `JamFormText`;
-the Jams tab's `Nueva jam` and edit dialogs draw it and `:feature:assistant` draws it for `Crear una jam nueva con esta
+Since `jam-form-date-time-pickers`, `JamPickerField` buttons open `JamFormPicker` (Material 3 calendar / 24-hour clock, Spanish, neutral `JamPickerDefaults` colours); `JamPickerValues` converts UTC calendar milliseconds to the existing numeric field strings. Only accepting emits `Edit`; cancelling does not. Venue stays a text field. The Jams tab's `Nueva jam` and edit dialogs draw it and `:feature:assistant` draws it for `Crear una jam nueva con esta
 lista` (state in `CreateFormState`: saveable turn id, three texts, touched mask). **Server:** `Post.js` `addSong_` calls
 `requireFutureJam_` (any future jam, held back included); every other setlist mutation and PUBLICADA stay on
 `requireEditableJam_`; the two guards are pure (`futureJamIn_`, `upcomingJamIn_`) and `checkFutureSetlistWrite` proves them on
@@ -1240,7 +1240,7 @@ The assistant's answer streams (15 October 2026). The final parse stays the sour
   `Incomplete` is not an outage: it does not trigger the service re-check. The screen follows a growing stream only when
   the list was already at the end (`shouldFollow`).
 - **UI (`:core:ui`).** `LoadingDots` (`state`) and the pending status chip's outline (`status`, `jam-status-chip-loading`,
-  sharing `rememberDotsClock`) are the only moving elements in the app (DESIGN.md M1): `loadingDotAlpha` is
+  sharing `rememberDotsClock`) are moving elements permitted by DESIGN.md M1 (the presence warning bar is another exception since `presence-warning-bottom-bar`): `loadingDotAlpha` is
   pure, `isReducedMotion(scale)` reads `Settings.Global.ANIMATOR_DURATION_SCALE` once per composition, and with scale 0 the dots
   and the outline are static and no transition exists.
 
@@ -1282,7 +1282,7 @@ through one in-flight guard in the composition scope (the call itself runs in `D
 
 Long-press drag reorder in admin mode, alongside the arrows (9 November 2026). `:core:ui` package `com.bbbjam.core.ui.reorder` holds a generic,
 repository-free helper: pure `ReorderMath` (nearest-center `hoveredKey`, `edgeScrollDelta`), `ReorderState` (`draggedKey`, `dragOffsetY`, ephemeral, never in a
-`UiModel`; `recentlyDragged()` guards the row's tap on release) with `rememberReorderState(listState, isTarget, onDrop)`, and `Modifier.reorderable(state, key,
+`UiModel`; `recentlyDragged()` guards row actions during a drag and for 300 ms after release; no previous release is a nullable timestamp, never a numeric sentinel that can overflow when subtracted) with `rememberReorderState(listState, isTarget, onDrop)`, and `Modifier.reorderable(state, key,
 shape, enabled)` over `detectDragGesturesAfterLongPress` (lift via `graphicsLayer`/`shadow`, frame-driven auto-scroll). `:feature:next-jam`: `MoveUiModel` gains
 `reorder: ReorderActionUiModel` (`Event.Drop(toRowKey)`), non-null exactly where the arrows are (null for musicians and a `Removing` row). `rememberMoveControls`
 extracts `moveTo(date, songId, target, size)` (queue bookkeeping unchanged) used by `onMove` (arrows) and the new `onDrop`, which resolves the row key against the
@@ -1298,9 +1298,7 @@ blank clears) over `DefaultMusicianFilterPreference` in its own DataStore file `
 in `dataModule`. A local preference, not a Sheet mutation. `:core:ui` `filter/`: `MusicianFilterUiModel`/`MusicianOptionUiModel`, `MusicianFilterChange`
 (`Select`, `Clear`, `ClearAll`), pure `musicianFilter(roster, selected, counts, instruments, onChange)`, `MusicianFilterBar` (heading, chip, picker dialog) and
 internal `MusicianFilterDefaults` (amber read only there, so no feature allowlist changed). `:feature:next-jam`: `NextJamPresenter` takes the preference and
-combines it with `observeJams()` in one flow, so the model is `Loading` until both were read and the list never shows unfiltered; `songsModel` applies the
-musician predicate, builds the instrument bar over those songs, then the instrument predicate; `SetlistUiModel.Songs.musicianFilter` is null when nobody is
-assigned and nothing is remembered. While a name is chosen the instrument bar's own summary and no-results are null.
+combines it with `observeJams()` in one flow, so the model is `Loading` until both were read and the list never shows unfiltered; `songsModel` applies only the active mode's predicate (`exclusive-filter-modes`), with full-setlist counts; `SetlistUiModel.Songs.musicianFilter` is null in instrument mode, and the instrument bar is null in musician mode.
 
 ## As built by `admin-drag-live-preview`
 
@@ -1320,3 +1318,31 @@ mutation (no entity changes, nothing persisted, nothing authorized), yet it stil
 `SongDetailPresenter(jams, adminSession, sources, presence)` with `Params.isResumed`; `songdetail/PresenceHeartbeat.kt` (`runPresenceHeartbeat`, `PresenceHeartbeat.INTERVAL` 30 s,
 `rememberOthersHere`: heartbeat while the admin detail of an upcoming song is visible, release in `finally`) and `SongDetailAdminUiModel.presenceNotice`. Server: `announcePresence`,
 `write: false`, CacheService key `presence_<date>_<songId>`, 120 s expiry.
+
+
+## As built by `presence-warning-bottom-bar`
+
+The concurrent-admin notice is a fixed `SongPresenceBar` below the weighted song-detail list, rather than text under the title.
+It uses the existing `presenceNotice` projection and unchanged heartbeat/TTL/advisory semantics (D-32). `PresenceWarningDefaults`
+blends the error token over background from 70% to 100%, with dark background-colour text; a 1400 ms reverse pulse redraws only
+the bar fill. `rememberReducedMotion` in core:ui state is now public for shared use: scale 0 creates no transition and draws full
+error. The bar wraps text, reserves its height and respects navigation insets. No backend or write contract changed.
+
+
+## As built by `concurrent-song-live-refresh`
+
+SongDetailPresenter calls rememberSongDetailLiveRefresh only while its upcoming-song admin model is visible and
+rememberOthersHere is true. The LaunchedEffect is keyed by repository, active state, jam date and song id. It awaits
+JamsRepository.refresh, then delays one second; no overlapping polls. Cache emissions update the existing projection
+and overlays. On absence, hide, logout, missing song or disposal the effect cancels; an existing shared repository
+request may finish in DataScope. Presence discovery remains 30 s / 120 s TTL. No backend or mutation change.
+
+
+## As built by `exclusive-filter-modes`
+
+NextJamPresenter delegates filter state to rememberNextJamFilters in NextJamFilterState.kt, which owns a saveable nullable JamFilterMode override; absent override follows the persisted musician.
+FilterModeUiModel carries the resolved mode and Select event. The mapper masks the inactive selection before RowState
+is built, so filters cannot intersect even with stale remembered inputs. It emits only the active filter's model.
+NextJamFilters draws a neutral Material 3 SingleChoiceSegmentedButtonRow and the active controls; the core filter bars
+accept showHeading=false here. Instrument changes batch mode/selection updates in one snapshot; clearing a musician
+writes only that preference. Mode switches never erase either remembered selection. No repository/domain mutation.

@@ -123,8 +123,8 @@ internal sealed interface SetlistUiModel : UiModel {
      * The rows in position order, only those the instrument filter shows; [droppedRowsNote] says how
      * many rows could not be read, or is null. [filterBar] is the instrument filter
      * (`instrument-filter-chips`), null when the setlist has no song (the empty case is not a
-     * filter's no-results case). [musicianFilter] is the musician filter (`musician-filter`), null when
-     * nobody is assigned in the setlist and no name is remembered. [orderKeys] is the `rowKey` of every
+     * filter's no-results case). Only the active [filterMode] has controls: [filterBar] in instrument mode,
+     * [musicianFilter] in musician mode. The inactive filter is null. [orderKeys] is the `rowKey` of every
      * entry of the full displayed order, hidden rows included: plain data the drag preview reorders.
      */
     data class Songs(
@@ -133,6 +133,7 @@ internal sealed interface SetlistUiModel : UiModel {
         val filterBar: InstrumentFilterBarUiModel?,
         val musicianFilter: MusicianFilterUiModel? = null,
         val orderKeys: List<String> = emptyList(),
+        val filterMode: FilterModeUiModel = FilterModeUiModel(),
     ) : SetlistUiModel
 
     /** A published setlist with no song: the empty block, and no filter bar. */

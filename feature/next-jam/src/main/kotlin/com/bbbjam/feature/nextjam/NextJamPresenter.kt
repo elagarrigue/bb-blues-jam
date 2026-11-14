@@ -4,13 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.bbbjam.core.data.DataFailure
 import com.bbbjam.core.data.admin.AdminSession
@@ -32,7 +27,6 @@ import com.bbbjam.core.ui.filter.MusicianFilterCounts
 import com.bbbjam.core.ui.filter.instrumentFilterBar
 import com.bbbjam.core.ui.filter.matchesInstrumentFilter
 import com.bbbjam.core.ui.filter.musicianFilter
-import com.bbbjam.core.ui.filter.updatedBy
 import com.bbbjam.core.ui.presenter.EventHandler
 import com.bbbjam.core.ui.presenter.Presenter
 import com.bbbjam.core.ui.state.EmptyStateUiModel
@@ -55,13 +49,11 @@ import com.bbbjam.feature.nextjam.overlay.SongOverlays
 import com.bbbjam.feature.nextjam.overlay.displayEntries
 import com.bbbjam.feature.nextjam.overlay.rememberSongOverlays
 import com.bbbjam.feature.nextjam.refresh.rememberNextJamRefreshes
-import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.random.Random
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 
 /**
  * Presents Próxima jam: the upcoming jam of [JamsRepository.observeJams], already cached, split in
@@ -181,47 +173,23 @@ internal class NextJamPresenter(
             rememberNextJamRefreshes(jams, calendar, random, params.isResumed, isAdmin, snapshot) { subscription++ }
         val today = remember(snapshot) { calendar.today() }
         val now = remember(snapshot) { calendar.now() }
-        var filter by rememberSaveable(stateSaver = InstrumentFilterSaver) { mutableStateOf(emptySet<Instrument>()) }
-        val onFilterChange: (InstrumentFilterChange) -> Unit = { change -> filter = filter.updatedBy(change) }
-        val onMusicianChange = rememberMusicianChange(musicianPreference) { filter = emptySet() }
+        val filters = rememberNextJamFilters(musicianPreference, read?.musician)
         val model = read?.let { loaded ->
             refreshes.shown(loaded.snapshot)
                 .toUiModel(
                     today,
-                    filter,
-                    onFilterChange,
+                    filters.instruments,
+                    filters.onInstruments,
                     now,
                     refreshes.onRetry,
                     onOpenSong,
                     admin,
                     loaded.musician,
-                    onMusicianChange,
+                    filters.onMusician,
+                    filters.mode,
                 )
         } ?: NextJamUiModel.Loading(UiText.res(R.string.next_jam_loading))
         return model.withPullRefresh(refreshes.pullRefresh)
-    }
-}
-
-/**
- * The handler of [MusicianFilterChange]: it writes [preference] (the model follows its flow) and, for
- * [MusicianFilterChange.ClearAll], also calls [onClearInstruments]. A write that fails leaves the selection as it was.
- */
-@Composable
-private fun rememberMusicianChange(
-    preference: MusicianFilterPreference,
-    onClearInstruments: () -> Unit,
-): (MusicianFilterChange) -> Unit {
-    val scope = rememberCoroutineScope()
-    val clearInstruments by rememberUpdatedState(onClearInstruments)
-    return { change ->
-        if (change == MusicianFilterChange.ClearAll) clearInstruments()
-        scope.launch {
-            try {
-                preference.select((change as? MusicianFilterChange.Select)?.name)
-            } catch (_: IOException) {
-                // The preference could not be written: the selection stays as it was.
-            }
-        }
     }
 }
 
@@ -235,12 +203,6 @@ private fun NextJamUiModel.withPullRefresh(pullRefresh: PullRefreshUiModel): Nex
     is NextJamUiModel.NoUpcomingJam -> copy(pullRefresh = pullRefresh)
     is NextJamUiModel.Jam -> copy(pullRefresh = pullRefresh)
 }
-
-/** The selected instruments as their enum names: bundle-safe, so the filter survives rotation. */
-internal val InstrumentFilterSaver: Saver<Set<Instrument>, Any> = listSaver(
-    save = { selected -> selected.map { it.name } },
-    restore = { names -> names.map { Instrument.valueOf(it) }.toSet() },
-)
 
 /**
  * Decision 3 of `next-jam-read-only-list` and Decision 1 of `list-states`: the only branches this
@@ -264,6 +226,7 @@ internal fun JamsSnapshot.toUiModel(
     admin: AdminState? = null,
     musician: String? = null,
     onMusicianChange: (MusicianFilterChange) -> Unit = {},
+    filterMode: FilterModeUiModel = FilterModeUiModel(initialFilterMode(musician)),
 ): NextJamUiModel {
     // A draft does not exist for a musician (D-26): musicians read the projection, the admin the raw view.
     val jam = (if (admin == null) forMusicians() else this).upcoming
@@ -284,14 +247,15 @@ internal fun JamsSnapshot.toUiModel(
             setlist = (if (admin == null) jam.setlistForMusicians() else jam.setlist).toUiModel(
                 jam.date,
                 RowState(
-                    filter,
+                    if (filterMode.selected == JamFilterMode.INSTRUMENT) filter else emptySet(),
                     onFilterChange,
                     onOpenSong,
-                    musician,
+                    musician.takeIf { filterMode.selected == JamFilterMode.MUSICIAN },
                     onMusicianChange,
                     admin?.let {
                         RowAdmin(it, jam)
                     },
+                    filterMode,
                 ),
             ),
             staleness = staleness,
@@ -330,6 +294,7 @@ private class RowState(
     val musician: String?,
     val onMusicianChange: (MusicianFilterChange) -> Unit,
     val admin: RowAdmin?,
+    val filterMode: FilterModeUiModel,
 ) {
     val isAdmin: Boolean
         get() = admin != null
@@ -374,8 +339,8 @@ private fun Setlist.toUiModel(date: LocalDate, state: RowState): SetlistUiModel 
 }
 
 /**
- * The songs of a published or admin setlist, filtered: the musician filter first (the roster and the
- * instrument chips' counts follow the songs it keeps), the instrument filter last.
+ * The songs of a published or admin setlist. RowState carries only the active mode's effective selection;
+ * the inactive mode cannot narrow the results or the visible filter's counts.
  */
 private fun Setlist.Available.songsModel(date: LocalDate, state: RowState): SetlistUiModel.Songs {
     val overlaidSongs = songs.map { song ->
@@ -412,12 +377,9 @@ private fun Setlist.Available.songsModel(date: LocalDate, state: RowState): Setl
             },
         droppedRowsNote = if (droppedRows == 0) null else SongListText.droppedRows(droppedRows),
         // With a musician chosen, the musician block owns the count and the empty line.
-        filterBar = if (state.musician == null) {
-            instrumentBar
-        } else {
-            instrumentBar.copy(summary = null, noResults = null)
-        },
-        musicianFilter = if (roster.isEmpty() && state.musician == null) {
+        filterMode = state.filterMode,
+        filterBar = if (state.filterMode.selected == JamFilterMode.INSTRUMENT) instrumentBar else null,
+        musicianFilter = if (state.filterMode.selected != JamFilterMode.MUSICIAN) {
             null
         } else {
             musicianFilter(

@@ -49,16 +49,18 @@ import com.bbbjam.core.ui.theme.BluesJamTheme
  * or an option's handler, and the presenter decides.
  */
 @Composable
-fun MusicianFilterBar(model: MusicianFilterUiModel, modifier: Modifier = Modifier) {
+fun MusicianFilterBar(model: MusicianFilterUiModel, modifier: Modifier = Modifier, showHeading: Boolean = true) {
     var pickerOpen by rememberSaveable { mutableStateOf(false) }
     val spacing = BluesJamTheme.spacing
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
-        Text(
-            text = model.heading.resolve(),
-            style = BluesJamTheme.typography.caption,
-            color = BluesJamTheme.colors.textMuted,
-            modifier = Modifier.semantics { heading() },
-        )
+        if (showHeading) {
+            Text(
+                text = model.heading.resolve(),
+                style = BluesJamTheme.typography.caption,
+                color = BluesJamTheme.colors.textMuted,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm), verticalAlignment = Alignment.CenterVertically) {
             NameButton(model) { pickerOpen = true }
             if (model.selectedName != null) {

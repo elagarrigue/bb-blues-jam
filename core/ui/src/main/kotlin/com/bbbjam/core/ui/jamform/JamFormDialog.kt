@@ -3,37 +3,47 @@ package com.bbbjam.core.ui.jamform
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import com.bbbjam.core.ui.text.resolve
 import com.bbbjam.core.ui.theme.BluesJamTheme
 
 /**
- * The jam form dialog: three labelled outlined fields (fecha and hora with the numeric keyboard), the
+ * The jam form dialog: date and time pickers, a labelled venue field, the
  * notes and the submit action, enabled only when [JamFormUiModel.canSubmit]. Back and a tap outside equal
  * `Cancelar`; nothing is written here, the host decides what [JamFormUiModel.Event.Submit] does (D-13).
  */
 @Composable
 fun JamFormDialog(model: JamFormUiModel) {
     val style = JamFormDefaults.form()
+    var picker by rememberSaveable { mutableStateOf<JamFormField?>(null) }
     AlertDialog(
         onDismissRequest = { model.events(JamFormUiModel.Event.Cancel) },
         containerColor = style.container,
         title = { Text(text = model.title.resolve(), style = BluesJamTheme.typography.body, color = style.title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs)) {
-                FormField(model.date, KeyboardType.Number, style) {
-                    model.events(JamFormUiModel.Event.Edit(JamFormField.DATE, it))
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(BluesJamTheme.spacing.xs),
+            ) {
+                JamPickerField(model.date, style) {
+                    picker = JamFormField.DATE
                 }
-                FormField(model.time, KeyboardType.Number, style) {
-                    model.events(JamFormUiModel.Event.Edit(JamFormField.TIME, it))
+                JamPickerField(model.time, style) {
+                    picker = JamFormField.TIME
                 }
                 FormField(model.venue, KeyboardType.Text, style) {
                     model.events(JamFormUiModel.Event.Edit(JamFormField.VENUE, it))
@@ -54,6 +64,7 @@ fun JamFormDialog(model: JamFormUiModel) {
             }
         },
     )
+    JamFormPicker(model, picker, onDismiss = { picker = null })
 }
 
 @Composable

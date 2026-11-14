@@ -23,12 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
@@ -116,7 +114,7 @@ internal fun SongDetailContent(model: SongDetailUiModel, modifier: Modifier, con
         start = contentPadding.calculateStartPadding(layoutDirection) + spacing.sm,
         top = contentPadding.calculateTopPadding() + spacing.sm,
         end = contentPadding.calculateEndPadding(layoutDirection) + spacing.md,
-        bottom = contentPadding.calculateBottomPadding() + spacing.lg,
+        bottom = spacing.lg,
     )
     // The "Agregar a Otros" dialog is a sibling of the list, not an item in it: it floats over the
     // whole screen and survives the list scrolling (`extras-dialog-and-lines`).
@@ -124,23 +122,39 @@ internal fun SongDetailContent(model: SongDetailUiModel, modifier: Modifier, con
         AddExtraDialog(it)
     }
     val loadingDescription = (model as? SongDetailUiModel.Loading)?.description?.resolve()
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(BluesJamTheme.colors.background)
-            .semantics { if (loadingDescription != null) contentDescription = loadingDescription },
-        contentPadding = padding,
-        verticalArrangement = Arrangement.spacedBy(spacing.md),
+            .padding(bottom = contentPadding.calculateBottomPadding()),
     ) {
-        item(key = BACK_KEY) { BackButton(model.back) }
-        when (model) {
-            is SongDetailUiModel.Loading -> Unit
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .semantics { if (loadingDescription != null) contentDescription = loadingDescription },
+            contentPadding = padding,
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
+        ) {
+            item(key = BACK_KEY) { BackButton(model.back) }
+            when (model) {
+                is SongDetailUiModel.Loading -> Unit
 
-            is SongDetailUiModel.NotFound -> item(key = NOT_FOUND_KEY) {
-                EmptyStateBlock(model.empty, Modifier.padding(start = spacing.sm))
+                is SongDetailUiModel.NotFound -> item(key = NOT_FOUND_KEY) {
+                    EmptyStateBlock(model.empty, Modifier.padding(start = spacing.sm))
+                }
+
+                is SongDetailUiModel.Song -> songItems(model)
             }
-
-            is SongDetailUiModel.Song -> songItems(model)
+        }
+        (model as? SongDetailUiModel.Song)?.admin?.presenceNotice?.let { notice ->
+            SongPresenceBar(
+                notice,
+                sidePadding = PaddingValues(
+                    start = contentPadding.calculateStartPadding(layoutDirection),
+                    end = contentPadding.calculateEndPadding(layoutDirection),
+                ),
+            )
         }
     }
 }
@@ -222,14 +236,6 @@ private fun Title(model: SongDetailUiModel.Song, modifier: Modifier) {
             Text(text = label.resolve(), style = SongDetailDefaults.captionStyle, color = PlayedRowDefaults.caption())
         }
         model.admin?.saveStatus?.let { status -> SaveStatusLine(status) }
-        model.admin?.presenceNotice?.let { notice ->
-            Text(
-                text = notice.resolve(),
-                style = SongDetailDefaults.captionStyle,
-                color = SongDetailDefaults.presenceNoticeColor(BluesJamTheme.colors),
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            )
-        }
     }
 }
 

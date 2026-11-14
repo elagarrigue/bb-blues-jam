@@ -507,8 +507,8 @@ Stated so they can be challenged rather than silently relied upon.
     as the row's key and strip, "Guardando…" and the cards (accepted by the user's decision).
   - The detail's failure cards sit after its controls; on a long panel they may be off-screen (a
     polite live region announces them).
-  - The detail has no pull to refresh, staleness notice or live polling: during the jam an admin on
-    the detail sees the cache until going back (writes still mirror into Room).
+  - The detail has no pull to refresh or staleness notice. Since concurrent-song-live-refresh, the visible admin
+    detail refreshes while another admin is known on that song; otherwise it sees the cache (writes mirror into Room).
   - A removal sending from the list does not block opening that row's detail; the detail turns not
     found when the removal is confirmed.
   - Saved state from an older build holds an `ExpandedRows` entry that is no longer read (harmless),
@@ -541,3 +541,14 @@ Stated so they can be challenged rather than silently relied upon.
   - *A model that writes `message` before `songs`* streams no songs early; the final answer is still right. Not a defect.
   - *WCAG 2.2.2 for the animation:* the dots are the only moving element, shown only while a request runs, stopped by
     `Cancelar`, static with "Quitar animaciones" (DESIGN.md M1).
+
+
+### Concurrent admin detail refresh (`concurrent-song-live-refresh`, 14 November 2026)
+
+While a visible admin detail knows another admin is on the same upcoming song, it refreshes immediately and waits
+one second after each response before reading again. This uses the existing whole-jams repository refresh (not a
+song-specific endpoint); requests are sequential and coalesce with other callers. Slow responses extend the cadence.
+Presence discovery still heartbeats every 30 seconds and holders expire after 120 seconds; starting/stopping the
+one-second polling follows those answers. An Unknown presence answer keeps the last known state. A failed refresh
+keeps cached data, with no new staleness UI on the detail. On leaving, no further poll starts; the shared repository's
+already-started request can finish in DataScope. Two-device latency/load and visual checks remain unmeasured.

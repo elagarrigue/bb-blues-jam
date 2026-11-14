@@ -261,9 +261,14 @@ class NextJamPlayedTest {
 
         assertEquals(listOf("Crossroads"), model.rows.map { it.title })
         assertTrue(model.rows.single().played)
-        // With the bass chip, the played song's open bass slot is not a match.
-        val bass = snapshot.toUiModel(today, filter = setOf(Instrument.BASS), musician = "Ana")
+        // A remembered musician cannot narrow instrument mode; the played song still has no open slots.
+        val bass = snapshot.toUiModel(
+            today,
+            filter = setOf(Instrument.BASS),
+            musician = "Ana",
+            filterMode = FilterModeUiModel(JamFilterMode.INSTRUMENT),
+        )
             .let { (it as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs }
-        assertTrue(bass.rows.isEmpty())
+        assertTrue(bass.rows.none { it.played })
     }
 }

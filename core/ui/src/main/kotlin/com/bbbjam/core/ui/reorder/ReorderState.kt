@@ -30,7 +30,9 @@ class ReorderState internal constructor(
 ) {
     var draggedKey: Any? by mutableStateOf(null)
         private set
-    private var lastDragEndNanos = Long.MIN_VALUE
+
+    // No release yet is absence, not a numeric sentinel: subtracting Long.MIN_VALUE can overflow.
+    private var lastDragEndNanos: Long? = null
 
     // All in the coordinates of `LazyListLayoutInfo.visibleItemsInfo` offsets. The finger does not move
     // when the list scrolls, so [pointerY] stays valid after the row's own slot has left the viewport.
@@ -83,8 +85,10 @@ class ReorderState internal constructor(
     }
 
     /** True during a drag and for a short moment after it, so the row's own tap does not fire on release. */
-    fun recentlyDragged(nowNanos: Long = System.nanoTime()): Boolean =
-        draggedKey != null || nowNanos - lastDragEndNanos < TAP_GUARD_NANOS
+    fun recentlyDragged(nowNanos: Long = System.nanoTime()): Boolean {
+        val lastEnd = lastDragEndNanos
+        return draggedKey != null || (lastEnd != null && nowNanos - lastEnd < TAP_GUARD_NANOS)
+    }
 
     internal fun start(key: Any, grabY: Float = 0f) {
         val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: return

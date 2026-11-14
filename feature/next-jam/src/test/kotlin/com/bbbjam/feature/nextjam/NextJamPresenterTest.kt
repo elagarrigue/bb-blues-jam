@@ -466,7 +466,11 @@ class NextJamPresenterTest {
         val counts = listOf(1, 0, 1, 1, 0, 0)
         // The musician block lists everyone on a slot or in Otros (`musician-filter`); it is checked on its own.
         val songs = (model as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs
-        assertEquals(listOf("Juan", "Mono", "Nico", "Tincho"), songs.musicianFilter?.options?.map { it.name })
+        assertEquals(null, songs.musicianFilter)
+        val musicianMode = snapshot(jam(Setlist.Available(listOf(withExtra, emptyLineup))))
+            .toUiModel(LocalDate.of(2026, 10, 2), filterMode = FilterModeUiModel(JamFilterMode.MUSICIAN))
+        val musicianSongs = (musicianMode as NextJamUiModel.Jam).setlist as SetlistUiModel.Songs
+        assertEquals(listOf("Juan", "Mono", "Nico", "Tincho"), musicianSongs.musicianFilter?.options?.map { it.name })
         assertEquals(
             NextJamUiModel.Jam(header, expectedSongs(expectedRows, null, bar(2, counts)), staleness = null),
             model.copy(setlist = songs.copy(musicianFilter = null)),

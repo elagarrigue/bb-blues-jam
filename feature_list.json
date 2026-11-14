@@ -2179,5 +2179,111 @@
       "Not run: Pixel 5 device check (orchestrator override: validator does the demo-jam check; confirm 'Demo (solo debug)' before dragging).",
       "10 November 2026: independent validator accept. Reran CI=true ./init.sh (exit 0, three wired). Pixel 5 demo live jam drag (no UP, no admin taps, force-stop to end): played row ~540 px over a ~475 px row swapped at ~237 px displacement, gap stayed within half a step of the drawn row, no flap under +/-4 px jitter, gap stable under the lifted row at the end of an auto-scroll (spot check). local.properties restored byte for byte."
     ]
+  },
+  {
+    "id": "jam-form-date-time-pickers",
+    "area": "core-ui",
+    "title": "Choose jam date and time with calendar and clock components",
+    "user_visible_behavior": "Fecha opens a calendar and Hora opens a 24-hour clock in the shared jam form (new jam, edit jam and assistant create). Accept applies a selection; Cancel or Back leaves the existing value unchanged. Spanish controls, neutral theme tokens, existing form validation and repository writes.",
+    "depends_on": [
+      "admin-jams-tab",
+      "admin-edit-delete-jam",
+      "assistant-proposal-targets"
+    ],
+    "status": "passing",
+    "verification": [
+      "UTC calendar conversion covers leap dates without Argentina time-zone shifts; 24-hour clock round trips including midnight",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "14 November 2026: implemented shared JamPickerField buttons, JamFormPicker calendar and 24-hour clock; Spanish configuration even on non-Spanish devices, neutral JamPickerDefaults colours, selections applied only on Accept. Venue remains a text field; form and clock content scroll. Existing Edit/Submit events and repository paths preserved.",
+      "JamPickerValuesTest: 3 JVM tests, 0 failures/errors: UTC midnight with leap-day round trip and Argentina offset, impossible/empty dates, 24-hour times including 00:00 and 23:59. Numeric formatter uses Locale.ROOT.",
+      "ktlintFormat then CI=true ./init.sh exit 0 on 14 November 2026, konsist/detekt/ktlint wired, Baseline OK. Initial post-change gate caught MagicNumber for the fallback hour; replaced with named constant, no verification rule change.",
+      "DESIGN.md and architecture skill updated. Not run: device visual/touch check, TalkBack, rotation and small-screen smoke. Awaiting independent validation; not accepted."
+    ]
+  },
+  {
+    "id": "reorder-initial-tap-guard",
+    "area": "core-ui",
+    "title": "Keep jam row actions enabled before the first drag and after returning from detail",
+    "user_visible_behavior": "Opening detail, move arrows and played toggles work on a fresh jam list and after navigation back without requiring a long-press drag. Retains the 300 ms tap guard after a drag release.",
+    "depends_on": [
+      "admin-drag-live-preview"
+    ],
+    "status": "passing",
+    "verification": [
+      "Regression tests against ReorderState for fresh/recreated lists and release guard expiry",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "14 November 2026: baseline gate passed; fail-first ReorderStateTest 3 tests, 2 failures on the original Long.MIN_VALUE sentinel (fresh state and recreated list). Root cause: signed overflow in nowNanos - Long.MIN_VALUE.",
+      "Replaced the Long.MIN_VALUE sentinel with a nullable release timestamp; guard checks elapsed time only after a release. ReorderStateTest: 3 passed after fix, including 300 ms release expiry.",
+      "ktlintFormat then CI=true ./init.sh exit 0 on 14 November 2026; konsist/detekt/ktlint wired, Baseline OK. No verification rules changed. Architecture skill and PROGRESS.md updated.",
+      "Not run: device touch/navigation smoke. Awaiting independent validation; not accepted. Earlier uncommitted jam date/time picker work preserved."
+    ]
+  },
+  {
+    "id": "presence-warning-bottom-bar",
+    "area": "feature-setlist",
+    "title": "Show concurrent admin presence in a pulsing red bottom bar",
+    "user_visible_behavior": "When another admin has the same upcoming-jam song open, the detail shows Otro admin está editando este tema in a fixed red bottom bar. The background slowly pulses between red shades; reduced motion makes it static. It stays visible while scrolling, disappears when the existing presence notice clears, and remains advisory.",
+    "depends_on": [
+      "admin-presence-notice"
+    ],
+    "status": "passing",
+    "verification": [
+      "Contrast stays at least 4.5:1 throughout the pulse, static state uses the error token",
+      "Existing SongPresenceTest still covers admin gating and notice lifetime",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "14 November 2026: SongPresenceBar is a fixed sibling below the weighted song-detail LazyColumn, with navigation insets reserved once. Removed the title notice. Existing presenceNotice, heartbeat and advisory behaviour unchanged.",
+      "PresenceWarningDefaults: opaque error/background blend at 70%-100%, dark text, 1400 ms each direction; animation state read only in drawBehind. Public core:ui rememberReducedMotion reused; scale 0 draws full error with no transition. One polite live region; text wraps.",
+      "PresenceWarningDefaultsTest 2 passed (distinct shades/static error token and 101 contrast samples at least 4.5:1); existing SongPresenceTest 6 passed. ktlintFormat then CI=true ./init.sh exit 0, konsist/detekt/ktlint wired, Baseline OK. No verification rule changes.",
+      "DESIGN.md motion exception and presence layout updated, architecture skill updated. Not run: two-device visual smoke, large fonts/landscape, TalkBack and reduced-motion device smoke. Awaiting independent validation; not accepted."
+    ]
+  },
+  {
+    "id": "concurrent-song-live-refresh",
+    "area": "feature-setlist",
+    "title": "Refresh a shared admin song detail every second",
+    "user_visible_behavior": "While a visible admin detail detects another admin on the same upcoming-jam song, refresh immediately and then one second after each response. Requests never overlap; refresh failures keep cached data. Stop on Alone presence, hidden screen, logout, missing song, changed target or disposal. Existing 30-second presence discovery and 120-second TTL stay unchanged.",
+    "depends_on": [
+      "admin-presence-notice"
+    ],
+    "status": "passing",
+    "verification": [
+      "Molecule virtual-time tests for cadence, cache updates, failure retry, non-overlap, gating and cancellation",
+      "Existing SongPresenceTest remains green",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "14 November 2026: baseline gate passed. SongDetailLiveRefreshTest 5 and SongPresenceTest 6 passed in targeted JVM run.",
+      "SongDetailLiveRefreshTest 5 passed in the full gate: cadence and cache key updates, stop after removal, hide/resume/logout/disposal, Unknown then Alone, slow failed refresh without overlap, musician/hidden/past/missing/Alone/Unknown-first gating. SongPresenceTest 6 passed.",
+      "ktlintFormat then CI=true ./init.sh exit 0 on 14 November 2026; konsist/detekt/ktlint wired, Baseline OK. No verification rule changes. DESIGN.md, architecture skill, risks and PROGRESS.md updated.",
+      "Not run: two-device/live latency, offline device smoke. Actual interval includes response time plus one second; whole-jams refresh reused, presence discovery remains 30 s and TTL 120 s. Awaiting independent validation; not accepted."
+    ]
+  },
+  {
+    "id": "exclusive-filter-modes",
+    "area": "feature-setlist",
+    "title": "Choose instrument or musician with an exclusive segmented filter control",
+    "user_visible_behavior": "One two-segment control selects Instrumento or Músico. Only the active mode is visible and applied; remembered selections are retained separately and never intersect. Instrument counts cover the full setlist, musician mode lists that musician regardless of open slots. The remembered musician selects musician mode on initial entry; explicit mode choice survives saved state. No assigned musicians shows an empty-state line.",
+    "depends_on": [
+      "musician-filter"
+    ],
+    "status": "passing",
+    "verification": [
+      "Presenter tests switch modes with disjoint results, restore selections and verify no hidden filter applies",
+      "Existing instrument, musician, played-state, drag and list tests stay green",
+      "CI=true ./init.sh exits 0 with konsist, detekt and ktlint wired"
+    ],
+    "evidence": [
+      "14 November 2026: Material 3 single-choice segmented Instrumento/Musico control in NextJamFilters; neutral tokens, native selection semantics, equal widths, 48dp minimum targets. Only active controls drawn; no-roster message; shared filter headings hidden.",
+      "NextJamFilterState remembers instrument selection and saveable mode override; initial mode follows persisted musician. Mapper masks inactive inputs before RowState. Mode switches retain selections; clearing musician leaves hidden instruments intact. Instrument updates batch state to avoid intermediate frames.",
+      "NextJamMusicianFilterTest 8 passed: exclusive/disjoint results, selection restoration, clear isolation, empty roster and mapper masking. NextJamFilterTest 9 passed; full next-jam suite 260 tests, 0 failures/errors, including played and drag coverage. Replaced old combined-filter test expectations as requested.",
+      "ktlintFormat then CI=true ./init.sh exit 0 on 14 November 2026, konsist/detekt/ktlint wired, Baseline OK. Extracted filter state to satisfy Detekt method length and complexity; no verification rule changes. DESIGN.md, architecture skill and PROGRESS.md updated.",
+      "Not run: device visual, large-font/landscape, TalkBack and saved-state smoke. Awaiting independent validation; not accepted. Earlier changes retained; no commit."
+    ]
   }
 ]
